@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict';
+import { performance } from 'node:perf_hooks';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+const current = process.cwd();
+const old = 'C:/Users/98jak/.codex/worktrees/gg-20261113-i08-validation/GraphGoblin';
+const load = (root, file) => import(pathToFileURL(resolve(root, file)).href);
+const { validateDraft: original } = await load(old, 'apps/web/src/editor/model.ts');
+const { validateDraft: candidate } = await load(current, 'apps/web/src/editor/model.ts');
+const { LoopDefinitionSchema } = await load(current, 'packages/contracts/src/index.ts');
+const { syntaxIssues } = await load(current, 'packages/domain/src/index.ts');
+const { nodeReferenceIssues } = await load(current, 'packages/domain/src/node-references.ts');
+const { Liquid } = await import('./packages/domain/node_modules/liquidjs/dist/liquid.node.mjs');
+const { Liquid: LiquidCjs } = (await import('./packages/domain/node_modules/liquidjs/dist/liquid.node.js')).default;
+function graph(count, refs) {
+  const nodes = [{id:'start', kind:'trigger', label:'Start', config:{type:'manual'}}];
+  const edges = [];
+  let previous = 'start';
+  let producer = 'start';
+  for (let i = 1; i < count - 1; i += 1) {
+    const id = 'n' + i;
+    const read = refs ? 'outputs.' + producer + '.value' : 'trigger.payload';
+    const count = refs ? 'counters.nodeVisits.' + producer : 'vars.count';
+    const node = i % 3 === 0
+      ? { id, kind:'mutate', label:id, config:{ operations:[
+          {op:'set',path:'/vars/value',value:{kind:'expression',jsonata:read + ' & $string(' + count + ')'}},
+          {op:'append-message',content:'Note ' + i + ' {{ ' + read + ' | json }}'},
+        ]}}
+      : { id, kind:'inference', label:id, config:{ prompt:{template:
+          'Step ' + i + '. {% if ' + read + ' %} {{ ' + read + ' | json }} {% endif %} {{ ' + count + ' }}'}} };
+    nodes.push(node);
+    if (node.kind === 'inference') producer = id;
+    edges.push({id:'e'+i,from:{node:previous,port:'out'},to:{node:id}});
+    previous = id;
+  }
+  nodes.push({ id:'done',kind:'exit',label:'Done',config:{returns:refs?'outputs.'+producer+'.value':'trigger.payload'} });
+  edges.push({id:'end',from:{node:previous,port:'out'},to:{node:'done'}});
+  return {schemaVersion:4,name:'Perf',nodes,edges};
+}
+const order = [0,1,2,3];
+const describe = (samples) => {
+  const s = [...samples].sort((a,b)=>a-b);
+  return [s[Math.ceil(s.length/2)-1],s[Math.ceil(s.length*.95)-1]].map(v=>Number(v.toFixed(2)));
+};
+for (const [size, refs] of [[100,true],[300,true],[300,false]]) {
+  const raw = graph(size,refs);
+  const parsed = LoopDefinitionSchema.parse(raw);
+  let syntaxCount=0, analysisCount=0;
+  const before = original(raw);
+  assert.equal(before.issues.length,0,JSON.stringify(before.issues.slice(0,2)));
+  const restores = [];
+  for (const Prototype of new Set([Liquid.prototype, LiquidCjs.prototype])) {
+    for (const method of ['parse','analyzeSync']) {
+      const saved = Prototype[method];
+      Prototype[method] = function(...args) {
+        if(method==='parse') syntaxCount += 1; else analysisCount += 1;
+        return saved.apply(this,args);
+      };
+      restores.push(() => { Prototype[method] = saved; });
+    }
+  }
+  // Only the candidate's installed Liquid instance is instrumented.
+  let after;
+  try { after = candidate(raw); } finally { restores.forEach(f=>f()); }
+  assert.deepEqual(after,before);
+  const counts = { templateParse:syntaxCount, templateAnalyze:analysisCount };
+  const cases = [
+    ['baselineValidateDraft',()=>original(raw)], ['candidateValidateDraft',()=>candidate(raw)],
+    ['candidateSyntaxIssues',()=>syntaxIssues(parsed)], ['candidateReferenceIssues',()=>nodeReferenceIssues(parsed)],
+  ];
+  const samples = cases.map(()=>[]);
+  for (let i=0;i<4;i+=1) for (const [,f] of cases) f();
+  for(let cycle=0;cycle<15;cycle+=1) for(const step of order){
+    const index=(step+cycle)%4;
+    const start=performance.now();
+    cases[index][1]();
+    samples[index].push(performance.now()-start);
+  }
+  console.log(JSON.stringify({
+    nodes:size, references:refs, publicResultEqual:true, counts,
+    medianP95Ms:Object.fromEntries(cases.map(([name],i)=>[name,describe(samples[i])])),
+  }));
+}

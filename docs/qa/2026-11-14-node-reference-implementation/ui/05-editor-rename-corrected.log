@@ -1,0 +1,36 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.rename.test.tsx (8 tests | 1 failed) 15095ms
+   ❯ renaming a node in the editor (#273) (8)
+     × says nothing more than before for a rename that only moves connections 707ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename.test.tsx > renaming a node in the editor (#273) > says nothing more than before for a rename that only moves connections
+AssertionError: expected <span class="sr-only" …(3)></span>
+…(1) to have a length of 3 but got 2
+
+- Expected
++ Received
+
+- 3
++ 2
+
+ ❯ src/editor/EditorPage.rename.test.tsx:225:58
+    223|     expect(store().renameReport).toMatchObject({ references: 0, connec…
+    224|     expect(screen.queryByText(/Renamed start to begin/)).toBeNull();
+    225|     expect(document.querySelectorAll('[role="status"]')).toHaveLength(…
+       |                                                          ^
+    226|   });
+    227|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  02:40:58
+   Duration  23.13s (tests 66%, transform 13%, environment 11%, import 7%, setup 3%)
+
+exit=1

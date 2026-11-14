@@ -1,0 +1,904 @@
+diff --git a/apps/web/src/editor/NodeEditorDialog.tsx b/apps/web/src/editor/NodeEditorDialog.tsx
+index ca2e3a4e..2a21a1d0 100644
+--- a/apps/web/src/editor/NodeEditorDialog.tsx
++++ b/apps/web/src/editor/NodeEditorDialog.tsx
+@@ -18,7 +18,11 @@ import {
+   RequiredNote,
+   type DialogCloseReason,
+ } from '../components/ui/index.js';
+-import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
++import {
++  carryCollectionIdentities,
++  createDisclosureIdentities,
++  type DisclosureStates,
++} from '../forms/disclosures.js';
+ import { SchemaForm } from '../forms/SchemaForm.js';
+ import { NodeOutputsContext } from '../forms/EarlierNodeOutputs.js';
+ import { FieldLabelsContext } from '../forms/fields/shared.js';
+@@ -315,7 +319,8 @@ export function NodeEditorDialog({
+   /**
+    * Apply the id being typed, on Enter or as the field loses focus (`next` is where focus is going).
+    * The rename repairs references in one step; when it repaired one in this node's own fields, the
+-   * config form remounts with the new source, and focus follows to the same control there.
++   * config form remounts with the new source. The repair rewrites strings in place, so the form
++   * keeps its collection rows and their open state, and focus follows to the same control there.
+    */
+   const commitId = (next?: Element | null) => {
+     const problem = idProblem(id.value, node.id, definition);
+@@ -323,8 +328,18 @@ export function NodeEditorDialog({
+       setIdState({ ...id, error: problem });
+       return;
+     }
++    const nextId = id.value;
++    const rename = () => {
++      const configOf = (nodeId: string) =>
++        useEditorStore.getState().definition?.nodes.find((n) => n.id === nodeId)?.config;
++      const previous = configOf(node.id);
++      const refused = renameNode(node.id, nextId);
++      // Before the remount renders: the repaired config takes this config's row ids.
++      if (!refused) carryCollectionIdentities(disclosureIdentities, previous, configOf(nextId));
++      return refused;
++    };
+     // A refusal stays with the typed text; after a rename the draft follows the new id.
+-    setIdState({ ...id, error: keepFocusThrough(() => renameNode(node.id, id.value), next) });
++    setIdState({ ...id, error: keepFocusThrough(rename, next) });
+   };
+ 
+   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
+diff --git a/apps/web/src/editor/RenameNotice.tsx b/apps/web/src/editor/RenameNotice.tsx
+index 8fcb3375..3fda86df 100644
+--- a/apps/web/src/editor/RenameNotice.tsx
++++ b/apps/web/src/editor/RenameNotice.tsx
+@@ -1,4 +1,5 @@
+ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
++import { Fragment } from 'react';
+ import { Alert } from '../components/ui/index.js';
+ import { IssueList } from './IssuePopover.js';
+ import type { EditorIssue } from './model.js';
+@@ -25,12 +26,19 @@ export function hasRenameNotice(report: RenameReport | undefined): report is Ren
+   return report !== undefined && (report.references > 0 || report.warnings.length > 0);
+ }
+ 
++function configOf(definition: LoopDefinitionInput, nodeId: string): unknown {
++  return definition.nodes.find((node) => node.id === nodeId)?.config;
++}
++
+ /**
+  * The latest rename's report (#273): how many references and connections it updated, and the
+  * places where the old id may remain because the domain could not settle them (dynamic, inherited
+- * or authored keys, unverifiable edits, scripts and generated patches). Rows on a node that is
+- * still in the draft open it at the field (`onChoose`); others only inform. Plain text, JSON values
+- * and scripts are never described as updated.
++ * or authored keys, unverifiable edits, scripts and generated patches). A row opens its node at
++ * the field (`onChoose`) only while that node's config is still the value the rename left, which
++ * undo and redo restore: after another edit of the node an index in the path can name a different
++ * row, so its rows then only inform and the notice says the node changed. Loop-level rows, and
++ * rows on a node no longer in the draft, only inform. Plain text, JSON values and scripts are
++ * never described as updated.
+  *
+  * The editor shows it above the canvas and, while the node dialog is open (the page is inert
+  * then), inside the dialog as well, as it does the draft conflict notice.
+@@ -47,11 +55,23 @@ export function RenameNotice({
+ }) {
+   const report = useEditorStore((s) => s.renameReport);
+   if (!hasRenameNotice(report)) return null;
+-  const present = new Set(definition.nodes.map((node) => node.id));
++  const unchanged = (nodeId: string) => {
++    const config = configOf(definition, nodeId);
++    return config !== undefined && config === configOf(report.definition, nodeId);
++  };
+   const reviewable = report.warnings.filter(
+-    (issue) => issue.nodeId !== undefined && present.has(issue.nodeId),
++    (issue) => issue.nodeId !== undefined && unchanged(issue.nodeId),
+   );
+   const informational = report.warnings.filter((issue) => !reviewable.includes(issue));
++  const changed = [
++    ...new Set(
++      informational.flatMap((issue) =>
++        issue.nodeId !== undefined && configOf(definition, issue.nodeId) !== undefined
++          ? [issue.nodeId]
++          : [],
++      ),
++    ),
++  ];
+   const summary = renameSummary(report);
+   const places = report.warnings.length;
+   return (
+@@ -75,6 +95,18 @@ export function RenameNotice({
+               <IssueList issues={reviewable} subject onChoose={onChoose} />
+             ) : null}
+             {informational.length > 0 ? <IssueList issues={informational} subject /> : null}
++            {changed.length > 0 ? (
++              <p>
++                {changed.map((nodeId, index) => (
++                  <Fragment key={nodeId}>
++                    {index === 0 ? null : index === changed.length - 1 ? ' and ' : ', '}
++                    <code>{nodeId}</code>
++                  </Fragment>
++                ))}{' '}
++                changed after the rename. {changed.length === 1 ? 'Its' : 'Their'} places show where
++                they were then and no longer open a field.
++              </p>
++            ) : null}
+           </>
+         ) : null}
+         <p>Undo reverses the whole rename.</p>
+diff --git a/apps/web/src/editor/store.ts b/apps/web/src/editor/store.ts
+index d6c16b61..fb045663 100644
+--- a/apps/web/src/editor/store.ts
++++ b/apps/web/src/editor/store.ts
+@@ -303,6 +303,12 @@ export interface RenameReport {
+    * could not verify. Located ones carry the node (by its new id) and the field's path.
+    */
+   warnings: EditorIssue[];
++  /**
++   * The draft as the rename left it. A warning's path names the field the rename analyzed only
++   * while its node's config is still that same value (undo and redo restore it): after another
++   * edit of that node a path can name a different row, so the notice no longer opens it.
++   */
++  definition: LoopDefinitionInput;
+ }
+ 
+ /** The node id rule's wording, shared by the node editor's own check. */
+@@ -758,6 +764,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
+           ).length,
+           references: result.repairedReferences - endpoints,
+           warnings: result.warnings,
++          definition,
+         },
+         ...recordStep(
+           historyOf(s),
+diff --git a/apps/web/src/forms/disclosures.ts b/apps/web/src/forms/disclosures.ts
+index 10da5164..1ce0f8c6 100644
+--- a/apps/web/src/forms/disclosures.ts
++++ b/apps/web/src/forms/disclosures.ts
+@@ -107,6 +107,38 @@ export function createCollectionIdentities(identities: DisclosureIdentities, val
+   };
+ }
+ 
++/** The length of the list at a dotted form path, or -1 where there is none. */
++function listLength(value: unknown, path: string): number {
++  let current = value;
++  for (const key of path.split('.')) {
++    if (typeof current !== 'object' || current === null) return -1;
++    current = (current as Record<string, unknown>)[key];
++  }
++  return Array.isArray(current) ? current.length : -1;
++}
++
++/**
++ * Give `next` the row ids recorded for `previous`, when `next` replaced it by an edit that changed
++ * values inside rows but kept every collection's rows in place: a rename's reference repair
++ * rewrites strings only. A form remounting with `next` then keeps its rows, so their open state
++ * and focus follow them. Nothing is carried when a recorded collection's length differs; rows are
++ * never matched by their contents.
++ */
++export function carryCollectionIdentities(
++  identities: DisclosureIdentities,
++  previous: unknown,
++  next: unknown,
++): void {
++  if (typeof previous !== 'object' || previous === null) return;
++  if (typeof next !== 'object' || next === null || identities.snapshots.has(next)) return;
++  const rows = identities.snapshots.get(previous);
++  if (!rows) return;
++  const kept = Object.keys(rows).every(
++    (path) => listLength(previous, path) === listLength(next, path),
++  );
++  if (kept) identities.snapshots.set(next, rows);
++}
++
+ export const CollectionIdentitiesContext = createContext<
+   ReturnType<typeof createCollectionIdentities> | undefined
+ >(undefined);
+diff --git a/apps/web/src/forms/fields/json.tsx b/apps/web/src/forms/fields/json.tsx
+index 2fb4aa69..240b00cf 100644
+--- a/apps/web/src/forms/fields/json.tsx
++++ b/apps/web/src/forms/fields/json.tsx
+@@ -132,9 +132,10 @@ export function JsonText({
+       ? validateText(text, schema, validateValue)
+       : undefined;
+   }, [text, schema, validateValue, validationVersion, ownError]);
+-  const error = candidate
+-    ? (candidate.error ?? (sameJson(candidate.value, value) ? undefined : PENDING_JSON))
+-    : ownError;
++  // Held text ends only by the author's hand: typing it back to the section's value, Apply, Cancel
++  // or a discard. A valid candidate that a change elsewhere made equal to the section (a rename's
++  // repair, a sibling fix, a remount after undo) stays held exactly as written, with no step.
++  const error = candidate ? (candidate.error ?? PENDING_JSON) : ownError;
+   const [confirmation, setConfirmation] = useState<{
+     text: string;
+     connections: readonly RemovedConnection[];
+diff --git a/apps/web/src/editor/EditorPage.rename.test.tsx b/apps/web/src/editor/EditorPage.rename.test.tsx
+index 28cbc834..7808b970 100644
+--- a/apps/web/src/editor/EditorPage.rename.test.tsx
++++ b/apps/web/src/editor/EditorPage.rename.test.tsx
+@@ -1,3 +1,4 @@
++import { EditorView } from '@codemirror/view';
+ import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '@graphgoblin/contracts';
+ import { act, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+@@ -11,9 +12,47 @@ import { newLoopDefinition } from './model.js';
+ import { useEditorStore } from './store.js';
+ 
+ const SAVE_WAIT = { timeout: 4000 };
++const UNDO = '{Control>}z{/Control}';
++const REDO = '{Control>}{Shift>}z{/Shift}{/Control}';
++const PENDING = 'Choose Apply JSON or Cancel JSON to finish this edit.';
+ const store = () => useEditorStore.getState();
+ const node = (id: string) => store().definition!.nodes.find((n) => n.id === id);
+ const config = (id: string) => node(id)!.config as Record<string, unknown>;
++const labels = () => store().past.map((step) => step.label);
++
++/** The text of the code editor that has focus. */
++function focusedCode(): string | undefined {
++  const active = document.activeElement;
++  return active instanceof HTMLElement && active.classList.contains('cm-content')
++    ? EditorView.findFromDOM(active)?.state.doc.toString()
++    : undefined;
++}
++
++/** The header of operation `n` (1-based) in `scope`, which toggles its row. */
++function operation(scope: HTMLElement, n: number): HTMLElement {
++  return within(scope).getByRole('button', { name: new RegExp(`^Operations ${n}\\b`) });
++}
++
++/** The stable row ids of the first `count` operations, as rendered. */
++function operationRows(scope: HTMLElement, count: number): (string | null | undefined)[] {
++  return Array.from({ length: count }, (_, index) =>
++    scope.querySelector(`[data-row-path="operations.${index}"]`)?.getAttribute('data-row-id'),
++  );
++}
++
++/** The open state of the first `count` operations. */
++function opened(scope: HTMLElement, count: number): (string | null)[] {
++  return Array.from({ length: count }, (_, index) =>
++    operation(scope, index + 1).getAttribute('aria-expanded'),
++  );
++}
++
++/** The Coerce operation's Source input, inside its open row. */
++function coerceSource(scope: HTMLElement): HTMLElement {
++  return within(within(scope).getByRole('group', { name: 'Operations 3' })).getByLabelText(
++    'Source',
++  );
++}
+ 
+ /**
+  * Work feeds a review and an exit. A sibling's Liquid and the exit's JSONata read it, the exit
+@@ -98,6 +137,114 @@ function selfReading(): LoopDefinitionInput {
+   };
+ }
+ 
++/**
++ * A Mutate node that coerces its own visit count, after two identical notes (#273 U1): the rename
++ * repairs the Coerce source in place, so the operations keep their rows.
++ */
++function selfCoercing(): LoopDefinitionInput {
++  return {
++    schemaVersion: CURRENT_DEFINITION_FORMAT,
++    name: 'coerce',
++    variables: { visits: { type: 'integer' } },
++    nodes: [
++      {
++        id: 'start',
++        kind: 'trigger',
++        label: 'Start',
++        config: { type: 'manual' },
++        ui: { x: 0, y: 0 },
++      },
++      {
++        id: 'work',
++        kind: 'mutate',
++        label: 'Work',
++        config: {
++          operations: [
++            { op: 'append-message', role: 'note', content: 'Same note' },
++            { op: 'append-message', role: 'note', content: 'Same note' },
++            {
++              op: 'coerce',
++              source: '/counters/nodeVisits/work',
++              jsonSchema: { type: 'integer' },
++              repair: { enabled: false },
++              target: '/vars/visits',
++            },
++          ],
++        },
++        ui: { x: 300, y: 0 },
++      },
++      {
++        id: 'done',
++        kind: 'exit',
++        label: 'Done',
++        config: { returns: 'vars.visits' },
++        ui: { x: 600, y: 0 },
++      },
++    ],
++    edges: [
++      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'work', port: 'in' } },
++      { id: 'e2', from: { node: 'work', port: 'out' }, to: { node: 'done', port: 'in' } },
++    ],
++  };
++}
++
++/**
++ * Audit sits between review and the exit with three notes; only the second reads a computed key,
++ * so every rename lists it for review (#273 U2).
++ */
++function auditing(): LoopDefinitionInput {
++  const definition = referencing();
++  return {
++    ...definition,
++    nodes: [
++      ...definition.nodes,
++      {
++        id: 'audit',
++        kind: 'mutate',
++        label: 'Audit',
++        config: {
++          operations: [
++            { op: 'append-message', role: 'note', content: 'First note' },
++            { op: 'append-message', role: 'note', content: 'Read {{ outputs[vars.key] }}' },
++            { op: 'append-message', role: 'note', content: 'Third note' },
++          ],
++        },
++        ui: { x: 750, y: 200 },
++      },
++    ],
++    edges: [
++      ...definition.edges.filter((edge) => edge.id !== 'e3'),
++      { id: 'e3', from: { node: 'review', port: 'out' }, to: { node: 'audit', port: 'in' } },
++      { id: 'e4', from: { node: 'audit', port: 'out' }, to: { node: 'done', port: 'in' } },
++    ],
++  };
++}
++
++/** Work's own Input mutation reads its visit count (#273 U3). */
++function selfInput(): LoopDefinitionInput {
++  const definition = referencing();
++  return {
++    ...definition,
++    nodes: definition.nodes.map((n) =>
++      n.id === 'work' && n.kind === 'inference'
++        ? {
++            ...n,
++            config: {
++              ...n.config,
++              input: [
++                {
++                  op: 'append-message',
++                  role: 'note',
++                  content: 'Visit {{ counters.nodeVisits.work }}',
++                },
++              ],
++            },
++          }
++        : n,
++    ),
++  };
++}
++
+ async function openEditor(definition: LoopDefinitionInput = referencing()) {
+   const api = new FakeApi();
+   const loop = api.addLoop(definition);
+@@ -463,4 +610,231 @@ describe('renaming a node in the editor (#273)', () => {
+       }),
+     );
+   });
++
++  it('keeps each operation row and its open state when Enter repairs a Coerce source in place', async () => {
++    const user = userEvent.setup();
++    await openEditor(selfCoercing());
++    const dialog = await editNode('work', 'Edit mutate work');
++    // Identical neighbours differ only in their open state; the Coerce row is open too.
++    await user.click(operation(dialog, 1));
++    await user.click(operation(dialog, 3));
++    expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
++    const rows = operationRows(dialog, 3);
++    const source = coerceSource(dialog);
++    expect(source).toHaveValue('/counters/nodeVisits/work');
++
++    const id = within(dialog).getByLabelText('Node id');
++    await user.clear(id);
++    await user.type(id, 'draft{Enter}');
++    expect(screen.getByRole('dialog', { name: 'Edit mutate draft' })).toBe(dialog);
++    expect(id).toHaveFocus();
++    expect(config('draft')['operations']).toEqual([
++      { op: 'append-message', role: 'note', content: 'Same note' },
++      { op: 'append-message', role: 'note', content: 'Same note' },
++      expect.objectContaining({ op: 'coerce', source: '/counters/nodeVisits/draft' }),
++    ]);
++    expect(labels()).toEqual(['rename work to draft']);
++
++    // The form remounted with the repaired source, on the same rows in the same open state.
++    expect(coerceSource(dialog)).not.toBe(source);
++    expect(coerceSource(dialog)).toHaveValue('/counters/nodeVisits/draft');
++    expect(operationRows(dialog, 3)).toEqual(rows);
++    expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
++
++    // Undo and redo from the Coerce header keep the rows, their state and the header's focus.
++    act(() => operation(dialog, 3).focus());
++    await user.keyboard(UNDO);
++    expect(screen.getByRole('dialog', { name: 'Edit mutate work' })).toBe(dialog);
++    expect(coerceSource(dialog)).toHaveValue('/counters/nodeVisits/work');
++    expect(operationRows(dialog, 3)).toEqual(rows);
++    expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
++    expect(operation(dialog, 3)).toHaveFocus();
++    await user.keyboard(REDO);
++    expect(screen.getByRole('dialog', { name: 'Edit mutate draft' })).toBe(dialog);
++    expect(coerceSource(dialog)).toHaveValue('/counters/nodeVisits/draft');
++    expect(operationRows(dialog, 3)).toEqual(rows);
++    expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
++    expect(operation(dialog, 3)).toHaveFocus();
++  });
++
++  it('moves focus to the remounted nested Source the pointer chose when leaving the id renames', async () => {
++    const user = userEvent.setup();
++    await openEditor(selfCoercing());
++    const dialog = await editNode('work', 'Edit mutate work');
++    await user.click(operation(dialog, 2));
++    await user.click(operation(dialog, 3));
++    expect(opened(dialog, 3)).toEqual(['false', 'true', 'true']);
++    const rows = operationRows(dialog, 3);
++    const id = within(dialog).getByLabelText('Node id');
++    await user.clear(id);
++    await user.type(id, 'draft');
++
++    // Pressing the visible Source commits the id as it loses focus; the form remounts under it.
++    const source = coerceSource(dialog);
++    await user.click(source);
++    expect(screen.getByRole('dialog', { name: 'Edit mutate draft' })).toBe(dialog);
++    // Focus is on the same row's remounted Source, not on a fallback for a vanished row.
++    const focused = document.activeElement;
++    expect(focused?.closest('[data-field]')).toHaveAttribute('data-field', 'operations.2.source');
++    expect(focused?.closest('[data-row-id]')).toHaveAttribute('data-row-id', rows[2]);
++    expect(focused).not.toBe(source);
++    expect(focused).toHaveValue('/counters/nodeVisits/draft');
++    expect(coerceSource(dialog)).toBe(focused);
++    expect(operationRows(dialog, 3)).toEqual(rows);
++    expect(opened(dialog, 3)).toEqual(['false', 'true', 'true']);
++    expect(labels()).toEqual(['rename work to draft']);
++
++    // Typing then edits the repaired source; the old one is never written back.
++    await user.keyboard('/x');
++    expect(config('draft')['operations']).toEqual([
++      expect.anything(),
++      expect.anything(),
++      expect.objectContaining({ op: 'coerce', source: '/counters/nodeVisits/draft/x' }),
++    ]);
++  });
++
++  it('never leads a review row to another operation after the warned row moves', async () => {
++    const user = userEvent.setup();
++    await openEditor(auditing());
++    const dialog = await editNode('work', 'Edit inference work');
++    const id = within(dialog).getByLabelText('Node id');
++    await user.clear(id);
++    await user.type(id, 'draft{Enter}');
++    const summary =
++      'Updated 3 references in expressions, templates and mutation paths, and 2 connections.';
++    const auditRow = (scope: HTMLElement) =>
++      within(notice(scope, 'Renamed work to draft')).queryAllByRole('button', {
++        name: /node audit config\.operations\.1\.content/,
++      });
++
++    // At first the row is exact: it opens Audit at the second operation's computed read.
++    expect(notice(dialog, 'Renamed work to draft')).toHaveTextContent(summary);
++    await user.click(auditRow(dialog)[0]!);
++    const audit = await screen.findByRole('dialog', { name: 'Edit mutate audit' });
++    await waitFor(() => expect(focusedCode()).toBe('Read {{ outputs[vars.key] }}'));
++    const warned = document.activeElement!.closest('[data-row-id]')!.getAttribute('data-row-id');
++
++    // Removing the first operation moves that read to index 0 and the third note to index 1.
++    await user.click(within(audit).getByRole('button', { name: 'Remove operations 1' }));
++    expect(config('audit')['operations']).toEqual([
++      { op: 'append-message', role: 'note', content: 'Read {{ outputs[vars.key] }}' },
++      { op: 'append-message', role: 'note', content: 'Third note' },
++    ]);
++    expect(audit.querySelector('[data-row-path="operations.0"]')).toHaveAttribute(
++      'data-row-id',
++      warned,
++    );
++
++    // Whatever the notice still offers for Audit must reach the computed read, never the note.
++    for (const row of auditRow(audit)) {
++      await user.click(row);
++      await waitFor(() => expect(focusedCode()).toBe('Read {{ outputs[vars.key] }}'));
++    }
++    // It keeps the place and the summary, and says why the place no longer opens.
++    const inDialog = notice(audit, 'Renamed work to draft');
++    expect(auditRow(audit)).toEqual([]);
++    expect(inDialog).toHaveTextContent(summary);
++    expect(inDialog).toHaveTextContent('Review 2 places where work may remain:');
++    expect(inDialog).toHaveTextContent('node audit config.operations.1.content');
++    expect(inDialog).toHaveTextContent(
++      'audit changed after the rename. Its places show where they were then and no longer open a field.',
++    );
++    expect(
++      within(inDialog).getByRole('button', { name: /node done config\.returns/ }),
++    ).toBeEnabled();
++    expect(focusedCode()).not.toBe('Third note');
++
++    // Undoing the removal restores the configuration the rename left, and with it the exact row.
++    act(() => operation(audit, 1).focus());
++    await user.keyboard(UNDO);
++    expect(config('audit')['operations']).toHaveLength(3);
++    await user.click(auditRow(audit)[0]!);
++    await waitFor(() => expect(focusedCode()).toBe('Read {{ outputs[vars.key] }}'));
++    act(() => operation(audit, 1).focus());
++    await user.keyboard(REDO);
++    expect(config('audit')['operations']).toHaveLength(2);
++
++    // Above the canvas the same row only informs too.
++    await user.click(within(audit).getByRole('button', { name: 'Done' }));
++    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
++    expect(auditRow(document.body)).toEqual([]);
++    expect(notice(document.body, 'Renamed work to draft')).toHaveTextContent(
++      'node audit config.operations.1.content',
++    );
++  });
++
++  it('keeps held section JSON exactly when a rename makes the applied section equal to it', async () => {
++    const user = userEvent.setup();
++    await openEditor(selfInput());
++    const dialog = await editNode('work', 'Edit inference work');
++    await user.click(within(dialog).getByRole('tab', { name: /^Context/ }));
++    await user.click(within(dialog).getByRole('button', { name: 'Edit as JSON: Input' }));
++    // Valid, differently spaced, and already naming the id the node is about to get.
++    const text = [
++      '[',
++      '    {',
++      '        "op": "append-message",',
++      '        "role": "note",',
++      '        "content": "Visit {{ counters.nodeVisits.draft }}"',
++      '    }',
++      ']',
++    ].join('\n');
++    setCode('Input JSON', text);
++    const held = { message: PENDING, text, input: 'unapplied JSON' };
++    expect(within(dialog).getByText(PENDING)).toBeVisible();
++    expect(store().fieldErrors).toEqual({ 'node:work': { input: held } });
++    expect(config('work')['input']).toEqual([
++      { op: 'append-message', role: 'note', content: 'Visit {{ counters.nodeVisits.work }}' },
++    ]);
++    const original = store().definition;
++    const before = labels();
++
++    const id = within(dialog).getByLabelText('Node id');
++    await user.clear(id);
++    await user.type(id, 'draft{Enter}');
++    const renamed = store().definition;
++    // The accepted section is repaired and now equals the buffer, which still waits for the author.
++    expect(config('draft')['input']).toEqual([
++      { op: 'append-message', role: 'note', content: 'Visit {{ counters.nodeVisits.draft }}' },
++    ]);
++    expect(renamed!.edges.filter((edge) => edge.to.node === 'draft')).toHaveLength(1);
++    expect(getCode('Input JSON')).toBe(text);
++    expect(within(dialog).getByText(PENDING)).toBeVisible();
++    expect(store().fieldErrors).toEqual({ 'node:draft': { input: held } });
++    expect(labels()).toEqual([...before, 'rename work to draft']);
++    expect(store().future).toEqual([]);
++
++    // One undo, from a control without text, restores the id, source, edges and the exact buffer.
++    act(() => within(dialog).getByRole('button', { name: 'Apply JSON' }).focus());
++    await user.keyboard(UNDO);
++    expect(screen.getByRole('dialog', { name: 'Edit inference work' })).toBe(dialog);
++    expect(store().definition).toBe(original);
++    expect(store().fieldErrors).toEqual({ 'node:work': { input: held } });
++    expect(getCode('Input JSON')).toBe(text);
++    expect(within(dialog).getByText(PENDING)).toBeVisible();
++    expect(labels()).toEqual(before);
++    expect(store().future.map((step) => step.label)).toEqual(['rename work to draft']);
++
++    // One redo restores the repair and the same held buffer, with nothing left to redo.
++    act(() => within(dialog).getByRole('button', { name: 'Apply JSON' }).focus());
++    await user.keyboard(REDO);
++    expect(screen.getByRole('dialog', { name: 'Edit inference draft' })).toBe(dialog);
++    expect(store().definition).toBe(renamed);
++    expect(store().fieldErrors).toEqual({ 'node:draft': { input: held } });
++    expect(getCode('Input JSON')).toBe(text);
++    expect(labels()).toEqual([...before, 'rename work to draft']);
++    expect(store().future).toEqual([]);
++
++    // Apply stays the author's own step: it ends the hold and leaves the equal section as it is.
++    await user.click(within(dialog).getByRole('button', { name: 'Apply JSON' }));
++    expect(store().fieldErrors).toEqual({});
++    expect(store().definition).toBe(renamed);
++    expect(within(dialog).queryByText(PENDING)).toBeNull();
++    expect(labels()).toEqual([...before, 'rename work to draft', 'edit config of draft']);
++    act(() => within(dialog).getByRole('button', { name: 'Apply JSON' }).focus());
++    await user.keyboard(UNDO);
++    expect(store().fieldErrors).toEqual({ 'node:draft': { input: held } });
++    expect(getCode('Input JSON')).toBe(text);
++    expect(store().definition).toBe(renamed);
++  });
+ });
+diff --git a/apps/web/src/forms/json-sections.test.tsx b/apps/web/src/forms/json-sections.test.tsx
+index dc44885d..15a32f98 100644
+--- a/apps/web/src/forms/json-sections.test.tsx
++++ b/apps/web/src/forms/json-sections.test.tsx
+@@ -379,6 +379,63 @@ describe('section JSON mode', () => {
+     expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
+   });
+ 
++  it('keeps held text that later validation finds equal to the section until the author settles it', async () => {
++    const schema = z
++      .object({
++        enabled: z.boolean(),
++        section: z.array(z.number()).meta({ jsonEditor: true }),
++      })
++      .superRefine((config, ctx) => {
++        if (!config.enabled && config.section.length)
++          ctx.addIssue({
++            code: 'custom',
++            path: ['enabled'],
++            message: 'Enable this collection first',
++          });
++      });
++    const spy = vi.fn();
++    const report = vi.fn();
++    render(
++      <Harness
++        schema={schema}
++        initial={{ enabled: false, section: [1] }}
++        spy={spy}
++        report={report}
++      />,
++    );
++    const user = userEvent.setup();
++    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
++    // The applied value, spaced by the author, is held while a parent rule refuses it.
++    const text = '[ 1 ]';
++    setCode('Section JSON', text);
++    expect(
++      screen.getByText('section (config.enabled): Enable this collection first'),
++    ).toBeInTheDocument();
++    report.mockClear();
++
++    // Fixing the sibling makes the held text valid and equal to the section. It stays held as typed.
++    await user.click(screen.getByRole('switch', { name: 'Enabled' }));
++    expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
++    expect(getCode('Section JSON')).toBe(text);
++    expect(screen.getByText(/Choose Apply JSON/)).toBeInTheDocument();
++    expect(report).toHaveBeenLastCalledWith('section', {
++      message: 'Choose Apply JSON or Cancel JSON to finish this edit.',
++      text,
++      input: 'unapplied JSON',
++    });
++    expect(report).not.toHaveBeenCalledWith('section', undefined);
++    await user.click(screen.getByRole('button', { name: 'Use structured editor for Section' }));
++    expect(screen.getByText(/before switching editors/)).toBeVisible();
++
++    // Typing it back to the section's value is the author's own resolution: nothing stays held.
++    setCode('Section JSON', '[1]');
++    expect(report).toHaveBeenLastCalledWith('section', undefined);
++    expect(screen.queryByText(/Choose Apply JSON/)).not.toBeInTheDocument();
++    await user.click(screen.getByRole('button', { name: 'Use structured editor for Section' }));
++    expect(screen.queryByLabelText('Section JSON')).not.toBeInTheDocument();
++    expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
++  });
++
+   it('validates nested array replacements and root refinements without changing the live candidate', async () => {
+     const schema = z
+       .object({
+diff --git a/apps/web/src/editor/RenameNotice.test.tsx b/apps/web/src/editor/RenameNotice.test.tsx
+new file mode 100644
+index 00000000..a620b187
+--- /dev/null
++++ b/apps/web/src/editor/RenameNotice.test.tsx
+@@ -0,0 +1,71 @@
++import { act, render, screen, within } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { expect, it, vi } from 'vitest';
++import { newLoopDefinition } from './model.js';
++import { RenameNotice } from './RenameNotice.js';
++import { useEditorStore } from './store.js';
++
++const store = () => useEditorStore.getState();
++
++/** The notice over the live draft, as the editor page shows it. */
++function Notice({ onChoose }: { onChoose: Parameters<typeof RenameNotice>[0]['onChoose'] }) {
++  const definition = useEditorStore((s) => s.definition);
++  return definition ? <RenameNotice definition={definition} onChoose={onChoose} /> : null;
++}
++
++/** A Mutate node whose one note reads a computed output key, which every rename lists. */
++function reader(id: string) {
++  return {
++    id,
++    kind: 'mutate' as const,
++    label: id,
++    config: {
++      operations: [{ op: 'append-message' as const, content: '{{ outputs[vars.key] }}' }],
++    },
++  };
++}
++
++it('opens only places whose node is as the rename left it, and names the nodes changed since', async () => {
++  const definition = newLoopDefinition('notice');
++  definition.variables = { key: { type: 'string' } };
++  definition.nodes.push(...['a', 'b', 'c', 'd', 'e'].map(reader));
++  store().load('L1', definition);
++  expect(store().renameNode('start', 'begin')).toBeUndefined();
++  expect(store().renameReport!.warnings.map((issue) => issue.nodeId)).toEqual([
++    'a',
++    'b',
++    'c',
++    'd',
++    'e',
++  ]);
++  // Edit three readers, delete one, leave one as the rename left it.
++  for (const id of ['a', 'b', 'c'])
++    store().updateNode(id, {
++      config: { operations: [{ op: 'append-message', content: `Edited ${id}` }] },
++    });
++  store().removeNode('d');
++
++  const onChoose = vi.fn();
++  render(<Notice onChoose={onChoose} />);
++  const notice = screen.getByRole('status');
++  expect(notice).toHaveTextContent('Review 5 places where start may remain:');
++  expect(within(notice).getAllByRole('button', { name: /config\.operations/ })).toHaveLength(1);
++  expect(notice).toHaveTextContent(
++    'a, b and c changed after the rename. Their places show where they were then and no longer open a field.',
++  );
++  expect(notice).not.toHaveTextContent(/\bd changed/);
++  await userEvent
++    .setup()
++    .click(within(notice).getByRole('button', { name: /node e config\.operations\.0\.content/ }));
++  expect(onChoose).toHaveBeenCalledWith(
++    expect.objectContaining({ nodeId: 'e', path: 'config.operations.0.content' }),
++  );
++
++  // Undoing the edits restores the configs the rename left, so their places open again.
++  act(() => {
++    for (let step = 0; step < 4; step += 1) store().undo();
++  });
++  expect(store().renameReport).toBeDefined();
++  expect(screen.getAllByRole('button', { name: /config\.operations/ })).toHaveLength(5);
++  expect(screen.getByRole('status')).not.toHaveTextContent('changed after the rename');
++});
+diff --git a/apps/web/src/forms/disclosures.test.ts b/apps/web/src/forms/disclosures.test.ts
+new file mode 100644
+index 00000000..31cd11ab
+--- /dev/null
++++ b/apps/web/src/forms/disclosures.test.ts
+@@ -0,0 +1,55 @@
++import { describe, expect, it } from 'vitest';
++import {
++  carryCollectionIdentities,
++  createCollectionIdentities,
++  createDisclosureIdentities,
++} from './disclosures.js';
++
++/** Identities with the rows of `value`'s operations and their nested messages recorded. */
++function recorded(value: object) {
++  const identities = createDisclosureIdentities();
++  const rows = createCollectionIdentities(identities, value);
++  const ids = [rows.get('operations', 2), rows.get('operations.0.messages', 1)];
++  return { identities, ids };
++}
++
++const config = {
++  operations: [{ op: 'inject', messages: [{ content: 'Same' }] }, { op: 'drop' }],
++};
++
++describe('carryCollectionIdentities', () => {
++  it('gives a replacement that keeps every recorded list in place the same row ids', () => {
++    const { identities, ids } = recorded(config);
++    const repaired = {
++      operations: [{ op: 'inject', messages: [{ content: 'Renamed' }] }, { op: 'drop' }],
++    };
++    carryCollectionIdentities(identities, config, repaired);
++    const rows = createCollectionIdentities(identities, repaired);
++    expect([rows.get('operations', 2), rows.get('operations.0.messages', 1)]).toEqual(ids);
++  });
++
++  it.each([
++    ['a shorter list', { operations: [{ op: 'inject', messages: [{ content: 'Same' }] }] }],
++    ['a nested list that moved', { operations: [{ op: 'drop' }, config.operations[0]] }],
++  ])('carries nothing to %s; rows are not matched by content', (_, changed) => {
++    const { identities, ids } = recorded(config);
++    carryCollectionIdentities(identities, config, changed);
++    expect(identities.snapshots.has(changed)).toBe(false);
++    const rows = createCollectionIdentities(identities, changed);
++    expect(rows.get('operations', 2)).not.toEqual(ids[0]);
++  });
++
++  it('keeps rows already recorded for the replacement and ignores values without rows', () => {
++    const { identities } = recorded(config);
++    const known = { operations: [{ op: 'drop' }, { op: 'drop' }] };
++    const own = createCollectionIdentities(identities, known).get('operations', 2);
++    carryCollectionIdentities(identities, config, known);
++    expect(createCollectionIdentities(identities, known).get('operations', 2)).toBe(own);
++
++    const unseen = { operations: [] };
++    carryCollectionIdentities(identities, { operations: [] }, unseen);
++    carryCollectionIdentities(identities, 'text', unseen);
++    carryCollectionIdentities(identities, config, undefined);
++    expect(identities.snapshots.has(unseen)).toBe(false);
++  });
++});
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 8f7d6d9e..fede6af9 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -34,13 +34,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ - Node-ID changes can repair edge endpoints, typed mutation pointers and statically understood
+   JSONata and Liquid references as one draft edit (#273). Publication rejects known missing
+-  gate and visit-count identities. Direct existence checks and unresolved inherited or custom
+-  output keys warn. The editor applies the repair when a node ID is committed, as one undo step
+-  and one saved revision, and remounts only forms showing a repaired source. A notice counts the
+-  updated references and connections and lists places where the old ID may remain, each opening
+-  its field. **Upgrade:** open a draft that reports a missing reference, correct the
+-  source field or restore the referenced node, then publish a new version. Existing published
+-  versions and runs retain their definitions.
++  gate and visit-count identities. A direct presence check of one such reference alone, and
++  unresolved inherited or custom output keys, warn. The editor applies the repair when a node ID
++  is committed, as one undo step and one saved revision, and remounts only forms showing a
++  repaired source; the node dialog keeps its list rows, open operations and focus. Unapplied
++  section JSON keeps its exact text until the author applies or cancels it. A notice counts the
++  updated references and connections and lists places where the old ID may remain. A listed
++  field opens while its node is as the rename left it; places in loop settings, scripts and
++  nodes edited since only inform. **Upgrade:** open a draft that reports a missing reference,
++  correct the source field or restore the referenced node, then publish a new version. Existing
++  published versions and runs retain their definitions.
+ 
+ - Windows startup recovers abandoned ownership records when a reused PID has a different verified
+   OS process creation identity. The launcher shares the API's ownership checks and reports
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 0e954248..5225bcdb 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -269,11 +269,13 @@ Pressing a palette entry places the new card at x = 40, below the lowest existin
+ 
+ The node dialog's **Node id** applies on Enter, on leaving the field and when the dialog closes, as before. Invalid and duplicate ids keep their messages, and protected voice steps keep their read-only id and "Voice steps stay" refusal. An accepted id goes through the domain's `renameLoopNode` with the exact current draft. The node, its connection ends, and the references the domain understands (typed mutation pointers and static JSONata and Liquid reads of `outputs`, `gates` and `counters.nodeVisits`) change in one store write. Decision route ownership, the node's unfinished field input, the selection and a pending issue focus follow it in the same write. That write is one undo step and one revision. Autosave, the device mirror and the draft token handling see the complete renamed draft once. Undo and Redo restore every repaired field, edge end, held input and the selection together. Unfinished input in other forms is never touched. A refusal the dialog did not foresee (another node with the same id, say) shows under the field like the existing id messages and changes nothing.
+ 
+-Forms keep their own state, so a rename that repaired a source the open node's config form or the loop settings form shows remounts only that form (`formEpochs` in the store, per form scope). The variables form and other buffers stay mounted, and a field still showing the old text cannot write it back. When the id field loses focus to a control in the remounting form, focus moves to the same control in the new form, as undo does (`keepFocusThrough` in `editor/useUndoShortcuts.ts`).
++Forms keep their own state, so a rename that repaired a source the open node's config form or the loop settings form shows remounts only that form (`formEpochs` in the store, per form scope). The variables form and other buffers stay mounted. No form writes the old text back by itself: the remounted fields show the repaired source, and edits there start from it. The repair rewrites strings in place without adding, removing or reordering rows, so the node dialog gives the repaired config the replaced config's collection row ids (`carryCollectionIdentities` in `forms/disclosures.ts`, only when every recorded list keeps its length; rows are never matched by content). Operations stay open or collapsed as they were. When the id field loses focus to a control in the remounting form, focus moves to the same control in the new form, inside the same row when it is in one, as undo does (`keepFocusThrough` in `editor/useUndoShortcuts.ts`).
+ 
+-A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row on a node still in the draft opens that node's editor at the field (in place for the open node). Loop-level rows only inform. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
++Held section JSON (unapplied **Edit as JSON** text) is not form state the rename repairs. The rename analyzes and repairs the accepted section only, and the held text keeps its exact bytes, also when the repair makes the accepted section equal to it. It stays held, with **Apply JSON** and **Cancel JSON**, until the author settles it; the remount adds no undo step and keeps redo, and the notice gives no diagnostics for that text. A later explicit **Apply JSON** is an ordinary whole-section edit that writes the document as held, including any old id it still names.
+ 
+-The persistent reference diagnostics come from the same local `domain` validation as other issues, on node badges and beside Publish. A known missing gate or visit count is an error (`NODE_REFERENCE_MISSING`), and Publish refuses with it. Direct existence checks (`NODE_REFERENCE_OPTIONAL_MISSING`), unverified output keys (`NODE_REFERENCE_OUTPUT_UNVERIFIED`) and dynamic reads (`NODE_REFERENCE_UNCERTAIN`) are warnings. A rename made while the loop's name is refused (see "Loop names" below) stays on this device with the other held edits; the save that follows a new name sends the whole renamed draft once. Regression: `editor/store.rename.test.ts`, `editor/EditorPage.rename.test.tsx` and Edge `e2e/rename-references.spec.ts` (the Starter's sibling Liquid and Exit through undo, redo, reload, publish and pinned runs; uncertain, optional and missing references with Publish; focus through the remount; held input; a stale tab; protected voice steps).
++A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row opens its node's editor at the field (in place for the open node) only while that node's config is still the value the rename left, which undo and redo restore. After another edit of that node a listed path can name a different row (removing an earlier operation shifts the indices), so its rows then only inform: the notice says the node changed after the rename and that its places show where they were then. Rows for loop settings, for scripts and generated patches, and on a node no longer in the draft only inform too. The summary and the list keep their counts. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
++
++The persistent reference diagnostics come from the same local `domain` validation as other issues, on node badges and beside Publish. A known missing gate or visit count is an error (`NODE_REFERENCE_MISSING`), and Publish refuses with it. A direct presence check of that one reference alone (`$exists(gates."old-id")` in JSONata, `{% if gates["old-id"] %}` in Liquid; `NODE_REFERENCE_OPTIONAL_MISSING`), unverified output keys (`NODE_REFERENCE_OUTPUT_UNVERIFIED`) and dynamic reads (`NODE_REFERENCE_UNCERTAIN`) are warnings. A rename made while the loop's name is refused (see "Loop names" below) stays on this device with the other held edits; the save that follows a new name sends the whole renamed draft once. Regression: `editor/store.rename.test.ts`, `editor/EditorPage.rename.test.tsx` (also a Coerce source repaired under open and collapsed identical operations on Enter, pointer focus into the remounted Source, a review row whose operation moved, and held Input JSON the repair makes equal, through one undo and redo), `forms/json-sections.test.tsx` and Edge `e2e/rename-references.spec.ts` (the Starter's sibling Liquid and Exit through undo, redo, reload, publish and pinned runs; uncertain, optional and missing references with Publish; focus through the remount; held input; a stale tab; protected voice steps).
+ 
+ ### Editing decision routes
+ 
+@@ -771,7 +773,7 @@ Declared loop variables suggest names in decision provider `context.vars` and `/
+ 
+ JSON starts from the section's current raw value; an absent optional section starts blank. `JsonSection` reuses `JsonText` and CodeMirror in `forms/fields/json.tsx`. Syntax and schema errors show inline with relative issue paths. A section replacement is validated in the complete current config against the root schema, including parent refinements such as Claude policy. Issues inside the section use relative paths; whole-section or other config issues appear as section-level messages with their config path when available. A candidate that fails anywhere cannot apply. **Apply JSON** rechecks this complete candidate immediately before any write and commits its raw value without inserting defaults, trimming strings or changing paths in the form. The contracts still parse at the save boundary. **Cancel JSON** restores the last applied value and drops the held text. Entering JSON mode is refused while a descendant field holds input: the notice names all held field paths and offers to focus the first, revealing its disclosures. History that restores held descendant input returns the section to structured controls until it is finished or discarded. Apply therefore never clears hidden held input. Cancel is also undoable. Until Apply, no partial JSON reaches the definition, device mirror or server draft.
+ 
+-Switching back to structured editing is blocked while invalid JSON or a different parsed value is held, with a reason and Apply/Cancel available. This keeps two editors from independently changing the same section. Whitespace and object-key ordering alone are not pending edits and do not block Publish; array ordering remains significant. Valid but unapplied text is held too, labelled as JSON not applied yet with the Apply/Cancel instruction; it blocks Publish until finished, without marking the JSON syntax invalid. Held text uses `forms/parse-errors.ts` and the existing editor-session store, including badges and problem counts, across tab switches, Advanced collapse, undo/redo remounts and dialog close/reopen. It has the existing window-session lifetime, not new persistence across a page reload. Following a nested issue in a JSON-mode section falls back to its JSON control, selecting its tab and opening its disclosures first.
++Switching back to structured editing is blocked while text is held (invalid JSON, or valid text not applied yet), with a reason and Apply/Cancel available. This keeps two editors from independently changing the same section. Typed text whose value equals the section is not held: whitespace and object-key ordering alone are not pending edits and do not block Publish; array ordering remains significant. Held text that becomes equal to the section only through another change (a node rename's repair, a sibling fix, a remount after undo or redo) stays held exactly as written until Apply, Cancel or further typing settles it. Valid but unapplied text is held too, labelled as JSON not applied yet with the Apply/Cancel instruction; it blocks Publish until finished, without marking the JSON syntax invalid. Held text uses `forms/parse-errors.ts` and the existing editor-session store, including badges and problem counts, across tab switches, Advanced collapse, undo/redo remounts and dialog close/reopen. It has the existing window-session lifetime, not new persistence across a page reload. Following a nested issue in a JSON-mode section falls back to its JSON control, selecting its tab and opening its disclosures first.
+ 
+ Bulk Answer replacement preserves connections strictly by route ID. Reordering rows and swapping surviving IDs leave each connection on its original ID. A vanished ID removes its connections even if a new ID takes its place at the same route count; JSON never retargets a connection to another ID. Before Apply changes anything, the JSON editor lists every connection to be removed by route ID and target node, requiring a separate **Confirm Apply JSON** action. **Keep editing JSON** cancels that review; text changes reset it, and confirmation rechecks the current connections. With no removals, Apply applies at once. To rename a route while keeping its connections, edit its ID in the structured editor. The replacement and any edge removals form one undoable edit scoped to that decision.
+ 
+@@ -949,7 +951,7 @@ The owner's request of 2026-10-04: undo and redo for the editor, with Ctrl+Z and
+ 
+ - **Steps.** Every change of the draft goes through the store's `edit` with a step: a label for the buttons and an optional merge key (`editor/history.ts`). The steps are adding, moving, connecting, renaming, and deleting nodes, removing edges, rerouting an edge and resetting its route (#44), a node's label and config, the loop's name and description, its settings, and its variables. A change that leaves the definition as it was is not an edit: no revision, no save, no step. Changes with the same key less than a second apart (`COALESCE_MS`, counted from the step's latest change) are one step: typing in one field (a node's label; the loop's name; its description; one field of a schema-driven form), a drag (it ends in one move, since xyflow's second report of the same position changes nothing, and its start closes the step before it, so two quick drags are two steps), a run of arrow-key nudges of one node, and a run of arrow-key nudges of one edge's segments. A segment drag is one step like a node drag; **Reset route** is a step of its own; a node move that takes a manual route back to automatic does so inside the move's step. A merged step that ends where it started (typed, then deleted) is dropped. An undo or redo closes the open step, so the next change starts a new one, and a new step clears redo.
+ - **Form changes.** The schema-driven forms (a node's config, the loop's settings, its variables) report each change with the field's path and its kind (`FormChange`, `forms/changes.ts`), decided in the shared form layer: every field binds with `useField(name, kind)`, and an action that makes several writes wraps them in one change (`useFormChange`, the outermost description wins). A **commit** is a discrete choice: a select or picker (model, effort, classifier, a union's variant, the cron preset), a switch, a segmented control, a checkbox, a button that sets a value (Use my time zone, Add or Remove of an optional object, Customize), and adding or removing a collection's rows. Each commit is a step of its own, however soon it follows the last change, and the writes one commit makes (its value and the unparsed text it moves or drops) are that one step. **Typing** (text, number, code, JSON, the cron builder's step and time inputs, a record's key or value) merges per field path: three keystrokes in one field are one step, typing in another field starts another, and typing after a commit starts a new one. So changing Model and then Effort within a second is two steps, and toggling a switch twice is two. A record key's rename merges by its row, since the key itself changes; a record value's typing by the value's path. A change no field describes is a step of its own. The store (`updateNode`, `updateSettings`, `updateVariables`, `setFieldError`) turns a change into the step's merge key: the form and the field's path for typing, the form and the commit's id for a commit.
+-- **Held input.** A step holds `fieldErrors` with the definition, and a form's report of held input (unparsed text, an incomplete schedule or unapplied section JSON) is a change like any other: typed text merges into the step of the typing in that field, and text a commit moves or drops (a row's removal) is part of that commit's step. Refreshing the message or pending/invalid classification of unchanged held text after parent validation adds no history step and preserves redo. Undo therefore takes back text that does not parse together with the typing that produced it, and redo brings it back with its blocking issue. **Discard the unparsed text**, in the field or in an issue's row, is a step of its own that never merges, however soon it follows the typing (the form reports it as a discard, `reason` `'discard'`, not as text that started to parse), so undo always brings the discarded text back; undoing a node's deletion or rename brings back its unparsed text under its id. This keeps the stored text consistent with the definition it was typed against: no undo leaves text behind for a node or path that the restored draft does not have.
++- **Held input.** A step holds `fieldErrors` with the definition, and a form's report of held input (unparsed text, an incomplete schedule or unapplied section JSON) is a change like any other: typed text merges into the step of the typing in that field, and text a commit moves or drops (a row's removal) is part of that commit's step. Refreshing the message or pending/invalid classification of unchanged held text after parent validation adds no history step and preserves redo. Neither validation nor a remount releases held section JSON that has become equal to the section: only the author's typing, Apply, Cancel or discard does. Undo therefore takes back text that does not parse together with the typing that produced it, and redo brings it back with its blocking issue. **Discard the unparsed text**, in the field or in an issue's row, is a step of its own that never merges, however soon it follows the typing (the form reports it as a discard, `reason` `'discard'`, not as text that started to parse), so undo always brings the discarded text back; undoing a node's deletion or rename brings back its unparsed text under its id. This keeps the stored text consistent with the definition it was typed against: no undo leaves text behind for a node or path that the restored draft does not have.
+ - **Not steps.** Selection, the open node editor, the loop panel's state, and save state. The history holds at most 100 steps (`HISTORY_LIMIT`, the oldest forgotten first), lives in memory only, and starts afresh on every load: opening the editor, **Reload server draft**, and restoring a set-aside device copy.
+ - **Undo and redo are edits.** They bump the revision (unless only unparsed text changed) and set the save state to pending, so autosave, the IndexedDB mirror, `If-Match`, and the conflict stop apply as to any edit; `useAutosave.ts` is unchanged. Undoing a rename keeps the node selected and its editor open, now on the old id. A node that an undo removes is deselected and its editor closes (focus returns to the canvas); redo brings the node back without reopening its editor.
+ - **Forms.** `historyEpoch`, bumped by every undo and redo, is part of the keys of the node editor's config form and of the loop panel's forms, so they remount with the restored values; the node editor's id draft resets with it. The node editor keeps its config form's disclosures (Advanced, collapsible list items) open or collapsed across the remount (see "Basic and advanced fields"). A node's label and the loop's name and description are controlled inputs and follow at once.
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index 806eb6c0..801f39bf 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -408,9 +408,9 @@ Save and import this complete deterministic example as `bounded-repeat.json`, th
+ }
+ ```
+ 
+-Changing a node ID updates its connections and the references GraphGoblin can read, in one undoable edit. These include `outputs."old-id".value`, `gates."old-id".passes` and `counters.nodeVisits."old-id"` in JSONata and Liquid, and mutation paths such as `/outputs/old-id/value`. A notice titled **Renamed old-id to new-id** says how many references and connections changed. It lists any place where the old ID may remain: a computed key such as `$lookup(outputs, vars.name)`, an output key that a mutation may write, or a script or generated patch. Choose a listed place to open that field and check it yourself. Plain text in prompts, JSON values and scripts are never changed. **Undo** reverses the whole rename.
++Changing a node ID updates its connections and the references GraphGoblin can read, in one undoable edit. In JSONata these include `outputs."old-id".value`, `gates."old-id".passes` and `counters.nodeVisits."old-id"`. In Liquid they are written with brackets: `{{ outputs["old-id"].value }}`, `gates["old-id"].passes` and `counters.nodeVisits["old-id"]`. Mutation paths such as `/outputs/old-id/value` are updated too. A notice titled **Renamed old-id to new-id** says how many references and connections changed. It lists any place where the old ID may remain: a computed key such as `$lookup(outputs, vars.name)`, an output key that a mutation may write, or a script or generated patch. Choose a listed field to open it and check it yourself. A field opens only while its node is as the rename left it. After you edit that node (removing an earlier operation, say), its places stay listed where they were but no longer open, so check that node in its editor. Places in loop settings, scripts and generated patches never open a field. Plain text in prompts, JSON values and scripts are never changed. JSON you typed under **Edit as JSON** but did not apply keeps its text; **Apply JSON** writes it as typed. **Undo** reverses the whole rename.
+ 
+-Badges also flag references that no longer match a node. A missing gate or visit count is an error and blocks publishing. An `$exists` check or `{% if %}` test of a missing node, an output key whose origin is unknown and a computed key are warnings.
++Badges also flag references that no longer match a node. A missing gate or visit count is an error and blocks publishing. A direct presence check of that one reference is a warning instead: `$exists(gates."old-id")` in JSONata, or `{% if gates["old-id"] %}` in Liquid with nothing else in the condition. Inside a longer condition, a comparison or a filter, the reference counts as an ordinary read. An output key whose origin is unknown and a computed key are warnings.
+ 
+ To find a reference, expand **Earlier node outputs (N)** under a template or expression field in the node dialog. It lists the nodes that can run before this one, nearest first, each with its reference in that field's syntax, a **Copy** button and a note on what it outputs. For example, a script's default output is its stdout itself, parsed as JSON when possible: `42`, not `{stdout: 42}`. IDs with a hyphen are quoted for you: `{{ outputs["old-id"].value }}` in Liquid and `outputs."old-id".value` in JSONata.
+ 

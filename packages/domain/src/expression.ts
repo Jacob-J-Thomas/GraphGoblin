@@ -217,3 +217,8 @@ export function checkExpression(expression: string): string | null {
     return error instanceof Error ? error.message : String(error);
   }
 }
+
+/** The same parsed and safety-checked syntax used for evaluation. Inspect without modifying it. */
+export function expressionAst(source: string): unknown {
+  return compile(source).ast();
+}

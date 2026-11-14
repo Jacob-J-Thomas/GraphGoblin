@@ -1,0 +1,67 @@
+// TEMPORARY diagnostic for #273 phase 2 (deleted after use): where does focus land after choosing
+// a rename notice row on the page?
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import type { Page } from '@playwright/test';
+import { expect, openNode, test, uniqueLoopName } from './fixtures.js';
+
+async function active(page: Page) {
+  return page.evaluate(() => {
+    const el = document.activeElement as HTMLElement | null;
+    if (!el) return 'none';
+    const field = el.closest('[data-field]')?.getAttribute('data-field');
+    return `${el.tagName}#${el.id}.${String(el.className).slice(0, 40)} label=${el.getAttribute('aria-label') ?? ''} field=${field ?? ''} text=${(el.textContent ?? '').slice(0, 40)}`;
+  });
+}
+
+for (const how of ['click', 'enter', 'badge'] as const) {
+  test(`diag focus after page row ${how}`, async ({ page, request }) => {
+    const name = uniqueLoopName('Diag rename focus');
+    const created = await request.post('/loops', {
+      data: {
+        definition: {
+          schemaVersion: CURRENT_DEFINITION_FORMAT,
+          name,
+          variables: { key: { type: 'string' } },
+          nodes: [
+            { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' }, ui: { x: 0, y: 80 } },
+            { id: 'work', kind: 'wait', label: 'Work', config: { mode: 'input', prompt: 'Go?' }, ui: { x: 260, y: 80 } },
+            { id: 'done', kind: 'exit', label: 'Done', config: { returns: '$lookup(outputs, vars.key)' }, ui: { x: 520, y: 80 } },
+          ],
+          edges: [
+            { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'work', port: 'in' } },
+            { id: 'e2', from: { node: 'work', port: 'out' }, to: { node: 'done', port: 'in' } },
+          ],
+        },
+      },
+    });
+    expect(created.status()).toBe(201);
+    const loopId = ((await created.json()) as { loop: { id: string } }).loop.id;
+    await page.goto(`/app/loops/${loopId}/edit`);
+    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+    const log: string[] = [];
+    if (how === 'badge') {
+      const badge = page.locator('.react-flow__node[data-id="done"]').getByRole('button', { name: /issues? on done/ });
+      await badge.focus();
+      await page.keyboard.press('ArrowDown');
+      log.push('after ArrowDown: ' + (await active(page)));
+      await page.keyboard.press('Enter');
+    } else {
+      const dialog = await openNode(page, 'work');
+      await dialog.getByLabel('Node id').fill('task');
+      await dialog.getByLabel('Node id').press('Enter');
+      await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      const row = page.getByRole('status').filter({ hasText: 'Renamed work to task' }).getByRole('button', { name: /node done config\.returns/ });
+      if (how === 'click') await row.click();
+      else {
+        await row.focus();
+        await page.keyboard.press('Enter');
+      }
+    }
+    for (const delay of [0, 50, 200, 1000]) {
+      await page.waitForTimeout(delay);
+      log.push(`+${delay}ms: ` + (await active(page)));
+    }
+    console.log(`DIAG ${how}\n` + log.join('\n'));
+  });
+}

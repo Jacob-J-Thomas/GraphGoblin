@@ -1,0 +1,210 @@
+{
+  "task": "Issue #273 node-reference held-input fixture correction evidence",
+  "provenance": {
+    "baseline": "bd88ff09069338c0db2d0d64a1e8b291c9eb6602",
+    "implementationCommit": "bd31d679a8f00693120e212d88efed737962d044",
+    "implementationParent": "bd88ff09069338c0db2d0d64a1e8b291c9eb6602",
+    "laterEvidenceMerge": "700ce251bc4c3b7ad29e072d0764ad9a5ca9174e (209 test/evidence only; no runtime change)",
+    "implementer": "Claude Sonnet 5.5, claude-sonnet-5-5",
+    "requestedEffort": "xhigh",
+    "effectiveEffort": "not independently observable",
+    "evidenceRole": "bounded fixture correction, not formal review or independent QA"
+  },
+  "spec": {
+    "repoPath": "apps/web/e2e/rename-references.spec.ts",
+    "originalSha256": "64c88f07777d5ea02459ded4f1b46c4acab4ee35e4589af31fbe70c09d1678e2",
+    "correctedSha256": "a547686e80d265343134ef03922b50ea69175ff2c34823c794f7184610d56c47",
+    "minimalDiffSha256": "6472e59be3c5b0e29e8a9ae6875c927158865ef66b457867f09fff8c61d26340",
+    "originalHandoffSha256": "57240235eaee1260a41f773a2dff67ee0a841fe873aa76469862bd2b5c6eec54",
+    "singleOldHelperCallReplaced": true,
+    "finalOriginalValueAssertionKept": true
+  },
+  "checks": [
+    {
+      "path": "checks/03-e2e-held-input.log",
+      "bytes": 537,
+      "sha256": "d2c5ed047bf67df317db688836e894d46dd0d2d7ae57ca0a103a0cd267418269"
+    },
+    {
+      "path": "checks/03-e2e-held-input.spec.sha256",
+      "bytes": 96,
+      "sha256": "eb90cd9eeccda81e2f55c8123af49039ed72e0a3842f58c0dd27559db8e1523d"
+    },
+    {
+      "path": "checks/04-e2e-rename-all.log",
+      "bytes": 1121,
+      "sha256": "3ed27d1cbb0e1d3c1a144a7b6358a4e702d997e72be0fbf62720ee306c42e194"
+    },
+    {
+      "path": "checks/04-e2e-rename-all.spec.sha256",
+      "bytes": 96,
+      "sha256": "eb90cd9eeccda81e2f55c8123af49039ed72e0a3842f58c0dd27559db8e1523d"
+    },
+    {
+      "path": "checks/05-web-typecheck-final.log",
+      "bytes": 124,
+      "sha256": "098595fd60407a704ca3c24b73783c2c59029ee00084c04d4dcf89bb2194854c"
+    },
+    {
+      "path": "checks/05-checks-final.spec.sha256",
+      "bytes": 105,
+      "sha256": "352157b74811e771ad53527ef0846b7341fd9bc68a25591d98d3d255fb387903"
+    },
+    {
+      "path": "checks/06-format-check-final.log",
+      "bytes": 162,
+      "sha256": "ff30d4c6c352eb054a442bb40c63d118f1187ce3ba318b691fc657da6c100b3c"
+    },
+    {
+      "path": "checks/07-lint-final.log",
+      "bytes": 109,
+      "sha256": "3df51025e716df527ae40c9d7cf2cd9ceff87b557e7aaf7eba262ab0fc1325b1"
+    }
+  ],
+  "browserTier": {
+    "focusedHeldInput": "1 passed",
+    "fullRenameReferencesFile": "5 passed",
+    "typecheck": "passed",
+    "prettier": "passed",
+    "eslint": "passed",
+    "browser": "Playwright-managed Edge on Windows",
+    "frontend": "existing phase-2 built apps/web/dist",
+    "apiAndPackages": "TypeScript source via development condition",
+    "storage": "in-memory fake-harness DB",
+    "nativeProviderCalls": 0,
+    "builtApiOrFileSqliteClaim": false
+  },
+  "requestSequence": {
+    "sanitizedArtifact": "request-sequence-comparison.json",
+    "sha256": "74fec3afb67c2d3b29dc950cad290297c37c6f2ae7951f45e26464b7aa56e73f",
+    "baselineSource": "batch/node-273-held-variable-trace-readback.json",
+    "baselineSourceSha256": "c685bcfdd975fa122bc91083994b3e11fe6aa38d150e68913d57afa5158acb1b",
+    "correctedSource": "batch/ui-273-held-fixture-correction/held-variable-trace-readback-pass.json",
+    "correctedSourceSha256": "64bcd94789df0466b318e486472c3281ace6366f03799fceb0fbd10be7559e41",
+    "originalPutCount": 3,
+    "originalEmptyVariablesPuts": 3,
+    "correctedPutCount": 2,
+    "correctedEmptyVariablesPuts": 0,
+    "firstCorrectedPutIsRename": true
+  },
+  "buildListings": [
+    {
+      "tree": "apps/web/dist",
+      "fileCount": 28,
+      "before": "build-listings/apps_web_dist-before.txt",
+      "after": "build-listings/apps_web_dist-after.txt",
+      "listingSha256": "b732610b34d9b02812a876b46d50478e6486e9164e8300d94979fc3cbf54df30",
+      "identicalBeforeAfter": true,
+      "matchesPhase2": true
+    },
+    {
+      "tree": "apps/web/dist-goblin",
+      "fileCount": 28,
+      "before": "build-listings/apps_web_dist-goblin-before.txt",
+      "after": "build-listings/apps_web_dist-goblin-after.txt",
+      "listingSha256": "ed652d122095f20695827ff95e62cb32d31fd6fdb89a4037c22ade4b0b060081",
+      "identicalBeforeAfter": true,
+      "matchesPhase2": true
+    },
+    {
+      "tree": "apps/api/dist",
+      "fileCount": 306,
+      "before": "build-listings/apps_api_dist-before.txt",
+      "after": "build-listings/apps_api_dist-after.txt",
+      "listingSha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "identicalBeforeAfter": true,
+      "matchesPhase2": true
+    },
+    {
+      "tree": "packages/contracts/dist",
+      "fileCount": 117,
+      "before": "build-listings/packages_contracts_dist-before.txt",
+      "after": "build-listings/packages_contracts_dist-after.txt",
+      "listingSha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "identicalBeforeAfter": true,
+      "matchesPhase2": true
+    },
+    {
+      "tree": "packages/domain/dist",
+      "fileCount": 121,
+      "before": "build-listings/packages_domain_dist-before.txt",
+      "after": "build-listings/packages_domain_dist-after.txt",
+      "listingSha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "identicalBeforeAfter": true,
+      "matchesPhase2": true
+    },
+    {
+      "tree": "packages/engine/dist",
+      "fileCount": 161,
+      "before": "build-listings/packages_engine_dist-before.txt",
+      "after": "build-listings/packages_engine_dist-after.txt",
+      "listingSha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "identicalBeforeAfter": true,
+      "matchesPhase2": true
+    },
+    {
+      "tree": "packages/infrastructure/dist",
+      "fileCount": 293,
+      "before": "build-listings/packages_infrastructure_dist-before.txt",
+      "after": "build-listings/packages_infrastructure_dist-after.txt",
+      "listingSha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "identicalBeforeAfter": true,
+      "matchesPhase2": true
+    }
+  ],
+  "identityArtifacts": [
+    {
+      "path": "identity/identity-before.txt",
+      "bytes": 209,
+      "sha256": "8e974794e6bcbbc2f64c8af3a8a8b21cb41179b8fcd38aaeff9921f72e70405d"
+    },
+    {
+      "path": "identity/identity-after.txt",
+      "bytes": 250,
+      "sha256": "854bd4ff46bede2b82d96c9a335e9c835fd51cfd554122d8b893fd05c05f6e01"
+    },
+    {
+      "path": "identity/source-sha256-before.txt",
+      "bytes": 425,
+      "sha256": "835f5c2b5ca2d25c95a9eb1cf5a4e48fc44ca1814c0219c334a64343a6a8772b"
+    },
+    {
+      "path": "identity/source-sha256-after.txt",
+      "bytes": 425,
+      "sha256": "b95f96fafa647ebd45bd8b0c2964987c1f1e99f67d5b81a8b23429108aad9332"
+    }
+  ],
+  "priorPhase2": {
+    "wholeWebPassed": 2500,
+    "notRerun": true,
+    "unitRuntimeBytesSame": true
+  },
+  "independentNativeQa": {
+    "status": "completed separately",
+    "commit": "700ce251bc4c3b7ad29e072d0764ad9a5ca9174e",
+    "report": "../2026-11-14-node-reference-independent-native/README.md",
+    "scenarios": 5,
+    "attemptScope": "across retained attempts",
+    "sameEvidenceRerun": false
+  },
+  "notRun": [
+    "unit suite",
+    "whole-web coverage",
+    "full pnpm check",
+    "new build",
+    "native QA",
+    "provider calls"
+  ],
+  "protectedRaw": {
+    "rulePath": ".gitattributes",
+    "hash": "5e86be09389436ea62b3290cbc709f0badbed9d742a6ad46c4605b4d459be1bc",
+    "readbackSourceNotCopied": true
+  },
+  "readmeFormat": {
+    "command": "pnpm.cmd exec prettier --config .prettierrc --write/check README.md only",
+    "node": "v22.23.4",
+    "result": "pass",
+    "log": "checks/README-prettier.log",
+    "logSha256": "edc699263ef2f7e014aef69cb49a0d361dab1a5bf4e1217f16605de2255a09e9"
+  }
+}

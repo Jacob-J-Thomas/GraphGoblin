@@ -1,0 +1,133 @@
+{
+  "expected": "207b3e53067ebded36c8ec4e28dc47de46e1631f",
+  "parent": "a770ca57e642998f71b1d113031e69c7080fc324",
+  "headAfter": "207b3e53067ebded36c8ec4e28dc47de46e1631f",
+  "scopeAfter": "",
+  "runtime": "v22.23.4",
+  "platform": "win32",
+  "arch": "x64",
+  "sourceCondition": [
+    "--conditions=development",
+    "--import",
+    "file:///C:/Users/98jak/.codex/worktrees/gg-20261114-node-references/GraphGoblin/apps/api/node_modules/tsx/dist/loader.mjs"
+  ],
+  "hashes": {
+    "apps/api/src/index.ts": "d53efe075cc6e90242002c09385b220a48e93b9c49f9986d16388024eb4e078b",
+    "apps/api/src/routes/loops.ts": "03ba4d011ed8ad339ad13433bc1a2f0959527384abdfb60af61140aff128bea5",
+    "apps/api/src/testing/test-app.ts": "5247bc452869886ca7af1ac7530e1ea6a8e34acfeba6c2c2627ced41bbc26996",
+    "apps/api/templates/starter/draft.json": "700cdbc08bdf2c335135cf4a01324f76b6f2b3845476760b8b49c64e1076aac9",
+    "packages/domain/package.json": "3eda82e6b6855b3057309bc6685fd4907c891f7d8d9cd96464c3bfb2cf28c68c",
+    "packages/domain/src/index.ts": "4df280d5f7e2def5b80564a598ebcc73edd6d250b3e0019aea1abf253f9832ea",
+    "packages/domain/src/graph.ts": "eafd4882dcf70c1ba24c896721529ec333a106601365c66ba3b23aedaf53ff1d",
+    "packages/domain/src/node-references.ts": "a1e73c0a981f892978dd1c659999b259811770dc85c050447f9584ebc48c13b4",
+    "packages/domain/src/expression-references.ts": "539205abaa685907c80613e9a89e7b4581d5b41fa9c1e94638925acadffaa3ae",
+    "packages/domain/src/template-references.ts": "7da0affea7df6a3fe6ca941ed1ee48b4abb5f272d8cb81e7f51135263f0c8a21",
+    "packages/domain/src/node-reference-path.ts": "4fde9d42f276cf6641135994088072a7c58a1e78f24f4d0d7334fd1e6802117e",
+    "packages/domain/src/syntax.ts": "332aa24184d2dedcd2eeedc7b9caa74fa09f7e6b67bf34b2d18794eb145f2910",
+    "packages/domain/src/source-analysis.ts": "f05b040e57db22a3a0d92d3c046606711f3758914b88eca4ed6a8375584fc072",
+    "packages/contracts/src/loop.ts": "bfe785031dc7bf5624b83cd170296a38f49662597d63ba447975e438879d0f82",
+    "pnpm-lock.yaml": "713574609496f2fa41d3527e3cda70984d5ea03ee2873b55d0aa9791f7baaeff"
+  },
+  "fixture": {
+    "appListened": false,
+    "appClosed": true,
+    "externalNetwork": false,
+    "pid": 46656
+  },
+  "outcomes": [
+    {
+      "case": "structural, typed, JSONata and Liquid",
+      "repairs": 6,
+      "evaluated": {
+        "keep-me": "outputs.start",
+        "proof": "carry",
+        "visits": 3
+      },
+      "rendered": "start: {{ outputs.start }} → CARRY"
+    },
+    {
+      "case": "dynamic, custom and opaque source",
+      "expression": "[$lookup(outputs, vars.pick).value, outputs.start.value, counters.nodeVisits.\"move-local\", \"start\"]",
+      "warnings": [
+        {
+          "nodeId": "done",
+          "path": "config.returns",
+          "severity": "warning",
+          "code": "NODE_REFERENCE_UNCERTAIN",
+          "message": "This field may depend on a dynamic, inherited, or authored node ID. Review it after renaming."
+        },
+        {
+          "nodeId": "foreign",
+          "path": "config.operations.0.path",
+          "severity": "warning",
+          "code": "NODE_REFERENCE_UNCERTAIN",
+          "message": "This field may depend on a dynamic, inherited, or authored node ID. Review it after renaming."
+        },
+        {
+          "severity": "warning",
+          "code": "NODE_REFERENCE_UNCERTAIN",
+          "message": "Check scripts and generated patches for references to the old ID."
+        }
+      ]
+    },
+    {
+      "case": "refused rename leaves original definition intact",
+      "variants": [
+        "unchanged",
+        "missing-node",
+        "invalid-id",
+        "duplicate-id",
+        "ambiguous-node"
+      ]
+    },
+    {
+      "case": "definite missing reads and explicit presence warnings",
+      "absentIssues": [
+        {
+          "path": "settings.workingDirectory.template",
+          "severity": "warning",
+          "code": "NODE_REFERENCE_OPTIONAL_MISSING",
+          "message": "No decision gate defines gates.ghost."
+        },
+        {
+          "nodeId": "done",
+          "path": "config.returns",
+          "severity": "warning",
+          "code": "NODE_REFERENCE_OPTIONAL_MISSING",
+          "message": "No node defines counters.nodeVisits.ghost."
+        }
+      ],
+      "hardIssues": [
+        {
+          "nodeId": "done",
+          "path": "config.returns",
+          "severity": "error",
+          "code": "NODE_REFERENCE_MISSING",
+          "message": "No node defines counters.nodeVisits.ghost."
+        },
+        {
+          "nodeId": "done",
+          "path": "config.returns",
+          "severity": "error",
+          "code": "NODE_REFERENCE_MISSING",
+          "message": "No decision gate defines gates.required."
+        }
+      ],
+      "inheritedIssues": [
+        {
+          "nodeId": "done",
+          "path": "config.returns",
+          "severity": "warning",
+          "code": "NODE_REFERENCE_OUTPUT_UNVERIFIED",
+          "message": "The origin of outputs.outerNode is unverified. It may be inherited or supplied by an authored patch."
+        }
+      ]
+    }
+  ],
+  "wire": [],
+  "failure": {
+    "scenario": "same source across gate, visit, and producer membership",
+    "message": "[\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_small\",\n    \"minimum\": 2,\n    \"inclusive\": true,\n    \"path\": [\n      \"nodes\",\n      1,\n      \"config\",\n      \"routes\"\n    ],\n    \"message\": \"Too small: expected array to have >=2 items\"\n  },\n  {\n    \"code\": \"custom\",\n    \"path\": [\n      \"nodes\",\n      1,\n      \"config\",\n      \"maxPasses\"\n    ],\n    \"message\": \"gate limits require a repeat route\"\n  }\n]",
+    "stack": "ZodError: [\n  {\n    \"origin\": \"array\",\n    \"code\": \"too_small\",\n    \"minimum\": 2,\n    \"inclusive\": true,\n    \"path\": [\n      \"nodes\",\n      1,\n      \"config\",\n      \"routes\"\n    ],\n    \"message\": \"Too small: expected array to have >=2 items\"\n  },\n  {\n    \"code\": \"custom\",\n    \"path\": [\n      \"nodes\",\n      1,\n      \"config\",\n      \"maxPasses\"\n    ],\n    \"message\": \"gate limits require a repeat route\"\n  }\n]\n    at diagnostics (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\node-273-independent-backend\\head-207b3e53\\verify-273-backend.mjs:48:83)\n    at <anonymous> (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\node-273-independent-backend\\head-207b3e53\\verify-273-backend.mjs:189:20)"
+  }
+}

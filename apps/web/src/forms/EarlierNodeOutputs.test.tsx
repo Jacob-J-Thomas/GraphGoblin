@@ -367,7 +367,9 @@ describe('field rendering and clipboard', () => {
     );
     await user.click(within(dialog).getByRole('button', { name: 'Earlier node outputs (1)' }));
     expect(within(dialog).getByText('{{ outputs.a.value }}')).toBeVisible();
-    act(() => useEditorStore.getState().renameNode('a', 'renamed-id'));
+    act(() => {
+      useEditorStore.getState().renameNode('a', 'renamed-id');
+    });
     expect(within(dialog).getByText('{{ outputs["renamed-id"].value }}')).toBeVisible();
     act(() => useEditorStore.getState().removeEdge('e0'));
     expect(within(dialog).queryByText(/Earlier node outputs/)).not.toBeInTheDocument();

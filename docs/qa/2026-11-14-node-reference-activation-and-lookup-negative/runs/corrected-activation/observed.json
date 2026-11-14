@@ -1,0 +1,801 @@
+{
+  "origin": "http://127.0.0.1:62845",
+  "suite": "273-pointer-activation-independent",
+  "phase": "corrected",
+  "scenario": "activation",
+  "rowCommit": "pointer",
+  "bundles": [
+    200
+  ],
+  "outcome": null,
+  "writes": [
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Form activation add steady b491ba8",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Self pointer repair",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/work",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Ordinary removable row versus repaired Coerce row"
+                  },
+                  {
+                    "op": "set",
+                    "path": "",
+                    "value": {
+                      "kind": "literal",
+                      "value": null
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"42e9d28caef11fbb\"",
+      "at": 1794689871978
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "add steady",
+      "name": "add",
+      "strategy": "steady",
+      "point": {
+        "x": 123.6484375,
+        "y": 546.671875,
+        "hittable": true,
+        "label": "Add operations"
+      },
+      "connectedAfterDown": true,
+      "activated": true,
+      "ui": {
+        "name": "_r_t_",
+        "rows": [
+          {
+            "id": "0",
+            "path": "operations.0",
+            "open": "false"
+          },
+          {
+            "id": "1",
+            "path": "operations.1",
+            "open": "false"
+          },
+          {
+            "id": "2",
+            "path": "operations.2",
+            "open": "true"
+          }
+        ],
+        "focused": {
+          "field": "operations.2",
+          "row": "operations.2",
+          "id": "2",
+          "label": null,
+          "type": "SELECT",
+          "value": null,
+          "text": null,
+          "isToggle": false,
+          "displayed": true
+        }
+      },
+      "events": [
+        {
+          "type": "pointerdown",
+          "tag": "SPAN",
+          "role": null,
+          "aria": null,
+          "text": "Add operations",
+          "id": null,
+          "trusted": true
+        },
+        {
+          "type": "mousedown",
+          "tag": "SPAN",
+          "role": null,
+          "aria": null,
+          "text": "Add operations",
+          "id": null,
+          "trusted": true
+        },
+        {
+          "type": "focusout",
+          "tag": "INPUT",
+          "role": null,
+          "aria": null,
+          "text": null,
+          "id": "node-id",
+          "trusted": true
+        },
+        {
+          "type": "focusin",
+          "tag": "BUTTON",
+          "role": null,
+          "aria": null,
+          "text": "Add operations",
+          "id": null,
+          "trusted": true
+        },
+        {
+          "type": "pointerup",
+          "tag": "SPAN",
+          "role": null,
+          "aria": null,
+          "text": "Add operations",
+          "id": null,
+          "trusted": true
+        },
+        {
+          "type": "mouseup",
+          "tag": "SPAN",
+          "role": null,
+          "aria": null,
+          "text": "Add operations",
+          "id": null,
+          "trusted": true
+        },
+        {
+          "type": "click",
+          "tag": "SPAN",
+          "role": null,
+          "aria": null,
+          "text": "Add operations",
+          "id": null,
+          "trusted": true
+        },
+        {
+          "type": "focusout",
+          "tag": "BUTTON",
+          "role": null,
+          "aria": null,
+          "text": "Add operations",
+          "id": null,
+          "trusted": true
+        },
+        {
+          "type": "focusin",
+          "tag": "SELECT",
+          "role": null,
+          "aria": null,
+          "text": null,
+          "id": "_r_20_",
+          "trusted": true
+        }
+      ],
+      "sent": [
+        {
+          "body": {
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Form activation add steady b491ba8",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "visits": {
+                  "type": "integer"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 120
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "work",
+                  "label": "Self pointer repair",
+                  "ui": {
+                    "x": 310,
+                    "y": 120
+                  },
+                  "kind": "mutate",
+                  "config": {
+                    "operations": [
+                      {
+                        "op": "coerce",
+                        "source": "/counters/nodeVisits/work",
+                        "jsonSchema": {
+                          "type": "integer"
+                        },
+                        "repair": {
+                          "enabled": false,
+                          "maxAttempts": 1,
+                          "onFailure": "fail-run"
+                        },
+                        "target": "/vars/visits"
+                      },
+                      {
+                        "op": "append-message",
+                        "role": "note",
+                        "content": "Ordinary removable row versus repaired Coerce row"
+                      },
+                      {
+                        "op": "set",
+                        "path": "",
+                        "value": {
+                          "kind": "literal",
+                          "value": null
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "end",
+                  "label": "End",
+                  "ui": {
+                    "x": 600,
+                    "y": 120
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "entry",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "work",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "out",
+                  "from": {
+                    "node": "work",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "end",
+                    "port": "in"
+                  }
+                }
+              ]
+            }
+          },
+          "ifMatch": "\"42e9d28caef11fbb\"",
+          "at": 1794689871978
+        }
+      ],
+      "before": {
+        "loop": {
+          "id": "01M7DXMARJCRB8HA2QT454FXN1",
+          "ownerId": "local",
+          "name": "Form activation add steady b491ba8",
+          "draftVersionId": "01M7DXMARJCRB8HA2QT454FXN2",
+          "createdAt": "2026-11-14T20:57:50.610Z",
+          "updatedAt": "2026-11-14T20:57:50.610Z"
+        },
+        "draft": {
+          "id": "01M7DXMARJCRB8HA2QT454FXN2",
+          "loopId": "01M7DXMARJCRB8HA2QT454FXN1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Form activation add steady b491ba8",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "visits": {
+                "type": "integer"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Self pointer repair",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "coerce",
+                      "source": "/counters/nodeVisits/work",
+                      "jsonSchema": {
+                        "type": "integer"
+                      },
+                      "repair": {
+                        "enabled": false,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      },
+                      "target": "/vars/visits"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Ordinary removable row versus repaired Coerce row"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:57:50.610Z"
+        },
+        "draftToken": "42e9d28caef11fbb"
+      },
+      "durable": {
+        "loop": {
+          "id": "01M7DXMARJCRB8HA2QT454FXN1",
+          "ownerId": "local",
+          "name": "Form activation add steady b491ba8",
+          "draftVersionId": "01M7DXMARJCRB8HA2QT454FXN2",
+          "createdAt": "2026-11-14T20:57:50.610Z",
+          "updatedAt": "2026-11-14T20:57:51.980Z"
+        },
+        "draft": {
+          "id": "01M7DXMARJCRB8HA2QT454FXN2",
+          "loopId": "01M7DXMARJCRB8HA2QT454FXN1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Form activation add steady b491ba8",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "visits": {
+                "type": "integer"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Self pointer repair",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "coerce",
+                      "source": "/counters/nodeVisits/work",
+                      "jsonSchema": {
+                        "type": "integer"
+                      },
+                      "repair": {
+                        "enabled": false,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      },
+                      "target": "/vars/visits"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Ordinary removable row versus repaired Coerce row"
+                    },
+                    {
+                      "op": "set",
+                      "path": "",
+                      "value": {
+                        "kind": "literal",
+                        "value": null
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:57:50.610Z"
+        },
+        "draftToken": "bf64382f182aa4ed"
+      },
+      "local": {
+        "loopId": "01M7DXMARJCRB8HA2QT454FXN1",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Form activation add steady b491ba8",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Self pointer repair",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/work",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Ordinary removable row versus repaired Coerce row"
+                  },
+                  {
+                    "op": "set",
+                    "path": "",
+                    "value": {
+                      "kind": "literal",
+                      "value": null
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:57:51.998Z",
+        "synced": true,
+        "baseToken": "bf64382f182aa4ed"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": {
+    "active": "add steady",
+    "message": "Error: Blank required path on new default operation is held on the device\nExpected false\nObserved true",
+    "stack": "Error: Blank required path on new default operation is held on the device\nExpected false\nObserved true\n    at check (evalmachine.<anonymous>:14:52)\n    at same (evalmachine.<anonymous>:15:31)\n    at activation (evalmachine.<anonymous>:249:11)\n    at async evalmachine.<anonymous>:277:13\n    at async evalmachine.<anonymous>:3:20\n    at async C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70181:13\n    at async waitForCompletion (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:66323:15)\n    at async _Tab._raceAgainstModalStates (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:67487:18)\n    at async _Tab.waitForCompletion (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:67494:9)\n    at async Object.handle (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70177:11)"
+  }
+}

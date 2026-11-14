@@ -379,6 +379,63 @@ describe('section JSON mode', () => {
     expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
   });
 
+  it('keeps held text that later validation finds equal to the section until the author settles it', async () => {
+    const schema = z
+      .object({
+        enabled: z.boolean(),
+        section: z.array(z.number()).meta({ jsonEditor: true }),
+      })
+      .superRefine((config, ctx) => {
+        if (!config.enabled && config.section.length)
+          ctx.addIssue({
+            code: 'custom',
+            path: ['enabled'],
+            message: 'Enable this collection first',
+          });
+      });
+    const spy = vi.fn();
+    const report = vi.fn();
+    render(
+      <Harness
+        schema={schema}
+        initial={{ enabled: false, section: [1] }}
+        spy={spy}
+        report={report}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    // The applied value, spaced by the author, is held while a parent rule refuses it.
+    const text = '[ 1 ]';
+    setCode('Section JSON', text);
+    expect(
+      screen.getByText('section (config.enabled): Enable this collection first'),
+    ).toBeInTheDocument();
+    report.mockClear();
+
+    // Fixing the sibling makes the held text valid and equal to the section. It stays held as typed.
+    await user.click(screen.getByRole('switch', { name: 'Enabled' }));
+    expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
+    expect(getCode('Section JSON')).toBe(text);
+    expect(screen.getByText(/Choose Apply JSON/)).toBeInTheDocument();
+    expect(report).toHaveBeenLastCalledWith('section', {
+      message: 'Choose Apply JSON or Cancel JSON to finish this edit.',
+      text,
+      input: 'unapplied JSON',
+    });
+    expect(report).not.toHaveBeenCalledWith('section', undefined);
+    await user.click(screen.getByRole('button', { name: 'Use structured editor for Section' }));
+    expect(screen.getByText(/before switching editors/)).toBeVisible();
+
+    // Typing it back to the section's value is the author's own resolution: nothing stays held.
+    setCode('Section JSON', '[1]');
+    expect(report).toHaveBeenLastCalledWith('section', undefined);
+    expect(screen.queryByText(/Choose Apply JSON/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Use structured editor for Section' }));
+    expect(screen.queryByLabelText('Section JSON')).not.toBeInTheDocument();
+    expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
+  });
+
   it('validates nested array replacements and root refinements without changing the live candidate', async () => {
     const schema = z
       .object({

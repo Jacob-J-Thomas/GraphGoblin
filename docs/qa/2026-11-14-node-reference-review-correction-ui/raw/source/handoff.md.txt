@@ -1,0 +1,121 @@
+# PR 474 UI correction U1/U2/U3: implementer handoff
+
+Claude Opus 5.5 (xhigh), implementation worker. This is an implementer handoff. It is not a formal review, independent QA or owner acceptance.
+
+## Identity and scope
+
+| Item | Value |
+| --- | --- |
+| Checkout | `C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin` |
+| HEAD (unchanged, no commits) | `ae8add8a791699e905540465b5ddf929d00c50eb`, tree `ea2dfcfd46f7d5ab79fd98414db214513d830b52` |
+| Target | `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c` |
+| Accepted findings | `review-273/ui-sol/report.md`, SHA-256 `0f3cf97035fb1be74fe8ab176d7bd3cc05e54ae21a00604b511135ae67242fd0` (verified) |
+| Runtime | Node v22.23.4 (project runtime on PATH), pnpm 12.8.1 |
+
+Files I changed (working tree only; no index, commit, push or GitHub action):
+
+- Source: `apps/web/src/editor/NodeEditorDialog.tsx`, `apps/web/src/editor/RenameNotice.tsx`, `apps/web/src/editor/store.ts`, `apps/web/src/forms/disclosures.ts`, `apps/web/src/forms/fields/json.tsx`
+- Tests: `apps/web/src/editor/EditorPage.rename.test.tsx`, `apps/web/src/forms/json-sections.test.tsx`, new `apps/web/src/editor/RenameNotice.test.tsx`, new `apps/web/src/forms/disclosures.test.ts`
+- Docs: `docs/09-frontend-and-pwa.md`, `docs/guide/02-build-a-loop.md`, `CHANGELOG.md`
+
+Foreign concurrent work, which I preserved and did not read for correctness or edit, appeared during the session: `docs/03-domain-model.md`, `packages/domain/src/expression-references.ts`, `packages/domain/src/node-references.ts`, `packages/domain/src/node-references.test.ts`. The checkout was clean when I started (`git status --short` empty). The web typecheck and component tests resolve `@graphgoblin/domain` through its development source. They therefore ran against that in-progress domain source as it was at each run. I make no whole-checkout cleanliness claim.
+
+## Exact diffs
+
+| File | SHA-256 |
+| --- | --- |
+| `source.diff` (5 product files) | `a1425cc39bbbeedd8116c15caa85fbde8a6be1ec2ae4d50ad6dbbcb7249a7381` |
+| `tests.diff` (2 modified, 2 new test files) | `36bb82b5e540a5cfc38fcf97e136e62171aa3559a68d519b6c98938e1f4dd985` |
+| `docs.diff` (09, guide, CHANGELOG) | `28b7c7423d14a48008e6d687cde4ecb2a64d2e9e8c857c526fae3fb99485bf08` |
+| `combined-ui-correction.diff` (concatenation of the three) | `3bf0bd54797236827f8ffb531f74585dbe5aac77293dc999470801de4375ceb9` |
+| `work/old-code-tests.diff` (tests as first run against unchanged source) | `0e16cbc2d3fd8d689f1523b57d6543c306ad3e14b002fa1b425c177bfaffa499` |
+
+The diffs are against HEAD. The new test files are rendered with `git diff --no-index /dev/null <file>`, so the index was not touched.
+
+## Corrections
+
+### U1: row identity across a reference-only remount
+
+**Cause, confirmed.** The rename replaces the node's config object, and the `formEpoch` key remounts `SchemaForm`. Collection row ids are looked up in the dialog's `DisclosureIdentities` WeakMap by config object, and the repaired object had no entry. Fresh row ids broke the `#row:<id>` open-state keys and `keepFocusThrough`'s `data-row-id` match.
+
+**Fix.** `forms/disclosures.ts::carryCollectionIdentities(identities, previous, next)` gives `next` the row snapshot recorded for `previous`. It does so only when every recorded collection path has the same list length in both values, `next` has no snapshot yet, and `previous` has one. Rows are never matched by content. `NodeEditorDialog.commitId` reads the exact pre-rename config from the store and calls `renameNode`. On success it carries the identities to the repaired config inside the `keepFocusThrough` action, before the batched remount renders. No store or new subsystem is involved. Existing remove, move, add and undo identity paths are unchanged.
+
+### U2: review rows must prove the current field
+
+**Fix.** `RenameReport` now carries `definition`, the draft as the rename left it (store `renameNode`). `RenameNotice` offers a row as an action only while the row's node has the same config object as in that definition. History restores the same immutable objects, so undo of later edits makes the rows actionable again. Otherwise the row is listed as information, and a sentence names the changed nodes: "`audit` changed after the rename. Its places show where they were then and no longer open a field." The summary counts, the number of places and the list are unchanged. Loop-level, script and deleted-node rows stay informational as before.
+
+**Design choice.** This withdraws the action; it does not follow the moved row. It is conservative: any config edit to that node withdraws that node's links until undo restores the rename-time config, including a non-structural edit or a fix of the warned field itself. The store has no general path-rebasing mechanism, and adding one was outside the brief.
+
+### U3: held section JSON is released only by the author
+
+**Cause, confirmed.** `JsonText` derived `error = undefined` when a valid held candidate was `sameJson`-equal to the current section value. Its effect then reported the hold cleared. `setFieldError` treated that as an authored change, adding a step and erasing redo.
+
+**Fix.** In `forms/fields/json.tsx`, a held valid candidate now always derives `PENDING_JSON` (`candidate.error ?? PENDING_JSON`). The hold ends only by the existing author paths:
+
+- typing to equality (`onChange`), unchanged
+- Apply
+- Cancel
+- discard, including an external discard from the validation panel
+
+Re-reporting the identical entry is a no-op in `setFieldError`. A changed message on the same text is the existing message-only refresh, with no step. No confirmation workflow was added, and held text is never rewritten.
+
+**Behavioural consequence.** A held buffer that a rename (or a sibling fix or remount) makes equal still blocks structured-editor switching and Publish until Apply or Cancel, as any held section JSON does. Applying it then is an ordinary step that clears the hold and leaves the definition object unchanged.
+
+### Documentation
+
+- **`docs/09`, rename section.** Automatic form writeback is now separated from held raw JSON. Held text keeps its exact bytes, gets no notice diagnostics, and a later explicit Apply writes it as held, old id included. The section also covers the row-id carry with its length precondition, focus inside rows, and the actionable-row rule with the "changed after the rename" sentence. It gives the direct single-reference presence examples in both languages and lists the new regressions.
+- **`docs/09`, JSON section paragraph.** Switching back to structured editing is blocked while any text is held. Text that becomes equal through another change stays held.
+- **`docs/09`, history "Held input" bullet.** Validation or a remount never releases held section JSON.
+- **Guide.** JSONata (`outputs."old-id".value`, ...) and Liquid bracket spellings (`{{ outputs["old-id"].value }}`, `gates["old-id"].passes`, `counters.nodeVisits["old-id"]`) are now given separately. The page adds the direct single-presence caveat (`$exists(gates."old-id")`; `{% if gates["old-id"] %}` with nothing else in the condition; longer conditions, comparisons and filters count as reads) and says which listed places open. It also notes that unapplied Edit as JSON text is kept and Apply writes it as typed.
+- **CHANGELOG.** The same three corrections are stated briefly.
+
+ADR-0075 and docs 03/07 were not edited; they are owned by the backend worker. A read-only grep found no ADR-0075 statement about notice actions or held JSON that conflicts.
+
+## Old-code regressions (recorded first, source unchanged)
+
+Run 1: `apps/web> pnpm exec vitest run src/editor/EditorPage.rename.test.tsx src/forms/json-sections.test.tsx` gave 5 failed and 49 passed (54), exit 1. Output is in `work/run1-old-code.txt` and `.plain.txt`.
+
+| Case | Old-code failure |
+| --- | --- |
+| U1 Enter: identical neighbours open/closed, Coerce open, `/counters/nodeVisits/work` to `/vars/visits`, integer schema, repair disabled | `Unable to find an accessible element with the role "group" and name "Operations 3"` after the rename: the open Coerce row collapsed. |
+| U1 pointer: Node id `draft`, then click the visible nested Source | First run: same collapse. Run 1b (focus assertion moved first, `work/run1b-old-code-pointer.*`): focus landed on `data-field="operations"` (vanished-row collection fallback), not `operations.2.source`. |
+| U2: three Audit notes, only the second `Read {{ outputs[vars.key] }}`; link is exact at first; remove operation 1; use the row again | `expected 'Third note' to be 'Read {{ outputs[vars.key] }}'`: the stale action focused the recycled index 1. |
+| U3: Inference `work` Input holds 4-space formatted valid JSON with `counters.nodeVisits.draft`; rename `work` to `draft` on Enter | `Unable to find ... Choose Apply JSON or Cancel JSON to finish this edit.`: the hold was auto-released after the remount. |
+| JSON unit: held `[ 1 ]` with a parent error; a sibling fix makes it valid and equal | `/Choose Apply JSON/` not found: validation consumed the hold. |
+
+Test changes after the old-code run:
+
+- Before run 1b, I put the pointer case's focus assertions first, so the old-code failure records where focus went. The assertions are otherwise the same.
+- After the fix, Prettier rewrapped one `expect`.
+- `RenameNotice.test.tsx` and `disclosures.test.ts` were added after the fix to cover new branches: plural "changed" text, deleted-node exclusion, undo restoring actions, carry refusal, and an already-known or absent snapshot. They were not run on old code; `carryCollectionIdentities` did not exist there.
+
+## Commands after the fix (all from `apps/web` unless noted; PATH has Node v22.23.4)
+
+| # | Command | Result |
+| --- | --- | --- |
+| 2 | `pnpm exec vitest run src/editor/EditorPage.rename.test.tsx src/forms/json-sections.test.tsx` | 54/54 passed, exit 0 (`work/run2-fixed.*`) |
+| 3 | `pnpm exec vitest run` + 20 focused files in `work/run3-files.txt`: rename, store, history, undo shortcuts, EditorPage undo/main, NodeEditorDialog (collapsible row undo/remove/move identity), DecisionAuthoring, IssueBadge, chat-protection, model, json-sections, JsonText, context, structure, SchemaForm, advanced, part-a-audit, EarlierNodeOutputs | 20 files, 406/406 passed, exit 0, 2m57s (`work/run3-focused.*`) |
+| 4 | `pnpm exec vitest run src/editor/RenameNotice.test.tsx src/forms/disclosures.test.ts` | 5/5 passed, exit 0 |
+| 5 | `pnpm exec vitest run` rename component, json-sections, RenameNotice, disclosures, store.rename, JsonText | 6 files, 70/70 passed, exit 0 (final source, `work/run5-final.*`) |
+| - | `pnpm run typecheck` (script confirmed: `tsc -p tsconfig.json --noEmit`; web tsconfig `noEmit`, `incremental: false`, `composite: false`) | exit 0, run before and after the last test/format changes (`work/typecheck-web*.txt`) |
+| - | `pnpm run lint` (`eslint .`, web package) | exit 0, twice (`work/lint-web*.txt`) |
+| - | root: `pnpm exec prettier --check` on all 12 touched files | first run flagged 2 of my files; `prettier --write` on those 2 changed wrapping only; final check exit 0 (`work/prettier-check*.txt`) |
+
+**Artifacts.** The 13 compiled trees (`apps/{api,mcp,plugin-claude,plugin-codex,web}/dist`, `apps/web/dist-goblin`, `packages/{adapter-codex,adapter-jev,api-client,contracts,domain,engine,infrastructure}/dist`) had 1227 files before and after. Their sorted per-file SHA-256 manifest is byte-identical, with manifest hash `04e4e22ef2e98aea08ce1d62243bba4d3bef30b6c8c1ceb3751fb2ef1c1e535b` (`work/dist-before.sha256`, `work/dist-after.sha256`). The 11 `*.tsbuildinfo` files outside `node_modules` are byte-identical (`work/tsbuildinfo-*.sha256`).
+
+Not run, by brief: builds, root `pnpm typecheck`, full web suite or coverage, browser, Playwright or native, API tests, independent QA scripts. No owner store, services, ports 4747/4748, credentials, Mac, subagents or GitHub were used.
+
+## Pending gates (root-owned)
+
+1. Combined freeze of this patch with the backend F1/F2 correction, then the exact-head CI. This includes full web coverage. New branches are covered by the cases above, but the package coverage percentage was not measured.
+2. Builds and the independent native scenarios in `node-reference-273-review-correction-independent/plan.md`. This work never executed them.
+3. Edge `e2e/rename-references.spec.ts` and the other existing browser gates; no new browser case was added.
+4. The fresh Astra MAX scan 3.
+
+## Remaining facts and limits
+
+- **Settings form.** Only the node dialog has caller-kept disclosure identities. `LoopSettingsPanel`'s settings `SchemaForm` keeps its own disclosure state, which restarts when a rename repairs settings (as on its other remounts). I did not change or verify that form's collection rows; the U1 finding concerned the node dialog.
+- **Carry precondition.** The carry needs the store's pre-rename config to be the object the form last remembered. For decision configs normalized by the dialog, or another path where they differ, no snapshot is found and behaviour is as before (fresh rows), never content-matched.
+- **U2 scope.** The withdrawal is per node and conservative, as described above. Following a moved row is not implemented.
+- **U3 generality.** The change applies to all explicit section-JSON holds, not only renames. A sibling fix or remount that makes held text equal no longer auto-releases it. The existing JSON, parent-refresh, Apply/Cancel/confirmation and history tests stayed green in run 3.
+- **Correction batches.** One evidence-based correction batch was used. The second permitted batch was not needed.

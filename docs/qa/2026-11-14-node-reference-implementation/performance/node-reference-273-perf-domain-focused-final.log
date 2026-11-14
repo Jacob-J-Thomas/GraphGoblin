@@ -1,0 +1,42 @@
+$ vitest run src/node-references.test.ts src/syntax.test.ts src/source-analysis.test.ts
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references/GraphGoblin/packages/domain
+
+ ❯ src/node-references.test.ts (44 tests | 1 failed) 384ms
+   ❯ reference scopes and source boundaries (41)
+     × rewrites only a parsed local reference in outputs.`start` 62ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs.`start`
+AssertionError: expected 'outputs.`start`' to be 'outputs.`true`' // Object.is equality
+
+Expected: "outputs.`true`"
+Received: "outputs.`start`"
+
+ ❯ src/node-references.test.ts:143:65
+    141|     ['outputs.starting.value', 'outputs.starting.value'],
+    142|   ])('rewrites only a parsed local reference in %s', (before, after) =…
+    143|     expect(expressionOf(renamed(returning(before)).definition)).toBe(a…
+       |                                                                 ^
+    144|   });
+    145|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 59 passed (60)
+   Start at  03:20:54
+   Duration  4.75s (transform 52%, import 40%, tests 8%)
+
+  Transform  transforming modules took 5.92s · 52% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references\GraphGoblin\packages\domain
+

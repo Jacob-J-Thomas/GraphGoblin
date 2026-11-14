@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.rename.test.tsx (14 tests | 1 failed | 13 skipped) 3005ms
+   ❯ renaming a node in the editor (#273) (14)
+     × moves focus to the remounted nested Source the pointer chose when leaving the id renames 3001ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename.test.tsx > renaming a node in the editor (#273) > moves focus to the remounted nested Source the pointer chose when leaving the id renames
+Error: expect(element).toHaveAttribute("data-field", "operations.2.source") // element.getAttribute("data-field") === "operations.2.source"
+
+Expected the element to have attribute:
+  data-field="operations.2.source"
+Received:
+  data-field="operations"
+ ❯ src/editor/EditorPage.rename.test.tsx:678:46
+    676|     // Focus is on the same row's remounted Source, not on a fallback …
+    677|     const focused = document.activeElement;
+    678|     expect(focused?.closest('[data-field]')).toHaveAttribute('data-fie…
+       |                                              ^
+    679|     expect(focused?.closest('[data-row-id]')).toHaveAttribute('data-ro…
+    680|     expect(focused).not.toBe(source);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 skipped (14)
+   Start at  13:04:46
+   Duration  11.03s (transform 28%, tests 28%, environment 20%, import 16%, setup 8%)
+
+  Transform  transforming modules took 3.04s · 28% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit=1

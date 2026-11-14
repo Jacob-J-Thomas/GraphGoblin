@@ -5,6 +5,7 @@ import {
   type NodeInput,
   type NodeKind,
 } from '@graphgoblin/contracts';
+import { renameLoopNode, type NodeRenameResult } from '@graphgoblin/domain';
 import type { z } from 'zod';
 import { create } from 'zustand';
 import type { FormChange } from '../forms/changes.js';
@@ -36,6 +37,7 @@ import {
   nextNodeId,
   validateDraft,
   type ConnectionRequest,
+  type EditorIssue,
 } from './model.js';
 
 type EdgeInput = z.input<typeof EdgeSchema>;
@@ -150,6 +152,20 @@ export interface EditorState {
    * form, the loop panel's forms) include it in their keys, so they show the restored values.
    */
   historyEpoch: number;
+  /**
+   * Bumped per form scope ("node:<id>", "settings") when an edit made outside that form replaced
+   * values it holds: a rename that repaired references in its fields. The loop settings form
+   * includes its count in its key and remounts. The node editor's config form takes the repair in
+   * place (`SchemaFormHandle.applyRepair`) and leaves those bumps out of its key, so it remounts
+   * only for a repair it could not take. Other forms keep their state and unfinished input. Not
+   * undo history.
+   */
+  formEpochs: Readonly<Record<string, number>>;
+  /**
+   * What the latest rename changed and what it could not settle (#273), until it is dismissed,
+   * undone or redone, replaced by another rename, or the editor loads again. Not undo history.
+   */
+  renameReport: RenameReport | undefined;
 
   load: (
     loopId: string,
@@ -183,7 +199,15 @@ export interface EditorState {
     changes: { label?: string; config?: unknown },
     change?: FormChange,
   ) => void;
-  renameNode: (nodeId: string, nextId: string) => void;
+  /**
+   * Change a node's id, and in the same undo step and revision its connections, the references
+   * to it that the domain understands (`renameLoopNode`), decision route ownership, its unfinished
+   * field input, the selection and a pending focus target. Returns why the id cannot change, or
+   * undefined when it changed (or was already that id).
+   */
+  renameNode: (nodeId: string, nextId: string) => string | undefined;
+  /** Forget the rename report (the notice's Dismiss). */
+  dismissRenameReport: () => void;
   applyChatAudio: (
     source: LoopDefinitionInput,
     next: LoopDefinitionInput,
@@ -268,6 +292,48 @@ export interface NodeFocusTarget {
   field: string;
 }
 
+/** What one accepted rename changed, and the fields it could not settle (#273). */
+export interface RenameReport {
+  from: string;
+  to: string;
+  /** Connections with an end on the node; they follow it. */
+  connections: number;
+  /** References rewritten in expressions, templates and mutation paths. */
+  references: number;
+  /**
+   * Fields the rename left for the author: dynamic, inherited or authored keys, and sources it
+   * could not verify. Located ones carry the node (by its new id) and the field's path.
+   */
+  warnings: EditorIssue[];
+  /**
+   * The draft as the rename left it. A warning's path names the field the rename analyzed only
+   * while its node's config is still that same value (undo and redo restore it): after another
+   * edit of that node a path can name a different row, so the notice no longer opens it.
+   */
+  definition: LoopDefinitionInput;
+}
+
+/** The node id rule's wording, shared by the node editor's own check. */
+export const ID_FORMAT_MESSAGE = 'Use a letter first, then letters, digits, _ or -';
+
+/** Why the domain refused a rename, in the node editor's words. */
+function renameRefusal(
+  kind: Exclude<NodeRenameResult['kind'], 'renamed' | 'unchanged'>,
+  nodeId: string,
+  nextId: string,
+): string {
+  switch (kind) {
+    case 'invalid-id':
+      return ID_FORMAT_MESSAGE;
+    case 'duplicate-id':
+      return `"${nextId}" is already used`;
+    case 'missing-node':
+      return `"${nodeId}" is no longer in this draft`;
+    case 'ambiguous-node':
+      return `More than one node uses "${nodeId}"; give the others their own ids first`;
+  }
+}
+
 let generations = 0;
 
 const INITIAL = {
@@ -294,6 +360,8 @@ const INITIAL = {
   future: [] as HistoryEntry[],
   openStep: undefined,
   historyEpoch: 0,
+  formEpochs: {} as Readonly<Record<string, number>>,
+  renameReport: undefined as RenameReport | undefined,
 };
 
 /**
@@ -419,6 +487,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
         : { revision: s.revision + 1, saveState: 'pending' as SaveState }),
       selectedNodeId: kept ? selected : undefined,
       ...(kept ? {} : { nodeDialogOpen: false, nodeFocus: undefined }),
+      // The report describes the draft after its rename: undoing (or redoing) that step ends it.
+      // Undoing a later edit, such as a fix made while reviewing, keeps it.
+      ...(entry.renamed &&
+      entry.renamed.from === s.renameReport?.from &&
+      entry.renamed.to === s.renameReport.to
+        ? { renameReport: undefined }
+        : {}),
     });
   };
 
@@ -629,35 +704,82 @@ export const useEditorStore = create<EditorState>((set, get) => {
     },
 
     renameNode: (nodeId, nextId) => {
-      const state = get();
-      if (state.definition && isProtectedVoiceNode(state.definition, state.systemChat, nodeId)) {
+      const s = get();
+      const def = s.definition;
+      if (!def) return undefined;
+      if (isProtectedVoiceNode(def, s.systemChat, nodeId)) {
         set({ connectionError: VOICE_STEP_MESSAGE });
-        return;
+        return VOICE_STEP_MESSAGE;
       }
-      if (nodeId === nextId) return;
-      const step = {
-        label: `rename ${nodeId} to ${nextId}`,
-        renamed: { from: nodeId, to: nextId },
-      };
-      edit(
-        (d) => ({
-          ...d,
-          nodes: d.nodes.map((n) => (n.id === nodeId ? { ...n, id: nextId } : n)),
-          edges: d.edges.map((e) => ({
-            ...e,
-            from: e.from.node === nodeId ? { ...e.from, node: nextId } : e.from,
-            to: e.to.node === nodeId ? { ...e.to, node: nextId } : e.to,
-          })),
-        }),
-        step,
+      // The exact current draft: the id, its edge ends and the references the domain understands
+      // change together, or nothing changes.
+      const result = renameLoopNode(def, nodeId, nextId);
+      if (result.kind === 'unchanged') return undefined;
+      if (result.kind !== 'renamed') return renameRefusal(result.kind, nodeId, nextId);
+      const renamed = { from: nodeId, to: nextId };
+      const { definition, decisionRoutes } = decisionRouteEdges(
+        result.definition,
+        s.decisionRoutes,
+        undefined,
+        renamed,
       );
-      if (get().selectedNodeId === nodeId) set({ selectedNodeId: nextId });
-      // Unparsed field text follows the node to its new id (part of the same step).
-      set((s) => {
-        const { [`node:${nodeId}`]: moved, ...rest } = s.fieldErrors;
-        return { fieldErrors: moved ? { ...rest, [`node:${nextId}`]: moved } : rest };
+      // Unparsed field text follows the node to its new id; other forms' text stays as typed.
+      const { [`node:${nodeId}`]: moved, ...otherErrors } = s.fieldErrors;
+      const fieldErrors = moved ? { ...otherErrors, [`node:${nextId}`]: moved } : s.fieldErrors;
+      // Forms holding a repaired source take it in place or remount with it, so a field still
+      // showing the old text cannot write it back. The renamed node's own count moves with it.
+      const { [`node:${nodeId}`]: ownEpoch, ...formEpochs } = s.formEpochs as Record<
+        string,
+        number
+      >;
+      if (ownEpoch !== undefined) formEpochs[`node:${nextId}`] = ownEpoch;
+      const bump = (scope: string) => (formEpochs[scope] = (formEpochs[scope] ?? 0) + 1);
+      result.definition.nodes.forEach((node, index) => {
+        if (node.config !== def.nodes[index]?.config) bump(`node:${node.id}`);
       });
+      if (result.definition.settings !== def.settings) bump('settings');
+      const endpoints = def.edges.reduce(
+        (count, edge) =>
+          count + Number(edge.from.node === nodeId) + Number(edge.to.node === nodeId),
+        0,
+      );
+      const before = {
+        definition: def,
+        fieldErrors: s.fieldErrors,
+        decisionRoutes: s.decisionRoutes,
+      };
+      const after = { definition, fieldErrors, decisionRoutes };
+      // One write: autosave, the device mirror and every subscriber see the whole rename at once.
+      set({
+        ...after,
+        revision: s.revision + 1,
+        saveState: 'pending',
+        selectedNodeId: s.selectedNodeId === nodeId ? nextId : s.selectedNodeId,
+        nodeFocus:
+          s.nodeFocus?.nodeId === nodeId ? { ...s.nodeFocus, nodeId: nextId } : s.nodeFocus,
+        formEpochs,
+        renameReport: {
+          from: nodeId,
+          to: nextId,
+          connections: def.edges.filter(
+            (edge) => edge.from.node === nodeId || edge.to.node === nodeId,
+          ).length,
+          references: result.repairedReferences - endpoints,
+          warnings: result.warnings,
+          definition,
+        },
+        ...recordStep(
+          historyOf(s),
+          before,
+          after,
+          { label: `rename ${nodeId} to ${nextId}`, renamed },
+          performance.now(),
+        ),
+      });
+      return undefined;
     },
+
+    dismissRenameReport: () => set({ renameReport: undefined }),
 
     // A drag ends in one move; a run of arrow-key nudges of one node merges into one step.
     moveNode: (nodeId, position) =>

@@ -1,0 +1,190 @@
+# #273 verification after the reviewed naming parent: handoff
+
+Worker: Claude Sonnet 5.5 (`claude-sonnet-5-5`, xhigh). Checkout: `C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin`. Output: `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-273-promotion-verification`. Window: first command 2026-11-14 17:51Z, last heavy command ended 18:16Z, final process snapshot 18:19Z. **The heavy slot is released.**
+
+## 1. Bottom line
+
+At the bound clean head, with **no source change** (`git diff HEAD` is 0 bytes), every requested gate passed on its first run, a forced zero-cache `pnpm.cmd build` produced a build whose bundled editor sources equal the head's sources, and both Edge specs passed 10/10 with retries 0, twice. No product or test failure occurred. All failed attempts (section 8) were my own harness mistakes and are kept.
+
+Not claimed here: overall #273 acceptance, formal review, merge eligibility, any CI result (CI `43622692936` and routing `43622692920` were not touched), a full-web coverage run, or the independent compiled-gateway/file-SQLite behavior tier. Backend Opus review 1, UI Sol review 2, the fresh Astra max whole-PR scan 3, current CI and owner acceptance remain separate gates (formal scans stay 0/3).
+
+## 2. Identity and admission
+
+| Item | Value |
+| --- | --- |
+| HEAD | `ae8add8a791699e905540465b5ddf929d00c50eb` (parent `ba3086b8`) |
+| Tree | `ea2dfcfd46f7d5ab79fd98414db214513d830b52` |
+| Branch | `codex/gg-20261114-node-references-native` |
+| Target (local `origin/main`, unchanged all session) | `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`, an ancestor of HEAD |
+| Product freeze | `16aa9a2aed50710e68875b991a8eedb668fdecf8`, tree `863175d2c21d09800b8e41416f76abdf9d59cf1b`, parents `33a2f47c` + `a817e5cc` |
+| Node / pnpm | `v22.23.4` (project runtime, first on PATH, in every `.meta`) / `pnpm.cmd` 12.8.1 (= `packageManager`) |
+| Worktree / index | clean at start and end; `git ls-files -s` sha256 `d4edba8f8241b5b8f9d263b65be46f312c5628f127538f234273db054eed0c7d`, index file sha256 `2a86b794da1a0492a0fec19957c14691ad778e9c542badd859d00a2bbbde6f32` and its mtime **identical** at start and end ([start](manifests/start-identity.txt), [end](manifests/end-identity.txt)). Every git call used `GIT_OPTIONAL_LOCKS=0` except my very first read (a `git status`/`git log` at about 17:50Z, before I created the env file); the index file's mtime, 11:43:50 local, predates this session, so no refresh happened. |
+
+**Admission.** The grant `ui-273-promotion-verification-slot-grant.json` names the same head, tree and base. The admission proof's own `grant` field still reads "NOT YET; wait for separate slot grant JSON"; it predates the grant file, and the grant is that separate JSON. [`scripts/admission.mjs`](scripts/admission.mjs) recomputed everything independently: **27/27 checks true** ([result](manifests/admission-recheck.json), [log](logs/00-admission-recheck.log)):
+
+- Local `origin/main` = target and an ancestor of HEAD. `16aa` is an ancestor; the two commits after it are `ba3086b8` and `ae8add8a`.
+- All 27 paths changed after `16aa` are under `docs/qa` (26) or `docs/delivery` (1): 21 added, 4 modified, **2 renames at 100% similarity** to `….md.txt` (`raw/failure/attempt3-error-context.md`, `raw/original-report.md`; both blobs have the same Git object id as before).
+- Between `16aa` and HEAD, **only the `docs` root entry differs**, and inside it only `docs/qa` and `docs/delivery`. Every other root entry is the identical Git object: `apps`, `packages`, `tooling`, `patches`, `scripts`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, `tsconfig.json`, `eslint.config.js`, `.dependency-cruiser.cjs`, `.prettierignore`, `.prettierrc`, `.gitattributes`, `.github`, `.npmrc`, `CHANGELOG.md`, `Dockerfile`, `docker-compose.yml` and the rest (the check compares every root tree entry; the file lists object ids for a subset of them in `rootEntryObjectIds`). So there is **no product/test/config delta** after the freeze.
+- No hidden index flags, no merge/rebase state.
+- The 48 paths of `node-reference-273-promotion-independent/promotion-source-map.json` (schema: `sources[path] = {sha256, equalsPreviousCandidate, equalsPriorNative}`): for every path, raw working-tree sha256 = Git HEAD blob = `16aa` blob = the map's value. My listing [`manifests/source-sha256.txt`](manifests/source-sha256.txt) (sha256 `9e910079f8b0f4502ec1e9a693428a1fdbeacbf30f586ae02d396c5faf170b5b`) is **byte-identical** to the independent QA's `frozen-source-sha256.txt`. No `source-paths.json` was assumed.
+- The admission proof's 24 `sourceHashes` equal my recomputed hashes and equal the map's `changedByRename` list.
+
+Merge claims in the brief, checked ([`manifests/merge-claims-check.txt`](manifests/merge-claims-check.txt)): `useAutosave.ts`, `LoopsPage.tsx`, `EditorPage.name-conflict.test.tsx` and `loop-names.test.tsx` equal `a817` exactly; the product delta `a817..HEAD` over `apps packages tooling` is exactly the 24 `changedByRename` paths. I did **not** re-verify the "842 prior QA files index-verified" statement; it was taken as stated and is not a behavior result.
+
+## 3. Patch
+
+None. [`patch/source-change.patch`](patch/source-change.patch) and [`patch/index-change.patch`](patch/index-change.patch) are both 0 bytes. No fixture correction is proposed because nothing failed.
+
+## 4. Gates (Node 22.23.4, `pnpm.cmd`, first run of each; none rerun)
+
+| # | Command (cwd = repo root) | Result | Log |
+| --- | --- | --- | --- |
+| 10 | `pnpm.cmd --filter @graphgoblin/domain exec vitest run src/node-references.test.ts` (preparation, verbatim) | **1 file, 44/44** | [10](logs/10-domain-node-references.log) |
+| 11 | `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/EditorPage.rename.test.tsx src/editor/store.rename.test.ts src/editor/EditorPage.name-conflict.test.tsx src/loops/loop-names.test.tsx` (preparation, verbatim) | **4 files, 44/44** (rename 10, store.rename 9, name-conflict 10, loop-names 15) | [11](logs/11-web-prep-four-suites.log) |
+| 12 | Extended editor/store/import neighbourhood, 26 files, adds a JSON reporter only ([list](manifests/web-extended-files.txt)) | **26 files, 402/402**, 0 failed/skipped/todo ([per-file](manifests/web-extended-per-file-counts.tsv)) | [12](logs/12-web-extended-26-suites.log), [json](logs/12-web-extended-26-suites.json) |
+| 13 | `pnpm.cmd --filter @graphgoblin/web typecheck` (`tsc -p tsconfig.json --noEmit`) | exit 0, no output | [13](logs/13-web-typecheck.log) |
+| 14 | `pnpm.cmd --filter @graphgoblin/web lint` (`eslint .`) | exit 0, no output | [14](logs/14-web-lint.log) |
+| 15 | `pnpm.cmd exec prettier --check --ignore-unknown <32 changed non-QA files since main>` ([list](manifests/format-targeted-files.txt)) | exit 0, "All matched files use Prettier code style!" | [15](logs/15-prettier-check-targeted.log) |
+| 16 | `pnpm.cmd format:check` (`prettier --check .`, the check the first CI run failed on) | exit 0 | [16](logs/16-format-check-whole-repo.log) |
+| 17 | Extra: `pnpm.cmd --filter @graphgoblin/domain exec vitest run` (whole domain unit suite, no coverage) | **29 files, 428/428** | [17](logs/17-domain-full-unit-suite.log), [json](logs/17-domain-full-unit-suite.json) |
+| 18 | Extra: `pnpm.cmd --filter @graphgoblin/api exec vitest run src/node-references.test.ts` (in-memory `createTestApp`, no ports) | **1 file, 2/2** | [18](logs/18-api-node-references.log) |
+| 19, 20 | Extra: `… domain|api exec tsc -p tsconfig.json` (config is `noEmit`, non-composite) | exit 0 / exit 0 | [19](logs/19-domain-tsc-noEmit.log), [20](logs/20-api-tsc-noEmit.log) |
+| 21 | Extra: `pnpm.cmd --filter @graphgoblin/domain lint` | exit 0 | [21](logs/21-domain-lint.log) |
+
+Rows 12 and 17 to 21 go beyond the preparation list; I chose the files the merge touched and their direct neighbours: the changed web test `EarlierNodeOutputs.test.tsx` is in row 12, the changed domain tests (including `source-analysis.test.ts`) run in row 17, and the changed API test runs in row 18. Nothing was weakened: no assertion, timeout, retry count or coverage setting was changed, and no coverage was run. The prepared packet's earlier "428/428 domain tests" matches row 17. Each `.meta` file records the exact command, versions, UTC start/end and exit.
+
+The `web` package script is called `e2e`, not `test:e2e` as the preparation says. I used the preparation's explicit `playwright test` command.
+
+## 5. Build and source/build bindings
+
+### 5.1 Command and accounting
+
+Root `build` is `turbo run build`. Command run: `pnpm.cmd build --force --cache-dir=.turbo/local-cache` (2026-11-14 18:07:21Z to 18:07:36Z), exit 0, `Tasks: 12 successful, 12 total`, `Cached: 0 cached, 12 total`, 14.8 s. Every one of the 12 tasks logged `cache bypass, force executing` ([log](logs/24-build-force.log), [meta](logs/24-build-force.meta)). The 12 tasks produce the 13 trees (`web` builds both `dist` and `dist-goblin`). All 13 trees existed before the build.
+
+`.turbo` did not exist before; this build created `.turbo/local-cache` (30 files, 6.5 MB, git-ignored). It is not part of the identity and was left in place.
+
+### 5.2 Output ownership (before any replacement)
+
+- All 13 trees are git-ignored (`dist/`, `dist-goblin/`), contained no symlinks, and no plugin builder lock or staging directory (`.<name>.graphgoblin-build`) existed.
+- No process other than my own shells referenced the checkout; no Edge process existed; the owner listener on 127.0.0.1:4747 (PID 19500) was observed and never touched.
+- Both plugin outputs passed a read-only replica of `tooling/plugin-output.mjs` ownership (format 1, kind, exact file list, every hash, derived directories): `apps/plugin-codex/dist/marketplace` (6 files + manifest) and `apps/plugin-claude/dist/plugin/graphgoblin` (7 + manifest), checked at the start, immediately before the build and after it ([before](manifests/plugin-ownership-before-build.json), [immediately before](manifests/plugin-ownership-immediately-before-build.json), [after](manifests/plugin-ownership-after-build.json)). I removed nothing from any tree myself; the build itself replaced the old web entry bundle and its map (Vite empties `dist`/`dist-goblin` as part of its normal output handling).
+
+### 5.3 The 13 per-file manifests
+
+Method copied from `ui-237-uncertainty-correction/manifests`: `<sha256> *./<relative path>` per file, C-locale path order, one `.sha256` per tree, all 13 trees including `apps/web/dist-goblin`, `apps/api/dist`, `apps/mcp/dist` and both plugin trees ([`scripts/manifest-trees.mjs`](scripts/manifest-trees.mjs), plus a `mtimes.tsv` per set). Sets: [`start`](manifests/start), [`prebuild`](manifests/prebuild) (immediately before the build), [`postbuild`](manifests/postbuild) (immediately after), `postedge1`, `postedge2`, `postscratch`, [`final`](manifests/final). **Native QA should consume `manifests/postbuild/`.** 1,227 files in every set.
+
+| Tree | Files | Bytes | Listing sha256 at postbuild | Listing changed by the build |
+| --- | --- | --- | --- | --- |
+| `apps/web/dist` | 28 | 12255819 | `3ad928ebe229b703511af4e6c716c82af7d116b4461add3fcbb10489080f786f` | yes (new entry bundle, `index.html`, `sw.js`, `sw.js.map`) |
+| `apps/web/dist-goblin` | 28 | 3278785 | `3b197f9e2d2218fd17089807fd82bfe351de5fe0f1ca6b92a5da7af7d1c09780` | yes (`sw.js.map` only) |
+| `apps/api/dist` | 306 | 1645339 | `549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370` | no |
+| `apps/mcp/dist` | 41 | 369002 | `945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6` | no |
+| `apps/plugin-codex/dist` | 24 | 111298 | `f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e` | no |
+| `apps/plugin-claude/dist` | 17 | 78349 | `a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b` | no |
+| `packages/contracts/dist` | 117 | 892623 | `26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada` | no |
+| `packages/domain/dist` | 121 | 448623 | `90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117` | no |
+| `packages/engine/dist` | 161 | 1059290 | `605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266` | no |
+| `packages/infrastructure/dist` | 293 | 1894536 | `5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075` | no |
+| `packages/api-client/dist` | 33 | 2169043 | `6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4` | no |
+| `packages/adapter-codex/dist` | 49 | 244764 | `e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503` | no |
+| `packages/adapter-jev/dist` | 9 | 117025 | `2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368` | no |
+
+Start versus prebuild: all 1,227 files identical, bytes and mtimes (the gates changed nothing). Prebuild versus postbuild ([comparison](manifests/prebuild-vs-postbuild.json)): 11 of 13 listings identical, and:
+
+- Changed: `apps/web/dist/index.html`, `dist/sw.js`, `dist/sw.js.map`, `dist-goblin/sw.js.map`.
+- Replaced: `dist/assets/index-DVl1FcJD.js` and `.map` (removed) by `index-CyF0v9uF.js` and `.map` (added).
+- Rewritten with identical bytes: 27 files (the web CSS, webmanifest and workbox files, 8 files in `dist-goblin`, and both plugin outputs, which the plugin builders re-publish).
+
+### 5.4 What the incremental backend output means (be precise)
+
+Turbo `--force` executed all 12 build commands; it did not make TypeScript re-emit. Every file of the `api`, `mcp`, `contracts`, `domain`, `engine`, `infrastructure`, `api-client`, `adapter-codex` and `adapter-jev` trees (306, 41, 117, 121, 161, 293, 33, 49 and 9 files), and the `tsc`-emitted part of both plugin trees (17 of 24 and 9 of 17 files), has **identical bytes and an unchanged mtime** across the build ([`prebuild-vs-postbuild.json`](manifests/prebuild-vs-postbuild.json): class `untouched`). `tsc -b` found each project up to date and wrote nothing. **So identical backend output here is not a new full re-emit, and none is claimed.** (The existing backend `dist` was last emitted at about 06:53 local time; the `.tsbuildinfo` hashes below show it was emitted from the same source bytes as the head.) The only other writes in those trees are the plugin builders re-publishing their generated output (7 and 8 files) with identical bytes. mtimes say nothing for the Vite trees: Vite empties and rewrites `dist`/`dist-goblin`, and copies `public/` files with their source mtimes preserved, so "untouched" is only meaningful for the `tsc` trees.
+
+What binds the backend output to the head instead:
+
+1. Every `dist/.tsbuildinfo` records the SHA-256 TypeScript hashed for each source file when it last emitted. All source entries equal the current raw source bytes: api 74/74, mcp 10/10, plugin-claude 3/3, plugin-codex 5/5, adapter-codex 12/12, adapter-jev 2/2, api-client 8/8, contracts 29/29, domain 30/30, engine 40/40, infrastructure 73/73; none has pending emit ([`bundle-source-check-postbuild.json`](manifests/bundle-source-check-postbuild.json)). Declaration-file entries of referenced projects are not raw-byte hashes, so they are counted but not compared.
+2. **From-scratch emit to a scratch directory outside the repo, byte-compared with `dist`** (supplementary; `--outDir` and `--tsBuildInfoFile` both overridden, and the manifests afterwards prove no dist file changed, [postedge2 vs postscratch](manifests/postedge2-vs-postscratch.json)): every `.js` and `.d.ts` is byte-identical for domain (30/30 + 30/30; its 60 source maps are equal once `sources` is resolved to repo-relative paths), engine, infrastructure, api-client, adapter-codex, adapter-jev, api (74/74), mcp, plugin-codex and plugin-claude. **One exception:** `packages/contracts`: all 29 `.js` are identical but 5 `.d.ts` (`events`, `loop`, `run`, `template-manifest`, `voice`) differ in member order only (same line count and the same line multiset, [check](logs/40-contracts-dts-order-only-check.log)). I did not isolate why (it differs between a fresh `tsc -p` emit and the incrementally built output); contracts is not in the #273 product delta. Files only in `dist` are the outputs of the post-`tsc` steps (api: 9 catalog files; plugins: the generated marketplace/plugin trees). Logs: [35](logs/35-scratch-emit-domain.log), [36](logs/36-compare-scratch-emit-domain.log), [39](logs/39-scratch-emit-remaining-projects.log); per-project JSON `manifests/scratch-emit-*-vs-dist.json`.
+
+### 5.5 Web bundle and the seven runtime paths
+
+Entry bundle `apps/web/dist/assets/index-CyF0v9uF.js` (served at `/app/assets/index-CyF0v9uF.js`): sha256 `4afaba751e3929e4e9e3ef45967bf76427a18fb5f198c1e87d546871e471cbd8`, 2,111,543 bytes. Its map `….js.map`: sha256 `345832d34ec400cc8774a1619b0c876a6a9e7d13f11e4c967f80537dc0ccfceb`, 9,362,118 bytes, 549 sources. `index.html` (references that bundle and `index-DSoHGgpa.css`): `22b50f3c31ec6c2b3776d98af6ba164b69f5359018c143c0cd52269da07efd8c`. `apps/api/dist/main.js`: `e011151e143f07f29181c03f616b6d8e5b7c04e1f136f001b508e9a480c8cc98` (its map points at `apps/api/src/main.ts`, sha256 `ff1d87d808c7109dc0193a9c584a259acc848760ba61d4ad225bf0aa6f27d146`, equal to the promotion map).
+
+The seven rename/editor runtime paths of `ui-mapping-template.json` / the verifier's `mappedRuntime` list, matched by **exact repo path** in the map (each appears exactly once). For each, the source embedded in the map (`sourcesContent`) = the raw working file = the Git HEAD blob = the promotion source map = the QA mapping template:
+
+| Path | Map index | sha256 (all five agree) |
+| --- | --- | --- |
+| `apps/web/src/editor/EditorPage.tsx` | 482 | `5a5d8208fa31f885e0ee9ad875282489605e463387443e0000dcd66e82c96a0c` |
+| `apps/web/src/editor/store.ts` | 375 | `a9570a8ee980ee4d42c7e5dfdb8debd65c3a01b34a0c5d1a28aa715bb89dae3d` |
+| `apps/web/src/editor/useAutosave.ts` | 473 | `fbe6a15d55d97217861d62e91e7f4e878dc5b2957c40c8c115c2ec14eaaa8782` |
+| `apps/web/src/editor/NodeEditorDialog.tsx` | 468 | `56384b384b84a7b53502b10364ce83b9fe5e70f999be064599cde84757c9ef08` |
+| `apps/web/src/editor/LoopSettingsPanel.tsx` | 469 | `eec75bb084479245dd37399e7a49982a0b1e3d19c26c703d51167b4f763fb9aa` |
+| `apps/web/src/editor/RenameNotice.tsx` | 467 | `ebf2cd203d2ab92055a384e95e2954c39e566318da7264a874b84ecba289870b` |
+| `apps/web/src/editor/useUndoShortcuts.ts` | 392 | `5eb63750db5a747acf7f8a5f3b18413f2ce234b1c555ae35605eacc53273775b` |
+
+The mapping template's other eight notice sources are also embedded and equal (15/15), and 16 of the 48 promotion-map paths are embedded in this bundle, all equal. All 213 tracked sources embedded in the entry map equal the checkout (the `dist-goblin` bundle: 41/41). The other 32 mapped paths (API, tests, e2e, engine, infrastructure, contracts and domain TypeScript) are not web sources; **the browser's domain, contracts and api-client code is bundled from `packages/*/dist/*.js`, not from TypeScript source.** I verified all 48 embedded dist files (domain 20, contracts 23, api-client 5) equal the on-disk dist files and the postbuild listing ([result](manifests/bundled-dist-packages-postbuild.json)). The chain is bundle → dist JS → `.tsbuildinfo` and from-scratch emit (5.4) → head sources.
+
+**Contrast with before the build** ([prebuild check](manifests/bundle-source-check-prebuild.json)): the installed bundle was `index-DVl1FcJD.js` (sha256 `14e7de77330b79d1e905b0c2c2460884e67237b38bd76215778222121c9964c7`, map `9ee4f14963e191e264eadaa3350a88864e14c15fe6d2b6c3884745d0afcb8d20`) and embedded stale `EditorPage.tsx`, `store.ts`, `useAutosave.ts` and `LoopsPage.tsx`: exactly the four files the merge changed (three of the seven runtime paths mismatched, plus `LoopsPage.tsx` outside the seven). It would not have matched the head. Before the build, backend `.tsbuildinfo` hashes already matched. That first MISMATCH (11 failures) was expected and is retained.
+
+### 5.6 Proof that the manifests are consumable
+
+`node-reference-273-promotion-independent/verify-binding.mjs`, run read-only against **dry-run** copies of a spec and mapping I generated with `frozen:true` ([`manifest-spec.dryrun.json`](manifests/manifest-spec.dryrun.json), [`ui-mapping.dryrun.json`](manifests/ui-mapping.dryrun.json); output written only here): `Verified 48 source hashes and 1227 artifact files`, exit 0 ([report](manifests/dryrun-binding-report.json), [log](logs/43-verify-binding-dryrun.log)). [`manifest-spec.proposed.json`](manifests/manifest-spec.proposed.json) and [`ui-mapping.proposed.json`](manifests/ui-mapping.proposed.json) are the same with `frozen:false`; `builtSource` is HEAD itself and `allowedPostBuildPaths` is empty. **I froze nothing.** Whether to freeze, and when, is root's decision.
+
+### 5.7 Two build facts native QA must know
+
+- `dist/sw.js.map` and `dist-goblin/sw.js.map` embed a random Windows temp path (`…/AppData/Local/Temp/<random>/sw.js`) as their source, so they differ on every build even when nothing else does. This is why `dist-goblin` shows one changed file. Identify this build by bytes, never by regenerating it.
+- The e2e server (`apps/web/e2e/server.ts`) rewrites `apps/web/dist/sw.js` from its recovered original when it stops. The bytes are identical here (listing hashes unchanged), but each Edge run changes that file's mtime ([postbuild vs final](manifests/postbuild-vs-final.json): only `dist/sw.js`, rewritten-identical).
+
+## 6. Edge specs
+
+Command, retries 0 ([log](logs/30-edge-rename-references-and-loop-names.log)):
+
+`pnpm.cmd --filter @graphgoblin/web exec playwright test e2e/rename-references.spec.ts e2e/loop-names.spec.ts --retries=0 --reporter=list,json --output=<external dir>`
+
+The only additions to the preparation's command are the JSON reporter and `--output`, which sends Playwright's artifacts to my folder so the pre-existing `apps/web/test-results/.last-run.json` (sha256 `91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903`, from an earlier run) was not overwritten; it is unchanged. **The files hold 5 + 5 = 10 cases; all 10 passed** (40.2 s; 0 unexpected, 0 flaky, 0 skipped; Playwright 1.63.0, one worker, per-test timeout 60 s and expect timeout 10 s from the unchanged config; [`edge/results.json`](edge/results.json)). Edge: the config selects channel `msedge` on Windows (`GG_E2E_BROWSER_CHANNEL` was not set; a missing channel makes Playwright fail at launch), and the supplementary run's trace metadata shows browser `chromium`, channel `msedge`, Chrome/153.0.8010.12 user agent. The canonical run kept no traces.
+
+| Spec | Cases | Result |
+| --- | --- | --- |
+| `loop-names.spec.ts` (:52, :91, :146, :189, :230) | 5 | 5 passed |
+| `rename-references.spec.ts` (:198, :427, :597, :748, :859) | 5 | 5 passed |
+
+**Tier.** Built `apps/web/dist` served by the in-process API (`e2e/server.ts`), TypeScript-source API (`--conditions=development`, `tsx`) over an in-memory database with `FakeHarness`. This is **not** the independent compiled-gateway/file-SQLite tier, and no provider process ran.
+
+**Corrected held-Variables case** (`rename-references.spec.ts:597`, spec bytes equal the promotion map, sha256 `a547686e80d265343134ef03922b50ea69175ff2c34823c794f7184610d56c47`). It enters the unfinished `[1, ` through `holdCode` (select-all and `insertText`; no Backspace, so the empty value is never typed). Before any rename it asserts the server's accepted draft still has `variables = {key: {type: 'string'}}` and the original node ids, and `expect(saves).toHaveLength(0)` (zero PUTs). After the renames it asserts the text is still `[1, ` and the final stored `variables` equal the original. The only Backspace in the spec is in `codeAt` (used twice, in the Exit `returns` field of the :427 case). The held-Variables case passed.
+
+**Supplementary second run** (`--trace=on`, otherwise identical, [log](logs/32-edge-supplementary-trace-run.log), [results](edge-trace/results.json)): 10/10 passed again (45.8 s). It exists to obtain frames, and it also shows the pass repeats at retries 0. The canonical result is the first run.
+
+**Screenshots.** The specs take none, and the canonical run kept no attachments. I extracted screencast frames from the traced run and **viewed nine** (1440×900; one 360×800); notes on what each does and does not show, including one frame I first mislabelled and one whose conflict notice is hidden behind a dialog, are in [`edge-trace/inspected/INSPECTION-NOTES.md`](edge-trace/inspected/INSPECTION-NOTES.md). One extracted frame was never viewed and is separated in `edge-trace/unviewed/`. These are visual sanity checks, not a conformance review.
+
+## 7. Native QA: what to consume
+
+Use `manifests/postbuild/*.sha256` (13 listings) with `manifests/source-sha256.txt`, the bundle and API entry hashes above, and the dry-run-proven spec shape. Their 20 `requiredSources` and the 7 `mappedRuntime` paths are covered. `apps/web/dist/sw.js` may carry a newer mtime than the build; bytes are identical.
+
+## 8. Failed attempts and mistakes (none is a product or repository failure)
+
+1. [`manifests/merge-claims-check.txt`](manifests/merge-claims-check.txt): my comparison script read Git Bash `/tmp` from Node (`ENOENT C:\tmp`). The two lists were visible in the same output; I redid the comparison via stdin and appended it, leaving the error in place.
+2. [`manifests/bundle-source-check-prebuild.v1-with-dts-noise.json`](manifests/bundle-source-check-prebuild.v1-with-dts-noise.json) / [log 03a](logs/03a-bundle-source-check-prebuild.v1-with-dts-noise.log): the first pre-build run (expected MISMATCH, stale bundle) also printed "d.ts 0 equal", a meaningless comparison. I patched the verifier to stop comparing declaration entries. [Log 03b](logs/03b-patch-crash-first-rerun.log) is my patch's first re-run, which crashed (`TypeError … 'push'`) because my multi-line text replacement only half-applied; I fixed it with a targeted edit and re-ran as [log 03](logs/03-bundle-source-check-prebuild.log).
+3. A per-file test-count command failed on shell escaping (backslash handling in the Bash tool); I moved it to [`scripts/vitest-json-table.mjs`](scripts/vitest-json-table.mjs).
+4. `require()` of a `.js.map` file executed it as JavaScript and dumped source text to the terminal; I redid the query with `JSON.parse`. Nothing was written.
+5. One Bash command was **denied by the tool's permission mode**; nothing in it ran, and the denial did not say why. It was the one that would have deleted (`rmdir`) the empty directories I had created in item 6 and then extracted the traces, so I suspect the deletion, but that is a guess. I did not retry the deletion or work around the denial; I wrote the extraction script with the file tool and extracted into a new directory instead.
+6. Git Bash's GNU `tar` cannot read zip, so my first trace extraction created 10 empty directories plus `edge-trace/extracted/`. They remain, empty (0 files); I extracted into `edge-trace/trace-contents/` instead with PowerShell.
+7. I ran `git status --ignored` once by mistake; it walked `node_modules` link loops and flooded a record with path-length warnings. It is read-only, changed nothing, and I rewrote that record without it ([end-identity.txt](manifests/end-identity.txt) says so).
+8. A frame copy was first named for the wrong content (Monday still checked, not the alert); renamed and documented.
+
+## 9. Cleanup and ownership
+
+- No process of mine remains: final snapshot shows no Edge, e2e server, Playwright, Vitest or Turbo node process ([processes-final.json](manifests/processes-final.json)); the listener set is the same as the baseline, and the owner listener 4747 (PID 19500) was never touched or used. No port 4748 listener existed. My runs used ephemeral ports only.
+- Provider credentials present in the inherited environment (Azure OpenAI and Jev keys) were never read; they were unset for every gate (`scripts/env.sh`). No provider, Mac, other checkout or subagent was used.
+- After the Edge runs I scanned the system temp folder for `gg-*`, `*graphgoblin*`, `*e2e*` and `playwright*` entries modified in the previous 45 minutes and found none (the API test creates its own `gg-wp-c2-tests-*` root and removes it on close). Other temp names were not scanned.
+- **Created and left in place (all untracked and git-ignored or external):** `.turbo/local-cache` (30 files, 6.5 MB); the rebuilt dist trees (the deliverable); any caches the tools keep under git-ignored `node_modules` (not inspected); everything under this output folder, including `scratch-emit/` (from-scratch emits, outside the repo), `edge/`, `edge-trace/` (about 130 MB with the trace archives and their extraction), and an unused empty `evidence/` directory I created at the start.
+- **Untouched:** `apps/web/test-results/.last-run.json`, `apps/web/coverage/`, the owner store and ports, the index, refs, GitHub. I deleted nothing in the repository. The only file I deleted anywhere was one broken helper script of my own in this output folder (`scripts/vitest-json-table.mjs`, whose backslashes the shell tool had collapsed), which I immediately re-created correctly.
+
+## 10. Limits
+
+- Local verification at one head. Not the independent public native tier; not full-web coverage; not CI (per the brief, the first CI failed before coverage and the later gates, so those did not run there; my local `format:check` pass is not a CI result).
+- Row 12 and the extras are my selection of neighbours, not an exhaustive affected-test closure.
+- `git diff 16aa..HEAD` being docs-only is a Git-object fact; behavioral equivalence of the documentation is not assessed.
+- Frames are trace screencasts from the supplementary run. The 360 px frame does not show the name-guidance text.
+- The 5 contracts `.d.ts` ordering differences are observed, not explained.
+
+## 11. File index
+
+`handoff.md` (this file); `result.json`; `patch/`; `logs/` (numbered; `.meta` = command, versions, UTC times, exit); `manifests/` (identity, admission, 13-tree manifest sets, comparisons, source and bundle checks, ownership, scratch-emit comparisons, proposed and dry-run specs, process snapshots); `edge/` and `edge-trace/` (reports, traces, `inspected/`); `scratch-emit/`; `scripts/` (every tool used; `run-logged.sh` wraps each gate, `env.sh` sets Node and strips provider variables). The launcher's own `events.jsonl`, `latest.md` and `launch.json` are untouched by me.

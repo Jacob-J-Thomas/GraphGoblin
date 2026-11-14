@@ -1,0 +1,350 @@
+2026-11-14T22:07:37Z
+v22.23.4
+probe A: final batch-2 boundary tests against the batch-1 pointer-press.ts (checkpoint copy); every other file batch-2
+batch-2 pointer-press.ts sha256 4a128a64d624fdbaec39e0feca204706fadfebe3382f0628a4090dd1d1489c53 (backed up)
+3f4fc9089213151288175a0a60ef0f011689793a5a09f36644e2f3fc6ed7aa01 *apps/web/src/editor/pointer-press.ts
+5b5d70bca96295cc3789c59121fd737b313a54c6838f0ccb216acd649d66c573 *apps/web/src/editor/pointer-press.test.tsx
+947b4d3472e2b754d65bd63e3c25510104ab84ea69e57339e5b74cdef2e2784a *apps/web/src/editor/RenameNotice.test.tsx
+bbe8bd01110481da936a3c12385d8728a53c7ea3391af37451b581c505a600a9 *apps/web/src/editor/EditorPage.rename-activation.test.tsx
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web
+
+ ❯ src/editor/RenameNotice.test.tsx (2 tests | 1 failed) 483ms
+   × appears and changes only once a pointer press has delivered its click or ended (#273 A2) 32ms
+ ❯ src/editor/pointer-press.test.tsx (11 tests | 7 failed) 347ms
+   ❯ usePrimaryPress (#273 A2) (10)
+     × lasts through a mouse release until its click has been delivered 34ms
+     × ends at the click of a release elsewhere, delivered to the common ancestor 16ms
+     × ends a release no click follows, or whose click is stopped, at the next task 12ms
+     × follows a tap: its pointer events, then its compatibility mouse events and click 18ms
+     × ends at once when the window loses focus 10ms
+     × removes its listeners with the last subscriber and forgets a press under way 9ms
+   × holds a value while a press is under way and follows it otherwise 13ms
+ ❯ src/editor/EditorPage.rename-activation.test.tsx (8 tests | 2 failed) 14070ms
+   ❯ a pointer press that commits a self-reference rename (#273 A2) (8)
+     × adds exactly one operation on the repaired source, as one step after the rename 2773ms
+     × removes exactly the pressed row, keeping the repaired Coerce row and its held JSON 1768ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected [ { notice: true, focused: true } ] to deeply equal [ { notice: false, focused: true } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "focused": true,
+-     "notice": false,
++     "notice": true,
+    },
+  ]
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:190:20
+    188|     await release(user, add);
+    189|     // Exactly one click reached the pressed button, with nothing new …
+    190|     expect(clicks).toEqual([{ notice: false, focused: true }]);
+       |                    ^
+    191|     expect(operations('worker')).toEqual([REPAIRED, NOTE, ADDED]);
+    192|     expect(labels()).toEqual(['rename work to worker', 'edit config of…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > removes exactly the pressed row, keeping the repaired Coerce row and its held JSON
+AssertionError: expected [ { notice: true, focused: true } ] to deeply equal [ { notice: false, focused: true } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "focused": true,
+-     "notice": false,
++     "notice": true,
+    },
+  ]
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:272:20
+    270|
+    271|     await release(user, remove);
+    272|     expect(clicks).toEqual([{ notice: false, focused: true }]);
+       |                    ^
+    273|     expect(operations('worker')).toEqual([REPAIRED]);
+    274|     expect(labels().slice(-2)).toEqual(['rename work to worker', 'edit…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/editor/pointer-press.test.tsx > usePrimaryPress (#273 A2) > lasts through a mouse release until its click has been delivered
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Expected: "true"
+Received: "false"
+
+ ❯ src/editor/pointer-press.test.tsx:67:23
+     65|     expect(pressed()).toBe('true');
+     66|     fireEvent.pointerUp(button, { button: 0 });
+     67|     expect(pressed()).toBe('true');
+       |                       ^
+     68|     fireEvent.mouseUp(button, { button: 0 });
+     69|     expect(pressed()).toBe('true');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/editor/pointer-press.test.tsx > usePrimaryPress (#273 A2) > ends at the click of a release elsewhere, delivered to the common ancestor
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Expected: "true"
+Received: "false"
+
+ ❯ src/editor/pointer-press.test.tsx:83:23
+     81|     fireEvent.pointerUp(elsewhere, { button: 0 });
+     82|     fireEvent.mouseUp(elsewhere, { button: 0 });
+     83|     expect(pressed()).toBe('true');
+       |                       ^
+     84|     fireEvent.click(document.body);
+     85|     expect(atButton).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/editor/pointer-press.test.tsx > usePrimaryPress (#273 A2) > ends a release no click follows, or whose click is stopped, at the next task
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Expected: "true"
+Received: "false"
+
+ ❯ src/editor/pointer-press.test.tsx:93:23
+     91|     fireEvent.pointerDown(button, { button: 0 });
+     92|     fireEvent.pointerUp(button, { button: 0 });
+     93|     expect(pressed()).toBe('true');
+       |                       ^
+     94|     await nextTask();
+     95|     expect(pressed()).toBe('false');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/editor/pointer-press.test.tsx > usePrimaryPress (#273 A2) > follows a tap: its pointer events, then its compatibility mouse events and click
+AssertionError: expected [ 'false' ] to deeply equal [ 'true' ]
+
+- Expected
++ Received
+
+  [
+-   "true",
++   "false",
+  ]
+
+ ❯ src/editor/pointer-press.test.tsx:131:19
+    129|     fireEvent.mouseUp(button, { button: 0 });
+    130|     fireEvent.click(button);
+    131|     expect(shown).toEqual(['true']);
+       |                   ^
+    132|     expect(pressed()).toBe('false');
+    133|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/editor/pointer-press.test.tsx > usePrimaryPress (#273 A2) > ends at once when the window loses focus
+AssertionError: expected 'true' to be 'false' // Object.is equality
+
+Expected: "false"
+Received: "true"
+
+ ❯ src/editor/pointer-press.test.tsx:151:23
+    149|     fireEvent.pointerDown(button, { button: 0 });
+    150|     fireEvent.blur(window);
+    151|     expect(pressed()).toBe('false');
+       |                       ^
+    152|   });
+    153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/editor/pointer-press.test.tsx > usePrimaryPress (#273 A2) > removes its listeners with the last subscriber and forgets a press under way
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Expected: "true"
+Received: "false"
+
+ ❯ src/editor/pointer-press.test.tsx:169:23
+    167|     fireEvent.pointerDown(button, { button: 0 });
+    168|     fireEvent.pointerUp(button, { button: 0 });
+    169|     expect(pressed()).toBe('true');
+       |                       ^
+    170|     view.unmount();
+    171|     await nextTask();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/editor/pointer-press.test.tsx > holds a value while a press is under way and follows it otherwise
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  value 3 shown 2
+Received:
+  value 3 shown 3
+ ❯ src/editor/pointer-press.test.tsx:199:18
+    197|   fireEvent.pointerUp(button, { button: 0 });
+    198|   fireEvent.mouseUp(button, { button: 0 });
+    199|   expect(button).toHaveTextContent('value 3 shown 2');
+       |                  ^
+    200|   // The press's own click applies its edit at once; what it shows fol…
+    201|   fireEvent.click(button);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  src/editor/RenameNotice.test.tsx > appears and changes only once a pointer press has delivered its click or ended (#273 A2)
+AssertionError: expected <div role="status" …(1)>…(4)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="grid gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3 grid-cols-[auto_minmax(0,1fr)_auto] min-w-0 text-sm leading-snug text-default wrap-anywhere bg-status-warn-bg border-status-warn-border"
+  role="status"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0 row-span-2 mt-px size-[18px] text-status-warn-fg"
+    data-icon="alert"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"
+    />
+    <path
+      d="M12 10v4M12 17.2h.01"
+    />
+  </svg>
+  <p
+    class="col-start-2 font-semibold text-status-warn-fg"
+  >
+    Renamed start to begin
+  </p>
+  <div
+    class="col-start-2 min-w-0 [&_a]:text-link"
+  >
+    <div
+      class="grid gap-1.5"
+    >
+      <p>
+        Updated 1 connection. 
+        Plain text, JSON values and scripts are not changed.
+      </p>
+      <p>
+        Review 
+        one place
+         where
+         
+        <code>
+          start
+        </code>
+         may remain:
+      </p>
+      <ul
+        class="grid gap-1"
+      >
+        <li
+          class="grid justify-items-start gap-1"
+        >
+          <button
+            class="grid w-full gap-1 rounded-md px-2 py-1.5 text-left pointer-coarse:min-h-11 cursor-pointer hover:bg-surface-hover"
+            type="button"
+          >
+            <span
+              class="flex flex-wrap items-center gap-x-2 gap-y-1"
+            >
+              <span
+                class="inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-warn-bg text-status-warn-fg h-5 gap-1 px-[7px] text-[11px] [&_svg]:size-[11px]"
+              >
+                <svg … />
+                <span … />
+              </span>
+               
+              <span
+                class="font-mono text-2xs text-muted"
+              >
+                NODE_REFERENCE_UNCERTAIN
+              </span>
+            </span>
+             
+            <span
+              class="text-sm leading-snug text-default"
+            >
+              This field may depend on a dynamic, inherited, or authored node ID. Review it after renaming.
+            </span>
+             
+            <span
+              class="flex flex-wrap gap-x-2 text-xs text-muted"
+            >
+              <code>
+                node a
+              </code>
+               
+              <code>
+                config.operations.0.content
+              </code>
+            </span>
+          </button>
+        </li>
+      </ul>
+      <p>
+        Undo reverses the whole rename.
+      </p>
+    </div>
+  </div>
+  <button
+    aria-label="Dismiss notice"
+    class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px] -my-1.5 col-start-3 row-start-1 row-span-2 self-start"
+    data-alert-dismiss=""
+    type="button"
+  >
+    <svg
+      aria-hidden="true"
+      class="size-4 shrink-0"
+      data-icon="close"
+      fill="none"
+      focusable="false"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M6 6l12 12M18 6 6 18"
+      />
+    </svg>
+  </button>
+</div>
+
+ ❯ src/editor/RenameNotice.test.tsx:96:40
+     94|   fireEvent.pointerUp(add, { button: 0 });
+     95|   fireEvent.mouseUp(add, { button: 0 });
+     96|   expect(screen.queryByRole('status')).toBeNull();
+       |                                        ^
+     97|   fireEvent.click(add);
+     98|   expect(atClick).toEqual([false]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  10 failed | 11 passed (21)
+   Start at  16:07:38
+   Duration  23.94s (tests 42%, environment 30%, transform 11%, setup 9%, import 8%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\apps\web
+
+exit=1
+restored: 4a128a64d624fdbaec39e0feca204706fadfebe3382f0628a4090dd1d1489c53 -> 4a128a64d624fdbaec39e0feca204706fadfebe3382f0628a4090dd1d1489c53 match=yes

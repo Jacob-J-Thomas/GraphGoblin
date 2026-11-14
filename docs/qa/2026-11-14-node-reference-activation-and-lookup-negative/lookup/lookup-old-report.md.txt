@@ -1,0 +1,11 @@
+# Nested JSONata lookup retained-runtime negative controls
+
+Two independent cases passed as defect reproductions on clean `5a4fb439c63755eeb2b5bef945319772623a9905` with retained `164c01a2e3a52bf0ef69a409e1a428b45817b1b8` runtime, Node 22.23.4, compiled Fastify gateway and disposable file SQLite. The fixture used two domain entry points and 26 actual public HTTP requests. It does not count as a formal scan.
+
+1. The public immutable domain rename repaired the structural start-node edge but left `$lookup(outputs, outputs.start.value).value` unchanged. After a conditional HTTP save, the genuine new version published. On the old pinned graph the original `start` output resolves the test payload. In the new pinned graph that stale key produces JSON `null`. The installed direct evaluator gives `undefined` with the stale expression after rename and `chosen` with the manually repaired key. The outer unknown computed node warning remains appropriate. There is no claim of a public rename endpoint.
+2. An exact conditional save replaced the draft source with `$lookup(outputs, $string(counters.nodeVisits.missing))`. Gateway validation had no exact `NODE_REFERENCE_MISSING` and treated it as publishable. Actual Publish returned 200 and switched current from v1 to v2. Public immutable v1 readback remained exact and pinning it still yielded `original release`. Direct missing reference correctly reports an error, and an explicit genuinely optional `exists` inside the key remains non-blocking.
+
+Before and after artifact binding stayed byte-equal (`c66bf3368cd6f9e406ae64c5ec03bbb32bb69c4b069595eac59730ff853a7bcb`). The gateway and public probe exited normally with no fixture listener or process and no lock/WAL/SHM. The corrected mode in the retained driver requires repaired nested source, preserved outer uncertainty, identical pinned payload after change and exact `422 LOOP_INVALID` with immutable v1/current draft/token preservation.
+
+[HTTP/domain/run evidence](runs/corrected-lookup-old/observed.json) · [Before](corrected-binding-before.json) · [After](old-lookup-binding-after.json) · [Cleanup](cleanup-after-lookup.json)
+

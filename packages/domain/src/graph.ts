@@ -5,22 +5,11 @@ import {
   type Node,
   type NodeKind,
 } from '@graphgoblin/contracts';
-import { syntaxIssues } from './syntax.js';
+import { authoredSourceIssues } from './node-references.js';
 import { decisionRouteDeclarations } from './answers.js';
 
-export interface ValidationIssue {
-  code: string;
-  severity: 'error' | 'warning';
-  message: string;
-  /** Node or edge id the issue is about, when applicable. */
-  nodeId?: string;
-  edgeId?: string;
-  /**
-   * The field the issue is about, when one is: relative to the node (`config.prompt.template`)
-   * when `nodeId` is set, else to the definition (`settings.workingDirectory.template`).
-   */
-  path?: string;
-}
+import type { ValidationIssue } from './validation-issue.js';
+export type { ValidationIssue } from './validation-issue.js';
 
 /** Output ports a node exposes, derived from its kind and config. */
 export function outputPorts(node: Node): string[] {
@@ -314,7 +303,7 @@ export function validateLoop(def: LoopDefinition): ValidationIssue[] {
     }
   }
 
-  issues.push(...syntaxIssues(def));
+  issues.push(...authoredSourceIssues(def));
   return issues;
 }
 

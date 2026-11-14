@@ -1,0 +1,84 @@
+// Temporary measurement copied to apps/web/src/editor/zz-perf-273.test.ts, run once, then deleted.
+// It is not part of the change. It measures the editor's per-edit validation (validateDraft, run by
+// EditorPage on every definition change) on large graphs with authored references, and isolates the
+// new node-reference analysis by importing it from the frozen domain source.
+import { CURRENT_DEFINITION_FORMAT, LoopDefinitionSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
+import { renameLoopNode, syntaxIssues } from '@graphgoblin/domain';
+import { writeFileSync } from 'node:fs';
+import { it } from 'vitest';
+// eslint-disable-next-line
+import { nodeReferenceIssues } from '../../../../packages/domain/src/node-references.js';
+import { validateDraft } from './model.js';
+
+function graph(count: number): LoopDefinitionInput {
+  const nodes: LoopDefinitionInput['nodes'] = [
+    { id: 'n0', kind: 'trigger', label: 'Start', config: { type: 'manual' }, ui: { x: 0, y: 0 } },
+  ];
+  const edges: LoopDefinitionInput['edges'] = [];
+  for (let i = 1; i < count - 1; i += 1) {
+    const prev = `n${String(i - 1)}`;
+    const back = `n${String(Math.max(1, i - 7))}`;
+    const id = `n${String(i)}`;
+    const ui = { x: (i % 20) * 300, y: Math.floor(i / 20) * 200 };
+    if (i % 3 === 0)
+      nodes.push({
+        id, kind: 'mutate', label: id, ui,
+        config: {
+          operations: [
+            { op: 'set', path: `/vars/v${String(i)}`, value: { kind: 'expression', jsonata: `outputs.${prev}.value & "-" & $string(counters.nodeVisits.${back})` } },
+            { op: 'set', path: `/vars/w${String(i)}`, value: { kind: 'template', template: `{{ outputs.${back}.value }} after {{ counters.nodeVisits.${prev} }}` } },
+          ],
+        },
+      });
+    else
+      nodes.push({
+        id, kind: 'inference', label: id, ui,
+        config: {
+          prompt: {
+            template: `Step ${String(i)}.\n{% if outputs.${prev} %}Previous: {{ outputs.${prev}.value | json }}{% endif %}\n{% for item in outputs.${back}.value.items %}- {{ item }}\n{% endfor %}Visits: {{ counters.nodeVisits.${back} }}`,
+          },
+        },
+      });
+    edges.push({ id: `e${String(i)}`, from: { node: prev, port: 'out' }, to: { node: id, port: 'in' } });
+  }
+  const last = `n${String(count - 2)}`;
+  nodes.push({ id: 'done', kind: 'exit', label: 'Done', config: { returns: `{"result": outputs.${last}.value, "visits": counters.nodeVisits.${last}}` }, ui: { x: 0, y: 4000 } });
+  edges.push({ id: 'e-done', from: { node: last, port: 'out' }, to: { node: 'done', port: 'in' } });
+  return { schemaVersion: CURRENT_DEFINITION_FORMAT, name: `perf ${String(count)}`, nodes, edges };
+}
+
+function measure(fn: () => unknown, runs = 25): { median: number; p95: number; max: number } {
+  for (let i = 0; i < 3; i += 1) fn();
+  const times: number[] = [];
+  for (let i = 0; i < runs; i += 1) {
+    const start = performance.now();
+    fn();
+    times.push(performance.now() - start);
+  }
+  times.sort((a, b) => a - b);
+  const at = (q: number) => times[Math.min(times.length - 1, Math.ceil(q * times.length) - 1)]!;
+  const round = (n: number) => Math.round(n * 100) / 100;
+  return { median: round(at(0.5)), p95: round(at(0.95)), max: round(times.at(-1)!) };
+}
+
+it('measures editor validation and rename cost on large graphs', () => {
+  const rows: Record<string, unknown>[] = [];
+  for (const count of [100, 300]) {
+    const definition = graph(count);
+    const parsed = LoopDefinitionSchema.parse(definition);
+    const issues = validateDraft(definition).issues;
+    const errors = issues.filter((issue) => issue.severity === 'error');
+    if (errors.length) throw new Error(JSON.stringify(errors.slice(0, 3)));
+    const fields = parsed.nodes.length;
+    rows.push({
+      nodes: fields,
+      edges: parsed.edges.length,
+      issues: issues.length,
+      validateDraftMs: measure(() => validateDraft(definition)),
+      syntaxIssuesMs: measure(() => syntaxIssues(parsed)),
+      nodeReferenceIssuesMs: measure(() => nodeReferenceIssues(parsed)),
+      renameHeavilyReadNodeMs: measure(() => renameLoopNode(definition, 'n10', 'renamed')),
+    });
+  }
+  writeFileSync('C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-273-claude-phase1/11-perf-results.json', `${JSON.stringify(rows, null, 2)}\n`);
+}, 600000);

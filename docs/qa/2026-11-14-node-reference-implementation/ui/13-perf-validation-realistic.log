@@ -1,0 +1,27 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references/GraphGoblin/apps/web
+
+ ❯ src/editor/zz-perf-273.test.ts (1 test | 1 failed) 126ms
+   × measures editor validation and rename cost on large graphs 124ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/zz-perf-273.test.ts > measures editor validation and rename cost on large graphs
+Error: [{"code":"PORT_MULTIPLY_CONNECTED","severity":"error","message":"port \"out\" of node \"n2\" has more than one outgoing edge","edgeId":"e4"},{"code":"PORT_MULTIPLY_CONNECTED","severity":"error","message":"port \"out\" of node \"n5\" has more than one outgoing edge","edgeId":"e7"},{"code":"PORT_MULTIPLY_CONNECTED","severity":"error","message":"port \"out\" of node \"n8\" has more than one outgoing edge","edgeId":"e10"}]
+ ❯ src/editor/zz-perf-273.test.ts:87:30
+     85|     const issues = validateDraft(definition).issues;
+     86|     const errors = issues.filter((issue) => issue.severity === 'error'…
+     87|     if (errors.length) throw new Error(JSON.stringify(errors.slice(0, …
+       |                              ^
+     88|     const fields = parsed.nodes.length;
+     89|     rows.push({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  02:45:47
+   Duration  5.77s (environment 59%, setup 18%, transform 11%, import 10%, tests 2%)
+
+exit=1

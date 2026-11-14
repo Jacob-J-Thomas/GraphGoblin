@@ -1,0 +1,48 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.rename.test.tsx (7 tests | 1 failed) 14052ms
+   ❯ renaming a node in the editor (#273) (7)
+     × says nothing more than before for a rename that only moves connections 711ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename.test.tsx > renaming a node in the editor (#273) > says nothing more than before for a rename that only moves connections
+AssertionError: expected { id: 3, from: 'start', …(4) } to match object { Object (references, connections, ...) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "connections": 1,
+    "references": 0,
+-   "warnings": [],
++   "warnings": [
++     {
++       "code": "NODE_REFERENCE_UNCERTAIN",
++       "message": "This field may depend on a dynamic, inherited, or authored node ID. Review it after renaming.",
++       "nodeId": "done",
++       "path": "config.returns",
++       "severity": "warning",
++     },
++   ],
+  }
+
+ ❯ src/editor/EditorPage.rename.test.tsx:203:34
+    201|     await user.type(id, 'begin{Enter}');
+    202|     expect(store().definition!.edges[0]!.from.node).toBe('begin');
+    203|     expect(store().renameReport).toMatchObject({ references: 0, connec…
+       |                                  ^
+    204|     expect(screen.queryByText(/Renamed start to begin/)).toBeNull();
+    205|     expect(document.querySelectorAll('[role="status"]')).toHaveLength(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  02:40:20
+   Duration  22.08s (tests 64%, transform 13%, environment 11%, import 8%, setup 4%)
+
+exit=1

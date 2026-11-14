@@ -89,7 +89,14 @@ Validation rules enforced by `domain` before a version can be published:
 - Every output port is connected, including a marked gate's `limit-reached`. Exits are terminal and have no outputs.
 - Node configs validate against their kind's schema. Referenced variables exist. Referenced subloops exist and are published (checked by the API, which can see other loops; a loop may reference itself).
 - Every supplied Liquid template parses and every JSONata expression contains non-whitespace source and compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`, each with the field's `path`: `config.<path>` relative to its node, or `settings.<path>`). Empty and whitespace-only templates are valid and render exactly as authored. Omit optional blank expressions; the editor clears them. For optional templates, only exactly empty input means absent in the form; whitespace is preserved. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults.
+- A known read of a missing node in `counters.nodeVisits` or a missing decision gate in `gates` blocks publication (`NODE_REFERENCE_MISSING`). Direct existence checks warn (`NODE_REFERENCE_OPTIONAL_MISSING`). A missing `outputs` key can come from inherited or authored state and warns when its origin cannot be verified (`NODE_REFERENCE_OUTPUT_UNVERIFIED`). Dynamic and scoped accesses that the authoring checks cannot establish report `NODE_REFERENCE_UNCERTAIN`.
 - No edge targets a trigger node's input.
+
+Reference validation follows the field's evaluation context. An LLM or classifier decision's
+message predicate and a subloop's input message or artifact predicate run against the selected
+item and access the current run through `$thread`. Subloop input variable expressions run against
+the parent thread directly, including a variable named `where`. In a JSONata filter or group
+within a thread expression, `$$` can still refer to the original thread after the focus changes.
 
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected

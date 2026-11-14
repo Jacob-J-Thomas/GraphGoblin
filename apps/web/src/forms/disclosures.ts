@@ -107,6 +107,38 @@ export function createCollectionIdentities(identities: DisclosureIdentities, val
   };
 }
 
+/** The length of the list at a dotted form path, or -1 where there is none. */
+function listLength(value: unknown, path: string): number {
+  let current = value;
+  for (const key of path.split('.')) {
+    if (typeof current !== 'object' || current === null) return -1;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return Array.isArray(current) ? current.length : -1;
+}
+
+/**
+ * Give `next` the row ids recorded for `previous`, when `next` replaced it by an edit that changed
+ * values inside rows but kept every collection's rows in place: a rename's reference repair
+ * rewrites strings only. A form remounting with `next` then keeps its rows, so their open state
+ * and focus follow them. Nothing is carried when a recorded collection's length differs; rows are
+ * never matched by their contents.
+ */
+export function carryCollectionIdentities(
+  identities: DisclosureIdentities,
+  previous: unknown,
+  next: unknown,
+): void {
+  if (typeof previous !== 'object' || previous === null) return;
+  if (typeof next !== 'object' || next === null || identities.snapshots.has(next)) return;
+  const rows = identities.snapshots.get(previous);
+  if (!rows) return;
+  const kept = Object.keys(rows).every(
+    (path) => listLength(previous, path) === listLength(next, path),
+  );
+  if (kept) identities.snapshots.set(next, rows);
+}
+
 export const CollectionIdentitiesContext = createContext<
   ReturnType<typeof createCollectionIdentities> | undefined
 >(undefined);

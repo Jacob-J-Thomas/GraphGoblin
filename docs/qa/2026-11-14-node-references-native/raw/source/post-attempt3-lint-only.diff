@@ -1,0 +1,11 @@
+--- C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-273-claude-phase2/logs/09-e2e-rename-attempt3.spec.ts.txt	2026-11-14 07:09:07.759729100 -0600
++++ apps/web/e2e/rename-references.spec.ts	2026-11-14 07:42:40.314568000 -0600
+@@ -86,7 +86,7 @@
+ /** Every draft save the page sends, with the answer the API gave it. */
+ function draftSaves(page: Page, loopId: string) {
+   const saves: { ifMatch: string | undefined; definition: Definition; status: number }[] = [];
+-  page.on('response', async (response) => {
++  page.on('response', (response) => {
+     const sent = response.request();
+     if (sent.method() !== 'PUT' || !sent.url().endsWith(`/loops/${loopId}/draft`)) return;
+     saves.push({

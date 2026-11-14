@@ -7,15 +7,21 @@ export * from './errors.js';
 export * from './chat.js';
 export * from './pointer.js';
 export * from './patch.js';
-export * from './template.js';
+export { checkTemplate, renderTemplate } from './template.js';
 export * from './template-bundle.js';
-export * from './expression.js';
+export {
+  checkExpression,
+  evaluateExpression,
+  evaluatePredicate,
+  type ExpressionOptions,
+} from './expression.js';
 export * from './thread-view.js';
 export * from './json-schema.js';
 export * from './mutations.js';
 export * from './graph.js';
 export * from './answers.js';
-export * from './syntax.js';
+export { findAuthoredSources, syntaxIssues } from './syntax.js';
+export { renameLoopNode, type NodeRenameResult } from './node-references.js';
 export * from './state-machine.js';
 export * from './loop-io.js';
 export * from './replay.js';

@@ -1,0 +1,21 @@
+--- e2e/rename-references.spec.ts	2026-11-14 07:42:40.314568000 -0600
++++ C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-273-claude-phase2/proposed/rename-references.spec.ts	2026-11-14 07:44:08.360270500 -0600
+@@ -661,6 +661,9 @@
+   await expect(start.getByRole('alert')).toHaveText('Choose at least one day.');
+   await start.getByRole('button', { name: 'Done', exact: true }).click();
+   await expect(page.getByRole('dialog')).toHaveCount(0);
++  // The draft's variables before any rename (clearing the field before typing emptied its value).
++  await saved(page);
++  const variablesBefore = (await serverDraft(request, loopId)).definition.variables;
+ 
+   // Click: the id applies as focus leaves, and focus lands in the remounted form's field.
+   let gate = await openNode(page, 'gate');
+@@ -727,7 +730,7 @@
+     'counters.nodeVisits."loop-gate" > 2 ? "stop" : "again"',
+   );
+   expect(nodeOf(stored, 'start').config['expression']).toBe('30 7 * * 1');
+-  expect(stored.variables).toEqual({ key: { type: 'string' } });
++  expect(stored.variables).toEqual(variablesBefore);
+ });
+ 
+ test('a rename in a stale tab waits for Overwrite or Reload, and nothing is lost unseen', async ({
