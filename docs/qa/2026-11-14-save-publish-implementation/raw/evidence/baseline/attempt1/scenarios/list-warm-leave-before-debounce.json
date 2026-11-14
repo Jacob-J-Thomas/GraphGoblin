@@ -1,0 +1,362 @@
+{
+  "name": "list-warm-leave-before-debounce",
+  "network": [
+    {
+      "t": 703,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 703,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 703,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 704,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 715,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 717,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 717,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 8
+      }
+    },
+    {
+      "t": 754,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 861,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D7XVVTMMKMAMY6AYEV7QND",
+      "ifMatch": null
+    },
+    {
+      "t": 861,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 861,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 862,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 862,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 862,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 867,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D7XVVTMMKMAMY6AYEV7QND",
+      "status": 200,
+      "body": {
+        "loop": "#237 mwgigd48 N5 warm-leave-before-debounce A",
+        "current": {
+          "id": "01M7D7XVVTMMKMAMY6AYEV7QNE",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N5 warm-leave-before-debounce A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "1ad48f91806a60b1"
+      }
+    },
+    {
+      "t": 922,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 923,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 923,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 924,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 925,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 985,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7XVVTMMKMAMY6AYEV7QND/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N5 warm-leave-before-debounce A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 989,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7XVVTMMKMAMY6AYEV7QND/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    }
+  ],
+  "barriers": [],
+  "steps": [
+    {
+      "t": 36,
+      "note": [
+        "publish A",
+        200
+      ]
+    },
+    {
+      "t": 60,
+      "note": [
+        "provider-free run on A",
+        202,
+        "queued"
+      ]
+    }
+  ],
+  "ui": {
+    "listBefore": {
+      "a": "#237 mwgigd48 N5 warm-leave-before-debounce A desc A Updated 11/14/2026, 8:38:34 AM published succeeded Edit Export Delete",
+      "b": "#237 mwgigd48 N5 warm-leave-before-debounce B desc B Updated 11/14/2026, 8:38:34 AM draft only never run Edit Export Delete"
+    }
+  },
+  "rest": {
+    "before": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgigd48 N5 warm-leave-before-debounce A",
+          "description": "desc A",
+          "currentVersionId": "01M7D7XVVTMMKMAMY6AYEV7QNE",
+          "draftVersionId": null
+        },
+        "current": {
+          "id": "01M7D7XVVTMMKMAMY6AYEV7QNE",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N5 warm-leave-before-debounce A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "1ad48f91806a60b1"
+      },
+      "versions": [
+        {
+          "id": "01M7D7XVVTMMKMAMY6AYEV7QNE",
+          "version": 1,
+          "status": "published"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgigd48 N5 warm-leave-before-debounce A",
+        "description": "desc A",
+        "runCount": 1,
+        "latestRun": "succeeded"
+      }
+    },
+    "controlBefore": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgigd48 N5 warm-leave-before-debounce B",
+          "description": "desc B",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D7XVW7P1SJ8V55KM854KGA"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D7XVW7P1SJ8V55KM854KGA",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgigd48 N5 warm-leave-before-debounce B",
+          "description": "desc B",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "8495f96c98a82e93"
+      },
+      "versions": [
+        {
+          "id": "01M7D7XVW7P1SJ8V55KM854KGA",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgigd48 N5 warm-leave-before-debounce B",
+        "description": "desc B",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {},
+  "pageErrors": [],
+  "consoleErrors": [],
+  "error": "locator.click: Error: strict mode violation: locator('header').getByRole('link', { name: 'Loops', exact: true }) resolved to 2 elements:\n    1) <a href=\"/app/loops\" aria-current=\"page\" data-discover=\"true\" class=\"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active\">…</a> aka getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Loops' })\n    2) <a href=\"/app/loops\" data-discover=\"true\" class=\"touch-target text-muted no-underline hover:text-default hover:underline\">Loops</a> aka getByRole('link', { name: 'Loops' }).nth(1)\n\nCall log:\n\u001b[2m  - waiting for locator('header').getByRole('link', { name: 'Loops', exact: true })\u001b[22m\n\n    at toLoops (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\drivers\\native-237.mjs:275:82)\n    at scenarios.<computed> (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\drivers\\native-237.mjs:492:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-237-claude-implementation/drivers/native-237.mjs:810:5"
+}

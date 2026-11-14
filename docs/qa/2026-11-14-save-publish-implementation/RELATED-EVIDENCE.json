@@ -1,0 +1,52 @@
+{
+  "schema": "related-evidence/v1",
+  "relationship": "Follow-up native diagnostic for a phase 1 candidate source hypothesis. Original implementation report and handoff are preserved unchanged.",
+  "package": "../2026-11-14-publish-retry-readback-diagnostic",
+  "evidenceHead": "e12b81ec9767b9bfd3d6e649025023796b2bc638",
+  "evidenceTree": "636dcdb5c7344a55bbdbe4c673b8fc707cdfdf2d",
+  "observationSummary": {
+    "heldInput": {
+      "readbackStatus": 200,
+      "unexpectedPublishPostStatus": 200,
+      "immutableVersionCreated": 2,
+      "expectedNoExtraPost": false
+    },
+    "newEditor": {
+      "readbackStatus": 200,
+      "unexpectedPublishPostStatus": 200,
+      "immutableVersionCreated": 2,
+      "expectedNoExtraPost": false
+    },
+    "healthyControl": {
+      "readbackStatus": 200,
+      "oneIntendedRetryPost": true,
+      "expectedNoExtraPost": true
+    },
+    "interpretation": "The initial publish was dropped before gateway admission and the first reconciliation readback failed. The deliberate retry readback was a real GET whose response was held while user state changed. Releasing that response allowed an additional publish POST in both negative cases."
+  },
+  "linkedFiles": [
+    {
+      "file": "README.md",
+      "sha256": "681786b16e44562aa2a65a7577cc2789288f6bd5ecab8226575a5aaf087778cd"
+    },
+    {
+      "file": "observations.json",
+      "sha256": "93f40a9895460cedbf23320d423723ae315d4ba53da45715bb8676343199ae67"
+    },
+    {
+      "file": "binding-before.json",
+      "sha256": "bd8fa3a11e4442fc3d13f1a535ae70b6a6e3fb3e1d511a18c01d9ce4cfc15db8"
+    },
+    {
+      "file": "served.json",
+      "sha256": "3cd2b7470941fe277f26c1ed5164eb11de0a0cc0d77d019820f6a0552ca48b7c"
+    },
+    {
+      "file": "cleanup.json",
+      "sha256": "37a16dd4145ead1d58302674ebe9a013e4b4c52d895c9548d2e6a47b4a861557"
+    }
+  ],
+  "rawDiagnosticNotCopied": true,
+  "rawPhase1HandoffAndReportUnchanged": true,
+  "curationSourcePath": "save-publish-237-readback-diagnostic/proposed/docs/qa/2026-11-14-publish-retry-readback-diagnostic"
+}

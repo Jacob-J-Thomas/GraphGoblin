@@ -1,0 +1,262 @@
+--- originals/readback-diagnostic.gateway.mjs	2026-11-14 10:29:22.652203800 -0600
++++ gateway.mjs	2026-11-14 10:32:50.436843800 -0600
+@@ -5,33 +5,40 @@
+ import { dirname, join, relative } from 'node:path';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ 
++// COPIED from save-publish-237-readback-diagnostic/gateway.mjs (sha256 5acd0212...) and modified
++// for the DIRTY #237+#209 integration candidate: HEAD e12b81ec with MERGE_HEAD 2367b15b and an
++// uncommitted working resolution. Instead of a clean tree and a Git-object mapping, it requires
++// the binding written by bind.mjs immediately before (identity, working-file source hashes and
++// every built file) and asserts the same identity and source bytes when it closes.
++// Usage: node gateway.mjs <worktree> <HEAD> <MERGE_HEAD> <source-paths.json> <binding-before.json>
+ const worktree = await realpath(process.argv[2]);
+ const expected = process.argv[3];
++const expectedMerge = process.argv[4];
+ const evidence = await realpath(dirname(fileURLToPath(import.meta.url)));
+ assert(relative(worktree, evidence).startsWith('..'));
+-const git = (...args) => execFileSync('git', args, { cwd: worktree, encoding: 'utf8' }).trim();
+-const identity = () => ({ head: git('rev-parse','HEAD'), tree: git('rev-parse','HEAD^{tree}'), status: git('status','--porcelain=v1') });
++const digest = (value) => createHash('sha256').update(value).digest('hex');
++const git = (...args) => execFileSync('git', args, { cwd: worktree, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim();
++const identity = () => ({ head: git('rev-parse','HEAD'), mergeHead: git('rev-parse','MERGE_HEAD'),
++  tree: git('rev-parse','HEAD^{tree}'), status: git('status','--porcelain=v1'), index: digest(git('ls-files','-s')) });
+ const start = identity();
+ assert.equal(start.head, expected);
+-assert.equal(start.status, '');
+-const bound = JSON.parse(await readFile(process.argv[5], 'utf8'));
+-assert.equal(bound.head, start.head, 'Preflight evidence is for another checkout');
+-assert.equal(bound.tree, start.tree, 'Preflight evidence is for another tree');
+-assert.equal(bound.mapping?.id, 'candidate-attempt1-ui-v1');
++assert.equal(start.mergeHead, expectedMerge);
++const bound = JSON.parse(await readFile(process.argv[6], 'utf8'));
++for (const key of ['head', 'mergeHead', 'tree', 'status', 'index'])
++  assert.equal(bound[key], start[key], 'Binding is for another candidate state: ' + key);
+ const dist = join(worktree,'apps','web','dist');
+ const apiEntry = join(worktree,'apps','api','dist','main.js');
+-const sourceFields = JSON.parse(await readFile(process.argv[4], 'utf8'));
++const sourceFields = JSON.parse(await readFile(process.argv[5], 'utf8'));
+ assert(Array.isArray(sourceFields) && sourceFields.length > 0, 'Affected source paths required');
+ for (const file of sourceFields) assert(!relative(worktree, join(worktree,file)).startsWith('..'));
+-const digest = (value) => createHash('sha256').update(value).digest('hex');
+-for (const [file, hash] of Object.entries(bound.mapping.sourceHashes)) {
+-  assert.equal(digest(execFileSync('git', ['show', expected+':'+file], {cwd: worktree})), hash,
+-    'Frozen candidate no longer matches the browser observation mapping: '+file);
+-}
+ const sourceHashes = Object.fromEntries(await Promise.all(sourceFields.map(async f => [f, digest(await readFile(join(worktree,f)))])));
++assert.deepEqual(sourceHashes, bound.sourceHashes, 'Working sources changed since binding');
+ const buildFiles = ['index.html', ...(await readdir(join(dist,'assets'))).filter(f => /\.(?:css|js)$/.test(f)).map(f => 'assets/'+f)];
+ const buildHashes = Object.fromEntries(await Promise.all(buildFiles.map(async f => [f, digest(await readFile(join(dist,f)))])));
++for (const [file, hash] of Object.entries(buildHashes))
++  assert.equal(bound.built['apps/web/dist/' + file], hash, 'Built web file changed since binding: ' + file);
+ const apiEntryHash = digest(await readFile(apiEntry));
++assert.equal(bound.built['apps/api/dist/main.js'], apiEntryHash, 'Built API entry changed since binding');
+ const scratch = await mkdtemp(join(evidence,'gateway-store-'));
+ for (const k of Object.keys(process.env)) {
+   if (/^GG_|^(?:JEV_API_KEY|CODEX_HOME|CLAUDE_CONFIG_DIR|OLLAMA_HOST)$/i.test(k)) delete process.env[k];
+@@ -65,7 +72,8 @@
+     served[file] = actual;
+   }
+   const startRecord = { ...start, scratch, url, pid:process.pid, node:process.version, sourceHashes,
+-    buildHashes, served, apiEntryHash, mapping: bound.mapping };
++    buildHashes, served, apiEntryHash, binding: { observedAt: bound.observedAt,
++      builtFileCount: bound.builtFileCount, builtManifestSha256: bound.builtManifestSha256 } };
+   await writeFile(join(evidence,'gateway.json'),JSON.stringify(startRecord,null,2)+'\n');
+   console.log('GG_QA_READY '+url);
+   await new Promise((done) => {
+--- originals/readback-diagnostic.diagnostic-attempt1.executed.playwright.js	2026-11-14 10:29:22.681751600 -0600
++++ verify-readback.playwright.js	2026-11-14 10:30:33.165058300 -0600
+@@ -2,7 +2,10 @@
+   const url = new URL(page.url());
+   const origin = url.origin;
+   const targetGroup = url.searchParams.get('qa-group') || 'all';
+-  const mapping = 'candidate-attempt1-ui-v1';
++  // COPIED from save-publish-237-readback-diagnostic/diagnostic-attempt1.executed.playwright.js
++  // (sha256 940a197a...). Modified only: this mapping label, the admitted qa-group, and a
++  // screenshot after each variant's assertions. Assertions and barriers are unchanged.
++  const mapping = 'integration-237-209-dirty-candidate';
+   const statusWith = (target, text) => target.getByRole('status').filter({ hasText: text });
+   const publishError = (target, text) => target.getByRole('alert')
+     .filter({ has: target.getByText('Publish failed', { exact: true }) }).filter({ hasText: text });
+@@ -395,6 +398,7 @@
+         entry.method === 'GET' && entry.path === path && entry.status === 200)?.seq < postings(id)[1].seq,
+         'Healthy POST followed the delivered preflight response');
+       outcomes.push({ active, capturedRead, newPublication });
++      await page.screenshot({ path: 'after-readback-' + variant + '.png', animations: 'disabled' });
+       return;
+     }
+     const unexpectedResponse = await unexpected;
+@@ -419,11 +423,12 @@
+       'Earlier attempt did not write its own notices in the new load');
+     }
+     outcomes.push({ active, capturedRead, currentUI, after });
++    await page.screenshot({ path: 'after-readback-' + variant + '.png', animations: 'disabled' });
+   }
+ 
+   try {
+     check(/^http:\/\/127\.0\.0\.1:[0-9]+$/.test(origin) && !/:474[78]$/.test(origin), 'Refused browser origin');
+-    check(targetGroup === 'readback-diagnostic', 'Only the scoped readback diagnostic is admitted');
++    check(targetGroup === 'readback-integration', 'Only the scoped readback integration check is admitted');
+     for (const variant of ['held-input', 'new-load', 'healthy']) {
+       const firstBarrier = barriers.length, firstPage = addedPages.length;
+       try {
+--- originals/name-retry-invalid-209.verify-invalid-retry.playwright.js	2026-11-14 10:29:22.739686200 -0600
++++ verify-u2-readiness.playwright.js	2026-11-14 10:31:41.343543900 -0600
+@@ -1,7 +1,13 @@
+ async (page) => {
++  // COPIED from name-retry-invalid-209-independent/verify-invalid-retry.playwright.js (sha256
++  // e473363f...), a BASELINE driver that asserted the #209 U2 defect. Modified for the corrected
++  // #237+#209 integration candidate: fixture, helpers and the real-refusal stage are unchanged;
++  // the later stages now assert the corrected U2 behavior (the invalid save ends the attempt
++  // without a PUT and offers Try again again; repair alone sends nothing; one fresh Try again sends
++  // one PUT), and #237 readiness beside the refusal and the Publish refusal are added.
+   const origin = new URL(page.url()).origin;
+   const suffix = crypto.randomUUID().slice(0, 8);
+-  const posts = [], observations = [], pageErrors = [];
++  const posts = [], publishes = [], observations = [], pageErrors = [];
+   let stage = 'fixture setup';
+   let failure = null;
+   const check = (test, message) => { if (!test) throw new Error(message); };
+@@ -21,7 +27,19 @@
+       posts.push({ time: Date.now(), stage, path, ifMatch: req.headers()['if-match'] ?? null,
+         type: req.method(), definition: req.postDataJSON().definition });
+     }
++    if (req.method() === 'POST' && /^\/loops\/[^/]+\/publish$/.test(path))
++      publishes.push({ time: Date.now(), stage, path });
+   });
++  const READY = 'Ready to publish';
++  const NAME_REFUSAL = 'Another loop already has this name; choose a different name before publishing.';
++  async function readiness(label) {
++    const ready = await page.getByText(READY, { exact: true }).count();
++    const unavailable = page.getByText('Validation unavailable', { exact: true });
++    const shown = await unavailable.count();
++    const value = { label, ready, unavailable: shown, title: shown ? await unavailable.getAttribute('title') : null };
++    observations.push({ stage: 'readiness: ' + label, ...value });
++    return value;
++  }
+   async function api(method, path, status, data, token) {
+     const r = await page.request.fetch(origin + path, { method, timeout: 10000,
+       ...(data === undefined ? {} : { data }),
+@@ -112,6 +130,7 @@
+     await nameBox().waitFor(wait);
+     await page.getByText('The editor is available. Checking the server and this device before saving changes.', { exact: true })
+       .waitFor({ state: 'hidden', timeout: 9000 });
++    await page.getByText(READY, { exact: true }).waitFor(wait);
+     const pendingConflict = putResponse(id);
+     await nameBox().fill(name);
+     const refusal = await tapResponse(pendingConflict, 409, 'LOOP_NAME_CONFLICT');
+@@ -120,6 +139,19 @@
+     equal(await detail(id), original, 'Initial refusal preserved exact target');
+     equal(posts.length, 1, 'Exactly one browser PUT before invalid edit');
+ 
++    stage = 'readiness and Publish beside the name refusal (#237)';
++    await page.getByText('Validation unavailable', { exact: true }).waitFor(wait);
++    const refusedReadiness = await readiness('refused name');
++    equal(refusedReadiness, { label: 'refused name', ready: 0, unavailable: 1, title: NAME_REFUSAL },
++      'No readiness claim beside a known name refusal');
++    await snapshot('refused name');
++    await page.screenshot({ path: 'u2-refused-readiness.png', animations: 'disabled' });
++    await page.getByRole('button', { name: 'Publish', exact: true }).click();
++    await page.getByRole('alert').filter({ has: page.getByText('Publish failed', { exact: true }) })
++      .filter({ hasText: NAME_REFUSAL }).waitFor(wait);
++    equal(publishes.length, 0, 'Publish sent nothing beside the refusal');
++    equal(posts.length, 1, 'Publish sent no draft save beside the refusal');
++
+     stage = 'invalid companion input and explicit retry';
+     const invalidDescription = 'V'.repeat(3988) + 'INVALID-4001!';
+     equal(invalidDescription.length, 4001, 'Native input has exactly the unsupported size');
+@@ -128,16 +160,15 @@
+     await page.keyboard.insertText(invalidDescription);
+     equal(await descriptionBox().inputValue(), invalidDescription, 'Native description retained invalid text');
+     await notice().getByRole('button', { name: 'Try again', exact: true }).click();
+-    await notice().getByRole('button', { name: 'Trying again…', exact: true }).waitFor(wait);
+     const invalidLocal = await device(id, name, invalidDescription, false);
+     equal(invalidLocal.baseToken, original.draftToken, 'Unsynced invalid draft keeps original token');
+     await page.evaluate(() => new Promise((done) => setTimeout(done, 1000)));
+-    const stuck = await snapshot('invalid retry after full autosave interval');
+-    const busy = stuck.retry.find((button) => button.text === 'Trying again…');
+-    check(busy?.ariaDisabled === 'true' && busy?.ariaBusy === 'true', 'Retry does not stay busy after schema refusal');
++    const ended = await snapshot('invalid retry after full autosave interval');
++    equal(ended.retry, [{ text: 'Try again', disabled: false, ariaDisabled: null, ariaBusy: null }],
++      'The invalid save ended the attempt and Try again is offered again');
+     equal(posts.length, 1, 'Invalid retry sent no browser PUT');
+     equal(await detail(id), original, 'Invalid retry preserved exact server content');
+-    await page.screenshot({ path: 'baseline-invalid-retry-stuck.png', animations: 'disabled' });
++    await page.screenshot({ path: 'u2-invalid-retry-offered.png', animations: 'disabled' });
+ 
+     stage = 'release name while invalid';
+     const clear = await api('PUT', draftPath(holderId), 200,
+@@ -147,34 +178,56 @@
+     equal(await detail(id), original, 'Freeing the name did not change target');
+ 
+     stage = 'repair description only without a second retry';
+-    const wouldSave = putResponse(id);
+     const repaired = 'Edited companion description without another retry';
+     await descriptionBox().click();
+     await page.keyboard.press('ControlOrMeta+A');
+     await page.keyboard.insertText(repaired);
+     equal(await nameBox().inputValue(), name, 'Conflicting name unchanged from refused text');
+-    const unexpected = await tapResponse(wouldSave, 200);
+-    equal(posts.length, 2, 'Repair alone triggered exactly one unexpected PUT');
+-    equal(posts[1].stage, stage, 'Unexpected PUT was sent during repair-only stage');
++    await page.evaluate(() => new Promise((done) => setTimeout(done, 1500)));
++    equal(posts.length, 1, 'Repair alone sent no browser PUT');
++    equal(await detail(id), original, 'Repair alone left the exact server content');
++    const repairedLocal = await device(id, name, repaired, false);
++    equal(repairedLocal.baseToken, original.draftToken, 'Repaired unsynced draft keeps original token');
++    const held = await snapshot('after repair only');
++    equal(held.save, 'Not saved: name in use', 'Repaired draft still held by the refusal');
++    equal(held.retry, [{ text: 'Try again', disabled: false, ariaDisabled: null, ariaBusy: null }],
++      'Try again still offered after repair');
++    equal((await readiness('repaired, still refused')).title, NAME_REFUSAL, 'Readiness still says why');
++
++    stage = 'one fresh deliberate Try again';
++    const fresh = putResponse(id);
++    await notice().getByRole('button', { name: 'Try again', exact: true }).click();
++    const accepted = await tapResponse(fresh, 200);
+     const next = { ...original.draft.definition, name, description: repaired };
+-    equal(unexpected.request.definition, next, 'Unexpected request carried same name and repaired description');
+-    equal(unexpected.ifMatch, '"' + original.draftToken + '"', 'Unexpected request used allowed original token');
+-    equal(unexpected.body.draft.id, original.draft.id, 'Target draft identity stable');
++    equal(accepted.request.definition, next, 'Fresh retry sent the refused name and repaired description');
++    equal(accepted.ifMatch, '"' + original.draftToken + '"', 'Fresh retry used the original token');
++    equal(accepted.body.draft.id, original.draft.id, 'Target draft identity stable');
++    await notice().waitFor({ state: 'hidden', timeout: 9000 });
++    await page.waitForFunction(() => document.querySelector('[data-testid="save-state"]')?.textContent === 'All changes saved',
++      null, wait);
++    await page.evaluate(() => new Promise((done) => setTimeout(done, 1000)));
++    equal(posts.length, 2, 'One fresh deliberate retry sent exactly one PUT');
+     const persisted = await detail(id);
+-    equal(persisted.draft.definition, next, 'Actual stored definition agrees with unauthorized retry');
+-    check(persisted.draftToken !== original.draftToken, 'Unexpected save advanced content token');
++    equal(persisted.loop.name, name, 'Server holds the retried name');
++    equal(persisted.draft.definition, next, 'Stored definition is the fresh retry request');
++    check(persisted.draftToken !== original.draftToken, 'Accepted save advanced content token');
+     const synced = await device(id, name, repaired, true);
+-    equal(synced.baseToken, persisted.draftToken, 'Actual device copy marked synced to unexpected write');
+-    const done = await snapshot('after repair-only PUT');
+-    await page.screenshot({ path: 'baseline-repair-only-saved.png', animations: 'disabled' });
+-    observations.push({ stage: 'exact-state-readbacks', refusal, original, invalidLocal, stuck, clearedHolder: clear.draft,
+-      unexpected, persisted, synced, finalUi: done });
++    equal(synced.baseToken, persisted.draftToken, 'Device copy synced to the accepted save');
++    await page.getByText(READY, { exact: true }).waitFor(wait);
++    const readyAgain = await readiness('after the accepted retry');
++    equal([readyAgain.ready, readyAgain.unavailable], [1, 0], 'Readiness returns once saved and checked');
++    const done = await snapshot('after fresh retry');
++    await page.screenshot({ path: 'u2-fresh-retry-saved.png', animations: 'disabled' });
++    observations.push({ stage: 'exact-state-readbacks', refusal, original, invalidLocal, ended, clearedHolder: clear.draft,
++      repairedLocal, held, accepted, persisted, synced, finalUi: done });
++    equal(publishes.length, 0, 'No publish request in this scenario');
+     equal(pageErrors, [], 'Unexpected browser page errors');
+   } catch (error) {
+     failure = { stage, message: String(error), stack: error.stack };
+     await snapshot('first fixture failure').catch(() => {});
+-    await page.screenshot({ path: 'first-failure.png', animations: 'disabled' }).catch(() => {});
++    await page.screenshot({ path: 'first-failure-u2.png', animations: 'disabled' }).catch(() => {});
+   }
+-  return { suite: 'invalid-companion-209', origin, browser: await page.evaluate(() => navigator.userAgent),
+-    posts, observations, pageErrors, failure, reproduced: failure === null };
++  return { suite: 'u2-invalid-repair-fresh-retry-and-237-readiness', origin,
++    browser: await page.evaluate(() => navigator.userAgent),
++    posts, publishes, observations, pageErrors, failure, passed: failure === null };
+ }

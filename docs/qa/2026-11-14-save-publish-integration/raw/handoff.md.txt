@@ -1,0 +1,240 @@
+# #237 integration with the #209 U1/U2 correction, and the confirmed retry correction · handoff
+
+**Status.** The merge conflict is resolved in the working file. The confirmed awaited-readback gap is fixed. The deferred readiness caption was reproduced and corrected. Focused tests, types, lint, format, a forced build and bounded native Edge verification all pass.
+
+Model `claude-opus-5-5` (Claude Opus 5.5), from the runtime and `launch.json`. Requested effort `xhigh`, from `launch.json`. The actual internal reasoning level is not observable and is not claimed.
+
+Nothing was staged, committed, pushed or published. I ran no `git merge`, `checkout`, `reset`, `restore` or `cherry-pick`. Git was used read-only (`show`, `diff`, `rev-parse`, `ls-files`, `hash-object`). I did not use providers, the owner service or store, ports 4747/4748, credentials, other checkouts or subagents. The heavy local slot is **released**: no build, test, gateway or browser process of this task is running.
+
+## Identity
+
+| Item | Value |
+| --- | --- |
+| Worktree | `C:/Users/98jak/.codex/worktrees/gg-20261114-save-publish/GraphGoblin` |
+| HEAD | `e12b81ec9767b9bfd3d6e649025023796b2bc638`, tree `636dcdb5c7344a55bbdbe4c673b8fc707cdfdf2d` (unchanged) |
+| MERGE_HEAD | `2367b15b310eac52d95af77c570d5ce36f741527` (unchanged); merge base `0d2fad63` |
+| Index | sha256 of `git ls-files -s` was `912616ba…0359e703` at start and at the end. The unresolved `useAutosave.ts` stages 1/2/3 are untouched. |
+
+Root still has to stage the resolved `useAutosave.ts` and my working changes. [start-identity.txt](manifests/start-identity.txt) · [final-files.txt](manifests/final-files.txt)
+
+## Changed files (working tree only)
+
+| File | Change | sha256 / blob |
+| --- | --- | --- |
+| `apps/web/src/editor/useAutosave.ts` | Conflict resolved (union of both parents) | `d17c4447…` / `9ecbeb3d` |
+| `apps/web/src/editor/usePublish.ts` | Recheck immediately before every POST; exported refusal sentences (+20/−8) | `caa73998…` / `2ef506ea` |
+| `apps/web/src/editor/EditorPage.tsx` | Readiness caption beside a refusal (+13/−3 on the staged merge) | `b6646c06…` / `5e3966d8` |
+| `apps/web/src/editor/EditorPage.publish.test.tsx` | Five new tests (+194) | `b571aab1…` / `b633d8ee` |
+| `docs/09-frontend-and-pwa.md` | Recheck wording, Readiness bullet, Beside Publish clause, Regression note (+4/−3 on the staged merge) | `63a12ac2…` / `ba22111e` |
+| `CHANGELOG.md` | #237 entry extended (+6/−3) | `c0d34cba…` / `eef9f785` |
+
+I did not change the five other merged paths (`EditorPage.name-conflict.test.tsx`, `store.ts`, `LoopsPage.tsx`, `loop-names.test.tsx`, `docs/guide/02-build-a-loop.md`). Each working file still equals its staged blob.
+
+There are no API, contract, schema, format, dependency, timeout, threshold or exclusion changes, and no compatibility path.
+
+Diffs:
+
+- [vs e12 HEAD](diffs/worktree-vs-e12-HEAD.diff)
+- [vs 2367 MERGE_HEAD](diffs/worktree-vs-2367-MERGE_HEAD.diff)
+- [my #237 correction vs index stage 0](diffs/worktree-vs-index-stage0-237-correction.diff)
+- [useAutosave vs ours](diffs/useAutosave-resolved-vs-ours-e12.diff)
+- [useAutosave vs theirs](diffs/useAutosave-resolved-vs-theirs-2367.diff)
+- Final copies: [backups/final/](backups/final/)
+
+## 1 · Conflict resolution: `useAutosave.ts`
+
+The only conflict was the `save` callback. The conflicted working file is kept as [useAutosave.ts.conflicted-working](backups/useAutosave.ts.conflicted-working) (sha256 `2221a18d…`).
+
+The resolution takes #209's structure:
+
+- `save(retry?: NameRetry)`
+- `settle()` on every early return and in `try/finally` around the queued `send()`
+- a `permit` kept only for the matching loop and generation, spent by one request
+- `deliberate`, and the removed generic branch that cleared another attempt's `retrying`
+
+It re-applies #237's three in-body changes:
+
+- the per-hook `chain` advance for the same generation
+- `recordSaved(queryClient, …)` with refresh after an accepted write
+- `setSaveState('saved', …, { revision, definition: saved.draft.definition, token })`, the acknowledged definition
+
+I checked this mechanically:
+
+- **Resolved vs theirs** differs only by #237's delta: imports, no `latestTokens`, the `recordSaved` signature and docs, `CONFLICT_MESSAGE`, `chain`, the unmount save on its own generation, and the ack payload.
+- **Resolved vs ours** (`-w`) differs only by #209's delta.
+- There is no global `latestTokens` and no `retrying`-as-permission. `retrying` only drives the busy display in `NameConflictNotice`.
+
+The other `flush` callers (`usePublish`, `useResolveConflict`, the debounce timer, the recovery and online events) all call `flush()` with no permit. So a generic save cannot consume a deliberate retry.
+
+**Auto-merged files inspected:**
+
+- `EditorPage.tsx` = e12 plus exactly #209's `retryName` change.
+- `store.ts` = e12 (acknowledged save, #273 rename report and form epochs) plus #209's `NameRetry` type and `retrying` doc.
+- `LoopsPage.tsx`, `loop-names.test.tsx` and `EditorPage.name-conflict.test.tsx` equal the 2367 blobs, because only #209 changed them.
+- `docs/09` = e12 plus exactly #209's three changed lines.
+- `guide/02` keeps both #209's naming paragraph and #273's node-rename paragraph.
+
+## 2 · Confirmed defect: awaited readback could bypass the dispatch check
+
+**Cause.** In the e12 code, the queued job checked the load and refusals once, then `await readBack(...)` when `checkFirst`, then POSTed with no second check.
+
+**Fix.** One local `sendable()` check: same loop and generation, otherwise `undefined`; then `refusal()` (held input, draft conflict, name refusal), which throws. It runs when the queue reaches the attempt (as before) and again immediately before `loops.publish`, with no await in between.
+
+What each path after the check does now:
+
+- **Check failed:** unchanged. The outcome is unknown with `sent: false` and nothing is posted. The next Publish still checks first.
+- **Current version holds the acknowledged draft:** unchanged. Nothing to publish, no write. With held input the notice adds "changes made after that are not published".
+- **Mismatch, but the load was replaced meanwhile:** returns `undefined`. Nothing is sent and the new load shows nothing. The old attempt's outcome never reaches it, through the existing `ours` filter.
+- **Mismatch, but held input, a conflict or a name refusal appeared meanwhile:** the refusal is thrown and shows as **Publish failed** with the editor's existing wording. No POST is sent and the held input stays local. A later explicit Publish proceeds as usual, because the successful check has already settled the unknown outcome, consistent with the existing "check OK → Publish again" path.
+- **Healthy:** exactly one POST after the check.
+
+Acknowledged-content capture, immutable version comparison, divergence → conflict, refresh, queue semantics and notice wording are unchanged.
+
+## 3 · Readiness caption (deferred from the #209 review)
+
+**Reproduced** in the integrated source with focused tests, before any change:
+
+- With a name refusal, **Ready to publish** (the cached check of the server's copy, keyed by the unchanged token) showed beside **Not saved: name in use**.
+- The same happened in a draft conflict.
+
+**Fix**, derived from the UI with no new state, copy or toolbar change:
+
+- `EditorPage` computes `heldReason`: `CONFLICT_REFUSAL` while `conflict` holds, else `NAME_REFUSAL` while the name notice applies (`showNameConflict`).
+- These are the same sentences Publish's `refusal()` uses, now exported constants.
+- The indicator then uses its existing `'error'` state, **Validation unavailable**, with that sentence as its tooltip. A catalog failure's reason still takes precedence.
+
+Held input already shows as issues, so it is unaffected. Publish stays clickable and refuses as before.
+
+`docs/guide/02-build-a-loop.md` still describes **Validation unavailable** as "when the server could not be asked (offline, say)". That remains broadly true, but the guide is outside my granted doc scope, so I did not edit it. Root or Luna may add the refusal case.
+
+## 4 · Focused tests and first failures (fake API; synthetic tier)
+
+Five new tests are in `EditorPage.publish.test.tsx`. They drive the public Publish button, Loops link, editor link, Name field and Reload button.
+
+- Three cover "Publish after an unknown outcome, while its check is answered":
+  - held input during the held check
+  - another editor opened during the held check
+  - healthy control: one POST, after the check
+- Two cover readiness: a name refusal, and a draft conflict.
+
+The fixture loses the first POST before admission and fails only the one readback GET, so no query goes offline. It then holds only loop A's detail read, and asserts that exactly one new GET is in flight before the state change. Held Variables input is injected through `setFieldError` with `input: 'unparsed text'`, the state the Variables control writes. The native run types it for real.
+
+| Run | Result | Log |
+| --- | --- | --- |
+| Baseline: integrated merge before any #237 change (22 affected files) | 250/250 pass | [01](logs/01-baseline-integrated-prefix.log) |
+| **First failures:** new tests on the original e12 `usePublish.ts` (blob `dedef8ac`) and the staged pre-fix `EditorPage.tsx` (blob `152a6331`) | 4 fail, healthy passes. Held input: no refusal; the full DOM shows **published v2**, "Published version 2… changes made after that are not published." New editor: POST count 2, expected 1. Readiness: **Ready to publish** present in both. | [02](logs/02-first-failures-new-tests-original-runtime.log), [02b](logs/02b-held-input-original-runtime-fulldom.log) |
+| After fix: publish and usePublish suites | 26/26 | [03](logs/03-publish-suites-after-fix.log) |
+| **Proof:** final tests on the original runtime | 4 fail / 22 pass: exactly the four new negatives fail; the healthy control and all 21 earlier tests pass | [07](logs/07-proof-final-tests-on-original-runtime.log) |
+| **Proof:** corrected runtime restored | 26/26 | [08](logs/08-proof-final-tests-on-corrected-runtime.log) |
+| Affected suites on the final candidate (22 files) | **255/255** | [09](logs/09-focused-affected-after-fix.log) |
+| Other suites asserting readiness: ClassifierField.editor, harness-switch, template-readiness | 38/38 | [10](logs/10-readiness-related-suites.log) |
+
+**Proof procedure:**
+
+1. Corrected `usePublish.ts` and `EditorPage.tsx` were backed up to [backups/corrected/](backups/corrected/) and hashed into [corrected-runtime-sha256-before-proof.txt](manifests/corrected-runtime-sha256-before-proof.txt).
+2. The originals were written from `git show HEAD:` and `git show :0:` into [backups/original/](backups/original/), copied in, and their blobs verified as `dedef8ac` and `152a6331` ([proof-original-swap.txt](manifests/proof-original-swap.txt)).
+3. The corrected files were then restored and checked: 2/2 OK ([proof-restore-check.txt](manifests/proof-restore-check.txt)).
+
+The 22 affected files ([focused-files.txt](manifests/focused-files.txt)) cover:
+
+- the publish, reconcile and usePublish suites
+- name-conflict, loop-names, lib/loop-names, LoopsPage and TemplateGallery (import)
+- useAutosave
+- EditorPage conflict, device, undo, freshness, restore, voice and EditorPage itself
+- useLoadEditor and its review suite
+- rename and store.rename (#273)
+- ValidationIndicator and save-status
+
+Run 01 invoked Vitest as `node node_modules/vitest/vitest.mjs`, with Node 22.23.4 first on PATH. Every later run used `pnpm exec vitest`.
+
+**Static checks on the final bytes:** Prettier `--check` on all six changed files passes ([11](logs/11-prettier-check-final.log)). ESLint `--max-warnings=0` on the four changed TS/TSX files reports 0 problems ([12](logs/12-eslint-final.log)). The web typecheck `tsc -p tsconfig.json --noEmit` passes ([13](logs/13-web-typecheck-final.log)).
+
+I ran no whole-web coverage and no full-repository suites, as instructed.
+
+## 5 · Forced build
+
+**Builders read first:**
+
+- `turbo.json` declares outputs `dist/**` and `dist-goblin/**`.
+- Vite builds `dist`, and `dist-goblin` with `emptyOutDir`.
+- The plugin builders run `node dist/cli.js` into `tooling/plugin-output.mjs`, which refuses a destination containing files it does not own (`.graphgoblin-plugin-output.json`). Both plugin outputs carried that manifest, so there was no refusal.
+- The API copies its catalog.
+
+**Command:** `pnpm.cmd build --force --cache-dir=.turbo/local-cache`, 16:27:13–16:27:29Z. 12/12 tasks executed, 0 cached, exit 0 ([14](logs/14-build-force.log), [meta](logs/14-build-force.meta)).
+
+`pnpm.cmd` resolved to `C:/nvm4w/nodejs/pnpm.cmd`, the standalone pnpm 12.8.1 executable. It runs package scripts with the first `node` on PATH, which is the project's v22.23.4 (`pnpm.cmd exec node --version`).
+
+**Outputs** ([prebuild](manifests/prebuild/) vs [postbuild](manifests/postbuild/) per-file sha256, 1,227 files):
+
+- The web bundle `assets/index-Di6OAoli.js` became `assets/index-DK8I-ydH.js` (`34d23072…`), with its map (`d8852751…`).
+- `index.html` (`818f7fcd…`), `sw.js` (`4c8cf497…`) and its map changed, and `dist-goblin/sw.js.map` changed.
+- All 1,171 other built files are byte-identical, including the API, MCP, plugins and packages.
+- The new bundle's source map contains the corrected `usePublish` source.
+
+## 6 · Bounded native verification (actual Edge, compiled gateway, file SQLite)
+
+**Tier.** These are native public-UI observations: Windows Edge 157.0.4341.46 (headless, `channel: msedge`, fresh isolated context per driver, service workers blocked, 1280×900, light), driven by the repository's Playwright 1.63.0. The gateway is the exported `main` of the built `apps/api/dist/main.js` (sha256 `e011151e…`) on Node 22.23.4, with disposable file SQLite under [native/gateway-store-PUmmvQ](native/) on 127.0.0.1:52761, with no API key and no providers. These were not source-TS or fake-memory runs.
+
+The independent runs used a `playwright-cli` named session, which is not on PATH here. [run-native.mjs](native/run-native.mjs) calls the same `async (page) => …` drivers directly.
+
+**Copied drivers** (originals untouched; copies and sha256 in [native/originals/](native/originals/) and [originals.sha256](native/originals.sha256); every modification is in [modifications.diff](native/modifications.diff)):
+
+- **`gateway.mjs`** (from `save-publish-237-readback-diagnostic`). The clean-tree and e12 Git-object mapping checks are replaced by the dirty-candidate binding: HEAD, MERGE_HEAD, tree, porcelain status, index digest, 25 working-file source hashes, the served web build and the API entry against [binding-before.json](native/binding-before.json). On close it re-asserts identity and source bytes. The git `maxBuffer` is raised. Store, environment scrubbing, port refusal, provider stubs and served-byte checks are unchanged.
+- **`verify-readback.playwright.js`** (from `diagnostic-attempt1.executed.playwright.js`). Only the mapping label, the admitted `qa-group` (`readback-integration`) and a screenshot after each variant changed. The barriers and assertions are unchanged: they already assert zero extra POSTs, the held-input refusal, no feedback in the new load, and one healthy POST after the GET 200.
+- **`verify-u2-readiness.playwright.js`** (from `name-retry-invalid-209-independent/verify-invalid-retry.playwright.js`, a **baseline driver that asserted the U2 defect**). The fixture, helpers and real-refusal stage are unchanged. The later assertions now encode the corrected U2 behavior, and #237 readiness and Publish-refusal checks are added.
+
+**First harness failure.** `bind.mjs`'s first run failed with `spawnSync git ENOBUFS` on `git ls-files -s` (Node's 1 MiB `execFileSync` buffer), before any gateway or browser started. I fixed it with `maxBuffer` in `bind.mjs` and `gateway.mjs`. Record: [15](logs/15-native-harness-first-failure-enobufs.txt).
+
+**Run:** 16:33:05–16:33:21Z ([16](logs/16-native-run-1.log), [run-summary.json](native/run-summary.json)). Both drivers passed on their first run: 0 driver failures, 0 page errors, gateway exit 0.
+
+**Readback** ([observed-readback.json](native/observed-readback.json)): each variant loses its first browser POST before upstream, fails its readback GET, then holds the real retry GET (200: old current v1 and the accepted draft) at the barrier.
+
+- **Held input.** Native typing of `[` into Variables while the GET waited. After release: 1 POST in total, v1 still current, the accepted draft still pending, **Publish failed** "Some fields hold input…", and the held text kept.
+- **New editor.** "Other load during readback" opened via Loops while the GET waited. After release: 1 POST, v1 current, and that editor's text and notices unchanged.
+- **Healthy.** Exactly one more POST, sent after the delivered GET 200, published the accepted full draft as a distinct v2. Both immutable versions read back.
+
+**U2 and readiness** ([observed-u2-readiness.json](native/observed-u2-readiness.json)):
+
+1. The real rename hit 409 `LOOP_NAME_CONFLICT`. Beside it the indicator showed **Validation unavailable** (tooltip: the name refusal), with no **Ready to publish**.
+2. Publish → **Publish failed** with the name sentence, 0 POSTs.
+3. A 4,001-character description, then Try again: 0 PUTs, **Try again** offered again (not busy), unsynced device copy on the original token.
+4. The holder was freed by an independent API write. Repairing the description alone sent 0 PUTs and still read "Not saved: name in use".
+5. One fresh Try again sent 1 PUT (200, original If-Match). Then "All changes saved", the device copy synced to the new token, and **Ready to publish** returned.
+
+**Console.** 9 `net::ERR_FAILED` entries in the readback run, 3 per variant, all from the driver's deliberate aborts. 1 entry in the U2 run, from the deliberate 409. The warnings are service-worker registrations blocked by configuration, as in the independent run.
+
+**Screenshots inspected:**
+
+- [held input](native/after-readback-held-input.png): **published v1**, Publish failed with the held-input sentence, 1 error, `[{` held in Variables
+- [new editor](native/after-readback-new-load.png): the other loop's editor, no publish feedback
+- [healthy](native/after-readback-healthy.png): **published v2**, "Published version 2."
+- [refused readiness](native/u2-refused-readiness.png): **Not saved: name in use** and **Validation unavailable**
+- [invalid retry](native/u2-invalid-retry-offered.png): Try again enabled, 1 error, "Saved on this device only"
+- [fresh retry](native/u2-fresh-retry-saved.png): **All changes saved** and **Ready to publish**
+
+**Cleanup.**
+
+- No Edge or Playwright processes, gateway (pid 43568) or orchestrator (pid 41632) remain, and nothing is listening on 52761 ([cleanup-processes.json](native/cleanup-processes.json)).
+- [gateway-closed.json](native/gateway-closed.json) shows `listening: false`.
+- The store directory holds only `graphgoblin.db` and the generated `master.key` of the disposable store (no WAL, SHM or lock). The key is not reproduced anywhere.
+- [binding-after.json](native/binding-after.json) equals binding-before in identity, index, all 25 sources and all 1,227 built files.
+- `gateway.log` contains only the ready line.
+
+## 7 · Observations not changed (for root and the reviewer)
+
+1. **A "Publish failed" refusal stays until the next Publish attempt.** In the fresh-retry screenshot, the earlier "Publish failed — Another loop already has this name…" remains after the name was accepted. The same applies to the held-input refusal after the input is discarded. This predates #237: at `700ce251` the publish error was likewise the mutation's error, shown until the next attempt with no dismiss control. It is not a readiness claim, and I left it unchanged as outside the confirmed scope.
+2. **Unconfirmed, source-level only: an earlier refusal clears check-first.** After an unknown outcome whose check failed, a Publish refused *before* its check (held input at click or at the queue turn) replaces the mutation data. The next Publish then has `checkFirst: false` and sends without reading the server first. This is pre-existing in phase1. My fix adds no new path of this kind: a refusal after the check only happens once the check succeeded, and a failed check still returns an unknown outcome with check-first preserved. It was not natively reproduced and I did not change it. Root may decide whether it warrants a separate item.
+
+## Correction batches
+
+One implementation batch: resolution, the readback recheck, the readiness caption, tests and docs. After it, the only further change was the harness `maxBuffer` fix, which is not a product change. No assertion, retry, timeout or coverage setting was weakened. Nothing remains that needs a second batch.
+
+## Remaining gates (not done here)
+
+- Root staging and commit of this resolution and correction.
+- The final #209 and #273 parent merges and promotion.
+- Fresh current exact-head CI, including whole-web coverage. Phase 1's 98.52/94.03 is historical.
+- Independent QA after root freeze.
+- Opposite-family GPT UI review.
+- A fresh whole-PR Astra max audit.
+- Owner acceptance, as "Part of" #237, never auto-closed.

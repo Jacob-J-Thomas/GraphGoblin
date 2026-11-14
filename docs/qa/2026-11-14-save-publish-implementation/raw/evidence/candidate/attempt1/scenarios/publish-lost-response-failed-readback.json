@@ -1,0 +1,697 @@
+{
+  "name": "publish-lost-response-failed-readback",
+  "network": [
+    {
+      "t": 523,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 524,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 524,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "ifMatch": null
+    },
+    {
+      "t": 525,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 525,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 525,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 526,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 526,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 529,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 532,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 535,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N4b",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "2ee7c28ed4edc08d"
+      }
+    },
+    {
+      "t": 536,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 638,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 639,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 639,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 642,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 672,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N4b",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 676,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1324,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G/draft",
+      "ifMatch": "\"2ee7c28ed4edc08d\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1334,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G/draft",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "a18e9169071bae04"
+      }
+    },
+    {
+      "t": 1339,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "ifMatch": null
+    },
+    {
+      "t": 1343,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "a18e9169071bae04"
+      }
+    },
+    {
+      "t": 1347,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1352,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1473,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G/publish",
+      "ifMatch": null
+    },
+    {
+      "t": 1489,
+      "ev": "failed",
+      "method": "POST",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G/publish",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "t": 1490,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "ifMatch": null
+    },
+    {
+      "t": 1492,
+      "ev": "failed",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "t": 1493,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "ifMatch": null
+    },
+    {
+      "t": 1497,
+      "ev": "failed",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "t": 1871,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "ifMatch": null
+    },
+    {
+      "t": 1879,
+      "ev": "failed",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "t": 1880,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "ifMatch": null
+    },
+    {
+      "t": 1882,
+      "ev": "failed",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "error": "net::ERR_FAILED"
+    },
+    {
+      "t": 2008,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "ifMatch": null
+    },
+    {
+      "t": 2016,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "status": 200,
+      "body": {
+        "loop": "#237 mwgjuqim N4b",
+        "current": {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "a18e9169071bae04"
+      }
+    },
+    {
+      "t": 2018,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "ifMatch": null
+    },
+    {
+      "t": 2025,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA6QRNV68HNZDW27VAP98G",
+      "status": 200,
+      "body": {
+        "loop": "#237 mwgjuqim N4b",
+        "current": {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "a18e9169071bae04"
+      }
+    }
+  ],
+  "barriers": [
+    {
+      "t": 1473,
+      "barrier": "publish",
+      "ev": "issued-by-browser-held",
+      "mode": "abort-after-commit"
+    },
+    {
+      "t": 1487,
+      "barrier": "publish",
+      "ev": "gateway-answered",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1488,
+      "barrier": "publish",
+      "ev": "aborted-to-browser"
+    },
+    {
+      "t": 1490,
+      "barrier": "detail",
+      "ev": "aborted-in-browser"
+    },
+    {
+      "t": 1493,
+      "barrier": "detail",
+      "ev": "aborted-in-browser"
+    },
+    {
+      "t": 1871,
+      "barrier": "detail",
+      "ev": "aborted-in-browser"
+    },
+    {
+      "t": 1880,
+      "barrier": "detail",
+      "ev": "aborted-in-browser"
+    }
+  ],
+  "steps": [
+    {
+      "t": 1334,
+      "note": [
+        "A1 PUT",
+        200
+      ]
+    },
+    {
+      "t": 1487,
+      "note": [
+        "POST answered at gateway (dropped before the browser)",
+        200,
+        {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      ]
+    },
+    {
+      "t": 1853,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\candidate\\attempt1\\screens\\publish-lost-response-failed-readback-first.png"
+    },
+    {
+      "t": 2234,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\candidate\\attempt1\\screens\\publish-lost-response-failed-readback-third.png"
+    }
+  ],
+  "ui": {
+    "first": {
+      "path": "/app/loops/01M7DA6QRNV68HNZDW27VAP98G/edit",
+      "heading": "#237 mwgjuqim N4b",
+      "header": "Loops / #237 mwgjuqim N4b draft only All changes saved Undo edit loop description Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [
+        "Publish not confirmedThe GraphGoblin API cannot be reached. Checking the server failed too: The GraphGoblin API cannot be reached. It is not known whether the draft saved for this publish was published. Publish again checks the server first."
+      ],
+      "name": "#237 mwgjuqim N4b",
+      "description": "A1",
+      "publishButton": "Publish"
+    },
+    "second": {
+      "path": "/app/loops/01M7DA6QRNV68HNZDW27VAP98G/edit",
+      "heading": "#237 mwgjuqim N4b",
+      "header": "Loops / #237 mwgjuqim N4b draft only All changes saved Undo edit loop description Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [
+        "Publish not confirmedChecking the server before publishing again failed: The GraphGoblin API cannot be reached. Nothing was sent, and it is still not known whether the earlier request published the draft saved for this publish."
+      ],
+      "name": "#237 mwgjuqim N4b",
+      "description": "A1",
+      "publishButton": "Publish"
+    },
+    "third": {
+      "path": "/app/loops/01M7DA6QRNV68HNZDW27VAP98G/edit",
+      "heading": "#237 mwgjuqim N4b",
+      "header": "Loops / #237 mwgjuqim N4b published v1 All changes saved Undo edit loop description Redo Open in Runs Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [
+        "Nothing to publish: version 1 already holds this draft."
+      ],
+      "name": "#237 mwgjuqim N4b",
+      "description": "A1",
+      "publishButton": "Publish"
+    }
+  },
+  "rest": {
+    "final": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "currentVersionId": "01M7DA6QRNV68HNZDW27VAP98H",
+          "draftVersionId": null
+        },
+        "current": {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N4b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "a18e9169071bae04"
+      },
+      "versions": [
+        {
+          "id": "01M7DA6QRNV68HNZDW27VAP98H",
+          "version": 1,
+          "status": "published"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgjuqim N4b",
+        "description": "A1",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "blind retry after an unknown outcome whose check failed": {
+      "expected": "unknown kept unknown; the next Publish checks first and sends nothing while the check fails; one version",
+      "notices": [
+        [
+          "Publish not confirmedThe GraphGoblin API cannot be reached. Checking the server failed too: The GraphGoblin API cannot be reached. It is not known whether the draft saved for this publish was published. Publish again checks the server first."
+        ],
+        [
+          "Publish not confirmedChecking the server before publishing again failed: The GraphGoblin API cannot be reached. Nothing was sent, and it is still not known whether the earlier request published the draft saved for this publish."
+        ],
+        [
+          "Nothing to publish: version 1 already holds this draft."
+        ]
+      ],
+      "posts": [
+        1,
+        1,
+        1
+      ],
+      "versions": 1,
+      "reproduced": false
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED",
+    "Failed to load resource: net::ERR_FAILED"
+  ]
+}

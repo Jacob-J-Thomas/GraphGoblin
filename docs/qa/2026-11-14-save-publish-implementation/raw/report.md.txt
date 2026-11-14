@@ -1,0 +1,54 @@
+I implemented #237 in the checkout. All eight asserted defects (D1–D8) reproduced natively before any change, and none recurred natively after it. Nothing was committed, staged or pushed, and no issue or PR was written. **The heavy slot is free.**
+
+**Baseline.** The setup was the clean, force-rebuilt `700ce251`, its built gateway on a fresh file-SQLite store, and Edge 157. Barriers were real browser route holds: requests held before admission, replies held after commit, and replies dropped after commit.
+- **D1:** "Published version 1." was shown while the editor held newer work, and also inside a newer editor load.
+- **D2:** another writer's draft was published under the clicked draft's success message. A competing publish produced a false "nothing to publish", and a page reload then silently dropped the user's draft.
+- **D3:** a lost reply was reported as "Publish failed" although the server had published.
+- **D4:** input typed during the save did not stop the publish.
+- **D5 (#156):** after a save, the Loops list stayed stale until the 5-second poll (about 6.6 s) in all three orders tested.
+- **D6:** an old leaving save borrowed another load's token and overwrote the other writer's draft, and in a second variant, a draft the user had just reloaded.
+- **D7:** publish re-ran the open draft's validation.
+- **D8:** this was only a hypothesis and is now confirmed. A re-entered editor showed older content as "All changes saved" while the server held the newer draft.
+
+The first driver attempt failed on an ambiguous "Loops" link; that output is kept unchanged.
+
+**What changed:**
+- **New `usePublish.ts`:** publishing now runs in the editor's save queue, and every barrier is rechecked just before the POST.
+- **Notice copy:** the notice compares the version the server actually stored with the draft it acknowledged for this attempt, and says nothing about who wrote a different draft.
+- **Lost or failed replies:** these are read back before anything is claimed. If that check also fails, the next Publish checks the server before sending anything.
+- **List and loop detail:** these are refreshed after every accepted save, including the save sent on leaving the editor, and an older read can't overwrite the result.
+- **Base token:** a leaving save uses only its own editor load's token, or is skipped if that load was replaced.
+- **Docs:** docs/09, guide/03 and the CHANGELOG are updated. There is no API, migration or format change.
+
+**Checks:**
+
+| Check | Result |
+| --- | --- |
+| Typecheck, lint, format on changed files | clean |
+| Focused unit tests (editor, loops, api, runs/new) | 866/866 passed |
+| New tests run against the original source | 20 of 21 failed; the 21st was corrected and now fails there too |
+| Native candidate, 17 scenarios (incl. clean-load no-op, failed readback, newer publication) | no defect observed; guards held |
+| Whole web coverage (one run) | 2,529 tests passed; lines 98.52%, branches 94.03% |
+| Affected existing Edge e2e specs | 38/38 passed |
+
+The candidate source and build are bound by hash manifests, and source and build were unchanged at the end. No processes remain.
+
+**Decisions a reviewer should check:**
+- **Autosaves wait behind a slow publish.** Natively, the next save went out 21–32 ms after the held reply was released. This ordering is what stops the editor's own later work from slipping in before the server accepts the publish.
+- **Mismatch recovery.** A confirmed mismatch puts the editor into the existing conflict state, so the user's work is kept and Reload/Overwrite decides.
+- **Copy changes.** The publish notice no longer has its own "Open in Runs" link (root refinement 3). The conflict notice body no longer says "another tab or device"; its title is unchanged.
+- **Test fixture changes.** The fake API now updates the summary description on save and can publish as another writer. Two autosave tests now get contract-shaped held replies; their assertions are unchanged.
+- **Possible copy tweak, not made.** When a lost reply's check finds the draft already published, the title still reads "Publish not confirmed".
+
+**Not done and not claimed:**
+- Screenshots exist only at 1280×800 in the dark theme. There were no narrow-width, light-theme, focus or screen-reader checks.
+- The full e2e suite was not run.
+- Three uncommon branches in `usePublish.ts` are not covered by tests.
+
+**Setup notes:**
+- My first build used Turbo's shared cache in the main repository checkout. It restored 5 tasks from it, and Turbo would have written entries there for the 5 tasks it rebuilt. Every later build was forced into a checkout-local cache, so all native evidence uses locally built artifacts.
+- The very first `git status` briefly showed staged deletions while the checkout was still being written; it was clean on re-check minutes later.
+
+Still required: GPT review, separate behavior QA, exact-head full CI, a fresh Astra audit within the 3-scan cap, root integration once the pending #209/#273 parent gates clear, and owner acceptance under "Part of #237".
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-237-claude-implementation`; open `handoff.md` first.

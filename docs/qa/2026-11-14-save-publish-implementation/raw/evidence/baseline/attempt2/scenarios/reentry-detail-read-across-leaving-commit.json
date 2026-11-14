@@ -1,0 +1,507 @@
+{
+  "name": "reentry-detail-read-across-leaving-commit",
+  "network": [
+    {
+      "t": 439,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 439,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 439,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D81WNK1MSR6E1ST28DYJ2R",
+      "ifMatch": null
+    },
+    {
+      "t": 440,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 440,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 441,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 442,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 442,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 442,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 442,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 444,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D81WNK1MSR6E1ST28DYJ2R",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81WNK1MSR6E1ST28DYJ2S",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "9384822f1a0530b2"
+      }
+    },
+    {
+      "t": 444,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 516,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 517,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 519,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 526,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 582,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D81WNK1MSR6E1ST28DYJ2R/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 588,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D81WNK1MSR6E1ST28DYJ2R/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 728,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 729,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 729,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D81WNK1MSR6E1ST28DYJ2R/draft",
+      "ifMatch": "\"9384822f1a0530b2\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N9",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 735,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 11
+      }
+    },
+    {
+      "t": 752,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 834,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D81WNK1MSR6E1ST28DYJ2R",
+      "ifMatch": null
+    },
+    {
+      "t": 870,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D81WNK1MSR6E1ST28DYJ2R/draft",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81WNK1MSR6E1ST28DYJ2S",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N9",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "a899b5bd25c9e72c"
+      }
+    },
+    {
+      "t": 1207,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D81WNK1MSR6E1ST28DYJ2R",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81WNK1MSR6E1ST28DYJ2S",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "9384822f1a0530b2"
+      }
+    }
+  ],
+  "barriers": [
+    {
+      "t": 729,
+      "barrier": "leaving-save",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-request"
+    },
+    {
+      "t": 834,
+      "barrier": "reentry-detail",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-response"
+    },
+    {
+      "t": 840,
+      "barrier": "reentry-detail",
+      "ev": "gateway-answered",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81WNK1MSR6E1ST28DYJ2S",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "9384822f1a0530b2"
+      }
+    },
+    {
+      "t": 856,
+      "barrier": "leaving-save",
+      "ev": "released-to-gateway"
+    },
+    {
+      "t": 1176,
+      "barrier": "reentry-detail",
+      "ev": "delivered-to-browser"
+    }
+  ],
+  "steps": [
+    {
+      "t": 840,
+      "note": [
+        "re-entry detail answered pre-commit",
+        {
+          "id": "01M7D81WNK1MSR6E1ST28DYJ2S",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "9384822f1a0530b2"
+      ]
+    },
+    {
+      "t": 871,
+      "note": [
+        "leaving save answered",
+        200
+      ]
+    },
+    {
+      "t": 2149,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\baseline\\attempt2\\screens\\reentry-detail-read-across-leaving-commit-final.png"
+    }
+  ],
+  "ui": {
+    "warm": {
+      "path": "/app/loops/01M7D81WNK1MSR6E1ST28DYJ2R/edit",
+      "heading": "#237 mwgiimen N9",
+      "header": "Loops / #237 mwgiimen N9 draft only Unsaved changes Undo Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "Unsaved changes",
+      "notices": [
+        "The editor is available. Checking the server and this device before saving changes.",
+        "Restored unsaved changes from this device."
+      ],
+      "name": "#237 mwgiimen N9",
+      "description": "U",
+      "publishButton": "Publish"
+    },
+    "final": {
+      "path": "/app/loops/01M7D81WNK1MSR6E1ST28DYJ2R/edit",
+      "heading": "#237 mwgiimen N9",
+      "header": "Loops / #237 mwgiimen N9 draft only All changes saved Undo Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [],
+      "name": "#237 mwgiimen N9",
+      "description": "orig",
+      "publishButton": "Publish"
+    }
+  },
+  "rest": {
+    "final": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N9",
+          "description": "U",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D81WNK1MSR6E1ST28DYJ2S"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D81WNK1MSR6E1ST28DYJ2S",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N9",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "a899b5bd25c9e72c"
+      },
+      "versions": [
+        {
+          "id": "01M7D81WNK1MSR6E1ST28DYJ2S",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N9",
+        "description": "U",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "D8 re-entry reconciles to the older server read over the warm copy": {
+      "expected": "editor keeps U (the server holds U); no older content shown as saved",
+      "editor": {
+        "description": "orig",
+        "saveState": "All changes saved",
+        "notices": []
+      },
+      "serverDraftDescription": "U",
+      "reproduced": true
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": []
+}

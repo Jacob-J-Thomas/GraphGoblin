@@ -69,6 +69,14 @@ Sonnet then ran all12build tasks with Turbo cache bypassed and16selected Edge te
 
 Corrected-head full CI and the fresh whole-PR Astra max scan3 remain required; the earlier0d2CI is historical. No merge sign-off or fourth scan is claimed. Owner #209 product acceptance remains open after engineering delivery and must not auto-close. The node-reference child may prepare locally, with its own integration, QA, CI and review gates, before promotion. Physical devices and assistive-technology speech remain outside this headless Windows evidence.
 
+## Save and publish reconciliation checkpoint — #237
+
+Claude Opus 5.5 xhigh implemented exact stored-revision publication notices, save/list reconciliation and generation-scoped publish admission. Independent native QA found two additional retry races during implementation: state changed during awaited readback, then a local refusal erased an unresolved outcome. Both original failures are retained and their corrections have effective negative controls. The final correction passed 33 publish tests and 262 affected tests; historical phase-1 web coverage remains separate from current CI.
+
+Independent GPT-6.1 Sol xhigh QA passed both uncertainty variants and 17 outcomes across five groups at `8fe52989e4e67be1b6416440a4c6df4605f2b676`, with compiled API main, file SQLite and native Edge. It checked exact versions/pinned runs, divergent content, late replies, list/detail refresh, token ancestry, held input and real refused saves/publications. All 12 fixture instances were cleaned up, 29 tracked source hashes and 1,227 built files matched before/after, and no uncaught page errors occurred. First fixture corrections remain retained. A same-mounted restored draft showed the older Publish pending while the loop queue prevented its save; after settlement it saved and published correctly. This is not proof of a block on independently acknowledged newer work.
+
+The [publication index](../qa/2026-11-14-save-publish-publication/README.md) links the historical implementation, both failures, both corrections and final independent QA. Runtime code remains frozen during evidence publication. Current-head CI, GPT opposite-family review and fresh Astra max audit are pending; formal scans are 0/3. Parent #273 delivery and owner product acceptance/closure remain separate gates.
+
 ## macOS plan approval
 
 The owner explicitly approved the [written #456 plan](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6872747350) in the delivery chat on 2026-11-14. The [approval record](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6873189605) preserves the decision: per-user Swift/AppKit launcher, saved Node path, bounded start or reuse of the matching gateway, default-browser handoff and detached gateway lifetime. The architecture hold is satisfied. The human-only `plan-approved` label was not self-applied by the orchestrator.

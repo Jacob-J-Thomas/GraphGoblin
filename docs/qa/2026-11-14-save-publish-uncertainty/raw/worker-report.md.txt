@@ -1,0 +1,36 @@
+The defect is fixed: after a lost publish reply whose check also failed, the next Publish now checks the server first, even if a Publish was refused in between. Tests, a forced build and the copied native diagnostic all confirm it. This doesn't make #237 complete: broader QA, parent integration, current CI, the two reviews and owner acceptance are still open.
+
+**Fix.** The fact that an earlier request's outcome is still unknown is now kept separately from the latest attempt's result, so a refusal no longer erases it. It is tied to the editor load (loop and generation). It is set when a request gets no answer and its check also fails. It stays set through:
+- held-input refusals
+- failed-save refusals
+- refusals met when the queue reaches the attempt
+- further failed checks
+
+It clears only when a check of the server answers or the server answers a request. Reads the editor makes in the background do not clear it. The refusal still shows as **Publish failed**. Nothing else changed in behavior or wording. Four files changed (`usePublish.ts`, `EditorPage.publish.test.tsx`, docs/09, CHANGELOG); `useAutosave` and all other paths are untouched.
+
+**Tests.**
+- **7 new tests.** 4 fail on the frozen 9e44 code for the defect's reason: a POST sent first, a blind 409, or a blind publish of version 2. They pass after the fix. The other 3 are controls that pass on both: a known publication, a check that already answered, and a newer editor load.
+- **Swap proof.** With the final test file, putting the 9e44 code back gives the same 4 failures; restoring the fix was hash-verified and gives 33/33.
+- **Affected suites:** the same 22 files as the last correction pass, 262/262. Web typecheck, ESLint and Prettier pass. No whole-web coverage run, per the brief.
+
+**Build.** Forced build: 12/12 tasks, 0 cached. Only the web bundle and its service-worker files changed (new bundle `index-DhiNw4HL.js`, whose source map holds the fixed code); the other 1,221 files are byte-identical. Backend output is incremental, so no from-scratch backend build is claimed.
+
+**Native (built gateway, file SQLite, Edge).**
+- **Refusal diagnostic.** I copied it and made it strict. It passes:
+  - The fresh Publish begins with a GET 200 and sends no POST.
+  - The notice reads "Nothing to publish: version 1 already holds this draft."
+  - Only version 1 exists, and the device copy is empty throughout.
+- **Readback controls** (held input, new editor load, healthy) also pass. The healthy case sends exactly one POST after the GET.
+- **U2 name retry** wasn't rerun because none of the code it exercises changed.
+- **Cleanup** is complete. Bindings before and after the runs are byte-identical.
+
+**Things to know:**
+- **Main moved during the task.** `origin/main` went from `7c6e6355` to `a817e5cc` (your PR #470 merge). Your `root-main-update.md` confirms this was authorized. The checkout's HEAD, index and files never changed, and everything here was tested on 9e44 plus these four files, not on the new main.
+- **Native run timing.** It differed from the original: an automatic retry of a read was blocked instead of succeeding, so the "Cannot reach the GraphGoblin API" banner showed briefly before the fresh Publish. This came from test timing, not the fix, and it meant no read succeeded before the fresh Publish.
+- **What the user sees after a refusal.** Only **Publish failed** shows; the earlier "Publish not confirmed" notice is replaced, so the screen no longer says the outcome is unknown. I left the error UI unchanged, per the brief.
+- **A new editor load starts without the unknown state**, as in 9e44. That includes reload, restore and navigating away and back. Whether a load should inherit it is your call.
+- **Native coverage.** The failed-save and queued refusals are covered by component tests only, not natively.
+- **Comment wording nit.** One code comment in `usePublish.ts` says a refusal "sends nothing", but a failed save did send its save request. Fixing it would change the source the build and native results are bound to, so I left it.
+- **Don't publish the store folders.** The `gateway-store-*` folders hold disposable databases and generated keys.
+
+Nothing was staged, committed or pushed, and the heavy slot is released. Everything is in `ui-237-uncertainty-correction/`; start with `handoff.md`.

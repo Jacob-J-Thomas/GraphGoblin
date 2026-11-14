@@ -1,0 +1,730 @@
+import { loops } from '@graphgoblin/api-client';
+import { HarnessDefaultsSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ReactFlowProvider } from '@xyflow/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router';
+import { useApi } from '../api/context.js';
+import {
+  cachedCatalogFingerprint,
+  catalogFingerprint,
+  draftContentKey,
+  isValidationKey,
+  keys,
+  useClassifierModels,
+  useModelCatalog,
+  usePreflight,
+  useProcessModelDefaults,
+  useSettings,
+} from '../api/queries.js';
+import { ErrorState } from '../components/status.js';
+import { Alert, Button, useSidePanelState } from '../components/ui/index.js';
+import { deviceStorageProblem } from '../drafts/local-drafts.js';
+import { focusById } from '../components/loop-name-conflict.js';
+import { focusFallback } from '../lib/focus.js';
+import { sameLoopName } from '../lib/loop-names.js';
+import { errorMessage, formatDateTime, isOfflineError, problemIssues } from '../lib/utils.js';
+import { Canvas } from './Canvas.js';
+import { ConflictNotice } from './ConflictNotice.js';
+import { NameConflictNotice } from './NameConflictNotice.js';
+import {
+  DeviceBackup,
+  UnpreservedDeviceCopy,
+  UnsupportedDeviceDraft,
+} from './DeviceCopyNotices.js';
+import { EditorToolbar } from './EditorToolbar.js';
+import { unsupportedEffortIssues } from './effort-issues.js';
+import {
+  fieldErrorIssues,
+  issueKey,
+  mergeIssues,
+  validateDraft,
+  type EditorIssue,
+} from './model.js';
+import { NodeEditorDialog } from './NodeEditorDialog.js';
+import { deviceCopyOf, deviceNotice, saveNotice, useDeviceStorageProblem } from './save-status.js';
+import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
+import { PALETTE_STORAGE_KEY, Palette, palettePanelDefault } from './Palette.js';
+import { hasRenameNotice, RenameNotice } from './RenameNotice.js';
+import { useEditorStore, type EditorState } from './store.js';
+import { AUTOSAVE_DELAY_MS, useAutosave } from './useAutosave.js';
+import { useLoadEditor } from './useLoadEditor.js';
+import {
+  CONFLICT_REFUSAL,
+  NAME_REFUSAL,
+  publishNotice,
+  usePublish,
+  type PublishOutcome,
+} from './usePublish.js';
+import { useResolveConflict } from './useResolveConflict.js';
+import { useUndoShortcuts } from './useUndoShortcuts.js';
+import { SystemLoopNotice } from './SystemLoopNotice.js';
+import { ValidationIndicator } from './ValidationIndicator.js';
+import { VoiceCustomReviewNotice, VoicePreviewNotice } from './VoicePreviewNotice.js';
+
+/** The save notice for a store state, as the editor shows it now (`saveNotice`). */
+function noticeOf(state: EditorState): string | undefined {
+  const device = deviceCopyOf(state.revision, state.deviceRevision, deviceStorageProblem());
+  return saveNotice(state.saveState, state.saveMessage, device);
+}
+
+/**
+ * The loop editor: the toolbar (with the validation indicator beside Publish), notices about the
+ * draft (restored, set aside, conflicting, unsaved, published), the palette, the canvas (each node
+ * with its issue badge), the collapsible loop panel (loop settings), and the node editor dialog for
+ * the node opened on the canvas. Loading and conflict resolution live in useLoadEditor and
+ * useResolveConflict. Runs start from Runs.
+ */
+export function EditorPage() {
+  const { loopId = '' } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const routeState: unknown = location.state;
+  const voicePreview =
+    routeState && typeof routeState === 'object' && 'voicePreview' in routeState
+      ? routeState.voicePreview
+      : undefined;
+  const voiceReview =
+    routeState &&
+    typeof routeState === 'object' &&
+    'voiceReview' in routeState &&
+    routeState.voiceReview === true;
+  const [voiceStaging, setVoiceStaging] = useState(false);
+  const [appliedVoice, setAppliedVoice] = useState<{
+    loopId: string;
+    generation: number;
+    revision: number;
+  }>();
+  const client = useApi();
+  const queryClient = useQueryClient();
+  const {
+    query,
+    restoredGeneration,
+    ready,
+    deviceWritable,
+    deviceReadError,
+    retryDeviceRead,
+    serverReconciled,
+    setAside,
+    setAsideIsLate,
+    unsupportedCopies,
+    unsupportedBlocked,
+    backups,
+    preservationFailures,
+    preservationBlocked,
+    recoveryError,
+    restoreSetAside,
+    discardSetAside,
+    discardDeviceCopy,
+  } = useLoadEditor(loopId);
+  const definition = useEditorStore((s) => s.definition);
+  const saveState = useEditorStore((s) => s.saveState);
+  const saveMessage = useEditorStore((s) => s.saveMessage);
+  const generation = useEditorStore((s) => s.generation);
+  const connectionError = useEditorStore((s) => s.connectionError);
+  const renameReport = useEditorStore((s) => s.renameReport);
+  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+  const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
+  const nodeDialogSession = useEditorStore((s) => s.nodeDialogSession);
+  const [panelExpanded, setPanelExpanded] = useSidePanelState(
+    LOOP_PANEL_STORAGE_KEY,
+    loopPanelDefault,
+  );
+  const [paletteExpanded, setPaletteExpanded] = useSidePanelState(
+    PALETTE_STORAGE_KEY,
+    palettePanelDefault,
+  );
+  const system = query.data?.loop.system;
+  useEffect(() => {
+    useEditorStore.setState({ systemChat: Boolean(system) });
+  }, [system, generation]);
+  const flush = useAutosave(client, AUTOSAVE_DELAY_MS, {
+    enabled: ready && !preservationBlocked && !unsupportedBlocked && !voiceStaging,
+    deviceReady: deviceWritable,
+    serverReconciled,
+    system: Boolean(system),
+  });
+  useUndoShortcuts();
+  const conflict = useEditorStore((s) => s.conflict);
+  const resolve = useResolveConflict(loopId, flush);
+  const nameConflict = useEditorStore((s) => s.nameConflict);
+  const savedRevision = useEditorStore((s) => s.savedRevision);
+  const revision = useEditorStore((s) => s.revision);
+  const baseToken = useEditorStore((s) => s.baseToken);
+  const fieldErrors = useEditorStore((s) => s.fieldErrors);
+  const local = useMemo(
+    () =>
+      definition ? validateDraft(definition, Boolean(system)) : { issues: [], schemaValid: false },
+    [definition, system],
+  );
+  // The catalog checks read the model catalog, the classifier catalog, and the classifiers'
+  // secrets, which change without a draft edit: the API's checks run again when what they read of
+  // them changes. Loading the model catalog here also has it ready before a node dialog or the
+  // loop settings form needs it, and its refetch (on focus, say) finds another tab's change.
+  const models = useModelCatalog();
+  // Start the first no-turn check and defaults load before an inference dialog is opened.
+  usePreflight();
+  const settings = useSettings();
+  const processDefaults = useProcessModelDefaults();
+  // An inherited model is known only once both defaults levels have been read, as in the pickers.
+  const knownDefaults = useMemo(() => {
+    const owner = HarnessDefaultsSchema.safeParse(settings.data?.['defaults'] ?? {});
+    return settings.data !== undefined &&
+      processDefaults.data !== undefined &&
+      !settings.isError &&
+      !processDefaults.isError &&
+      owner.success
+      ? { owner: owner.data, process: processDefaults.data }
+      : undefined;
+  }, [settings.data, settings.isError, processDefaults.data, processDefaults.isError]);
+  // A kept effort the node's model does not offer: the API refuses to save the draft, so its own
+  // check never sees it. Name the node and field here as soon as the model or effort changes.
+  const effortIssues = useMemo(
+    () => (definition ? unsupportedEffortIssues(definition, models.data, knownDefaults) : []),
+    [definition, models.data, knownDefaults],
+  );
+  const classifiers = useClassifierModels();
+  const catalogsResolved = models.data !== undefined && classifiers.data !== undefined;
+  // A failed refresh leaves cached choices available, but cannot certify publication readiness.
+  const catalogFailure = models.isError || classifiers.isError;
+  const catalogFailureReason = catalogFailure
+    ? 'A model catalog could not be loaded. Retry its lookup before publishing.'
+    : undefined;
+  const catalogState = useMemo(
+    () => catalogFingerprint(models.data, classifiers.data),
+    [models.data, classifiers.data],
+  );
+  // The draft the API's checks validate: the server's copy, named by its draft token (which every
+  // save and every reload of the server draft changes), else by its content. Only a copy the
+  // server holds is checked (no unsaved edits), so the key always names what was checked.
+  const saved = revision === savedRevision;
+  const draftKey = useMemo(
+    () => baseToken ?? (definition ? draftContentKey(definition) : ''),
+    [baseToken, definition],
+  );
+  // The API's own checks (cron syntax, subloop references, the catalogs) of the saved draft. They
+  // wait for the classifier catalog's first answer, success or not, so opening the editor does not
+  // run them twice. They do not wait for the model catalog: its pickers stay usable (read-only)
+  // while it loads, and an issue found meanwhile can be followed to them; a model catalog that
+  // arrives after the first check is a change of state (unknown to known) and runs them once more.
+  const serverCheck = useQuery({
+    queryKey: keys.validation(loopId, draftKey, catalogState),
+    enabled:
+      serverReconciled &&
+      !conflict &&
+      Boolean(definition) &&
+      saved &&
+      local.schemaValid &&
+      !classifiers.isPending,
+    // Unknown catalogs cannot certify freshness, even if this request found no issues. Keep its
+    // badges available, but check again on reopening or recovery instead of trusting that answer.
+    staleTime: catalogsResolved ? Infinity : 0,
+    retry: false,
+    queryFn: async () => {
+      const checked = definition as LoopDefinitionInput;
+      const result = await loops.validate(client, loopId, checked);
+      // A catalog changed while the check ran, so its answer may describe either state: drop it
+      // rather than store it under this state's key. The new state's own check runs.
+      if (cachedCatalogFingerprint(queryClient) !== catalogState)
+        throw new Error('A catalog changed during the check; checking again.');
+      const known = new Set(validateDraft(checked, Boolean(system)).issues.map(issueKey));
+      return result.issues
+        .map(({ nodeId, edgeId, ...rest }): EditorIssue => ({
+          ...rest,
+          ...(nodeId ? { nodeId } : {}),
+          ...(edgeId ? { edgeId } : {}),
+        }))
+        .filter((issue) => !known.has(issueKey(issue)));
+    },
+  });
+  // When a catalog changes (a write here, or another tab's seen on a refresh), checks keyed by any
+  // other catalog state are no longer trusted: one still running is cancelled, so its answer is
+  // not kept, and each is marked stale, so going back to that state checks again.
+  useEffect(() => {
+    const others = {
+      predicate: ({ queryKey }: { queryKey: readonly unknown[] }) =>
+        isValidationKey(queryKey) && queryKey[1] === loopId && queryKey[4] !== catalogState,
+    };
+    void queryClient
+      .cancelQueries(others)
+      .then(() => queryClient.invalidateQueries({ ...others, refetchType: 'none' }));
+  }, [queryClient, loopId, catalogState]);
+  const validation = useMemo(
+    () => ({
+      issues: mergeIssues(
+        { ...local, issues: [...local.issues, ...effortIssues] },
+        // The API's report of the same node's unsupported effort says less than the editor's.
+        serverCheck.data?.filter(
+          (issue) =>
+            !effortIssues.some((own) => own.code === issue.code && own.nodeId === issue.nodeId),
+        ),
+        fieldErrorIssues(fieldErrors),
+      ),
+    }),
+    [local, effortIssues, serverCheck.data, fieldErrors],
+  );
+
+  const publish = usePublish(loopId, flush);
+  const [dismissedPublish, setDismissedPublish] = useState<PublishOutcome>();
+  const [dismissedRestoreGeneration, setDismissedRestoreGeneration] = useState<number>();
+  const [dismissedSaveNotice, setDismissedSaveNotice] = useState<
+    { generation: number; state: typeof saveState; message: string } | undefined
+  >();
+  const [dismissedDeviceNotice, setDismissedDeviceNotice] = useState<
+    { generation: number; message: string } | undefined
+  >();
+  // Where the edits are besides the server: on this device once the mirror write of this revision
+  // succeeded, in this window only when device storage refused it (`save-status.ts`).
+  const reportedStorageProblem = useDeviceStorageProblem();
+  const storageProblem = deviceReadError
+    ? { kind: 'failed' as const, message: deviceReadError }
+    : reportedStorageProblem;
+  const deviceRevision = useEditorStore((s) => s.deviceRevision);
+  const device = deviceCopyOf(revision, deviceRevision, storageProblem);
+  const notice = saveNotice(saveState, saveMessage, device);
+  const [dismissalAnnouncement, setDismissalAnnouncement] = useState(0);
+  const noticeContainerRef = useRef<HTMLDivElement>(null);
+  const saveStatusRef = useRef<HTMLSpanElement>(null);
+  const deviceCopyNotices = [
+    ...preservationFailures.map((copy, index) => (
+      <UnpreservedDeviceCopy
+        key={`unpreserved-${copy.source}-${copy.savedAt}-${String(index)}`}
+        loopId={loopId}
+        copy={copy}
+        onDiscard={discardDeviceCopy}
+      />
+    )),
+    ...unsupportedCopies.map((copy, index) => (
+      <UnsupportedDeviceDraft
+        key={`unsupported-${copy.source}-${copy.savedAt}-${String(index)}`}
+        loopId={loopId}
+        copy={copy}
+        onDiscard={discardDeviceCopy}
+      />
+    )),
+    ...backups.map((copy, index) => (
+      <DeviceBackup
+        key={`backup-${copy.savedAt}-${String(index)}`}
+        loopId={loopId}
+        copy={copy}
+        onDiscard={discardDeviceCopy}
+      />
+    )),
+  ];
+
+  // Pending and saving are transient parts of an edit. Keep a dismissal until saving settles on
+  // a different state/message or a new editor load starts.
+  useEffect(
+    () =>
+      useEditorStore.subscribe((state) => {
+        if (state.saveState === 'pending' || state.saveState === 'saving') return;
+        setDismissedSaveNotice((dismissed) =>
+          dismissed &&
+          dismissed.generation === state.generation &&
+          dismissed.state === state.saveState &&
+          dismissed.message === (noticeOf(state) ?? '')
+            ? dismissed
+            : undefined,
+        );
+      }),
+    [],
+  );
+
+  if (unsupportedBlocked) {
+    return (
+      <main className="grid gap-3 p-page">
+        <Alert tone="warn" title="This browser holds a device draft this build cannot open">
+          Editing and autosave are paused so that draft is not overwritten. GraphGoblin does not
+          convert device drafts from older formats. Export it if you want to keep its contents, then
+          discard it to open the editor.
+        </Alert>
+        {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
+        {deviceCopyNotices}
+      </main>
+    );
+  }
+  if (!ready) {
+    if (query.isError && !isOfflineError(query.error))
+      return <ErrorState error={query.error} what="Loop" />;
+    if (query.isError) return <ErrorState error={query.error} what="The editor" />;
+    return <p className="p-page text-sm text-muted">Loading loop…</p>;
+  }
+  if (preservationBlocked) {
+    return (
+      <main className="grid gap-3 p-page">
+        <Alert tone="bad" title="Device copy preservation failed">
+          Editing and autosave are paused because the original device copy could not be safely
+          archived. Export it or discard the blocked copy to continue editing.
+        </Alert>
+        {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
+        {deviceCopyNotices}
+      </main>
+    );
+  }
+  if (!definition) {
+    return (
+      <main className="grid gap-3 p-page">
+        {recoveryError ? <Alert tone="warn">{recoveryError}</Alert> : null}
+        {deviceCopyNotices.length > 0 ? (
+          deviceCopyNotices
+        ) : (
+          <p className="text-sm text-muted">No loop definition is available to edit.</p>
+        )}
+      </main>
+    );
+  }
+  const def = definition;
+  const published = query.data?.current?.definition;
+  const errors = validation.issues.filter((i) => i.severity === 'error').length;
+  const editing = nodeDialogOpen ? def.nodes.find((n) => n.id === selectedNodeId) : undefined;
+  const saveNoticeIsActive = Boolean(notice);
+  const showRestoredNotice =
+    restoredGeneration === generation && dismissedRestoreGeneration !== generation;
+  const showSaveNotice =
+    saveNoticeIsActive &&
+    (dismissedSaveNotice?.generation !== generation ||
+      dismissedSaveNotice.state !== saveState ||
+      dismissedSaveNotice.message !== notice);
+  const deviceProblem = storageProblem ? deviceNotice(storageProblem) : undefined;
+  const showDeviceNotice =
+    deviceProblem !== undefined &&
+    (dismissedDeviceNotice?.generation !== generation ||
+      dismissedDeviceNotice.message !== deviceProblem.body);
+  const announceDismissalAndRestoreFocus = () => {
+    setDismissalAnnouncement((count) => count + 1);
+    window.requestAnimationFrame(() => {
+      const nextDismissButton =
+        noticeContainerRef.current?.querySelector<HTMLButtonElement>('[data-alert-dismiss]');
+      if (nextDismissButton) nextDismissButton.focus();
+      else focusFallback(saveStatusRef.current);
+    });
+  };
+  // What the latest Publish of this editor load established (#237), until dismissed.
+  const publishText =
+    publish.outcome && publish.outcome !== dismissedPublish
+      ? publishNotice(
+          publish.outcome,
+          { definition: def, fieldErrors, revision },
+          query.data?.current,
+        )
+      : undefined;
+  // The name refusal applies while the draft still has the refused name (#209).
+  const showNameConflict =
+    nameConflict !== undefined && !conflict && sameLoopName(def.name, nameConflict.name);
+  // A draft conflict or a name refusal keeps this draft from the server: Publish refuses it and
+  // the API's checks cannot run on it, so an earlier check of the server's copy (cached under its
+  // token) never reads as ready beside Publish (#237).
+  const heldReason = conflict ? CONFLICT_REFUSAL : showNameConflict ? NAME_REFUSAL : undefined;
+  /** Take the API's suggestion as an ordinary, undoable rename; autosave then tries it. */
+  const applySuggestedName = (name: string, inDialog: boolean) => {
+    // A step of its own, so Undo returns to the refused text rather than past the typing too.
+    useEditorStore.getState().closeStep();
+    useEditorStore.getState().updateMeta({ name });
+    useEditorStore.getState().closeStep();
+    // The notice leaves with the refused name. The save status reports the new attempt; inside
+    // the modal node dialog (the page behind is inert) focus stays in the dialog, on its title.
+    window.requestAnimationFrame(() => {
+      const dialog = inDialog ? document.querySelector('dialog[open]') : null;
+      const title = dialog?.getAttribute('aria-labelledby');
+      focusFallback(title ? document.getElementById(title) : saveStatusRef.current);
+    });
+  };
+  const editName = () => {
+    setPanelExpanded(true);
+    focusById('loop-name', true);
+  };
+  /**
+   * Send the refused name once more, for when the other loop has since been renamed. The
+   * permission goes with this one save only (`NameRetry`): ordinary autosaves keep holding the
+   * name, and a save that cannot send (invalid input, say) ends the attempt without sending.
+   */
+  const retryName = () => {
+    const state = useEditorStore.getState();
+    if (!state.loopId || !state.nameConflict || state.nameConflict.retrying) return;
+    const refusal = { ...state.nameConflict, retrying: true, retried: false };
+    state.setNameConflict(refusal);
+    state.setSaveState('pending');
+    void flush({ loopId: state.loopId, generation: state.generation, refusal });
+  };
+  const nameConflictNotice = (inDialog: boolean) =>
+    showNameConflict ? (
+      <NameConflictNotice
+        conflict={nameConflict}
+        currentName={def.name}
+        device={device}
+        inDialog={inDialog}
+        onUseSuggestion={(name) => applySuggestedName(name, inDialog)}
+        onEditName={editName}
+        onRetry={retryName}
+      />
+    ) : null;
+
+  const notices = [
+    voiceReview ? (
+      <VoiceCustomReviewNotice key={`voice-review-${location.key}`} loopId={loopId} />
+    ) : null,
+    voicePreview !== undefined ? (
+      <VoicePreviewNotice
+        key={`voice-${location.key}`}
+        value={voicePreview}
+        loopId={loopId}
+        ready={serverReconciled && deviceWritable}
+        restored={restoredGeneration === generation}
+        onStagingChange={setVoiceStaging}
+        storageUnavailableReason={
+          !deviceWritable && (deviceReadError || storageProblem || serverReconciled)
+            ? 'This device’s draft storage is unavailable, so Apply is paused. Close older GraphGoblin tabs or windows, then retry device draft storage. Your current draft is kept.'
+            : undefined
+        }
+        onRetryStorage={retryDeviceRead}
+        onApplied={() => {
+          const applied = useEditorStore.getState();
+          setAppliedVoice({ loopId, generation: applied.generation, revision: applied.revision });
+          const nextState =
+            routeState && typeof routeState === 'object'
+              ? Object.fromEntries(
+                  Object.entries(routeState).filter(([key]) => key !== 'voicePreview'),
+                )
+              : null;
+          void navigate(`${location.pathname}${location.search}${location.hash}`, {
+            replace: true,
+            state: nextState,
+            preventScrollReset: true,
+          });
+        }}
+      />
+    ) : null,
+    appliedVoice?.loopId === loopId &&
+    appliedVoice.generation === generation &&
+    appliedVoice.revision === revision ? (
+      <Alert
+        key="voice-applied"
+        tone="good"
+        title="Voice draft applied"
+        onDismiss={() => setAppliedVoice(undefined)}
+      >
+        Saved as a draft. Undo restores the previous draft. Publish when you are ready to use it.
+      </Alert>
+    ) : null,
+    ...deviceCopyNotices,
+    deviceReadError ? (
+      <Alert key="device-read" tone="warn" title="Device drafts could not be read">
+        Changes are saved to the server; this window keeps a copy only in memory until device
+        storage can be read.
+        <span className="mt-2 flex gap-2">
+          <Button size="sm" variant="outline" onClick={retryDeviceRead}>
+            Retry device read
+          </Button>
+        </span>
+      </Alert>
+    ) : null,
+    !serverReconciled && !query.isError && !deviceReadError ? (
+      <Alert key="reconciling" tone="info">
+        The editor is available. Checking the server and this device before saving changes.
+      </Alert>
+    ) : null,
+    recoveryError ? (
+      <Alert key="recovery-error" tone="warn">
+        {recoveryError}
+      </Alert>
+    ) : null,
+    showRestoredNotice ? (
+      <Alert
+        key="restored"
+        tone="info"
+        onDismiss={() => {
+          setDismissedRestoreGeneration(generation);
+          announceDismissalAndRestoreFocus();
+        }}
+      >
+        Restored unsaved changes from this device.
+      </Alert>
+    ) : null,
+    setAside ? (
+      <Alert
+        key="set-aside"
+        tone="warn"
+        title={setAsideIsLate ? 'Another device copy is available' : 'The server has a newer draft'}
+      >
+        {setAsideIsLate
+          ? `A different copy from ${formatDateTime(setAside.savedAt)} was found on this device after editing opened. Your current work is kept; choose whether to use that saved copy instead.`
+          : `This device has unsaved changes from ${formatDateTime(setAside.savedAt)}, older than the draft saved on the server since, which is shown.`}{' '}
+        <span className="mt-2 flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => void restoreSetAside()}>
+            Use this device&apos;s copy instead
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => void discardSetAside()}>
+            Discard it
+          </Button>
+        </span>
+      </Alert>
+    ) : null,
+    conflict ? <ConflictNotice key="conflict" resolve={resolve} device={device} /> : null,
+    showNameConflict ? <div key="name-conflict">{nameConflictNotice(false)}</div> : null,
+    showSaveNotice ? (
+      <Alert
+        key="save"
+        tone="warn"
+        onDismiss={() => {
+          setDismissedSaveNotice({ generation, state: saveState, message: notice ?? '' });
+          announceDismissalAndRestoreFocus();
+        }}
+      >
+        {notice}
+      </Alert>
+    ) : null,
+    // Device storage's own notice, apart from the save state: a server save still counts as one.
+    showDeviceNotice ? (
+      <Alert
+        key="device"
+        tone="warn"
+        title={deviceProblem.title}
+        onDismiss={() => {
+          setDismissedDeviceNotice({ generation, message: deviceProblem.body });
+          announceDismissalAndRestoreFocus();
+        }}
+      >
+        {deviceProblem.body}
+      </Alert>
+    ) : null,
+    hasRenameNotice(renameReport) ? (
+      <RenameNotice
+        key="rename"
+        definition={def}
+        onChoose={(issue) => {
+          if (issue.nodeId) useEditorStore.getState().openNode(issue.nodeId, { field: issue.path });
+        }}
+        onDismissed={announceDismissalAndRestoreFocus}
+      />
+    ) : null,
+    publishText ? (
+      <Alert
+        key="published"
+        tone={publishText.tone}
+        {...(publishText.title ? { title: publishText.title } : {})}
+        {...(publishText.dismissible
+          ? {
+              onDismiss: () => {
+                setDismissedPublish(publish.outcome);
+                announceDismissalAndRestoreFocus();
+              },
+            }
+          : {})}
+      >
+        {publishText.text}
+      </Alert>
+    ) : null,
+    publish.error ? (
+      <Alert key="publish-failed" title="Publish failed">
+        {errorMessage(publish.error)}
+        <ul className="list-disc pl-4">
+          {problemIssues(publish.error).map((issue, i) => (
+            <li key={i}>{issue}</li>
+          ))}
+        </ul>
+      </Alert>
+    ) : null,
+    connectionError ? (
+      <Alert key="connection" tone="warn">
+        Connection refused: {connectionError}
+      </Alert>
+    ) : null,
+  ].filter(Boolean);
+
+  return (
+    <div
+      className="flex h-[calc(100dvh-3.5rem)] min-h-80 flex-col"
+      inert={voiceStaging}
+      aria-busy={voiceStaging}
+    >
+      <EditorToolbar
+        loopId={loopId}
+        system={system}
+        name={def.name}
+        published={Boolean(published)}
+        version={query.data?.current?.version}
+        saveState={saveState}
+        device={device}
+        saveMessage={notice ?? saveMessage}
+        errors={errors}
+        validation={
+          <ValidationIndicator
+            issues={validation.issues}
+            definition={def}
+            check={
+              serverCheck.isError || catalogFailure || heldReason !== undefined
+                ? 'error'
+                : !catalogsResolved || serverCheck.isPending || serverCheck.isFetching
+                  ? 'pending'
+                  : 'done'
+            }
+            unavailableReason={catalogFailureReason ?? heldReason}
+          />
+        }
+        publishing={publish.pending}
+        publishBlockedReason={
+          system && !local.schemaValid
+            ? 'Restore the chat contract before publishing.'
+            : catalogFailureReason
+        }
+        onPublish={publish.start}
+        saveStatusRef={saveStatusRef}
+      />
+      {system ? (
+        <SystemLoopNotice
+          binding={system}
+          version={query.data?.current?.version}
+          definition={def}
+          published={query.data?.current?.definition}
+          loopId={loopId}
+        />
+      ) : null}
+      {notices.length > 0 ? (
+        <div
+          ref={noticeContainerRef}
+          className="grid shrink-0 gap-2 border-b border-default bg-surface-raised px-4 py-3"
+        >
+          {notices}
+        </div>
+      ) : null}
+      <span aria-live="polite" aria-atomic="true" className="sr-only">
+        <span key={dismissalAnnouncement}>
+          {dismissalAnnouncement > 0 ? 'Notice dismissed' : ''}
+        </span>
+      </span>
+      <ReactFlowProvider>
+        <div className="relative flex min-h-0 flex-1">
+          <Palette expanded={paletteExpanded} onExpandedChange={setPaletteExpanded} />
+          <main className="min-w-0 flex-1">
+            <Canvas definition={def} issues={validation.issues} />
+          </main>
+          <LoopPanel
+            definition={def}
+            system={Boolean(system)}
+            issues={validation.issues}
+            expanded={panelExpanded}
+            onExpandedChange={setPanelExpanded}
+          />
+        </div>
+      </ReactFlowProvider>
+      {/* Outside the canvas, so keys pressed in the dialog never reach the canvas handlers. */}
+      {editing ? (
+        <NodeEditorDialog
+          key={nodeDialogSession}
+          system={Boolean(system)}
+          node={editing}
+          definition={def}
+          issues={validation.issues}
+          loopId={loopId}
+          notice={
+            conflict ? (
+              <ConflictNotice resolve={resolve} device={device} />
+            ) : (
+              nameConflictNotice(true)
+            )
+          }
+        />
+      ) : null}
+    </div>
+  );
+}

@@ -1,0 +1,515 @@
+{
+  "name": "reentry-unmount-token-ancestry",
+  "network": [
+    {
+      "t": 405,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 405,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 406,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY",
+      "ifMatch": null
+    },
+    {
+      "t": 406,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 406,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 407,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 407,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 407,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 408,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 408,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 409,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81JXYZZBWQA24F4DY10XZ",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N6",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "0d4689f900c8037f"
+      }
+    },
+    {
+      "t": 412,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 415,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 416,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 472,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 474,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 520,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N6",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 523,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1165,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY/draft",
+      "ifMatch": "\"0d4689f900c8037f\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N6",
+          "description": "S1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1217,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 1219,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 1227,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 8
+      }
+    },
+    {
+      "t": 1240,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 1313,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY",
+      "ifMatch": null
+    },
+    {
+      "t": 1322,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81JXYZZBWQA24F4DY10XZ",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N6",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "8776c2b4481b0a62"
+      }
+    },
+    {
+      "t": 1337,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N6",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1345,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1887,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY/draft",
+      "status": 409,
+      "body": {
+        "code": "DRAFT_CONFLICT"
+      }
+    },
+    {
+      "t": 1888,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY/draft",
+      "ifMatch": "\"8776c2b4481b0a62\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N6",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1903,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D81JXYZZBWQA24F4DY10XY/draft",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81JXYZZBWQA24F4DY10XZ",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N6",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "f51155804c912175"
+      }
+    }
+  ],
+  "barriers": [
+    {
+      "t": 1165,
+      "barrier": "s1",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-request"
+    },
+    {
+      "t": 1879,
+      "barrier": "s1",
+      "ev": "released-to-gateway"
+    }
+  ],
+  "steps": [
+    {
+      "t": 1261,
+      "note": [
+        "other writer PUT B (If-Match T0)",
+        200,
+        "8776c2b4481b0a62"
+      ]
+    },
+    {
+      "t": 2906,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\baseline\\attempt2\\screens\\reentry-unmount-token-ancestry-final.png"
+    }
+  ],
+  "ui": {
+    "reentered": {
+      "path": "/app/loops/01M7D81JXYZZBWQA24F4DY10XY/edit",
+      "heading": "#237 mwgiimen N6",
+      "header": "Loops / #237 mwgiimen N6 draft only All changes saved Undo Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [
+        "The server has a newer draftThis device has unsaved changes from 11/14/2026, 8:40:37 AM, older than the draft saved on the server since, which is shown. Use this device's copy insteadDiscard it"
+      ],
+      "name": "#237 mwgiimen N6",
+      "description": "B by other writer",
+      "publishButton": "Publish"
+    },
+    "final": {
+      "path": "/app/loops/01M7D81JXYZZBWQA24F4DY10XY/edit",
+      "heading": "#237 mwgiimen N6",
+      "header": "Loops / #237 mwgiimen N6 draft only All changes saved Undo Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [
+        "The server has a newer draftThis device has unsaved changes from 11/14/2026, 8:40:37 AM, older than the draft saved on the server since, which is shown. Use this device's copy insteadDiscard it"
+      ],
+      "name": "#237 mwgiimen N6",
+      "description": "B by other writer",
+      "publishButton": "Publish"
+    }
+  },
+  "rest": {
+    "final": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N6",
+          "description": "U",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D81JXYZZBWQA24F4DY10XZ"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D81JXYZZBWQA24F4DY10XZ",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N6",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "f51155804c912175"
+      },
+      "versions": [
+        {
+          "id": "01M7D81JXYZZBWQA24F4DY10XZ",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N6",
+        "description": "U",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "D6 leaving save of an earlier load borrows a newer load’s token": {
+      "expected": "U is sent with its own load's base (T0) or skipped; the other writer's B stays",
+      "t0": "0d4689f900c8037f",
+      "otherWriterToken": "8776c2b4481b0a62",
+      "leavingSaveIfMatch": "\"8776c2b4481b0a62\"",
+      "serverDraftDescription": "U",
+      "reproduced": true
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ]
+}

@@ -1,0 +1,394 @@
+{
+  "name": "list-warm-save-in-flight",
+  "network": [
+    {
+      "t": 621,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 621,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 622,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 622,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 632,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 632,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 635,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 10
+      }
+    },
+    {
+      "t": 643,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 756,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D7XZ29PPXFHBCZGT5QBDJT",
+      "ifMatch": null
+    },
+    {
+      "t": 756,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 756,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 758,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 758,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 758,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 758,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D7XZ29PPXFHBCZGT5QBDJT",
+      "status": 200,
+      "body": {
+        "loop": "#237 mwgigd48 N5 warm-save-in-flight A",
+        "current": {
+          "id": "01M7D7XZ29PPXFHBCZGT5QBDJV",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N5 warm-save-in-flight A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "21fc7e73ff587d80"
+      }
+    },
+    {
+      "t": 759,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 825,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 825,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 833,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 833,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 858,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7XZ29PPXFHBCZGT5QBDJT/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N5 warm-save-in-flight A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 865,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7XZ29PPXFHBCZGT5QBDJT/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 3690,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D7XZ29PPXFHBCZGT5QBDJT/draft",
+      "ifMatch": "\"21fc7e73ff587d80\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N5 warm-save-in-flight A renamed",
+          "description": null,
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    }
+  ],
+  "barriers": [
+    {
+      "t": 3690,
+      "barrier": "save",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-request"
+    }
+  ],
+  "steps": [
+    {
+      "t": 34,
+      "note": [
+        "publish A",
+        200
+      ]
+    },
+    {
+      "t": 42,
+      "note": [
+        "provider-free run on A",
+        202,
+        "queued"
+      ]
+    }
+  ],
+  "ui": {
+    "listBefore": {
+      "a": "#237 mwgigd48 N5 warm-save-in-flight A desc A Updated 11/14/2026, 8:38:37 AM published succeeded Edit Export Delete",
+      "b": "#237 mwgigd48 N5 warm-save-in-flight B desc B Updated 11/14/2026, 8:38:37 AM draft only never run Edit Export Delete"
+    }
+  },
+  "rest": {
+    "before": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgigd48 N5 warm-save-in-flight A",
+          "description": "desc A",
+          "currentVersionId": "01M7D7XZ29PPXFHBCZGT5QBDJV",
+          "draftVersionId": null
+        },
+        "current": {
+          "id": "01M7D7XZ29PPXFHBCZGT5QBDJV",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N5 warm-save-in-flight A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "21fc7e73ff587d80"
+      },
+      "versions": [
+        {
+          "id": "01M7D7XZ29PPXFHBCZGT5QBDJV",
+          "version": 1,
+          "status": "published"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgigd48 N5 warm-save-in-flight A",
+        "description": "desc A",
+        "runCount": 1,
+        "latestRun": "succeeded"
+      }
+    },
+    "controlBefore": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgigd48 N5 warm-save-in-flight B",
+          "description": "desc B",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D7XZ2NK281AASJ4FKBCMHZ"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D7XZ2NK281AASJ4FKBCMHZ",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgigd48 N5 warm-save-in-flight B",
+          "description": "desc B",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "04a418ab22356bcc"
+      },
+      "versions": [
+        {
+          "id": "01M7D7XZ2NK281AASJ4FKBCMHZ",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgigd48 N5 warm-save-in-flight B",
+        "description": "desc B",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {},
+  "pageErrors": [],
+  "consoleErrors": [],
+  "error": "locator.click: Error: strict mode violation: locator('header').getByRole('link', { name: 'Loops', exact: true }) resolved to 2 elements:\n    1) <a href=\"/app/loops\" aria-current=\"page\" data-discover=\"true\" class=\"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active\">…</a> aka getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Loops' })\n    2) <a href=\"/app/loops\" data-discover=\"true\" class=\"touch-target text-muted no-underline hover:text-default hover:underline\">Loops</a> aka getByRole('link', { name: 'Loops' }).nth(1)\n\nCall log:\n\u001b[2m  - waiting for locator('header').getByRole('link', { name: 'Loops', exact: true })\u001b[22m\n\n    at toLoops (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\drivers\\native-237.mjs:275:82)\n    at scenarios.<computed> (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\drivers\\native-237.mjs:492:11)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-237-claude-implementation/drivers/native-237.mjs:810:5"
+}

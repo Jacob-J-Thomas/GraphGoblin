@@ -1,0 +1,45 @@
+The merge conflict is resolved, the confirmed readback defect is fixed, and the "Ready to publish" caption no longer shows beside a known name refusal. Focused tests, the forced build and native Edge runs all pass. Nothing is staged or committed, and the heavy slot is free.
+
+**Identity.** HEAD is still `e12b81ec` and MERGE_HEAD `2367b15b`. The index hash is unchanged from the start (`912616ba…`), so the three conflict stages are still there for you to stage.
+
+**Conflict resolution (`useAutosave.ts`, working file only).** I kept #209's single-use `NameRetry` permission, which is always settled when the save ends. I re-added #237's three changes inside that save: the per-load token chain, the cache refresh after an accepted save, and the server's acknowledged definition. Each side differs from the result by exactly the other side's changes. There is no global `latestTokens`, and `retrying` only drives the busy display. Every other caller of the save (`usePublish`, conflict resolution, the debounce timer, the online and recovery events) passes no permission, so an ordinary save cannot use up a deliberate retry. The seven auto-merged files each match their intended parent content.
+
+**Readback fix (`usePublish.ts`).** The same-load and refusal check now runs again immediately before every POST, so it also runs after the check-first readback.
+- If another editor load replaced this one, nothing is sent and nothing is shown.
+- If held input, a draft conflict or a name refusal appeared, the attempt shows "Publish failed" with the existing wording and sends nothing.
+- If the readback itself fails, the outcome stays unknown and the next Publish still checks first.
+- If nothing changed, exactly one POST goes out after the check.
+
+**Readiness caption (`EditorPage.tsx`).** I reproduced it before changing anything: the cached "Ready to publish" showed beside "Not saved: name in use", and also during a draft conflict. Now the indicator shows its existing "Validation unavailable" state, with Publish's own refusal sentence as the tooltip. Nothing new was added to the toolbar.
+
+**Tests.** I added five tests: two for state changing while the check is answered (held input, another editor), a healthy control, and two for readiness.
+
+| Run | Result |
+| --- | --- |
+| Original e12 `usePublish.ts` plus staged pre-fix `EditorPage.tsx`, swapped in from verified backups | 4 new tests fail, 22 pass |
+| Corrected files restored, hashes verified | 26/26 |
+| 22 affected suites | 255/255 |
+| 3 other readiness suites | 38/38 |
+
+Format, lint (0 warnings) and the web typecheck pass. The held-input failure on the original code shows "Published version 2" while the input is held, the same as the independent native run.
+
+**Build.** `pnpm.cmd build --force --cache-dir=.turbo/local-cache` ran all 12 tasks with nothing cached. Only the web bundle (now `index-DK8I-ydH.js`), `index.html` and the service-worker files changed; the other 1,171 built files are byte-identical.
+
+**Native verification.** Real Edge 157 against the built `main.js` with a throwaway SQLite store, using copies of the independent drivers (originals untouched, every change recorded in `modifications.diff`).
+- **Held input:** one POST in total, v1 still current, the refusal shown.
+- **Another editor:** one POST, no feedback in that editor.
+- **Healthy:** one more POST after the check, published as v2.
+- **#209 U2:** an invalid save sent nothing and offered Try again again; repairing the description alone sent nothing; one fresh Try again sent one save (200).
+
+There were no page errors, and all six screenshots were inspected. The gateway's close checks passed, and source and build hashes were identical before and after. Nothing was left running, listening or locked. My first harness run failed with `ENOBUFS` before anything started; that was a bug in my own binding script, fixed and logged.
+
+**Left unchanged, for you to decide:**
+- A "Publish failed" refusal stays on screen until the next Publish attempt, even after the cause is fixed. This was already true before #237.
+- From reading the code only, not reproduced: if a Publish is refused before its check (for example held input at the click), the next Publish after an unknown outcome skips the check. This exists in phase 1; my fix adds no new case of it.
+- The user guide (`docs/guide/02-build-a-loop.md`) wording for "Validation unavailable" was outside my doc scope, so I didn't edit it.
+
+**Still to do:** your staging and commit, the final #209 and #273 merges, fresh CI, independent QA, the GPT UI review, the Astra audit and owner acceptance.
+
+Model is `claude-opus-5-5` with requested effort `xhigh` (from `launch.json`); actual reasoning level isn't observable.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-237-integration-correction`; start with `handoff.md`, then `logs/` and `native/`.

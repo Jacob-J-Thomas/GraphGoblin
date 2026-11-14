@@ -1,0 +1,51 @@
+{
+  "url": "http://127.0.0.1:57475",
+  "playwrightVersion": "1.63.0",
+  "browserVersion": "157.0.4341.46",
+  "node": "v22.23.4",
+  "startedAt": "2026-11-14T14:40:05.889Z",
+  "scenarios": {
+    "list-warm-leave-before-debounce": {
+      "checks": {
+        "D5 list stays stale after an acknowledged leaving save": true
+      }
+    },
+    "list-warm-save-in-flight": {
+      "checks": {
+        "D5 list stays stale after an acknowledged leaving save": true
+      }
+    },
+    "list-cold-leave-before-debounce": {
+      "checks": {
+        "D5 list stays stale after an acknowledged leaving save": true
+      }
+    },
+    "reentry-unmount-token-ancestry": {
+      "checks": {
+        "D6 leaving save of an earlier load borrows a newer load’s token": true
+      }
+    },
+    "reload-then-leave-old-snapshot": {
+      "checks": {
+        "D6 earlier load’s debounced snapshot sent after Reload server draft": true
+      }
+    },
+    "held-input-during-flush": {
+      "checks": {
+        "D4 held input typed during the save does not stop the publish": true
+      }
+    },
+    "reentry-detail-read-across-leaving-commit": {
+      "checks": {
+        "D8 re-entry reconciles to the older server read over the warm copy": true
+      }
+    },
+    "existing-refusals": {
+      "checks": {
+        "refused name kept out of the list (guard)": false,
+        "LOOP_INVALID refusal explicit (guard)": false
+      }
+    }
+  },
+  "finishedAt": "2026-11-14T14:40:58.050Z"
+}

@@ -1,0 +1,514 @@
+{
+  "name": "reload-then-leave-old-snapshot",
+  "network": [
+    {
+      "t": 437,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 437,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 438,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C",
+      "ifMatch": null
+    },
+    {
+      "t": 438,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 438,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 439,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 439,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 440,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 440,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 441,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 442,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81NSKWZM487CZGFY4234D",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N7",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "bcac7407f412bddc"
+      }
+    },
+    {
+      "t": 442,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 447,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 505,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 506,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 508,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 562,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N7",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 567,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1242,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C/draft",
+      "ifMatch": "\"bcac7407f412bddc\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N7",
+          "description": "C1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1248,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C/draft",
+      "status": 409,
+      "body": {
+        "code": "DRAFT_CONFLICT"
+      }
+    },
+    {
+      "t": 1304,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C",
+      "ifMatch": null
+    },
+    {
+      "t": 1310,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81NSKWZM487CZGFY4234D",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N7",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "41cdc5c783801c95"
+      }
+    },
+    {
+      "t": 1329,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N7",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1336,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1410,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 1410,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 1410,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C/draft",
+      "ifMatch": "\"41cdc5c783801c95\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N7",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1414,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 9
+      }
+    },
+    {
+      "t": 1428,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D81NSKWZM487CZGFY4234C/draft",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81NSKWZM487CZGFY4234D",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N7",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "8889450048a22542"
+      }
+    },
+    {
+      "t": 1437,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    }
+  ],
+  "barriers": [],
+  "steps": [
+    {
+      "t": 614,
+      "note": [
+        "other writer PUT B",
+        200,
+        "41cdc5c783801c95"
+      ]
+    },
+    {
+      "t": 1249,
+      "note": [
+        "editor PUT C1",
+        409
+      ]
+    },
+    {
+      "t": 1419,
+      "note": [
+        "left the editor ms after the U edit",
+        162
+      ]
+    }
+  ],
+  "ui": {},
+  "rest": {
+    "final": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N7",
+          "description": "U",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D81NSKWZM487CZGFY4234D"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D81NSKWZM487CZGFY4234D",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N7",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "8889450048a22542"
+      },
+      "versions": [
+        {
+          "id": "01M7D81NSKWZM487CZGFY4234D",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N7",
+        "description": "U",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "D6 earlier load’s debounced snapshot sent after Reload server draft": {
+      "expected": "no PUT from the earlier load; the reloaded draft B stays on the server",
+      "leftAfterMs": 162,
+      "uPuts": [
+        {
+          "t": 1410,
+          "ev": "request",
+          "method": "PUT",
+          "path": "/loops/01M7D81NSKWZM487CZGFY4234C/draft",
+          "ifMatch": "\"41cdc5c783801c95\"",
+          "body": {
+            "definition": {
+              "name": "#237 mwgiimen N7",
+              "description": "U",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              }
+            }
+          }
+        }
+      ],
+      "serverDraftDescription": "U",
+      "timingValid": true,
+      "reproduced": true
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ]
+}

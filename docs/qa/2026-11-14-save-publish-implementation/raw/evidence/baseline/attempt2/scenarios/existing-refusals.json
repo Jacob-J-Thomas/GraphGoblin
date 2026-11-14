@@ -1,0 +1,673 @@
+{
+  "name": "existing-refusals",
+  "network": [
+    {
+      "t": 479,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 479,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 480,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 480,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 481,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 482,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 487,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 510,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 586,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D81YSVTZBVJ87AX1ZPVA1Z",
+      "ifMatch": null
+    },
+    {
+      "t": 586,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 587,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 587,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 587,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 587,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 588,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D81YSVTZBVJ87AX1ZPVA1Z",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D81YSVTZBVJ87AX1ZPVA20",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N11 mine",
+          "description": "mine",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "374e16ec2749c386"
+      }
+    },
+    {
+      "t": 589,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 637,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 638,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 638,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 639,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 689,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D81YSVTZBVJ87AX1ZPVA1Z/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N11 mine",
+          "description": "mine",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 693,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D81YSVTZBVJ87AX1ZPVA1Z/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1358,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D81YSVTZBVJ87AX1ZPVA1Z/draft",
+      "ifMatch": "\"374e16ec2749c386\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N11 taken",
+          "description": "mine",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1365,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D81YSVTZBVJ87AX1ZPVA1Z/draft",
+      "status": 409,
+      "body": {
+        "code": "LOOP_NAME_CONFLICT"
+      }
+    },
+    {
+      "t": 6725,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 6730,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 7852,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 7853,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 7853,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D826B77K3H07PA3ZGVH42T",
+      "ifMatch": null
+    },
+    {
+      "t": 7853,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 7853,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 7853,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 7854,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 7854,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 7856,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 7856,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 7857,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D826B77K3H07PA3ZGVH42T",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D826B77K3H07PA3ZGVH42V",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N11 invalid",
+          "description": "broken",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "26ac9a8b1392b527"
+      }
+    },
+    {
+      "t": 7859,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 7861,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 7862,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 7891,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 7893,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 7912,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D826B77K3H07PA3ZGVH42T/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N11 invalid",
+          "description": "broken",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 7920,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D826B77K3H07PA3ZGVH42T/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 7947,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D826B77K3H07PA3ZGVH42T/publish",
+      "ifMatch": null
+    },
+    {
+      "t": 7953,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D826B77K3H07PA3ZGVH42T/publish",
+      "status": 422,
+      "body": {
+        "code": "LOOP_INVALID"
+      }
+    }
+  ],
+  "barriers": [],
+  "steps": [
+    {
+      "t": 1368,
+      "note": [
+        "name PUT",
+        409,
+        {
+          "code": "LOOP_NAME_CONFLICT"
+        }
+      ]
+    },
+    {
+      "t": 7955,
+      "note": [
+        "LOOP_INVALID POST",
+        422,
+        {
+          "code": "LOOP_INVALID"
+        }
+      ]
+    },
+    {
+      "t": 8550,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\baseline\\attempt2\\screens\\existing-refusals-loop-invalid.png"
+    }
+  ],
+  "ui": {
+    "nameRefused": {
+      "path": "/app/loops/01M7D81YSVTZBVJ87AX1ZPVA1Z/edit",
+      "heading": "#237 mwgiimen N11 taken",
+      "header": "Loops / #237 mwgiimen N11 taken draft only Not saved: name in use Undo edit loop name Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "Not saved: name in use",
+      "notices": [
+        "Another loop already has this nameThe name “#237 mwgiimen N11 taken” matches another loop’s name, so this draft was not saved. Names that differ only in letter case or spacing count as the same name. Your changes are kept on this device, and the server keeps the previous name and draft until you choose a name no other loop has.Use “#237 mwgiimen N11 taken copy”Edit nameTry again"
+      ],
+      "name": "#237 mwgiimen N11 taken",
+      "description": "mine",
+      "publishButton": "Publish"
+    },
+    "listAfterRefusal": "#237 mwgiimen N11 mine mine Updated 11/14/2026, 8:40:48 AM draft only never run Edit Export Delete",
+    "invalid": {
+      "path": "/app/loops/01M7D826B77K3H07PA3ZGVH42T/edit",
+      "heading": "#237 mwgiimen N11 invalid",
+      "header": "Loops / #237 mwgiimen N11 invalid draft only All changes saved Undo Redo Open in Runs Publish the loop first: runs start from a published version. 1 error Publish",
+      "saveState": "All changes saved",
+      "notices": [
+        "Publish failedthe draft has structural errors (LOOP_INVALID)done: No decision gate defines gates.missing."
+      ],
+      "name": "#237 mwgiimen N11 invalid",
+      "description": "broken",
+      "publishButton": "Publish"
+    }
+  },
+  "rest": {
+    "afterRefusal": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N11 mine",
+          "description": "mine",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D81YSVTZBVJ87AX1ZPVA20"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D81YSVTZBVJ87AX1ZPVA20",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N11 mine",
+          "description": "mine",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "374e16ec2749c386"
+      },
+      "versions": [
+        {
+          "id": "01M7D81YSVTZBVJ87AX1ZPVA20",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N11 mine",
+        "description": "mine",
+        "runCount": 0,
+        "latestRun": null
+      }
+    },
+    "invalid": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N11 invalid",
+          "description": "broken",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D826B77K3H07PA3ZGVH42V"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D826B77K3H07PA3ZGVH42V",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N11 invalid",
+          "description": "broken",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "26ac9a8b1392b527"
+      },
+      "versions": [
+        {
+          "id": "01M7D826B77K3H07PA3ZGVH42V",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N11 invalid",
+        "description": "broken",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "refused name kept out of the list (guard)": {
+      "row": "#237 mwgiimen N11 mine mine Updated 11/14/2026, 8:40:48 AM draft only never run Edit Export Delete",
+      "reproduced": false
+    },
+    "LOOP_INVALID refusal explicit (guard)": {
+      "notices": [
+        "Publish failedthe draft has structural errors (LOOP_INVALID)done: No decision gate defines gates.missing."
+      ],
+      "reproduced": false
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 409 (Conflict)",
+    "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
+  ]
+}

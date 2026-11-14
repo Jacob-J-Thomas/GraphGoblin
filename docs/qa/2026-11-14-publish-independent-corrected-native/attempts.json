@@ -1,0 +1,141 @@
+[
+  {
+    "scenario": "ancestry",
+    "driverSha256": "8978de6416c1c2509665e9d2a366d4983a10f752ba7abc9c41122644953a81a0",
+    "rawObservationSha256": "8bfd52a12cf7f7410f8cde26a3c5cba96a5bfe9c4458d4763cd1d0d0407a4859",
+    "error": null,
+    "fixtureDisposition": null,
+    "completed": [
+      "same-loop re-entry must not lend its token to the leaving generation",
+      "held invalid text arrives during an actual queued flush"
+    ],
+    "pageErrors": []
+  },
+  {
+    "scenario": "committed",
+    "driverSha256": "d9c3d2ccde0d5e2a1f4d2643a9b9ec1449bcf2802a368af39455626e95466509",
+    "rawObservationSha256": "cfd813a30bf69246f4b000d789d82899671dfbd3a58486e96cb835f6794a2043",
+    "error": null,
+    "fixtureDisposition": null,
+    "completed": [],
+    "pageErrors": []
+  },
+  {
+    "scenario": "list",
+    "driverSha256": "5c879d997023cf56c4945a0ed0ed54c30929f9dd7f9bf971432cb42f80d6af4e",
+    "rawObservationSha256": "a06d01b0c855c74317b45dbd1e4d5b0cb8c85dcc17e4e638b26efe733d54637c",
+    "error": "cold list / active save before navigation",
+    "fixtureDisposition": "Two edit links were counted for each displayed row.",
+    "completed": [],
+    "pageErrors": []
+  },
+  {
+    "scenario": "list-2",
+    "driverSha256": "46e1be49df21d9e5a66d23b9377ccc0d35b3f37bacd5350edf003de6b433aca2",
+    "rawObservationSha256": "0b3d841d3787f486a4abc8e8cf27db905a9822ea275165ae4e50dffced0f51d4",
+    "error": "warm list / pending save on unmount",
+    "fixtureDisposition": "The same loop name was reused as the cold and warm control and correctly received 409.",
+    "completed": [
+      "cold list / active save before navigation"
+    ],
+    "pageErrors": []
+  },
+  {
+    "scenario": "list-3",
+    "driverSha256": "8978de6416c1c2509665e9d2a366d4983a10f752ba7abc9c41122644953a81a0",
+    "rawObservationSha256": "a44381fb37017d701df58a11c179d783d6d8e7016490ed580e5947107a36caec",
+    "error": null,
+    "fixtureDisposition": null,
+    "completed": [
+      "cold list / active save before navigation",
+      "warm list / pending save on unmount",
+      "same-loop detail read crosses a leaving save"
+    ],
+    "pageErrors": []
+  },
+  {
+    "scenario": "not-admitted",
+    "driverSha256": "d9c3d2ccde0d5e2a1f4d2643a9b9ec1449bcf2802a368af39455626e95466509",
+    "rawObservationSha256": "da7a15d68515bd2d54e6480594cc4b504e13b7b791928b33f37b23f37cf0231d",
+    "error": null,
+    "fixtureDisposition": null,
+    "completed": [],
+    "pageErrors": []
+  },
+  {
+    "scenario": "publication",
+    "driverSha256": "3cc8fe56914833491c089658fe9e37d4d4842de1dc874d7ca0257e550314fade",
+    "rawObservationSha256": "56a69a3662ded2f8e29887e2836d94ac0d860d130ff5c5ba5f7bf2258d7be511",
+    "error": "older publish response after a distinct newer publication and editor re-entry",
+    "fixtureDisposition": "The test waited for an autosave queued behind its own old-response barrier.",
+    "completed": [
+      "postcommit response, late local edits and old immutable pin",
+      "request held before admission allows a same-row different definition"
+    ],
+    "pageErrors": []
+  },
+  {
+    "scenario": "publication-2",
+    "driverSha256": "5c879d997023cf56c4945a0ed0ed54c30929f9dd7f9bf971432cb42f80d6af4e",
+    "rawObservationSha256": "5a7970cc85c489cf0c6ea388c9c50a97d8d5ef9264b819a8f44e3ddf06594bea",
+    "error": null,
+    "fixtureDisposition": null,
+    "completed": [
+      "postcommit response, late local edits and old immutable pin",
+      "request held before admission allows a same-row different definition",
+      "older publish response after a distinct newer publication and editor re-entry",
+      "older success and newer current release in the same editor generation"
+    ],
+    "pageErrors": []
+  },
+  {
+    "scenario": "refusals",
+    "driverSha256": "8978de6416c1c2509665e9d2a366d4983a10f752ba7abc9c41122644953a81a0",
+    "rawObservationSha256": "46a97990943272da220e44795c5dc075e03a3a4c5d8ebcb057ac09808d5059c2",
+    "error": "a refused flushing save cannot advance release or list",
+    "fixtureDisposition": "A real recovery GET completed immediately, which allowed the expected draft-only auto-recovery.",
+    "completed": [
+      "name and conditional-save refusals never admit publication or refused summaries"
+    ],
+    "pageErrors": []
+  },
+  {
+    "scenario": "refusals-2",
+    "driverSha256": "5eb50373b0b41434f2213f2769a7a2d4e6d83b8a097fc160fb89c3c4024cc2cf",
+    "rawObservationSha256": "0ff7290d5f839fa2498a56bbba0f9814c7dbf0fa665ebe60881b366ecc61858d",
+    "error": null,
+    "fixtureDisposition": null,
+    "completed": [
+      "name and conditional-save refusals never admit publication or refused summaries",
+      "a refused flushing save cannot advance release or list",
+      "known #273 reference fails as its own real publication refusal"
+    ],
+    "pageErrors": []
+  },
+  {
+    "scenario": "same-editor-pending",
+    "driverSha256": "5eb50373b0b41434f2213f2769a7a2d4e6d83b8a097fc160fb89c3c4024cc2cf",
+    "rawObservationSha256": "7e94f26ec99b41463d8cb537410601a8e4e680efa5f34ac60be4a9d3a4e83a3c",
+    "error": null,
+    "fixtureDisposition": null,
+    "completed": [
+      "public same-mounted generation after restoring a real device draft"
+    ],
+    "pageErrors": []
+  },
+  {
+    "scenario": "transport",
+    "driverSha256": "5c879d997023cf56c4945a0ed0ed54c30929f9dd7f9bf971432cb42f80d6af4e",
+    "rawObservationSha256": "f3da5db1ffb72854005e4bf97cccd190fb3487ce00507f45bf556c6dafaac4fa",
+    "error": null,
+    "fixtureDisposition": null,
+    "completed": [
+      "committed response lost and reconciling read unavailable before retry",
+      "canonical clean load and competing publication with no draft",
+      "unknown retry readback in queue / held-input",
+      "unknown retry readback in queue / new-load",
+      "unknown retry readback in queue / healthy"
+    ],
+    "pageErrors": []
+  }
+]

@@ -1,0 +1,872 @@
+{
+  "name": "publish-held-request-other-save",
+  "network": [
+    {
+      "t": 499,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 500,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 500,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649",
+      "ifMatch": null
+    },
+    {
+      "t": 500,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 501,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 501,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 501,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 502,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 506,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 507,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 508,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgigd48 N2",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "9d7cf9aeb7a0a4f9"
+      }
+    },
+    {
+      "t": 509,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 509,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 509,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 517,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 519,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 629,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N2",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 636,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1288,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/draft",
+      "ifMatch": "\"9d7cf9aeb7a0a4f9\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N2",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1301,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/draft",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgigd48 N2",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "97390702e8ac594e"
+      }
+    },
+    {
+      "t": 1311,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N2",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1319,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1349,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/publish",
+      "ifMatch": null
+    },
+    {
+      "t": 1404,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/publish",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N2",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1408,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649",
+      "ifMatch": null
+    },
+    {
+      "t": 1410,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N2",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1410,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649",
+      "ifMatch": null
+    },
+    {
+      "t": 1411,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N2",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1420,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649",
+      "status": 200,
+      "body": {
+        "loop": "#237 mwgigd48 N2",
+        "current": {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N2",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "03a600d615ecc82c"
+      }
+    },
+    {
+      "t": 1423,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1427,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649",
+      "status": 200,
+      "body": {
+        "loop": "#237 mwgigd48 N2",
+        "current": {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N2",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "03a600d615ecc82c"
+      }
+    },
+    {
+      "t": 1434,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 2015,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 2016,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 2017,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649",
+      "ifMatch": null
+    },
+    {
+      "t": 2017,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 2017,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 2019,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 2019,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 2019,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 2024,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 2025,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 2064,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649",
+      "status": 200,
+      "body": {
+        "loop": "#237 mwgigd48 N2",
+        "current": {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N2",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "03a600d615ecc82c"
+      }
+    },
+    {
+      "t": 2065,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 2065,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 2065,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 2065,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 2076,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 2096,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N2",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 2110,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7XM5BR7M81V6SX50Z7649/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    }
+  ],
+  "barriers": [
+    {
+      "t": 1349,
+      "barrier": "publish",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-request"
+    },
+    {
+      "t": 1388,
+      "barrier": "publish",
+      "ev": "released-to-gateway"
+    }
+  ],
+  "steps": [
+    {
+      "t": 1305,
+      "note": [
+        "A1 PUT",
+        200,
+        {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgigd48 N2",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "97390702e8ac594e"
+      ]
+    },
+    {
+      "t": 1388,
+      "note": [
+        "other writer PUT B (If-Match A1 token)",
+        200,
+        {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgigd48 N2",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "03a600d615ecc82c"
+      ]
+    },
+    {
+      "t": 1414,
+      "note": [
+        "editor POST",
+        200,
+        {
+          "version": {
+            "id": "01M7D7XM5BR7M81V6SX50Z764A",
+            "version": 1,
+            "status": "published",
+            "name": "#237 mwgigd48 N2",
+            "description": "B by other writer",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            }
+          }
+        }
+      ]
+    },
+    {
+      "t": 1818,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\baseline\\attempt1\\screens\\publish-held-request-other-save-after-release.png"
+    }
+  ],
+  "ui": {
+    "afterRelease": {
+      "path": "/app/loops/01M7D7XM5BR7M81V6SX50Z7649/edit",
+      "heading": "#237 mwgigd48 N2",
+      "header": "GraphGoblin Chat Loops Runs Events Settings",
+      "saveState": "All changes saved",
+      "notices": [
+        "Published version 1.Open in Runs"
+      ],
+      "name": "#237 mwgigd48 N2",
+      "description": "A1",
+      "publishButton": "Publish"
+    },
+    "afterReload": {
+      "path": "/app/loops/01M7D7XM5BR7M81V6SX50Z7649/edit",
+      "heading": "#237 mwgigd48 N2",
+      "header": "GraphGoblin Chat Loops Runs Events Settings",
+      "saveState": "All changes saved",
+      "notices": [],
+      "name": "#237 mwgigd48 N2",
+      "description": "B by other writer",
+      "publishButton": "Publish"
+    }
+  },
+  "rest": {
+    "final": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgigd48 N2",
+          "description": "B by other writer",
+          "currentVersionId": "01M7D7XM5BR7M81V6SX50Z764A",
+          "draftVersionId": null
+        },
+        "current": {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgigd48 N2",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "03a600d615ecc82c"
+      },
+      "versions": [
+        {
+          "id": "01M7D7XM5BR7M81V6SX50Z764A",
+          "version": 1,
+          "status": "published"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgigd48 N2",
+        "description": "B by other writer",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "D1/D2 publish certifies the clicked draft though the version holds another": {
+      "expected": "returned version holds a different stored draft than the acknowledged A1; mismatch stated; local work kept",
+      "observed": "Published version 1.Open in Runs",
+      "versionDescription": "B by other writer",
+      "reproduced": true
+    },
+    "A1 kept for explicit recovery after reload": {
+      "observed": {
+        "description": "B by other writer",
+        "saveState": "All changes saved",
+        "notices": []
+      },
+      "reproduced": true
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": []
+}
