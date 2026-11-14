@@ -19,7 +19,7 @@ GraphGoblin is built for AI engineers. AI-driven development lifecycle (AIDLC) p
 | 04  | [Node catalog](04-node-catalog.md)                           | Every node type: purpose, configuration, ports, engine behaviour                                                |
 | 05  | [Execution engine](05-execution-engine.md)                   | Executor semantics, event sourcing, run lifecycle, resiliency model                                             |
 | 06  | [Harness integration](06-harness-integration.md)             | Harness port, Codex/Claude/Ollama inference, model discovery and Chat workflow integration                      |
-| 07  | [API, streaming, and MCP](07-api-and-streaming.md)           | REST surface, SSE, OpenAPI, auth, MCP server, Codex plugin                                                      |
+| 07  | [API, streaming, and MCP](07-api-and-streaming.md)           | REST surface, SSE, OpenAPI, auth, MCP server, Codex and Claude Code plugins                                     |
 | 08  | [Triggers and integrations](08-triggers-and-integrations.md) | Manual, cron, webhook, inbound event, polling; security of inbound paths                                        |
 | 09  | [Frontend and PWA](09-frontend-and-pwa.md)                   | Native Chat, paired Goblin PWA, editor, run inspector, settings and service-worker update flow                  |
 | 10  | [Testing and quality](10-testing-and-quality.md)             | Coverage policy, fixtures, adversarial QA agents, CI gates                                                      |

@@ -1,4 +1,4 @@
-# Use MCP and the Codex plugin
+# Use MCP with Codex and Claude Code
 
 ## Start the MCP server
 
@@ -137,5 +137,23 @@ If it asks for input, show me the prompt. Report the returned summary and run ID
 ```
 
 The run and inspection skills use MCP. The design skill uses REST for editing because the tool list covers run operations rather than graph editing. See [API, streaming, and MCP](../07-api-and-streaming.md) for design context.
+
+## Load the Claude Code plugin
+
+Build GraphGoblin with the supported Node 22 runtime and start the gateway. From the built checkout, validate and load the Claude artifact:
+
+```powershell
+$pluginPath = (Resolve-Path 'apps/plugin-claude/dist/plugin/graphgoblin').Path
+claude plugin validate --strict $pluginPath
+claude --plugin-dir $pluginPath
+```
+
+The plugin inherits `GG_API_URL` and, when needed, `GG_API_KEY`. In an authenticated configuration, authoring needs `loops:write`, starting a known loop needs `loops:read` and `runs:write`, and inspection by run ID needs `runs:read`.
+
+- Use `/graphgoblin:design-loop` to create or update an unpublished draft and see validation issues.
+- Use `/graphgoblin:run-loop` to start a loop. Explicitly request draft execution when the loop has no published version.
+- Use `/graphgoblin:inspect-run` with the run ID to read the outcome and events.
+
+Claude uses the existing stdio MCP server for all three commands, including its opt-in draft tools. See [local installation and refresh](../../apps/plugin-claude/README.md) for a persistent copy, alternate Node selection, and troubleshooting.
 
 Continue with [Settings and secrets](06-settings-and-secrets.md).

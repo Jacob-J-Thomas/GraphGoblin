@@ -68,7 +68,7 @@ export async function main(
     return { exitCode: 0, url: http.url, close: () => http.close() };
   }
 
-  const server = createMcpServer(options);
+  const server = createMcpServer({ ...options, draftTools: config.draftTools === true });
   await server.connect(new StdioServerTransport(io.stdin, io.stdout));
   log(`graphgoblin-mcp: stdio (gateway ${config.apiUrl})`);
   return { exitCode: 0, close: () => server.close() };
