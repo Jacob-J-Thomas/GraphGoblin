@@ -1,8 +1,10 @@
+import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fieldErrorIssues, type EditorIssue } from './model.js';
+import { VOICE_STEP_MESSAGE } from './chat-protection.js';
+import { fieldErrorIssues, validateDraft, type EditorIssue } from './model.js';
 import { useEditorStore } from './store.js';
 import { ValidationIndicator } from './ValidationIndicator.js';
 
@@ -120,6 +122,67 @@ describe('ValidationIndicator', () => {
     rerender(<ValidationIndicator issues={[loopLevel]} definition={definition} />);
     expect(screen.getByRole('group', { name: 'Loop and connections' })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Nodes' })).toBeNull();
+  });
+
+  it('removes an edge the canvas cannot draw from its issue row, once, then returns focus (#207)', async () => {
+    const user = userEvent.setup();
+    const stranded = kitchenSinkLoop();
+    stranded.edges.push({
+      id: 'ghost',
+      from: { node: 'prep', port: 'nope' },
+      to: { node: 'gone' },
+    });
+    useEditorStore.getState().load('L1', stranded);
+    function Live() {
+      const def = useEditorStore((s) => s.definition)!;
+      return <ValidationIndicator issues={validateDraft(def).issues} definition={def} />;
+    }
+    render(<Live />);
+    const before = useEditorStore.getState().definition!;
+    await user.click(screen.getByRole('button', { name: /error/ }));
+    const general = screen.getByRole('group', { name: 'Loop and connections' });
+    // Two issues name the edge; one action. Drawable edges' rows have none.
+    expect(within(general).getAllByText(/edge "ghost"/)).toHaveLength(2);
+    const remove = within(general).getAllByRole('button', { name: /^Remove edge/ });
+    expect(remove.map((b) => b.textContent)).toEqual(['Remove edge ghost']);
+    await user.click(remove[0]!);
+    const after = useEditorStore.getState().definition!;
+    expect(after.edges).toEqual(before.edges.filter((e) => e.id !== 'ghost'));
+    expect(after.nodes).toBe(before.nodes);
+    expect(useEditorStore.getState().past.map((step) => step.label)).toEqual([
+      'remove edge prep nope to gone',
+    ]);
+    expect(screen.queryByRole('dialog', { name: 'Loop issues' })).toBeNull();
+    await waitFor(() => expect(document.activeElement).not.toBe(document.body));
+    useEditorStore.getState().undo();
+    expect(useEditorStore.getState().definition!.edges).toEqual(before.edges);
+  });
+
+  it('keeps a protected Chat voice step that the canvas cannot draw, saying why (#207)', async () => {
+    const user = userEvent.setup();
+    const chat = {
+      schemaVersion: 4,
+      name: 'Chat',
+      nodes: [
+        { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
+        { id: 'chat-normalize', kind: 'mutate', label: 'N', config: { operations: [] } },
+      ],
+      edges: [{ id: 'v1', from: { node: 'chat-normalize', port: 'out' }, to: { node: 'gone' } }],
+    } as unknown as LoopDefinitionInput;
+    useEditorStore.getState().load('L1', chat);
+    useEditorStore.setState({ systemChat: true });
+    const issue: EditorIssue = {
+      code: 'EDGE_TO_MISSING',
+      severity: 'error',
+      message: 'x',
+      edgeId: 'v1',
+    };
+    render(<ValidationIndicator issues={[issue]} definition={chat} />);
+    await user.click(screen.getByRole('button', { name: '1 error' }));
+    const remove = screen.getByRole('button', { name: 'Remove edge v1' });
+    expect(remove).toBeDisabled();
+    expect(remove).toHaveAttribute('title', VOICE_STEP_MESSAGE);
+    useEditorStore.setState({ systemChat: false });
   });
 
   it('discards loop-level unparsed text, leaving focus on "Ready to publish"', async () => {

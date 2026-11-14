@@ -341,6 +341,163 @@ describe('Canvas handlers', () => {
     ).toBe(true);
   });
 
+  describe('a refused drop says why (#207)', () => {
+    type EndState = Parameters<NonNullable<ReactFlowProps['onConnectEnd']>>[1];
+    const end = (nodeId: string, id: string | null, type: 'source' | 'target') => ({
+      nodeId,
+      id,
+      type,
+      x: 0,
+      y: 0,
+      position: type === 'source' ? Position.Right : Position.Left,
+      width: 8,
+      height: 8,
+    });
+    const drop = (
+      from: ReturnType<typeof end> | null,
+      to: ReturnType<typeof end> | null,
+      isValid: boolean | null,
+    ) =>
+      act(() =>
+        flow().onConnectEnd!(new MouseEvent('mouseup'), {
+          isValid,
+          fromHandle: from,
+          toHandle: to,
+        } as unknown as EndState),
+      );
+    const occupied = /^port "out" of "prep" is already connected\. To connect it elsewhere/;
+    const notice = () => store().connectionError;
+    beforeEach(() => useEditorStore.setState({ connectionError: undefined }));
+
+    it('names the reason for a drop on a port, whichever end the drag started from', () => {
+      renderCanvas();
+      drop(end('prep', 'out', 'source'), end('done', 'in', 'target'), false);
+      expect(notice()).toMatch(occupied);
+      act(() => useEditorStore.setState({ connectionError: undefined }));
+      // Dragged from the input to the output: the real tuple is still prep.out -> done.
+      drop(end('done', 'in', 'target'), end('prep', 'out', 'source'), false);
+      expect(notice()).toMatch(occupied);
+      // xyflow reports a port under the pointer but outside its radius as neither valid nor not.
+      act(() => useEditorStore.setState({ connectionError: undefined }));
+      drop(end('prep', 'out', 'source'), end('done', 'in', 'target'), null);
+      expect(notice()).toMatch(occupied);
+      // A handle with no id is the default output.
+      act(() => useEditorStore.setState({ connectionError: undefined }));
+      drop(end('prep', null, 'source'), end('done', 'in', 'target'), false);
+      expect(notice()).toMatch(occupied);
+      expect(store().definition!.edges.filter((e) => e.from.node === 'prep')).toHaveLength(1);
+    });
+
+    it('says nothing for the pane, a port of the same type, or a drop that connected', () => {
+      renderCanvas();
+      act(() => useEditorStore.setState({ connectionError: 'an earlier refusal' }));
+      drop(end('prep', 'out', 'source'), null, null);
+      drop(end('prep', 'out', 'source'), end('infer', 'out', 'source'), false);
+      drop(end('infer', 'in', 'target'), end('done', 'in', 'target'), false);
+      drop(end('prep', 'out', 'source'), end('done', 'in', 'target'), true);
+      // The earlier notice is neither replaced nor repeated by an unrelated reason.
+      expect(notice()).toBe('an earlier refusal');
+      expect(store().definition!.edges.filter((e) => e.from.node === 'prep')).toHaveLength(1);
+      expect(store().past).toHaveLength(0);
+    });
+
+    it('reports a stale or unknown end the canvas offers no handle for (controlled callback)', () => {
+      renderCanvas();
+      // No rendered handle exists for these; the callback is driven directly, defensively.
+      drop(end('gone', 'out', 'source'), end('done', 'in', 'target'), false);
+      expect(notice()).toBe('unknown node');
+      drop(end('start', 'out', 'source'), end('nightly', 'in', 'target'), false);
+      expect(notice()).toBe('triggers have no input');
+    });
+
+    it('explains a refused click-connect from the handles clicked, and not one that connected', () => {
+      renderCanvas();
+      const handle = (nodeId: string, id: string, type: 'source' | 'target') => {
+        const element = document.createElement('div');
+        element.className = `react-flow__handle ${type}`;
+        element.dataset['nodeid'] = nodeId;
+        element.dataset['handleid'] = id;
+        const inner = element.appendChild(document.createElement('span'));
+        return inner;
+      };
+      const click = (target: Element) =>
+        act(() =>
+          flow().onClickConnectEnd!(
+            { target } as unknown as MouseEvent,
+            {
+              isValid: null,
+              fromHandle: null,
+              toHandle: null,
+            } as unknown as EndState,
+          ),
+        );
+      const start = (nodeId: string, handleId: string, handleType: 'source' | 'target') =>
+        act(() =>
+          flow().onClickConnectStart!(new MouseEvent('click'), { nodeId, handleId, handleType }),
+        );
+      // Output then an input: occupied.
+      start('prep', 'out', 'source');
+      click(handle('done', 'in', 'target'));
+      expect(notice()).toMatch(occupied);
+      // Input then output (reversed), and again with no start: no new notice.
+      act(() => useEditorStore.setState({ connectionError: undefined }));
+      start('done', 'in', 'target');
+      click(handle('prep', 'out', 'source'));
+      expect(notice()).toMatch(occupied);
+      act(() => useEditorStore.setState({ connectionError: undefined }));
+      click(handle('prep', 'out', 'source'));
+      start('prep', 'out', 'source');
+      click(handle('infer', 'out', 'source'));
+      start('prep', 'out', 'source');
+      click(document.createElement('div'));
+      expect(notice()).toBeUndefined();
+      // A handle without an id is the default output; a start without a node, or a click that is
+      // not on an element, says nothing.
+      const bare = handle('done', 'in', 'target');
+      delete bare.parentElement!.dataset['handleid'];
+      start('prep', 'out', 'source');
+      click(bare);
+      expect(notice()).toMatch(occupied);
+      act(() => useEditorStore.setState({ connectionError: undefined }));
+      act(() =>
+        flow().onClickConnectStart!(new MouseEvent('click'), {
+          nodeId: null,
+          handleId: null,
+          handleType: null,
+        }),
+      );
+      click(handle('done', 'in', 'target'));
+      start('prep', 'out', 'source');
+      act(() =>
+        flow().onClickConnectEnd!(
+          { target: null } as unknown as MouseEvent,
+          {
+            isValid: null,
+            fromHandle: null,
+            toHandle: null,
+          } as unknown as EndState,
+        ),
+      );
+      expect(notice()).toBeUndefined();
+      // A click that connected (xyflow called onConnect first) refuses nothing afterwards.
+      act(() => store().removeEdge('e3'));
+      renderCanvas();
+      start('prep', 'out', 'source');
+      act(() =>
+        // xyflow may name the default output by no id at all.
+        flow().onConnect!({
+          source: 'prep',
+          sourceHandle: null,
+          target: 'infer',
+          targetHandle: 'in',
+        }),
+      );
+      click(handle('infer', 'in', 'target'));
+      expect(notice()).toBeUndefined();
+      expect(store().definition!.edges.filter((e) => e.from.node === 'prep')).toHaveLength(1);
+    });
+  });
+
   it('applies node changes: measurement, selection, dragging, removal, and drag stop', () => {
     renderCanvas();
     act(() =>
@@ -769,6 +926,56 @@ describe('manual edge routes (#44)', () => {
       outputOrder: geometry.outputOrder,
     };
   };
+
+  it('removes the selected connection from its toolbar in one undo step, then focuses Undo (#207)', () => {
+    const undo = document.body.appendChild(document.createElement('button'));
+    undo.dataset['history'] = 'undo';
+    try {
+      render(<Live />);
+      select('start-work');
+      fireEvent.click(handle('Remove connection'));
+      expect(store().definition!.edges.some((e) => e.id === 'start-work')).toBe(false);
+      expect(labels()).toEqual(['remove edge start to work']);
+      expect(undo).toHaveFocus();
+      expect(flow().edges!.some((e) => e.selected)).toBe(false);
+      // Undo brings the same record back, unselected.
+      act(() => store().undo());
+      expect(edge('start-work').selected).toBe(false);
+      expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
+    } finally {
+      undo.remove();
+    }
+  });
+
+  it('keeps the selection when the store refuses the removal, and focuses the canvas without a toolbar', () => {
+    const view = render(<Live />);
+    const removeEdge = store().removeEdge;
+    const refused = vi.fn();
+    try {
+      act(() => useEditorStore.setState({ removeEdge: refused }));
+      select('start-work');
+      fireEvent.click(handle('Remove connection'));
+      expect(refused).toHaveBeenCalledWith('start-work');
+      expect(edge('start-work').selected).toBe(true);
+    } finally {
+      act(() => useEditorStore.setState({ removeEdge }));
+    }
+    // Select again so the canvas renders with the store's own action.
+    act(() => flow().onEdgesChange!([{ type: 'select', id: 'start-work', selected: false }]));
+    select('start-work');
+    fireEvent.click(handle('Remove connection'));
+    expect(store().definition!.edges.some((e) => e.id === 'start-work')).toBe(false);
+    expect(view.getByTestId('canvas')).toHaveFocus();
+  });
+
+  it('forgets a selection whose connection is gone, so an edge reusing its id is not selected (#207)', () => {
+    render(<Live />);
+    select('start-work');
+    expect(edge('start-work').selected).toBe(true);
+    act(() => store().removeEdge('start-work'));
+    act(() => store().undo());
+    expect(edge('start-work').selected).toBe(false);
+  });
 
   it('drags a forward edge segment into a manual route in one undo step, and resets it', () => {
     render(<Live />);

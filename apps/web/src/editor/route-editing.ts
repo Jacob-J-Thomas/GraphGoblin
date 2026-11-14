@@ -34,6 +34,11 @@ export interface RouteEditing {
   ): RouteSegment | undefined;
   /** Remove the edge's manual route: it routes automatically again. */
   reset(edgeId: string): void;
+  /**
+   * Remove the connection itself (#207): one undo step, refused for a protected Chat voice step. The
+   * canvas drops the selection and moves focus to a control where Delete removes nothing.
+   */
+  remove(edgeId: string): void;
 }
 
 export const RouteEditingContext = createContext<RouteEditing | undefined>(undefined);

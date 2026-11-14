@@ -231,9 +231,23 @@ export function connectionProblem(
   )
     return 'Finish a unique, valid route ID before connecting it';
   if (def.edges.some((e) => e.from.node === from.id && e.from.port === port)) {
-    return `port "${port}" of "${from.id}" is already connected`;
+    return `port "${port}" of "${from.id}" is already connected. To connect it elsewhere, select its connection and choose Remove connection (or press Delete or Backspace), then draw it again.`;
   }
   return null;
+}
+
+/**
+ * Whether the canvas can draw a stored edge: both ends exist, its output port is a handle on the
+ * source's card, and its target has an input (a trigger has none). Edges it cannot draw (from an
+ * imported or API-written draft, or a renamed Script exit label) have no canvas path to select.
+ */
+export function canvasDrawsEdge(
+  def: LoopDefinitionInput,
+  edge: LoopDefinitionInput['edges'][number],
+): boolean {
+  const from = def.nodes.find((n) => n.id === edge.from.node);
+  const to = def.nodes.find((n) => n.id === edge.to.node);
+  return !!from && !!to && to.kind !== 'trigger' && canvasPorts(from).includes(edge.from.port);
 }
 
 export type EditorIssue = ValidationIssue & {

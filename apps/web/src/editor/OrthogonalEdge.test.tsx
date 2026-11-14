@@ -8,6 +8,9 @@ import type { RoutedEdge } from './routing.js';
 import { createRouteChannels } from './route-channels.js';
 import { labelBox } from './edge-label-placement.js';
 import { ForwardEdge } from './ForwardEdge.js';
+import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+import { VOICE_STEP_MESSAGE } from './chat-protection.js';
+import { useEditorStore } from './store.js';
 
 const data = (
   route: RoutedEdge | undefined,
@@ -80,6 +83,7 @@ const editor = () => ({
   begin: vi.fn<RouteEditing['begin']>(),
   nudge: vi.fn<RouteEditing['nudge']>(() => undefined),
   reset: vi.fn<RouteEditing['reset']>(),
+  remove: vi.fn<RouteEditing['remove']>(),
 });
 
 describe('OrthogonalEdge', () => {
@@ -400,5 +404,90 @@ describe('OrthogonalEdge', () => {
     );
     expect(screen.getByRole('button', { name: 'Reset route' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /^Route segment/ }).length).toBeGreaterThan(0);
+  });
+
+  it('offers Remove connection on every selected edge, keeping its keys from the edge and canvas (#207)', () => {
+    useEditorStore.setState({ definition: undefined, systemChat: false });
+    const editing = editor();
+    const onKeyDown = vi.fn();
+    // xyflow's edge wrapper selects its edge in a React click handler on an ancestor.
+    const onClick = vi.fn();
+    const view = render(
+      <div onKeyDown={onKeyDown} onClick={onClick}>
+        {inFlow(<OrthogonalEdge {...props} />, editing)}
+      </div>,
+    );
+    // Unselected: no toolbar.
+    expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
+    view.rerender(
+      <div onKeyDown={onKeyDown} onClick={onClick}>
+        {inFlow(<OrthogonalEdge {...props} selected />, editing)}
+      </div>,
+    );
+    // An automatic route has nothing to reset, but its connection can be removed.
+    expect(screen.queryByRole('button', { name: 'Reset route' })).toBeNull();
+    const remove = screen.getByRole('button', { name: 'Remove connection' });
+    expect(remove).toBeEnabled();
+    expect(remove).toHaveClass('nokey', 'nodrag', 'nopan', 'pointer-coarse:h-11');
+    for (const key of ['Delete', 'Backspace', 'Enter', ' ']) fireEvent.keyDown(remove, { key });
+    expect(onKeyDown).not.toHaveBeenCalled();
+    expect(editing.remove).not.toHaveBeenCalled();
+    remove.focus();
+    fireEvent.keyDown(remove, { key: 'Escape' });
+    expect(screen.getByTestId('edge')).toHaveFocus();
+    // The edge wrapper never sees the click (it would select the removed edge again).
+    fireEvent.click(remove);
+    expect(editing.remove).toHaveBeenCalledWith('return');
+    expect(onClick).not.toHaveBeenCalled();
+    // A manual route that crosses a card: the note, Reset route, then Remove connection.
+    view.rerender(
+      <div onKeyDown={onKeyDown}>
+        {inFlow(
+          <OrthogonalEdge
+            {...props}
+            data={data({ ...route, manual: true, crossing: true })}
+            selected
+          />,
+          editing,
+        )}
+      </div>,
+    );
+    const toolbar = view.container.querySelector('.gg-route-toolbar')!;
+    expect([...toolbar.children].map((child) => child.textContent)).toEqual([
+      'Crosses a card',
+      'Reset route',
+      'Remove connection',
+    ]);
+  });
+
+  it('disables Remove connection on a protected Chat voice step, saying why (#207)', () => {
+    useEditorStore.setState({
+      systemChat: true,
+      definition: {
+        schemaVersion: 4,
+        name: 'Chat',
+        nodes: [
+          { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
+          { id: 'chat-normalize', kind: 'mutate', label: 'Norm', config: { operations: [] } },
+        ],
+        edges: [
+          {
+            id: 'return',
+            from: { node: 'chat-input', port: 'out' },
+            to: { node: 'chat-normalize' },
+          },
+        ],
+      } as unknown as LoopDefinitionInput,
+    });
+    const editing = editor();
+    render(inFlow(<OrthogonalEdge {...props} selected />, editing));
+    const remove = screen.getByRole('button', { name: 'Remove connection' });
+    expect(remove).toBeDisabled();
+    expect(remove).toHaveAttribute('title', VOICE_STEP_MESSAGE);
+    fireEvent.click(remove);
+    expect(editing.remove).not.toHaveBeenCalled();
+    act(() => useEditorStore.setState({ systemChat: false }));
+    expect(screen.getByRole('button', { name: 'Remove connection' })).toBeEnabled();
+    useEditorStore.setState({ definition: undefined, systemChat: false });
   });
 });

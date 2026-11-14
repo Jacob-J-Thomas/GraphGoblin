@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Icon } from '../components/icons/index.js';
 import { Badge, Button, type PopoverControls } from '../components/ui/index.js';
 import { cn } from '../lib/utils.js';
@@ -84,12 +85,15 @@ export function IssueList({
   issues,
   onChoose,
   onDiscard,
+  rowAction,
   subject = false,
 }: {
   issues: readonly EditorIssue[];
   onChoose?: ((issue: EditorIssue) => void) | undefined;
   /** Called after discarding an issue's held input. */
   onDiscard?: ((issue: EditorIssue) => void) | undefined;
+  /** A further control under an issue's row (by its index in `issues`), if it has one. */
+  rowAction?: ((issue: EditorIssue, index: number) => ReactNode) | undefined;
   /** Name each issue's node or edge (for a list from the whole loop). */
   subject?: boolean;
 }) {
@@ -125,6 +129,7 @@ export function IssueList({
               Discard the {issue.discard.input ?? 'unparsed text'}
             </Button>
           ) : null}
+          {rowAction?.(issue, index)}
         </li>
       ))}
     </ul>

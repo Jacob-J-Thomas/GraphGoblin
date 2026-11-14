@@ -32,6 +32,8 @@ import { LABEL_CHARACTER_WIDTH, LABEL_HEIGHT, LABEL_PADDING } from './routing-la
 import { roundedPath } from './routing.js';
 import { followEdgeLabel } from './edge-label-placement.js';
 import { edgeLabelText } from './edge-label-text.js';
+import { isProtectedVoiceEdge, VOICE_STEP_MESSAGE } from './chat-protection.js';
+import { useEditorStore } from './store.js';
 
 export interface OrthogonalEdgeData extends Record<string, unknown> {
   /** The edge's routed geometry, published by the canvas without rebuilding xyflow's edges. */
@@ -52,6 +54,14 @@ export const zoomOf = (state: Pick<ReactFlowState, 'transform'>): number => stat
 
 /** Keep a handle this far (screen px) from a label pill, when its segment has room for it. */
 const HANDLE_REACH = 14;
+/**
+ * The selected edge's toolbar frame (screen px), centred above its label. Wide enough for Crosses a
+ * card, Reset route and Remove connection side by side; only the controls themselves take pointer
+ * events, so the empty frame never covers the canvas.
+ */
+const TOOLBAR_WIDTH = 420;
+/** Keys a toolbar button keeps from the edge and the canvas: they act on the button alone. */
+const TOOLBAR_KEYS = ['Enter', ' ', 'Delete', 'Backspace'];
 const ARROWS: Record<string, ['x' | 'y', -1 | 1]> = {
   ArrowLeft: ['x', -1],
   ArrowRight: ['x', 1],
@@ -62,8 +72,9 @@ const ARROWS: Record<string, ['x' | 'y', -1 | 1]> = {
 /**
  * One edge's path from ordered orthogonal points: a backward route from the router (#18), a manual
  * route (#44), or, for a forward edge without one, xyflow's own smoothstep. Selected, it shows a
- * handle on each segment and, for a manual route, a Reset route button. xyflow's wrapper keeps the
- * hit target, keyboard selection, and edge change and delete events.
+ * handle on each segment and a toolbar: Remove connection (#207) and, for a manual route, Reset
+ * route. xyflow's wrapper keeps the hit target, keyboard selection, and edge change and delete
+ * events.
  */
 export const OrthogonalEdge = memo(function OrthogonalEdge({
   id,
@@ -225,6 +236,11 @@ function RouteHandles({
     [points],
   );
   const segments = useMemo(() => segmentsOf(base.route, base.from, base.to), [base]);
+  // A protected Chat voice step keeps its connection (as the store refuses its removal).
+  const removalBlocked = useEditorStore((s) => {
+    const edge = s.definition?.edges.find((e) => e.id === edgeId);
+    return !!edge && !!s.definition && isProtectedVoiceEdge(s.definition, s.systemChat, edge);
+  });
   // After a nudge, keep focus on the moved segment even when a split renumbered it: once the
   // stored route comes back with that segment, focus its handle.
   const focusTargetRef = useRef<RouteSegment>(undefined);
@@ -265,6 +281,14 @@ function RouteHandles({
   };
 
   const scale = `scale(${1 / zoom})`;
+  // Escape returns to the connection; the keys that act on a button stay with it.
+  const toolbarKeys = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      edgeElement()?.focus();
+    } else if (TOOLBAR_KEYS.includes(event.key)) event.stopPropagation();
+  };
   return (
     <g ref={groupRef} className="gg-route-handles">
       {segments.map((segment, i) => {
@@ -296,21 +320,21 @@ function RouteHandles({
           </g>
         );
       })}
-      {manual ? (
-        <g transform={`translate(${labelAt.x} ${labelAt.y - 18 / zoom}) ${scale}`}>
-          <foreignObject
-            x={crossing ? -120 : -60}
-            y={-48}
-            width={crossing ? 240 : 120}
-            height={48}
-            className="gg-route-toolbar-frame"
-          >
-            <div className="gg-route-toolbar flex h-full items-end justify-center gap-2">
-              {crossing ? (
-                <span className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted">
-                  Crosses a card
-                </span>
-              ) : null}
+      <g transform={`translate(${labelAt.x} ${labelAt.y - 18 / zoom}) ${scale}`}>
+        <foreignObject
+          x={-TOOLBAR_WIDTH / 2}
+          y={-48}
+          width={TOOLBAR_WIDTH}
+          height={48}
+          className="gg-route-toolbar-frame"
+        >
+          <div className="gg-route-toolbar flex h-full items-end justify-center gap-2">
+            {manual && crossing ? (
+              <span className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted">
+                Crosses a card
+              </span>
+            ) : null}
+            {manual ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -319,21 +343,29 @@ function RouteHandles({
                   editing.reset(edgeId);
                   edgeElement()?.focus();
                 }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Escape') {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    edgeElement()?.focus();
-                  } else if (['Enter', ' ', 'Delete', 'Backspace'].includes(event.key))
-                    event.stopPropagation();
-                }}
+                onKeyDown={toolbarKeys}
               >
                 Reset route
               </Button>
-            </div>
-          </foreignObject>
-        </g>
-      ) : null}
+            ) : null}
+            <Button
+              size="sm"
+              variant="outline"
+              className="nodrag nopan nokey pointer-coarse:h-11"
+              disabled={removalBlocked}
+              title={removalBlocked ? VOICE_STEP_MESSAGE : undefined}
+              onClick={(event) => {
+                // The edge wrapper would select this (now removed) edge again on the same click.
+                event.stopPropagation();
+                editing.remove(edgeId);
+              }}
+              onKeyDown={toolbarKeys}
+            >
+              Remove connection
+            </Button>
+          </div>
+        </foreignObject>
+      </g>
     </g>
   );
 }

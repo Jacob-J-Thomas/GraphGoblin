@@ -8,3 +8,15 @@ export function canvasFocusTarget(nodeId: string | undefined): HTMLElement | nul
     : null;
   return card ?? document.querySelector<HTMLElement>('[data-editor-canvas]');
 }
+
+/**
+ * Where focus goes after a connection's Remove connection button removed it (#207): the toolbar's
+ * Undo, which names the removal and restores it. Outside the canvas, a further Delete there cannot
+ * remove a node that is still selected. Without the toolbar (a bare canvas), the canvas itself.
+ */
+export function removalFocusTarget(): HTMLElement | null {
+  return (
+    document.querySelector<HTMLElement>('[data-history="undo"]') ??
+    document.querySelector<HTMLElement>('[data-editor-canvas]')
+  );
+}

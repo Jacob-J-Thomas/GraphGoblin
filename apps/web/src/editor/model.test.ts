@@ -4,6 +4,7 @@ import { NodeConfigSchemas } from '@graphgoblin/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   canvasPortLabels,
+  canvasDrawsEdge,
   canvasPorts,
   connectionProblem,
   countsLabel,
@@ -126,6 +127,40 @@ describe('editor model', () => {
     expect(
       connectionProblem(def, { source: 'done', sourceHandle: 'loopBack', target: 'mid' }),
     ).toContain('no output port');
+  });
+
+  it('says how to free an occupied output: remove its connection, then draw again (#207)', () => {
+    const def = newLoopDefinition('x');
+    expect(connectionProblem(def, { source: 'start', sourceHandle: 'out', target: 'done' })).toBe(
+      'port "out" of "start" is already connected. To connect it elsewhere, select its connection and choose Remove connection (or press Delete or Backspace), then draw it again.',
+    );
+  });
+
+  it('tells which stored edges the canvas can draw (#207)', () => {
+    const def: LoopDefinitionInput = newLoopDefinition('x');
+    def.nodes.push({
+      id: 'run',
+      kind: 'script',
+      label: 'Run',
+      config: { command: 'node', exitCodeRoutes: { '1': 'retry' } },
+    });
+    const edge = (
+      from: string,
+      port: string,
+      to: string,
+    ): LoopDefinitionInput['edges'][number] => ({
+      id: 'x',
+      from: { node: from, port },
+      to: { node: to, port: 'in' },
+    });
+    expect(canvasDrawsEdge(def, def.edges[0]!)).toBe(true);
+    expect(canvasDrawsEdge(def, edge('run', 'retry', 'done'))).toBe(true);
+    // A renamed Script label, a missing source or target, an Exit's output, a trigger's input.
+    expect(canvasDrawsEdge(def, edge('run', 'report', 'done'))).toBe(false);
+    expect(canvasDrawsEdge(def, edge('gone', 'out', 'done'))).toBe(false);
+    expect(canvasDrawsEdge(def, edge('run', 'out', 'gone'))).toBe(false);
+    expect(canvasDrawsEdge(def, edge('done', 'out', 'run'))).toBe(false);
+    expect(canvasDrawsEdge(def, edge('run', 'out', 'start'))).toBe(false);
   });
 
   it('labels Noul sides and Score bands while keeping their stable IDs as ports', () => {

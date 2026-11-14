@@ -13,9 +13,12 @@ import {
   type Connection,
   type Edge,
   type EdgeChange,
+  type HandleType,
   type IsValidConnection,
   type NodeChange,
   type NodeMouseHandler,
+  type OnConnectEnd,
+  type OnConnectStart,
   type OnInit,
   type OnNodeDrag,
   type XYPosition,
@@ -67,6 +70,7 @@ import { createLabelPlacementCache, type EdgeLabelPosition } from './edge-label-
 import { ForwardEdge } from './ForwardEdge.js';
 import { edgeLabelText } from './edge-label-text.js';
 import { loopBackEdgeIds } from './loop-back-edges.js';
+import { removalFocusTarget } from './canvas-focus.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
@@ -104,7 +108,52 @@ const ARIA_LABELS: Partial<AriaLabelConfig> = {
     'Press Enter to edit the node, or Space to select it. With a node selected, press Delete to remove it.',
   'node.a11yDescription.keyboardDisabled':
     'Press Enter to edit the node, or Space to select it. With a node selected, use the arrow keys to move it and Delete to remove it.',
+  // A connection is changed by removing it and drawing it again (#207).
+  'edge.a11yDescription.default':
+    'Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection. To connect its output elsewhere, remove the connection and draw from the output again.',
 };
+
+/** One end of a refused drop: a rendered port handle (xyflow's handle, or its element's data). */
+export interface DropEnd {
+  nodeId: string;
+  id?: string | null | undefined;
+  type: HandleType;
+}
+
+/**
+ * Why a drop from `from` onto `to` was refused, in the store's current draft (#207), or null when it
+ * says nothing: no handle under the drop (the pane), two ends of one type, or an allowed tuple. A
+ * drag may start at either end, so the output end is found by its handle type.
+ */
+export function dropRefusal(
+  definition: LoopDefinitionInput | undefined,
+  from: DropEnd | null | undefined,
+  to: DropEnd | null | undefined,
+): string | null {
+  if (!definition || !from || !to || from.type === to.type) return null;
+  const [source, target] = from.type === 'source' ? [from, to] : [to, from];
+  return connectionProblem(definition, {
+    source: source.nodeId,
+    sourceHandle: source.id ?? null,
+    target: target.nodeId,
+  });
+}
+
+const connectionKey = (source: string, port: string | null, target: string) =>
+  JSON.stringify([source, port ?? 'out', target]);
+
+/** The port handle a click landed on, read from xyflow's handle element. */
+function clickedEnd(target: EventTarget | null): DropEnd | undefined {
+  const handle =
+    target instanceof Element ? target.closest<HTMLElement>('.react-flow__handle') : null;
+  const nodeId = handle?.dataset['nodeid'];
+  if (!handle || !nodeId) return undefined;
+  return {
+    nodeId,
+    id: handle.dataset['handleid'] ?? null,
+    type: handle.classList.contains('source') ? 'source' : 'target',
+  };
+}
 
 export { canvasFocusTarget } from './canvas-focus.js';
 
@@ -425,6 +474,10 @@ export function Canvas({
   const [measured, setMeasured] = useState<Record<string, Size>>({});
   const [dragging, setDragging] = useState<Record<string, XYPosition>>({});
   const [selectedEdge, setSelectedEdge] = useState<string | undefined>();
+  // The selected connection is gone (removed, or undone): forget it while rendering, so an edge that
+  // later reuses its id is not selected, nor removable, by a selection made on another (#207).
+  if (selectedEdge !== undefined && !definition.edges.some((e) => e.id === selectedEdge))
+    setSelectedEdge(undefined);
   const cardDataRef = useRef<ReadonlyMap<string, NodeCardData>>(new Map());
   const nodesRef = useRef<ReadonlyMap<string, FlowNode>>(new Map());
   const edgesRef = useRef({ byId: new Map<string, Edge>(), value: [] as Edge[] });
@@ -637,8 +690,16 @@ export function Canvas({
         setEdgeRoute(edgeId, undefined);
         announce('Route reset: the connection routes automatically.');
       },
+      remove(edgeId) {
+        const before = useEditorStore.getState().definition;
+        removeEdge(edgeId);
+        // Refused (a protected Chat voice step): the store's notice says why; the selection stays.
+        if (useEditorStore.getState().definition === before) return;
+        setSelectedEdge((current) => (current === edgeId ? undefined : current));
+        removalFocusTarget()?.focus();
+      },
     };
-  }, [announce, closeStep, screenToFlowPosition, setEdgeRoute]);
+  }, [announce, closeStep, removeEdge, screenToFlowPosition, setEdgeRoute]);
 
   const pinnedCrossings = useCallback(() => {
     const cards = cardBoxes(planRef.current.nodes);
@@ -737,12 +798,53 @@ export function Canvas({
     [definition],
   );
 
+  // The last connection a gesture made, so the click-connect end below can tell a click that
+  // connected from one that was refused; and the port a click-connect started from.
+  const connectedRef = useRef<string | undefined>(undefined);
+  const clickStartRef = useRef<DropEnd | undefined>(undefined);
   const onConnect = useCallback(
     (conn: Connection) => {
+      connectedRef.current = connectionKey(conn.source, conn.sourceHandle, conn.target);
       connect({ source: conn.source, sourceHandle: conn.sourceHandle, target: conn.target });
     },
     [connect],
   );
+
+  // A drop on a port that refused it says why in the page's "Connection refused" notice (#207). A
+  // drop that connected went through onConnect; a drop on the pane or on a port of the same type
+  // says nothing (and leaves an earlier notice as it was). Never connects anything.
+  const onConnectEnd: OnConnectEnd = useCallback((_event, state) => {
+    if (state.isValid) return;
+    const problem = dropRefusal(
+      useEditorStore.getState().definition,
+      state.fromHandle,
+      state.toHandle,
+    );
+    if (problem) useEditorStore.setState({ connectionError: problem });
+  }, []);
+  // xyflow hands a click-connect's end the drag state (idle by then), so the two ends come from
+  // the click that started it and the handle element clicked last.
+  const onClickConnectStart: OnConnectStart = useCallback((_event, params) => {
+    connectedRef.current = undefined;
+    clickStartRef.current =
+      params.nodeId && params.handleType
+        ? { nodeId: params.nodeId, id: params.handleId, type: params.handleType }
+        : undefined;
+  }, []);
+  const onClickConnectEnd: OnConnectEnd = useCallback((event) => {
+    const from = clickStartRef.current;
+    clickStartRef.current = undefined;
+    const to = clickedEnd(event.target);
+    if (!from || !to || from.type === to.type) return;
+    const [source, target] = from.type === 'source' ? [from, to] : [to, from];
+    const made = connectionKey(source.nodeId, source.id ?? null, target.nodeId);
+    if (connectedRef.current === made) {
+      connectedRef.current = undefined;
+      return;
+    }
+    const problem = dropRefusal(useEditorStore.getState().definition, from, to);
+    if (problem) useEditorStore.setState({ connectionError: problem });
+  }, []);
 
   const onNodeDragStop: OnNodeDrag<FlowNode> = useCallback(
     (_, node) => endDrag(node.id, node.position),
@@ -815,6 +917,9 @@ export function Canvas({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onConnectEnd={onConnectEnd}
+          onClickConnectStart={onClickConnectStart}
+          onClickConnectEnd={onClickConnectEnd}
           isValidConnection={isValidConnection}
           onNodeDragStop={onNodeDragStop}
           onMove={closeCanvasPopovers}
@@ -841,6 +946,9 @@ export function Canvas({
       onNodesChange,
       onEdgesChange,
       onConnect,
+      onConnectEnd,
+      onClickConnectStart,
+      onClickConnectEnd,
       isValidConnection,
       onNodeDragStop,
       closeCanvasPopovers,

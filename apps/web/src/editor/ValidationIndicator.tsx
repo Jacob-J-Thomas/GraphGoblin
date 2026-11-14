@@ -1,8 +1,9 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { useId, useRef } from 'react';
 import { Icon } from '../components/icons/index.js';
-import { Popover } from '../components/ui/index.js';
+import { Button, Popover } from '../components/ui/index.js';
 import { cn } from '../lib/utils.js';
+import { isProtectedVoiceEdge, VOICE_STEP_MESSAGE } from './chat-protection.js';
 import {
   IssueList,
   refocusAfterDiscard,
@@ -11,6 +12,7 @@ import {
   worstSeverity,
 } from './IssuePopover.js';
 import { countsLabel, groupIssues, issuesLabel, type EditorIssue } from './model.js';
+import { removeStrandedEdge, strandedEdgeRows } from './stranded-edges.js';
 import { useEditorStore } from './store.js';
 
 const GROUP_LABEL = 'px-2 pt-0.5 text-xs font-semibold text-muted';
@@ -35,7 +37,9 @@ const STATUS: Record<ServerCheck, { icon: 'queued' | 'info' | 'check-circle'; te
  * Otherwise it is a button named by the counts ("2 errors, 1 warning", from the same merged list
  * Publish checks) that opens a popover listing every loop-level and edge issue in full, then one
  * row per node with issues ("prep: 2 issues"), which opens that node; each node's badge on the
- * canvas has the detail.
+ * canvas has the detail. A stored edge the canvas cannot draw (from a missing node or port, into a
+ * missing node or a trigger) has nothing to select on the canvas, so its first issue row offers
+ * Remove edge (#207): one undo step, refused for a protected Chat voice step.
  */
 export function ValidationIndicator({
   issues,
@@ -54,6 +58,7 @@ export function ValidationIndicator({
   const nodeGroupId = useId();
   // Where focus goes when "Discard the unparsed text" removed the last issue, and with it the button.
   const readyRef = useRef<HTMLSpanElement>(null);
+  const system = useEditorStore((s) => s.systemChat);
   if (issues.length === 0) {
     const status = STATUS[check];
     return (
@@ -78,6 +83,7 @@ export function ValidationIndicator({
   }
   const severity = worstSeverity(issues);
   const { general, nodes } = groupIssues(issues, definition);
+  const stranded = strandedEdgeRows(general, definition);
   return (
     <Popover
       label="Loop issues"
@@ -108,6 +114,26 @@ export function ValidationIndicator({
                 issues={general}
                 subject
                 onDiscard={() => refocusAfterDiscard(close, () => readyRef.current)}
+                rowAction={(_issue, index) => {
+                  const edge = stranded.get(index);
+                  if (!edge) return null;
+                  const blocked = isProtectedVoiceEdge(definition, system, edge);
+                  return (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="ml-2"
+                      disabled={blocked}
+                      title={blocked ? VOICE_STEP_MESSAGE : undefined}
+                      onClick={() => {
+                        if (removeStrandedEdge(edge))
+                          refocusAfterDiscard(close, () => readyRef.current);
+                      }}
+                    >
+                      Remove edge {edge.id}
+                    </Button>
+                  );
+                }}
               />
             </div>
           ) : null}
