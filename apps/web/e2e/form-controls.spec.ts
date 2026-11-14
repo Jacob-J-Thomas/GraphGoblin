@@ -267,3 +267,133 @@ test('the run form keeps a long choice inside its field and puts each problem be
   await expect(reason).toHaveAccessibleDescription(/Reason must NOT have fewer than 3 characters/);
   await expect(page).toHaveURL(/\/app\/runs\/new/);
 });
+
+test('New run and Wait send the supplied input and omit untouched or reset fields (#235)', async ({
+  page,
+  request,
+}) => {
+  const inputSchema = {
+    type: 'object',
+    required: ['reason'],
+    properties: {
+      untouched: { type: 'string' },
+      comment: { type: 'string' },
+      message: { type: 'string' },
+      title: { type: 'string', minLength: 1 },
+      reason: { type: 'string' },
+      number: { type: 'number' },
+      metadata: { type: 'null' },
+      approved: { type: 'boolean' },
+    },
+  };
+  const definition = approvalLoop('explicit input presence');
+  const loopId = await publishLoop(request, {
+    ...definition,
+    nodes: definition.nodes.map((node) => {
+      if (node.id === 'start') return { ...node, config: { ...node.config, inputSchema } };
+      if (node.id === 'approve') return { ...node, config: { ...node.config, inputSchema } };
+      return {
+        ...node,
+        config: { returns: '{"started": trigger.payload, "answered": lastOutput.value}' },
+      };
+    }),
+  });
+  const input = {
+    message: '',
+    title: 'ok',
+    reason: '',
+    number: 0,
+    metadata: null,
+    approved: false,
+  };
+
+  async function enterInput(submitLabel: string, omitBy: 'keyboard' | 'click') {
+    const form = page.getByRole('form', { name: submitLabel });
+    const message = form.getByLabel('message', { exact: true });
+    await message.fill('clear this');
+    await message.clear();
+    // Cleared text is the empty string, and its placeholder says so.
+    await expect(message).toHaveAttribute('placeholder', '""');
+    const title = form.getByLabel('title', { exact: true });
+    const reason = form.getByLabel('reason', { exact: true });
+    const number = form.getByLabel('number', { exact: true });
+    const metadata = form.getByLabel('metadata', { exact: true });
+    await title.fill('1');
+    await title.clear();
+    await reason.fill('r');
+    await reason.clear();
+    // The native number input holds "-", which it reports as an empty value.
+    await number.press('-');
+    expect(await number.evaluate((el: HTMLInputElement) => el.validity.badInput)).toBe(true);
+    await metadata.fill(' ');
+    const submit = form.getByRole('button', { name: submitLabel });
+    await submit.click();
+    await expect(title).toHaveAccessibleDescription(/must NOT have fewer than 1/);
+    await expect(number).toHaveAccessibleDescription('number: enter a number');
+    await expect(metadata).toHaveAccessibleDescription(/metadata: invalid JSON/);
+    // Required text cleared to "" is valid here, and has no way back to absent.
+    await expect(reason).not.toHaveAttribute('aria-invalid');
+    await expect(form.getByRole('button', { name: 'Omit reason', exact: true })).toHaveCount(0);
+
+    await number.fill('1');
+    await number.clear();
+    await submit.click();
+    await expect(number).toHaveAccessibleDescription('number: enter a number');
+
+    // Omit appears in the label's line without moving the field, and takes the field back to
+    // absent with focus on it.
+    const comment = form.getByLabel('comment', { exact: true });
+    const omit = form.getByRole('button', { name: 'Omit comment', exact: true });
+    const offset = () =>
+      comment.evaluate(
+        (el) => el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
+      );
+    const resting = await offset();
+    await comment.fill('drop this');
+    await expect(omit).toBeVisible();
+    expect(await offset()).toBe(resting);
+    const [field, button] = await Promise.all([comment.boundingBox(), omit.boundingBox()]);
+    expect(button!.y + button!.height).toBeLessThanOrEqual(field!.y);
+    if (omitBy === 'keyboard') {
+      await comment.press('Shift+Tab');
+      await expect(omit).toBeFocused();
+      await page.keyboard.press('Enter');
+    } else {
+      await omit.click();
+    }
+    await expect(comment).toBeFocused();
+    await expect(comment).toHaveValue('');
+    await expect(omit).toHaveCount(0);
+    expect(await offset()).toBe(resting);
+
+    await title.fill('ok');
+    await number.fill('0');
+    await metadata.fill('null');
+    await form
+      .getByRole('radiogroup', { name: 'approved' })
+      .getByRole('radio', { name: 'No' })
+      .check();
+    return submit;
+  }
+
+  await page.goto(`/app/runs/new?loop=${loopId}`);
+  const start = await enterInput('Start run', 'keyboard');
+  const started = page.waitForRequest(
+    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/loops/${loopId}/runs`,
+  );
+  await start.click();
+  expect((await started).postDataJSON().input).toEqual(input);
+  await expect(page.getByText('Input requested')).toBeVisible();
+  const runId = new URL(page.url()).pathname.split('/').at(-1);
+
+  const respond = await enterInput('Submit input', 'click');
+  const observed = await (await request.get(`/runs/${runId}`)).json();
+  const answered = page.waitForRequest(
+    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/runs/${runId}/input`,
+  );
+  await respond.click();
+  expect((await answered).postDataJSON()).toEqual({ waitId: observed.waiting.waitId, input });
+  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  const completed = await (await request.get(`/runs/${runId}`)).json();
+  expect(completed.result).toEqual({ started: input, answered: input });
+});

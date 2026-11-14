@@ -1,6 +1,6 @@
 import type { JsonSchema } from '@graphgoblin/contracts';
 import { validateJson, type SchemaIssue } from '@graphgoblin/domain';
-import { useId, useState, type FormEvent, type ReactNode } from 'react';
+import { useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import {
   Button,
   FieldGroup,
@@ -35,9 +35,11 @@ function propertyType(schema: PropertySchema): 'string' | 'number' | 'boolean' |
 
 /**
  * How an enum value reads in its control: a string as itself unless the enum also holds a value
- * that reads the same (a string "1" beside the number 1), then quoted; anything else as JSON.
+ * that reads the same (a string "1" beside the number 1), then quoted; anything else as JSON. The
+ * empty string reads `""`, so it never looks like Not set.
  */
 function enumLabel(option: unknown, options: unknown[]): string {
+  if (option === '') return '""';
   if (typeof option !== 'string') return JSON.stringify(option);
   const clash = options.some((other) => other !== option && JSON.stringify(other) === option);
   return clash ? JSON.stringify(option) : option;
@@ -130,6 +132,45 @@ interface Control {
 }
 
 /**
+ * The ghost button's look, drawn 20 px high so it fits the label's line: showing it never moves the
+ * control below (the label keeps its 6 px gap). A coarse pointer gets a 44 px target (touch-target).
+ */
+const OMIT_BUTTON = cn(
+  'touch-target -my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center rounded-sm px-1.5',
+  'border border-transparent bg-transparent text-xs leading-none font-semibold text-default',
+  'transition-[background-color] hover:bg-surface-hover',
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
+);
+
+/**
+ * Omit, at the end of an edited optional field's label line: the field goes back to absent, as it
+ * started, and focus goes to its control (the button itself goes away).
+ */
+function OmitButton({
+  controlId,
+  label,
+  onOmit,
+}: {
+  controlId: string;
+  label: string;
+  onOmit: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={`Omit ${label}`}
+      className={OMIT_BUTTON}
+      onClick={(event) => {
+        event.currentTarget.ownerDocument.getElementById(controlId)?.focus();
+        onOmit();
+      }}
+    >
+      Omit
+    </button>
+  );
+}
+
+/**
  * A choice among an enum's members: a segmented control for two to four, a select for more. An
  * optional enum offers "Not set"; a required one starts with nothing chosen. When the chosen member
  * is no longer offered (the schema changed while the form was open) nothing shows as chosen, the
@@ -147,7 +188,7 @@ function EnumChoice({
   label: string;
   options: unknown[];
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
   control: Control;
   required: boolean;
   goneId: string;
@@ -177,11 +218,7 @@ function EnumChoice({
         {required ? (
           <SegmentedControl {...common} onChange={onChange} />
         ) : (
-          <SegmentedControl
-            {...common}
-            notSet={NOT_SET}
-            onChange={(next) => onChange(next ?? '')}
-          />
+          <SegmentedControl {...common} notSet={NOT_SET} onChange={onChange} />
         )}
         {message}
       </>
@@ -197,7 +234,7 @@ function EnumChoice({
         value={gone ? '' : value}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value || undefined)}
       >
         <option value="">{required ? '(choose)' : NOT_SET}</option>
         {options.map((option, index) => (
@@ -214,7 +251,8 @@ function EnumChoice({
 /**
  * One property's field: label (or legend), control, help, and its errors, linked by ids generated
  * here (the property's name is data, used only to look its value up). Help is the property's
- * description, then its default when a placeholder cannot show it.
+ * description, then its default when a placeholder cannot show it. The placeholder shows the
+ * default only while the field is absent; cleared text shows `""`, the empty string it sends.
  */
 function PropertyField({
   name,
@@ -235,11 +273,13 @@ function PropertyField({
   const type = propertyType(prop);
   const label = titleOf(name, prop);
   const hasDefault = prop.default !== undefined;
-  const placeholder =
+  const defaultText =
     hasDefault && (type === 'string' || type === 'number') ? String(prop.default) : undefined;
+  const placeholder =
+    value === undefined ? defaultText : type === 'string' && value === '' ? '""' : undefined;
   const help = [
     prop.description,
-    hasDefault && placeholder === undefined ? `Default: ${JSON.stringify(prop.default)}` : '',
+    hasDefault && defaultText === undefined ? `Default: ${JSON.stringify(prop.default)}` : '',
   ]
     .filter(Boolean)
     .join(' · ');
@@ -287,20 +327,45 @@ function PropertyField({
     );
   } else {
     const text = typeof value === 'string' ? value : '';
+    // Only an edited optional field can go back to absent; a required one has no such state.
+    const omit =
+      !required && value !== undefined ? (
+        <OmitButton controlId={id} label={label} onOmit={() => onChange(undefined)} />
+      ) : null;
     field = (
       <>
         <div className="flex min-w-0 items-center justify-between gap-2">
           <Label htmlFor={id} required={required}>
             {label}
           </Label>
-          {type === 'json' ? <LanguageTag>JSON</LanguageTag> : null}
+          {omit || type === 'json' ? (
+            // Omit appears before the tag, so the tag never moves.
+            <span className="flex shrink-0 items-center gap-2">
+              {omit}
+              {type === 'json' ? <LanguageTag>JSON</LanguageTag> : null}
+            </span>
+          ) : null}
         </div>
         {type === 'json' ? (
           <Textarea {...control} value={text} onChange={(e) => onChange(e.target.value)} />
+        ) : type === 'number' ? (
+          <Input
+            {...control}
+            type="number"
+            value={text}
+            placeholder={placeholder}
+            // A native number input reports incomplete text ("-", "1e") as an empty value, and
+            // React sends no change when the value was already empty: the input event still
+            // records the edit, so the field is checked rather than left out.
+            onInput={(event) => {
+              if (event.currentTarget.validity.badInput) onChange('');
+            }}
+            onChange={(e) => onChange(e.target.value)}
+          />
         ) : (
           <Input
             {...control}
-            type={type === 'number' ? 'number' : 'text'}
+            type="text"
             value={text}
             placeholder={placeholder}
             onChange={(e) => onChange(e.target.value)}
@@ -325,9 +390,12 @@ function PropertyField({
  * or select for an enum, and anything else as JSON), with the properties the schema requires
  * marked; any other schema, or none, gets a single JSON editor. The form starts empty, so nothing
  * shows a value it would not send (a switch, always on or off, has no place here). An enum choice is
- * kept by value and sent as the value it stands for (a number stays a number). A field left unset
- * is not sent. The value is checked with `domain`'s validator before `onSubmit`, as the API will
- * check it: an empty JSON editor as `null`, which is what the API validates when no input is sent.
+ * kept by value and sent as the value it stands for (a number stays a number). A field nobody
+ * touched is absent from the value. Edited text is sent as typed, cleared text as the empty string,
+ * and the schema decides whether either is valid; an edited number or JSON field must hold a number
+ * or JSON, so a blank one is a problem, never left out. Omit puts an edited optional field (or the
+ * JSON editor, when the schema accepts no input) back to absent. The value is checked with
+ * `domain`'s validator before `onSubmit`, as the API will check it: no JSON input as `null`.
  * Each problem shows beside its field (linked to the control, which is marked invalid, and
  * announced); a problem with the value as a whole shows under the form, or under the JSON editor.
  * Editing a field clears its problems.
@@ -347,8 +415,14 @@ export function JsonSchemaForm({
   const properties = objectProperties(schema);
   const required = requiredProperties(schema);
   const [values, setValues] = useState<ReadonlyMap<string, string | boolean>>(() => new Map());
-  const [raw, setRaw] = useState('');
+  // The JSON editor's text: undefined until edited (no input), then exactly what was typed.
+  const [raw, setRaw] = useState<string>();
   const [problems, setProblems] = useState<Problems>(NO_PROBLEMS);
+  // No input reaches the API's check as null: only a schema that accepts it makes input optional.
+  const rawOptional = useMemo(
+    () => schema === undefined || validateJson(schema, null).ok,
+    [schema],
+  );
 
   const set = (key: string, value: string | boolean | undefined) => {
     setValues((current) => {
@@ -366,8 +440,9 @@ export function JsonSchemaForm({
   };
 
   /**
-   * The value the fields stand for, and what is wrong with a field before the schema is asked (an
-   * enum choice no longer offered, JSON that does not parse): those fields are left out.
+   * The value the fields stand for, and what is wrong with a field before the schema is asked (a
+   * blank or incomplete number, JSON that does not parse, an enum choice no longer offered): those
+   * fields are left out of the value, and the form refuses to send it.
    */
   const collectFields = (props: [string, PropertySchema][]) => {
     // Entries, then an object: a property named "__proto__" stays an own property.
@@ -375,9 +450,14 @@ export function JsonSchemaForm({
     const fields = new Map<string, string[]>();
     for (const [key, prop] of props) {
       const value = values.get(key);
-      if (value === undefined || value === '') continue;
+      if (value === undefined) continue;
       const type = propertyType(prop);
-      if (type === 'number') out.push([key, Number(value)]);
+      if (type === 'number') {
+        const number = Number(value);
+        if (value === '' || !Number.isFinite(number))
+          fields.set(key, [`${titleOf(key, prop)}: enter a number`]);
+        else out.push([key, number]);
+      }
       // Enum controls hold the chosen member's JSON text: the member comes back with its type. A
       // choice the schema no longer offers is refused, never silently left out.
       else if (type === 'enum') {
@@ -415,7 +495,7 @@ export function JsonSchemaForm({
       for (const [key, messages] of collected.fields) fields.set(key, messages);
       next = { fields, form: placed.form };
     } else {
-      if (raw.trim() !== '') {
+      if (raw !== undefined) {
         const parsed = parseJson(raw);
         if (!parsed.ok)
           return setProblems({ fields: new Map(), form: [`Invalid JSON: ${parsed.error}`] });
@@ -448,10 +528,22 @@ export function JsonSchemaForm({
         ))
       ) : (
         <FieldGroup className="max-w-[440px]">
-          <Label htmlFor={rawId}>Input (JSON)</Label>
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <Label htmlFor={rawId}>Input (JSON)</Label>
+            {rawOptional && raw !== undefined ? (
+              <OmitButton
+                controlId={rawId}
+                label="input"
+                onOmit={() => {
+                  setRaw(undefined);
+                  setProblems(NO_PROBLEMS);
+                }}
+              />
+            ) : null}
+          </div>
           <Textarea
             id={rawId}
-            value={raw}
+            value={raw ?? ''}
             placeholder="{}"
             aria-invalid={rawInvalid || undefined}
             aria-describedby={rawInvalid ? `${rawId}-error` : undefined}
