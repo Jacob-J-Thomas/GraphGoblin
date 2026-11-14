@@ -1,0 +1,486 @@
+{
+  "task": "Issue #209 MCP and API-client shared-store test fixture correction",
+  "source": {
+    "baselineCommit": "c427287b41a4e1b67a397ab4e03e228c6ea62450",
+    "baselineFiles": [
+      {
+        "path": "apps/mcp/src/mcp.test.ts",
+        "sourceSnapshot": "source/apps/mcp/src/mcp.test.ts",
+        "preparedFile": "proposed/apps/mcp/src/mcp.test.ts",
+        "baselineBlob": "7a0668bf6578c2bc640de927e2ee3655eb209f81",
+        "correctionCommitBlob": "616c063fac7df4f5b8cf3b7e6b501afa5c7e23f3",
+        "sourceSha256": "f8e18f8c83557c9699957e1d37a675828e440c7d27c4cecd85a44d2827ceea1a",
+        "correctionSha256": "b2c1d45f0a88772eecfbca28df91362d6f42155452d448a5155ba8997c37d630",
+        "preparedSha256": "b2c1d45f0a88772eecfbca28df91362d6f42155452d448a5155ba8997c37d630",
+        "committedMatchesPrepared": true
+      },
+      {
+        "path": "packages/api-client/src/contract.test.ts",
+        "sourceSnapshot": "source/packages/api-client/src/contract.test.ts",
+        "preparedFile": "proposed/packages/api-client/src/contract.test.ts",
+        "baselineBlob": "acdb8131eb45e2d02b416f0d7ca61dfd0d443a77",
+        "correctionCommitBlob": "6374c027afae3559b087f188f9bcb049ce5b033e",
+        "sourceSha256": "d6cc33ea93db492c29f31d5834f1a7547b0c1c3b72b7d9be98e759ccd560c52b",
+        "correctionSha256": "0fa84a4f1cf1cbd374072b2bec591b56b8c227927dcc83e1ac31c21a76c15296",
+        "preparedSha256": "0fa84a4f1cf1cbd374072b2bec591b56b8c227927dcc83e1ac31c21a76c15296",
+        "committedMatchesPrepared": true
+      }
+    ],
+    "preparedPatchSha256": "6610624cca9f0bc21c6ff8567613eb611205379c6f04975ee96e5fb83ddd6ba2"
+  },
+  "delivery": {
+    "testedHead": "35436eddf51482ca9394347228860afe38b0c412",
+    "correctionCommit": "8a057e25c2b30187f4b4a8fab0fee049ec9fc3be",
+    "rootQaIntegrationHead": "693e61a367c9d3ea61aee16aeecd730a364d28da",
+    "branch": "codex/gg-20261114-loop-names",
+    "worktreeAtHandoff": "clean (root confirmation)",
+    "workerStagedOrCommitted": false
+  },
+  "runtimeInvariant": {
+    "comparedAtCorrectionCommit": "8a057e25c2b30187f4b4a8fab0fee049ec9fc3be",
+    "files": [
+      {
+        "path": "apps/mcp/src/tools.ts",
+        "baselineSha256": "6cfce5625705e4216ad909d9bc262c261b7aae662577000aa3c9f8d2d3e7ae05",
+        "correctionCommitSha256": "6cfce5625705e4216ad909d9bc262c261b7aae662577000aa3c9f8d2d3e7ae05",
+        "identical": true
+      },
+      {
+        "path": "apps/mcp/src/server.ts",
+        "baselineSha256": "c46ddee3019273875e77457a2af6e056f90dcaf9cb8f63695b1ac6eb14c7e75b",
+        "correctionCommitSha256": "c46ddee3019273875e77457a2af6e056f90dcaf9cb8f63695b1ac6eb14c7e75b",
+        "identical": true
+      },
+      {
+        "path": "packages/api-client/src/client.ts",
+        "baselineSha256": "066672e4bcaf5aa8f11d6bdab13b7f6b330686084ba582bff31a7bdfda546c10",
+        "correctionCommitSha256": "066672e4bcaf5aa8f11d6bdab13b7f6b330686084ba582bff31a7bdfda546c10",
+        "identical": true
+      },
+      {
+        "path": "packages/infrastructure/src/sqlite/loops.ts",
+        "baselineSha256": "db324eecb34a44c3dbf19f1bbd4098b611ff7f250cd7701c350d7918e98fef69",
+        "correctionCommitSha256": "db324eecb34a44c3dbf19f1bbd4098b611ff7f250cd7701c350d7918e98fef69",
+        "identical": true
+      },
+      {
+        "path": "packages/infrastructure/src/sqlite/loop-names.ts",
+        "baselineSha256": "c077b725593387e21b0e536f21374a82f56458786bb4c82c618792d93b873fc3",
+        "correctionCommitSha256": "c077b725593387e21b0e536f21374a82f56458786bb4c82c618792d93b873fc3",
+        "identical": true
+      },
+      {
+        "path": "apps/api/src/routes/loops.ts",
+        "baselineSha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f",
+        "correctionCommitSha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f",
+        "identical": true
+      },
+      {
+        "path": "apps/api/src/plugins/errors.ts",
+        "baselineSha256": "88618344c1c77e4b9f83657912973e029f960427954d9d8926aaa14aa0d7b0d7",
+        "correctionCommitSha256": "88618344c1c77e4b9f83657912973e029f960427954d9d8926aaa14aa0d7b0d7",
+        "identical": true
+      }
+    ],
+    "allIdenticalToBaseline": true,
+    "noProductRuntimeChange": true
+  },
+  "verification": {
+    "node": "v22.23.4",
+    "pnpm": "12.8.1",
+    "checks": [
+      {
+        "command": "pnpm.cmd --filter @graphgoblin/mcp test",
+        "log": "logs/corrected/13-mcp-test-final.log",
+        "exitCode": 0,
+        "result": "12 files; 60 passed; 2 skipped",
+        "logSha256": "67e54e72a1ec84ef57b60a24becd89cb651f7bb25ac4431e9494a83c9f2471ac"
+      },
+      {
+        "command": "pnpm.cmd --filter @graphgoblin/mcp test:coverage",
+        "log": "logs/corrected/15-mcp-coverage-final.log",
+        "exitCode": 0,
+        "result": "96.95% lines; 94.23% branches",
+        "logSha256": "49793f83ac594702a0a011d56c328ed1e9e381165992ef1400f3457ff14fe30f"
+      },
+      {
+        "command": "pnpm.cmd --filter @graphgoblin/mcp typecheck",
+        "log": "logs/corrected/18-mcp-typecheck-final.log",
+        "exitCode": 0,
+        "result": "passed",
+        "logSha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca"
+      },
+      {
+        "command": "pnpm.cmd --filter @graphgoblin/mcp lint",
+        "log": "logs/corrected/20-mcp-lint-final.log",
+        "exitCode": 0,
+        "result": "passed",
+        "logSha256": "cc5a0b39c7052d24c24888403c48018b4fcccc9d799f81be6c9c30c9e19c85fc"
+      },
+      {
+        "command": "pnpm.cmd --filter @graphgoblin/api-client test",
+        "log": "logs/corrected/14-api-client-test-final.log",
+        "exitCode": 0,
+        "result": "11 files; 103 passed",
+        "logSha256": "2879af22677dba29b495383a6b9944750e81a72c55b6596225ccc4e73367a008"
+      },
+      {
+        "command": "pnpm.cmd --filter @graphgoblin/api-client test:coverage",
+        "log": "logs/corrected/16-api-client-coverage-final.log",
+        "exitCode": 0,
+        "result": "100% lines; 97.30% branches",
+        "logSha256": "43b609b825f465efe9742ec557a8ac1dc0f622c0b14b1308e60fada4e4c13be9"
+      },
+      {
+        "command": "pnpm.cmd --filter @graphgoblin/api-client typecheck",
+        "log": "logs/corrected/17-api-client-typecheck-final.log",
+        "exitCode": 0,
+        "result": "passed",
+        "logSha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca"
+      },
+      {
+        "command": "pnpm.cmd --filter @graphgoblin/api-client lint",
+        "log": "logs/corrected/19-api-client-lint-final.log",
+        "exitCode": 0,
+        "result": "passed",
+        "logSha256": "cc5a0b39c7052d24c24888403c48018b4fcccc9d799f81be6c9c30c9e19c85fc"
+      },
+      {
+        "command": "pnpm.cmd exec prettier --check README.md apps/mcp/src/mcp.test.ts packages/api-client/src/contract.test.ts",
+        "log": "logs/corrected/22-prettier-final.log",
+        "exitCode": 0,
+        "result": "passed",
+        "logSha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+      }
+    ],
+    "buildOutputReadback": {
+      "method": "Read-only current path-to-per-file-SHA256 comparison against the retained phase3 output listings. Current aggregate is bound to the retained aggregate only when every path and per-file hash matches; no build was run for this readback.",
+      "trees": [
+        {
+          "tree": "apps/web/dist",
+          "currentFileCount": 28,
+          "phase3FileCount": 28,
+          "phase3Listing": "../ui-209-claude-phase3/build-listings/final-apps_web_dist.txt",
+          "phase3ListingFileSha256": "37d2177ec857c85029979e82a2b86afe46f575ca56bbf88e62b2302410c47dd2",
+          "phase3AggregateSha256": "37d2177ec857c85029979e82a2b86afe46f575ca56bbf88e62b2302410c47dd2",
+          "currentAggregateSha256": "37d2177ec857c85029979e82a2b86afe46f575ca56bbf88e62b2302410c47dd2",
+          "pathToPerFileSha256MatchesPhase3": true,
+          "changedFileCount": 0,
+          "missingFileCount": 0,
+          "extraFileCount": 0,
+          "changed": [],
+          "missing": [],
+          "extra": []
+        },
+        {
+          "tree": "apps/web/dist-goblin",
+          "currentFileCount": 28,
+          "phase3FileCount": 28,
+          "phase3Listing": "../ui-209-claude-phase3/build-listings/final-apps_web_dist-goblin.txt",
+          "phase3ListingFileSha256": "e45aea7d07aa1e5c01ab97920263dc9f9fef2b8b7b8a2e12e1278b244fd0d652",
+          "phase3AggregateSha256": "e45aea7d07aa1e5c01ab97920263dc9f9fef2b8b7b8a2e12e1278b244fd0d652",
+          "currentAggregateSha256": "e45aea7d07aa1e5c01ab97920263dc9f9fef2b8b7b8a2e12e1278b244fd0d652",
+          "pathToPerFileSha256MatchesPhase3": true,
+          "changedFileCount": 0,
+          "missingFileCount": 0,
+          "extraFileCount": 0,
+          "changed": [],
+          "missing": [],
+          "extra": []
+        },
+        {
+          "tree": "apps/api/dist",
+          "currentFileCount": 306,
+          "phase3FileCount": 306,
+          "phase3Listing": "../ui-209-claude-phase3/build-listings/final-apps_api_dist.txt",
+          "phase3ListingFileSha256": "bbb1b75763c0fa874f1f1f054bda88dc25098a40c7bf3fe27f68809b4b3b8e13",
+          "phase3AggregateSha256": "bbb1b75763c0fa874f1f1f054bda88dc25098a40c7bf3fe27f68809b4b3b8e13",
+          "currentAggregateSha256": "bbb1b75763c0fa874f1f1f054bda88dc25098a40c7bf3fe27f68809b4b3b8e13",
+          "pathToPerFileSha256MatchesPhase3": true,
+          "changedFileCount": 0,
+          "missingFileCount": 0,
+          "extraFileCount": 0,
+          "changed": [],
+          "missing": [],
+          "extra": []
+        },
+        {
+          "tree": "packages/infrastructure/dist",
+          "currentFileCount": 293,
+          "phase3FileCount": 293,
+          "phase3Listing": "../ui-209-claude-phase3/build-listings/final-packages_infrastructure_dist.txt",
+          "phase3ListingFileSha256": "fb734ebe04d20e55e4a8081f4b8a88eb13a1c30b833c36dd0d75490d6bbf20f9",
+          "phase3AggregateSha256": "fb734ebe04d20e55e4a8081f4b8a88eb13a1c30b833c36dd0d75490d6bbf20f9",
+          "currentAggregateSha256": "fb734ebe04d20e55e4a8081f4b8a88eb13a1c30b833c36dd0d75490d6bbf20f9",
+          "pathToPerFileSha256MatchesPhase3": true,
+          "changedFileCount": 0,
+          "missingFileCount": 0,
+          "extraFileCount": 0,
+          "changed": [],
+          "missing": [],
+          "extra": []
+        }
+      ]
+    },
+    "buildListingReferences": [
+      {
+        "path": "../ui-209-claude-phase3/build-sha256-final.txt",
+        "bytes": 440,
+        "sha256": "87fc22cdf8405f33f032def576c82ec2017135ad54f903b2468da2e388a4fde0"
+      },
+      {
+        "path": "../ui-209-claude-phase3/build-listings/final-apps_web_dist.txt",
+        "bytes": 2591,
+        "sha256": "37d2177ec857c85029979e82a2b86afe46f575ca56bbf88e62b2302410c47dd2",
+        "tree": "apps/web/dist",
+        "treeHash": "37d2177ec857c85029979e82a2b86afe46f575ca56bbf88e62b2302410c47dd2"
+      },
+      {
+        "path": "../ui-209-claude-phase3/build-listings/final-apps_web_dist-goblin.txt",
+        "bytes": 2591,
+        "sha256": "e45aea7d07aa1e5c01ab97920263dc9f9fef2b8b7b8a2e12e1278b244fd0d652",
+        "tree": "apps/web/dist-goblin",
+        "treeHash": "e45aea7d07aa1e5c01ab97920263dc9f9fef2b8b7b8a2e12e1278b244fd0d652"
+      },
+      {
+        "path": "../ui-209-claude-phase3/build-listings/final-apps_api_dist.txt",
+        "bytes": 27508,
+        "sha256": "bbb1b75763c0fa874f1f1f054bda88dc25098a40c7bf3fe27f68809b4b3b8e13",
+        "tree": "apps/api/dist",
+        "treeHash": "bbb1b75763c0fa874f1f1f054bda88dc25098a40c7bf3fe27f68809b4b3b8e13"
+      },
+      {
+        "path": "../ui-209-claude-phase3/build-listings/final-packages_infrastructure_dist.txt",
+        "bytes": 26805,
+        "sha256": "fb734ebe04d20e55e4a8081f4b8a88eb13a1c30b833c36dd0d75490d6bbf20f9",
+        "tree": "packages/infrastructure/dist",
+        "treeHash": "fb734ebe04d20e55e4a8081f4b8a88eb13a1c30b833c36dd0d75490d6bbf20f9"
+      }
+    ]
+  },
+  "historicalFailures": {
+    "originalAndUnchangedReproduction": [
+      {
+        "path": "../ui-209-claude-phase3/logs/14-mcp-plugins.log",
+        "bytes": 2522,
+        "sha256": "dae89a44a2f0eafeaddbb478be3159d52417fa9f4013e1130468cdd77bd9cf09",
+        "exitPath": "../ui-209-claude-phase3/logs/14-mcp-plugins.exit",
+        "exitCode": 1
+      },
+      {
+        "path": "../ui-209-claude-phase3/logs/16-api-client.log",
+        "bytes": 3758,
+        "sha256": "6a8bfa05fb561ad470172815a91b75c9ad80af24d69ec4caa6b4c17a1553b46a",
+        "exitPath": "../ui-209-claude-phase3/logs/16-api-client.exit",
+        "exitCode": 1
+      },
+      {
+        "path": "../ui-209-claude-phase3/logs/17-recheck-mcp-mcp-test.log",
+        "bytes": 1569,
+        "sha256": "a6ac0656dd8950d42b99243ef859e9262591296a370e03a84d91392746bb06f0",
+        "exitPath": "../ui-209-claude-phase3/logs/17-recheck-mcp-mcp-test.exit",
+        "exitCode": 1
+      },
+      {
+        "path": "../ui-209-claude-phase3/logs/17-recheck-api-client-contract.log",
+        "bytes": 3932,
+        "sha256": "035540a4ac7d735acc599c0acdd9cabec0060f7d0780cfbe5ea9d3837392132c",
+        "exitPath": "../ui-209-claude-phase3/logs/17-recheck-api-client-contract.exit",
+        "exitCode": 1
+      }
+    ],
+    "localFirstCorrectionAttempts": [
+      {
+        "log": "logs/corrected/08-mcp-lint.log",
+        "exitCode": 1,
+        "reason": "Initial synthetic fetch used async without await; corrected stub returns a resolved response.",
+        "sha256": "60c8fb9b2aec00dc54e1a563a6cad475b4b8de31363b3110aace017d82e0175c"
+      },
+      {
+        "log": "logs/corrected/10-prettier-check-first.log",
+        "exitCode": 1,
+        "reason": "Initial Prettier check flagged the API-client test file; formatted copy passes the final check.",
+        "sha256": "4141bb1f5363c26328b49f24c3d55c4c95a2c2c6d968b848b571eeeac0efc09e"
+      }
+    ]
+  },
+  "artifactCount": 34,
+  "artifactBytes": 113657,
+  "artifacts": [
+    {
+      "path": "build-readback-aggregate-attempt1.json",
+      "bytes": 2418,
+      "sha256": "7d104b4e248f3d957ce9e064c554f776ba805bd8537f9ff757f7c9ccdb187de8"
+    },
+    {
+      "path": "build-readback.json",
+      "bytes": 3058,
+      "sha256": "548de44a32d7cd0591ca81170d6a721e0bfef816377cea5eb06175486b23d6ed"
+    },
+    {
+      "path": "logs/corrected/08-mcp-lint.log",
+      "bytes": 460,
+      "sha256": "60c8fb9b2aec00dc54e1a563a6cad475b4b8de31363b3110aace017d82e0175c"
+    },
+    {
+      "path": "logs/corrected/08-mcp-lint.log.exit",
+      "bytes": 3,
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "logs/corrected/10-prettier-check-first.log",
+      "bytes": 158,
+      "sha256": "4141bb1f5363c26328b49f24c3d55c4c95a2c2c6d968b848b571eeeac0efc09e"
+    },
+    {
+      "path": "logs/corrected/10-prettier-check-first.log.exit",
+      "bytes": 3,
+      "sha256": "f1b2f662800122bed0ff255693df89c4487fbdcf453d3524a42d4ec20c3d9c04"
+    },
+    {
+      "path": "logs/corrected/12-prettier-check-recheck.log",
+      "bytes": 68,
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "path": "logs/corrected/12-prettier-check-recheck.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/13-mcp-test-final.log",
+      "bytes": 309,
+      "sha256": "67e54e72a1ec84ef57b60a24becd89cb651f7bb25ac4431e9494a83c9f2471ac"
+    },
+    {
+      "path": "logs/corrected/13-mcp-test-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/14-api-client-test-final.log",
+      "bytes": 266,
+      "sha256": "2879af22677dba29b495383a6b9944750e81a72c55b6596225ccc4e73367a008"
+    },
+    {
+      "path": "logs/corrected/14-api-client-test-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/15-mcp-coverage-final.log",
+      "bytes": 684,
+      "sha256": "49793f83ac594702a0a011d56c328ed1e9e381165992ef1400f3457ff14fe30f"
+    },
+    {
+      "path": "logs/corrected/15-mcp-coverage-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/16-api-client-coverage-final.log",
+      "bytes": 649,
+      "sha256": "43b609b825f465efe9742ec557a8ac1dc0f622c0b14b1308e60fada4e4c13be9"
+    },
+    {
+      "path": "logs/corrected/16-api-client-coverage-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/17-api-client-typecheck-final.log",
+      "bytes": 54,
+      "sha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca"
+    },
+    {
+      "path": "logs/corrected/17-api-client-typecheck-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/18-mcp-typecheck-final.log",
+      "bytes": 54,
+      "sha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca"
+    },
+    {
+      "path": "logs/corrected/18-mcp-typecheck-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/19-api-client-lint-final.log",
+      "bytes": 12,
+      "sha256": "cc5a0b39c7052d24c24888403c48018b4fcccc9d799f81be6c9c30c9e19c85fc"
+    },
+    {
+      "path": "logs/corrected/19-api-client-lint-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/20-mcp-lint-final.log",
+      "bytes": 12,
+      "sha256": "cc5a0b39c7052d24c24888403c48018b4fcccc9d799f81be6c9c30c9e19c85fc"
+    },
+    {
+      "path": "logs/corrected/20-mcp-lint-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/21-prettier-readme-final.log",
+      "bytes": 88,
+      "sha256": "2468a3a9e2ce66517479845f0f5665c02840817fc6014c17d55c63bf6a87d8b5"
+    },
+    {
+      "path": "logs/corrected/21-prettier-readme-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "logs/corrected/22-prettier-final.log",
+      "bytes": 68,
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "path": "logs/corrected/22-prettier-final.log.exit",
+      "bytes": 3,
+      "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+    },
+    {
+      "path": "names-209-mcp-fixture.patch",
+      "bytes": 4412,
+      "sha256": "6610624cca9f0bc21c6ff8567613eb611205379c6f04975ee96e5fb83ddd6ba2"
+    },
+    {
+      "path": "proposed/apps/mcp/src/mcp.test.ts",
+      "bytes": 26842,
+      "sha256": "b2c1d45f0a88772eecfbca28df91362d6f42155452d448a5155ba8997c37d630"
+    },
+    {
+      "path": "proposed/packages/api-client/src/contract.test.ts",
+      "bytes": 21325,
+      "sha256": "0fa84a4f1cf1cbd374072b2bec591b56b8c227927dcc83e1ac31c21a76c15296"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5721,
+      "sha256": "ed9a7b2bdbedef054babe952c4ceadc48d78e0e82a97901bc81a0c7d470c772d"
+    },
+    {
+      "path": "source/apps/mcp/src/mcp.test.ts",
+      "bytes": 25757,
+      "sha256": "f8e18f8c83557c9699957e1d37a675828e440c7d27c4cecd85a44d2827ceea1a"
+    },
+    {
+      "path": "source/packages/api-client/src/contract.test.ts",
+      "bytes": 21203,
+      "sha256": "d6cc33ea93db492c29f31d5834f1a7547b0c1c3b72b7d9be98e759ccd560c52b"
+    }
+  ],
+  "limits": [
+    "Test-only correction; no runtime/API behavior change.",
+    "MCP tests build the MCP package. No full root/full-web suite, browser, native-provider run or independent QA was performed by this worker.",
+    "No push by this worker."
+  ]
+}
