@@ -1,6 +1,6 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { isProtectedVoiceEdge } from './chat-protection.js';
-import { canvasDrawsEdge, type EditorIssue } from './model.js';
+import { canvasDrawsEdge } from './model.js';
 import { useEditorStore } from './store.js';
 
 type Edge = LoopDefinitionInput['edges'][number];
@@ -19,24 +19,20 @@ const sameEnds = (a: Edge, b: Edge) =>
   (a.to.port ?? 'in') === (b.to.port ?? 'in');
 
 /**
- * The stored edges the canvas cannot draw that an issue list names (#207), each on its first issue
- * row, by row index: an edge from a missing node or port, into a missing node or a trigger. Such an
- * edge has no path to select on the canvas, so its issue row offers its removal; an edge the canvas
- * draws, or an id more than one edge holds, gets no row action.
+ * The stored edges the canvas cannot draw (#207), in stored order: from a missing node or from a
+ * port that is not a handle on its card, into a missing node or into a trigger. They have no path
+ * to select on the canvas, so Loop issues lists each with its ends and offers its removal. This
+ * reads the draft itself, not its issues: while the draft does not parse (a Decision route's ID
+ * left blank, say) validation reports only the schema error, yet the edge the blank row owns is
+ * still stored and is not drawn. An id more than one edge holds is left out, since removal by id
+ * would take both.
  */
-export function strandedEdgeRows(
-  issues: readonly EditorIssue[],
-  definition: LoopDefinitionInput,
-): Map<number, Edge> {
-  const rows = new Map<number, Edge>();
-  const seen = new Set<string>();
-  issues.forEach((issue, index) => {
-    if (issue.edgeId === undefined || seen.has(issue.edgeId)) return;
-    seen.add(issue.edgeId);
-    const edge = onlyEdge(definition, issue.edgeId);
-    if (edge && !canvasDrawsEdge(definition, edge)) rows.set(index, edge);
-  });
-  return rows;
+export function strandedEdges(definition: LoopDefinitionInput): Edge[] {
+  const holders = new Map<string, number>();
+  for (const edge of definition.edges) holders.set(edge.id, (holders.get(edge.id) ?? 0) + 1);
+  return definition.edges.filter(
+    (edge) => holders.get(edge.id) === 1 && !canvasDrawsEdge(definition, edge),
+  );
 }
 
 /**

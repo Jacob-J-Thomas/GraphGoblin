@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { getSmoothStepPath, Position, ReactFlowProvider, type EdgeProps } from '@xyflow/react';
 import type { ReactNode } from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -11,6 +11,7 @@ import { ForwardEdge } from './ForwardEdge.js';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { VOICE_STEP_MESSAGE } from './chat-protection.js';
 import { useEditorStore } from './store.js';
+import { createViewportGestureGate } from './viewport-gesture.js';
 
 const data = (
   route: RoutedEdge | undefined,
@@ -79,11 +80,12 @@ function inFlow(children: ReactNode, editing: RouteEditing | undefined = undefin
   );
 }
 
-const editor = () => ({
+const editor = (viewport: RouteEditing['viewport'] = createViewportGestureGate()) => ({
   begin: vi.fn<RouteEditing['begin']>(),
   nudge: vi.fn<RouteEditing['nudge']>(() => undefined),
   reset: vi.fn<RouteEditing['reset']>(),
   remove: vi.fn<RouteEditing['remove']>(),
+  viewport,
 });
 
 describe('OrthogonalEdge', () => {
@@ -488,6 +490,117 @@ describe('OrthogonalEdge', () => {
     expect(editing.remove).not.toHaveBeenCalled();
     act(() => useEditorStore.setState({ systemChat: false }));
     expect(screen.getByRole('button', { name: 'Remove connection' })).toBeEnabled();
+    useEditorStore.setState({ definition: undefined, systemChat: false });
+  });
+
+  it('keeps Reset route and Remove connection visibly unavailable while a mouse pan settles (#207)', async () => {
+    useEditorStore.setState({ definition: undefined, systemChat: false });
+    const gate = createViewportGestureGate();
+    const detach = gate.attach(window);
+    const editing = editor(gate);
+    // xyflow's edge wrapper selects its edge in a React click handler on an ancestor.
+    const onClick = vi.fn();
+    try {
+      render(
+        <div onClick={onClick}>
+          {inFlow(
+            <OrthogonalEdge {...props} data={data({ ...route, manual: true })} selected />,
+            editing,
+          )}
+        </div>,
+      );
+      const reset = screen.getByRole('button', { name: 'Reset route' });
+      const remove = screen.getByRole('button', { name: 'Remove connection' });
+      const buttons = [reset, remove];
+      // A new canvas starts ready; wheel, touch and programmatic moves never add d3's blocker.
+      act(() => {
+        gate.move(new WheelEvent('wheel'));
+        gate.move(new Event('touchmove'));
+        gate.move(null);
+      });
+      for (const button of buttons) {
+        expect(button).not.toHaveAttribute('aria-disabled');
+        expect(button).not.toHaveAttribute('data-gesture');
+      }
+
+      act(() => gate.move(new MouseEvent('mousemove')));
+      for (const button of buttons) {
+        expect(button).toHaveAttribute('aria-disabled', 'true');
+        expect(button).toHaveAttribute('data-gesture', 'panning');
+        // A real hit target that keeps focus and `nopan`, not a disabled button a press falls
+        // through; no message: the drag in progress is the reason.
+        expect(button).toBeEnabled();
+        expect(button).not.toHaveAttribute('title');
+      }
+      remove.focus();
+      fireEvent.click(remove);
+      expect(editing.remove).not.toHaveBeenCalled();
+      // The refused click stays on the button, as an accepted one does.
+      expect(onClick).not.toHaveBeenCalled();
+      expect(remove).toHaveFocus();
+      fireEvent.click(reset);
+      expect(editing.reset).not.toHaveBeenCalled();
+
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
+      });
+      for (const button of buttons) expect(button).toHaveAttribute('data-gesture', 'settling');
+      // A task queued now runs after the barrier's first task, which enables nothing; d3's cleanup,
+      // queued in the same release, would have run by then too. The handlers agree.
+      const afterFirst = await new Promise<string | null>((resolve) =>
+        setTimeout(() => {
+          fireEvent.click(remove);
+          fireEvent.click(reset);
+          resolve(remove.getAttribute('data-gesture'));
+        }, 0),
+      );
+      expect(afterFirst).toBe('settling');
+      expect(editing.remove).not.toHaveBeenCalled();
+      expect(editing.reset).not.toHaveBeenCalled();
+      // The second task makes both available again.
+      await waitFor(() => expect(remove).not.toHaveAttribute('aria-disabled'));
+      expect(reset).not.toHaveAttribute('aria-disabled');
+      expect(reset).not.toHaveAttribute('data-gesture');
+      fireEvent.click(remove);
+      expect(editing.remove).toHaveBeenCalledTimes(1);
+      expect(editing.remove).toHaveBeenCalledWith('return');
+      fireEvent.click(reset);
+      expect(editing.reset).toHaveBeenCalledTimes(1);
+    } finally {
+      detach();
+    }
+  });
+
+  it('keeps a protected voice step’s own reason while a pan settles (#207)', () => {
+    useEditorStore.setState({
+      systemChat: true,
+      definition: {
+        schemaVersion: 4,
+        name: 'Chat',
+        nodes: [
+          { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
+          { id: 'chat-normalize', kind: 'mutate', label: 'Norm', config: { operations: [] } },
+        ],
+        edges: [
+          {
+            id: 'return',
+            from: { node: 'chat-input', port: 'out' },
+            to: { node: 'chat-normalize' },
+          },
+        ],
+      } as unknown as LoopDefinitionInput,
+    });
+    const gate = createViewportGestureGate();
+    const editing = editor(gate);
+    render(inFlow(<OrthogonalEdge {...props} selected />, editing));
+    act(() => gate.move(new MouseEvent('mousemove')));
+    const remove = screen.getByRole('button', { name: 'Remove connection' });
+    expect(remove).toBeDisabled();
+    expect(remove).toHaveAttribute('title', VOICE_STEP_MESSAGE);
+    expect(remove).not.toHaveAttribute('aria-disabled');
+    expect(remove).not.toHaveAttribute('data-gesture');
+    fireEvent.click(remove);
+    expect(editing.remove).not.toHaveBeenCalled();
     useEditorStore.setState({ definition: undefined, systemChat: false });
   });
 });

@@ -1,8 +1,8 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { newLoopDefinition, validateDraft, type EditorIssue } from './model.js';
+import { canvasDrawsEdge, newLoopDefinition, validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
-import { removeStrandedEdge, strandedEdgeRows } from './stranded-edges.js';
+import { removeStrandedEdge, strandedEdges } from './stranded-edges.js';
 
 type Edge = LoopDefinitionInput['edges'][number];
 const edge = (id: string, from: string, port: string, to: string): Edge => ({
@@ -33,23 +33,99 @@ const store = () => useEditorStore.getState();
 describe('stored edges the canvas cannot draw (#207)', () => {
   beforeEach(() => store().load('L1', stranded()));
 
-  it('offers one removal per undrawable edge, on its first issue row, and none for drawable edges', () => {
+  it('lists each undrawable edge once, in stored order, and no drawable edge', () => {
     const def = store().definition!;
-    const { issues } = validateDraft(def);
-    const rows = strandedEdgeRows(issues, def);
-    expect([...rows.values()].map((e) => e.id).sort()).toEqual(['e3', 'e4']);
-    for (const [index, e] of rows) expect(issues[index]!.edgeId).toBe(e.id);
-    // Two issues about one edge: the action is on the first only.
-    const twice: EditorIssue[] = [
-      { code: 'EDGE_TO_MISSING', severity: 'error', message: 'a', edgeId: 'e4' },
-      { code: 'EDGE_PORT_MISSING', severity: 'error', message: 'b', edgeId: 'e4' },
-      { code: 'PORT_MULTIPLY_CONNECTED', severity: 'error', message: 'c', edgeId: 'e2' },
-      { code: 'NO_EXIT', severity: 'error', message: 'd' },
-    ];
-    expect([...strandedEdgeRows(twice, def)]).toEqual([[0, def.edges.find((e) => e.id === 'e4')]]);
+    const stranded = strandedEdges(def);
+    // The stored records themselves.
+    expect(stranded).toEqual([def.edges[2], def.edges[3]]);
+    expect(stranded[0]).toBe(def.edges[2]);
     // An id two edges hold is not offered (removal by id would take both).
     const doubled = { ...def, edges: [...def.edges, edge('e4', 'start', 'out', 'done')] };
-    expect(strandedEdgeRows(twice, doubled).size).toBe(0);
+    expect(strandedEdges(doubled).map((e) => e.id)).toEqual(['e3']);
+    // Into a trigger, from a node that is gone, and an edge two issues name: each once.
+    const more = {
+      ...def,
+      edges: [
+        ...def.edges,
+        edge('e5', 'run', 'retry', 'start'),
+        edge('e6', 'gone', 'out', 'run'),
+        edge('e7', 'run', 'nope', 'ghost'),
+      ],
+    };
+    expect(validateDraft(more).issues.filter((i) => i.edgeId === 'e7')).toHaveLength(2);
+    expect(strandedEdges(more).map((e) => e.id)).toEqual(['e3', 'e4', 'e5', 'e6', 'e7']);
+    // In a draft that parses, each comes with an error of its own, so Loop issues has a list to
+    // open; the list itself does not depend on those issues.
+    const { issues, schemaValid } = validateDraft(more);
+    expect(schemaValid).toBe(true);
+    for (const e of strandedEdges(more))
+      expect(issues.some((i) => i.edgeId === e.id && i.severity === 'error')).toBe(true);
+  });
+
+  it('reads the draft, not its issues: a blank Decision route ID still lists the edge it owns', () => {
+    const def = newLoopDefinition('Blank');
+    def.nodes.push(
+      {
+        id: 'pick',
+        kind: 'decision',
+        label: 'Pick',
+        config: {
+          kind: 'expression',
+          jsonata: '"yes"',
+          routes: [
+            { id: 'yes', label: 'Yes' },
+            { id: 'no', label: 'No' },
+            { id: 'route-3', label: '7' },
+          ],
+        },
+      },
+      {
+        id: 'branch',
+        kind: 'mutate',
+        label: 'Branch',
+        config: { operations: [{ op: 'append-message', role: 'note', content: 'Branch ran' }] },
+      },
+    );
+    def.edges.push(
+      edge('e2', 'pick', 'yes', 'done'),
+      edge('e3', 'pick', 'no', 'done'),
+      edge('e5', 'pick', 'route-3', 'branch'),
+    );
+    store().load('L2', def);
+    expect(strandedEdges(store().definition!)).toEqual([]);
+    const node = store().definition!.nodes.find((n) => n.id === 'pick')!;
+    const config = node.config as { routes: { id: string; label: string }[] };
+    store().updateNode(
+      'pick',
+      {
+        config: {
+          ...config,
+          routes: config.routes.map((row, i) => (i === 2 ? { ...row, id: '' } : row)),
+        },
+      },
+      { path: 'routes.2.id', kind: 'typing', id: 1 },
+    );
+    const blank = store().definition!;
+    // The blank row keeps its edge on the last valid port; the draft does not parse, so its only
+    // issue is the schema's, on the node, and names no edge.
+    const e5 = blank.edges.find((e) => e.id === 'e5')!;
+    expect(e5).toEqual(edge('e5', 'pick', 'route-3', 'branch'));
+    const { issues, schemaValid } = validateDraft(blank);
+    expect(schemaValid).toBe(false);
+    expect(issues.every((i) => i.code === 'SCHEMA' && i.edgeId === undefined)).toBe(true);
+    expect(canvasDrawsEdge(blank, e5)).toBe(false);
+    expect(strandedEdges(blank)).toEqual([e5]);
+    // The edge's recovery removes exactly it, one step; Undo restores the draft and ownership.
+    const before = { definition: blank, decisionRoutes: store().decisionRoutes };
+    expect(removeStrandedEdge(e5)).toBe(true);
+    expect(store().definition!.edges).toEqual(blank.edges.filter((e) => e.id !== 'e5'));
+    expect(store().definition!.nodes).toBe(blank.nodes);
+    expect(store().past.at(-1)!.label).toBe('remove edge pick route-3 to branch');
+    expect(store().decisionRoutes['pick']!.rows[2]).toMatchObject({ id: '', edgeIds: [] });
+    store().undo();
+    expect(store().definition).toEqual(before.definition);
+    expect(store().decisionRoutes).toEqual(before.decisionRoutes);
+    expect(store().decisionRoutes['pick']!.rows[2]).toMatchObject({ id: '', edgeIds: ['e5'] });
   });
 
   it('removes exactly the expected edge as one undo step; undo restores it with its route', () => {
