@@ -15,8 +15,12 @@ import { runPreflight } from './preflight.js';
 import { DEFAULT_MODEL_CATALOG } from '@graphgoblin/infrastructure/sqlite';
 let t: TestApp;
 let claude: FakeHarness;
-const definition = (model = 'claude-opus-5-5', extra: Record<string, unknown> = {}) =>
-  singleNodeLoop('claude-loop', {
+const definition = (
+  model = 'claude-opus-5-5',
+  extra: Record<string, unknown> = {},
+  name = 'claude-loop',
+) =>
+  singleNodeLoop(name, {
     id: 'infer',
     kind: 'inference',
     label: 'Infer',
@@ -204,7 +208,7 @@ describe('Claude public integration', () => {
       expect(catalogEntry?.efforts).toEqual(efforts);
       for (const [index, effort] of efforts.entries()) {
         claude.script([{ finalText: 'Synthetic result.' }]);
-        const authored = definition(model, { effort });
+        const authored = definition(model, { effort }, `claude-${model}-${effort}`);
         const loopId = await t.publishLoop(authored);
         const reopened = await t.app.inject({ method: 'GET', url: '/loops/' + loopId });
         expect(

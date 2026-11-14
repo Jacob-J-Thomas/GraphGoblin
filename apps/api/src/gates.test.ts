@@ -66,7 +66,11 @@ describe('decision gate API admission', () => {
     const id = created.json().loop.id as string;
     const responses = [
       created,
-      await t.app.inject({ method: 'POST', url: '/loops/import', payload: envelope(definition) }),
+      await t.app.inject({
+        method: 'POST',
+        url: '/loops/import?name=Gate%20admission%20copy',
+        payload: envelope(definition),
+      }),
       await t.app.inject({ method: 'PUT', url: `/loops/${id}/draft`, payload: { definition } }),
       await t.app.inject({ method: 'POST', url: `/loops/${id}/validate`, payload: { definition } }),
       await t.app.inject({ method: 'POST', url: `/loops/${id}/publish` }),
@@ -99,7 +103,7 @@ describe('decision gate API admission', () => {
     const id = created.json().loop.id as string;
     const imported = await t.app.inject({
       method: 'POST',
-      url: '/loops/import',
+      url: '/loops/import?name=Gate%20admission%20copy',
       payload: envelope(definition),
     });
     const saved = await t.app.inject({
@@ -155,7 +159,7 @@ describe('decision gate API admission', () => {
       const id = created.json().loop.id as string;
       const imported = await t.app.inject({
         method: 'POST',
-        url: '/loops/import',
+        url: '/loops/import?name=Gate%20admission%20copy',
         payload: envelope(definition),
       });
       const saved = await t.app.inject({

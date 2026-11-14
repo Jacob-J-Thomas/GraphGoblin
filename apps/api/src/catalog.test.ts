@@ -222,8 +222,10 @@ describe('catalog ownership and toggle routes', () => {
 function modelLoop(
   place: 'inference' | 'decision' | 'default',
   model?: string,
+  name?: string,
 ): LoopDefinitionInput {
   const definition = minimalLoop();
+  if (name !== undefined) definition.name = name;
   if (place === 'default')
     return {
       ...definition,
@@ -314,12 +316,12 @@ describe('advisory model validation', () => {
       const unknown = await t.app.inject({
         method: 'POST',
         url: '/loops',
-        payload: { definition: modelLoop(place, 'missing-model') },
+        payload: { definition: modelLoop(place, 'missing-model', `Unknown ${place} model`) },
       });
       expect(unknown.statusCode).toBe(400);
       expect(unknown.json().code).toBe('EVALUATION_INVALID_CONFIGURATION');
       await t.container.repos.catalog.setEnabled('codex', 'gpt-6-luna', false);
-      const definition = modelLoop(place, 'gpt-6-luna');
+      const definition = modelLoop(place, 'gpt-6-luna', `Unavailable ${place} model`);
       const created = await t.app.inject({
         method: 'POST',
         url: '/loops',
@@ -346,7 +348,7 @@ describe('advisory model validation', () => {
       const ready = await t.app.inject({
         method: 'POST',
         url: '/loops',
-        payload: { definition: modelLoop(place) },
+        payload: { definition: modelLoop(place, undefined, `Ready ${place} model`) },
       });
       expect(ready.statusCode).toBe(201);
       expect(ready.json().issues).toEqual([]);
@@ -371,8 +373,9 @@ describe('Codex efforts are offered per model, with none as the lowest level (#2
     place: 'inference' | 'decision',
     model: string,
     effort: Effort,
+    name?: string,
   ): LoopDefinitionInput {
-    const definition = modelLoop(place, model);
+    const definition = modelLoop(place, model, name);
     const node =
       place === 'inference'
         ? {
@@ -431,7 +434,7 @@ describe('Codex efforts are offered per model, with none as the lowest level (#2
         const created = await t.app.inject({
           method: 'POST',
           url: '/loops',
-          payload: { definition: withEffort(place, model, 'none') },
+          payload: { definition: withEffort(place, model, 'none', `None ${place} ${model}`) },
         });
         expect(created.statusCode, created.body).toBe(201);
         expect(created.json().issues, model).toEqual([]);
@@ -442,7 +445,9 @@ describe('Codex efforts are offered per model, with none as the lowest level (#2
         });
         expect(defaults.statusCode, model).toBe(200);
       }
-      const loopId = await t.publishLoop(withEffort(place, 'gpt-6-luna', 'none'));
+      const loopId = await t.publishLoop(
+        withEffort(place, 'gpt-6-luna', 'none', `Run ${place} gpt-6-luna none`),
+      );
       const started = await t.app.inject({
         method: 'POST',
         url: `/loops/${loopId}/runs`,

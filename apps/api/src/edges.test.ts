@@ -128,7 +128,11 @@ describe('loop and run route branches', () => {
     expect(detail.draft).toBeUndefined();
 
     const created = (
-      await t.app.inject({ method: 'POST', url: '/loops', payload: { definition: minimalLoop() } })
+      await t.app.inject({
+        method: 'POST',
+        url: '/loops',
+        payload: { definition: { ...minimalLoop(), name: 'unpublished copy' } },
+      })
     ).json<{ loop: { id: string } }>();
     const missing = await t.app.inject(`/loops/${created.loop.id}/export`);
     expect(missing.statusCode).toBe(404);

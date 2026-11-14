@@ -1,0 +1,70 @@
+{
+  "task": "Issue #470 API model fixture-name correction",
+  "baselineHead": "02567f879230f8b8eebb353ea87d22ea347febdd",
+  "rawCi": {
+    "path": "../review-209/ci43600331688-gates-failure.log",
+    "sha256": "841974f1c2d792d8b0e7b1695696f6aad5e23f5b2344aafad3db316c28dc0d74",
+    "bytes": 327286,
+    "copiedIntoBundle": false
+  },
+  "rawFailureIndex": {
+    "path": "../review-209/api-fixture-failures.json",
+    "sha256": "7e03b2ca245ed113d4917c3a28333fa8b1c94e09d558de91f0f6d9c9b585a84b",
+    "bytes": 7511,
+    "copiedIntoBundle": false
+  },
+  "environment": {
+    "node": "v22.23.4",
+    "pnpm": "12.8.1",
+    "selectedRuntime": "C:/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64"
+  },
+  "checks": [
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec eslint src/catalog.test.ts src/claude.test.ts src/model-readiness.test.ts src/readiness-evidence.test.ts",
+      "log": "logs/preparation/01-eslint.log",
+      "exit": 0,
+      "result": "passed",
+      "logSha256": "71e1f8f9fe4aeabab5a57ba24a5032a7343625dbe9ec044bc5299fa60eab5f4f"
+    },
+    {
+      "command": "pnpm.cmd exec prettier --check apps/api/src/catalog.test.ts apps/api/src/claude.test.ts apps/api/src/model-readiness.test.ts apps/api/src/readiness-evidence.test.ts",
+      "log": "logs/preparation/02-prettier-check.log",
+      "exit": 0,
+      "result": "passed",
+      "logSha256": "8f66e023330462012e392bd95d2a67ea9181cf6f39c9102e357a8e850a0872ef"
+    },
+    {
+      "command": "git diff --check -- apps/api/src/catalog.test.ts apps/api/src/claude.test.ts apps/api/src/model-readiness.test.ts apps/api/src/readiness-evidence.test.ts",
+      "log": "logs/preparation/03-diff-check.log",
+      "exit": 0,
+      "result": "passed",
+      "logSha256": "1a2fd94786bac67c8006e570d2ad2a35e1837426e5a9262d781d23e65a614cc5"
+    },
+    {
+      "command": "git apply --reverse --check names-209-api-models.patch",
+      "log": "logs/preparation/04-reverse-check.log",
+      "exit": 0,
+      "result": "passed",
+      "logSha256": "797cc444c1b616027e1bc29ac907464411313f3c5a386379a48c16a783392f63"
+    }
+  ],
+  "nonChecks": {
+    "tests": "not run by delegation",
+    "typecheck": "not run by delegation",
+    "build": "not run by delegation",
+    "coverage": "not run by delegation",
+    "browser": "not run by delegation"
+  },
+  "scope": {
+    "modifiedFiles": [
+      "apps/api/src/catalog.test.ts",
+      "apps/api/src/claude.test.ts",
+      "apps/api/src/model-readiness.test.ts",
+      "apps/api/src/readiness-evidence.test.ts"
+    ],
+    "productOrRuntimeChanges": false,
+    "staged": false,
+    "committed": false,
+    "pushed": false
+  }
+}

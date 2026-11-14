@@ -1,0 +1,93 @@
+diff --git a/apps/mcp/src/mcp.test.ts b/apps/mcp/src/mcp.test.ts
+index 7a0668b..616c063 100644
+--- a/apps/mcp/src/mcp.test.ts
++++ b/apps/mcp/src/mcp.test.ts
+@@ -222,12 +222,6 @@ describe('MCP server against the in-process API', () => {
+     const missingId = await call('describe_loop', { loopId: fakeUlid('no-such-loop') });
+     expect(text(missingId)).toMatch(/^LOOP_NOT_FOUND: .*list_loops/);
+ 
+-    await t.publishLoop({ ...minimalLoop(), name: 'twin' });
+-    await t.publishLoop({ ...minimalLoop(), name: 'Twin' });
+-    const ambiguous = await call('start_run', { loopId: 'twin' });
+-    expect(ambiguous.isError).toBe(true);
+-    expect(text(ambiguous)).toMatch(/^AMBIGUOUS_LOOP_NAME: 2 loops/);
+-
+     const unpublished = await call('start_run', { loopId: draftId });
+     expect(unpublished.isError).toBe(true);
+     expect(text(unpublished)).toMatch(/^GraphGoblin API error [A-Z_]+ \(HTTP 4\d\d\)/);
+@@ -245,6 +239,41 @@ describe('MCP server against the in-process API', () => {
+     });
+   });
+ 
++  it('maps an ambiguous loop name from a controlled upstream to a coded MCP error', async () => {
++    // The current API rejects equivalent names. This synthetic upstream response keeps the
++    // MCP resolver's defensive ambiguity error covered without claiming the API admits duplicates.
++    const server = createMcpServer({
++      apiUrl: 'http://controlled-upstream.test',
++      fetch: (request) => {
++        expect(request.method).toBe('GET');
++        expect(new URL(request.url).pathname).toBe('/loops');
++        return Promise.resolve(
++          Response.json({
++            items: [
++              { id: fakeUlid('ambiguous-twin-1'), name: 'Twin' },
++              { id: fakeUlid('ambiguous-twin-2'), name: 'twin' },
++            ],
++          }),
++        );
++      },
++    });
++    const ambiguousClient = new Client({ name: 'controlled-upstream-test', version: '1.0.0' });
++    const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
++    await server.connect(serverSide);
++    await ambiguousClient.connect(clientSide);
++    try {
++      const ambiguous = await ambiguousClient.callTool({
++        name: 'start_run',
++        arguments: { loopId: 'twin' },
++      });
++      expect(ambiguous.isError).toBe(true);
++      expect(text(ambiguous)).toMatch(/^AMBIGUOUS_LOOP_NAME: 2 loops/);
++    } finally {
++      await ambiguousClient.close();
++      await server.close();
++    }
++  });
++
+   it('starts a run, waits for it, and records the manual.mcp source', async () => {
+     const loopId = await t.publishLoop({ ...minimalLoop(), name: 'quick' });
+     const started = body(
+diff --git a/packages/api-client/src/contract.test.ts b/packages/api-client/src/contract.test.ts
+index acdb813..6374c02 100644
+--- a/packages/api-client/src/contract.test.ts
++++ b/packages/api-client/src/contract.test.ts
+@@ -193,7 +193,7 @@ describe('against the in-process API (local trusted mode)', () => {
+   });
+ 
+   it('preserves typed run pages including opaque cursors', async () => {
+-    const { loop } = await loops.create(client, minimalLoop());
++    const { loop } = await loops.create(client, { ...minimalLoop(), name: 'typed-run-pages' });
+     await loops.publish(client, loop.id);
+     await runs.start(client, loop.id);
+     await runs.start(client, loop.id);
+@@ -311,7 +311,7 @@ describe('against the in-process API (local trusted mode)', () => {
+   });
+ 
+   it('streams run events over SSE until the run finishes, and resumes from a sequence', async () => {
+-    const { loop } = await loops.create(client, waitLoop);
++    const { loop } = await loops.create(client, { ...waitLoop, name: 'sse-run-events' });
+     await loops.publish(client, loop.id);
+     const run = await runs.start(client, loop.id);
+     await until(async () => (await runs.get(client, run.id)).status === 'waiting');
+@@ -372,7 +372,10 @@ describe('against the in-process API (local trusted mode)', () => {
+       code: 'EVALUATION_INVALID_CONFIGURATION',
+       errors: [expect.objectContaining(issue)],
+     });
+-    const { loop } = await loops.create(client, minimalLoop());
++    const { loop } = await loops.create(client, {
++      ...minimalLoop(),
++      name: 'catalog-validation-target',
++    });
+     const validated = await loops.validate(client, loop.id, definition);
+     expect(validated.publishable).toBe(false);
+     expect(validated.issues).toEqual([expect.objectContaining(issue)]);

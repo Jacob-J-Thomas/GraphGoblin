@@ -117,7 +117,11 @@ describe('cron preview endpoint', () => {
       );
       for (const response of [
         await t.app.inject({ method: 'PUT', url: `/loops/${id}/draft`, payload: { definition } }),
-        await t.app.inject({ method: 'POST', url: '/loops/import', payload: definition }),
+        await t.app.inject({
+          method: 'POST',
+          url: '/loops/import?name=Cron%20admission%20copy',
+          payload: definition,
+        }),
       ]) {
         expect(response.statusCode).toBeLessThan(300);
         expect(response.json().issues).toEqual(expect.arrayContaining([issue]));
