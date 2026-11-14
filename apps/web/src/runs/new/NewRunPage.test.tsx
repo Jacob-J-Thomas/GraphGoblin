@@ -175,6 +175,66 @@ describe('New run', () => {
     expect(runStarts(api)[0]!.body).toMatchObject({ triggerNodeId: 'quick', input: { n: 1 } });
   });
 
+  it('sends empty text, null, zero and false as entered, and leaves out what was not (#235)', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const typed = minimalLoop();
+    typed.nodes[0] = {
+      id: 'start',
+      kind: 'trigger',
+      label: 'Start',
+      config: {
+        type: 'manual',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            untouched: { type: 'string' },
+            note: { type: 'string' },
+            details: { type: 'null' },
+            count: { type: 'integer' },
+            approved: { type: 'boolean' },
+          },
+        },
+      },
+    };
+    const loop = api.addLoop(typed, { published: true });
+    const view = renderApp(newRunPath(loop.id), api);
+    const launcher = await screen.findByRole('region', { name: 'Start a run' });
+    await user.type(within(launcher).getByLabelText('note'), 'x');
+    await user.clear(within(launcher).getByLabelText('note'));
+    await user.type(within(launcher).getByLabelText('details'), 'null');
+    await user.type(within(launcher).getByLabelText('count'), '0');
+    await user.click(
+      within(within(launcher).getByRole('radiogroup', { name: 'approved' })).getByRole('radio', {
+        name: 'No',
+      }),
+    );
+    await user.click(within(launcher).getByRole('button', { name: 'Start run' }));
+    await waitFor(() => expect(runStarts(api)).toHaveLength(1));
+    expect((runStarts(api)[0]!.body as { input: unknown }).input).toStrictEqual({
+      note: '',
+      details: null,
+      count: 0,
+      approved: false,
+    });
+    view.unmount();
+
+    // A free JSON input: none sends no input at all, while null is an input.
+    const free = api.addLoop({ ...minimalLoop(), name: 'free' }, { published: true });
+    const again = renderApp(newRunPath(free.id), api);
+    const launcherAgain = await screen.findByRole('region', { name: 'Start a run' });
+    await user.click(within(launcherAgain).getByRole('button', { name: 'Start run' }));
+    await waitFor(() => expect(runStarts(api)).toHaveLength(2));
+    expect(runStarts(api)[1]!.body).not.toHaveProperty('input');
+    again.unmount();
+    renderApp(newRunPath(free.id), api);
+    const third = await screen.findByRole('region', { name: 'Start a run' });
+    await user.type(within(third).getByLabelText('Input (JSON)'), 'null');
+    await user.click(within(third).getByRole('button', { name: 'Start run' }));
+    await waitFor(() => expect(runStarts(api)).toHaveLength(3));
+    expect(runStarts(api)[2]!.body).toHaveProperty('input', null);
+  });
+
   it('shows why a run could not start', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();

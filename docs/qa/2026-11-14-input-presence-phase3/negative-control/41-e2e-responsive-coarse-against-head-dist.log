@@ -1,0 +1,43 @@
+
+Running 1 test using 1 worker
+
+(node:34664) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\responsive.spec.ts:724:5 › responsive light › on a coarse pointer the controls are at least 44 px (2.4s)
+
+
+  1) [chromium] › e2e\responsive.spec.ts:724:5 › responsive light › on a coarse pointer the controls are at least 44 px 
+
+    Error: /app/runs/new?loop=01M3Y7RKG01WCD11PRF254G9Z8 with Omit
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "Omit input",
+    + ]
+
+      777 |             const omit = page.getByRole('button', { name: 'Omit input', exact: true });
+      778 |             await expect(omit).toBeVisible();
+    > 779 |             expect(await smallTargets(page), `${path} with Omit`).toEqual([]);
+          |                                                                   ^
+      780 |             await measure(`Omit input (${path.includes('/new') ? 'New run' : 'Wait'})`, omit);
+      781 |             await omit.tap();
+      782 |             await expect(input).toHaveValue('');
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\responsive.spec.ts:779:67
+
+    Error Context: test-results\responsive-responsive-ligh-d8b9d-controls-are-at-least-44-px-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\responsive-responsive-ligh-d8b9d-controls-are-at-least-44-px-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\responsive-responsive-ligh-d8b9d-controls-are-at-least-44-px-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\responsive.spec.ts:724:5 › responsive light › on a coarse pointer the controls are at least 44 px 

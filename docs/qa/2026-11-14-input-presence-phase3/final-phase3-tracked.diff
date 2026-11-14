@@ -1,0 +1,481 @@
+diff --git a/apps/web/e2e/form-controls.spec.ts b/apps/web/e2e/form-controls.spec.ts
+index 3fbcc036..3027a41a 100644
+--- a/apps/web/e2e/form-controls.spec.ts
++++ b/apps/web/e2e/form-controls.spec.ts
+@@ -401,78 +401,123 @@ test('New run and Wait send the supplied input and omit untouched or reset field
+ test.describe('with a coarse pointer (#235)', () => {
+   test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+ 
+-  // The browser moves a touch that lands near a button onto it, even over a text field. A tap on
+-  // the top of an edited field must keep its text, and Omit must still take a tap of its own.
+-  test('a tap on an edited field never omits it, and a tap on Omit does', async ({
++  // Omit is a 44 px button in a place its label line always holds, 12 px above its field and 16 px
++  // below the field before, with no larger invisible box. The browser moves a touch that lands near
++  // a button onto it, even over a text field, so real taps on both fields must keep the text, and
++  // Omit must still take a tap anywhere on itself.
++  test('Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait', async ({
+     page,
+     request,
+   }) => {
++    const inputSchema = {
++      type: 'object',
++      properties: {
++        first: { type: 'string' },
++        comment: { type: 'string' },
++        details: { type: 'object' },
++      },
++    };
+     const definition = approvalLoop('coarse omit');
+     const loopId = await publishLoop(request, {
+       ...definition,
+       nodes: definition.nodes.map((node) =>
+-        node.id === 'start'
+-          ? {
+-              ...node,
+-              config: {
+-                ...node.config,
+-                inputSchema: {
+-                  type: 'object',
+-                  properties: {
+-                    first: { type: 'string' },
+-                    comment: { type: 'string' },
+-                    details: { type: 'object' },
+-                  },
+-                },
+-              },
+-            }
++        node.id === 'start' || node.id === 'approve'
++          ? { ...node, config: { ...node.config, inputSchema } }
+           : node,
+       ),
+     });
+-    await page.goto(`/app/runs/new?loop=${loopId}`);
+-    expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+-    const form = page.getByRole('form', { name: 'Start run' });
+ 
+-    for (const name of ['comment', 'details']) {
+-      const field = form.getByLabel(name, { exact: true });
+-      const omit = form.getByRole('button', { name: `Omit ${name}`, exact: true });
+-      const offset = () =>
+-        field.evaluate(
+-          (el) => el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
+-        );
+-      const resting = await offset();
+-      await field.fill('typed');
+-      await expect(omit).toBeVisible();
+-      expect(await offset()).toBe(resting);
+-      await field.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+-      const button = (await omit.boundingBox())!;
+-      const top = (await field.boundingBox())!.y;
+-      // The button stands clear of the field, beyond where the browser would move a tap onto it.
+-      expect(top - (button.y + button.height)).toBeGreaterThanOrEqual(8);
++    async function tapAround(submitLabel: string) {
++      expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
++      const form = page.getByRole('form', { name: submitLabel });
++      for (const [name, before] of [
++        ['comment', 'first'],
++        ['details', 'comment'],
++      ] as const) {
++        const field = form.getByLabel(name, { exact: true });
++        const omit = form.getByRole('button', { name: `Omit ${name}`, exact: true });
++        const offset = () =>
++          field.evaluate(
++            (el) =>
++              el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
++          );
++        const resting = await offset();
++        await field.fill('typed');
++        await expect(omit).toBeVisible();
++        // Omit appearing moves nothing.
++        expect(await offset()).toBe(resting);
++        await field.evaluate((el) => el.scrollIntoView({ block: 'center' }));
++        const button = (await omit.boundingBox())!;
++        const box = (await field.boundingBox())!;
++        const above = (await form.getByLabel(before, { exact: true }).boundingBox())!;
++        expect(button.width, `Omit ${name}: touch width`).toBeGreaterThanOrEqual(44);
++        expect(button.height, `Omit ${name}: touch height`).toBeGreaterThanOrEqual(44);
++        expect(await omit.evaluate((el) => getComputedStyle(el, '::after').content)).toBe('none');
++        expect(box.y - (button.y + button.height)).toBeGreaterThanOrEqual(12);
++        expect(button.y - (above.y + above.height)).toBeGreaterThanOrEqual(16);
+ 
+-      // Real touches over the top of the field, across and beyond the button's width.
+-      const wrong: string[] = [];
+-      for (
+-        let x = Math.floor(button.x) - 24;
+-        x <= Math.ceil(button.x + button.width) + 24;
+-        x += 6
+-      ) {
+-        for (let depth = 0; depth <= 14; depth += 2) {
+-          await page.touchscreen.tap(x, top + depth);
++        // Real touches over the top of this field and the bottom of the one before, across and
++        // beyond the button's width, a column at a time: once Omit has gone, no later tap brings
++        // it back, so a column that leaves no Omit had a tap that omitted the field.
++        const wrong: string[] = [];
++        const column = async (where: string, x: number, ys: number[]) => {
++          for (const y of ys) await page.touchscreen.tap(x, y);
+           if ((await omit.count()) === 0) {
+-            wrong.push(`x ${x}, ${depth} px into the field`);
++            wrong.push(`${where} at x ${x}, y ${ys.join('/')}`);
+             await field.fill('typed');
+             await expect(omit).toBeVisible();
+           }
++        };
++        const depths = (deepest: number) =>
++          Array.from({ length: deepest / 2 + 1 }, (_, step) => 0.5 + step * 2);
++        for (
++          let x = Math.floor(button.x) - 24;
++          x <= Math.ceil(button.x + button.width) + 24;
++          x += 6
++        ) {
++          if (x > box.x && x < box.x + box.width)
++            await column(
++              name,
++              x,
++              depths(14).map((depth) => box.y + depth),
++            );
++          if (x > above.x && x < above.x + above.width)
++            await column(
++              before,
++              x,
++              depths(10).map((depth) => above.y + above.height - depth),
++            );
+         }
+-      }
+-      expect(wrong).toEqual([]);
+-      await expect(field).toHaveValue('typed');
++        expect(wrong).toEqual([]);
++        await expect(field).toHaveValue('typed');
+ 
+-      // A tap on the button itself omits the field.
+-      await page.touchscreen.tap(button.x + button.width / 2, button.y + button.height / 2);
+-      await expect(omit).toHaveCount(0);
+-      await expect(field).toHaveValue('');
++        // A tap anywhere on the button omits the field: 4 px inside each rounded corner, then the
++        // centre.
++        const right = button.x + button.width;
++        const bottom = button.y + button.height;
++        for (const [x, y] of [
++          [button.x + 4, button.y + 4],
++          [right - 4, button.y + 4],
++          [button.x + 4, bottom - 4],
++          [right - 4, bottom - 4],
++          [button.x + button.width / 2, button.y + button.height / 2],
++        ] as const) {
++          await expect(omit).toBeVisible();
++          await page.touchscreen.tap(x, y);
++          await expect(omit).toHaveCount(0);
++          await expect(field).toHaveValue('');
++          await field.fill('typed');
++        }
++        await omit.tap();
++        await expect(omit).toHaveCount(0);
++        expect(await offset()).toBe(resting);
++      }
++      return form.getByRole('button', { name: submitLabel, exact: true });
+     }
++
++    await page.goto(`/app/runs/new?loop=${loopId}`);
++    await (await tapAround('Start run')).tap();
++    await expect(page.getByText('Input requested')).toBeVisible();
++    await tapAround('Submit input');
+   });
+ });
+diff --git a/apps/web/e2e/responsive.spec.ts b/apps/web/e2e/responsive.spec.ts
+index ad96e79e..b50e5f84 100644
+--- a/apps/web/e2e/responsive.spec.ts
++++ b/apps/web/e2e/responsive.spec.ts
+@@ -3,7 +3,8 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+ /**
+  * Responsive review (#41): both stored themes, every page and transient state at four widths,
+  * all nine node dialogs at 360/768 px, pointer and keyboard authoring at 768 px, coarse-pointer
+- * targets (including disclosures, code fields, checkbox/radio labels, and port hit boxes), and
++ * targets (including disclosures, code fields, checkbox/radio labels, the Omit an edited run input
++ * shows, and port hit boxes), and
+  * reflow at 200% zoom. Group related
+  * states instead of creating a separate browser test for each matrix cell.
+  */
+@@ -761,6 +762,7 @@ for (const theme of ['dark', 'light'] as const) {
+           ['/app/loops', 'responsive sweep'],
+           [`/app/loops/${loopId}/edit`, 'Approve'],
+           ['/app/runs', 'responsive sweep'],
++          [`/app/runs/new?loop=${loopId}`, 'Start run'],
+           [`/app/runs/${runId}`, 'Input requested'],
+           ['/app/events', 'issue-opened'],
+         ] as const) {
+@@ -768,6 +770,17 @@ for (const theme of ['dark', 'light'] as const) {
+           expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+           await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
+           expect(await smallTargets(page), path).toEqual([]);
++          if (path.startsWith('/app/runs/')) {
++            // New run's and the waiting run's input: an edited optional field shows Omit (#235).
++            const input = page.getByLabel('Input (JSON)', { exact: true });
++            await input.fill('{}');
++            const omit = page.getByRole('button', { name: 'Omit input', exact: true });
++            await expect(omit).toBeVisible();
++            expect(await smallTargets(page), `${path} with Omit`).toEqual([]);
++            await measure(`Omit input (${path.includes('/new') ? 'New run' : 'Wait'})`, omit);
++            await omit.tap();
++            await expect(input).toHaveValue('');
++          }
+           if (path === `/app/runs/${runId}`) {
+             for (const name of ['Full thread JSON', /^Node progress/]) {
+               const toggle = page.getByRole('button', { name });
+diff --git a/apps/web/src/forms/JsonSchemaForm.test.tsx b/apps/web/src/forms/JsonSchemaForm.test.tsx
+index eea70799..84cae9cd 100644
+--- a/apps/web/src/forms/JsonSchemaForm.test.tsx
++++ b/apps/web/src/forms/JsonSchemaForm.test.tsx
+@@ -147,6 +147,52 @@ describe('JsonSchemaForm', () => {
+     });
+   });
+ 
++  it('holds Omit’s place in an optional field’s label line with a hidden stand-in drawn as Omit', async () => {
++    const user = userEvent.setup();
++    render(
++      <JsonSchemaForm
++        schema={{
++          type: 'object',
++          required: ['name', 'data'],
++          properties: {
++            name: { type: 'string' },
++            data: { type: 'object' },
++            note: { type: 'string' },
++            details: { type: 'object' },
++          },
++        }}
++        submitLabel="Send"
++        onSubmit={vi.fn()}
++      />,
++    );
++    /** The text "Omit" in a field's label line: its stand-in, or the button once it shows. */
++    const omitText = (label: string) =>
++      within(screen.getByLabelText(label).previousElementSibling as HTMLElement).queryAllByText(
++        'Omit',
++      );
++    const [note] = omitText('note');
++    const [details] = omitText('details');
++    for (const standIn of [note, details]) {
++      expect(standIn?.tagName).toBe('SPAN');
++      expect(standIn).toHaveAttribute('aria-hidden', 'true');
++      expect(standIn).toHaveClass('invisible');
++    }
++    // Required fields never show Omit, so they hold no place for it.
++    expect(omitText('name')).toEqual([]);
++    expect(omitText('data')).toEqual([]);
++    expect(omitButtons()).toEqual([]);
++
++    // Omit takes the stand-in's place, drawn the same way, so it takes the same room.
++    await user.type(screen.getByLabelText('note'), 'x');
++    const button = screen.getByRole('button', { name: 'Omit note' });
++    expect(omitText('note')).toHaveLength(1);
++    expect(omitText('note')[0]).toBe(button);
++    expect(details?.className).toBe(`${button.className} invisible`);
++    await user.click(button);
++    expect(omitText('note')).toHaveLength(1);
++    expect(omitText('note')[0]).toHaveAttribute('aria-hidden', 'true');
++  });
++
+   it('checks a number the browser reports as incomplete rather than leaving it out', async () => {
+     const user = userEvent.setup();
+     const submit = vi.fn();
+@@ -261,10 +307,23 @@ describe('JsonSchemaForm', () => {
+   it('offers no Omit in the JSON editor when the schema refuses no input', async () => {
+     const user = userEvent.setup();
+     render(<JsonSchemaForm schema={{ type: 'number' }} submitLabel="Send" onSubmit={vi.fn()} />);
+-    await user.type(screen.getByLabelText('Input (JSON)'), '1');
++    const input = screen.getByLabelText('Input (JSON)');
++    // Nor a place held for it in the label line.
++    expect(within(input.previousElementSibling as HTMLElement).queryByText('Omit')).toBeNull();
++    await user.type(input, '1');
+     expect(omitButtons()).toEqual([]);
+   });
+ 
++  it('holds Omit’s place in the JSON editor when the schema accepts no input', async () => {
++    const user = userEvent.setup();
++    render(<JsonSchemaForm schema={undefined} submitLabel="Send" onSubmit={vi.fn()} />);
++    const input = screen.getByLabelText('Input (JSON)');
++    const line = input.previousElementSibling as HTMLElement;
++    expect(within(line).getByText('Omit')).toHaveAttribute('aria-hidden', 'true');
++    await user.type(input, '{{}');
++    expect(within(line).getByText('Omit')).toBe(screen.getByRole('button', { name: 'Omit input' }));
++  });
++
+   it('renders one field per property and validates before submitting', async () => {
+     const user = userEvent.setup();
+     const submit = vi.fn();
+diff --git a/apps/web/src/forms/JsonSchemaForm.tsx b/apps/web/src/forms/JsonSchemaForm.tsx
+index 4381a5fa..06ae52cc 100644
+--- a/apps/web/src/forms/JsonSchemaForm.tsx
++++ b/apps/web/src/forms/JsonSchemaForm.tsx
+@@ -132,25 +132,66 @@ interface Control {
+ }
+ 
+ /**
+- * The ghost button's look, drawn 20 px high so it fits the label's line: showing it never moves the
+- * control below. It has no larger invisible target (`touch-target`'s 44 px square would lie 7.5 px
+- * over the field below, and a tap there would omit it and lose what was typed).
++ * Omit's look. With a fine pointer, a ghost button drawn 20 px high so it fits the label's line. With
++ * a coarse pointer, an outline button of 44 by 44 px: its own box is the whole target, with no
++ * larger invisible one.
+  */
+ const OMIT_BUTTON = cn(
+-  '-my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center rounded-sm px-1.5',
++  '-my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center justify-center rounded-sm px-1.5',
+   'border border-transparent bg-transparent text-xs leading-none font-semibold text-default',
+   'transition-[background-color] hover:bg-surface-hover',
+   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
++  'pointer-coarse:my-0 pointer-coarse:h-11 pointer-coarse:min-w-11 pointer-coarse:rounded-md',
++  'pointer-coarse:border-strong pointer-coarse:bg-surface-raised pointer-coarse:shadow-ledge',
+ );
+ 
+ /**
+- * The label line of a field that can show Omit. On a coarse pointer Edge moves a tap that lands just
+- * under a button onto it, even over a text field. At the 6 px gap (the button ends 4.5 px above the
+- * field) real touches up to 5 px inside the top of the field omitted it and lost the typed text;
+- * they still did at 6.5 px, and none did from 7.5 px. 6 px more, always there so that Omit appearing
+- * moves nothing, leaves 10.5 px. A fine pointer keeps the 6 px gap.
++ * The label line of a field that can show Omit, on a coarse pointer: as high as Omit (44 px), the
++ * label at its foot, 12 px between the label and Omit, and 6 px more below it, so Omit ends 12 px
++ * above the field and starts at least 16 px below the field before. A fine pointer keeps its line.
+  */
+-const OMIT_ROW = 'pointer-coarse:pb-1.5';
++const OMIT_ROW = 'pointer-coarse:items-end pointer-coarse:gap-3 pointer-coarse:pb-1.5';
++
++/**
++ * A field's label line: the label, then Omit's place (an optional field) and the language tag (a
++ * JSON field) at its end. While there is no Omit, a hidden stand-in drawn as Omit holds its place,
++ * so Omit appearing moves neither the label nor the field (nor the tag), in any font.
++ */
++function LabelLine({
++  htmlFor,
++  label,
++  required = false,
++  optional,
++  omit,
++  tag,
++}: {
++  htmlFor: string;
++  label: string;
++  required?: boolean;
++  optional: boolean;
++  omit: ReactNode;
++  tag?: ReactNode;
++}) {
++  return (
++    <div className={cn('flex min-w-0 items-center justify-between gap-2', optional && OMIT_ROW)}>
++      <Label htmlFor={htmlFor} required={required}>
++        {label}
++      </Label>
++      {optional || tag ? (
++        <span className="flex shrink-0 items-center gap-2 pointer-coarse:items-end">
++          {optional
++            ? (omit ?? (
++                <span aria-hidden="true" className={cn(OMIT_BUTTON, 'invisible')}>
++                  Omit
++                </span>
++              ))
++            : null}
++          {tag}
++        </span>
++      ) : null}
++    </div>
++  );
++}
+ 
+ /**
+  * Omit, at the end of an edited optional field's label line: the field goes back to absent, as it
+@@ -344,20 +385,14 @@ function PropertyField({
+       ) : null;
+     field = (
+       <>
+-        <div
+-          className={cn('flex min-w-0 items-center justify-between gap-2', !required && OMIT_ROW)}
+-        >
+-          <Label htmlFor={id} required={required}>
+-            {label}
+-          </Label>
+-          {omit || type === 'json' ? (
+-            // Omit appears before the tag, so the tag never moves.
+-            <span className="flex shrink-0 items-center gap-2">
+-              {omit}
+-              {type === 'json' ? <LanguageTag>JSON</LanguageTag> : null}
+-            </span>
+-          ) : null}
+-        </div>
++        <LabelLine
++          htmlFor={id}
++          label={label}
++          required={required}
++          optional={!required}
++          omit={omit}
++          tag={type === 'json' ? <LanguageTag>JSON</LanguageTag> : undefined}
++        />
+         {type === 'json' ? (
+           <Textarea {...control} value={text} onChange={(e) => onChange(e.target.value)} />
+         ) : type === 'number' ? (
+@@ -540,24 +575,23 @@ export function JsonSchemaForm({
+         ))
+       ) : (
+         <FieldGroup className="max-w-[440px]">
+-          <div
+-            className={cn(
+-              'flex min-w-0 items-center justify-between gap-2',
+-              rawOptional && OMIT_ROW,
+-            )}
+-          >
+-            <Label htmlFor={rawId}>Input (JSON)</Label>
+-            {rawOptional && raw !== undefined ? (
+-              <OmitButton
+-                controlId={rawId}
+-                label="input"
+-                onOmit={() => {
+-                  setRaw(undefined);
+-                  setProblems(NO_PROBLEMS);
+-                }}
+-              />
+-            ) : null}
+-          </div>
++          <LabelLine
++            htmlFor={rawId}
++            label="Input (JSON)"
++            optional={rawOptional}
++            omit={
++              rawOptional && raw !== undefined ? (
++                <OmitButton
++                  controlId={rawId}
++                  label="input"
++                  onOmit={() => {
++                    setRaw(undefined);
++                    setProblems(NO_PROBLEMS);
++                  }}
++                />
++              ) : null
++            }
++          />
+           <Textarea
+             id={rawId}
+             value={raw ?? ''}
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 30c80d62..122c4d62 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -438,7 +438,7 @@ Every form control comes from `components/ui/` and takes its look from the token
+ - **Disclosure** (`disclosure.tsx`, #14). A button with `aria-expanded` and `aria-controls` that shows and hides a panel kept mounted while hidden: `variant="box"` is a bordered section whose full-width header is the toggle (a form's Advanced options), `variant="row"` a compact list item header with `actions` beside it. `summary` adds to the toggle's text, `defaultOpen` sets the first state, `open` with `onOpenChange` lets the caller keep the state instead (so it outlives a remount), and `revealDisclosures(element)` opens every collapsed one around an element at once (through `onOpenChange` when the caller keeps it).
+ - **Labels, help, required.** `Label required` puts the `RequiredMarker` (an asterisk in the bad tone, `aria-hidden`) after the label, outside the `<label>`, so the accessible name stays the field's name; a control carries `aria-required`. A group (an array, a record, a set of checkboxes) shows the marker after its legend instead, since a group takes no `aria-required`, and states its minimum as text that describes it ("Choose at least 1.", "At least 2 items."); its checkboxes are not each marked. A form with required fields starts with `RequiredNote` ("Required fields are marked \*", hidden from assistive technology, which hears "required" on each control instead). Help text (`HelpText`) is linked to its control with `aria-describedby`.
+ - **Errors.** Where a field shows its own error, the message sits under it, describes the control (`aria-describedby`, after any help), sets `aria-invalid`, and is announced (`role="alert"`; a JSON parse error, which changes as you type, is a polite live region instead). That covers every field of the schema-driven forms, including record values (which react-hook-form does not track: their messages come from SchemaForm's check of the whole value, by exact path) and collections (the group's error describes the fieldset, which takes no `aria-invalid`); each `JsonSchemaForm` property and its raw JSON editor; the node dialog's id (its own check) and label (the loop's validation), the loop panel's name (the contract's check), Loops create (the API's refusal), the import picker (the refusal describes it and marks it invalid until the next file), the secret name rule (it turns into an alert while the name breaks it), and the Connect form's refusal (it describes the To select). Not linked to a field: a nested object's own error (shown in its fieldset, announced), `JsonSchemaForm` problems with the value as a whole (a summary under the form, announced), the schema-driven forms' Config issues summary, and the API's refusals in Settings (secrets, API keys, defaults), shown under their form without an announcement. Catalog model-form and toggle refusals are announced with an alert, as are the classifier form's field checks (beside each field) and refusals (#43).
+-- **Where.** The schema-driven forms (below), `JsonSchemaForm` (New run and the waiting-for-input form), the node dialog's id and label and its Connect form, the loop panel, Loops create and import, Settings (model form and Enabled switch, the classifier form and its switches, defaults, secrets, API keys), and the API key panel. `JsonSchemaForm` marks the properties in the JSON Schema's `required` list and uses the same controls, with one difference: it starts empty and sends only what it shows, so a boolean is never a switch (always on or off) but **Yes** / **No** segments, after **Not set** unless required (a required one starts with neither chosen). An enum of two to four members is a segmented control (a required one starts with nothing chosen), and a longer one a select ("(choose)" when required, **Not set** otherwise); an enum's empty string reads `""`, apart from **Not set**. A default shows as a placeholder while the field is absent (strings, numbers) or as help ("Default: true"). Its ids are generated per field, so a property may have any name. Each problem shows beside its property under the property's title ("Approval is required", "Reason must NOT have fewer than 3 characters", "Labels: invalid JSON (…)", "Count: enter a number"), located through `validateJson`'s `issues` in `domain` (path segments, a missing property at itself); editing a field clears its problems. It sends what was entered (#235): a property nobody touched is absent; edited text is sent as typed, and cleared text as `""` (its placeholder then reads `""`), for the schema to accept or refuse; an edited number or JSON field must hold a number or JSON, so a blank one, or a number the browser holds as incomplete (`-`, `1e`), is a problem beside it, never left out. An edited optional text, number or JSON field shows **Omit** (named "Omit" and the field's title) at the end of its label's line, before any language tag: a ghost button drawn 20 px high, so it appears without moving the field or the 6 px gap. It puts the field back to absent and moves focus to the field. On a coarse pointer it has no larger invisible target (`touch-target`), and the label line of an optional field keeps 6 px more below it (a 12 px gap; a fine pointer keeps 6 px), always, so Omit appearing still moves nothing: Edge moves a tap that lands just under a button onto it even over a text field: at the usual gap real touches up to 5 px inside the top of the field omitted it and lost the text, and none did from a 7.5 px gap (the button then sits 10.5 px above the field). Edge touch checks in `e2e/form-controls.spec.ts` tap a grid over the top of the field and the bottom of the one above it, and none may omit. Required properties have no Omit, and choices go back with **Not set**. The JSON editor keeps no input, edited blank text (refused), and `null`, `""`, `0` and `false` apart, and offers Omit only when its schema accepts no input (checked as `null`). New run sends no `input` for no input; the wait input endpoint takes an `input`, so no input is sent as `null`.
++- **Where.** The schema-driven forms (below), `JsonSchemaForm` (New run and the waiting-for-input form), the node dialog's id and label and its Connect form, the loop panel, Loops create and import, Settings (model form and Enabled switch, the classifier form and its switches, defaults, secrets, API keys), and the API key panel. `JsonSchemaForm` marks the properties in the JSON Schema's `required` list and uses the same controls, with one difference: it starts empty and sends only what it shows, so a boolean is never a switch (always on or off) but **Yes** / **No** segments, after **Not set** unless required (a required one starts with neither chosen). An enum of two to four members is a segmented control (a required one starts with nothing chosen), and a longer one a select ("(choose)" when required, **Not set** otherwise); an enum's empty string reads `""`, apart from **Not set**. A default shows as a placeholder while the field is absent (strings, numbers) or as help ("Default: true"). Its ids are generated per field, so a property may have any name. Each problem shows beside its property under the property's title ("Approval is required", "Reason must NOT have fewer than 3 characters", "Labels: invalid JSON (…)", "Count: enter a number"), located through `validateJson`'s `issues` in `domain` (path segments, a missing property at itself); editing a field clears its problems. It sends what was entered (#235): a property nobody touched is absent; edited text is sent as typed, and cleared text as `""` (its placeholder then reads `""`), for the schema to accept or refuse; an edited number or JSON field must hold a number or JSON, so a blank one, or a number the browser holds as incomplete (`-`, `1e`), is a problem beside it, never left out. An edited optional text, number or JSON field shows **Omit** (named "Omit" and the field's title) at the end of its label's line, before any language tag. It puts the field back to absent and moves focus to the field. The label line of every optional field holds Omit's place while there is none (a hidden stand-in drawn as Omit), so Omit appearing moves neither the label, the tag nor the field. With a fine pointer Omit is a ghost button drawn 20 px high, which fits the label's line and its 6 px gap. With a coarse pointer it is a 44 by 44 px outline button with no larger invisible target: the label line is 44 px high, with the label at its foot and 12 px between the label and Omit; Omit ends 12 px above its field (the label's gap there) and starts at least 16 px below the field before, so a touch on either field stays with that field. Edge touch checks in `e2e/form-controls.spec.ts` measure Omit on New run and Wait, tap a grid over the top of the field and the bottom of the one before (none may omit), and tap inside the button (each omits). Required properties have no Omit, and choices go back with **Not set**. The JSON editor keeps no input, edited blank text (refused), and `null`, `""`, `0` and `false` apart, and offers Omit only when its schema accepts no input (checked as `null`). New run sends no `input` for no input; the wait input endpoint takes an `input`, so no input is sent as `null`.
+ - **Contrast.** The controls use token pairs already in the contrast table (field and track edges, the selected segment, the switch thumb on and off, the checkbox tick, the focus ring on every surface); #8 added the error text and marker, and the invalid edge, on the sunken surface (the model form).
+ 
+ ### Component structure
+@@ -467,9 +467,9 @@ Every screen works from 360 px to wide desktop without sideways page scrolling o
+ - **Forms** (`FieldRow`, or `FIELD_ROW` on a form of its own, in `components/ui/field.tsx`). Fields side by side that wrap; below 640 px one column, every field and note the full width whatever width it asked for, a button at its own width at the start of its line. Used by the Runs filters, Loops create, the model form, Defaults, Secrets, API keys, the API key panel, and the node dialog's Connect form; the schema-driven config fields are one column already.
+ - **Header navigation** (`MainNav`). Below 640 px the links fold into a **Menu** button (`aria-expanded`, `aria-controls`) that opens a full-width panel of 48 px rows; choosing a link or Escape closes it, Escape returning focus to Menu.
+ - **Split panes** (`SidePanel`'s `overlayBelow`). Below its breakpoint an expanded panel floats over the content (absolute, full height, an overlay shadow, at least a rail's width of the content left beside it) instead of taking its own column: the editor's loop settings below `lg` and its palette below `md`, so the canvas keeps its width and no panel pushes the page sideways. Collapsed, both stay rails. The editor's toolbar wraps its actions (Undo, Redo, Open in Runs, the validation indicator, Publish) onto further lines rather than cutting them off, and the editor fills the dynamic viewport height (`100dvh`), at least 320 px.
+-- **Touch.** Where the primary pointer is coarse (`pointer-coarse:`, `@media (pointer: coarse)`), controls are at least 44 px: buttons (`sm`, `md`, and icon sizes), inputs and selects, segment labels (at least 44 px wide and tall, including short Yes/No choices), disclosure toggles (including the inspector's Full thread JSON and Node progress, through the shared `Disclosure`), checkbox rows (`CHECKBOX_LABEL`, at least 44 px wide and tall), the Menu button, Open in Runs, the validation indicator and its rows, issue rows, timeline rows, palette buttons, and the canvas's zoom controls. Controls that keep a small look take the touch with an invisible 44 px box around them (`touch-target`): the switch, the issue badge, and links in tables. The Omit button of an edited field in `JsonSchemaForm` keeps its drawn 20 px: a box around it would reach over the field below (see Form controls, "Where"). Canvas ports counter-scale only their absolutely positioned `::after` hit box through `--gg-canvas-zoom`, clamped to the canvas's 0.1 to 2 range; a 1/32 CSS px allowance covers rounding. On coarse pointers output rows are always **44 CSS px**, with a **2 px gap (46 px pitch)**. Card dimensions, measured handles and the routing cache key never change with viewport zoom. Hit-box height is capped at the row pitch, and width at **half the gap to the next card** within the port's vertical strip, using geometry-only limits and a spatial index. With room horizontally, the on-screen target is about **44 by 44 px at zoom 1 and above**. Below about **0.96 zoom**, height is **46 times zoom**: **36.06 px at 0.784**, **23 px at 0.5** and **4.6 px at the 0.1 floor**, where the Connect form is the practical way to connect. Neighbouring cards can cap width below 44 px as well: at 260 px spacing (76 px card gap), the 38 CSS px cap gives **29.79 px at 0.784** and **19 px at 0.5**. These caps prevent neighbouring targets from overlapping without changing layout or rerouting edges on zoom. Fine-pointer rows remain 18 px with a 2 px gap. The node dialog's **Connect form** is the full-size way to connect on a zoomed-out touch canvas. Nothing needs hover: the issue popovers open on tap, the collapsed palette's tooltips repeat what the expanded palette shows, and the remaining tooltips (a truncated name, Publish's blocking count, Validation unavailable, the disabled Open in Runs link's reason) repeat what the accessible name or description already carries; on touch those few explanations are not shown on screen. Keyboard order and accessible names are unchanged.
++- **Touch.** Where the primary pointer is coarse (`pointer-coarse:`, `@media (pointer: coarse)`), controls are at least 44 px: buttons (`sm`, `md`, and icon sizes), inputs and selects, segment labels (at least 44 px wide and tall, including short Yes/No choices), disclosure toggles (including the inspector's Full thread JSON and Node progress, through the shared `Disclosure`), checkbox rows (`CHECKBOX_LABEL`, at least 44 px wide and tall), the Menu button, Open in Runs, the validation indicator and its rows, issue rows, timeline rows, palette buttons, the canvas's zoom controls, and the Omit of an edited New run or Wait input (drawn 44 by 44 px in a place its label line holds; see Form controls, "Where"). Controls that keep a small look take the touch with an invisible 44 px box around them (`touch-target`): the switch, the issue badge, and links in tables. Canvas ports counter-scale only their absolutely positioned `::after` hit box through `--gg-canvas-zoom`, clamped to the canvas's 0.1 to 2 range; a 1/32 CSS px allowance covers rounding. On coarse pointers output rows are always **44 CSS px**, with a **2 px gap (46 px pitch)**. Card dimensions, measured handles and the routing cache key never change with viewport zoom. Hit-box height is capped at the row pitch, and width at **half the gap to the next card** within the port's vertical strip, using geometry-only limits and a spatial index. With room horizontally, the on-screen target is about **44 by 44 px at zoom 1 and above**. Below about **0.96 zoom**, height is **46 times zoom**: **36.06 px at 0.784**, **23 px at 0.5** and **4.6 px at the 0.1 floor**, where the Connect form is the practical way to connect. Neighbouring cards can cap width below 44 px as well: at 260 px spacing (76 px card gap), the 38 CSS px cap gives **29.79 px at 0.784** and **19 px at 0.5**. These caps prevent neighbouring targets from overlapping without changing layout or rerouting edges on zoom. Fine-pointer rows remain 18 px with a 2 px gap. The node dialog's **Connect form** is the full-size way to connect on a zoomed-out touch canvas. Nothing needs hover: the issue popovers open on tap, the collapsed palette's tooltips repeat what the expanded palette shows, and the remaining tooltips (a truncated name, Publish's blocking count, Validation unavailable, the disabled Open in Runs link's reason) repeat what the accessible name or description already carries; on touch those few explanations are not shown on screen. Keyboard order and accessible names are unchanged.
+ - **Zoom.** At 200% (a 1024 by 768 window lays out in 512 by 384 CSS pixels) Loops, the editor, the run inspector, and Settings reflow without sideways scrolling (WCAG 1.4.10); the editor keeps a usable canvas under its wrapped toolbar.
+-- **Regression.** `components/ui/ui.test.tsx` (stacking, `FieldRow`), `components/ui/side-panel.test.tsx` (overlay), `forms/cron/*.test.ts*`, and Edge `e2e/responsive.spec.ts`: both stored themes before load; no sideways page scroll or control clipped by its container on every screen and Settings section at the four widths, including the required API key panel, a forced API/healthz outage, the update toast, and the Events error-boundary test route; all nine node dialogs and their Advanced options at 360 and 768; the header Menu at 360 and the links at 768, the Runs table stacked at 360 and 768 with its headers kept, the secret form in one column at 360, the editor at 768 (pointer selection/edit/drag connection and keyboard rail addition/edit/Connect form, validation, publish, the floating loop panel), 44 px controls including native summaries, code editors, checkbox/radio labels and short choices on a touch screen, on-screen port hit boxes capped by fixed row pitch and neighbouring-card gaps at fitted zoom at 768 and 360 px, identical three-route card heights at zoom 1, 0.784 and 0.5, and zero routing measurements across eight coarse-pointer zoom changes on 300 nodes, and 200% zoom. The grouped geometry tests attach `scroll-widths.json` with `document.scrollingElement.scrollWidth` and `innerWidth` for the QA evidence table.
++- **Regression.** `components/ui/ui.test.tsx` (stacking, `FieldRow`), `components/ui/side-panel.test.tsx` (overlay), `forms/cron/*.test.ts*`, and Edge `e2e/responsive.spec.ts`: both stored themes before load; no sideways page scroll or control clipped by its container on every screen and Settings section at the four widths, including the required API key panel, a forced API/healthz outage, the update toast, and the Events error-boundary test route; all nine node dialogs and their Advanced options at 360 and 768; the header Menu at 360 and the links at 768, the Runs table stacked at 360 and 768 with its headers kept, the secret form in one column at 360, the editor at 768 (pointer selection/edit/drag connection and keyboard rail addition/edit/Connect form, validation, publish, the floating loop panel), 44 px controls including native summaries, code editors, checkbox/radio labels, short choices, and the Omit of an edited New run and Wait input on a touch screen, on-screen port hit boxes capped by fixed row pitch and neighbouring-card gaps at fitted zoom at 768 and 360 px, identical three-route card heights at zoom 1, 0.784 and 0.5, and zero routing measurements across eight coarse-pointer zoom changes on 300 nodes, and 200% zoom. The grouped geometry tests attach `scroll-widths.json` with `document.scrollingElement.scrollWidth` and `innerWidth` for the QA evidence table.
+ 
+ ### List actions and destructive confirmations (#6, #12)
+ 

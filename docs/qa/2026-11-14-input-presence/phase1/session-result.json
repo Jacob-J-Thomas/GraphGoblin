@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 1094723,
+  "stop_reason": "end_turn",
+  "session_id": "ea7e4776-1bc5-4d1c-8e23-efa53d78b866",
+  "total_cost_usd": 6.841424,
+  "usage": {
+    "input_tokens": 174,
+    "cache_creation_input_tokens": 246408,
+    "cache_read_input_tokens": 12731520,
+    "output_tokens": 116158,
+    "output_tokens_details": {
+      "thinking_tokens": 66690
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 246408,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2553,
+        "cache_read_input_tokens": 246003,
+        "cache_creation_input_tokens": 405,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 405
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 174,
+      "outputTokens": 116158,
+      "cacheReadInputTokens": 12731520,
+      "cacheCreationInputTokens": 246408,
+      "webSearchRequests": 0,
+      "costUSD": 6.841424,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 66690,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 246408,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 113,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've finished phase 1 for #235: the form change, tests and docs are ready for review, uncommitted. It is **not ready for merge or accepted**. My new Edge test case is edited and typechecked but has never run. No screenshots exist yet. The full gate, GPT review, QA, CI and Astra audit are all still pending.\n\n**Model and effort:** `claude-opus-5-5` at `xhigh` (from `launch.json`). Every command ran on Node v22.23.4 through `pnpm.cmd`.\n\n## What changed\nOnly `JsonSchemaForm.tsx` changed in production code. `RunLauncher` and `WaitPanel`, the API, contracts and storage are untouched, with no migration.\n\nFrom the GPT proposal I kept the core behaviour:\n- untouched fields stay absent;\n- cleared text is sent as `\"\"` and checked against its schema;\n- a blank number gets \"enter a number\", and blank JSON gets \"invalid JSON\";\n- the raw editor is \"no input\" until edited, then parses exactly what was typed;\n- the empty-string enum choice is labelled `\"\"` so it doesn't look like **Not set**;\n- the **Omit** wording and name (\"Omit comment\"), and moving focus back to the field.\n\nWhat I changed, and why:\n1. **Omit no longer pushes the field down.** The proposal used the standard 32px button (44px on touch) in a label line that is only about 17px tall. The input jumped down about 15px on the first keystroke and back on Omit, breaking the documented 6px label-to-field gap. Omit is now a small 20px button that fits the label line. It uses the existing `touch-target` utility for a 44px touch area and keeps the normal button look and focus ring.\n2. **Omit sits before the \"JSON\" tag**, so the tag never moves.\n3. **Placeholders.** A default shows only while the field is absent, and cleared text shows `\"\"`. Schema defaults aren't filled in when a field is missing (no Ajv `useDefaults`), so showing the default on a field that will send `\"\"` was misleading. It was also the only visual difference between \"empty\" and \"absent\" apart from the button.\n4. **The raw JSON editor only offers Omit when its schema accepts no input.** This is the raw-editor version of \"required fields get no way back to absent\".\n5. **The incomplete-number handler (`-`, `1e`) now applies only to number inputs**, not text inputs.\n\nKeyboard: Shift+Tab from the field reaches Omit; Enter puts the field back to absent with focus on it.\n\nI also updated `docs/09-frontend-and-pwa.md` and `CHANGELOG.md`, and added one sentence to the user guide (`docs/guide/03-run-and-observe.md`).\n\n## Acceptance (phase 1 evidence is component and fake-API tests)\n| Criterion | Status |\n|---|---|\n| Untouched optional fields absent | Form tests plus New run and Wait request-body tests; Edge bodies pending |\n| Explicit empty text present and checked by its schema | Covered, including a `minLength` error and a required field accepting `\"\"` |\n| Blank number and JSON refused, not dropped | Covered for property fields and the raw editor |\n| Incomplete native number (`-`) | Simulated in jsdom using the repo's existing pattern; real Edge pending |\n| `null`, `\"\"`, `0`, `false` through New run and Wait | Request bodies covered against the fake API; real API bodies and stored result readback pending (Edge) |\n| No Omit on required fields; `\"\"` enum distinct from Not set | Covered |\n| Raw editor states kept apart | Covered: untouched, `null`, blank, spaces, `\"\"`, `0`, `false`, omitted |\n| Existing behaviour unchanged | All 94 tests in the 5 related files pass |\n\n**Proof the tests catch the bug:** against the unmodified form, 7 of 17 form tests and 2 of 14 consumer tests fail. I also broke each decision on purpose (seven separate mutations), and each was caught by its own test. The final file was restored and its hash re-checked.\n\n## Command results\n- Starting point (the proposal as supplied): 25/25.\n- Form tests after my changes: 17/17 on the first run. The 3 main files: 31/31 on the first run.\n- Prettier, ESLint and web typecheck (which includes the e2e file): all clean on the first run.\n- Two other test files that render the form: 63/63. Final run of all 5 files: 94/94.\n- A coverage check on the form file alone: 100% of lines, 96.5% of branches. The uncovered branches are all in older, unchanged lines. This is not the package-wide 90% gate.\n\nNo run failed except the deliberate mutation runs. I ran no root build, check, coverage or browser.\n\n## Git status and source hashes\nHEAD `839932e6…` on `codex/gg-20261114-i08-input`, unchanged. Nothing staged or committed.\n```\n M CHANGELOG.md\n M apps/web/e2e/form-controls.spec.ts\n M apps/web/src/forms/JsonSchemaForm.test.tsx\n M apps/web/src/forms/JsonSchemaForm.tsx\n M apps/web/src/runs/inspector/WaitPanel.test.tsx\n M apps/web/src/runs/new/NewRunPage.test.tsx\n M docs/09-frontend-and-pwa.md\n M docs/guide/03-run-and-observe.md\n?? docs/qa/2026-11-14-i08-u22-baseline/\n```\n- `JsonSchemaForm.tsx` sha256: `809d4b5c…869fdd`. All eight hashes are in the handoff.\n- I didn't touch the U22 baseline folder. It still has 31 files, listed with hashes in `u22-baseline-manifest.sha256`.\n\n## Still to do in phase 2\n1. Run `pnpm build`, then the Edge e2e file including my new #235 case. It checks the `-` key, request bodies at both endpoints, the stored run result, the field not moving, and keyboard and mouse Omit.\n2. Take Edge screenshots in light and dark, at 1280 and 390 wide, on both New run and the Wait card.\n3. Check two tight spots I could only calculate:\n   - the Omit focus ring clears the input by about 0.45px;\n   - on touch, Omit's 44px tap area overlaps the input's top-right corner by about 7.5px. There isn't room for 44px without some overlap; the existing utility makes the same trade-off for switches and issue badges. Touch emulation should confirm a tap in the middle of the input still focuses it.\n4. Check forced-colours mode.\n5. Run the full `pnpm check`, then the remaining review, QA, CI and audit gates.\n6. The issue needs owner acceptance before closing, so the PR must say \"Part of #235\", not \"Closes\".\n\nFiles are in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-235-claude-phase1/`:\n- handoff.md\n- final-tracked.diff\n- u22-baseline-manifest.sha256\n- logs/ (one log per command)\n- mutation/",
+  "ttft_ms": 522,
+  "type": "result",
+  "duration_ms": 1667428,
+  "uuid": "6d0d7c68-2fec-49d0-9144-13e1741ed44a",
+  "ttft_stream_ms": 481,
+  "time_to_request_ms": 59,
+  "first_content_frame_ms": 481,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 174,
+      "outputTokens": 116158,
+      "cacheReadInputTokens": 12731520,
+      "cacheCreationInputTokens": 246408,
+      "webSearchRequests": 0,
+      "costUSD": 6.841424,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 66690,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 246408,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

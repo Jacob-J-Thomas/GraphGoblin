@@ -1,0 +1,35 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { join } from 'node:path';
+const cwd='C:/Users/98jak/.codex/worktrees/gg-20261114-i08-input/GraphGoblin';
+const batch='C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch';
+const git=(...args)=>execFileSync('git',args,{cwd,maxBuffer:4*1024*1024});
+const head=process.argv[2]??git('rev-parse','HEAD').toString().trim();
+if(!/^[a-f0-9]{40}$/.test(head))throw new Error('Require full head');
+const hash=x=>createHash('sha256').update(x).digest('hex');
+const manifestPath='docs/qa/2026-11-14-input-presence/u22-baseline-source-manifest.json';
+const manifest=JSON.parse(git('show',head+':'+manifestPath));
+const readmePath='docs/qa/2026-11-14-i08-u22-baseline/README.md';
+const attributesPath='docs/qa/2026-11-14-i08-u22-baseline/.gitattributes';
+const checks=manifest.filter(x=>x.path!==readmePath&&x.path!==attributesPath).map(x=>{
+ const bytes=git('show',head+':'+x.path),sha256=hash(bytes);
+ if(bytes.length!==x.bytes||sha256!==x.sha256)throw new Error('Raw U22 drift '+x.path);
+ return {path:x.path,bytes:bytes.length,sha256,match:true};
+});
+if(checks.length!==29)throw new Error('Expected29rawdataentries');
+const original=manifest.find(x=>x.path===readmePath);
+const preservedPath='docs/qa/2026-11-14-input-presence/u22-baseline-raw/README.md.txt';
+const preserved=git('show',head+':'+preservedPath);
+if(hash(preserved)!==original.sha256||preserved.length!==original.bytes)throw new Error('HistoricalREADMEdrift');
+const publication=git('show',head+':'+readmePath);
+const originalAttributes=manifest.find(x=>x.path===attributesPath);
+const attributesSourcePath=join(batch,'proposed-u22-baseline-qa',attributesPath);
+const attributesSource=readFileSync(attributesSourcePath);
+if(hash(attributesSource)!==originalAttributes.sha256||attributesSource.length!==originalAttributes.bytes)throw new Error('Historicalattributes external source drift');
+const attributesPublication=git('show',head+':'+attributesPath);
+const result={head,historicalExecutionBaseline:'b3b5e1874a8252cc01c065d18fef42cbfbe075b4',verification:'Git committed byte preservation only; not re-execution of baseline scenarios',rawCount:checks.length,checks,originalReadme:{...original,preservedPath,preservedSha256:hash(preserved)},currentPublicationReadme:{path:readmePath,bytes:publication.length,sha256:hash(publication),matchesHistoricalRaw:hash(publication)===original.sha256},originalAttributes:{...originalAttributes,externalSourcePath:attributesSourcePath,externalSourceMatch:true},currentPublicationAttributes:{path:attributesPath,bytes:attributesPublication.length,sha256:hash(attributesPublication)},note:'Publication README and .gitattributes differ intentionally from the original31-entry manifest. The29 raw data files and originalREADME Git blobs match; originalattribute rules are verified separately against retainedexternalbytes, with a rawcopy planned for the correction. No scenario re-execution is claimed.'};
+const output=join(batch,'review-235','u22-git-readback-'+head.slice(0,8)+'.json');
+writeFileSync(output,JSON.stringify(result,null,2)+'\n');
+console.log(JSON.stringify({head,rawCount:checks.length,originalReadmePreserved:true,publicationDiffers:!result.currentPublicationReadme.matchesHistoricalRaw,output}));
+

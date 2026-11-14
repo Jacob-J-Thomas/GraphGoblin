@@ -3,7 +3,7 @@
  * and save what they show; Tab leaves a code field; required fields carry their marker and
  * `aria-required`; an error describes its control; the file picker is a labelled native input.
  */
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import {
   approvalLoop,
   chooseOptionByKeyboard,
@@ -266,4 +266,396 @@ test('the run form keeps a long choice inside its field and puts each problem be
   await expect(reason).toHaveAttribute('aria-invalid', 'true');
   await expect(reason).toHaveAccessibleDescription(/Reason must NOT have fewer than 3 characters/);
   await expect(page).toHaveURL(/\/app\/runs\/new/);
+});
+
+test('New run and Wait send the supplied input and omit untouched or reset fields (#235)', async ({
+  page,
+  request,
+}) => {
+  const inputSchema = {
+    type: 'object',
+    required: ['reason'],
+    properties: {
+      untouched: { type: 'string' },
+      comment: { type: 'string' },
+      message: { type: 'string' },
+      title: { type: 'string', minLength: 1 },
+      reason: { type: 'string' },
+      number: { type: 'number' },
+      metadata: { type: 'null' },
+      approved: { type: 'boolean' },
+    },
+  };
+  const definition = approvalLoop('explicit input presence');
+  const loopId = await publishLoop(request, {
+    ...definition,
+    nodes: definition.nodes.map((node) => {
+      if (node.id === 'start') return { ...node, config: { ...node.config, inputSchema } };
+      if (node.id === 'approve') return { ...node, config: { ...node.config, inputSchema } };
+      return {
+        ...node,
+        config: { returns: '{"started": trigger.payload, "answered": lastOutput.value}' },
+      };
+    }),
+  });
+  const input = {
+    message: '',
+    title: 'ok',
+    reason: '',
+    number: 0,
+    metadata: null,
+    approved: false,
+  };
+
+  async function enterInput(submitLabel: string, omitBy: 'keyboard' | 'click') {
+    const form = page.getByRole('form', { name: submitLabel });
+    const message = form.getByLabel('message', { exact: true });
+    await message.fill('clear this');
+    await message.clear();
+    // Cleared text is the empty string, and its placeholder says so.
+    await expect(message).toHaveAttribute('placeholder', '""');
+    const title = form.getByLabel('title', { exact: true });
+    const reason = form.getByLabel('reason', { exact: true });
+    const number = form.getByLabel('number', { exact: true });
+    const metadata = form.getByLabel('metadata', { exact: true });
+    await title.fill('1');
+    await title.clear();
+    await reason.fill('r');
+    await reason.clear();
+    // The native number input holds "-", which it reports as an empty value.
+    await number.press('-');
+    expect(await number.evaluate((el: HTMLInputElement) => el.validity.badInput)).toBe(true);
+    await metadata.fill(' ');
+    const submit = form.getByRole('button', { name: submitLabel });
+    await submit.click();
+    await expect(title).toHaveAccessibleDescription(/must NOT have fewer than 1/);
+    await expect(number).toHaveAccessibleDescription('number: enter a number');
+    await expect(metadata).toHaveAccessibleDescription(/metadata: invalid JSON/);
+    // Required text cleared to "" is valid here, and has no way back to absent.
+    await expect(reason).not.toHaveAttribute('aria-invalid');
+    await expect(form.getByRole('button', { name: 'Omit reason', exact: true })).toHaveCount(0);
+
+    await number.fill('1');
+    await number.clear();
+    await submit.click();
+    await expect(number).toHaveAccessibleDescription('number: enter a number');
+
+    // Omit appears in the label's line without moving the field, and takes the field back to
+    // absent with focus on it.
+    const comment = form.getByLabel('comment', { exact: true });
+    const omit = form.getByRole('button', { name: 'Omit comment', exact: true });
+    const offset = () =>
+      comment.evaluate(
+        (el) => el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
+      );
+    const resting = await offset();
+    await comment.fill('drop this');
+    await expect(omit).toBeVisible();
+    expect(await offset()).toBe(resting);
+    const [field, button] = await Promise.all([comment.boundingBox(), omit.boundingBox()]);
+    expect(button!.y + button!.height).toBeLessThanOrEqual(field!.y);
+    if (omitBy === 'keyboard') {
+      await comment.press('Shift+Tab');
+      await expect(omit).toBeFocused();
+      await page.keyboard.press('Enter');
+    } else {
+      await omit.click();
+    }
+    await expect(comment).toBeFocused();
+    await expect(comment).toHaveValue('');
+    await expect(omit).toHaveCount(0);
+    expect(await offset()).toBe(resting);
+
+    await title.fill('ok');
+    await number.fill('0');
+    await metadata.fill('null');
+    // The radio is visually hidden: a click on its visible label chooses it.
+    const approved = form.getByRole('radiogroup', { name: 'approved' });
+    await approved.getByText('No', { exact: true }).click();
+    await expect(approved.getByRole('radio', { name: 'No', exact: true })).toBeChecked();
+    return submit;
+  }
+
+  await page.goto(`/app/runs/new?loop=${loopId}`);
+  const start = await enterInput('Start run', 'keyboard');
+  const started = page.waitForRequest(
+    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/loops/${loopId}/runs`,
+  );
+  await start.click();
+  expect((await started).postDataJSON().input).toEqual(input);
+  await expect(page.getByText('Input requested')).toBeVisible();
+  const runId = new URL(page.url()).pathname.split('/').at(-1);
+
+  const respond = await enterInput('Submit input', 'click');
+  const observed = await (await request.get(`/runs/${runId}`)).json();
+  const answered = page.waitForRequest(
+    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/runs/${runId}/input`,
+  );
+  await respond.click();
+  expect((await answered).postDataJSON()).toEqual({ waitId: observed.waiting.waitId, input });
+  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  const completed = await (await request.get(`/runs/${runId}`)).json();
+  expect(completed.result).toEqual({ started: input, answered: input });
+});
+
+test('Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235)', async ({
+  page,
+  request,
+}) => {
+  // A number input holding "-" (or "1e") reports `value` "" with `validity.badInput`, the same
+  // empty value React already holds: only the browser's own state, and the request, say whether
+  // Omit took the typed text away with the field. The text is typed with real key presses.
+  const inputSchema = {
+    type: 'object',
+    required: ['limit'],
+    properties: {
+      note: { type: 'string' },
+      size: { type: 'number' },
+      count: { type: 'integer' },
+      limit: { type: 'integer' },
+    },
+  };
+  const definition = approvalLoop('omit incomplete number');
+  const loopId = await publishLoop(request, {
+    ...definition,
+    nodes: definition.nodes.map((node) => {
+      if (node.id === 'start' || node.id === 'approve')
+        return { ...node, config: { ...node.config, inputSchema } };
+      return {
+        ...node,
+        config: { returns: '{"started": trigger.payload, "answered": lastOutput.value}' },
+      };
+    }),
+  });
+  // Count, omitted twice, is never sent; the neighbours' text, a valid zero and the required limit
+  // (which has no Omit) are.
+  const input = { note: 'keep me', size: 0, limit: 0 };
+  const posts: string[] = [];
+  page.on('request', (req) => {
+    const path = new URL(req.url()).pathname;
+    if (req.method() === 'POST' && /^\/(loops\/[^/]+\/runs|runs\/[^/]+\/input)$/.test(path))
+      posts.push(path);
+  });
+  /** What the browser itself says about a number input: its `value` reads "" for incomplete text. */
+  const native = (field: Locator) =>
+    field.evaluate((el: HTMLInputElement) => ({
+      value: el.value,
+      badInput: el.validity.badInput,
+      valid: el.validity.valid,
+    }));
+
+  async function enterInput(submitLabel: string, omitFirstBy: 'keyboard' | 'click') {
+    const form = page.getByRole('form', { name: submitLabel });
+    const note = form.getByLabel('note', { exact: true });
+    const size = form.getByLabel('size', { exact: true });
+    const count = form.getByLabel('count', { exact: true });
+    const limit = form.getByLabel('limit', { exact: true });
+    const omit = form.getByRole('button', { name: 'Omit count', exact: true });
+    const submit = form.getByRole('button', { name: submitLabel, exact: true });
+    const sent = posts.length;
+
+    await note.fill('keep me');
+    await size.fill('0');
+    await count.press('-');
+    await limit.press('-');
+    // Real typing: both read as empty and as bad input. Only count, being optional, offers Omit.
+    expect(await native(count)).toEqual({ value: '', badInput: true, valid: false });
+    expect(await native(limit)).toEqual({ value: '', badInput: true, valid: false });
+    await expect(omit).toBeVisible();
+    await expect(form.getByRole('button', { name: 'Omit limit' })).toHaveCount(0);
+    await submit.click();
+    await expect(count).toHaveAccessibleDescription('count: enter a number');
+    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
+    expect(posts).toHaveLength(sent);
+
+    const omitCount = async (by: 'keyboard' | 'click') => {
+      if (by === 'keyboard') {
+        await count.press('Shift+Tab');
+        await expect(omit).toBeFocused();
+        await page.keyboard.press('Enter');
+      } else {
+        await omit.click();
+      }
+      await expect(omit).toHaveCount(0);
+      await expect(count).toBeFocused();
+      // The text typed into count went with it: the browser no longer holds incomplete input, and
+      // the field is valid, where an unchanged "" value would have said nothing.
+      expect(await native(count)).toEqual({ value: '', badInput: false, valid: true });
+      await expect(count).not.toHaveAttribute('aria-invalid');
+      await expect(form.getByText('count: enter a number')).toHaveCount(0);
+    };
+    await omitCount(omitFirstBy);
+
+    // Nothing else moved: the neighbours keep their text and zero, and the required limit keeps
+    // its incomplete text and its refusal.
+    await expect(note).toHaveValue('keep me');
+    await expect(size).toHaveValue('0');
+    expect(await native(limit)).toEqual({ value: '', badInput: true, valid: false });
+    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
+
+    // The field takes new input afterwards, and goes the same way by the other route.
+    await count.press('-');
+    expect(await native(count)).toEqual({ value: '', badInput: true, valid: false });
+    await expect(omit).toBeVisible();
+    await omitCount(omitFirstBy === 'keyboard' ? 'click' : 'keyboard');
+
+    // The required limit is still refused, and nothing is sent, until it holds a number.
+    await submit.click();
+    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
+    expect(posts).toHaveLength(sent);
+    await limit.fill('0');
+    expect(await native(limit)).toEqual({ value: '0', badInput: false, valid: true });
+    // The form now agrees with what it will send: no control holds text it would leave out.
+    expect(await form.evaluate((el: HTMLFormElement) => el.checkValidity())).toBe(true);
+    return submit;
+  }
+
+  await page.goto(`/app/runs/new?loop=${loopId}`);
+  const start = await enterInput('Start run', 'keyboard');
+  const started = page.waitForRequest(
+    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/loops/${loopId}/runs`,
+  );
+  await start.click();
+  const startBody = (await started).postDataJSON();
+  expect(startBody.input).toEqual(input);
+  expect(startBody.input).not.toHaveProperty('count');
+  await expect(page.getByText('Input requested')).toBeVisible();
+  const runId = new URL(page.url()).pathname.split('/').at(-1);
+
+  const respond = await enterInput('Submit input', 'click');
+  const observed = await (await request.get(`/runs/${runId}`)).json();
+  const answered = page.waitForRequest(
+    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/runs/${runId}/input`,
+  );
+  await respond.click();
+  const answerBody = (await answered).postDataJSON();
+  expect(answerBody).toEqual({ waitId: observed.waiting.waitId, input });
+  expect(answerBody.input).not.toHaveProperty('count');
+  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
+  const completed = await (await request.get(`/runs/${runId}`)).json();
+  expect(completed.result).toEqual({ started: input, answered: input });
+});
+
+test.describe('with a coarse pointer (#235)', () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+
+  // Omit is a 44 px button in a place its label line always holds, 12 px above its field and 16 px
+  // below the field before, with no larger invisible box. The browser moves a touch that lands near
+  // a button onto it, even over a text field, so real taps on both fields must keep the text, and
+  // Omit must still take a tap anywhere on itself.
+  test('Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait', async ({
+    page,
+    request,
+  }) => {
+    const inputSchema = {
+      type: 'object',
+      properties: {
+        first: { type: 'string' },
+        comment: { type: 'string' },
+        details: { type: 'object' },
+      },
+    };
+    const definition = approvalLoop('coarse omit');
+    const loopId = await publishLoop(request, {
+      ...definition,
+      nodes: definition.nodes.map((node) =>
+        node.id === 'start' || node.id === 'approve'
+          ? { ...node, config: { ...node.config, inputSchema } }
+          : node,
+      ),
+    });
+
+    async function tapAround(submitLabel: string) {
+      expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+      const form = page.getByRole('form', { name: submitLabel });
+      for (const [name, before] of [
+        ['comment', 'first'],
+        ['details', 'comment'],
+      ] as const) {
+        const field = form.getByLabel(name, { exact: true });
+        const omit = form.getByRole('button', { name: `Omit ${name}`, exact: true });
+        const offset = () =>
+          field.evaluate(
+            (el) =>
+              el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
+          );
+        const resting = await offset();
+        await field.fill('typed');
+        await expect(omit).toBeVisible();
+        // Omit appearing moves nothing.
+        expect(await offset()).toBe(resting);
+        await field.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+        const button = (await omit.boundingBox())!;
+        const box = (await field.boundingBox())!;
+        const above = (await form.getByLabel(before, { exact: true }).boundingBox())!;
+        expect(button.width, `Omit ${name}: touch width`).toBeGreaterThanOrEqual(44);
+        expect(button.height, `Omit ${name}: touch height`).toBeGreaterThanOrEqual(44);
+        expect(await omit.evaluate((el) => getComputedStyle(el, '::after').content)).toBe('none');
+        expect(box.y - (button.y + button.height)).toBeGreaterThanOrEqual(12);
+        expect(button.y - (above.y + above.height)).toBeGreaterThanOrEqual(16);
+
+        // Real touches over the top of this field and the bottom of the one before, across and
+        // beyond the button's width, a column at a time: once Omit has gone, no later tap brings
+        // it back, so a column that leaves no Omit had a tap that omitted the field.
+        const wrong: string[] = [];
+        const column = async (where: string, x: number, ys: number[]) => {
+          for (const y of ys) await page.touchscreen.tap(x, y);
+          if ((await omit.count()) === 0) {
+            wrong.push(`${where} at x ${x}, y ${ys.join('/')}`);
+            await field.fill('typed');
+            await expect(omit).toBeVisible();
+          }
+        };
+        const depths = (deepest: number) =>
+          Array.from({ length: deepest / 2 + 1 }, (_, step) => 0.5 + step * 2);
+        for (
+          let x = Math.floor(button.x) - 24;
+          x <= Math.ceil(button.x + button.width) + 24;
+          x += 6
+        ) {
+          if (x > box.x && x < box.x + box.width)
+            await column(
+              name,
+              x,
+              depths(14).map((depth) => box.y + depth),
+            );
+          if (x > above.x && x < above.x + above.width)
+            await column(
+              before,
+              x,
+              depths(10).map((depth) => above.y + above.height - depth),
+            );
+        }
+        expect(wrong).toEqual([]);
+        await expect(field).toHaveValue('typed');
+
+        // A tap anywhere on the button omits the field: 4 px inside each rounded corner, then the
+        // centre.
+        const right = button.x + button.width;
+        const bottom = button.y + button.height;
+        for (const [x, y] of [
+          [button.x + 4, button.y + 4],
+          [right - 4, button.y + 4],
+          [button.x + 4, bottom - 4],
+          [right - 4, bottom - 4],
+          [button.x + button.width / 2, button.y + button.height / 2],
+        ] as const) {
+          await expect(omit).toBeVisible();
+          await page.touchscreen.tap(x, y);
+          await expect(omit).toHaveCount(0);
+          await expect(field).toHaveValue('');
+          await field.fill('typed');
+        }
+        await omit.tap();
+        await expect(omit).toHaveCount(0);
+        expect(await offset()).toBe(resting);
+      }
+      return form.getByRole('button', { name: submitLabel, exact: true });
+    }
+
+    await page.goto(`/app/runs/new?loop=${loopId}`);
+    await (await tapAround('Start run')).tap();
+    await expect(page.getByText('Input requested')).toBeVisible();
+    await tapAround('Submit input');
+  });
 });
