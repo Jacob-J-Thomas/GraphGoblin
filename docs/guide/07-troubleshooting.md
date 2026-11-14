@@ -6,6 +6,10 @@ The launcher reports the failed step in a dialog and records it in `launcher.log
 `GraphGoblin.exe`. `gateway.log` there retains stdout/stderr from gateways it started, including
 startup refusal. The default location is `%LOCALAPPDATA%\GraphGoblin\Launcher`.
 
+- **Store remains held after an inconclusive recheck:** the launcher retains the last verified
+  owner and refuses a second gateway. Let its deliberate shutdown finish or inspect that owner;
+  do not stop unrelated processes or delete unverified locks. An incomplete final retry can
+  simply mean the release wait expired, rather than a PowerShell/WMI failure.
 - **Launcher identity/ownership check timed out:** the dialog now names the exact helper,
   whether it waited for exit or output closure, elapsed time, allowance and output sizes.
   Initial helpers use the configured startup timeout with a 15-second minimum (normally

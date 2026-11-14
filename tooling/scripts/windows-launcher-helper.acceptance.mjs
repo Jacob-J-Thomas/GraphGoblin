@@ -203,7 +203,7 @@ test(
   { skip: !native },
   async () => {
     const f = await fixture(`import {writeSync} from 'node:fs';
-    writeSync(1, '${identity}' + 'PRIVATE_HELPER_OUTPUT'.repeat(20000));`);
+    writeSync(1, '${identity}' + ' '.repeat(300000) + 'PRIVATE_HELPER_OUTPUT');`);
     try {
       const result = await f.run();
       assert.equal(result.code, 1);
@@ -329,6 +329,50 @@ test(
     }
   },
 );
+
+for (const failure of ['timeout', 'exit', 'invalid']) {
+  test(
+    `retains held guidance when an ownership recheck ends in ${failure}`,
+    { skip: !native },
+    async () => {
+      const f = await fixture(
+        `import {appendFileSync, existsSync} from 'node:fs';
+      if(process.argv[2] === '--store-state') {
+        const marker = new URL('./ownership-attempts', import.meta.url);
+        const first = !existsSync(marker); appendFileSync(marker, 'attempt\\n');
+        const held = JSON.stringify({state:'held',path:'fixture-α',detail:'Synthetic persistent owner'});
+        if ('${failure}' === 'timeout') setTimeout(() => process.stdout.write(held), 800);
+        else if (first) process.stdout.write(held);
+        else if ('${failure}' === 'exit') { process.stderr.write('PRIVATE_RECHECK_OUTPUT'); process.exitCode = 7; }
+        else process.stdout.write('{PRIVATE_RECHECK_OUTPUT}');
+      } else process.stdout.write('${identity}');`,
+        4,
+        false,
+      );
+      try {
+        const result = await f.run();
+        assert.equal(result.code, 1);
+        assert.match(result.stderr, /Synthetic persistent owner: fixture-α/);
+        assert.match(result.stderr, /No second gateway was started/);
+        assert.match(
+          result.stderr,
+          /Do not stop an unrelated process or delete an unverified lock/,
+        );
+        assert.doesNotMatch(result.stderr, /Check the configured runtime|PRIVATE_RECHECK_OUTPUT/);
+        assert.ok(
+          (await readFile(join(f.repo, 'apps/api/dist/ownership-attempts'), 'utf8')).split('\n')
+            .length >= 3,
+          'must exercise a retry after a verified held result',
+        );
+        if (failure !== 'timeout')
+          assert.match(result.stderr, /last ownership recheck was inconclusive/);
+        assert.ok(result.elapsed < 10000, `elapsed ${result.elapsed}`);
+      } finally {
+        await f.close();
+      }
+    },
+  );
+}
 
 test('sanitizes malformed ownership JSON including parser errors', { skip: !native }, async () => {
   const f = await fixture(

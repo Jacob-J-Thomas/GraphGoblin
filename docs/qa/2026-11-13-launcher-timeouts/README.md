@@ -120,6 +120,43 @@ migrations, token/dependency rules passed before the first coverage attempt; tem
 licenses, generated docs and contrast checks also passed. The complete Linux CI gate and
 Windows CI job are required on the published candidate before delivery.
 
-Stable implementation review, PR and local repair: pending. The exact historical stall remains
-unconfirmed; synthetic reproduction demonstrates repair of reachable defects, not historical
-causality. No owner service/store/configuration has changed.
+Stable implementation review pass 1: Claude Opus 5.5 xhigh reviewed exact candidate
+`4ba9031a7b6b61b8f31dd3cccd5c4e2a44270925`, session
+`1b6e31a3-5929-45e0-9e4b-1525c46ca99c`; raw response and report are
+`claude-implementation-pass1.json` and `.md`. All four CI jobs at that candidate passed
+([run 43542440710](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43542440710),
+`ci-pass1.json`). The implementation review requested two corrections before readiness:
+
+- `FIX-IN-PR` F1: after a valid held result, an inconclusive retry must retain the complete
+  no-second-gateway/do-not-stop/do-not-delete guidance. The correction shares the held refusal
+  text and adds only release timing to a failed recheck, without suggesting WMI is broken.
+  Three native cases exercise persistent 800 ms held replies with a four-second release wait,
+  then failed-exit and malformed-result retries. A note on #459 records that helper termination
+  near the release deadline also exposes its existing descendant-lifetime limitation.
+- `FIX-IN-PR` F2: an oversized result must have a valid retained prefix. The fixture now sends
+  identity plus 300,000 whitespace bytes plus a private sentinel. Without the size guard,
+  trimming the retained prefix produces a valid identity, so the corrected test must fail.
+- `FIX-IN-PR` small documentation order correction: introduce the native suite before the
+  supplementary helper suite.
+- `NO-CHANGE` uncommon anonymous-pipe exceptions: no reachable failure beyond the handled I/O
+  and disposal cases was established, and unexpected errors still refuse startup. Broad exception
+  taxonomy is not required for these two corrections.
+- `NO-CHANGE` optional fixture-artifact retention: the helper fixtures are disposable protocol
+  inputs, and CI retains assertion/timeout output in its job log. This patch does not promise
+  durable copies of every fixture directory. Source/replay and local raw results are preserved.
+- `DUPLICATE-STALE` descendant cleanup: already deferred as #459; no new safety blocker found.
+
+The correction's launcher source SHA-256 is
+`198d226e2ca5253796613a53b05b9247949ed8e63dc86cdab540faf2d2d22bee`.
+Independent correction QA includes mutation checks: removing the size guard fails the overflow
+test, and restoring the old catch fails both deterministic recheck guidance cases. See
+`qa-correction.md` and its raw/replay artifacts. The complete corrected native suite passed
+27/27 in 208 seconds (`native-correction.txt`); tooling lint and changed-file formatting passed.
+One targeted Claude correction review remains;
+the review budget is one full implementation review plus this targeted pass.
+
+PR: [#460](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460). Final CI, targeted review and
+local repair outcomes will be recorded in its discussion at the exact final head. The exact
+historical stall remains unconfirmed; synthetic reproduction demonstrates repair of reachable
+defects, not historical causality. No owner service/store/configuration has changed at this
+commit. Merge remains subject to explicit owner authorization.

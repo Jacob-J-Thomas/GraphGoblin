@@ -78,6 +78,9 @@ that launcher-owned helper and waits at most two additional seconds; it never ki
 or an unrelated process. A successful result requires exit code zero, complete pipes, bounded
 valid output and the existing instance/ownership validation. Repeated ownership checks share
 the remaining monotonic store-release wait instead of starting fresh full-duration waits.
+After a valid held result, an incomplete or failed recheck retains that ownership reason and
+the instruction not to stop unrelated processes or delete unverified locks. It reports the
+release-wait timing instead of treating the incomplete retry as proof of a runtime/WMI problem.
 Helper, existing-store release, gateway readiness and PWA-window waits are separate phases;
 `StartupTimeoutSeconds` is not one end-to-end launch deadline. Errors identify the helper stage,
 outcome, elapsed time, allowance and output byte counts; successful helper checks taking at

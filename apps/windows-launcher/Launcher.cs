@@ -361,10 +361,14 @@ namespace GraphGoblin.Desktop
                     // Polls share the release budget; a last full-duration helper would
                     // otherwise extend it and replace a useful previously held diagnosis.
                     try { owned = StoreHasLiveOwner(remaining); }
-                    catch (Exception error) { throw new Exception(ownershipDetail + ". " + error.Message); }
+                    catch (Exception) {
+                        // A truncated or failed recheck does not invalidate the last held
+                        // result. Keep its safety guidance rather than implying a WMI fault.
+                        throw new Exception(HeldOwnershipRefusal() + " The last ownership recheck was inconclusive after " + releaseElapsed.ElapsedMilliseconds + " ms of the " + releaseBudget + " ms release wait; the last verified held result was retained.");
+                    }
                     if (!owned) break;
                 }
-                if (owned) throw new Exception(ownershipDetail + ". No second gateway was started. Do not stop an unrelated process or delete an unverified lock.");
+                if (owned) throw new Exception(HeldOwnershipRefusal());
             }
             int pid = NativeProcess.Start(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/main.js")), config.Repo, config.ChildEnvironment(), log);
             spawnedPid = pid;
@@ -385,6 +389,10 @@ namespace GraphGoblin.Desktop
         }
 
         string ownershipDetail;
+        string HeldOwnershipRefusal()
+        {
+            return ownershipDetail + ". No second gateway was started. Do not stop an unrelated process or delete an unverified lock.";
+        }
         sealed class Ownership { public string state, path, detail; }
 
         bool StoreHasLiveOwner(int budget)
