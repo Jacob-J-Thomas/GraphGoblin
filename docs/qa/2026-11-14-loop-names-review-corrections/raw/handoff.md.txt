@@ -1,0 +1,107 @@
+# PR 470 · #209 UI correction U1/U2 · handoff
+
+Implementation of the two FIX-IN-PR findings from `review-209/gpt-ui-scan2/report.md`. Worktree `C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin`, branch `codex/gg-20261114-loop-names`. HEAD `0d2fad63c448bc5591c530d087dd05c9af7821cc`, tree `f095a8cd37122e36d65958482897e7fd55311853`, target `7c6e635539e12c56b82f226f1ee734d83b985ad4`, all unchanged. Nothing was staged, committed, pushed or published, and no provider, owner app/store, credentials or ports 4747/4748 were used. Model: `claude-opus-5-5` (Claude Opus 5.5), with effort `xhigh` as given in `launch.json`.
+
+## Changed files
+
+The four runtime files, two test files and one numbered doc are listed below. `original` is the file at HEAD, recorded before any edit. `NameConflictNotice.tsx` was not changed.
+
+| File | Original sha256 / blob | Current sha256 / blob |
+| --- | --- | --- |
+| `apps/web/src/loops/LoopsPage.tsx` | `cd7903b0…db62e` / `f8b782fe` | `10f79063…c9268` / `088b3e87` |
+| `apps/web/src/editor/useAutosave.ts` | `2cc25d87…1a7506` / `c33ce65c` | `fbe6a15d…eaa8782` / `9c743847` |
+| `apps/web/src/editor/EditorPage.tsx` | `b6e302b2…cf83c` / `a00ef124` | `39186a12…0d472` / `08d9af28` |
+| `apps/web/src/editor/store.ts` | `126ea55a…406ca` / `7f346d1c` | `50489916…f6bc9` / `4a73cee3` |
+| `apps/web/src/loops/loop-names.test.tsx` | `4d086f1d…7e090c` / `71c1df37` | `9f0982ec…f4403` / `68ee98f6` |
+| `apps/web/src/editor/EditorPage.name-conflict.test.tsx` | `9f2610c0…a30da80` / `cd9eb6e0` | `07362691…eb738de0` / `8e73efc6` |
+| `docs/09-frontend-and-pwa.md` | `50d463ef…cb479fcb9` / `a1e4f41a` | `cead6910…b91373` / `45fe3d1a` |
+
+Full hashes are in [original-sha256.txt](original-sha256.txt) and [current-sha256.txt](current-sha256.txt). The complete working diff is [correction.diff](correction.diff) (sha256 `99c0a55a8e6f40e60e2b1737771b50364bc31c55a13375aa01108c533f56610a`). It covers 7 files with +634/−134 lines, or +543/−43 ignoring whitespace. Most of the `useAutosave.ts` line count is reindentation: Prettier keeps a React hook call compact only when its callback has no parameters, so adding `retry` wrapped the `useCallback` body one level deeper. `git diff -w` shows the logic change is +44/−14 lines.
+
+No backend, contracts, package, dependency, generated-doc, timeout, threshold or exclusion change was made.
+
+The Luna-owned guide `docs/guide/02-build-a-loop.md` was not touched. Its in-worktree modification is another worker's: HEAD blob `a34faee3` changed to `6b0fc2d8` at 09:09:59 local, about a minute after this run launched and before my first hash recording. Its hash is the same in both of my recordings. I made no broad rollback; the proof below swapped only the four runtime files.
+
+## U1 · import selection ownership
+
+**Design.** Each file choice gets an `ImportSelection` token (`{ key }`) when it is chosen, inside the change handler and before the file is read.
+
+- `currentRef` holds the current choice.
+- `retryingRef` holds the choice whose retry is being sent. It guards a second activation before the next render.
+- The token travels in the mutation variables of the initial request and of every retry, and `HeldImport` stores it.
+- Every choice-specific outcome checks `currentRef.current === selection` first. That covers a read failure, the stale-read return before parse/upload, initial success, initial refusal, initial other failure, and retry refusal or failure. The retry path also checks `now.selection`, replacing the earlier partial `document` identity guard.
+- List refresh (`invalidateQueries(keys.loops)`) runs before the ownership check, so a stale choice still reconciles the list after a success, a refusal, any retry outcome, or a failure that may have committed.
+- Cancel sets `currentRef` to undefined.
+- The retry form is keyed by `held.selection.key`.
+- `pending` is `importLoop.isPending && importLoop.variables.selection === held.selection`.
+- `file.text()` is wrapped: an unreadable file reports `<file> could not be read.` only if that choice is still current. Before, the rejection was unhandled.
+
+No workflow framework was added and the picker was not disabled.
+
+**Final selection policy, for QA.** The picker stays enabled. The newest choice owns the result message and the **Import under another name** region. Choosing another file, or **Cancel**, ends the current choice. After that, an ended choice's unread file is never sent and its read failure says nothing. Its late answer, whether 201, 409 or another failure, only refreshes the loop list, so a late successful import appears in the list with no message. The form's typed text persists across the same upload's retries, and a second activation while that retry is sending sends nothing. Every attempt sends the parsed upload unchanged, with the explicit name only in the `name` query. Independent native QA should use `qa-mode=candidate` with picker B enabled during A, not the disabled-picker outcome. This is documented in docs/09 under "Loop names → Import".
+
+**Small added behavior.** An initial (non-retry) import failure that may have committed (no answer or 5xx) now also refreshes the list. The current message text is unchanged.
+
+## U2 · Try again ownership
+
+**Design.** The permission and the busy display are now separate.
+
+- **Type.** `NameRetry { loopId, generation, refusal }` is a new type in `store.ts`. `EditorNameConflict.retrying` stays boolean, is documented as display-only, and grants nothing.
+- **Starting an attempt.** `EditorPage.retryName` builds `refusal = { ...nameConflict, retrying: true, retried: false }`, sets it in the store, and calls `flush({ loopId, generation, refusal })`.
+- **Signature.** `useAutosave`'s returned function is now `(retry?: NameRetry) => Promise<boolean>`. Every other caller (publish, Overwrite, recovery and online events, the debounced timer) passes nothing.
+- **Binding.** In `save(retry)`, the permit is kept only if it matches the `loopId`/`generation` captured by that call. Inside the queued job, the name hold is skipped only when the draft name is equivalent to `permit.refusal.name`. The permit is cleared as soon as one request is sent.
+- **Settling.** `settle()` runs on every path: the early returns before queueing (`!enabled`, no `loopId`) and a `try/finally` around the queued job. It covers schema-invalid, draft conflict, a newer generation, the already-saved state, the hold, success and every failure. It clears `retrying` only if the store still holds the same `refusal` object it marked, so a newer refusal, an accepted save or a load is left alone.
+- **Removed branch.** The generic failure branch that cleared another attempt's `retrying` is gone. `retried` on a refusal is now `deliberate`, meaning the refused request was this attempt's own.
+- **Unchanged.** Stale-token precedence (`DRAFT_CONFLICT` clears the name notice, and the job stops on `state.conflict`), the unmount skip, the device mirror and undo.
+
+**Consequence.** No other save (publish, recovery, the debounced timer) gets through the hold while a Try again is pending. Before, any save that ran while `retrying` was true skipped the hold. docs/09 "Rename" describes this.
+
+## Tests and first failures
+
+There are 10 new tests: 6 for U1 in `loop-names.test.tsx` under "Import: a newer file choice owns the panel", and 4 for U2 in `EditorPage.name-conflict.test.tsx` under "Try again is one deliberate save of the refused name". They drive public controls against the fake API, holding the server's answer behind explicit deferred promises and checking exact request bodies and query names.
+
+**Run 1, original runtime, first test draft.** [first-failures-original-source.log.txt](first-failures-original-source.log.txt): 10 failed, 15 passed (25), plus 1 unhandled `NotReadableError` rejection.
+
+- Eight failures were the expected product failures.
+- Two were **errors in my test setup**, not product evidence: both queued Try again tests asserted on a stale `field` element after Undo. Undo remounts the settings form through its history-epoch key, so the old element still read `Daytime B`. The fix re-queries the field.
+
+**Run 2, original runtime, editor file with the corrected setup.** [first-failures-original-source-editor-fixture-corrected.log.txt](first-failures-original-source-editor-fixture-corrected.log.txt): 3 failed, 7 passed (10). The queued test failed with expected `All changes saved`, received `Not saved: name in use`. The stale-token test passed, as a preservation test should.
+
+**Run 3, proof.** [proof-final-tests-on-original-runtime.log.txt](proof-final-tests-on-original-runtime.log.txt). The final test files ran against the exact HEAD runtime files, restored with `git show HEAD:<path>`; their read-back hashes matched the originals above. The corrected files were then restored from [corrected-backup/](corrected-backup/) and checked against [corrected-runtime-sha256-before-proof.txt](corrected-runtime-sha256-before-proof.txt) (4/4 OK). Result: **9 failed, 16 passed (25)**, plus 1 unhandled rejection. The 16 passes are the 15 pre-existing tests and the stale-token preservation test.
+
+The U1 failures:
+
+1. **Late A 409.** Expected `selected-B.json was not imported`, received `prior-A.json was not imported…`. This matches the native baseline.
+2. **Late A 201.** The region `Import under another name` was missing, because B's form had been cleared.
+3. **Cancel, then late A 409.** The region reappeared after Cancel.
+4. **Delayed A read.** The POST bodies were `[exportB, exportA]` instead of `[exportB]`: the obsolete upload was sent.
+5. **Read failure.** No `broken.json could not be read.` message appeared, and the rejection went unhandled.
+6. **Double activation.** The query names were `[null, 'minimal copy', 'minimal copy']`: two retries were sent.
+
+The U2 failures:
+
+1. **Invalid description, then Try again.** No `Try again` button could be found, because it stayed **Trying again…** and busy.
+2. **Repaired description alone.** The PUT count was 2 where 1 was expected: the leaked permission sent the refused name.
+3. **Queued Try again, then B's 503.** Received `Not saved: name in use`: the click was lost.
+
+**After correction.** [focused-after-correction.log.txt](focused-after-correction.log.txt): the 2 focused files pass **25/25**, with no unhandled errors. [scoped-after-correction.log.txt](scoped-after-correction.log.txt) covers 13 files: loop-names, EditorPage.name-conflict, LoopsPage, TemplateGallery, useAutosave, EditorPage.conflict/undo/device/freshness/restore and EditorPage, useLoadEditor and useLoadEditor.review. They pass **184/184**.
+
+**Static checks.** `pnpm run typecheck` for web, `tsc -p tsconfig.json --noEmit`, passes. ESLint on the 6 changed source/test files reports 0 problems. The first ESLint run found 6 `require-await` errors in my new tests and 3 ref-naming warnings in `LoopsPage.tsx`; I fixed them with the repository's `act(() => Promise.resolve(…))` pattern and `…Ref` names. `prettier --check` passes on all 7 files.
+
+**Correction batches.** One implementation batch, then one lint/format/docs batch. There are no unresolved test or behavior issues.
+
+## Not run and for root
+
+Not run, as instructed: `pnpm build`, full web tests or `test:coverage`, browser/E2E, and native suites. No `dist` was written; 0 files under `apps/web/dist`, `apps/web/dist-goblin` and `apps/api/dist` are newer than this run's `launch.json`.
+
+Root checks remaining:
+
+1. **Full web `test:coverage`.** It should confirm the ≥90% line and branch thresholds. One limit: the `settle()` early paths when a `retry` is given and the save is disabled or has no `loopId` are reachable only defensively and have no dedicated test.
+2. **Repository lint, layers and generated docs.**
+3. **Integration build.**
+4. **Edge E2E** `e2e/loop-names.spec.ts` and `e2e/template-gallery.spec.ts`. Both are unchanged and neither was run.
+5. **Independent native candidate QA** for import selection, in `qa-mode=candidate`, both orders, with the picker enabled.
+6. **Separate native QA** for invalid companion input and queued Try again.
+7. **Final whole-PR audit and owner acceptance.**
+
+The nonblockers (#237 validation caption and unmount ancestry) and the Luna guide sentence stay with root and Luna.

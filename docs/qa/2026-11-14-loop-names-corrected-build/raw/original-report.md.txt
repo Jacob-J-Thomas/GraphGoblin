@@ -1,0 +1,34 @@
+**PASS at the implementation level.** The forced fresh build passed, and the two selected Edge specs passed 16/16 with retries off. Native QA, current-head CI and any audit are still open.
+
+**Identity.** HEAD `2367b15b310eac52d95af77c570d5ce36f741527` and tree `6bcc8e4eb74ee2d82dd793f88538b08d260002d8` matched before and after. `git status` showed 0 lines throughout, and `git diff 0d2fad6 HEAD` touched exactly the 8 expected paths. Node was `v22.23.4`, and `pnpm.cmd` is 12.8.1. All 9 source hashes matched the pre-commit binding before and after the run. The remote feature ref is still `0d2fad63`, as expected.
+
+**Build.**
+- `pnpm.cmd build --force --cache-dir=.turbo/local-cache` expands to `turbo run build --force …` and exited 0.
+- Run window: 2026-11-14T15:46:09Z–15:46:24Z.
+- Turbo reported 12 successful of 12 tasks, 0 cached, 15.091s. It did not refuse, and I deleted nothing.
+- The old 655 files in `web/dist`, `web/dist-goblin`, `api/dist` and `infrastructure/dist` matched the recorded 0d2 listings before the build.
+- `apps/web/dist` replaced `index-LZq9N9nK.js` with `index-CCILPoqP.js` (sha256 `8b2d02ab…dba2`). `index.html`, `sw.js` and `sw.js.map` also changed.
+- In `apps/web/dist-goblin`, only `sw.js.map` changed. I did not investigate why.
+- The new bundle's source map embeds sources that hash identically to the 5 runtime source files, and the compiled correction strings are present.
+- Per-file hash listings for 13 `dist` trees are in `artifacts/after-e2e/tree-*.sha256`. The hashes were unchanged between the build and the end of the e2e run.
+
+**E2E.**
+- Command: `LIVE=0 pnpm.cmd --filter @graphgoblin/web test:e2e e2e/loop-names.spec.ts e2e/template-gallery.spec.ts --retries=0 --reporter=list,json --output=…`. It exited 0 (15:47:18Z–15:47:49Z) with 16 passed, 0 failed, 0 flaky, 0 skipped, each test on one attempt.
+- Tier: the real API from TypeScript source via `tsx`, with an in-memory database and the fake harness. It served the fresh `apps/web/dist` on an ephemeral port, driven by headless Edge with a temp profile. It did not use the built API or file SQLite, and it never touched 4747/4748.
+- These specs cover the existing Create, rename, Import-retry, stale-draft and template-gallery flows. They do not exercise the new U1/U2 cases (newer file choice, Cancel then a late answer, double retry, unreadable file, **Try again**, invalid companion). The specs themselves wrote 3 gallery screenshots, and I took none.
+
+**Limits.**
+1. Native QA against the built API and file SQLite is still needed, using the new bundle.
+2. The `tsc -b` package builds were not re-emitted. Their file mtimes are unchanged, so `tsc -b` judged them up to date. Their bytes are identical, and only `apps/web` and docs changed since 0d2. A from-scratch emit would need a root grant, which I did not take.
+3. The 0d2 CI is not evidence for 2367. Corrected-head CI must run the full gates, and I ran no coverage or full-repo check. Nothing here is an audit.
+4. The new-test count is 9 failing on the original runtime plus 1 stale-token control that passes on both.
+
+**Cleanup.** No `node`, Playwright, `e2e/server.ts`, Edge, Turbo, pnpm or Vite process of mine remains. The process and listener lists differ from the pre-build baseline only by an unrelated `chrome.exe` pid. The only listener on 4747/4748 is the owner's `127.0.0.1:4747` (pid 19500), which was there before I started, and nothing listens on 4748. My Edge temp profile is gone, and the in-memory store left no lock files. The build is left in place for independent QA.
+
+The heavy slot is released.
+
+Everything is under `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-209-correction-verification/`:
+- handoff.md
+- manifest.json (sha256 `5ab37edc…2acd`, lists 63 files)
+- artifacts/
+- tools/
