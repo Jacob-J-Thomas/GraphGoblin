@@ -213,11 +213,12 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
     ['heartbeat', { intervalSeconds: 60, maxBeats: 3 }],
     ['exit', {}],
   ] as const;
+  const name = uniqueLoopName('responsive dialogs');
   const created = await request.post('/loops', {
     data: {
       definition: {
         schemaVersion: CURRENT_DEFINITION_FORMAT,
-        name: uniqueLoopName('responsive dialogs'),
+        name,
         nodes: configs.map(([kind, config], i) => ({
           id: kind,
           kind,
@@ -232,6 +233,7 @@ async function seedDialogs(request: Parameters<typeof publishLoop>[0]) {
   expect(created.status()).toBe(201);
   return {
     loopId: ((await created.json()) as { loop: { id: string } }).loop.id,
+    name,
     kinds: configs.map(([kind]) => kind),
   };
 }
@@ -421,12 +423,12 @@ for (const theme of ['dark', 'light'] as const) {
       page,
       request,
     }) => {
-      const { loopId, kinds } = await seedDialogs(request);
+      const { loopId, name, kinds } = await seedDialogs(request);
       for (const viewport of WIDTHS.slice(0, 2)) {
         await page.setViewportSize(viewport);
         // xyflow hides wrappers until measurement. Keyboard press/focus does not wait for
         // visibility, so require the measured wrapper before sending Enter.
-        await openDraftTab(page, loopId, 'responsive dialogs');
+        await openDraftTab(page, loopId, name);
         for (const kind of kinds) {
           const node = page.locator(`.react-flow__node[data-id="${kind}"]`);
           await expect(node).toBeVisible();
