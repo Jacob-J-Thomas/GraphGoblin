@@ -1,0 +1,94 @@
+{
+  "description": "Sanitized PUT order/status/variables/node IDs only. Omits paths, headers, tokens, body references, timestamps, raw trace events, screenshots, and store data.",
+  "baseline": {
+    "externalArtifact": "batch/node-273-held-variable-trace-readback.json",
+    "sha256": "c685bcfdd975fa122bc91083994b3e11fe6aa38d150e68913d57afa5158acb1b",
+    "records": {
+      "recordCount": 8,
+      "putCount": 3,
+      "emptyVariablesPutCount": 3,
+      "putSequence": [
+        {
+          "sequence": 1,
+          "status": 200,
+          "variables": {},
+          "nodeIds": [
+            "start",
+            "work",
+            "gate",
+            "done"
+          ]
+        },
+        {
+          "sequence": 2,
+          "status": 200,
+          "variables": {},
+          "nodeIds": [
+            "start",
+            "work",
+            "check",
+            "done"
+          ]
+        },
+        {
+          "sequence": 3,
+          "status": 200,
+          "variables": {},
+          "nodeIds": [
+            "start",
+            "draft",
+            "loop-gate",
+            "done"
+          ]
+        }
+      ]
+    }
+  },
+  "corrected": {
+    "externalArtifact": "batch/ui-273-held-fixture-correction/held-variable-trace-readback-pass.json",
+    "sha256": "64bcd94789df0466b318e486472c3281ace6366f03799fceb0fbd10be7559e41",
+    "records": {
+      "recordCount": 6,
+      "putCount": 2,
+      "emptyVariablesPutCount": 0,
+      "putSequence": [
+        {
+          "sequence": 1,
+          "status": 200,
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodeIds": [
+            "start",
+            "work",
+            "check",
+            "done"
+          ]
+        },
+        {
+          "sequence": 2,
+          "status": 200,
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodeIds": [
+            "start",
+            "draft",
+            "loop-gate",
+            "done"
+          ]
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "baselineEmptyVariablesPuts": 3,
+    "correctedEmptyVariablesPuts": 0,
+    "correctedFirstPutIsRename": true,
+    "allCorrectedPutsPreserveKeySchema": true
+  }
+}

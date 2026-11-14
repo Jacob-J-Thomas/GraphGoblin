@@ -1,0 +1,92 @@
+# #273 held-input fixture correction handoff (Claude Sonnet 5.5)
+
+- **Worker:** Claude, model `claude-sonnet-5-5` (`launch.json`). Effort was requested as xhigh; I cannot observe the effective effort myself.
+- **Role:** bounded fixture correction, not a review scan and not independent QA.
+- **Checkout:** `C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin`, branch `codex/gg-20261114-node-references-native`.
+- **Admitted identity, verified before editing and again at the end:** HEAD `bd88ff09069338c0db2d0d64a1e8b291c9eb6602`, tree `a0a30a056e2f692d9bf6674cbea28972fcec0d27`, clean. Main `7c6e6355` is an ancestor. The tree was clean at start and the four source hashes equal phase 2's `logs/33-final-source-sha256.txt`.
+- **State now:** one tracked file modified, `apps/web/e2e/rename-references.spec.ts` (21 insertions, 6 deletions). Nothing is staged (0 staged paths), committed or pushed. No product source, docs or other test file changed. No subagent, provider call, owner store or service, settings, or other checkout. Port 4747 is listening, owned by PID 19500 (the owner's `source/repos` API, already running before I started); I did not touch it, and I did not touch 4748.
+- **Runner files:** `events.jsonl`, `latest.md` and `launch.json` in this directory belong to the runner. `report.md` will be the runner's.
+
+## Bottom line
+
+1. **Fixed: the held-input test now passes, and so do all five `rename-references` cases (5/5).** The only change is the fixture's setup of the unfinished Variables text. No product code is touched.
+2. **Cause (root's finding, confirmed in code):** the old `code()` helper did select-all, `Backspace`, then `insertText('[1, ')`. In `apps/web/src/forms/fields/json.tsx`, `validateText` treats empty text as valid (`text.trim() === ''` gives `value: undefined`), and the field's `onChange` then calls `onChange(undefined)` (I read that path in `json.tsx`; I did not read the record row's handling of `undefined`, but the retained trace shows the variable gone). So the `Backspace` alone removed `variables.key` from the draft, and autosave (`AUTOSAVE_DELAY_MS` = 600) saved `variables: {}` before any rename. The text typed afterwards is invalid, so it is held and never changes the draft, which left `{}` as the saved value. This was a fixture defect and not a rename regression.
+3. **Evidence of the sequence in a real Edge run** (`held-variable-trace-readback-pass.json`, same extraction method as root's script):
+
+   | Run                                         | Loop PUTs                                                                                    | PUTs with empty `variables` |
+   | ------------------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------- |
+   | phase 2 attempt 3 (original), root readback | 3: first at 13:09:27.230 with ids start/work/gate/done, then `check`, then `draft`/`loop-gate` | **3 of 3**                  |
+   | corrected run (this task)                   | 2: first at 14:09:46.709 is the rename to `check`, then `draft`/`loop-gate`                    | **0 of 2**                  |
+
+   In the corrected run every save carries `variables: {"key":{"type":"string"}}`, and the first PUT is the rename. `logs/09-put-summary-original-vs-corrected.txt` has the lines.
+
+## Source change (`snapshots/original-to-corrected.diff`, sha256 `6472e59b…`)
+
+| Snapshot | sha256 |
+| -------- | ------ |
+| original spec (equals committed blob at `bd88ff09`), `snapshots/original-rename-references.spec.ts.txt` | `64c88f07777d5ea02459ded4f1b46c4acab4ee35e4589af31fbe70c09d1678e2` |
+| corrected spec, `snapshots/corrected-rename-references.spec.ts.txt` | `a547686e80d265343134ef03922b50ea69175ff2c34823c794f7184610d56c47` |
+
+1. **Held-entry helper.** `code()` is replaced by `holdCode()` with the same signature. It clicks the field, selects all and inserts the text in one input, with no `Backspace`. Its doc comment gives the reason. The one call site (`holdCode(page, page, 'Variables value 1', '[1, ')`, line 663) is the only caller the old helper had in this file.
+   - **Decision for root.** You asked me to keep the generic helper unchanged unless evidence required otherwise. Its only caller in this spec was this test, and the evidence requires that this test no longer delete first. I replaced it rather than leave an unused function; I expect the configured `@typescript-eslint/no-unused-vars` (`error`) to flag an unused function, but I did not test that. If you prefer the old helper kept beside `holdCode()`, that is a trivial follow-up, and it would then need a use or an exemption. `forms.spec.ts` and `fixtures.ts` are untouched and have their own helpers.
+   - The pattern select-all then `insertText` is the one `forms.spec.ts` already uses at lines 403 to 404 for valid-to-valid Variables edits.
+2. **Save listener.** `const saves = draftSaves(page, loopId)` is registered before `page.goto`, as test 1 does, to record every draft PUT the page sends.
+3. **Public pre-rename checkpoint** (lines 671 to 678, including its comment), after both held inputs are entered and the Start dialog is closed, before the first rename:
+   - `await saved(page)`, so a save that edits had scheduled has finished. An emptied Variables field changes the draft, and the store's edit path sets the save state to `pending` ("Unsaved changes", `store.ts` line 424) at once, so the wait is not vacuous for the failure being fixed.
+   - `serverDraft(request, loopId)` (public `GET /loops/:id`): `variables` equals `{ key: { type: 'string' } }` (asserted first, so a regression reports the saved value), node ids equal `['start','work','gate','done']`, and `saves` has length 0.
+4. **Kept unchanged:** the held text `[1, ` and its three assertions (lines 664, 721, 730), the trigger's unchecked Monday and "Choose at least one day." (lines 667 and 735), the click/Tab/Shift+Tab focus and remount assertions, the repaired `/tmp/{{ outputs.draft.value }}` template, the exact stored node ids, `loop-gate` JSONata and cron expression, and the **final original-value assertion** `expect(stored.variables).toEqual({ key: { type: 'string' } })` (line 745). The fixture's created variables are unchanged. The single-step, token and device-copy assertions are in test 1, which I did not edit.
+
+## Runs (all from `apps/web`, Node v22.23.4, `pnpm exec playwright test <file>`, no `--`)
+
+Edge was started by Playwright's default channel (`msedge` on Windows). Phase 2 recorded Edge 157.0.4341.46; I did not re-read the version in this run. The e2e server (`e2e/server.ts`) serves the built `apps/web/dist` and runs the API and workspace packages **from TypeScript source** (`--conditions=development --import tsx`), over an in-memory fake-harness database on an ephemeral port. The API/domain/contracts/engine/infrastructure `dist` trees were bound, but this server does not load them.
+
+| Log | Command | Result |
+| --- | ------- | ------ |
+| `logs/01`, `logs/02` | `prettier --check` and `eslint` on the spec, before the E2E run | pass, exit 0 |
+| `logs/03-e2e-held-input.log` | `-g "focus follows the remounted form" --trace on` against the existing phase 2 build (spec sha256 `a547686e…`) | **1 passed** (6.3 s, 13.6 s total), exit 0 |
+| `logs/04-e2e-rename-all.log` | whole `e2e/rename-references.spec.ts`, once, same bytes | **5 passed** (30.4 s): Starter rename, uncertain/optional/missing, held text and focus, stale tab, protected voice ids |
+| `logs/05-web-typecheck-final.log` | `pnpm --filter @graphgoblin/web typecheck` (`tsc -p tsconfig.json --noEmit`, includes `e2e/`) | pass, exit 0 |
+| `logs/06`, `logs/07` | `prettier --check` and `eslint` on the spec, final bytes | pass, exit 0 |
+
+- **First failures:** none in this task. The corrected test passed on its first run, so I did not spend a second correction batch. The phase 2 first failure (`variables` equals `{}` at the last line, attempt 3) is unmodified in `ui-273-claude-phase2/logs/09-e2e-rename-attempt3.log` and `e2e-attempt3/`, and root's readback is unmodified. I did not edit any phase 2 file or `node-273-held-variable-trace-readback.json`.
+- **Trace of the passing run:** run 1 used `--trace on` so the pass leaves native request evidence (`e2e-held-input-pass/`, extracted in `e2e-held-input-pass/trace-held/`). Run 2 used the default `retain-on-failure`, so a pass leaves no trace.
+- **Spec bytes are the same in runs 03, 04 and the final checks** (`logs/03`, `04`, `05` sha256 files).
+
+## Bindings (`build-listings/`, produced by `scripts/bind-state.sh before|after`)
+
+Per-file listings use phase 2's format (`find . -type f | LC_ALL=C sort | xargs sha256sum -b`). Each equals phase 2's listing byte for byte, and **before equals after** for every tree:
+
+| Tree | Files | Listing sha256 (before = after = phase 2) |
+| ---- | ----- | ----------------------------------------- |
+| `apps/web/dist` | 28 | `b732610b34d9b02812a876b46d50478e6486e9164e8300d94979fc3cbf54df30` |
+| `apps/web/dist-goblin` | 28 | `ed652d122095f20695827ff95e62cb32d31fd6fdb89a4037c22ade4b0b060081` |
+| `apps/api/dist` | 306 | `549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370` |
+| `packages/domain/dist` | 121 | `90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117` |
+| `packages/contracts/dist` | 117 | `26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada` |
+| `packages/engine/dist` | 161 | `605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266` |
+| `packages/infrastructure/dist` | 293 | `5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075` |
+
+The e2e server rewrites `sw.js` on shutdown, and `apps/web/dist` still listed identically after my two Playwright runs (two e2e server shutdowns). Changed-source sha256 (`source-sha256-before.txt`, `source-sha256-after.txt`): `EditorPage.rename.test.tsx` `c525da9a…`, `EarlierNodeOutputs.test.tsx` `7391f331…` and `docs/09-frontend-and-pwa.md` `b4803c91…` are the same before and after. Only the spec changed, from `64c88f07…` to `a547686e…`. `identity-before.txt` and `identity-after.txt` give HEAD, tree and status (before: clean; after: ` M apps/web/e2e/rename-references.spec.ts`).
+
+## What this does not show, and limits
+
+- **Not run, on purpose:** whole-web coverage and unit tests (only an E2E fixture changed; phase 2's whole-web result of 201 files, 2500 tests, lines 98.51% and branches 93.99% remains separately identified and is not re-established here), the other Edge specs, `pnpm check`, `check:deps`, `check:layers`. I ran only the one spec file.
+- **No negative control.** I did not re-run the old spec bytes against the new checkpoint. The evidence for the cause is root's retained trace and the code path above, and the corrected run's trace.
+- **The `saves` length-0 assertion is a point-in-time check.** It is backed by `saved(page)` for the failure mode here and by the whole-run trace (no empty-variables PUT), but it cannot by itself exclude a save that arrives after the checkpoint; the last line of the test covers the end state.
+- **Atomicity is shown through its effects.** I did not instrument CodeMirror. The corrected trace shows no save carrying an empty value, and the editor shows `[1, ` as held text throughout, which is what the single-input replacement is meant to produce.
+- **Edge only**, headless as Playwright runs it, one host. No assistive-technology, performance or screenshot work.
+- **No unexpected product behaviour appeared**, so there is nothing to report to root as a source change. I made no runtime or source change, so no rebuild or new admission is needed for this checkpoint.
+
+## Processes and cleanup
+
+- Playwright's e2e server and its Edge instances exited with their runs. A scan after the runs (`logs/08-process-scan-after.txt`) found no `e2e/server.ts`, Playwright or test Edge process. Matches were only my own shells and `tee`, the harness's `pwsh` and this task's own runner (PID 48668, `claude-review-runner.mjs` with `ui-273-held-fixture-correction-spec.json`), none of which I stopped; the runner exits on its own when I finish.
+- `apps/web/test-results/` (git-ignored) holds only the last run's `.last-run.json`; I copied the first run's trace before the second run cleared it.
+- Nothing else was started, and nothing is left running.
+
+## Evidence index (this directory)
+
+`snapshots/` (original, corrected, diff, hashes) · `logs/01–09` · `build-listings/` · `e2e-held-input-pass/` (raw trace, extracted) · `held-variable-trace-readback-pass.json` · `scripts/` (`bind-state.sh`, `inspect-held-variable-trace.mjs` which is a parameterised copy of root's script, `summarize-puts.mjs`).
+
+## Remaining gates (not claimed)
+
+Independent native QA, then parent integration, current-head CI (including the whole browser suite), opposite-family reviews and a fresh Astra max audit within three scans. No owner acceptance or merge is claimed. Root decides whether to commit this one-file change.

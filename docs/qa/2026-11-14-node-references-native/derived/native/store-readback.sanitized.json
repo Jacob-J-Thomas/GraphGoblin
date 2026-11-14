@@ -1,0 +1,70 @@
+{
+  "tier": "direct store read (not UI or API evidence)",
+  "dbSha256BeforeRead": "a7552c1386270cb40d3948991c94173367597b7e861c690b2449c9cf5e4b75b5",
+  "dbSha256AfterRead": "a7552c1386270cb40d3948991c94173367597b7e861c690b2449c9cf5e4b75b5",
+  "readDidNotModifyFile": true,
+  "loopId": "01M3Y7RKG02EJPMM8PAZG2BKNE",
+  "versions": [
+    {
+      "id": "01M3Y7RKG02EJPMM8PAZG2BKNF",
+      "version": 1,
+      "status": "published",
+      "publishedAt": "2026-10-02T12:00:00.000Z",
+      "definitionSha256": "36b1e0f67eeb895315b96911522af15ee852f159d0b69161937d080a47b03ba6",
+      "exitReturns": "outputs.assistant.value",
+      "ids": [
+        "start",
+        "instructions",
+        "assistant",
+        "done",
+        "review",
+        "archive"
+      ]
+    },
+    {
+      "id": "01M3Y7RKG02EJPMM8PAZG2BKNS",
+      "version": 2,
+      "status": "published",
+      "publishedAt": "2026-10-02T12:00:00.000Z",
+      "definitionSha256": "07ac75924e51ad4b5cf2d5a8d9c3b825604c40e603ec82ea60698102fabc387f",
+      "exitReturns": "outputs.writer.value",
+      "ids": [
+        "start",
+        "instructions",
+        "writer",
+        "done",
+        "review",
+        "archive"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "id": "01M3Y7RKG02EJPMM8PAZG2BKNG",
+      "version_id": "01M3Y7RKG02EJPMM8PAZG2BKNF",
+      "status": "succeeded"
+    },
+    {
+      "id": "01M3Y7RKG02EJPMM8PAZG2BKNT",
+      "version_id": "01M3Y7RKG02EJPMM8PAZG2BKNS",
+      "status": "succeeded"
+    },
+    {
+      "id": "01M3Y7RKG02EJPMM8PAZG2BKP3",
+      "version_id": "01M3Y7RKG02EJPMM8PAZG2BKNF",
+      "status": "succeeded"
+    }
+  ],
+  "checks": {
+    "v1RowEqualsApiV1": true,
+    "v2RowEqualsApiV2": true,
+    "v1ReadsAssistant": true,
+    "v2ReadsWriter": true,
+    "threeSucceededRuns": true,
+    "runsPinned": true
+  },
+  "curation": {
+    "originalSourceSha256": "699f28b989508c230dbfed95cfb7f894266a1d164ffa9a00cf203d8fd26a50ee",
+    "note": "Direct SQLite readback summary only; database/store bytes and absolute path are not included."
+  }
+}

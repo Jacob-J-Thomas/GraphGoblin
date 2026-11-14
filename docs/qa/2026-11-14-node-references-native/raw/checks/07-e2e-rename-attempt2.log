@@ -1,0 +1,140 @@
+2026-11-14T13:05:15Z
+
+Running 5 tests using 1 worker
+
+(node:50772) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\rename-references.spec.ts:182:1 › Starter assistant to writer: one saved step repairs the sibling Liquid and the Exit, and both versions run (6.8s)
+  x  2 [chromium] › e2e\rename-references.spec.ts:411:1 › uncertain, optional and known-missing references: notice rows, badges and Publish (3.7s)
+(node:43260) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 [chromium] › e2e\rename-references.spec.ts:581:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename (14.2s)
+(node:6532) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 [chromium] › e2e\rename-references.spec.ts:721:1 › a rename in a stale tab waits for Overwrite or Reload, and nothing is lost unseen (6.5s)
+  x  5 [chromium] › e2e\rename-references.spec.ts:832:1 › protected voice steps keep their ids, and renaming respond repairs the chat envelope (1.0m)
+
+
+  1) [chromium] › e2e\rename-references.spec.ts:411:1 › uncertain, optional and known-missing references: notice rows, badges and Publish 
+
+    Error: expect(received).toContain(expected) // indexOf
+
+    Matcher error: received value must not be null nor undefined
+
+    Received has value: undefined
+
+      551 |   const problem = (await refusal.json()) as { code: string; issues?: { code: string }[] };
+      552 |   expect(problem.code).toBe('LOOP_INVALID');
+    > 553 |   expect(problem.issues?.map((issue) => issue.code)).toContain('NODE_REFERENCE_MISSING');
+          |                                                      ^
+      554 |   await expect(page.getByRole('alert').filter({ hasText: 'Publish failed' })).toBeVisible();
+      555 |   expect((await detail(request, loopId)).loop.currentVersionId).toBe(v1.id);
+      556 |
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\rename-references.spec.ts:553:54
+
+    Error Context: test-results\rename-references-uncertai-e9a10-ice-rows-badges-and-Publish-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\rename-references-uncertai-e9a10-ice-rows-badges-and-Publish-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\rename-references-uncertai-e9a10-ice-rows-badges-and-Publish-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\rename-references.spec.ts:581:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  getByRole('dialog').locator('.cm-content').and(getByRole('dialog').getByLabel('Jsonata', { exact: true }))
+    Expected: "counters.nodeVisits.loop-gate > 2 ? \"stop\" : \"again\""
+    Received: "counters.nodeVisits.\"loop-gate\" > 2 ? \"stop\" : \"again\""
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveText" getByRole('dialog').locator('.cm-content').and(getByRole('dialog').getByLabel('Jsonata', { exact: true })) with timeout 10000ms
+      - waiting for getByRole('dialog').locator('.cm-content').and(getByRole('dialog').getByLabel('Jsonata', { exact: true }))
+        24 × locator resolved to <div id="_r_3t_" translate="no" role="textbox" autocorrect="off" spellcheck="false" autocapitalize="off" aria-label="Jsonata" aria-required="true" aria-multiline="true" contenteditable="true" writingsuggestions="false" data-language="javascript" aria-describedby="_r_3t_-help" class="cm-content cm-lineWrapping">…</div>
+           - unexpected value "counters.nodeVisits."loop-gate" > 2 ? "stop" : "again""
+
+
+      677 |   await expect(gate).toHaveAccessibleName('Edit decision loop-gate');
+      678 |   await expect(gate.locator('#node-label')).toBeFocused();
+    > 679 |   await expect(codeText(gate, 'Jsonata')).toHaveText(
+          |                                           ^
+      680 |     'counters.nodeVisits.loop-gate > 2 ? "stop" : "again"',
+      681 |   );
+      682 |   await page.keyboard.press('Shift+Tab');
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\rename-references.spec.ts:679:43
+
+    Error Context: test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\rename-references.spec.ts:832:1 › protected voice steps keep their ids, and renaming respond repairs the chat envelope 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByTestId('node-respond').locator(':scope > div:has([data-kind])')
+        - locator resolved to <div class="flex h-9 items-center gap-2 rounded-t-[11px] border-b border-default bg-kind-subtle pr-2 pl-[7px]">…</div>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is visible, enabled and stable
+          - scrolling into view if needed
+          - done scrolling
+          - <span class="text-2xs font-bold tracking-[0.08em] text-muted uppercase">Decision</span> from <div tabindex="0" role="group" aria-roledescription="node" data-id="chat-normalize-check" aria-describedby="react-flow__node-desc-1" data-testid="rf__node-chat-normalize-check" aria-label="Decision Validate transcript (chat-normalize-check)" class="react-flow__node react-flow__node-gg nopan selectable draggable">…</div> subtree intercepts pointer events
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is visible, enabled and stable
+          - scrolling into view if needed
+          - done scrolling
+          - <span class="text-2xs font-bold tracking-[0.08em] text-muted uppercase">Decision</span> from <div tabindex="0" role="group" aria-roledescription="node" data-id="chat-normalize-check" aria-describedby="react-flow__node-desc-1" data-testid="rf__node-chat-normalize-check" aria-label="Decision Validate transcript (chat-normalize-check)" class="react-flow__node react-flow__node-gg nopan selectable draggable">…</div> subtree intercepts pointer events
+        - retrying click action
+          - waiting 100ms
+        111 × waiting for element to be visible, enabled and stable
+            - element is visible, enabled and stable
+            - scrolling into view if needed
+            - done scrolling
+            - <span class="text-2xs font-bold tracking-[0.08em] text-muted uppercase">Decision</span> from <div tabindex="0" role="group" aria-roledescription="node" data-id="chat-normalize-check" aria-describedby="react-flow__node-desc-1" data-testid="rf__node-chat-normalize-check" aria-label="Decision Validate transcript (chat-normalize-check)" class="react-flow__node react-flow__node-gg nopan selectable draggable">…</div> subtree intercepts pointer events
+          - retrying click action
+            - waiting 500ms
+
+
+       at fixtures.ts:134
+
+      132 | export async function openNode(page: Page, nodeId: string) {
+      133 |   // Target the rendered header box: a fixed pixel offset can leave the card after zooming.
+    > 134 |   await page.getByTestId(`node-${nodeId}`).locator(':scope > div:has([data-kind])').click();
+          |                                                                                     ^
+      135 |   const dialog = page.getByRole('dialog');
+      136 |   await expect(dialog).toBeVisible();
+      137 |   return dialog;
+        at openNode (C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\fixtures.ts:134:85)
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\rename-references.spec.ts:881:25
+
+    Error Context: test-results\rename-references-protecte-cab13-d-repairs-the-chat-envelope-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\rename-references-protecte-cab13-d-repairs-the-chat-envelope-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\rename-references-protecte-cab13-d-repairs-the-chat-envelope-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › e2e\rename-references.spec.ts:411:1 › uncertain, optional and known-missing references: notice rows, badges and Publish 
+    [chromium] › e2e\rename-references.spec.ts:581:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename 
+    [chromium] › e2e\rename-references.spec.ts:832:1 › protected voice steps keep their ids, and renaming respond repairs the chat envelope 
+  2 passed (1.7m)
+EXIT 1
+2026-11-14T13:06:59Z
