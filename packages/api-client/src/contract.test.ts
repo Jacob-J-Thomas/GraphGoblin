@@ -193,7 +193,7 @@ describe('against the in-process API (local trusted mode)', () => {
   });
 
   it('preserves typed run pages including opaque cursors', async () => {
-    const { loop } = await loops.create(client, minimalLoop());
+    const { loop } = await loops.create(client, { ...minimalLoop(), name: 'typed-run-pages' });
     await loops.publish(client, loop.id);
     await runs.start(client, loop.id);
     await runs.start(client, loop.id);
@@ -311,7 +311,7 @@ describe('against the in-process API (local trusted mode)', () => {
   });
 
   it('streams run events over SSE until the run finishes, and resumes from a sequence', async () => {
-    const { loop } = await loops.create(client, waitLoop);
+    const { loop } = await loops.create(client, { ...waitLoop, name: 'sse-run-events' });
     await loops.publish(client, loop.id);
     const run = await runs.start(client, loop.id);
     await until(async () => (await runs.get(client, run.id)).status === 'waiting');
@@ -372,7 +372,10 @@ describe('against the in-process API (local trusted mode)', () => {
       code: 'EVALUATION_INVALID_CONFIGURATION',
       errors: [expect.objectContaining(issue)],
     });
-    const { loop } = await loops.create(client, minimalLoop());
+    const { loop } = await loops.create(client, {
+      ...minimalLoop(),
+      name: 'catalog-validation-target',
+    });
     const validated = await loops.validate(client, loop.id, definition);
     expect(validated.publishable).toBe(false);
     expect(validated.issues).toEqual([expect.objectContaining(issue)]);
