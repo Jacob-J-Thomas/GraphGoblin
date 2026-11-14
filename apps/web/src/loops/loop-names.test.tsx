@@ -1,6 +1,6 @@
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { FakeApi, problem, starterTemplateEntry, TS } from '../__fixtures__/fake-api.js';
@@ -234,6 +234,249 @@ describe('Import: an unchanged export while the original exists (#209)', () => {
     await upload(user, exportOf({ ...minimalLoop(), name: 'Fresh' }), 'second.json');
     expect(await screen.findByText('Imported "Fresh".')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'Import under another name' })).toBeNull();
+  });
+});
+
+describe('Import: a newer file choice owns the panel (#209)', () => {
+  const PANEL = { name: 'Import under another name' };
+  const FIELD = { name: 'Name for the imported loop' };
+
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  const picker = () => screen.findByLabelText('Import an exported loop (JSON)');
+
+  async function choose(user: ReturnType<typeof userEvent.setup>, document: unknown, file: string) {
+    await user.upload(
+      await picker(),
+      new File([JSON.stringify(document)], file, { type: 'application/json' }),
+    );
+  }
+
+  /** A file whose read finishes (or fails) only when the test says so. */
+  function slowFile(file: string) {
+    const read = deferred<string>();
+    const slow = new File(['{}'], file, { type: 'application/json' });
+    Object.defineProperty(slow, 'text', { value: () => read.promise });
+    return { file: slow, read };
+  }
+
+  /**
+   * The API admits or refuses the first import at once; only its answer to the browser waits for
+   * the returned release. Later imports answer at once.
+   */
+  function holdFirstImportAnswer(api: FakeApi) {
+    const gate = deferred<void>();
+    let first = true;
+    api.override('POST /loops/import', async (call) => {
+      const response = await api.builtIn(call);
+      if (first) {
+        first = false;
+        await gate.promise;
+      }
+      return response;
+    });
+    return async () => {
+      const lists = api.callsTo('GET', '/loops').length;
+      await act(() => Promise.resolve(gate.resolve()));
+      // The late answer is handled once it refreshes the loop list (it may have committed).
+      await waitFor(() => expect(api.callsTo('GET', '/loops').length).toBeGreaterThan(lists));
+    };
+  }
+
+  function twoGraphs() {
+    const a = { ...kitchenSinkLoop(), name: 'Archived A', description: 'graph A' };
+    const b = { ...minimalLoop(), name: 'Visible B', description: 'graph B' };
+    return { a, b, exportA: exportOf(a), exportB: exportOf(b) };
+  }
+
+  it('keeps the newer file’s panel, typed name and document when an older refusal answers late', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { a, b, exportA, exportB } = twoGraphs();
+    api.addLoop(a);
+    api.addLoop(b);
+    const before = snapshot(api);
+    const releaseA = holdFirstImportAnswer(api);
+    renderApp('/loops', api);
+    await choose(user, exportA, 'prior-A.json');
+    await waitFor(() => expect(api.callsTo('POST', '/loops/import')).toHaveLength(1));
+    await choose(user, exportB, 'selected-B.json');
+    const panel = await screen.findByRole('region', PANEL);
+    expect(panel).toHaveTextContent('selected-B.json was not imported');
+    const field = within(panel).getByRole('textbox', FIELD);
+    await user.clear(field);
+    await user.type(field, 'Visible B kept for B');
+
+    await releaseA();
+    expect(screen.getByRole('region', PANEL)).toBe(panel);
+    expect(panel).toHaveTextContent('selected-B.json was not imported');
+    expect(panel).toHaveTextContent('Another loop already has the name “Visible B”.');
+    expect(panel).not.toHaveTextContent('prior-A.json');
+    expect(field).toHaveValue('Visible B kept for B');
+    expect(screen.getByText('selected-B.json')).toBeInTheDocument();
+    expect(screen.queryByText(/^Imported/)).toBeNull();
+
+    // Another writer takes the typed name first: the same upload keeps its text and takes the
+    // fresh suggestion, and every attempt sends B's document unchanged.
+    api.addLoop({ ...minimalLoop(), name: 'visible b KEPT for b' });
+    await user.click(within(panel).getByRole('button', { name: 'Import as new loop' }));
+    expect(await within(panel).findByRole('alert')).toHaveTextContent(
+      'Another loop already has the name “Visible B kept for B”.',
+    );
+    expect(field).toHaveValue('Visible B kept for B');
+    await user.click(
+      within(panel).getByRole('button', { name: 'Use “Visible B kept for B copy”' }),
+    );
+    await user.click(within(panel).getByRole('button', { name: 'Import as new loop' }));
+    expect(await screen.findByText('Imported "Visible B kept for B copy".')).toBeInTheDocument();
+
+    const calls = api.callsTo('POST', '/loops/import');
+    expect(calls.map((call) => call.search.get('name'))).toEqual([
+      null,
+      null,
+      'Visible B kept for B',
+      'Visible B kept for B copy',
+    ]);
+    expect(calls[0]!.body).toEqual(exportA);
+    for (const call of calls.slice(1)) expect(call.body).toEqual(exportB);
+    const created = snapshot(api).find((loop) => loop.name === 'Visible B kept for B copy');
+    expect(created?.definition).toEqual({ ...before[1]!.definition, name: created?.name });
+    expect(snapshot(api).slice(0, 2)).toEqual(before);
+  });
+
+  it('lists an older file’s late import without closing the newer file’s panel', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { a, b, exportB } = twoGraphs();
+    api.addLoop(b);
+    const releaseA = holdFirstImportAnswer(api);
+    renderApp('/loops', api);
+    await choose(user, exportOf({ ...a, name: 'Fresh A' }), 'prior-A.json');
+    await waitFor(() => expect(api.callsTo('POST', '/loops/import')).toHaveLength(1));
+    // A committed; only its answer is still on the way.
+    expect(snapshot(api).map((loop) => loop.name)).toEqual(['Visible B', 'Fresh A']);
+    await choose(user, exportB, 'selected-B.json');
+    const panel = await screen.findByRole('region', PANEL);
+    const field = within(panel).getByRole('textbox', FIELD);
+    await user.clear(field);
+    await user.type(field, 'B under my name');
+
+    await releaseA();
+    expect(await screen.findByRole('link', { name: 'Fresh A' })).toBeInTheDocument();
+    expect(screen.getByRole('region', PANEL)).toBe(panel);
+    expect(panel).toHaveTextContent('selected-B.json was not imported');
+    expect(field).toHaveValue('B under my name');
+    expect(screen.queryByText('Imported "Fresh A".')).toBeNull();
+
+    await user.click(within(panel).getByRole('button', { name: 'Import as new loop' }));
+    expect(await screen.findByText('Imported "B under my name".')).toBeInTheDocument();
+    const retry = api.callsTo('POST', '/loops/import').at(-1)!;
+    expect(retry.search.get('name')).toBe('B under my name');
+    expect(retry.body).toEqual(exportB);
+  });
+
+  it('does not reopen the panel for an older file after Cancel', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { a, b, exportA, exportB } = twoGraphs();
+    api.addLoop(a);
+    api.addLoop(b);
+    const releaseA = holdFirstImportAnswer(api);
+    renderApp('/loops', api);
+    await choose(user, exportA, 'prior-A.json');
+    await waitFor(() => expect(api.callsTo('POST', '/loops/import')).toHaveLength(1));
+    await choose(user, exportB, 'selected-B.json');
+    const panel = await screen.findByRole('region', PANEL);
+    await user.click(within(panel).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('region', PANEL)).toBeNull();
+
+    await releaseA();
+    expect(screen.queryByRole('region', PANEL)).toBeNull();
+    expect(screen.queryByText(/was not imported/)).toBeNull();
+    expect(api.callsTo('POST', '/loops/import')).toHaveLength(2);
+  });
+
+  it('sends nothing for a file whose read finishes after a newer choice', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { b, exportA, exportB } = twoGraphs();
+    api.addLoop(b);
+    renderApp('/loops', api);
+    const slow = slowFile('slow-A.json');
+    await user.upload(await picker(), slow.file);
+    await choose(user, exportB, 'selected-B.json');
+    const panel = await screen.findByRole('region', PANEL);
+    const field = within(panel).getByRole('textbox', FIELD);
+    await user.clear(field);
+    await user.type(field, 'B under my name');
+
+    // A's name is free, so an upload of it would be admitted and could close B's panel.
+    await act(() => Promise.resolve(slow.read.resolve(JSON.stringify(exportA))));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    expect(api.callsTo('POST', '/loops/import').map((call) => call.body)).toEqual([exportB]);
+    expect(screen.getByRole('region', PANEL)).toBe(panel);
+    expect(panel).toHaveTextContent('selected-B.json was not imported');
+    expect(field).toHaveValue('B under my name');
+    expect(snapshot(api).map((loop) => loop.name)).toEqual(['Visible B']);
+  });
+
+  it('reports a file that cannot be read, unless a newer choice replaced it', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { b, exportB } = twoGraphs();
+    api.addLoop(b);
+    renderApp('/loops', api);
+    const broken = slowFile('broken.json');
+    await user.upload(await picker(), broken.file);
+    await act(() =>
+      Promise.resolve(broken.read.reject(new DOMException('unreadable', 'NotReadableError'))),
+    );
+    expect(await screen.findByText('broken.json could not be read.')).toBeInTheDocument();
+    expect(await picker()).toHaveAttribute('aria-invalid', 'true');
+    expect(api.callsTo('POST', '/loops/import')).toHaveLength(0);
+
+    const slow = slowFile('slow-A.json');
+    await user.upload(await picker(), slow.file);
+    expect(screen.queryByText('broken.json could not be read.')).toBeNull();
+    await choose(user, exportB, 'selected-B.json');
+    const panel = await screen.findByRole('region', PANEL);
+    await act(() =>
+      Promise.resolve(slow.read.reject(new DOMException('unreadable', 'NotReadableError'))),
+    );
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    expect(screen.queryByText('slow-A.json could not be read.')).toBeNull();
+    expect(screen.getByRole('region', PANEL)).toBe(panel);
+    expect(await picker()).not.toHaveAttribute('aria-invalid');
+    expect(api.callsTo('POST', '/loops/import').map((call) => call.body)).toEqual([exportB]);
+  });
+
+  it('sends one retry when Import as new loop is activated twice at once', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.addLoop({ ...minimalLoop(), name: 'minimal' });
+    const exported = exportOf(minimalLoop());
+    renderApp('/loops', api);
+    await choose(user, exported, 'minimal.json');
+    const panel = await screen.findByRole('region', PANEL);
+    const submit = within(panel).getByRole('button', { name: 'Import as new loop' });
+    act(() => {
+      fireEvent.click(submit);
+      fireEvent.click(submit);
+    });
+    expect(await screen.findByText('Imported "minimal copy".')).toBeInTheDocument();
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    const calls = api.callsTo('POST', '/loops/import');
+    expect(calls.map((call) => call.search.get('name'))).toEqual([null, 'minimal copy']);
+    for (const call of calls) expect(call.body).toEqual(exported);
+    expect(snapshot(api).map((loop) => loop.name)).toEqual(['minimal', 'minimal copy']);
   });
 });
 

@@ -1,0 +1,931 @@
+{
+  "suite": "invalid-companion-209-correction",
+  "origin": "http://127.0.0.1:59728",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "posts": [
+    {
+      "time": 1794671756197,
+      "stage": "real name refusal",
+      "path": "/loops/01M7DCBG0GR5G2RDT8DVPEXBR2/draft",
+      "ifMatch": "draft-token-1",
+      "type": "PUT",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Occupied retry cf5f130d",
+        "description": "Persisted description for target",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Manual start",
+            "ui": {
+              "x": 0,
+              "y": 90
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Exit",
+            "ui": {
+              "x": 300,
+              "y": 90
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "\"Stable graph marker target\"",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "connect",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "time": 1794671759789,
+      "stage": "fresh explicit retry of the repaired draft",
+      "path": "/loops/01M7DCBG0GR5G2RDT8DVPEXBR2/draft",
+      "ifMatch": "draft-token-1",
+      "type": "PUT",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "Occupied retry cf5f130d",
+        "description": "Edited companion description without another retry",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Manual start",
+            "ui": {
+              "x": 0,
+              "y": 90
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Exit",
+            "ui": {
+              "x": 300,
+              "y": 90
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "\"Stable graph marker target\"",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "connect",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "stage": "invalid retry settled with device copy",
+      "heading": "Occupied retry cf5f130d",
+      "name": "Occupied retry cf5f130d",
+      "descriptionLength": 4001,
+      "save": "Saved on this device only",
+      "retry": [
+        {
+          "text": "Try again",
+          "disabled": false,
+          "ariaDisabled": null,
+          "ariaBusy": null
+        }
+      ]
+    },
+    {
+      "stage": "after the fresh explicit retry",
+      "heading": "Occupied retry cf5f130d",
+      "name": "Occupied retry cf5f130d",
+      "descriptionLength": 50,
+      "save": "All changes saved",
+      "retry": []
+    },
+    {
+      "stage": "exact-state-readbacks",
+      "refusal": {
+        "status": 409,
+        "body": {
+          "suggestedName": "Occupied retry cf5f130d copy",
+          "type": "https://graphgoblin.dev/problems/loop-name-conflict",
+          "title": "loop name conflict",
+          "status": 409,
+          "code": "LOOP_NAME_CONFLICT",
+          "detail": "A loop with an equivalent name already exists. Try \"Occupied retry cf5f130d copy\"."
+        },
+        "ifMatch": "draft-token-1",
+        "request": {
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Occupied retry cf5f130d",
+            "description": "Persisted description for target",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 90
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Exit",
+                "ui": {
+                  "x": 300,
+                  "y": 90
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"Stable graph marker target\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "original": {
+        "loop": {
+          "id": "01M7DCBG0GR5G2RDT8DVPEXBR2",
+          "ownerId": "local",
+          "name": "Target retry cf5f130d",
+          "description": "Persisted description for target",
+          "draftVersionId": "01M7DCBG0GR5G2RDT8DVPEXBR3",
+          "createdAt": "2026-11-14T15:55:55.280Z",
+          "updatedAt": "2026-11-14T15:55:55.280Z"
+        },
+        "draft": {
+          "id": "01M7DCBG0GR5G2RDT8DVPEXBR3",
+          "loopId": "01M7DCBG0GR5G2RDT8DVPEXBR2",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Target retry cf5f130d",
+            "description": "Persisted description for target",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 90
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Exit",
+                "ui": {
+                  "x": 300,
+                  "y": 90
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"Stable graph marker target\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T15:55:55.280Z"
+        },
+        "draftToken": "draft-token-1"
+      },
+      "invalidLocal": {
+        "loopId": "01M7DCBG0GR5G2RDT8DVPEXBR2",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Occupied retry cf5f130d",
+          "description": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVINVALID-4001!",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 90
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Exit",
+              "ui": {
+                "x": 300,
+                "y": 90
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"Stable graph marker target\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "decisionRoutes": {},
+        "savedAt": "2026-11-14T15:55:56.283Z",
+        "synced": false,
+        "baseToken": "draft-token-1"
+      },
+      "invalidState": {
+        "heading": "Occupied retry cf5f130d",
+        "name": "Occupied retry cf5f130d",
+        "descriptionLength": 4001,
+        "save": "Saved on this device only",
+        "retry": [
+          {
+            "text": "Try again",
+            "disabled": false,
+            "ariaDisabled": null,
+            "ariaBusy": null
+          }
+        ]
+      },
+      "clearedHolder": {
+        "id": "01M7DCBG03G2A5AR11ZY8SGDYE",
+        "loopId": "01M7DCBG03G2A5AR11ZY8SGDYD",
+        "version": 1,
+        "status": "draft",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Released retry name cf5f130d",
+          "description": "Persisted description for holder",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 90
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Exit",
+              "ui": {
+                "x": 300,
+                "y": 90
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"Stable graph marker holder\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-14T15:55:55.267Z"
+      },
+      "repairedLocal": {
+        "loopId": "01M7DCBG0GR5G2RDT8DVPEXBR2",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Occupied retry cf5f130d",
+          "description": "Edited companion description without another retry",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 90
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Exit",
+              "ui": {
+                "x": 300,
+                "y": 90
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"Stable graph marker target\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "decisionRoutes": {},
+        "savedAt": "2026-11-14T15:55:58.097Z",
+        "synced": false,
+        "baseToken": "draft-token-1"
+      },
+      "repairedTransition": [
+        {
+          "label": "Saved on this device only",
+          "at": 1794671758064
+        },
+        {
+          "label": "Unsaved changes",
+          "at": 1794671758097
+        },
+        {
+          "label": "Not saved: name in use",
+          "at": 1794671758704
+        }
+      ],
+      "accepted": {
+        "status": 200,
+        "body": {
+          "draft": {
+            "id": "01M7DCBG0GR5G2RDT8DVPEXBR3",
+            "loopId": "01M7DCBG0GR5G2RDT8DVPEXBR2",
+            "version": 1,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Occupied retry cf5f130d",
+              "description": "Edited companion description without another retry",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Manual start",
+                  "ui": {
+                    "x": 0,
+                    "y": 90
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Exit",
+                  "ui": {
+                    "x": 300,
+                    "y": 90
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"Stable graph marker target\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T15:55:55.280Z"
+          },
+          "draftToken": "draft-token-2",
+          "issues": []
+        },
+        "ifMatch": "draft-token-1",
+        "request": {
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Occupied retry cf5f130d",
+            "description": "Edited companion description without another retry",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 90
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Exit",
+                "ui": {
+                  "x": 300,
+                  "y": 90
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"Stable graph marker target\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "persisted": {
+        "loop": {
+          "id": "01M7DCBG0GR5G2RDT8DVPEXBR2",
+          "ownerId": "local",
+          "name": "Occupied retry cf5f130d",
+          "description": "Edited companion description without another retry",
+          "draftVersionId": "01M7DCBG0GR5G2RDT8DVPEXBR3",
+          "createdAt": "2026-11-14T15:55:55.280Z",
+          "updatedAt": "2026-11-14T15:55:59.802Z"
+        },
+        "draft": {
+          "id": "01M7DCBG0GR5G2RDT8DVPEXBR3",
+          "loopId": "01M7DCBG0GR5G2RDT8DVPEXBR2",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Occupied retry cf5f130d",
+            "description": "Edited companion description without another retry",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 90
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Exit",
+                "ui": {
+                  "x": 300,
+                  "y": 90
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"Stable graph marker target\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T15:55:55.280Z"
+        },
+        "draftToken": "draft-token-2"
+      },
+      "synced": {
+        "loopId": "01M7DCBG0GR5G2RDT8DVPEXBR2",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Occupied retry cf5f130d",
+          "description": "Edited companion description without another retry",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 90
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Exit",
+              "ui": {
+                "x": 300,
+                "y": 90
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"Stable graph marker target\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T15:55:59.819Z",
+        "synced": true,
+        "baseToken": "draft-token-2"
+      },
+      "finalUi": {
+        "heading": "Occupied retry cf5f130d",
+        "name": "Occupied retry cf5f130d",
+        "descriptionLength": 50,
+        "save": "All changes saved",
+        "retry": []
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": null,
+  "passed": true
+}

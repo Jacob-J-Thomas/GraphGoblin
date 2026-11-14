@@ -127,8 +127,20 @@ function CreateLoop() {
   );
 }
 
+/**
+ * One choice of a file in the import picker (#209). The newest choice owns the import's result and
+ * its retry panel; the picker stays enabled, and a newer choice or Cancel ends the current one.
+ * Whatever an ended choice still has under way (its file read, its request, its retry) then changes
+ * neither: an unread file is not sent, and a late answer only refreshes the loop list, since the
+ * import may have been created. `key` keeps one retry form per choice.
+ */
+interface ImportSelection {
+  readonly key: number;
+}
+
 /** An import the API refused for its name, kept until the user retries under another or cancels. */
 interface HeldImport {
+  selection: ImportSelection;
   fileName: string;
   /** The parsed upload, sent unchanged on every retry; the chosen name travels in the query. */
   document: Record<string, unknown>;
@@ -152,17 +164,24 @@ function ImportLoop() {
     { tone: 'good' | 'bad'; text: string; issues?: string[] } | undefined
   >();
   const [held, setHeld] = useState<HeldImport>();
+  // The current choice (`ImportSelection`), and the one whose retry is being sent, read at once
+  // rather than at the next render so neither a late answer nor a second activation slips by.
+  const choicesRef = useRef(0);
+  const currentRef = useRef<ImportSelection | undefined>(undefined);
+  const retryingRef = useRef<ImportSelection | undefined>(undefined);
   const importLoop = useMutation({
     mutationFn: ({
       document,
       name,
     }: {
+      selection: ImportSelection;
       fileName: string;
       document: Record<string, unknown>;
       name?: string;
     }) => loops.import(client, document, name === undefined ? undefined : { name }),
-    onSuccess: (created) => {
+    onSuccess: (created, { selection }) => {
       void queryClient.invalidateQueries({ queryKey: keys.loops });
+      if (currentRef.current !== selection) return;
       setHeld(undefined);
       setMessage({
         tone: 'good',
@@ -170,30 +189,35 @@ function ImportLoop() {
         issues: created.issues.map((i) => `${i.code}: ${i.message}`),
       });
     },
-    onError: (error, { fileName, document, name }) => {
+    onError: (error, { selection, fileName, document, name }) => {
       const refused = loopNameConflict(error, name ?? importedLoopName(document));
-      if (name !== undefined) {
-        // A retry: keep the held document and say why this attempt failed too. The list refresh
-        // shows the loop that holds the name, or an import that committed without an answer.
-        setHeld((current) =>
-          current?.document === document
-            ? refused
-              ? { ...current, latest: refused, error: undefined }
-              : {
-                  ...current,
-                  error: { text: errorMessage(error), uncertain: mayHaveCommitted(error) },
-                }
-            : current,
-        );
+      // The list refresh shows the loop that holds the name, or an import that committed without
+      // an answer, whether or not this choice is still the current one.
+      if (refused || name !== undefined || mayHaveCommitted(error))
         void queryClient.invalidateQueries({ queryKey: keys.loops });
+      if (currentRef.current !== selection) return;
+      if (name !== undefined) {
+        // A retry: keep the held document and say why this attempt failed too.
+        setHeld((now) =>
+          now?.selection !== selection
+            ? now
+            : refused
+              ? { ...now, latest: refused, error: undefined }
+              : {
+                  ...now,
+                  error: { text: errorMessage(error), uncertain: mayHaveCommitted(error) },
+                },
+        );
         return;
       }
       if (refused) {
-        setHeld({ fileName, document, original: refused, latest: refused });
-        void queryClient.invalidateQueries({ queryKey: keys.loops });
+        setHeld({ selection, fileName, document, original: refused, latest: refused });
         return;
       }
       setMessage({ tone: 'bad', text: errorMessage(error), issues: problemIssues(error) });
+    },
+    onSettled: (_created, _error, { selection, name }) => {
+      if (name !== undefined && retryingRef.current === selection) retryingRef.current = undefined;
     },
   });
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -201,14 +225,30 @@ function ImportLoop() {
     event.target.value = '';
     if (!file) return;
     // A new choice starts over: the last result no longer describes the picker.
+    const selection: ImportSelection = { key: (choicesRef.current += 1) };
+    currentRef.current = selection;
     setMessage(undefined);
     setHeld(undefined);
-    const parsed = parseJson(await file.text());
+    let text: string;
+    try {
+      text = await file.text();
+    } catch {
+      if (currentRef.current === selection)
+        setMessage({ tone: 'bad', text: `${file.name} could not be read.` });
+      return;
+    }
+    // Another file was chosen while this one was read: only that one is sent.
+    if (currentRef.current !== selection) return;
+    const parsed = parseJson(text);
     if (!parsed.ok || typeof parsed.value !== 'object' || parsed.value === null) {
       setMessage({ tone: 'bad', text: `${file.name} is not a JSON document.` });
       return;
     }
-    importLoop.mutate({ fileName: file.name, document: parsed.value as Record<string, unknown> });
+    importLoop.mutate({
+      selection,
+      fileName: file.name,
+      document: parsed.value as Record<string, unknown>,
+    });
   };
   return (
     <>
@@ -255,19 +295,30 @@ function ImportLoop() {
             </Alert>
           </div>
           <LoopNameRetryForm
+            // One form per choice: the typed name stays across this upload's retries only.
+            key={held.selection.key}
             label="Name for the imported loop"
             submitLabel="Import as new loop"
             pendingLabel="Importing…"
             initialName={held.original.suggestedName ?? held.original.name ?? ''}
             conflict={held.latest}
-            pending={importLoop.isPending}
+            pending={importLoop.isPending && importLoop.variables.selection === held.selection}
             describedBy="import-name-conflict-text"
             onSubmit={(name) => {
-              if (importLoop.isPending) return;
+              // One retry at a time, even when activated twice before the next render.
+              if (retryingRef.current === held.selection) return;
+              retryingRef.current = held.selection;
               setHeld({ ...held, error: undefined });
-              importLoop.mutate({ fileName: held.fileName, document: held.document, name });
+              importLoop.mutate({
+                selection: held.selection,
+                fileName: held.fileName,
+                document: held.document,
+                name,
+              });
             }}
             onCancel={() => {
+              // Ends this choice: nothing it still has under way brings the panel back.
+              currentRef.current = undefined;
               setHeld(undefined);
               focusById('import-loop');
             }}

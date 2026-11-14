@@ -447,13 +447,18 @@ export function EditorPage() {
     setPanelExpanded(true);
     focusById('loop-name', true);
   };
-  /** Send the refused name once more, for when the other loop has since been renamed. */
+  /**
+   * Send the refused name once more, for when the other loop has since been renamed. The
+   * permission goes with this one save only (`NameRetry`): ordinary autosaves keep holding the
+   * name, and a save that cannot send (invalid input, say) ends the attempt without sending.
+   */
   const retryName = () => {
     const state = useEditorStore.getState();
-    if (!state.nameConflict || state.nameConflict.retrying) return;
-    state.setNameConflict({ ...state.nameConflict, retrying: true, retried: false });
+    if (!state.loopId || !state.nameConflict || state.nameConflict.retrying) return;
+    const refusal = { ...state.nameConflict, retrying: true, retried: false };
+    state.setNameConflict(refusal);
     state.setSaveState('pending');
-    void flush();
+    void flush({ loopId: state.loopId, generation: state.generation, refusal });
   };
   const nameConflictNotice = (inDialog: boolean) =>
     showNameConflict ? (

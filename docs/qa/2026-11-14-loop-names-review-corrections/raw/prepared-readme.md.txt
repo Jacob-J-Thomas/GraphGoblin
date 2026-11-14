@@ -1,0 +1,29 @@
+# PR #470 U1/U2 correction evidence
+
+**Frozen source:** commit 2367b15b310eac52d95af77c570d5ce36f741527, tree 6bcc8e4eb74ee2d82dd793f88538b08d260002d8, parent 0d2fad63c448bc5591c530d087dd05c9af7821cc, target main 7c6e635539e12c56b82f226f1ee734d83b985ad4. The eight-file correction is frozen locally and not pushed. This packet is external evidence curation only.
+
+## Scope and provenance
+
+Root confirmed session 60913 completed with actual model Claude Opus 5.5 (claude-opus-5-5) and exit 0; xhigh was requested. No effective hidden reasoning level is asserted. The [launch](raw/launch.json) and [exit](raw/exit.json) records are preserved; raw events and result/usage metadata are excluded. The original [handoff](raw/handoff.md.txt), [report](raw/report.md.txt), and [correction diff](raw/correction.diff) are preserved byte-for-byte. The report's initial summary incorrectly says all ten new tests fail on the old runtime; the precise run-3 result below and in the handoff is authoritative.
+
+The root's [pre-commit binding](raw/correction-precommit-binding.json) records nine source hashes for eight changed paths and confirms the old 655 distribution files stayed unchanged. Those are old native-baseline artifacts, not a fresh correction build. Four runtime files were swapped back to their exact original versions for the negative-control test run, then restored from four corrected backups: [EditorPage.tsx](raw/corrected-backup/EditorPage.tsx.txt), [LoopsPage.tsx](raw/corrected-backup/LoopsPage.tsx.txt), [store.ts](raw/corrected-backup/store.ts.txt), and [useAutosave.ts](raw/corrected-backup/useAutosave.ts.txt). The proof log records both hash checks. [Original](raw/original-sha256.txt), [corrected-before-proof](raw/corrected-runtime-sha256-before-proof.txt), and [current](raw/current-sha256.txt) source hashes are retained. The separate guide paragraph change was not overwritten by the worker.
+
+## Test evidence and correction to the report summary
+
+- **Run 1, original runtime:** 10 failed / 15 passed, plus one unhandled NotReadableError. Eight failures were expected product defects; two queued-retry failures were test setup errors from retaining a stale field element across Undo. The [first-failure log](raw/first-failures-original-source.log.txt) is retained.
+- **Run 2, original runtime after re-querying the field:** 3 failed / 7 passed in the editor test file. The stale-token preservation control passed on both runtimes. The remaining product failures are preserved in the [fixture-corrected first-failure log](raw/first-failures-original-source-editor-fixture-corrected.log.txt).
+- **Run 3, final tests on exact original runtime files:** 9 failed / 16 passed across 25 tests, plus one unhandled read error. The nine defect cases fail on the baseline. The tenth new test is a stale-token preservation control and passes on both old and corrected runtimes. The exact [negative-control proof log](raw/proof-final-tests-on-original-runtime.log.txt), [original hashes](raw/original-sha256.txt), and [pre-proof corrected-runtime hashes](raw/corrected-runtime-sha256-before-proof.txt) are retained.
+- **Corrected source:** both focused files passed 25/25 and 13 related files passed 184/184. See [focused results](raw/focused-after-correction.log.txt) and [related results](raw/scoped-after-correction.log.txt).
+- **Static checks:** the handoff records web typecheck, ESLint and formatting passing. Selected exact command/tool-result pairs are preserved in [derived static evidence](derived/static-command-tool-evidence.json), extracted with this small [helper](derived/extract-209-static-tool-evidence.mjs); it contains no model reasoning, signatures, or unrelated events. It records an initial Prettier version lookup with exit 127, a first formatting command with exit 1, and a first ESLint command with exit 1 (six errors, three warnings). Later web typecheck, ESLint with zero problems, and Prettier across all seven correction-owned files exited 0. Read explicit shell exit codes in each result; the wrapper isError field alone is not a pass/fail signal. The supplied correction folder had no separate type/lint/format log files.
+
+## Behavior summary
+
+U1 gives each selected import a synchronous ownership token that gates its read, initial request, retries, and outcomes. The newest file choice owns the panel; late responses may refresh the list but cannot replace the current message or retry form. The picker remains enabled.
+
+U2 separates the retry permission from its busy display. Only the deliberate Try again invocation can bypass the refused-name hold, and it is scoped to the loop, editor generation, and refused name. It is consumed by one request and settles on every exit. Other saves cannot consume it; stale-token precedence and the device copy remain intact.
+
+## Still pending
+
+No fresh build, full coverage, corrected browser suite, or independent native candidate QA has run. Focused and related tests plus static checks are the evidence here; this is not final review or merge approval. Current-head CI, independent corrected QA, and the reserved final whole-PR audit remain gates.
+
+The prior [PR review/CI packet](../2026-11-14-loop-names-review/README.md), [U1 import-order baseline](../2026-11-14-loop-name-import-order-baseline/README.md), and [U2 invalid-retry baseline](../2026-11-14-loop-name-invalid-retry-baseline/README.md) are canonical planned siblings. They remain separate evidence and are linked, not copied. Relative sibling links are checked against their prepared external copies; see link-checks.json. manifest.json records copied byte counts and SHA-256 hashes; SHA256SUMS.txt provides the flat verification list.

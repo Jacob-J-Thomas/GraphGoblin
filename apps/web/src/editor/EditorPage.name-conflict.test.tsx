@@ -1,7 +1,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { FakeApi } from '../__fixtures__/fake-api.js';
+import { FakeApi, problem, type RecordedCall } from '../__fixtures__/fake-api.js';
 import { renderApp } from '../__fixtures__/render.js';
 import { loadLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from './model.js';
@@ -30,6 +30,13 @@ async function rename(user: ReturnType<typeof userEvent.setup>, name: string) {
 }
 
 const saveState = () => screen.getByTestId('save-state');
+
+/** The loop name a recorded draft save sent. */
+const sentName = (call: RecordedCall) =>
+  (call.body as { definition: { name: string } }).definition.name;
+
+/** Over the contract's 4,000-character limit for a description: the draft fails its schema. */
+const TOO_LONG = 'd'.repeat(4001);
 
 describe('renaming to another loop’s name (#209)', () => {
   it('keeps the authored name on the device and the server copy intact, and holds saves', async () => {
@@ -209,5 +216,153 @@ describe('renaming to another loop’s name (#209)', () => {
       description: 'typed before leaving',
     });
     expect(stored()).toEqual(original);
+  });
+});
+
+describe('Try again is one deliberate save of the refused name (#209)', () => {
+  /** Rename to the other loop's name and wait for the refusal; returns the save counter. */
+  async function refused(user: ReturnType<typeof userEvent.setup>, api: FakeApi, loopId: string) {
+    await screen.findByRole('heading', { name: 'Daytime Triage' });
+    const field = await rename(user, 'Nightly Triage');
+    await screen.findByText(NOTICE, undefined, SAVE_WAIT);
+    const puts = () => api.callsTo('PUT', `/loops/${loopId}/draft`);
+    return { field, puts, before: puts().length };
+  }
+
+  async function pasteInvalidDescription(user: ReturnType<typeof userEvent.setup>) {
+    const description = screen.getByRole('textbox', { name: 'Description' });
+    await user.clear(description);
+    await user.paste(TOO_LONG);
+    await waitFor(
+      () => expect(saveState()).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    return description;
+  }
+
+  it('settles a Try again that invalid companion text stopped, sending nothing', async () => {
+    const user = userEvent.setup();
+    const { api, mine, original, stored } = twoLoops();
+    renderApp(`/loops/${mine.id}/edit`, api);
+    const { puts, before } = await refused(user, api, mine.id);
+    await pasteInvalidDescription(user);
+
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    // The attempt ends at the schema check: the action is offered again, not left busy.
+    await waitFor(() => {
+      const retry = screen.getByRole('button', { name: 'Try again' });
+      expect(retry).not.toHaveAttribute('aria-busy');
+      expect(retry).not.toHaveAttribute('aria-disabled');
+    });
+    expect(saveState()).toHaveTextContent('Saved on this device only');
+    expect(screen.getByText(NOTICE)).toBeInTheDocument();
+    expect(puts()).toHaveLength(before);
+    expect(stored()).toEqual(original);
+    await waitFor(async () =>
+      expect(await loadLocalDraft(mine.id)).toMatchObject({
+        synced: false,
+        definition: { name: 'Nightly Triage', description: TOO_LONG },
+      }),
+    );
+  });
+
+  it('sends nothing when only the companion text is repaired, then once on a fresh Try again', async () => {
+    const user = userEvent.setup();
+    const { api, other, mine, original, stored } = twoLoops();
+    renderApp(`/loops/${mine.id}/edit`, api);
+    const { puts, before } = await refused(user, api, mine.id);
+    const description = await pasteInvalidDescription(user);
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // The other loop is renamed meanwhile, so any save of the name would now be accepted.
+    api.saveDraftElsewhere(other.id, newLoopDefinition('Nightly Triage (old)'));
+    await user.clear(description);
+    await user.type(description, 'repaired');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    expect(puts()).toHaveLength(before);
+    expect(stored()).toEqual(original);
+    expect(saveState()).toHaveTextContent('Not saved: name in use');
+    expect(screen.getByText(NOTICE)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(saveState()).toHaveTextContent('All changes saved'), SAVE_WAIT);
+    expect(
+      puts()
+        .slice(before)
+        .map((call) => call.body),
+    ).toMatchObject([{ definition: { name: 'Nightly Triage', description: 'repaired' } }]);
+    expect(stored().loop).toMatchObject({ id: mine.id, name: 'Nightly Triage' });
+    expect(stored().draft?.definition.description).toBe('repaired');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    expect(puts()).toHaveLength(before + 1);
+  });
+
+  /**
+   * After the refusal, rename to an allowed name whose ordinary save is held in flight, go back
+   * to the refused name with Undo, and choose Try again: it queues behind the held save.
+   */
+  async function retryQueuedBehindHeldSave(user: ReturnType<typeof userEvent.setup>) {
+    const { api, other, mine, stored } = twoLoops();
+    let heldCall: RecordedCall | undefined;
+    let answer!: (response: Response | Promise<Response>) => void;
+    api.override('PUT /loops/:id/draft', (call) => {
+      if (sentName(call) !== 'Daytime B') return api.builtIn(call);
+      heldCall = call;
+      return new Promise<Response>((resolve) => {
+        answer = resolve;
+      });
+    });
+    renderApp(`/loops/${mine.id}/edit`, api);
+    const { field, puts } = await refused(user, api, mine.id);
+    // A new undo step, rather than more typing merged into the refused name's.
+    act(() => useEditorStore.getState().closeStep());
+    await user.clear(field);
+    await user.type(field, 'Daytime B');
+    await waitFor(() => expect(heldCall).toBeDefined(), SAVE_WAIT);
+    const before = puts().length;
+
+    // Undo remounts the settings form, so the field is found again.
+    await user.click(screen.getByRole('button', { name: /^Undo/ }));
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Nightly Triage');
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(screen.getByRole('button', { name: 'Trying again…' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
+    return { api, other, mine, stored, puts, before, heldCall: heldCall!, answer };
+  }
+
+  it('keeps a Try again queued behind an ordinary save that then fails', async () => {
+    const user = userEvent.setup();
+    const { api, other, mine, stored, puts, before, answer } =
+      await retryQueuedBehindHeldSave(user);
+    api.saveDraftElsewhere(other.id, newLoopDefinition('Nightly Triage (old)'));
+    await act(() => Promise.resolve(answer(problem(503, 'UNAVAILABLE', 'The store is busy.'))));
+
+    await waitFor(() => expect(saveState()).toHaveTextContent('All changes saved'), SAVE_WAIT);
+    expect(puts().slice(before).map(sentName)).toEqual(['Nightly Triage']);
+    expect(stored().loop).toMatchObject({ id: mine.id, name: 'Nightly Triage' });
+    expect(screen.queryByText(NOTICE)).toBeNull();
+  });
+
+  it('lets a stale draft stop a Try again queued behind the failing save', async () => {
+    const user = userEvent.setup();
+    const { api, mine, stored, puts, before, heldCall, answer } =
+      await retryQueuedBehindHeldSave(user);
+    api.saveDraftElsewhere(mine.id, {
+      ...newLoopDefinition('Daytime Triage'),
+      description: 'theirs',
+    });
+    const theirs = stored();
+    await act(() => Promise.resolve(answer(api.builtIn(heldCall))));
+
+    expect(await screen.findByText(STALE, undefined, SAVE_WAIT)).toBeInTheDocument();
+    expect(saveState()).toHaveTextContent('Draft changed elsewhere');
+    expect(screen.queryByText(NOTICE)).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    expect(puts()).toHaveLength(before);
+    expect(stored()).toEqual(theirs);
+    expect(useEditorStore.getState().definition?.name).toBe('Nightly Triage');
   });
 });
