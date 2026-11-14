@@ -1,0 +1,156 @@
+2026-11-14T13:01:48Z
+
+Running 5 tests using 1 worker
+
+(node:15140) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\rename-references.spec.ts:177:1 › Starter assistant to writer: one saved step repairs the sibling Liquid and the Exit, and both versions run (5.6s)
+(node:25288) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  2 [chromium] › e2e\rename-references.spec.ts:406:1 › uncertain, optional and known-missing references: notice rows, badges and Publish (12.9s)
+(node:12012) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  3 [chromium] › e2e\rename-references.spec.ts:570:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename (4.2s)
+(node:50856) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 [chromium] › e2e\rename-references.spec.ts:710:1 › a rename in a stale tab waits for Overwrite or Reload, and nothing is lost unseen (6.8s)
+  x  5 [chromium] › e2e\rename-references.spec.ts:821:1 › protected voice steps keep their ids, and renaming respond repairs the chat envelope (477ms)
+
+
+  1) [chromium] › e2e\rename-references.spec.ts:177:1 › Starter assistant to writer: one saved step repairs the sibling Liquid and the Exit, and both versions run 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    Expected: {"description": "Summarize supplied input and suggest a next step. Edit the workflow instructions, model defaults, or nodes at any time.", "edges": [{"from": {"node": "start", "port": "out"}, "id": "start-out-instructions", "to": {"node": "instructions", "port": "in"}}, {"from": {"node": "instructions", "port": "out"}, "id": "instructions-out-assistant", "to": {"node": "assistant", "port": "in"}}, {"from": {"node": "assistant", "port": "out"}, "id": "assistant-out-review", "to": {"node": "review", "port": "in"}}, {"from": {"node": "review", "port": "out"}, "id": "review-out-archive", "to": {"node": "archive", "port": "in"}}, {"from": {"node": "archive", "port": "out"}, "id": "archive-out-done", "to": {"node": "done", "port": "in"}}], "name": "Rename Starter writer [28d4d455-1]", "nodes": [{"config": {"exposeTo": ["ui", "api", "mcp"], "type": "manual"}, "id": "start", "kind": "trigger", "label": "Run input and context", "ui": {"x": 0, "y": 0}}, {"config": {"operations": [{"op": "set", "path": "/vars/instruction", "value": {"kind": "literal", "value": "Summarize the input and suggest a next step."}}, {"op": "set", "path": "/vars/source", "value": {"kind": "literal", "value": {"reads": "outputs.assistant.value", "step": "assistant"}}}]}, "id": "instructions", "kind": "mutate", "label": "Workflow instructions", "ui": {"x": 270, "y": 0}}, {"config": {"harness": "codex", "harnessOptions": {"approval": "never", "networkAccess": false, "sandbox": "read-only", "webSearch": false}, "input": [], "output": {"captureTranscript": "artifact", "toMessages": "final", "transforms": []}, "prompt": {"template": "Instructions:
+    {{ vars.instruction }}·
+    Run input and any supplied repository/task context:
+    {{ invocation.trigger.payload | json }}·
+    Use only the supplied context and accessible working directory. Missing repository URLs, issue/PR numbers, credentials, or ownership are unknown; do not invent them. This is a manual editable workflow. Do not commit, push, merge, create or close issues/PRs, change labels, or contact external services.
+    "}, "session": {"policy": "fresh"}, "timeoutSeconds": 300}, "id": "assistant", "kind": "inference", "label": "Assistant", "ui": {"x": 540, "y": 0}}, {"config": {"destinations": [{"kind": "caller"}], "outcome": "success", "returns": "outputs.assistant.value"}, "id": "done", "kind": "exit", "label": "Suggested next step", "ui": {"x": 810, "y": 0}}, {"config": {"harness": "codex", "harnessOptions": {"approval": "never", "networkAccess": false, "sandbox": "read-only", "webSearch": false}, "input": [], "output": {"captureTranscript": "artifact", "toMessages": "final", "transforms": []}, "prompt": {"template": "The assistant step wrote:
+    {{ outputs.assistant.value }}
+    Review it."}, "session": {"policy": "fresh"}, "timeoutSeconds": 300}, "id": "review", "kind": "inference", "label": "Review", "ui": {"x": 810, "y": 160}}, {"config": {"args": ["-e", "process.stdin.resume() // the thread holds outputs.assistant.value"], "command": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe", "cwd": "workspace", "stdin": "thread", "stdout": "ignore"}, "id": "archive", "kind": "script", "label": "Archive", "ui": {"x": 1080, "y": 160}}], "schemaVersion": 4, "settings": {"defaults": {"byHarness": {}}, "maxNodeVisits": 10, "runDeadlineSeconds": null, "structuredTimeoutMs": null, "subloopDepthLimit": 8, "workingDirectory": {"kind": "temp"}}, "variables": {}}
+    Received: undefined
+
+      382 |     await request.get(`/loops/${loopId}/versions/${v1.id}`)
+      383 |   ).json()) as VersionRecord;
+    > 384 |   expect(v1Now.definition).toEqual(before.definition);
+          |                            ^
+      385 |   expect(v1Now.definition).toEqual(v1.definition);
+      386 |
+      387 |   // Provider-free pinned runs: each version reads its own inference node's output.
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\rename-references.spec.ts:384:28
+
+    Error Context: test-results\rename-references-Starter--ae343--Exit-and-both-versions-run-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\rename-references-Starter--ae343--Exit-and-both-versions-run-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\rename-references-Starter--ae343--Exit-and-both-versions-run-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\rename-references.spec.ts:406:1 › uncertain, optional and known-missing references: notice rows, badges and Publish 
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator:  getByRole('dialog', { name: 'Edit exit done' }).locator('[data-field="returns"] .cm-content')
+    Expected: focused
+    Received: inactive
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toBeFocused" getByRole('dialog', { name: 'Edit exit done' }).locator('[data-field="returns"] .cm-content') with timeout 10000ms
+      - waiting for getByRole('dialog', { name: 'Edit exit done' }).locator('[data-field="returns"] .cm-content')
+        24 × locator resolved to <div id="_r_24_" translate="no" role="textbox" autocorrect="off" spellcheck="false" autocapitalize="off" aria-required="true" aria-multiline="true" contenteditable="true" writingsuggestions="false" data-language="javascript" aria-label="Return expression" aria-describedby="_r_24_-help" class="cm-content cm-lineWrapping">…</div>
+           - unexpected value "inactive"
+
+
+      516 |   await expect(exit).toBeVisible();
+      517 |   const returns = exit.locator('[data-field="returns"] .cm-content');
+    > 518 |   await expect(returns).toBeFocused();
+          |                         ^
+      519 |   await expect(exit.locator('[data-field="returns"] .cm-editor')).toHaveClass(/cm-focused/);
+      520 |
+      521 |   // A known missing gate is an error: the draft saves, Publish is refused with 422.
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\rename-references.spec.ts:518:25
+
+    Error Context: test-results\rename-references-uncertai-e9a10-ice-rows-badges-and-Publish-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\rename-references-uncertai-e9a10-ice-rows-badges-and-Publish-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\rename-references-uncertai-e9a10-ice-rows-badges-and-Publish-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e\rename-references.spec.ts:570:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename 
+
+    Error: expect(locator).toBeFocused() failed
+
+    Locator: getByRole('dialog').getByLabel('Label', { exact: true })
+    Expected: focused
+    Error: strict mode violation: getByRole('dialog').getByLabel('Label', { exact: true }) resolved to 3 elements:
+        1) <input value="Gate" id="node-label" aria-required="true" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 point…/> aka locator('#node-label')
+        2) <input id="_r_44_" value="Again" aria-required="true" aria-describedby="_r_44_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken di…/> aka getByRole('group', { name: 'Routes 1' }).getByLabel('Label')
+        3) <input id="_r_4a_" value="Stop" aria-required="true" aria-describedby="_r_4a_-help" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken dis…/> aka getByRole('group', { name: 'Routes 2' }).getByLabel('Label')
+
+    Call log:
+      - Expect "toBeFocused" getByRole('dialog').getByLabel('Label', { exact: true }) with timeout 10000ms
+      - waiting for getByRole('dialog').getByLabel('Label', { exact: true })
+
+
+      665 |   await page.keyboard.press('Tab');
+      666 |   await expect(gate).toHaveAccessibleName('Edit decision loop-gate');
+    > 667 |   await expect(gate.getByLabel('Label', { exact: true })).toBeFocused();
+          |                                                           ^
+      668 |   await expect(codeText(gate, 'Jsonata')).toHaveText(
+      669 |     'counters.nodeVisits.loop-gate > 2 ? "stop" : "again"',
+      670 |   );
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\rename-references.spec.ts:667:59
+
+    Error Context: test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › e2e\rename-references.spec.ts:821:1 › protected voice steps keep their ids, and renaming respond repairs the chat envelope 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "{\"protocol\":\"graphgoblin.chat.v1\",\"reply\":outputs.respond.value}"
+    Received: undefined
+
+      849 |   ).toBe(200);
+      850 |   const before = (await serverDraft(request, loopId, url)).definition;
+    > 851 |   expect(nodeOf(before, 'chat-envelope').config['jsonata']).toBe(
+          |                                                             ^
+      852 |     '{"protocol":"graphgoblin.chat.v1","reply":outputs.respond.value}',
+      853 |   );
+      854 |
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\rename-references.spec.ts:851:61
+
+    Error Context: test-results\rename-references-protecte-cab13-d-repairs-the-chat-envelope-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\rename-references-protecte-cab13-d-repairs-the-chat-envelope-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\rename-references-protecte-cab13-d-repairs-the-chat-envelope-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium] › e2e\rename-references.spec.ts:177:1 › Starter assistant to writer: one saved step repairs the sibling Liquid and the Exit, and both versions run 
+    [chromium] › e2e\rename-references.spec.ts:406:1 › uncertain, optional and known-missing references: notice rows, badges and Publish 
+    [chromium] › e2e\rename-references.spec.ts:570:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename 
+    [chromium] › e2e\rename-references.spec.ts:821:1 › protected voice steps keep their ids, and renaming respond repairs the chat envelope 
+  1 passed (47.4s)
+EXIT 1
+2026-11-14T13:02:36Z

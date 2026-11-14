@@ -1,0 +1,53 @@
+2026-11-14T13:09:07Z
+
+Running 5 tests using 1 worker
+
+(node:44992) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\rename-references.spec.ts:194:1 › Starter assistant to writer: one saved step repairs the sibling Liquid and the Exit, and both versions run (6.0s)
+  ok 2 [chromium] › e2e\rename-references.spec.ts:423:1 › uncertain, optional and known-missing references: notice rows, badges and Publish (4.4s)
+  x  3 [chromium] › e2e\rename-references.spec.ts:593:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename (5.6s)
+(node:32948) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 4 [chromium] › e2e\rename-references.spec.ts:733:1 › a rename in a stale tab waits for Overwrite or Reload, and nothing is lost unseen (12.9s)
+  ok 5 [chromium] › e2e\rename-references.spec.ts:844:1 › protected voice steps keep their ids, and renaming respond repairs the chat envelope (4.2s)
+
+
+  1) [chromium] › e2e\rename-references.spec.ts:593:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 5
+    + Received  + 1
+
+    - Object {
+    -   "key": Object {
+    -     "type": "string",
+    -   },
+    - }
+    + Object {}
+
+      728 |   );
+      729 |   expect(nodeOf(stored, 'start').config['expression']).toBe('30 7 * * 1');
+    > 730 |   expect(stored.variables).toEqual({ key: { type: 'string' } });
+          |                            ^
+      731 | });
+      732 |
+      733 | test('a rename in a stale tab waits for Overwrite or Reload, and nothing is lost unseen', async ({
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-node-references-native\GraphGoblin\apps\web\e2e\rename-references.spec.ts:730:28
+
+    Error Context: test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\rename-references-focus-fo-df3cf-sewhere-survives-the-rename-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\rename-references.spec.ts:593:1 › focus follows the remounted form, and unfinished input elsewhere survives the rename 
+  4 passed (42.2s)
+EXIT 1
+2026-11-14T13:09:51Z

@@ -1,0 +1,31 @@
+{
+  "observedAt": "2026-11-14T17:43:18.068Z",
+  "pr": 474,
+  "head": "ba3086b8c1df555ed6544e27cbdb2d6630e91948",
+  "run": 43621306507,
+  "job": 132527398274,
+  "conclusion": "failure",
+  "failedStep": "Format check",
+  "cause": "Two historical raw Markdown artifacts were formatted as authored documents. Product build, process acceptance, typecheck and lint passed before this step; later gates were skipped.",
+  "repair": "Rename only the two raw files to .md.txt and update publication manifests; retain exact bytes and original first-failure CI log. No product code, formatter ignore, assertions or thresholds changed.",
+  "renames": [
+    {
+      "oldPath": "docs/qa/2026-11-14-node-references-native/raw/failure/attempt3-error-context.md",
+      "newPath": "docs/qa/2026-11-14-node-references-native/raw/failure/attempt3-error-context.md.txt",
+      "bytes": 23498,
+      "sha256": "bbcd7999e035ff0ee17908e7555e425f15fcf08bd9fd37e0a1953044e6f3f80e"
+    },
+    {
+      "oldPath": "docs/qa/2026-11-14-node-references-native/raw/original-report.md",
+      "newPath": "docs/qa/2026-11-14-node-references-native/raw/original-report.md.txt",
+      "bytes": 4566,
+      "sha256": "0a6125a79d2d742bebe7243519ac623ee29196563022d4762e47e541e36ff6d4"
+    }
+  ],
+  "log": {
+    "path": "gates.log",
+    "bytes": 64065,
+    "sha256": "25559aa0f0c6e24a0714e063fd8209a3e27036ad55c096998105393dc46fd089"
+  },
+  "currentHeadVerification": "pending"
+}

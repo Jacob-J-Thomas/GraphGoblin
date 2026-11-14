@@ -1,0 +1,90 @@
+# SIGN-OFF — PR #470 final whole-PR adversarial audit
+
+Date: 2026-11-14. This is scan **3 of the maximum 3 total scans** under D035. No delegation or additional scan was performed. This verdict applies only to the identities below and is engineering review sign-off; owner product acceptance for #209 remains open.
+
+## Reviewed identity and admission
+
+- PR: https://github.com/Jacob-J-Thomas/GraphGoblin/pull/470
+- Head: `8fc8c0a5240c304dfe4f309caad8bd1ebf540948`
+- Tree: `af0e9f76b750ecbd308b3e12c589fb729b3ebf23`
+- Current main, target, and merge-base: `7c6e635539e12c56b82f226f1ee734d83b985ad4`
+- Checkout: `C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin`; clean when independently inspected.
+- CI merge commit: `2b6f1a0abb49ee2ad60facf935317b355302a077`, with the exact audited tree and the expected target/head parents.
+- CI run [43614498888](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43614498888) and routing run [43614498893](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43614498893): completed successfully, each `run_attempt: 1`, bound to this head.
+
+I independently checked local Git identity/status, remote head/main, live PR metadata, workflow attempts, and the merge commit's tree and parents. The packet's original PREPARED ONLY identity marker is historical; gate-status and the live readbacks establish admission. Product and test code is unchanged from correction commit `2367b15b310eac52d95af77c570d5ce36f741527`; subsequent changes are QA evidence and the delivery register.
+
+## Verdict and scope
+
+**No remaining in-scope blocking finding was identified. SIGN-OFF.** The reviewed admission logic, API/UI behavior, startup refusal, preservation properties, and supporting evidence meet the accepted #209 contract. This does not authorize merging, close #209, certify unrelated work, or resolve the parked issues listed below.
+
+I read AGENTS.md, the documentation index, issue workflow, current implementation/delivery context, batch REVIEW-COMMON, ADR-0073, the changed numbered docs and guides, original reviews/dispositions, and the final admission packet. The review covered all 82 non-QA changed files, including product code, tests, fixtures, generated contracts/reference material, and relevant complete callers. It was not restricted to the last U1/U2 corrections. Areas examined included every name-writing entry point, transaction boundaries, stale-token ordering, owner isolation, Unicode/storage behavior, UI async ownership, autosave retry lifetime, startup-before-write ordering, immutable versions/history, generated Chat behavior, and the effectiveness and limits of tests.
+
+## Original findings and current disposition
+
+### U1 — import selection ownership (original P1): FIXED IN PR
+
+Introducedness: #209 added an actionable held import-name form. An older file read or import response could replace or clear the current selection, letting an old document be submitted under the newer selection's name. The original native failure is retained, including the wrong-document consequence.
+
+The smallest necessary correction is ownership carried from synchronous file selection through read, initial mutation, retry, and rendering. `apps/web/src/loops/LoopsPage.tsx:170` holds the current identity; success/error handlers at lines 182–219 reject obsolete ownership, and lines 223–248 establish ownership before awaiting the read. The keyed form at line 299, selection-specific pending state, cancellation, and synchronous retry guard preserve the chosen document and typed name. Late successful creation can refresh the list without taking over the current panel.
+
+Disposition evidence: negative component controls fail on the old implementation; the independent corrected native run exercises both late-409 and late-201 schedules with real upstream responses. Six actual import POSTs, request bodies, selected-file/form state, and public/file-store readbacks show that each retry imports B's exact graph. The late A success remains an actual visible created row. I inspected the scripts, raw observations, bindings, and screenshots. No residual U1 blocker found.
+
+### U2 — explicit retry permission lifetime (original P2): FIXED IN PR
+
+Introducedness: #209's new name-conflict retry state could remain busy or retain permission after local validation prevented the attempt; repairing an unrelated description could then submit automatically. An older ordinary save could also consume or clear a newer queued retry. Original component and native failures remain retained.
+
+The smallest necessary correction is a permit owned by one explicit flush invocation and its loop/generation/refusal identity. `apps/web/src/editor/EditorPage.tsx:453` creates that identity. `apps/web/src/editor/useAutosave.ts:156` settles only the matching refusal, checks the permit against the refused name around line 195, consumes it before the request, and settles all exits through the invocation's finalization. A displayed busy flag is not permission to save. Generic older failures cannot clear a newer retry; stale-draft handling retains precedence.
+
+Disposition evidence: corrected focused tests cover invalid input, queued ordinary-save overlap, and stale-token preservation. The independent native run observes invalid description → explicit retry with no PUT → repaired description with an updated unsynced device draft and no PUT → fresh explicit retry with exactly one conditional PUT. Initial 409 plus final 200 are the only browser PUTs; accepted/public/device definitions and draft identity agree. The queued-overlap variant has controlled component proof, not a new native reproduction. No residual U2 blocker found.
+
+### Guide wording: FIXED IN PR
+
+The user-facing uniqueness wording now scopes itself to creation, rename, import, and template copy. It no longer contradicts the deliberately automatic generated Chat allocation. This is a documentation correction, not an expanded runtime contract.
+
+## Acceptance matrix
+
+| Requirement | Review and evidence | Result |
+| --- | --- | --- |
+| Owner-scoped equivalent-name admission | Shared SQLite admission reads only the owner's current loops; create, draft rename, import, and template copy use the same transactional write path. Same-ID exclusion and other-owner independence are covered. | PASS |
+| Atomic concurrent writes | Drizzle calls libSQL transaction with its default write mode; the installed native driver maps it to BEGIN IMMEDIATE. Existing client serialization holds the transaction. Actual file-SQLite/public-API races admit one winner and reject competing equivalent writes. | PASS |
+| Exact name/storage contract | ECMAScript trim, whitespace-run collapse, and locale-independent lowercase match the accepted contract; no unintended NFC/full casefold. NUL/unpaired surrogates are refused, valid supplementary characters and U+FFFD accepted. Suggestions remain valid and within 120 UTF-16 units. | PASS |
+| Stale token and preservation | Conditional draft validation precedes admission. Existing IDs, immutable published versions, pinned history, and unrelated graph content are retained. Same-ID draft updates remain possible. | PASS |
+| Create/import/template guidance | Typed 409 with an advisory suggestion; choosing a suggestion only fills the field. Explicit retry/cancel paths preserve entered content and the intended document. Template actions use a synchronous in-flight guard. | PASS |
+| Import ordering | U1 identity guard spans file reads and both initial/retry responses. Native actual-response late-409/201 schedules and negative controls substantiate the fix. | PASS |
+| Editor retry/autosave | Equivalent refused names stay held; unrelated edits and suggestion selection do not silently submit. Invocation-owned retry, invalid-input settlement, queued overlap, device copies, and conditional save are covered at the tiers described above. | PASS |
+| Generated Chat | Gateway/device Chat creation uses the shared admission transaction with explicit automatic allocation; idempotence and collisions are covered. Device labels are sanitized for a storable generated name without rewriting the stored label. | PASS |
+| Existing current-format stores | Read-only duplicate/NUL preflight runs before mutable open, WAL changes, migrations, or master-key creation. Retained native evidence includes an old-build-created duplicate store, unchanged database/WAL/SHM hashes on refusal, manual repair, and preserved versions/pins after reopen. | PASS |
+| Docs, layering, fixtures, gates | ADR/numbered docs/upgrade guidance and API references agree. No new dependency or content-conversion migration. Fixture changes use distinct names without weakening the intended assertions. Current exact-tree CI is green. | PASS |
+
+## Evidence validity and execution boundary
+
+My execution consisted of read-only Git/source/log/JSON inspection, live GitHub reads, independent blob/byte/hash checks, inspection of installed transaction-library source, and viewing five retained native screenshots. **I did not run a product test, build, browser session, coverage suite, or owner service.** No repository source, index, original report, or GitHub state was mutated. The external auditor-readback and this report are my audit artifacts.
+
+`auditor-readback.json` records independent agreement for 577 manifest QA files and 82 non-QA files, plus all six additional legacy QA paths: 665 changed files accounted for, with no local/committed mismatch. The binary-inclusive exact diff matches Git, at 14,791,378 bytes and SHA-256 `d2372898b66f3099a7acfbad969a500dc70526dc7de5930bfdf3e38fe041babc`. All 16 corrected-native runtime source fingerprints match the current head.
+
+The earlier independent backend evidence has 13 fingerprints: its 12 runtime/test source paths still match; its pnpm lockfile differs only through already-merged plugin importer changes. I inspected that diff and found no changed backend dependency version. It must not be described as a byte-identical full lockfile. Its 66 public Fastify API calls use real native file SQLite through source TypeScript, without a socket. They substantiate the backend paths and preservation cases, not a compiled-network/browser claim.
+
+The corrected native bundle uses actual compiled API main.js, a fresh file-backed SQLite store, real local HTTP, and Edge on Windows. Its delayed responses come from route.fetch against the real upstream, then are fulfilled unchanged. The retained binding covers 16 source files, 1,203 built files across 13 trees, five embedded runtime source-map matches, and served assets. Before/after equality is represented by the binding hash; it is not a claim that I reran the binding tool. The raw request/readback records agree with the reported graphs and conditional token progression. Cleanup records show the owned gateway stopped and its listener/locks cleared.
+
+Other evidence remains explicitly bounded:
+
+- The corrected suite has 25 focused and 184 related passing component tests. The precise negative control is **nine new defect cases failing the old runtime**, plus one additional stale-token control passing both. The original report's all-ten-fail wording and initial fixture mistakes remain immutable, with explicit corrections retained.
+- The forced build records 12 Turbo tasks with zero cache hits and fresh web assets. Unchanged backend TypeScript output was incremental; this is not proof of a full backend re-emit. The 16 selected existing Edge tests use source API/in-memory SQLite/FakeHarness and do not exercise the new U1/U2 races.
+- Current CI reports 22 successful coverage tasks, Browser 474 passed plus one expected provider skip, Windows 14 passed without skips, and two passing routing checks. The original Windows failure and one historical unchanged-job retry are separate from this head's first-attempt success. The dependency audit passes its configured threshold while reporting 8 low and 13 moderate advisories; it is not a zero-advisory result.
+- Physical-device behavior, assistive-technology speech, live external providers, and subjective owner acceptance were not established by this audit. The native retry observation has a bounded quiet interval and is corroborated by source/control tests; it is not an unbounded endurance claim.
+
+## Preserved open and no-change dispositions
+
+| Item | Disposition retained |
+| --- | --- |
+| #472 deleted-name reuse regression coverage | DEFER, P3. Current admission queries current rows, so deletion frees the name by source reasoning; a direct create/delete/recreate regression remains absent. Follow-up is that focused regression, not a claimed fix here. |
+| #473 MCP lookup whitespace inconsistency | DEFER, P3, mostly preexisting. Lookup normalization can disagree with admission normalization; ID lookup remains available. Not fixed or newly runtime-verified here. |
+| #471 Windows reclaim-marker EPERM | OPEN. Exact unlink site remains unproven, and the original third trial's final-record assertion never executed. Neither its historical unchanged retry nor this head's clean run resolves the cause. |
+| #237 cached Ready caption / broader publication, cache, token, and unmount lifecycle | SEPARATE WORK. The retained native screenshot still shows the cached Ready to publish caption while the name is held. The #209 name hold is protected; this audit does not claim the wider lifecycle work is fixed. |
+| Raw QA whitespace | NO CHANGE. Original bytes and scoped evidence attributes are preserved; no runtime quality threshold is relaxed. |
+| Historical malformed draft-name JSON | NO CHANGE under the accepted boundary: refused on the next save rather than silently rewritten or treated as a new startup-conversion requirement. |
+| Cross-connection test wording stronger than its isolated proof | NO CHANGE. The source-level BEGIN IMMEDIATE proof and actual public/API races supply the missing distinction; the test alone is not credited with proving transaction mode. |
+
+No new issue or fourth review is requested. D035's cap remains intact and does not waive a known blocker. The original scan-1 READY and scan-2 CHANGES REQUIRED reports remain unchanged; this report supplies the final current-head disposition. Owner acceptance for #209 remains a separate post-merge product decision and must not be auto-closed by this engineering sign-off.
+
