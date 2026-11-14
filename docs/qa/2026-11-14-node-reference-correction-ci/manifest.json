@@ -1,0 +1,302 @@
+{
+  "schemaVersion": 1,
+  "packet": "2026-11-14-node-reference-correction-ci",
+  "sourceEvidenceDirectory": "review-273/current-ci-164c",
+  "identity": {
+    "pr": 474,
+    "head": "164c01a2e3a52bf0ef69a409e1a428b45817b1b8",
+    "tree": "30af5edcf429af416a37833ea2bd21a17c752e66",
+    "base": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+    "prMergeRef": "b4984f3667d18e856233eb97b232f2ec87258380"
+  },
+  "runs": {
+    "ci": {
+      "runId": 43632537429,
+      "conclusion": "success",
+      "firstAttempt": true,
+      "jobs": [
+        {
+          "id": 132562106833,
+          "name": "Browser",
+          "conclusion": "success"
+        },
+        {
+          "id": 132562107061,
+          "name": "Windows launcher",
+          "conclusion": "success"
+        },
+        {
+          "id": 132562107066,
+          "name": "Template image",
+          "conclusion": "success"
+        },
+        {
+          "id": 132562107072,
+          "name": "Gates",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "routing": {
+      "runId": 43632537340,
+      "conclusion": "success",
+      "firstAttempt": true,
+      "jobs": [
+        {
+          "id": 132562106554,
+          "name": "routing",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "workflowRuns": [
+      {
+        "id": 43632537340,
+        "name": "Routing performance",
+        "status": "completed",
+        "conclusion": "success",
+        "runNumber": 261
+      },
+      {
+        "id": 43632537429,
+        "name": "CI",
+        "status": "completed",
+        "conclusion": "success",
+        "runNumber": 860
+      }
+    ]
+  },
+  "rawLogs": {
+    "complete": true,
+    "observedAt": "2026-11-14T20:01:57.786Z",
+    "logs": [
+      {
+        "path": "raw/logs/gates.log",
+        "sourcePath": "review-273/current-ci-164c/gates.log",
+        "bytes": 373854,
+        "sha256": "83230e971e125f5713a6e2b9ee9323aadf4a47f70d1fd9ea721dba760685c3f3",
+        "encoding": "UTF-8",
+        "lineEndings": "LF",
+        "crlfLines": 0,
+        "bareLfLines": 3350,
+        "runId": 43632537429,
+        "jobId": 132562107072,
+        "head": "164c01a2e3a52bf0ef69a409e1a428b45817b1b8"
+      },
+      {
+        "path": "raw/logs/browser.log",
+        "sourcePath": "review-273/current-ci-164c/browser.log",
+        "bytes": 177174,
+        "sha256": "ab68442bef10128d2f7a16fce8cdbcc42eac4361fbac64dca1fea03151671062",
+        "encoding": "UTF-8",
+        "lineEndings": "LF",
+        "crlfLines": 0,
+        "bareLfLines": 1461,
+        "runId": 43632537429,
+        "jobId": 132562106833,
+        "head": "164c01a2e3a52bf0ef69a409e1a428b45817b1b8"
+      },
+      {
+        "path": "raw/logs/windows.log",
+        "sourcePath": "review-273/current-ci-164c/windows.log",
+        "bytes": 45936,
+        "sha256": "ec415cf684d1417077efe209ac890228ee2f5919667d61de13614672ad08e7a4",
+        "encoding": "UTF-8",
+        "lineEndings": "CRLF",
+        "crlfLines": 579,
+        "bareLfLines": 0,
+        "runId": 43632537429,
+        "jobId": 132562107061,
+        "head": "164c01a2e3a52bf0ef69a409e1a428b45817b1b8"
+      },
+      {
+        "path": "raw/logs/template.log",
+        "sourcePath": "review-273/current-ci-164c/template.log",
+        "bytes": 40330,
+        "sha256": "7bc7eee3b8c8191d4df77fb7ecd17f5fc9629507badd97674113178fc9b752d3",
+        "encoding": "UTF-8",
+        "lineEndings": "LF",
+        "crlfLines": 0,
+        "bareLfLines": 501,
+        "runId": 43632537429,
+        "jobId": 132562107066,
+        "head": "164c01a2e3a52bf0ef69a409e1a428b45817b1b8"
+      },
+      {
+        "path": "raw/logs/routing.log",
+        "sourcePath": "review-273/current-ci-164c/routing.log",
+        "bytes": 64986,
+        "sha256": "0933487a41f7290fb4a2e7dcd5a44801363a8bb112d2f6570d2663bc193f0b10",
+        "encoding": "UTF-8",
+        "lineEndings": "LF",
+        "crlfLines": 0,
+        "bareLfLines": 781,
+        "runId": 43632537340,
+        "jobId": 132562106554,
+        "head": "164c01a2e3a52bf0ef69a409e1a428b45817b1b8"
+      }
+    ]
+  },
+  "verifiedSummary": {
+    "browser": {
+      "passed": 479,
+      "skipped": 1,
+      "skip": "live.spec.ts live Codex inference loop",
+      "retries": 0
+    },
+    "windows": {
+      "tests": 14,
+      "passed": 14,
+      "skipped": 0
+    },
+    "templateImage": {
+      "conclusion": "success",
+      "catalogItems": [
+        "starter",
+        "implementation",
+        "review",
+        "qa"
+      ]
+    },
+    "routing": {
+      "testsPassed": 2,
+      "nodes": [
+        100,
+        300
+      ],
+      "medianRoutingP95Ms": [
+        1.7,
+        3.1
+      ],
+      "maxIndividualRoutingP95Ms": 3.4
+    },
+    "dependencyAudit": {
+      "command": "pnpm audit --audit-level=high",
+      "vulnerabilities": 21,
+      "low": 8,
+      "moderate": 13,
+      "gateConclusion": "success"
+    },
+    "gates": {
+      "turboTasksSuccessful": 22,
+      "turboTasksTotal": 22,
+      "webTestsPassed": 2520,
+      "webTestFiles": 203,
+      "domainTestsPassed": 452,
+      "domainTestFiles": 29
+    }
+  },
+  "prSnapshot": {
+    "state": "open",
+    "merged": false,
+    "headSha": "164c01a2e3a52bf0ef69a409e1a428b45817b1b8",
+    "baseSha": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+    "updatedAt": "2026-11-14T19:32:00Z",
+    "updatedAtMeaning": "last PR edit time, not snapshot capture time",
+    "fetchedAtApprox": "2026-11-14T20:02Z",
+    "bodyFetchedAfterRunsCompletedBeforeGreenUpdate": true,
+    "bodyIsHistoricalPreGreenSnapshot": true
+  },
+  "limits": {
+    "correctedIndependentNative": "tracked in separate evidence; not reproduced by this CI packet",
+    "freshAstraScan3": "pending",
+    "physicalDeviceRun": "not evidenced",
+    "strictManualSweep": "not evidenced",
+    "ownerAcceptance": "not established",
+    "sourceRetargetOrMergeIntoMain": "not established by this packet"
+  },
+  "curatedCounts": {
+    "rawFiles": 10,
+    "rawBytes": 723943
+  },
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 13,
+      "sha256": "dca0153464713ed09f6c4107166383929574608387e3ec787ce3dc1e54a68fb2",
+      "authored": true
+    },
+    {
+      "path": "README.md",
+      "bytes": 4296,
+      "sha256": "c7fb7539bd58e576a39ec76fa230b4925f4b9a81940a608410286ce93e4c84f1",
+      "authored": true
+    },
+    {
+      "path": "link-checks.json",
+      "bytes": 3554,
+      "sha256": "9dc187899453c9f1ae6a6e7bb73f36782cbd1f79709dfbac66bb1d6412e95771",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/browser.log",
+      "bytes": 177174,
+      "sha256": "ab68442bef10128d2f7a16fce8cdbcc42eac4361fbac64dca1fea03151671062",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/browser.log"
+    },
+    {
+      "path": "raw/logs/gates.log",
+      "bytes": 373854,
+      "sha256": "83230e971e125f5713a6e2b9ee9323aadf4a47f70d1fd9ea721dba760685c3f3",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/gates.log"
+    },
+    {
+      "path": "raw/logs/routing.log",
+      "bytes": 64986,
+      "sha256": "0933487a41f7290fb4a2e7dcd5a44801363a8bb112d2f6570d2663bc193f0b10",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/routing.log"
+    },
+    {
+      "path": "raw/logs/template.log",
+      "bytes": 40330,
+      "sha256": "7bc7eee3b8c8191d4df77fb7ecd17f5fc9629507badd97674113178fc9b752d3",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/template.log"
+    },
+    {
+      "path": "raw/logs/windows.log",
+      "bytes": 45936,
+      "sha256": "ec415cf684d1417077efe209ac890228ee2f5919667d61de13614672ad08e7a4",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/windows.log"
+    },
+    {
+      "path": "raw/metadata/jobs-complete.json",
+      "bytes": 10867,
+      "sha256": "2ccd2478931bfd5ab237ad177c954cae80a32b5fdf8b350ccf7498682a429af4",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/jobs-complete.json"
+    },
+    {
+      "path": "raw/metadata/log-manifest.json",
+      "bytes": 1575,
+      "sha256": "888e654fe138938014d5b426378b078f63d029235619ec540a0528a86a3e1662",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/log-manifest.json"
+    },
+    {
+      "path": "raw/metadata/pr-snapshot.json",
+      "bytes": 6021,
+      "sha256": "0dd99961412a972a6de6b3ea68cb3fdc72761927b1122d4686b73586dd114e34",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/pr-snapshot.json"
+    },
+    {
+      "path": "raw/metadata/routing-jobs-complete.json",
+      "bytes": 2379,
+      "sha256": "375167195df9ce734dcbcffdb74d71e506e66c751713c265863eafcb8b6c6417",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/routing-jobs-complete.json"
+    },
+    {
+      "path": "raw/metadata/workflows-complete.json",
+      "bytes": 821,
+      "sha256": "50d7dbfe45736d4a421200c808d2b55785c833e9023335f7f24c8a3f0cab6293",
+      "authored": false,
+      "sourcePath": "review-273/current-ci-164c/workflows-complete.json"
+    }
+  ]
+}

@@ -1,0 +1,999 @@
+{
+  "phase": "before",
+  "head": "ae8add8a791699e905540465b5ddf929d00c50eb",
+  "tree": "ea2dfcfd46f7d5ab79fd98414db214513d830b52",
+  "base": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+  "jsonata": {
+    "version": "2.2.2",
+    "entrySha256": "10965a9e3d86ccaf87f55294959637898e918c7ef5181af72d13279c8fc8e6de"
+  },
+  "domainEntrySha256": "fb068a2dc0d3789e8fce6568f3971f974f32af786949bf234bdacba7f120c402",
+  "gatewayPid": 25000,
+  "apiEntrySha256": "e011151e143f07f29181c03f616b6d8e5b7c04e1f136f001b508e9a480c8cc98",
+  "timeline": [
+    {
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DSZ24NVZPTDHGGHKJX60EY/validate",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DSZ24NVZPTDHGGHKJX60EY/validate",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DSZ26PNK0YFQCHCBF7VJYW/validate",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DSZ26PNK0YFQCHCBF7VJYW/validate",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DSZ27J8ZB12P0BWC56GPG8/publish",
+      "status": 200,
+      "published": "01M7DSZ27J8ZB12P0BWC56GPG9"
+    },
+    {
+      "method": "POST",
+      "path": "/loops",
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF",
+      "status": 200,
+      "revision": "4dad773808394168"
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF/publish",
+      "status": 200,
+      "published": "01M7DSZ28QMAPT8C980M0F8MVG"
+    },
+    {
+      "method": "GET",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF",
+      "status": 200,
+      "revision": "4dad773808394168"
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF/draft",
+      "status": 200,
+      "revision": "e81c8839737236e2",
+      "token": "4dad773808394168"
+    },
+    {
+      "method": "GET",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF",
+      "status": 200,
+      "revision": "e81c8839737236e2"
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF/validate",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF/publish",
+      "status": 200,
+      "published": "01M7DSZ2A9M4NEZGY2G3YETVDF"
+    },
+    {
+      "method": "GET",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF",
+      "status": 200,
+      "revision": "e81c8839737236e2"
+    },
+    {
+      "method": "GET",
+      "path": "/loops/01M7DSZ28QMAPT8C980M0F8MVF/versions/01M7DSZ28QMAPT8C980M0F8MVG",
+      "status": 200
+    }
+  ],
+  "groups": [
+    {
+      "name": "F1 LLM and classifier message predicate roots",
+      "witnesses": [
+        {
+          "kind": "llm",
+          "rename": {
+            "before": "$thread.counters.nodeVisits.work > 0 or $exists(counters.nodeVisits.work)",
+            "result": "$thread.counters.nodeVisits.work > 0 or $exists(counters.nodeVisits.renamed)",
+            "warnings": [],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "renamed",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "pick",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "yes",
+                "from": {
+                  "node": "pick",
+                  "port": "yes"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "no",
+                "from": {
+                  "node": "pick",
+                  "port": "no"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "validation": {
+            "domain": {
+              "item": [
+                {
+                  "nodeId": "pick",
+                  "path": "config.context.messages.where",
+                  "severity": "warning",
+                  "code": "NODE_REFERENCE_OPTIONAL_MISSING",
+                  "message": "No node defines counters.nodeVisits.missing."
+                }
+              ],
+              "bad": []
+            },
+            "gateway": {
+              "item": {
+                "issues": [
+                  {
+                    "code": "NODE_REFERENCE_OPTIONAL_MISSING",
+                    "severity": "warning",
+                    "message": "No node defines counters.nodeVisits.missing.",
+                    "nodeId": "pick",
+                    "path": "config.context.messages.where"
+                  },
+                  {
+                    "code": "HARNESS_READINESS_CLI_MISSING",
+                    "severity": "warning",
+                    "message": "Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight.",
+                    "nodeId": "pick",
+                    "path": "config.harness"
+                  }
+                ],
+                "publishable": false
+              },
+              "bad": {
+                "issues": [
+                  {
+                    "code": "HARNESS_READINESS_CLI_MISSING",
+                    "severity": "warning",
+                    "message": "Codex CLI was not found. Install the Codex CLI or set GG_CODEX_BINARY, then retry preflight.",
+                    "nodeId": "pick",
+                    "path": "config.harness"
+                  }
+                ],
+                "publishable": false
+              }
+            }
+          },
+          "effects": {
+            "before": true,
+            "renamed": true
+          }
+        },
+        {
+          "kind": "classifier",
+          "rename": {
+            "before": "$thread.counters.nodeVisits.work > 0 or $exists(counters.nodeVisits.work)",
+            "result": "$thread.counters.nodeVisits.work > 0 or $exists(counters.nodeVisits.renamed)",
+            "warnings": [],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "renamed",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "pick",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "yes",
+                "from": {
+                  "node": "pick",
+                  "port": "yes"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "no",
+                "from": {
+                  "node": "pick",
+                  "port": "no"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "validation": {
+            "domain": {
+              "item": [
+                {
+                  "nodeId": "pick",
+                  "path": "config.context.messages.where",
+                  "severity": "warning",
+                  "code": "NODE_REFERENCE_OPTIONAL_MISSING",
+                  "message": "No node defines counters.nodeVisits.missing."
+                }
+              ],
+              "bad": []
+            },
+            "gateway": {
+              "item": {
+                "issues": [
+                  {
+                    "code": "NODE_REFERENCE_OPTIONAL_MISSING",
+                    "severity": "warning",
+                    "message": "No node defines counters.nodeVisits.missing.",
+                    "nodeId": "pick",
+                    "path": "config.context.messages.where"
+                  },
+                  {
+                    "code": "CLASSIFIER_SECRET_MISSING",
+                    "severity": "warning",
+                    "message": "Decision 'pick' (pick), classifier 'Jev' (jev): Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets. Configure its key in Settings, Classifier models. This evaluation is unavailable; publication is blocked.",
+                    "nodeId": "pick",
+                    "path": "config.model"
+                  }
+                ],
+                "publishable": false
+              },
+              "bad": {
+                "issues": [
+                  {
+                    "code": "CLASSIFIER_SECRET_MISSING",
+                    "severity": "warning",
+                    "message": "Decision 'pick' (pick), classifier 'Jev' (jev): Missing or blank secret 'jev-api-key'. Set it in Settings, Secrets. Configure its key in Settings, Classifier models. This evaluation is unavailable; publication is blocked.",
+                    "nodeId": "pick",
+                    "path": "config.model"
+                  }
+                ],
+                "publishable": false
+              }
+            }
+          },
+          "effects": {
+            "before": true,
+            "renamed": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "F1 Subloop where variable uses the parent thread root",
+      "rename": {
+        "before": "counters.nodeVisits.work",
+        "result": "counters.nodeVisits.work",
+        "warnings": [],
+        "edges": [
+          {
+            "id": "start",
+            "from": {
+              "node": "renamed",
+              "port": "out"
+            },
+            "to": {
+              "node": "child",
+              "port": "in"
+            }
+          },
+          {
+            "id": "finish",
+            "from": {
+              "node": "child",
+              "port": "out"
+            },
+            "to": {
+              "node": "end",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "rest": {
+        "firstVersion": {
+          "id": "01M7DSZ28QMAPT8C980M0F8MVG",
+          "loopId": "01M7DSZ28QMAPT8C980M0F8MVF",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reference QA before subloop-parent 20b12b9",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "work",
+                "label": "work",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "child",
+                "label": "child",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "subloop",
+                "config": {
+                  "loopRef": {
+                    "loopId": "01M7DSZ27J8ZB12P0BWC56GPG8",
+                    "version": 1
+                  },
+                  "input": {
+                    "mode": "fresh",
+                    "vars": {
+                      "where": "counters.nodeVisits.work"
+                    }
+                  },
+                  "output": {
+                    "mode": "result-only",
+                    "resultTo": {
+                      "lastOutput": true
+                    },
+                    "usage": "roll-up"
+                  }
+                }
+              },
+              {
+                "id": "end",
+                "label": "end",
+                "ui": {
+                  "x": 0,
+                  "y": 0
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "outputs.child.value.result",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "child",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "finish",
+                "from": {
+                  "node": "child",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T19:53:48.055Z",
+          "publishedAt": "2026-11-14T19:53:48.081Z"
+        },
+        "prePublish": {
+          "loop": {
+            "id": "01M7DSZ28QMAPT8C980M0F8MVF",
+            "ownerId": "local",
+            "name": "Reference QA before subloop-parent 20b12b9",
+            "currentVersionId": "01M7DSZ28QMAPT8C980M0F8MVG",
+            "draftVersionId": "01M7DSZ2A9M4NEZGY2G3YETVDF",
+            "createdAt": "2026-11-14T19:53:48.055Z",
+            "updatedAt": "2026-11-14T19:53:48.105Z"
+          },
+          "current": {
+            "id": "01M7DSZ28QMAPT8C980M0F8MVG",
+            "loopId": "01M7DSZ28QMAPT8C980M0F8MVF",
+            "version": 1,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Reference QA before subloop-parent 20b12b9",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "work",
+                  "label": "work",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "child",
+                  "label": "child",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "subloop",
+                  "config": {
+                    "loopRef": {
+                      "loopId": "01M7DSZ27J8ZB12P0BWC56GPG8",
+                      "version": 1
+                    },
+                    "input": {
+                      "mode": "fresh",
+                      "vars": {
+                        "where": "counters.nodeVisits.work"
+                      }
+                    },
+                    "output": {
+                      "mode": "result-only",
+                      "resultTo": {
+                        "lastOutput": true
+                      },
+                      "usage": "roll-up"
+                    }
+                  }
+                },
+                {
+                  "id": "end",
+                  "label": "end",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "outputs.child.value.result",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "start",
+                  "from": {
+                    "node": "work",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "child",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "finish",
+                  "from": {
+                    "node": "child",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "end",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T19:53:48.055Z",
+            "publishedAt": "2026-11-14T19:53:48.081Z"
+          },
+          "draft": {
+            "id": "01M7DSZ2A9M4NEZGY2G3YETVDF",
+            "loopId": "01M7DSZ28QMAPT8C980M0F8MVF",
+            "version": 2,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Reference QA before subloop-parent 20b12b9",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "work",
+                  "label": "work",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "child",
+                  "label": "child",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "subloop",
+                  "config": {
+                    "loopRef": {
+                      "loopId": "01M7DSZ27J8ZB12P0BWC56GPG8",
+                      "version": 1
+                    },
+                    "input": {
+                      "mode": "fresh",
+                      "vars": {
+                        "where": "gates.absent.passes"
+                      }
+                    },
+                    "output": {
+                      "mode": "result-only",
+                      "resultTo": {
+                        "lastOutput": true
+                      },
+                      "usage": "roll-up"
+                    }
+                  }
+                },
+                {
+                  "id": "end",
+                  "label": "end",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "outputs.child.value.result",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "start",
+                  "from": {
+                    "node": "work",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "child",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "finish",
+                  "from": {
+                    "node": "child",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "end",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T19:53:48.105Z"
+          },
+          "draftToken": "e81c8839737236e2"
+        },
+        "savedIssues": [],
+        "validation": {
+          "issues": [],
+          "publishable": true
+        },
+        "attempt": {
+          "status": 200,
+          "data": {
+            "version": {
+              "id": "01M7DSZ2A9M4NEZGY2G3YETVDF",
+              "loopId": "01M7DSZ28QMAPT8C980M0F8MVF",
+              "version": 2,
+              "status": "published",
+              "definition": {
+                "schemaVersion": 4,
+                "name": "Reference QA before subloop-parent 20b12b9",
+                "settings": {
+                  "workingDirectory": {
+                    "kind": "temp"
+                  },
+                  "defaults": {
+                    "byHarness": {}
+                  },
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null,
+                  "subloopDepthLimit": 8
+                },
+                "variables": {},
+                "nodes": [
+                  {
+                    "id": "work",
+                    "label": "work",
+                    "ui": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "kind": "trigger",
+                    "config": {
+                      "type": "manual",
+                      "exposeTo": [
+                        "ui",
+                        "api",
+                        "mcp"
+                      ]
+                    }
+                  },
+                  {
+                    "id": "child",
+                    "label": "child",
+                    "ui": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "kind": "subloop",
+                    "config": {
+                      "loopRef": {
+                        "loopId": "01M7DSZ27J8ZB12P0BWC56GPG8",
+                        "version": 1
+                      },
+                      "input": {
+                        "mode": "fresh",
+                        "vars": {
+                          "where": "gates.absent.passes"
+                        }
+                      },
+                      "output": {
+                        "mode": "result-only",
+                        "resultTo": {
+                          "lastOutput": true
+                        },
+                        "usage": "roll-up"
+                      }
+                    }
+                  },
+                  {
+                    "id": "end",
+                    "label": "end",
+                    "ui": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "kind": "exit",
+                    "config": {
+                      "outcome": "success",
+                      "returns": "outputs.child.value.result",
+                      "destinations": [
+                        {
+                          "kind": "caller"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "edges": [
+                  {
+                    "id": "start",
+                    "from": {
+                      "node": "work",
+                      "port": "out"
+                    },
+                    "to": {
+                      "node": "child",
+                      "port": "in"
+                    }
+                  },
+                  {
+                    "id": "finish",
+                    "from": {
+                      "node": "child",
+                      "port": "out"
+                    },
+                    "to": {
+                      "node": "end",
+                      "port": "in"
+                    }
+                  }
+                ]
+              },
+              "createdAt": "2026-11-14T19:53:48.105Z",
+              "publishedAt": "2026-11-14T19:53:48.139Z"
+            },
+            "issues": []
+          }
+        },
+        "after": {
+          "loop": {
+            "id": "01M7DSZ28QMAPT8C980M0F8MVF",
+            "ownerId": "local",
+            "name": "Reference QA before subloop-parent 20b12b9",
+            "currentVersionId": "01M7DSZ2A9M4NEZGY2G3YETVDF",
+            "createdAt": "2026-11-14T19:53:48.055Z",
+            "updatedAt": "2026-11-14T19:53:48.139Z"
+          },
+          "current": {
+            "id": "01M7DSZ2A9M4NEZGY2G3YETVDF",
+            "loopId": "01M7DSZ28QMAPT8C980M0F8MVF",
+            "version": 2,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Reference QA before subloop-parent 20b12b9",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "work",
+                  "label": "work",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "child",
+                  "label": "child",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "subloop",
+                  "config": {
+                    "loopRef": {
+                      "loopId": "01M7DSZ27J8ZB12P0BWC56GPG8",
+                      "version": 1
+                    },
+                    "input": {
+                      "mode": "fresh",
+                      "vars": {
+                        "where": "gates.absent.passes"
+                      }
+                    },
+                    "output": {
+                      "mode": "result-only",
+                      "resultTo": {
+                        "lastOutput": true
+                      },
+                      "usage": "roll-up"
+                    }
+                  }
+                },
+                {
+                  "id": "end",
+                  "label": "end",
+                  "ui": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "outputs.child.value.result",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "start",
+                  "from": {
+                    "node": "work",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "child",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "finish",
+                  "from": {
+                    "node": "child",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "end",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T19:53:48.105Z",
+            "publishedAt": "2026-11-14T19:53:48.139Z"
+          },
+          "draftToken": "e81c8839737236e2"
+        }
+      }
+    },
+    {
+      "name": "F2 evaluator-confirmed non-path JSONata attachments",
+      "witnesses": [
+        {
+          "name": "function-result predicate",
+          "source": "$distinct(vars.rows)[n = $$.counters.nodeVisits.work].n",
+          "before": 2,
+          "variant": 1,
+          "observesOriginalRoot": true,
+          "proposed": "$distinct(vars.rows)[n = $$.counters.nodeVisits.work].n",
+          "warnings": [],
+          "missing": []
+        },
+        {
+          "name": "block-result predicate",
+          "source": "(vars.rows)[n = $$.counters.nodeVisits.work].n",
+          "before": 2,
+          "variant": 1,
+          "observesOriginalRoot": true,
+          "proposed": "(vars.rows)[n = $$.counters.nodeVisits.work].n",
+          "warnings": [],
+          "missing": []
+        },
+        {
+          "name": "function-result grouping",
+          "source": "$distinct(vars.rows){tag: $sum($$.counters.nodeVisits.work)}",
+          "before": {
+            "one": 2,
+            "two": 2
+          },
+          "variant": {
+            "one": 1,
+            "two": 1
+          },
+          "observesOriginalRoot": true,
+          "proposed": "$distinct(vars.rows){tag: $sum($$.counters.nodeVisits.work)}",
+          "warnings": []
+        }
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [Object: null prototype] {\n- {\n    one: 2,\n    two: 2\n  }\n"
+    }
+  ],
+  "failures": [
+    {
+      "name": "F2 evaluator-confirmed non-path JSONata attachments",
+      "reason": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [Object: null prototype] {\n- {\n    one: 2,\n    two: 2\n  }\n",
+      "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [Object: null prototype] {\n- {\n    one: 2,\n    two: 2\n  }\n\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/node-reference-273-review-correction-independent/runs/before-backend-url/verify-backend.mjs:226:32\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async record (file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/node-reference-273-review-correction-independent/runs/before-backend-url/verify-backend.mjs:82:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/node-reference-273-review-correction-independent/runs/before-backend-url/verify-backend.mjs:204:1"
+    }
+  ]
+}

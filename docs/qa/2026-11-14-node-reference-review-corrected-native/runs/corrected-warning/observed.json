@@ -1,0 +1,974 @@
+{
+  "origin": "http://127.0.0.1:55318",
+  "suite": "273-review-correction-native-candidate",
+  "phase": "corrected",
+  "scenario": "warning",
+  "rowCommit": "pointer",
+  "bundles": [
+    200
+  ],
+  "outcome": {
+    "route": "explicit historical guidance",
+    "dialogNotice": "Renamed work to budget\n\nUpdated 2 connections. Plain text, JSON values and scripts are not changed.\n\nReview one place where work may remain:\n\nWarning\nNODE_REFERENCE_UNCERTAIN\nThis field may depend on a dynamic, inherited, or authored node ID. Review it after renaming.\nnode audit\nconfig.operations.1.content\n\naudit changed after the rename. Its places show where they were then and no longer open a field.\n\nUndo reverses the whole rename.",
+    "canvasNotice": "Renamed work to budget\n\nUpdated 2 connections. Plain text, JSON values and scripts are not changed.\n\nReview one place where work may remain:\n\nWarning\nNODE_REFERENCE_UNCERTAIN\nThis field may depend on a dynamic, inherited, or authored node ID. Review it after renaming.\nnode audit\nconfig.operations.1.content\n\naudit changed after the rename. Its places show where they were then and no longer open a field.\n\nUndo reverses the whole rename.",
+    "afterRemovalFocus": {
+      "field": "operations",
+      "row": null,
+      "id": null,
+      "label": null,
+      "type": "BUTTON",
+      "value": null,
+      "text": null,
+      "isToggle": false,
+      "displayed": true
+    },
+    "previousRows": {
+      "name": "_r_1c_",
+      "rows": [
+        {
+          "id": "0",
+          "path": "operations.0",
+          "open": "false"
+        },
+        {
+          "id": "1",
+          "path": "operations.1",
+          "open": "true"
+        },
+        {
+          "id": "2",
+          "path": "operations.2",
+          "open": "false"
+        }
+      ],
+      "focused": {
+        "field": "operations.1.content",
+        "row": "operations.1",
+        "id": "1",
+        "label": "Content",
+        "type": "textbox",
+        "value": null,
+        "text": "Review counters {{ counters.nodeVisits[vars.key] }}",
+        "isToggle": false,
+        "displayed": true
+      }
+    },
+    "movedRows": {
+      "name": "_r_1c_",
+      "rows": [
+        {
+          "id": "1",
+          "path": "operations.0",
+          "open": "true"
+        },
+        {
+          "id": "2",
+          "path": "operations.1",
+          "open": "false"
+        }
+      ],
+      "focused": {
+        "field": "operations",
+        "row": null,
+        "id": null,
+        "label": null,
+        "type": "BUTTON",
+        "value": null,
+        "text": null,
+        "isToggle": false,
+        "displayed": true
+      }
+    }
+  },
+  "writes": [
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Warning field identity 71614b6",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "budget",
+              "label": "Rename target",
+              "ui": {
+                "x": 300,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Keep source operation"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "audit",
+              "label": "Warning owner",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Remove preceding operation"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Review counters {{ counters.nodeVisits[vars.key] }}"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Unrelated third operation must never receive focus"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 920,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "budget",
+                "port": "in"
+              }
+            },
+            {
+              "id": "next",
+              "from": {
+                "node": "budget",
+                "port": "out"
+              },
+              "to": {
+                "node": "audit",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "audit",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"1a9bd02fab72bb6b\"",
+      "at": 1794686682840
+    },
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Warning field identity 71614b6",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "budget",
+              "label": "Rename target",
+              "ui": {
+                "x": 300,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Keep source operation"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "audit",
+              "label": "Warning owner",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Review counters {{ counters.nodeVisits[vars.key] }}"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Unrelated third operation must never receive focus"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 920,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "budget",
+                "port": "in"
+              }
+            },
+            {
+              "id": "next",
+              "from": {
+                "node": "budget",
+                "port": "out"
+              },
+              "to": {
+                "node": "audit",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "audit",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"af776d70ac117373\"",
+      "at": 1794686684753
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "rename while preserving ambiguous Liquid",
+      "stored": {
+        "loop": {
+          "id": "01M7DTK0JWBEQNHDD11N861WVA",
+          "ownerId": "local",
+          "name": "Warning field identity 71614b6",
+          "draftVersionId": "01M7DTK0JWBEQNHDD11N861WVB",
+          "createdAt": "2026-11-14T20:04:41.692Z",
+          "updatedAt": "2026-11-14T20:04:42.849Z"
+        },
+        "draft": {
+          "id": "01M7DTK0JWBEQNHDD11N861WVB",
+          "loopId": "01M7DTK0JWBEQNHDD11N861WVA",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Warning field identity 71614b6",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "budget",
+                "label": "Rename target",
+                "ui": {
+                  "x": 300,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Keep source operation"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "audit",
+                "label": "Warning owner",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Remove preceding operation"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Review counters {{ counters.nodeVisits[vars.key] }}"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Unrelated third operation must never receive focus"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 920,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "budget",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "next",
+                "from": {
+                  "node": "budget",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "audit",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "audit",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:41.692Z"
+        },
+        "draftToken": "af776d70ac117373"
+      },
+      "local": {
+        "loopId": "01M7DTK0JWBEQNHDD11N861WVA",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Warning field identity 71614b6",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "budget",
+              "label": "Rename target",
+              "ui": {
+                "x": 300,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Keep source operation"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "audit",
+              "label": "Warning owner",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Remove preceding operation"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Review counters {{ counters.nodeVisits[vars.key] }}"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Unrelated third operation must never receive focus"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 920,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "budget",
+                "port": "in"
+              }
+            },
+            {
+              "id": "next",
+              "from": {
+                "node": "budget",
+                "port": "out"
+              },
+              "to": {
+                "node": "audit",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "audit",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:04:42.889Z",
+        "synced": true,
+        "baseToken": "af776d70ac117373"
+      }
+    },
+    {
+      "label": "Remove operation preceding historical warning",
+      "stored": {
+        "loop": {
+          "id": "01M7DTK0JWBEQNHDD11N861WVA",
+          "ownerId": "local",
+          "name": "Warning field identity 71614b6",
+          "draftVersionId": "01M7DTK0JWBEQNHDD11N861WVB",
+          "createdAt": "2026-11-14T20:04:41.692Z",
+          "updatedAt": "2026-11-14T20:04:44.753Z"
+        },
+        "draft": {
+          "id": "01M7DTK0JWBEQNHDD11N861WVB",
+          "loopId": "01M7DTK0JWBEQNHDD11N861WVA",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Warning field identity 71614b6",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "budget",
+                "label": "Rename target",
+                "ui": {
+                  "x": 300,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Keep source operation"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "audit",
+                "label": "Warning owner",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Review counters {{ counters.nodeVisits[vars.key] }}"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Unrelated third operation must never receive focus"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 920,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "budget",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "next",
+                "from": {
+                  "node": "budget",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "audit",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "audit",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:41.692Z"
+        },
+        "draftToken": "1e09112ed5cea5a3"
+      },
+      "local": {
+        "loopId": "01M7DTK0JWBEQNHDD11N861WVA",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Warning field identity 71614b6",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "budget",
+              "label": "Rename target",
+              "ui": {
+                "x": 300,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Keep source operation"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "audit",
+              "label": "Warning owner",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Review counters {{ counters.nodeVisits[vars.key] }}"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Unrelated third operation must never receive focus"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 920,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "budget",
+                "port": "in"
+              }
+            },
+            {
+              "id": "next",
+              "from": {
+                "node": "budget",
+                "port": "out"
+              },
+              "to": {
+                "node": "audit",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "audit",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:04:44.783Z",
+        "synced": true,
+        "baseToken": "1e09112ed5cea5a3"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": null
+}
