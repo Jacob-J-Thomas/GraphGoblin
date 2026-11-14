@@ -1,0 +1,62 @@
+
+Running 1 test using 1 worker
+
+(node:14400) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\form-controls.spec.ts:271:1 › New run and Wait send the supplied input and omit untouched or reset fields (#235) (1.0m)
+
+
+  1) [chromium] › e2e\form-controls.spec.ts:271:1 › New run and Wait send the supplied input and omit untouched or reset fields (#235) 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.check: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('form', { name: 'Start run' }).getByRole('radiogroup', { name: 'approved' }).getByRole('radio', { name: 'No', exact: true })
+        - locator resolved to <input type="radio" name="_r_c_" value="false" class="peer sr-only"/>
+      - attempting click action
+        2 × waiting for element to be visible, enabled and stable
+          - element is visible, enabled and stable
+          - scrolling into view if needed
+          - done scrolling
+          - <label class="relative inline-flex max-w-full min-w-0 pointer-coarse:min-h-11 pointer-coarse:min-w-11">…</label> intercepts pointer events
+        - retrying click action
+        - waiting 20ms
+        2 × waiting for element to be visible, enabled and stable
+          - element is visible, enabled and stable
+          - scrolling into view if needed
+          - done scrolling
+          - <label class="relative inline-flex max-w-full min-w-0 pointer-coarse:min-h-11 pointer-coarse:min-w-11">…</label> intercepts pointer events
+        - retrying click action
+          - waiting 100ms
+        110 × waiting for element to be visible, enabled and stable
+            - element is visible, enabled and stable
+            - scrolling into view if needed
+            - done scrolling
+            - <label class="relative inline-flex max-w-full min-w-0 pointer-coarse:min-h-11 pointer-coarse:min-w-11">…</label> intercepts pointer events
+          - retrying click action
+            - waiting 500ms
+
+
+      373 |       .getByRole('radiogroup', { name: 'approved' })
+      374 |       .getByRole('radio', { name: 'No', exact: true })
+    > 375 |       .check();
+          |        ^
+      376 |     return submit;
+      377 |   }
+      378 |
+        at enterInput (C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:375:8)
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:380:17
+
+    Error Context: test-results\form-controls-New-run-and--dff0c-ouched-or-reset-fields-235--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\form-controls-New-run-and--dff0c-ouched-or-reset-fields-235--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\form-controls-New-run-and--dff0c-ouched-or-reset-fields-235--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\form-controls.spec.ts:271:1 › New run and Wait send the supplied input and omit untouched or reset fields (#235) 
