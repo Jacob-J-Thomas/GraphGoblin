@@ -241,6 +241,13 @@ function RouteHandles({
     const edge = s.definition?.edges.find((e) => e.id === edgeId);
     return !!edge && !!s.definition && isProtectedVoiceEdge(s.definition, s.systemChat, edge);
   });
+  // From a mouse pan's first move until its release settles, d3 may cancel the next click (#207).
+  // Reset route and Remove connection then say they are unavailable, keeping their hit target and
+  // focus (aria-disabled, not disabled), and their handlers refuse on the same rendered state.
+  const gesture = useSyncExternalStore(editing.viewport.subscribe, editing.viewport.state);
+  const settling = gesture === 'ready' ? undefined : gesture;
+  // The voice-step reason wins: that button stays disabled with its message.
+  const removeSettling = removalBlocked ? undefined : settling;
   // After a nudge, keep focus on the moved segment even when a split renumbered it: once the
   // stored route comes back with that segment, focus its handle.
   const focusTargetRef = useRef<RouteSegment>(undefined);
@@ -339,7 +346,10 @@ function RouteHandles({
                 size="sm"
                 variant="outline"
                 className="nodrag nopan nokey pointer-coarse:h-11"
+                aria-disabled={settling ? true : undefined}
+                data-gesture={settling}
                 onClick={() => {
+                  if (settling) return;
                   editing.reset(edgeId);
                   edgeElement()?.focus();
                 }}
@@ -353,10 +363,13 @@ function RouteHandles({
               variant="outline"
               className="nodrag nopan nokey pointer-coarse:h-11"
               disabled={removalBlocked}
+              aria-disabled={removeSettling ? true : undefined}
+              data-gesture={removeSettling}
               title={removalBlocked ? VOICE_STEP_MESSAGE : undefined}
               onClick={(event) => {
                 // The edge wrapper would select this (now removed) edge again on the same click.
                 event.stopPropagation();
+                if (settling) return;
                 editing.remove(edgeId);
               }}
               onKeyDown={toolbarKeys}
