@@ -18,10 +18,13 @@ async function setup(options: TestAppOptions = {}) {
   opened.push(t);
   return t;
 }
-function repeated(kind: 'wait' | 'heartbeat' = 'wait'): LoopDefinitionInput {
+function repeated(
+  kind: 'wait' | 'heartbeat' = 'wait',
+  name = 'Repeated wait',
+): LoopDefinitionInput {
   return {
     schemaVersion: 4,
-    name: 'Repeated wait',
+    name,
     nodes: [
       { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
       kind === 'wait'
@@ -174,8 +177,9 @@ describe('observed wait identities over real SQLite and API', () => {
 
 function singleWait(
   config: Extract<LoopDefinitionInput['nodes'][number], { kind: 'wait' }>['config'],
+  name = 'Repeated wait',
 ): LoopDefinitionInput {
-  const def = repeated();
+  const def = repeated('wait', name);
   def.nodes = [def.nodes[0]!, { id: 'work', kind: 'wait', label: 'Wait', config }, def.nodes[3]!];
   def.edges = [
     def.edges[0]!,
@@ -652,8 +656,14 @@ it.each(['event', 'row'] as const)(
   'acknowledges timers for unreadable %s history and keeps healthy work available',
   async (damage) => {
     const t = await setup();
-    const bad = await start(t, singleWait({ mode: 'duration', seconds: 1 }));
-    const healthy = await start(t, singleWait({ mode: 'input', prompt: 'Healthy' }));
+    const bad = await start(
+      t,
+      singleWait({ mode: 'duration', seconds: 1 }, 'Unreadable timed run'),
+    );
+    const healthy = await start(
+      t,
+      singleWait({ mode: 'input', prompt: 'Healthy' }, 'Healthy input run'),
+    );
     t.container.manager.stop();
     await t.container.handle.client.execute({
       sql:

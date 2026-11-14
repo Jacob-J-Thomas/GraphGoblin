@@ -79,7 +79,7 @@ describe('evaluator-specific decision admission', () => {
       const id = created.json().loop.id as string;
       const imported = await t.app.inject({
         method: 'POST',
-        url: '/loops/import',
+        url: '/loops/import?name=Decision%20admission%20copy',
         payload: envelope(input),
       });
       expect(imported.statusCode, imported.body).toBe(201);
@@ -132,7 +132,7 @@ describe('evaluator-specific decision admission', () => {
         }),
         imported = await t.app.inject({
           method: 'POST',
-          url: '/loops/import',
+          url: '/loops/import?name=Invalid%20decision%20copy',
           payload: envelope(input),
         }),
         validated = await t.app.inject({

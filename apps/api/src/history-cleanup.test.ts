@@ -125,15 +125,15 @@ async function controlled(free = 50 * GiB) {
     },
   };
 }
-async function complete(t: TestApp, artifact = false) {
+async function complete(t: TestApp, name: string, artifact = false) {
   const definition = artifact
-    ? singleNodeLoop('Owned outputs', {
+    ? singleNodeLoop(name, {
         id: 'infer',
         kind: 'inference',
         label: 'Infer',
         config: { prompt: { template: 'Hello' }, output: { captureTranscript: 'artifact' } },
       })
-    : minimalLoop();
+    : { ...minimalLoop(), name };
   const loop = await t.publishLoop(definition);
   const started = await t.app.inject({ method: 'POST', url: `/loops/${loop}/runs`, payload: {} });
   expect(started.statusCode).toBe(202);
@@ -162,7 +162,7 @@ async function mark(t: TestApp, runIds: string[]) {
 
 it('leaves approvals and files alone with adequate storage, measures at most once per minute and uses hysteresis', async () => {
   const { api, poll, read } = await controlled();
-  const run = await complete(api);
+  const run = await complete(api, 'Approved retained history');
   await mark(api, [run.id]);
   await poll(50 * GiB);
   expect((await api.container.repos.runs.get(run.id))?.deletionApproval).toBeDefined();
@@ -209,7 +209,10 @@ it.each(['early-exit', 'empty-render'] as const)(
     expect((await api.container.repos.runs.get(retained.id))?.status).toBe(
       mode === 'early-exit' ? 'succeeded' : 'failed',
     );
-    const owners = [await complete(api, true), await complete(api, true)];
+    const owners = [
+      await complete(api, 'First disposable outputs', true),
+      await complete(api, 'Second disposable outputs', true),
+    ];
     const workspaces = api.harness.started.map((turn) => turn.workingDirectory);
     expect(workspaces).toHaveLength(2);
     for (const path of workspaces) await writeFile(join(path, 'owned'), 'reclaim');
@@ -241,7 +244,7 @@ it('uses an aliased data directory for temp workspaces, transcripts and pressure
     env: { GG_DATA_DIR: alias },
     storageCapacity: { read: () => Promise.resolve({ totalBytes: 100 * GiB, availableBytes }) },
   });
-  const run = await complete(app, true);
+  const run = await complete(app, 'Aliased owned outputs', true);
   expect((await app.container.repos.runs.get(run.id))?.status).toBe('succeeded');
   const workspace = app.harness.started[0]!.workingDirectory;
   const artifact = (await app.container.manager.getThread(run.id))!.artifacts[0]!;
@@ -261,8 +264,8 @@ it('uses an aliased data directory for temp workspaces, transcripts and pressure
 
 it('warns with no eligible history and treats successful and failed retained runs identically', async () => {
   const { api, poll } = await controlled();
-  const success = await complete(api),
-    failed = await complete(api);
+  const success = await complete(api, 'Successful retained run'),
+    failed = await complete(api, 'Failed retained run');
   await api.container.repos.runs.update(failed.id, { status: 'failed' });
   await poll(0);
   const status = (await api.app.inject('/system/storage')).json<StorageStatus>();
@@ -279,7 +282,10 @@ it('warns with no eligible history and treats successful and failed retained run
 
 it('cleans an older run approved between pressure passes without a false no-eligible status', async () => {
   const { api, poll } = await controlled();
-  const pair = [await complete(api), await complete(api)].sort((a, b) => a.id.localeCompare(b.id));
+  const pair = [
+    await complete(api, 'Older approved run'),
+    await complete(api, 'Newer approved run'),
+  ].sort((a, b) => a.id.localeCompare(b.id));
   const older = pair[0]!,
     newer = pair[1]!;
   await mark(api, [newer.id]);
@@ -296,7 +302,7 @@ it('cleans an older run approved between pressure passes without a false no-elig
 
 it('refuses noncanonical artifact references before retained input can depend on them', async () => {
   const { api, poll } = await controlled();
-  const owner = await complete(api, true);
+  const owner = await complete(api, 'Original artifact owner', true);
   const artifact = (await api.container.manager.getThread(owner.id))!.artifacts[0]!;
   const [kind, hash] = artifact.ref.slice('artifact:'.length).split('/');
   const spellings = [
@@ -311,7 +317,9 @@ it('refuses noncanonical artifact references before retained input can depend on
   ];
   for (const ref of spellings)
     expect(await api.container.ports.artifacts.get(ref), ref).toBeUndefined();
-  const loop = await api.publishLoop(minimalLoop());
+  const retainedInput = minimalLoop();
+  retainedInput.name = 'Canonical artifact retained input';
+  const loop = await api.publishLoop(retainedInput);
   const response = await api.app.inject({
     method: 'POST',
     url: `/loops/${loop}/runs`,
@@ -331,7 +339,7 @@ it.each(['direct', 'missing-descendant', 'containing'] as const)(
   'protects a waiting run workspace configured through a %s junction',
   async (mode) => {
     const { api, poll } = await controlled();
-    const owner = await complete(api, true);
+    const owner = await complete(api, 'Junction-protected owner', true);
     const workspace = api.harness.started[0]!.workingDirectory;
     await writeFile(join(workspace, 'retain.txt'), 'retained input bytes');
     const alias = join(api.dataDir, 'configured-alias');
@@ -372,8 +380,8 @@ it('deletes disposable owned outputs and approved rows while retained shared art
     { finalText: 'same bytes', items: [] },
     { finalText: 'same bytes', items: [] },
   ]);
-  const removed = await complete(api, true),
-    retained = await complete(api, true);
+  const removed = await complete(api, 'Disposable artifact owner', true),
+    retained = await complete(api, 'Retained artifact owner', true);
   const workspace = api.harness.started[0]!.workingDirectory;
   await writeFile(join(workspace, 'owned.txt'), 'owned output');
   const artifact = (await api.container.manager.getThread(retained.id))!.artifacts[0]!;
@@ -419,7 +427,7 @@ it.each(['error', 'invalid'] as const)('fails closed when capacity is %s', async
 
 it('starts no deletion after stop', async () => {
   const { api, poll } = await controlled();
-  const run = await complete(api);
+  const run = await complete(api, 'Stopped cleanup run');
   await mark(api, [run.id]);
   await api.container.historyCleanup.stop();
   await poll(0);
@@ -440,7 +448,7 @@ it('awaits an in-flight capacity dependency on stop and deletes nothing after it
           : Promise.resolve({ totalBytes: 100 * GiB, availableBytes: 50 * GiB }),
     },
   });
-  const run = await complete(app);
+  const run = await complete(app, 'In-flight cleanup run');
   await mark(app, [run.id]);
   hold = true;
   app.clock.advance(60_000);
@@ -622,10 +630,12 @@ it('reclaims approved workspaces through the API with 1000 retained workspace us
   await mkdir(root);
   const template = LoopDefinitionSchema.parse({
     ...minimalLoop(),
+    name: 'Retained template workspace',
     settings: { workingDirectory: { kind: 'template', template: '{{vars.path}}' } },
   });
   const fixed = LoopDefinitionSchema.parse({
     ...minimalLoop(),
+    name: 'Retained fixed workspace',
     settings: { workingDirectory: { kind: 'fixed', path: root } },
   });
   const versions = [];
@@ -635,7 +645,7 @@ it('reclaims approved workspaces through the API with 1000 retained workspace us
   }
   const paths = Array.from({ length: 75 }, (_, i) => join(root, String(i)));
   await Promise.all(paths.map((path) => mkdir(path)));
-  const owner = await complete(api, true);
+  const owner = await complete(api, 'Large retained workspace owner', true);
   const owned = api.harness.started.at(-1)!.workingDirectory;
   await writeFile(join(owned, 'reclaim'), 'owned workspace bytes');
   for (let i = 0; i < 1000; i++) {

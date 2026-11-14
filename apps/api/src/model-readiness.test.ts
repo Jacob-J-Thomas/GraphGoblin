@@ -19,7 +19,7 @@ afterEach(async () => {
   await app?.close();
   app = undefined;
 });
-const definition = (harness: HarnessId = 'claude') => {
+const definition = (harness: HarnessId = 'claude', name = 'Readiness') => {
   const node = {
     id: 'work',
     kind: 'inference' as const,
@@ -32,7 +32,7 @@ const definition = (harness: HarnessId = 'claude') => {
       prompt: { template: 'No turn' },
     },
   };
-  const value = singleNodeLoop('Readiness', node);
+  const value = singleNodeLoop(name, node);
   value.nodes.push({ ...value.nodes.find((n) => n.id === 'work')!, id: 'work2' });
   value.edges.find((edge) => edge.from.node === 'work')!.to.node = 'work2';
   value.edges.push({ id: 'e3', from: { node: 'work2', port: 'out' }, to: { node: 'done' } });
@@ -117,10 +117,11 @@ describe('public authoring readiness', () => {
       });
       const imported = await app.app.inject({
         method: 'POST',
-        url: '/loops/import',
+        url: '/loops/import?name=Readiness%20copy',
         payload: exported,
       });
       expect(imported.statusCode, imported.body).toBe(201);
+      expect(imported.json<{ loop: { name: string } }>().loop.name).toBe('Readiness copy');
       expect(harness.probes).toBe(0);
       await Promise.all(
         [1, 2].map(() =>
@@ -170,7 +171,7 @@ describe('public authoring readiness', () => {
     });
     expect(disabled.statusCode).toBe(201);
     expect(disabled.body).toContain('MODEL_DISABLED');
-    const value = definition();
+    const value = definition('claude', 'Readiness with removed model');
     for (const node of value.nodes)
       if (node.kind === 'inference') node.config.model = 'removed-model';
     const removed = await app.app.inject({

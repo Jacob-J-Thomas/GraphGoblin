@@ -15,8 +15,10 @@ afterEach(async () => {
 function definition(
   authentication: WebhookAuthentication,
   dedupeKey?: string,
+  name = 'Webhook key fixture',
 ): LoopDefinitionInput {
   const value = minimalLoop();
+  value.name = name;
   value.nodes[0]!.config = {
     type: 'webhook',
     authentication,
@@ -35,9 +37,9 @@ const recipes: WebhookAuthentication[] = [
     windowSeconds: 1,
   },
 ];
-async function setup(auth: WebhookAuthentication, key?: string) {
+async function setup(auth: WebhookAuthentication, key?: string, name?: string) {
   await t.app.inject({ method: 'PUT', url: '/secrets/key', payload: { value: 'synthetic' } });
-  const id = await t.publishLoop(definition(auth, key));
+  const id = await t.publishLoop(definition(auth, key, name));
   const endpoint = (await t.app.inject(`/loops/${id}/triggers`)).json<{
     webhooks: { path: string }[];
   }>().webhooks[0]!;
@@ -95,6 +97,7 @@ describe.each(recipes)('uniform webhook keys: $type $message', (auth) => {
     const binding = await setup(
       auth,
       '$string(id) & ":" & $headers."x-delivery" & ":" & $string($exists($headers."x-signature"))',
+      'Payload and header binding source',
     );
     expect((await binding.send('{"id":7}', { 'x-delivery': 'delivery' })).statusCode).toBe(202);
     await t.idle();
@@ -102,7 +105,11 @@ describe.each(recipes)('uniform webhook keys: $type $message', (auth) => {
     expect(
       (await t.container.repos.runs.getInitialThread(run!.id))!.invocation.trigger.dedupeKey,
     ).toBe('7:delivery:false');
-    const invalid = await setup(auth, '$error("private diagnostic")');
+    const invalid = await setup(
+      auth,
+      '$error("private diagnostic")',
+      'Invalid key expression source',
+    );
     const response = await invalid.send('{}');
     expect(response.json()).toMatchObject({ status: 422, code: 'EXPRESSION_FAILED' });
     expect(response.body).not.toContain('private diagnostic');
