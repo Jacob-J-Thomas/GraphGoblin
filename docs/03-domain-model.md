@@ -118,6 +118,15 @@ of the latest durable `node.finished`, not the largest attempt or newest timesta
 The log supplies completed-visit/reset counts and open-turn provenance across restart.
 No row schema or stored data rewrite is needed. See [ADR-0052](decisions/ADR-0052-node-own-session-continuity.md).
 
+### JSON Schema references
+
+Each authored JSON Schema is compiled independently. IDs can recur in other schemas, loops,
+and versions. References into the current schema, including local definitions and embedded
+resources, resolve within that document. An unresolved reference produces an invalid-schema
+diagnostic identifying the reference. The validator does not retrieve schemas over the network
+or resolve references from previously compiled loop definitions. Compiled validators are cached
+by complete schema content.
+
 ## Versioning (Decided)
 
 - Upgrade migration `0005` rewrites stored version definitions once, removing only
