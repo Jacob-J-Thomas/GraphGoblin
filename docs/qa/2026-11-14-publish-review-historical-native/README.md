@@ -1,0 +1,18 @@
+# PR #475 historical native evidence
+
+This packet records the historical negative controls against the retained compiled runtime. The [raw native report](old-native-report.md.txt) is preserved byte-for-byte (4,529 bytes; SHA-256 743c688f9139e003cd210cfa5d823deadb073ed995359cbfa3bd4d6ac51d5a7e). It is the primary chronology for the criterion outcomes and the initial healthy-response timing correction.
+
+| Criterion       | Captured readbacks                                                                                                                                                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| F1              | [Initial](runs/before-f1-initial/observed.json) · [Healthy](runs/before-f1-healthy/observed.json) · [Healthy follow-up](runs/before-f1-healthy-followup/observed.json) · [Held](runs/before-f1-held/observed.json) · [Divergent](runs/before-f1-divergent/observed.json) |
+| F2              | [Default](runs/before-f2-default/observed.json)                                                                                                                                                                                                                          |
+| F3              | [Held](runs/before-f3-held/observed.json) · [Matched](runs/before-f3-matched/observed.json) · [Mismatch](runs/before-f3-mismatch/observed.json)                                                                                                                          |
+| F4              | [Cold](runs/before-f4-cold/observed.json) · [Warm](runs/before-f4-warm/observed.json)                                                                                                                                                                                    |
+| Runtime binding | [Before](475-artifacts-before.json) · [After](475-artifacts-after.json)                                                                                                                                                                                                  |
+| Cleanup         | [First exits](native-baseline-first-exits.json) · [Process and gateway cleanup](old-native-cleanup.json)                                                                                                                                                                 |
+
+The report records seven designated negative fixtures reproduced on their first attempt, followed by one healthy-control readback after the real successful response. Eleven Edge sessions and gateways closed; the cleanup readback reports no owned live process IDs, listeners, locks, WAL or SHM. The test used Windows Edge, Node 22.23.4 and isolated file SQLite.
+
+These are historical failure controls only. They do not establish corrected behavior, final-target integration, provider behavior, physical-device behavior or owner acceptance. No build, owner service, provider call or repository mutation was used. The [corrected candidate packet](../2026-11-14-publish-review-corrected-native/README.md) records separate stacked-candidate observations.
+
+The [retained-file manifest](retained-files-manifest.json) is an exact copy of the source manifest (39 raw files; 1,111,425 bytes). See [local link checks](link-checks.json) and [SHA-256 sums](SHA256SUMS.txt). .gitattributes disables text conversion for every retained file.

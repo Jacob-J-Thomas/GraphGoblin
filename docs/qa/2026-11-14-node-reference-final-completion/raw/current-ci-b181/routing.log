@@ -1,0 +1,785 @@
+﻿2026-11-14T23:01:26.5830468Z Current runner version: '2.338.2'
+2026-11-14T23:01:26.5846392Z ##[group]Runner Image Provisioner
+2026-11-14T23:01:26.5847006Z Hosted Compute Agent
+2026-11-14T23:01:26.5847469Z Version: 20261103.629
+2026-11-14T23:01:26.5848161Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-14T23:01:26.5848684Z Build Date: 2026-11-03T17:26:59Z
+2026-11-14T23:01:26.5849213Z Worker ID: {52df4e4a-2134-417c-aac8-b986ba2b8175}
+2026-11-14T23:01:26.5849709Z Region: us-west-2
+2026-11-14T23:01:26.5850100Z Cloud: AWS
+2026-11-14T23:01:26.5850506Z ##[endgroup]
+2026-11-14T23:01:26.5851424Z ##[group]Operating System
+2026-11-14T23:01:26.5851879Z Ubuntu
+2026-11-14T23:01:26.5852238Z 26.04.1
+2026-11-14T23:01:26.5852593Z LTS
+2026-11-14T23:01:26.5852951Z ##[endgroup]
+2026-11-14T23:01:26.5853341Z ##[group]Runner Image
+2026-11-14T23:01:26.5853810Z Image: ubuntu-26.04
+2026-11-14T23:01:26.5854193Z Version: 20261111.82.6
+2026-11-14T23:01:26.5855080Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.82/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-14T23:01:26.5856154Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.82
+2026-11-14T23:01:26.5856814Z ##[endgroup]
+2026-11-14T23:01:26.5857582Z ##[group]GITHUB_TOKEN Permissions
+2026-11-14T23:01:26.5859210Z Contents: read
+2026-11-14T23:01:26.5859612Z Metadata: read
+2026-11-14T23:01:26.5860049Z ##[endgroup]
+2026-11-14T23:01:26.5861428Z Secret source: Actions
+2026-11-14T23:01:26.5862031Z Cache mode: write
+2026-11-14T23:01:26.5862531Z Prepare workflow directory
+2026-11-14T23:01:26.6220350Z Prepare all required actions
+2026-11-14T23:01:26.6256695Z Getting action download info
+2026-11-14T23:01:26.9873075Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-14T23:01:28.6005556Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-14T23:01:29.0156792Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-14T23:01:29.1292757Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-14T23:01:29.4066279Z Complete job name: routing
+2026-11-14T23:01:29.4783749Z ##[group]Run actions/checkout@v4
+2026-11-14T23:01:29.4784826Z with:
+2026-11-14T23:01:29.4785582Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-14T23:01:29.4791852Z   token: ***
+2026-11-14T23:01:29.4792597Z   ssh-strict: true
+2026-11-14T23:01:29.4793328Z   ssh-user: git
+2026-11-14T23:01:29.4794082Z   persist-credentials: true
+2026-11-14T23:01:29.4794869Z   clean: true
+2026-11-14T23:01:29.4795628Z   sparse-checkout-cone-mode: true
+2026-11-14T23:01:29.4796502Z   fetch-depth: 1
+2026-11-14T23:01:29.4797206Z   fetch-tags: false
+2026-11-14T23:01:29.4798138Z   show-progress: true
+2026-11-14T23:01:29.4798905Z   lfs: false
+2026-11-14T23:01:29.4799580Z   submodules: false
+2026-11-14T23:01:29.4800375Z   set-safe-directory: true
+2026-11-14T23:01:29.4801210Z   allow-unsafe-pr-checkout: false
+2026-11-14T23:01:29.4802273Z env:
+2026-11-14T23:01:29.4802962Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:01:29.4804252Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:01:29.4805665Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:01:29.4806458Z ##[endgroup]
+2026-11-14T23:01:33.3313282Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-14T23:01:33.3315127Z ##[group]Getting Git version info
+2026-11-14T23:01:33.3315651Z Working directory is '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-14T23:01:33.3316450Z [command]/usr/bin/git version
+2026-11-14T23:01:33.3316809Z git version 2.56.1
+2026-11-14T23:01:33.3318250Z ##[endgroup]
+2026-11-14T23:01:33.3325122Z Temporarily overriding HOME='/home/runner/work/_temp/d1aa7e48-dc38-424a-a49f-8acfd83e56ff' before making global git config changes
+2026-11-14T23:01:33.3326256Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-14T23:01:33.3329422Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-14T23:01:33.3420781Z Deleting the contents of '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-14T23:01:33.3423332Z ##[group]Initializing the repository
+2026-11-14T23:01:33.3426785Z [command]/usr/bin/git init /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-14T23:01:33.3957417Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-14T23:01:33.3958192Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-14T23:01:33.3958690Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-14T23:01:33.3959101Z hint: call:
+2026-11-14T23:01:33.3959325Z hint:
+2026-11-14T23:01:33.3959650Z hint: 	git config --global init.defaultBranch <name>
+2026-11-14T23:01:33.3959994Z hint:
+2026-11-14T23:01:33.3960332Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-14T23:01:33.3960846Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-14T23:01:33.3961175Z hint:
+2026-11-14T23:01:33.3961370Z hint: 	git branch -m <name>
+2026-11-14T23:01:33.3961575Z hint:
+2026-11-14T23:01:33.3961875Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-14T23:01:33.3994654Z Initialized empty Git repository in /home/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-14T23:01:33.4011508Z [command]/usr/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-14T23:01:33.4064118Z ##[endgroup]
+2026-11-14T23:01:33.4064547Z ##[group]Disabling automatic garbage collection
+2026-11-14T23:01:33.4066723Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-14T23:01:33.4087532Z ##[endgroup]
+2026-11-14T23:01:33.4088198Z ##[group]Setting up auth
+2026-11-14T23:01:33.4092906Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-14T23:01:33.4114061Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-14T23:01:33.6640966Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-14T23:01:33.6664227Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-14T23:01:33.6837396Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-14T23:01:33.6857325Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-14T23:01:33.7025844Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-14T23:01:33.7048582Z ##[endgroup]
+2026-11-14T23:01:33.7048942Z ##[group]Fetching the repository
+2026-11-14T23:01:33.7054132Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +45bfab3ac18a2a37e700f0fef8590b77d55afcd7:refs/remotes/pull/474/merge
+2026-11-14T23:01:46.9671941Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-14T23:01:46.9672488Z  * [new ref]           45bfab3ac18a2a37e700f0fef8590b77d55afcd7 -> pull/474/merge
+2026-11-14T23:01:46.9679383Z ##[endgroup]
+2026-11-14T23:01:46.9679854Z ##[group]Determining the checkout info
+2026-11-14T23:01:46.9680241Z ##[endgroup]
+2026-11-14T23:01:46.9683920Z [command]/usr/bin/git sparse-checkout disable
+2026-11-14T23:01:46.9736225Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-14T23:01:46.9757334Z ##[group]Checking out the ref
+2026-11-14T23:01:46.9761612Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/474/merge
+2026-11-14T23:01:48.0184981Z Updating files:  36% (7631/21120)
+2026-11-14T23:01:48.0322669Z Updating files:  37% (7815/21120)
+2026-11-14T23:01:48.0431739Z Updating files:  38% (8026/21120)
+2026-11-14T23:01:48.0510319Z Updating files:  39% (8237/21120)
+2026-11-14T23:01:48.0669662Z Updating files:  40% (8448/21120)
+2026-11-14T23:01:48.0894161Z Updating files:  41% (8660/21120)
+2026-11-14T23:01:48.1049583Z Updating files:  42% (8871/21120)
+2026-11-14T23:01:48.1138837Z Updating files:  43% (9082/21120)
+2026-11-14T23:01:48.1231045Z Updating files:  44% (9293/21120)
+2026-11-14T23:01:48.1410699Z Updating files:  45% (9504/21120)
+2026-11-14T23:01:48.2092135Z Updating files:  46% (9716/21120)
+2026-11-14T23:01:48.2383802Z Updating files:  47% (9927/21120)
+2026-11-14T23:01:48.2674146Z Updating files:  48% (10138/21120)
+2026-11-14T23:01:48.3014644Z Updating files:  49% (10349/21120)
+2026-11-14T23:01:48.3170118Z Updating files:  50% (10560/21120)
+2026-11-14T23:01:48.3263433Z Updating files:  51% (10772/21120)
+2026-11-14T23:01:48.3347242Z Updating files:  52% (10983/21120)
+2026-11-14T23:01:48.3546463Z Updating files:  53% (11194/21120)
+2026-11-14T23:01:48.3872195Z Updating files:  54% (11405/21120)
+2026-11-14T23:01:48.4082227Z Updating files:  55% (11616/21120)
+2026-11-14T23:01:48.4214007Z Updating files:  56% (11828/21120)
+2026-11-14T23:01:48.4415097Z Updating files:  57% (12039/21120)
+2026-11-14T23:01:48.4536056Z Updating files:  58% (12250/21120)
+2026-11-14T23:01:48.4812174Z Updating files:  59% (12461/21120)
+2026-11-14T23:01:48.5229572Z Updating files:  60% (12672/21120)
+2026-11-14T23:01:48.5562248Z Updating files:  61% (12884/21120)
+2026-11-14T23:01:48.5737429Z Updating files:  62% (13095/21120)
+2026-11-14T23:01:48.5826770Z Updating files:  63% (13306/21120)
+2026-11-14T23:01:48.5901239Z Updating files:  64% (13517/21120)
+2026-11-14T23:01:48.5958432Z Updating files:  65% (13728/21120)
+2026-11-14T23:01:48.6141445Z Updating files:  66% (13940/21120)
+2026-11-14T23:01:48.6296562Z Updating files:  67% (14151/21120)
+2026-11-14T23:01:48.6446287Z Updating files:  68% (14362/21120)
+2026-11-14T23:01:48.6627233Z Updating files:  69% (14573/21120)
+2026-11-14T23:01:48.6739367Z Updating files:  70% (14784/21120)
+2026-11-14T23:01:48.6788934Z Updating files:  71% (14996/21120)
+2026-11-14T23:01:48.6912005Z Updating files:  72% (15207/21120)
+2026-11-14T23:01:48.7121516Z Updating files:  73% (15418/21120)
+2026-11-14T23:01:48.7508862Z Updating files:  74% (15629/21120)
+2026-11-14T23:01:48.7709429Z Updating files:  75% (15840/21120)
+2026-11-14T23:01:48.7899691Z Updating files:  76% (16052/21120)
+2026-11-14T23:01:48.8118411Z Updating files:  77% (16263/21120)
+2026-11-14T23:01:48.8325047Z Updating files:  78% (16474/21120)
+2026-11-14T23:01:48.8505264Z Updating files:  79% (16685/21120)
+2026-11-14T23:01:48.8602846Z Updating files:  80% (16896/21120)
+2026-11-14T23:01:48.8809389Z Updating files:  81% (17108/21120)
+2026-11-14T23:01:48.8913250Z Updating files:  82% (17319/21120)
+2026-11-14T23:01:48.9019454Z Updating files:  83% (17530/21120)
+2026-11-14T23:01:48.9425322Z Updating files:  84% (17741/21120)
+2026-11-14T23:01:48.9618296Z Updating files:  85% (17952/21120)
+2026-11-14T23:01:48.9724590Z Updating files:  86% (18164/21120)
+2026-11-14T23:01:48.9856480Z Updating files:  87% (18375/21120)
+2026-11-14T23:01:48.9919812Z Updating files:  88% (18586/21120)
+2026-11-14T23:01:49.0133418Z Updating files:  88% (18643/21120)
+2026-11-14T23:01:49.0369452Z Updating files:  89% (18797/21120)
+2026-11-14T23:01:49.0532878Z Updating files:  90% (19008/21120)
+2026-11-14T23:01:49.0645807Z Updating files:  91% (19220/21120)
+2026-11-14T23:01:49.0774080Z Updating files:  92% (19431/21120)
+2026-11-14T23:01:49.1032594Z Updating files:  93% (19642/21120)
+2026-11-14T23:01:49.1086964Z Updating files:  94% (19853/21120)
+2026-11-14T23:01:49.1149003Z Updating files:  95% (20064/21120)
+2026-11-14T23:01:49.1200421Z Updating files:  96% (20276/21120)
+2026-11-14T23:01:49.1278056Z Updating files:  97% (20487/21120)
+2026-11-14T23:01:49.1354385Z Updating files:  98% (20698/21120)
+2026-11-14T23:01:49.1442449Z Updating files:  99% (20909/21120)
+2026-11-14T23:01:49.1442786Z Updating files: 100% (21120/21120)
+2026-11-14T23:01:49.1590174Z Updating files: 100% (21120/21120), done.
+2026-11-14T23:01:49.1590640Z Note: switching to 'refs/remotes/pull/474/merge'.
+2026-11-14T23:01:49.1590817Z 
+2026-11-14T23:01:49.1590991Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-14T23:01:49.1591352Z changes and commit them, and you can discard any commits you make in this
+2026-11-14T23:01:49.1591722Z state without impacting any branches by switching back to a branch.
+2026-11-14T23:01:49.1591931Z 
+2026-11-14T23:01:49.1592081Z If you want to create a new branch to retain commits you create, you may
+2026-11-14T23:01:49.1592415Z do so (now or later) by using -c with the switch command. Example:
+2026-11-14T23:01:49.1592609Z 
+2026-11-14T23:01:49.1592698Z   git switch -c <new-branch-name>
+2026-11-14T23:01:49.1592836Z 
+2026-11-14T23:01:49.1592919Z Or undo this operation with:
+2026-11-14T23:01:49.1593048Z 
+2026-11-14T23:01:49.1593124Z   git switch -
+2026-11-14T23:01:49.1593217Z 
+2026-11-14T23:01:49.1593383Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-14T23:01:49.1593619Z 
+2026-11-14T23:01:49.1593914Z HEAD is now at 45bfab3a Merge b1810e03402cbc5d1bdceac899dbcc40b1ac317e into a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c
+2026-11-14T23:01:49.1651116Z ##[endgroup]
+2026-11-14T23:01:49.1700385Z [command]/usr/bin/git log -1 --format=%H
+2026-11-14T23:01:49.1718501Z 45bfab3ac18a2a37e700f0fef8590b77d55afcd7
+2026-11-14T23:01:49.1887167Z ##[group]Run pnpm/action-setup@v4
+2026-11-14T23:01:49.1887372Z with:
+2026-11-14T23:01:49.1887532Z   dest: ~/setup-pnpm
+2026-11-14T23:01:49.1887693Z   run_install: null
+2026-11-14T23:01:49.1888689Z   cache: false
+2026-11-14T23:01:49.1888923Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-14T23:01:49.1889154Z   package_json_file: package.json
+2026-11-14T23:01:49.1889338Z   standalone: false
+2026-11-14T23:01:49.1889549Z env:
+2026-11-14T23:01:49.1889859Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:01:49.1890212Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:01:49.1890593Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:01:49.1890844Z ##[endgroup]
+2026-11-14T23:01:49.2962654Z ##[group]Running self-installer...
+2026-11-14T23:01:49.9560072Z (node:2388) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-14T23:01:49.9561059Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-14T23:01:50.1356976Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-14T23:01:50.2302089Z Packages: +3
+2026-11-14T23:01:50.2302565Z +++
+2026-11-14T23:01:51.0284508Z Progress: resolved 15, reused 0, downloaded 3, added 3, done
+2026-11-14T23:01:51.0415506Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-14T23:01:54.7225478Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-14T23:01:54.7229207Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-14T23:01:54.7579045Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-14T23:01:55.9861118Z 
+2026-11-14T23:01:55.9861790Z dependencies:
+2026-11-14T23:01:55.9862130Z + pnpm 12.8.1 (12.18.0 is available)
+2026-11-14T23:01:55.9862402Z 
+2026-11-14T23:01:55.9877053Z Done in 6.5s
+2026-11-14T23:01:56.0269632Z ##[endgroup]
+2026-11-14T23:01:56.0287160Z Installation Completed!
+2026-11-14T23:01:56.0409614Z ##[group]Run actions/setup-node@v4
+2026-11-14T23:01:56.0409894Z with:
+2026-11-14T23:01:56.0410105Z   node-version-file: .nvmrc
+2026-11-14T23:01:56.0410356Z   cache: pnpm
+2026-11-14T23:01:56.0410565Z   always-auth: false
+2026-11-14T23:01:56.0410802Z   check-latest: false
+2026-11-14T23:01:56.0413642Z   token: ***
+2026-11-14T23:01:56.0413839Z env:
+2026-11-14T23:01:56.0414045Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:01:56.0414485Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:01:56.0414953Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:01:56.0415420Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-14T23:01:56.0415746Z ##[endgroup]
+2026-11-14T23:01:56.1432600Z Resolved .nvmrc as 22
+2026-11-14T23:01:56.2876271Z Found in cache @ /opt/hostedtoolcache/node/22.23.4/x64
+2026-11-14T23:01:56.2880831Z (node:2420) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-14T23:01:56.2881743Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-14T23:01:56.2883802Z ##[group]Environment details
+2026-11-14T23:01:59.4899043Z node: v22.23.4
+2026-11-14T23:01:59.4899313Z npm: 10.9.9
+2026-11-14T23:01:59.4899517Z yarn: 1.22.22
+2026-11-14T23:01:59.4900039Z ##[endgroup]
+2026-11-14T23:01:59.4916087Z [command]/home/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-14T23:01:59.5054773Z /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-14T23:01:59.7800952Z Cache hit for: node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-14T23:01:59.7879537Z (node:2420) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-14T23:02:01.1695274Z Received 0 of 258558667 (0.0%), 0.0 MBs/sec
+2026-11-14T23:02:02.1703095Z Received 96468992 of 258558667 (37.3%), 46.0 MBs/sec
+2026-11-14T23:02:03.1706765Z Received 213909504 of 258558667 (82.7%), 68.0 MBs/sec
+2026-11-14T23:02:03.5182360Z Received 258558667 of 258558667 (100.0%), 73.6 MBs/sec
+2026-11-14T23:02:03.5183819Z Cache Size: ~247 MB (258558667 B)
+2026-11-14T23:02:03.5246693Z [command]/usr/bin/tar -xf /home/runner/work/_temp/502dcb2f-6836-449a-84fb-ad38f93bf740/cache.tzst -P -C /home/runner/work/GraphGoblin/GraphGoblin --use-compress-program unzstd
+2026-11-14T23:02:04.4988820Z Cache restored successfully
+2026-11-14T23:02:04.5081458Z Cache restored from key: node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-14T23:02:04.5254605Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-14T23:02:04.5254928Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-14T23:02:04.5285586Z shell: /usr/bin/bash -e {0}
+2026-11-14T23:02:04.5285790Z env:
+2026-11-14T23:02:04.5285949Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:02:04.5286257Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:02:04.5286571Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:02:04.5286782Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-14T23:02:04.5287000Z ##[endgroup]
+2026-11-14T23:02:04.5543347Z Scope: all 14 workspace projects
+2026-11-14T23:02:04.5910448Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-14T23:02:04.6498486Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-11-14T23:02:04.6505721Z   Content-addressable store is at: /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-14T23:02:04.6506639Z   Virtual store is at:             node_modules/.pnpm
+2026-11-14T23:02:07.5526311Z ✓ Lockfile passes supply-chain policies (931 entries in 3s)
+2026-11-14T23:02:07.5526715Z Lockfile is up to date, resolution step is skipped
+2026-11-14T23:02:07.5649077Z Packages: +801
+2026-11-14T23:02:07.5649590Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-14T23:02:07.6247621Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-14T23:02:07.9154774Z 
+2026-11-14T23:02:07.9158541Z devDependencies:
+2026-11-14T23:02:07.9159145Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-14T23:02:07.9159579Z + @eslint/js 10.0.1
+2026-11-14T23:02:07.9160023Z + @vitest/coverage-v8 5.0.3
+2026-11-14T23:02:07.9160672Z + dependency-cruiser 18.5.0
+2026-11-14T23:02:07.9161157Z + eslint 10.11.0
+2026-11-14T23:02:07.9161502Z + eslint-config-prettier 10.1.8
+2026-11-14T23:02:07.9161887Z + eslint-plugin-react-hooks 7.1.1
+2026-11-14T23:02:07.9162313Z + prettier 3.9.9
+2026-11-14T23:02:07.9163001Z + turbo 2.11.6
+2026-11-14T23:02:07.9163327Z + typescript 6.0.3
+2026-11-14T23:02:07.9163647Z + typescript-eslint 8.71.0
+2026-11-14T23:02:07.9163937Z + vitest 5.0.3
+2026-11-14T23:02:07.9164124Z 
+2026-11-14T23:02:07.9174158Z Done in 3.4s using pnpm v12.8.1
+2026-11-14T23:02:07.9419696Z ##[group]Run pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge
+2026-11-14T23:02:07.9420142Z [36;1mpnpm --filter @graphgoblin/web exec playwright install --with-deps msedge[0m
+2026-11-14T23:02:07.9442336Z shell: /usr/bin/bash -e {0}
+2026-11-14T23:02:07.9442566Z env:
+2026-11-14T23:02:07.9442768Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:02:07.9443103Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:02:07.9443413Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:02:07.9443633Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-14T23:02:07.9443852Z ##[endgroup]
+2026-11-14T23:02:08.5561531Z Installing dependencies...
+2026-11-14T23:02:08.5633188Z Switching to root user to install dependencies...
+2026-11-14T23:02:08.6768348Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [152 B]
+2026-11-14T23:02:08.7467037Z Get:5 https://packages.microsoft.com/ubuntu/26.04/prod resolute InRelease [3964 B]
+2026-11-14T23:02:08.7876285Z Hit:2 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute InRelease
+2026-11-14T23:02:08.8410534Z Get:3 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute-updates InRelease [137 kB]
+2026-11-14T23:02:08.9164441Z Get:6 https://packages.microsoft.com/ubuntu/26.04/prod resolute/main arm64 Packages [143 kB]
+2026-11-14T23:02:08.9854112Z Get:7 https://packages.microsoft.com/ubuntu/26.04/prod resolute/main amd64 Packages [158 kB]
+2026-11-14T23:02:09.0312220Z Get:8 http://security.ubuntu.com/ubuntu resolute-security InRelease [137 kB]
+2026-11-14T23:02:09.0429806Z Get:4 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute-backports InRelease [137 kB]
+2026-11-14T23:02:09.1769672Z Get:9 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute-updates/main amd64v3 Packages [869 kB]
+2026-11-14T23:02:09.3319756Z Get:10 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute-updates/main Translation-en [195 kB]
+2026-11-14T23:02:09.3864089Z Get:11 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute-updates/universe amd64v3 Packages [390 kB]
+2026-11-14T23:02:09.4393774Z Get:12 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute-updates/universe Translation-en [122 kB]
+2026-11-14T23:02:09.7184474Z Get:13 http://security.ubuntu.com/ubuntu resolute-security/main amd64v3 Packages [718 kB]
+2026-11-14T23:02:10.4765984Z Get:14 http://security.ubuntu.com/ubuntu resolute-security/universe amd64v3 Packages [220 kB]
+2026-11-14T23:02:22.5463560Z Fetched 3231 kB in 2s (1733 kB/s)
+2026-11-14T23:02:23.0685563Z Reading package lists...
+2026-11-14T23:02:23.0886347Z Reading package lists...
+2026-11-14T23:02:23.1927201Z Building dependency tree...
+2026-11-14T23:02:23.1932177Z Reading state information...
+2026-11-14T23:02:23.2199527Z xvfb is already the newest version (2:21.1.22-1ubuntu1.3).
+2026-11-14T23:02:23.2200113Z fonts-noto-color-emoji is already the newest version (2.051-1build1).
+2026-11-14T23:02:23.2200660Z libfontconfig1 is already the newest version (2.17.1-3ubuntu1).
+2026-11-14T23:02:23.2201128Z libfontconfig1 set to manually installed.
+2026-11-14T23:02:23.2201591Z libfreetype6 is already the newest version (2.14.2+dfsg-1ubuntu0.2).
+2026-11-14T23:02:23.2202032Z libfreetype6 set to manually installed.
+2026-11-14T23:02:23.2202473Z fonts-liberation is already the newest version (1:2.1.5-3build1).
+2026-11-14T23:02:23.2202923Z fonts-liberation set to manually installed.
+2026-11-14T23:02:23.2559694Z Solving dependencies...
+2026-11-14T23:02:23.3364059Z The following additional packages will be installed:
+2026-11-14T23:02:23.3364702Z   xfonts-encodings xfonts-utils
+2026-11-14T23:02:23.3369458Z Recommended packages:
+2026-11-14T23:02:23.3369823Z   fonts-ipafont-mincho fonts-tlwg-loma
+2026-11-14T23:02:23.3910412Z The following NEW packages will be installed:
+2026-11-14T23:02:23.3911505Z   fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
+2026-11-14T23:02:23.3916366Z   fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
+2026-11-14T23:02:23.3916751Z   xfonts-utils
+2026-11-14T23:02:23.4084296Z 0 upgraded, 9 newly installed, 0 to remove and 16 not upgraded.
+2026-11-14T23:02:23.4084641Z Need to get 21.9 MB of archives.
+2026-11-14T23:02:23.4085370Z After this operation, 80.2 MB of additional disk space will be used.
+2026-11-14T23:02:23.4085820Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [152 B]
+2026-11-14T23:02:23.5539984Z Get:2 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-ipafont-gothic all 00303-23ubuntu1 [3703 kB]
+2026-11-14T23:02:24.0539186Z Get:3 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/main amd64v3 fonts-freefont-ttf all 20211204+svn4273-4build1 [5656 kB]
+2026-11-14T23:02:24.2900075Z Get:4 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-tlwg-loma-otf all 1:0.7.3-1build1 [106 kB]
+2026-11-14T23:02:24.3691255Z Get:5 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-unifont all 1:16.0.04-1build1 [3169 kB]
+2026-11-14T23:02:24.5138185Z Get:6 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-wqy-zenhei all 0.9.45-8build1 [7863 kB]
+2026-11-14T23:02:24.7636007Z Get:7 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/main amd64v3 xfonts-encodings all 1:1.0.5-0ubuntu3 [576 kB]
+2026-11-14T23:02:24.8513357Z Get:8 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/main amd64v3 xfonts-utils amd64 1:7.7+7build1 [97.3 kB]
+2026-11-14T23:02:24.9316678Z Get:9 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/universe amd64v3 xfonts-cyrillic all 1:1.0.5+nmu1build1 [384 kB]
+2026-11-14T23:02:25.0153295Z Get:10 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute/universe amd64v3 xfonts-scalable all 1:1.0.3-1.3build1 [304 kB]
+2026-11-14T23:02:26.2226427Z Fetched 21.9 MB in 2s (13.5 MB/s)
+2026-11-14T23:02:26.3202036Z Selecting previously unselected package fonts-ipafont-gothic.
+2026-11-14T23:02:26.4895775Z (Reading database ... 
+2026-11-14T23:02:26.4896074Z (Reading database ... 5%
+2026-11-14T23:02:26.4896276Z (Reading database ... 10%
+2026-11-14T23:02:26.4896486Z (Reading database ... 15%
+2026-11-14T23:02:26.4896664Z (Reading database ... 20%
+2026-11-14T23:02:26.4896854Z (Reading database ... 25%
+2026-11-14T23:02:26.4897031Z (Reading database ... 30%
+2026-11-14T23:02:26.4897204Z (Reading database ... 35%
+2026-11-14T23:02:26.4897387Z (Reading database ... 40%
+2026-11-14T23:02:26.4897563Z (Reading database ... 45%
+2026-11-14T23:02:26.4897741Z (Reading database ... 50%
+2026-11-14T23:02:27.1178042Z (Reading database ... 55%
+2026-11-14T23:02:27.3550048Z (Reading database ... 60%
+2026-11-14T23:02:28.0914134Z (Reading database ... 65%
+2026-11-14T23:02:28.3498789Z (Reading database ... 70%
+2026-11-14T23:02:28.6568205Z (Reading database ... 75%
+2026-11-14T23:02:29.4750273Z (Reading database ... 80%
+2026-11-14T23:02:30.4704845Z (Reading database ... 85%
+2026-11-14T23:02:31.4014715Z (Reading database ... 90%
+2026-11-14T23:02:32.4822262Z (Reading database ... 95%
+2026-11-14T23:02:32.4822617Z (Reading database ... 100%
+2026-11-14T23:02:32.4823063Z (Reading database ... 213647 files and directories currently installed.)
+2026-11-14T23:02:32.4862812Z Preparing to unpack .../0-fonts-ipafont-gothic_00303-23ubuntu1_all.deb ...
+2026-11-14T23:02:32.4935012Z Unpacking fonts-ipafont-gothic (00303-23ubuntu1) ...
+2026-11-14T23:02:32.6214200Z Selecting previously unselected package fonts-freefont-ttf.
+2026-11-14T23:02:32.6312763Z Preparing to unpack .../1-fonts-freefont-ttf_20211204+svn4273-4build1_all.deb ...
+2026-11-14T23:02:32.6315425Z Unpacking fonts-freefont-ttf (20211204+svn4273-4build1) ...
+2026-11-14T23:02:32.7312403Z Selecting previously unselected package fonts-tlwg-loma-otf.
+2026-11-14T23:02:32.7411105Z Preparing to unpack .../2-fonts-tlwg-loma-otf_1%3a0.7.3-1build1_all.deb ...
+2026-11-14T23:02:32.7413679Z Unpacking fonts-tlwg-loma-otf (1:0.7.3-1build1) ...
+2026-11-14T23:02:32.7551951Z Selecting previously unselected package fonts-unifont.
+2026-11-14T23:02:32.7649068Z Preparing to unpack .../3-fonts-unifont_1%3a16.0.04-1build1_all.deb ...
+2026-11-14T23:02:32.7652211Z Unpacking fonts-unifont (1:16.0.04-1build1) ...
+2026-11-14T23:02:32.8574206Z Selecting previously unselected package fonts-wqy-zenhei.
+2026-11-14T23:02:32.8673291Z Preparing to unpack .../4-fonts-wqy-zenhei_0.9.45-8build1_all.deb ...
+2026-11-14T23:02:32.8775298Z Unpacking fonts-wqy-zenhei (0.9.45-8build1) ...
+2026-11-14T23:02:32.9471011Z Selecting previously unselected package xfonts-encodings.
+2026-11-14T23:02:32.9569342Z Preparing to unpack .../5-xfonts-encodings_1%3a1.0.5-0ubuntu3_all.deb ...
+2026-11-14T23:02:32.9576382Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu3) ...
+2026-11-14T23:02:32.9746588Z Selecting previously unselected package xfonts-utils.
+2026-11-14T23:02:32.9843776Z Preparing to unpack .../6-xfonts-utils_1%3a7.7+7build1_amd64v3.deb ...
+2026-11-14T23:02:32.9848278Z Unpacking xfonts-utils (1:7.7+7build1) ...
+2026-11-14T23:02:33.0523873Z Selecting previously unselected package xfonts-cyrillic.
+2026-11-14T23:02:33.0621371Z Preparing to unpack .../7-xfonts-cyrillic_1%3a1.0.5+nmu1build1_all.deb ...
+2026-11-14T23:02:33.0623730Z Unpacking xfonts-cyrillic (1:1.0.5+nmu1build1) ...
+2026-11-14T23:02:33.0802911Z Selecting previously unselected package xfonts-scalable.
+2026-11-14T23:02:33.0900064Z Preparing to unpack .../8-xfonts-scalable_1%3a1.0.3-1.3build1_all.deb ...
+2026-11-14T23:02:33.0904365Z Unpacking xfonts-scalable (1:1.0.3-1.3build1) ...
+2026-11-14T23:02:33.1160123Z Setting up fonts-wqy-zenhei (0.9.45-8build1) ...
+2026-11-14T23:02:33.1252655Z Setting up fonts-freefont-ttf (20211204+svn4273-4build1) ...
+2026-11-14T23:02:33.1260446Z Setting up fonts-tlwg-loma-otf (1:0.7.3-1build1) ...
+2026-11-14T23:02:33.1269635Z Setting up xfonts-encodings (1:1.0.5-0ubuntu3) ...
+2026-11-14T23:02:33.1277338Z Setting up fonts-ipafont-gothic (00303-23ubuntu1) ...
+2026-11-14T23:02:33.1314300Z update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+2026-11-14T23:02:33.1323673Z Setting up fonts-unifont (1:16.0.04-1build1) ...
+2026-11-14T23:02:33.1331532Z Setting up xfonts-utils (1:7.7+7build1) ...
+2026-11-14T23:02:33.1364666Z Setting up xfonts-cyrillic (1:1.0.5+nmu1build1) ...
+2026-11-14T23:02:33.2034259Z Setting up xfonts-scalable (1:1.0.3-1.3build1) ...
+2026-11-14T23:02:33.2306828Z Processing triggers for man-db (2.13.1-1build1) ...
+2026-11-14T23:02:33.2327228Z Not building database; man-db/auto-update is not 'true'.
+2026-11-14T23:02:33.2334683Z Processing triggers for fontconfig (2.17.1-3ubuntu1) ...
+2026-11-14T23:02:34.4324556Z 
+2026-11-14T23:02:34.4325433Z Running kernel seems to be up-to-date.
+2026-11-14T23:02:34.4325881Z 
+2026-11-14T23:02:34.4326074Z Restarting services...
+2026-11-14T23:02:34.4401707Z 
+2026-11-14T23:02:34.4402366Z Service restarts being deferred:
+2026-11-14T23:02:34.4411732Z  systemctl restart hosted-compute-agent.service
+2026-11-14T23:02:34.4411977Z 
+2026-11-14T23:02:34.4412472Z No containers need to be restarted.
+2026-11-14T23:02:34.4412655Z 
+2026-11-14T23:02:34.4412840Z No user sessions are running outdated binaries.
+2026-11-14T23:02:34.4413058Z 
+2026-11-14T23:02:34.4413345Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-11-14T23:02:35.1034720Z Switching to root user to install dependencies...
+2026-11-14T23:02:35.1095575Z ++ arch
+2026-11-14T23:02:35.1117174Z + [[ x86_64 == aarch64 ]]
+2026-11-14T23:02:35.1117454Z + '[' -z '' ']'
+2026-11-14T23:02:35.1117677Z + [[ ! -f /etc/os-release ]]
+2026-11-14T23:02:35.1119007Z ++ bash -c 'source /etc/os-release && echo $ID'
+2026-11-14T23:02:35.1127981Z + ID=ubuntu
+2026-11-14T23:02:35.1128881Z + [[ ubuntu != ubuntu ]]
+2026-11-14T23:02:35.1130550Z + dpkg --get-selections
+2026-11-14T23:02:35.1131012Z + grep -q '^microsoft-edge-stable[[:space:]]*install$'
+2026-11-14T23:02:35.1213394Z + apt-get remove -y microsoft-edge-stable
+2026-11-14T23:02:35.1314454Z Reading package lists...
+2026-11-14T23:02:35.2432154Z Building dependency tree...
+2026-11-14T23:02:35.2437097Z Reading state information...
+2026-11-14T23:02:35.3105413Z Solving dependencies...
+2026-11-14T23:02:35.3984703Z The following packages will be REMOVED:
+2026-11-14T23:02:35.3985075Z   microsoft-edge-stable
+2026-11-14T23:02:35.6178728Z 0 upgraded, 0 newly installed, 1 to remove and 16 not upgraded.
+2026-11-14T23:02:35.6179247Z After this operation, 711 MB disk space will be freed.
+2026-11-14T23:02:35.6284149Z (Reading database ... 
+2026-11-14T23:02:35.6284501Z (Reading database ... 5%
+2026-11-14T23:02:35.6284764Z (Reading database ... 10%
+2026-11-14T23:02:35.6285007Z (Reading database ... 15%
+2026-11-14T23:02:35.6285374Z (Reading database ... 20%
+2026-11-14T23:02:35.6285622Z (Reading database ... 25%
+2026-11-14T23:02:35.6285867Z (Reading database ... 30%
+2026-11-14T23:02:35.6286118Z (Reading database ... 35%
+2026-11-14T23:02:35.6286395Z (Reading database ... 40%
+2026-11-14T23:02:35.6286637Z (Reading database ... 45%
+2026-11-14T23:02:35.6286889Z (Reading database ... 50%
+2026-11-14T23:02:35.6303038Z (Reading database ... 55%
+2026-11-14T23:02:35.6315527Z (Reading database ... 60%
+2026-11-14T23:02:35.6344792Z (Reading database ... 65%
+2026-11-14T23:02:35.6354739Z (Reading database ... 70%
+2026-11-14T23:02:35.6375119Z (Reading database ... 75%
+2026-11-14T23:02:35.6486099Z (Reading database ... 80%
+2026-11-14T23:02:35.6611165Z (Reading database ... 85%
+2026-11-14T23:02:35.6772232Z (Reading database ... 90%
+2026-11-14T23:02:35.6852308Z (Reading database ... 95%
+2026-11-14T23:02:35.6852605Z (Reading database ... 100%
+2026-11-14T23:02:35.6852919Z (Reading database ... 213912 files and directories currently installed.)
+2026-11-14T23:02:35.6888675Z Removing microsoft-edge-stable (157.0.4341.46-1) ...
+2026-11-14T23:02:35.9238184Z update-alternatives: using /usr/bin/google-chrome-stable to provide /usr/bin/x-www-browser (x-www-browser) in auto mode
+2026-11-14T23:02:35.9246977Z update-alternatives: using /usr/bin/google-chrome-stable to provide /usr/bin/gnome-www-browser (gnome-www-browser) in auto mode
+2026-11-14T23:02:35.9628152Z Processing triggers for man-db (2.13.1-1build1) ...
+2026-11-14T23:02:35.9639769Z Not building database; man-db/auto-update is not 'true'.
+2026-11-14T23:02:36.6923525Z + command -v curl
+2026-11-14T23:02:36.6923904Z + command -v gpg
+2026-11-14T23:02:36.6925785Z + curl -L https://packages.microsoft.com/keys/microsoft.asc
+2026-11-14T23:02:36.6926251Z + gpg --dearmor
+2026-11-14T23:02:36.6964118Z   % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+2026-11-14T23:02:36.6964644Z                                  Dload  Upload  Total   Spent   Left   Speed
+2026-11-14T23:02:36.6964904Z 
+2026-11-14T23:02:36.7465087Z   0      0   0      0   0      0      0      0                              0
+2026-11-14T23:02:36.7465636Z 100    975 100    975   0      0  19455      0                              0
+2026-11-14T23:02:36.7466129Z 100    975 100    975   0      0  19446      0                              0
+2026-11-14T23:02:36.7466562Z 100    975 100    975   0      0  19439      0                              0
+2026-11-14T23:02:36.7678734Z + install -o root -g root -m 644 /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/
+2026-11-14T23:02:36.7707684Z + sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-stable.list'
+2026-11-14T23:02:36.7714942Z + rm /tmp/microsoft.gpg
+2026-11-14T23:02:36.7722304Z + apt-get update
+2026-11-14T23:02:36.8159472Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [152 B]
+2026-11-14T23:02:36.8819983Z Get:5 https://packages.microsoft.com/repos/edge stable InRelease [3590 B]
+2026-11-14T23:02:36.8971499Z Hit:6 https://packages.microsoft.com/ubuntu/26.04/prod resolute InRelease
+2026-11-14T23:02:36.9162874Z Hit:2 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute InRelease
+2026-11-14T23:02:36.9166208Z Get:7 https://packages.microsoft.com/repos/edge stable/main amd64 Packages [64.1 kB]
+2026-11-14T23:02:36.9653125Z Hit:3 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute-updates InRelease
+2026-11-14T23:02:37.0150784Z Hit:4 http://us-east-2.ec2.archive.ubuntu.com/ubuntu resolute-backports InRelease
+2026-11-14T23:02:37.0875549Z Hit:8 http://security.ubuntu.com/ubuntu resolute-security InRelease
+2026-11-14T23:02:37.1925246Z Fetched 67.7 kB in 0s (231 kB/s)
+2026-11-14T23:02:37.7460215Z Reading package lists...
+2026-11-14T23:02:37.7571649Z + apt-get install -y microsoft-edge-stable
+2026-11-14T23:02:37.7670633Z Reading package lists...
+2026-11-14T23:02:37.8788402Z Building dependency tree...
+2026-11-14T23:02:37.8794007Z Reading state information...
+2026-11-14T23:02:37.9490291Z Solving dependencies...
+2026-11-14T23:02:38.0428772Z The following NEW packages will be installed:
+2026-11-14T23:02:38.0429176Z   microsoft-edge-stable
+2026-11-14T23:02:38.1256363Z 0 upgraded, 1 newly installed, 0 to remove and 16 not upgraded.
+2026-11-14T23:02:38.1256756Z Need to get 201 MB of archives.
+2026-11-14T23:02:38.1257058Z After this operation, 711 MB of additional disk space will be used.
+2026-11-14T23:02:38.1257623Z Get:1 https://packages.microsoft.com/repos/edge stable/main amd64 microsoft-edge-stable amd64 157.0.4341.60-1 [201 MB]
+2026-11-14T23:02:38.9909037Z Fetched 201 MB in 1s (267 MB/s)
+2026-11-14T23:02:39.0037177Z Selecting previously unselected package microsoft-edge-stable.
+2026-11-14T23:02:39.0059820Z (Reading database ... 
+2026-11-14T23:02:39.0060061Z (Reading database ... 5%
+2026-11-14T23:02:39.0060260Z (Reading database ... 10%
+2026-11-14T23:02:39.0060450Z (Reading database ... 15%
+2026-11-14T23:02:39.0060636Z (Reading database ... 20%
+2026-11-14T23:02:39.0060813Z (Reading database ... 25%
+2026-11-14T23:02:39.0060990Z (Reading database ... 30%
+2026-11-14T23:02:39.0061175Z (Reading database ... 35%
+2026-11-14T23:02:39.0061351Z (Reading database ... 40%
+2026-11-14T23:02:39.0061528Z (Reading database ... 45%
+2026-11-14T23:02:39.0061840Z (Reading database ... 50%
+2026-11-14T23:02:39.0076095Z (Reading database ... 55%
+2026-11-14T23:02:39.0089009Z (Reading database ... 60%
+2026-11-14T23:02:39.0117613Z (Reading database ... 65%
+2026-11-14T23:02:39.0127716Z (Reading database ... 70%
+2026-11-14T23:02:39.0147958Z (Reading database ... 75%
+2026-11-14T23:02:39.0257063Z (Reading database ... 80%
+2026-11-14T23:02:39.0376911Z (Reading database ... 85%
+2026-11-14T23:02:39.0533629Z (Reading database ... 90%
+2026-11-14T23:02:39.0615389Z (Reading database ... 95%
+2026-11-14T23:02:39.0615719Z (Reading database ... 100%
+2026-11-14T23:02:39.0616037Z (Reading database ... 213523 files and directories currently installed.)
+2026-11-14T23:02:39.0649425Z Preparing to unpack .../microsoft-edge-stable_157.0.4341.60-1_amd64.deb ...
+2026-11-14T23:02:39.0655828Z Unpacking microsoft-edge-stable (157.0.4341.60-1) ...
+2026-11-14T23:02:46.2724626Z Setting up microsoft-edge-stable (157.0.4341.60-1) ...
+2026-11-14T23:02:46.3969415Z update-alternatives: using /usr/bin/microsoft-edge-stable to provide /usr/bin/microsoft-edge (microsoft-edge) in auto mode
+2026-11-14T23:02:46.4168181Z Processing triggers for man-db (2.13.1-1build1) ...
+2026-11-14T23:02:46.4178342Z Not building database; man-db/auto-update is not 'true'.
+2026-11-14T23:02:46.7171829Z 
+2026-11-14T23:02:46.7172699Z Running kernel seems to be up-to-date.
+2026-11-14T23:02:46.7172952Z 
+2026-11-14T23:02:46.7173059Z Restarting services...
+2026-11-14T23:02:46.7230721Z 
+2026-11-14T23:02:46.7231122Z Service restarts being deferred:
+2026-11-14T23:02:46.7231528Z  systemctl restart hosted-compute-agent.service
+2026-11-14T23:02:46.7231764Z 
+2026-11-14T23:02:46.7231895Z No containers need to be restarted.
+2026-11-14T23:02:46.7232068Z 
+2026-11-14T23:02:46.7232230Z No user sessions are running outdated binaries.
+2026-11-14T23:02:46.7232415Z 
+2026-11-14T23:02:46.7232618Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-11-14T23:02:47.4171692Z + microsoft-edge-stable --version
+2026-11-14T23:02:47.7854287Z Microsoft Edge 157.0.4341.60 
+2026-11-14T23:02:47.7902558Z Downloading FFmpeg (playwright ffmpeg v1011) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-linux.zip
+2026-11-14T23:02:48.1605839Z |                                                                                |   0% of 2.3 MiB
+2026-11-14T23:02:48.2147011Z |■■■■■■■■                                                                        |  10% of 2.3 MiB
+2026-11-14T23:02:48.2579853Z |■■■■■■■■■■■■■■■■                                                                |  20% of 2.3 MiB
+2026-11-14T23:02:48.2897484Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.3 MiB
+2026-11-14T23:02:48.2977052Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.3 MiB
+2026-11-14T23:02:48.3051886Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.3 MiB
+2026-11-14T23:02:48.3162585Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.3 MiB
+2026-11-14T23:02:48.3228253Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.3 MiB
+2026-11-14T23:02:48.3298249Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.3 MiB
+2026-11-14T23:02:48.3392701Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.3 MiB
+2026-11-14T23:02:48.3417403Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.3 MiB
+2026-11-14T23:02:48.3831244Z FFmpeg (playwright ffmpeg v1011) downloaded to /home/runner/.cache/ms-playwright/ffmpeg-1011
+2026-11-14T23:02:48.3974912Z ##[group]Run pnpm build
+2026-11-14T23:02:48.3975267Z [36;1mpnpm build[0m
+2026-11-14T23:02:48.4001730Z shell: /usr/bin/bash -e {0}
+2026-11-14T23:02:48.4002179Z env:
+2026-11-14T23:02:48.4002503Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:02:48.4003069Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:02:48.4003759Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:02:48.4004153Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-14T23:02:48.4004604Z ##[endgroup]
+2026-11-14T23:02:48.4220196Z $ turbo run build
+2026-11-14T23:02:48.4504698Z 
+2026-11-14T23:02:48.4505203Z Attention:
+2026-11-14T23:02:48.4505816Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-14T23:02:48.4506516Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-14T23:02:48.4507588Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-14T23:02:48.4508557Z https://turborepo.dev/docs/telemetry
+2026-11-14T23:02:48.4508809Z 
+2026-11-14T23:02:48.5068019Z 
+2026-11-14T23:02:48.5079676Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-14T23:02:48.5080923Z    • Running build in 13 packages
+2026-11-14T23:02:48.5081244Z    • Remote caching disabled
+2026-11-14T23:02:48.5081394Z 
+2026-11-14T23:02:49.9894962Z ##[group]@graphgoblin/contracts:build
+2026-11-14T23:02:49.9895456Z cache miss, executing e5f1e4fdfa62887d
+2026-11-14T23:02:49.9895786Z $ tsc -b tsconfig.build.json
+2026-11-14T23:02:49.9896257Z ##[endgroup]
+2026-11-14T23:02:51.8168959Z ##[group]@graphgoblin/domain:build
+2026-11-14T23:02:51.8169545Z cache miss, executing 797f4630ae844254
+2026-11-14T23:02:51.8170045Z $ tsc -b tsconfig.build.json
+2026-11-14T23:02:51.8170611Z ##[endgroup]
+2026-11-14T23:02:54.4759510Z ##[group]@graphgoblin/engine:build
+2026-11-14T23:02:54.4760086Z cache miss, executing 8ba220328d8bdd62
+2026-11-14T23:02:54.4760411Z $ tsc -b tsconfig.build.json
+2026-11-14T23:02:54.4761123Z ##[endgroup]
+2026-11-14T23:02:56.1814651Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-14T23:02:56.1815820Z cache miss, executing e859859393481212
+2026-11-14T23:02:56.1816543Z $ tsc -b tsconfig.build.json
+2026-11-14T23:02:56.1817294Z ##[endgroup]
+2026-11-14T23:02:56.5897617Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-14T23:02:56.5902061Z cache miss, executing 16a6fb28d7877274
+2026-11-14T23:02:56.5902875Z $ tsc -b tsconfig.build.json
+2026-11-14T23:02:56.5920635Z ##[endgroup]
+2026-11-14T23:03:00.1343009Z ##[group]@graphgoblin/infrastructure:build
+2026-11-14T23:03:00.1343719Z cache miss, executing 80bf98ae922d59a2
+2026-11-14T23:03:00.1344169Z $ tsc -b tsconfig.build.json
+2026-11-14T23:03:00.1344785Z ##[endgroup]
+2026-11-14T23:03:04.7884822Z ##[group]@graphgoblin/api:build
+2026-11-14T23:03:04.7885431Z cache miss, executing f103b6cc7119c692
+2026-11-14T23:03:04.7885877Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-14T23:03:04.7886413Z ##[endgroup]
+2026-11-14T23:03:06.7343461Z ##[group]@graphgoblin/api-client:build
+2026-11-14T23:03:06.7344187Z cache miss, executing ae675c3953e5e783
+2026-11-14T23:03:06.7344653Z $ tsc -b tsconfig.build.json
+2026-11-14T23:03:06.7345157Z ##[endgroup]
+2026-11-14T23:03:09.0913099Z ##[group]@graphgoblin/mcp:build
+2026-11-14T23:03:09.0913520Z cache miss, executing 7de9805b9415913a
+2026-11-14T23:03:09.0913850Z $ tsc -b tsconfig.build.json
+2026-11-14T23:03:09.0914290Z ##[endgroup]
+2026-11-14T23:03:10.3512151Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-14T23:03:10.3513025Z cache bypass, force executing 9a1692edc203d422
+2026-11-14T23:03:10.3514127Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-14T23:03:10.3520135Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-14T23:03:10.3521648Z ##[endgroup]
+2026-11-14T23:03:10.5432934Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-14T23:03:10.5433944Z cache bypass, force executing 0fc92f570c2ab359
+2026-11-14T23:03:10.5434608Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-14T23:03:10.5435546Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-14T23:03:10.5436675Z Install: codex plugin marketplace add "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-14T23:03:10.5437531Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-14T23:03:10.5438658Z ##[endgroup]
+2026-11-14T23:03:12.3939076Z ##[group]@graphgoblin/web:build
+2026-11-14T23:03:12.3939751Z cache miss, executing abf3dac7782f4ea9
+2026-11-14T23:03:12.3940260Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-14T23:03:12.3941103Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-14T23:03:12.3941504Z transforming...
+2026-11-14T23:03:12.3941839Z ✓ 773 modules transformed.
+2026-11-14T23:03:12.3942099Z rendering chunks...
+2026-11-14T23:03:12.3942352Z computing gzip size...
+2026-11-14T23:03:12.3942743Z dist/manifest.webmanifest           0.47 kB
+2026-11-14T23:03:12.3943193Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-14T23:03:12.3943735Z dist/assets/index-DSoHGgpa.css     92.92 kB │ gzip:  17.71 kB
+2026-11-14T23:03:12.3944288Z dist/assets/index-BWVFQagJ.js   2,115.25 kB │ gzip: 660.03 kB │ map: 9,386.12 kB
+2026-11-14T23:03:12.3944607Z 
+2026-11-14T23:03:12.3944985Z [32m✓ built in 1.86s[39m
+2026-11-14T23:03:12.3945244Z 
+2026-11-14T23:03:12.3945427Z [36mPWA v1.3.0[39m
+2026-11-14T23:03:12.3945792Z mode      [35mgenerateSW[39m
+2026-11-14T23:03:12.3946265Z precache  [32m21 entries[39m [2m(2634.29 KiB)[22m
+2026-11-14T23:03:12.3946655Z files generated
+2026-11-14T23:03:12.3946934Z   [2mdist/sw.js.map[22m
+2026-11-14T23:03:12.3947261Z   [2mdist/sw.js[22m
+2026-11-14T23:03:12.3947566Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-14T23:03:12.3948086Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-14T23:03:12.3948530Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-14T23:03:12.3949154Z transforming...
+2026-11-14T23:03:12.3949412Z ✓ 283 modules transformed.
+2026-11-14T23:03:12.3949650Z rendering chunks...
+2026-11-14T23:03:12.3949904Z computing gzip size...
+2026-11-14T23:03:12.3950223Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-14T23:03:12.3950673Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-14T23:03:12.3951124Z dist-goblin/assets/index-DXxuMaNo.css   77.54 kB │ gzip:  15.48 kB
+2026-11-14T23:03:12.3951663Z dist-goblin/assets/index-56X1VFOz.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-14T23:03:12.3951917Z 
+2026-11-14T23:03:12.3952063Z [32m✓ built in 316ms[39m
+2026-11-14T23:03:12.3952228Z 
+2026-11-14T23:03:12.3952378Z [36mPWA v1.3.0[39m
+2026-11-14T23:03:12.3952672Z mode      [35mgenerateSW[39m
+2026-11-14T23:03:12.3953099Z precache  [32m21 entries[39m [2m(989.08 KiB)[22m
+2026-11-14T23:03:12.3953448Z files generated
+2026-11-14T23:03:12.3953717Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-14T23:03:12.3954017Z   [2m../dist-goblin/sw.js[22m
+2026-11-14T23:03:12.3954378Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-14T23:03:12.3954718Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-14T23:03:12.3955200Z ##[endgroup]
+2026-11-14T23:03:12.3955368Z 
+2026-11-14T23:03:12.3955480Z  Tasks:    12 successful, 12 total
+2026-11-14T23:03:12.3955819Z Cached:    0 cached, 12 total
+2026-11-14T23:03:12.3956080Z   Time:    23.943s 
+2026-11-14T23:03:12.3956208Z 
+2026-11-14T23:03:12.4719794Z ##[group]Run pnpm --filter @graphgoblin/web exec playwright test e2e/routing.spec.ts --grep 'performance:' --retries=0
+2026-11-14T23:03:12.4720503Z [36;1mpnpm --filter @graphgoblin/web exec playwright test e2e/routing.spec.ts --grep 'performance:' --retries=0[0m
+2026-11-14T23:03:12.4739094Z shell: /usr/bin/bash -e {0}
+2026-11-14T23:03:12.4739438Z env:
+2026-11-14T23:03:12.4739707Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:03:12.4740110Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:03:12.4740492Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:03:12.4740754Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-14T23:03:12.4741086Z ##[endgroup]
+2026-11-14T23:03:16.9060296Z GitCommitInfo: timeout of 3000ms exceeded while running "git fetch origin a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c --no-auto-maintenance --no-auto-gc --no-tags --no-recurse-submodules --depth=1"
+2026-11-14T23:03:19.2074544Z 
+2026-11-14T23:03:19.2075580Z Running 2 tests using 1 worker
+2026-11-14T23:03:19.2075818Z 
+2026-11-14T23:03:31.8410353Z 100 nodes, drag 1: routing 1.800 ms / frame 16.700 ms p95; 269 routes, 300 frames
+2026-11-14T23:03:37.0159563Z 100 nodes, drag 2: routing 1.500 ms / frame 16.700 ms p95; 266 routes, 300 frames
+2026-11-14T23:03:42.1989469Z 100 nodes, drag 3: routing 1.700 ms / frame 16.800 ms p95; 268 routes, 299 frames
+2026-11-14T23:03:42.2057312Z Routing performance: {"nodes":100,"edges":200,"repeat":1,"channel":"msedge","browser":"157.0.4341.60","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":1.6999999999825377,"idle":{"frameP95Ms":16.799999999999727,"frameSamples":180},"repetitions":[{"repetition":1,"routingP95Ms":1.8000000000174623,"frameP95Ms":16.700000000000728,"addedFrameP95Ms":-0.09999999999899956,"reroutedEdgesP95":14,"routingSamples":269,"frameSamples":300,"durationMs":5002.199999999993,"pointerMovesSent":306,"pointerMovesObserved":298,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":2,"acknowledgementP95Ms":7,"samplerStartOffsetMs":2,"firstPointerMs":3.8999999999941792,"lastPointerMs":5002.599999999977,"inputDurationMs":5100},{"repetition":2,"routingP95Ms":1.5,"frameP95Ms":16.700000000000728,"addedFrameP95Ms":-0.09999999999899956,"reroutedEdgesP95":15,"routingSamples":266,"frameSamples":300,"durationMs":5004.299999999994,"pointerMovesSent":306,"pointerMovesObserved":301,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":2,"acknowledgementP95Ms":12,"samplerStartOffsetMs":1,"firstPointerMs":5.599999999976717,"lastPointerMs":5004.6999999999825,"inputDurationMs":5100},{"repetition":3,"routingP95Ms":1.6999999999825377,"frameP95Ms":16.799999999999272,"addedFrameP95Ms":-4.547473508864641e-13,"reroutedEdgesP95":15,"routingSamples":268,"frameSamples":299,"durationMs":5005.8000000000175,"pointerMovesSent":306,"pointerMovesObserved":300,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":2,"acknowledgementP95Ms":12,"samplerStartOffsetMs":1,"firstPointerMs":7.7000000000116415,"lastPointerMs":5006.400000000023,"inputDurationMs":5100}]}
+2026-11-14T23:03:42.2566935Z   ✓  1 [chromium] › e2e/routing.spec.ts:479:3 › performance: 100 nodes / 200 edges, three five-second pointer drags (19.4s)
+2026-11-14T23:03:51.6958630Z 300 nodes, drag 1: routing 3.100 ms / frame 16.700 ms p95; 242 routes, 301 frames
+2026-11-14T23:03:56.9339551Z 300 nodes, drag 2: routing 2.700 ms / frame 16.700 ms p95; 260 routes, 300 frames
+2026-11-14T23:04:02.1385530Z 300 nodes, drag 3: routing 2.300 ms / frame 16.700 ms p95; 270 routes, 299 frames
+2026-11-14T23:04:02.1514235Z Routing performance: {"nodes":300,"edges":600,"repeat":1,"channel":"msedge","browser":"157.0.4341.60","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":2.6999999999825377,"idle":{"frameP95Ms":16.799999999999955,"frameSamples":180},"repetitions":[{"repetition":1,"routingP95Ms":3.1000000000058208,"frameP95Ms":16.700000000000728,"addedFrameP95Ms":-0.09999999999922693,"reroutedEdgesP95":23,"routingSamples":242,"frameSamples":301,"durationMs":5016.399999999989,"pointerMovesSent":306,"pointerMovesObserved":274,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":2,"acknowledgementP95Ms":18,"samplerStartOffsetMs":1,"firstPointerMs":2.8999999999941792,"lastPointerMs":5016,"inputDurationMs":5102},{"repetition":2,"routingP95Ms":2.6999999999825377,"frameP95Ms":16.700000000000728,"addedFrameP95Ms":-0.09999999999922693,"reroutedEdgesP95":23,"routingSamples":260,"frameSamples":300,"durationMs":5002.1,"pointerMovesSent":307,"pointerMovesObserved":301,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":2,"acknowledgementP95Ms":10,"samplerStartOffsetMs":1,"firstPointerMs":4.7000000000116415,"lastPointerMs":5002.5,"inputDurationMs":5116},{"repetition":3,"routingP95Ms":2.3000000000174623,"frameP95Ms":16.700000000000728,"addedFrameP95Ms":-0.09999999999922693,"reroutedEdgesP95":16,"routingSamples":270,"frameSamples":299,"durationMs":5002.099999999988,"pointerMovesSent":306,"pointerMovesObserved":299,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":2,"acknowledgementP95Ms":8,"samplerStartOffsetMs":1,"firstPointerMs":4.7999999999883585,"lastPointerMs":5002.5,"inputDurationMs":5100}]}
+2026-11-14T23:04:02.1780035Z   ✓  2 [chromium] › e2e/routing.spec.ts:479:3 › performance: 300 nodes / 600 edges, three five-second pointer drags (19.9s)
+2026-11-14T23:04:02.3008149Z 
+2026-11-14T23:04:02.3011049Z   2 passed (49.4s)
+2026-11-14T23:04:02.3431556Z ##[group]Run node --input-type=module <<'NODE'
+2026-11-14T23:04:02.3431941Z [36;1mnode --input-type=module <<'NODE'[0m
+2026-11-14T23:04:02.3432332Z [36;1mimport { readdir, readFile, appendFile } from 'node:fs/promises';[0m
+2026-11-14T23:04:02.3432704Z [36;1mconst folder = process.env.GG_ROUTING_REPORT_DIR;[0m
+2026-11-14T23:04:02.3433158Z [36;1mconst files = await readdir(folder).catch(() => []);[0m
+2026-11-14T23:04:02.3434371Z [36;1mconst rows = ['# Routing performance', '', 'Whole cache miss includes geometry preparation, invalidation, routing and identity reuse. Limits: median of three routing p95s <8 ms; strict manual dispatch: <4 ms and frame p95 <17 ms (the 60 Hz budget; timestamps land 0.1 ms past one vsync). Every drag: routing p95 <16 ms.', '', '| Nodes | Browser | Drag | Routing p95 | Fixture median | Idle frame p95 | Drag frame p95 | Added frame p95 |', '| --- | --- | --- | --- | --- | --- | --- | --- |'];[0m
+2026-11-14T23:04:02.3435673Z [36;1mfor (const file of files.filter(f => f.endsWith('.json')).sort()) {[0m
+2026-11-14T23:04:02.3436083Z [36;1m  const report = JSON.parse(await readFile(folder + '/' + file, 'utf8'));[0m
+2026-11-14T23:04:02.3437019Z [36;1m  for (const run of report.repetitions) rows.push(`| ${report.nodes} | ${report.channel} ${report.browser} | ${run.repetition} | ${run.routingP95Ms.toFixed(3)} ms | ${report.medianRoutingP95Ms.toFixed(3)} ms | ${report.idle.frameP95Ms.toFixed(3)} ms | ${run.frameP95Ms.toFixed(3)} ms | ${run.addedFrameP95Ms.toFixed(3)} ms |`);[0m
+2026-11-14T23:04:02.3438012Z [36;1m}[0m
+2026-11-14T23:04:02.3438424Z [36;1mif (!files.length) rows.push('', 'No measurement report was produced; inspect the failed setup/test step.');[0m
+2026-11-14T23:04:02.3438951Z [36;1mawait appendFile(process.env.GITHUB_STEP_SUMMARY, rows.join('\n') + '\n');[0m
+2026-11-14T23:04:02.3439296Z [36;1mNODE[0m
+2026-11-14T23:04:02.3460734Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-14T23:04:02.3461144Z env:
+2026-11-14T23:04:02.3461398Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:04:02.3461777Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:04:02.3462165Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:04:02.3462456Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-14T23:04:02.3462737Z ##[endgroup]
+2026-11-14T23:04:02.3777546Z ##[group]Run actions/upload-artifact@v4
+2026-11-14T23:04:02.3778040Z with:
+2026-11-14T23:04:02.3778344Z   name: routing-performance
+2026-11-14T23:04:02.3778725Z   path: routing-performance/*.json
+2026-11-14T23:04:02.3779015Z   if-no-files-found: warn
+2026-11-14T23:04:02.3779261Z   compression-level: 6
+2026-11-14T23:04:02.3779496Z   overwrite: false
+2026-11-14T23:04:02.3779726Z   include-hidden-files: false
+2026-11-14T23:04:02.3780012Z env:
+2026-11-14T23:04:02.3780228Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-14T23:04:02.3780593Z   GG_ROUTING_REPORT_DIR: /home/runner/work/GraphGoblin/GraphGoblin/routing-performance
+2026-11-14T23:04:02.3780995Z   GG_ROUTING_STRICT_PERF: 
+2026-11-14T23:04:02.3781437Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-14T23:04:02.3781761Z ##[endgroup]
+2026-11-14T23:04:02.5022679Z (node:4671) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-14T23:04:02.5023892Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-14T23:04:02.5089884Z With the provided path, there will be 2 files uploaded
+2026-11-14T23:04:02.5090970Z Artifact name is valid!
+2026-11-14T23:04:02.5091389Z Root directory input is valid!
+2026-11-14T23:04:02.8853307Z Beginning upload of artifact content to blob storage
+2026-11-14T23:04:02.8992256Z (node:4671) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-14T23:04:03.2253607Z Uploaded bytes 1765
+2026-11-14T23:04:03.3131933Z Finished uploading artifact content to blob storage!
+2026-11-14T23:04:03.3132883Z SHA256 digest of uploaded artifact zip is 6da355b4ae00d9988d55a2e686ab195933caae18c234088b5c0de3a02ecb54c7
+2026-11-14T23:04:03.3133675Z Finalizing artifact upload
+2026-11-14T23:04:03.6776855Z Artifact routing-performance.zip successfully finalized. Artifact ID 14136231637
+2026-11-14T23:04:03.6778725Z Artifact routing-performance has been successfully uploaded! Final size is 1765 bytes. Artifact ID is 14136231637
+2026-11-14T23:04:03.6783813Z Artifact download URL: https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43651091052/artifacts/14136231637
+2026-11-14T23:04:03.6940431Z Post job cleanup.
+2026-11-14T23:04:03.7842991Z (node:4685) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-14T23:04:03.7843655Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-14T23:04:03.7844825Z Cache hit occurred on the primary key node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83, not saving cache.
+2026-11-14T23:04:03.7925189Z Post job cleanup.
+2026-11-14T23:04:03.9005070Z Pruning is unnecessary.
+2026-11-14T23:04:03.9156173Z Post job cleanup.
+2026-11-14T23:04:03.9868933Z [command]/usr/bin/git version
+2026-11-14T23:04:03.9905355Z git version 2.56.1
+2026-11-14T23:04:03.9938603Z Temporarily overriding HOME='/home/runner/work/_temp/ebc6bf4b-c137-49c1-b6c3-a00260add06a' before making global git config changes
+2026-11-14T23:04:03.9939997Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-14T23:04:03.9941949Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-14T23:04:03.9972509Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-14T23:04:04.0001540Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-14T23:04:04.0219297Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-14T23:04:04.0236546Z http.https://github.com/.extraheader
+2026-11-14T23:04:04.0244352Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-14T23:04:04.0273938Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-14T23:04:04.0486623Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-14T23:04:04.0508224Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-14T23:04:04.0804803Z Cleaning up orphan processes
+2026-11-14T23:04:04.1051750Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
