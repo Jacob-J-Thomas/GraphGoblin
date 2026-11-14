@@ -1,0 +1,39 @@
+Verification at the bound head found no failures and needed no source change; the single heavy slot is released. `git diff HEAD` is 0 bytes, the worktree is clean, and the index file's hash and mtime are unchanged from start to end.
+
+## What I checked
+- **Admission:** all 27 checks passed (script: `scripts/admission.mjs`).
+  - HEAD `ae8add8a…`, tree `ea2dfcfd…` and target `a817e5cc…` match the grant, and the checkout was clean.
+  - Everything after the `16aa` product freeze is docs only: 27 paths under `docs/qa` and `docs/delivery`, including the two `.md.txt` renames with unchanged contents.
+  - Only the `docs` root entry differs between `16aa` and HEAD.
+  - My recomputed 48-path source listing is byte-identical to the independent QA's `frozen-source-sha256.txt`.
+- **Tests:** domain node-references passed 44/44. The four prepared web suites passed 44/44. A 26-file editor/store/import neighbourhood passed 402/402, and the whole domain suite passed 428/428.
+  - The API node-references test passed 2/2.
+  - Web typecheck and lint, plus the domain and API typechecks and domain lint, exit 0.
+  - `prettier --check` on the 32 changed non-QA source and doc files passed, and so did the whole-repo `format:check`.
+- **Build:** `pnpm.cmd build --force --cache-dir=.turbo/local-cache` ran 12 of 12 tasks with 0 cached. It replaced the stale web bundle `index-DVl1FcJD.js`, which still embedded the pre-merge `EditorPage`, `store`, `useAutosave` and `LoopsPage`, with `index-CyF0v9uF.js`.
+- **Seven editor runtime paths:** each is embedded in the new bundle's source map and equals the working file, the Git blob, the promotion map and the QA mapping template.
+- **Edge specs:** both spec files passed 10/10 with retries 0 (5 + 5 cases) in 40.2 s.
+  - The held-Variables case kept the original value and made zero pre-rename PUTs.
+  - This is built web plus the TypeScript-source API in memory with `FakeHarness`, not the compiled-gateway/file-SQLite tier.
+
+## Build identity for native QA
+- **Manifests:** consume `manifests/postbuild/`, which holds all 13 per-file manifests (1,227 files).
+- **Consumability:** your `verify-binding.mjs` accepted them in a dry run with copies marked `frozen:true`: "Verified 48 source hashes and 1227 artifact files". I froze nothing.
+- **Incremental TypeScript output:** the backend trees came out byte- and mtime-identical, meaning `tsc -b` found them up to date and wrote nothing. That is not a new full re-emit.
+- **Source binding:** the `.tsbuildinfo` hashes equal the head sources.
+- **Optional from-scratch emit (extra I added):** it matches `dist` byte for byte for every `.js` and `.d.ts` file except 5 contracts `.d.ts` files, which differ in member order only. I did not isolate why, and contracts is not in the #273 delta.
+- **Two facts native QA must know:**
+  - `sw.js.map` embeds a random temp path, so it differs on every build.
+  - The e2e server rewrites `dist/sw.js` with identical bytes on shutdown, so only its mtime changes.
+
+## Things to know
+- **Ownership:** both plugin outputs passed a read-only ownership check before the build; I deleted nothing in the repository.
+- **Extras beyond your list:** the broader test suites, the extra typechecks, a second Edge run with `--trace on`, and the from-scratch emit.
+- **Screenshots:** the specs take none. The nine trace frames I actually viewed are in `edge-trace/inspected/` with notes on what each does and does not show.
+- **Failed attempts:** all eight were my own harness mistakes and are kept in handoff section 8. One Bash call was denied by the permission mode; I did not retry it or work around it.
+- **Leftovers (mine):** `.turbo/local-cache` (created by the build), about 130 MB of Edge trace archives and their extraction under `edge-trace/`, and a few empty directories.
+- **Environment:** inherited provider keys were unset for every gate. The owner listener on 4747 was observed and never touched, and no processes of mine remain.
+
+None of this is acceptance, review, CI or merge eligibility. The handoff also covers the full fingerprints and the extra checks.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-273-promotion-verification/`; start with `handoff.md`, and `result.json` holds the same numbers in machine-readable form.

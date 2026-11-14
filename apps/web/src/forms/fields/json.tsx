@@ -132,9 +132,10 @@ export function JsonText({
       ? validateText(text, schema, validateValue)
       : undefined;
   }, [text, schema, validateValue, validationVersion, ownError]);
-  const error = candidate
-    ? (candidate.error ?? (sameJson(candidate.value, value) ? undefined : PENDING_JSON))
-    : ownError;
+  // Held text ends only by the author's hand: typing it back to the section's value, Apply, Cancel
+  // or a discard. A valid candidate that a change elsewhere made equal to the section (a rename's
+  // repair, a sibling fix, a remount after undo) stays held exactly as written, with no step.
+  const error = candidate ? (candidate.error ?? PENDING_JSON) : ownError;
   const [confirmation, setConfirmation] = useState<{
     text: string;
     connections: readonly RemovedConnection[];

@@ -1,0 +1,921 @@
+{
+  "observedAt": "2026-11-14T17:51:57.915Z",
+  "checks": {
+    "grant.granted": {
+      "ok": true
+    },
+    "grant.head/tree/base match brief": {
+      "ok": true
+    },
+    "admission.head/tree/base/freeze match brief": {
+      "ok": true
+    },
+    "admission.productDeltaAfterFreeze is empty": {
+      "ok": true
+    },
+    "HEAD equals expected": {
+      "ok": true,
+      "detail": "ae8add8a791699e905540465b5ddf929d00c50eb"
+    },
+    "HEAD tree equals expected": {
+      "ok": true,
+      "detail": "ea2dfcfd46f7d5ab79fd98414db214513d830b52"
+    },
+    "origin/main still equals target": {
+      "ok": true,
+      "detail": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c"
+    },
+    "target a817 is an ancestor of HEAD": {
+      "ok": true
+    },
+    "freeze 16aa is an ancestor of HEAD": {
+      "ok": true
+    },
+    "freeze tree equals prepared source-map tree": {
+      "ok": true
+    },
+    "16aa parents are 33a2 and a817 (merge of main into the candidate)": {
+      "ok": true,
+      "detail": "33a2f47cfdcc5ad76723f4e7c6841babfcfd1fb6 a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c"
+    },
+    "worktree and index clean (porcelain empty, untracked included)": {
+      "ok": true,
+      "detail": ""
+    },
+    "no skip-worktree / assume-unchanged / other hidden-state index entries": {
+      "ok": true,
+      "detail": []
+    },
+    "no merge/rebase/cherry-pick state": {
+      "ok": true
+    },
+    "commits after freeze are exactly two": {
+      "ok": true,
+      "detail": [
+        "ae8add8a791699e905540465b5ddf929d00c50eb ba3086b8c1df555ed6544e27cbdb2d6630e91948 Preserve raw QA Markdown outside formatting inputs",
+        "ba3086b8c1df555ed6544e27cbdb2d6630e91948 16aa9a2aed50710e68875b991a8eedb668fdecf8 Record naming delivery and node reference integration"
+      ]
+    },
+    "every changed path after 16aa is under docs/qa or docs/delivery": {
+      "ok": true,
+      "detail": []
+    },
+    "no changed path under apps/ packages/ tooling/ or any root file": {
+      "ok": true
+    },
+    "only the docs root entry differs between 16aa and HEAD (apps, packages, tooling, configs, lockfile identical Git objects)": {
+      "ok": true,
+      "detail": [
+        "docs"
+      ]
+    },
+    "docs sub-entries that differ are only qa and delivery": {
+      "ok": true
+    },
+    "exactly two renames, both R100 to .md.txt (contents unchanged)": {
+      "ok": true,
+      "detail": [
+        [
+          "R100",
+          "docs/qa/2026-11-14-node-references-native/raw/failure/attempt3-error-context.md",
+          "docs/qa/2026-11-14-node-references-native/raw/failure/attempt3-error-context.md.txt"
+        ],
+        [
+          "R100",
+          "docs/qa/2026-11-14-node-references-native/raw/original-report.md",
+          "docs/qa/2026-11-14-node-references-native/raw/original-report.md.txt"
+        ]
+      ]
+    },
+    "renamed blobs byte-identical (same Git object id)": {
+      "ok": true,
+      "detail": [
+        {
+          "from": "docs/qa/2026-11-14-node-references-native/raw/failure/attempt3-error-context.md",
+          "to": "docs/qa/2026-11-14-node-references-native/raw/failure/attempt3-error-context.md.txt",
+          "blobAt16aa": "0297ec6964d2729463e9a3da3831c43138d2a1d5",
+          "blobAtHead": "0297ec6964d2729463e9a3da3831c43138d2a1d5"
+        },
+        {
+          "from": "docs/qa/2026-11-14-node-references-native/raw/original-report.md",
+          "to": "docs/qa/2026-11-14-node-references-native/raw/original-report.md.txt",
+          "blobAt16aa": "903e91ef3d8fff72a4f0a7c9033075656e550592",
+          "blobAtHead": "903e91ef3d8fff72a4f0a7c9033075656e550592"
+        }
+      ]
+    },
+    "source map head/tree/base are the 16aa freeze": {
+      "ok": true
+    },
+    "source map captures 48 paths": {
+      "ok": true,
+      "detail": 48
+    },
+    "all 48 mapped paths: raw worktree == HEAD blob == 16aa blob == map sha256": {
+      "ok": true,
+      "detail": {
+        "mismatches": 0
+      }
+    },
+    "git diff 16aa..HEAD over the 48 mapped paths is empty": {
+      "ok": true,
+      "detail": []
+    },
+    "git diff 16aa..HEAD over apps/ packages/ tooling/ is empty": {
+      "ok": true,
+      "detail": []
+    },
+    "admission sourceHashes (24) equal recomputed raw hashes and are inside the 48-path map": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "failures": [],
+  "rootEntryObjectIds": {
+    "apps": {
+      "at16aa": "b48a103edfec44e21eebde1fdd32f8cda2e21125",
+      "atHead": "b48a103edfec44e21eebde1fdd32f8cda2e21125",
+      "equal": true
+    },
+    "packages": {
+      "at16aa": "5b9e2a7f5742e31f51b9ee9a4c4943a13bf77c21",
+      "atHead": "5b9e2a7f5742e31f51b9ee9a4c4943a13bf77c21",
+      "equal": true
+    },
+    "tooling": {
+      "at16aa": "10bd8bc514b217bcd38756535e80eef07809143a",
+      "atHead": "10bd8bc514b217bcd38756535e80eef07809143a",
+      "equal": true
+    },
+    "package.json": {
+      "at16aa": "cec476651f9b1da6bca3f5990acddd9557c8732d",
+      "atHead": "cec476651f9b1da6bca3f5990acddd9557c8732d",
+      "equal": true
+    },
+    "pnpm-lock.yaml": {
+      "at16aa": "92a751dbb2c4ead02c57adadbf1afcbd4d63aca5",
+      "atHead": "92a751dbb2c4ead02c57adadbf1afcbd4d63aca5",
+      "equal": true
+    },
+    "pnpm-workspace.yaml": {
+      "at16aa": "a784037224ca4e00da67ae6e9163555dd1eb2d6a",
+      "atHead": "a784037224ca4e00da67ae6e9163555dd1eb2d6a",
+      "equal": true
+    },
+    "turbo.json": {
+      "at16aa": "3144bec4c9da0a656b8ebe7058d9b116973f2643",
+      "atHead": "3144bec4c9da0a656b8ebe7058d9b116973f2643",
+      "equal": true
+    },
+    "tsconfig.json": {
+      "at16aa": "e3718b166081ae33c012297cdf83b7c8cc0a16bc",
+      "atHead": "e3718b166081ae33c012297cdf83b7c8cc0a16bc",
+      "equal": true
+    },
+    ".prettierignore": {
+      "at16aa": "214b409520d9e9a1b556b9d63d18dd35dd8c45dd",
+      "atHead": "214b409520d9e9a1b556b9d63d18dd35dd8c45dd",
+      "equal": true
+    },
+    ".gitattributes": {
+      "at16aa": "1130c5891ce6e630cb4d47631d323e784c2bd0c4",
+      "atHead": "1130c5891ce6e630cb4d47631d323e784c2bd0c4",
+      "equal": true
+    },
+    ".github": {
+      "at16aa": "3a7626f8323b43df16012e62d9f79f87f9cc441a",
+      "atHead": "3a7626f8323b43df16012e62d9f79f87f9cc441a",
+      "equal": true
+    },
+    "CHANGELOG.md": {
+      "at16aa": "8f7d6d9e279a1ebad81b7e1e66d958bda164e79f",
+      "atHead": "8f7d6d9e279a1ebad81b7e1e66d958bda164e79f",
+      "equal": true
+    }
+  },
+  "docsEntriesDiffering": [
+    "delivery",
+    "qa"
+  ],
+  "commitsAfterFreeze": [
+    "ae8add8a791699e905540465b5ddf929d00c50eb ba3086b8c1df555ed6544e27cbdb2d6630e91948 Preserve raw QA Markdown outside formatting inputs",
+    "ba3086b8c1df555ed6544e27cbdb2d6630e91948 16aa9a2aed50710e68875b991a8eedb668fdecf8 Record naming delivery and node reference integration"
+  ],
+  "nameStatusSummary": {
+    "M": 4,
+    "A": 21,
+    "R100": 2
+  },
+  "changedAfterFreeze": [
+    "docs/delivery/2026-11-13-four-intents-register.md",
+    "docs/qa/.gitattributes",
+    "docs/qa/2026-11-14-loop-names-final/.gitattributes",
+    "docs/qa/2026-11-14-loop-names-final/README.md",
+    "docs/qa/2026-11-14-loop-names-final/SHA256SUMS.txt",
+    "docs/qa/2026-11-14-loop-names-final/final-admission.json",
+    "docs/qa/2026-11-14-loop-names-final/link-checks.json",
+    "docs/qa/2026-11-14-loop-names-final/manifest.json",
+    "docs/qa/2026-11-14-loop-names-final/raw/auditor-readback.json",
+    "docs/qa/2026-11-14-loop-names-final/raw/ci8fc-browser-pass.log",
+    "docs/qa/2026-11-14-loop-names-final/raw/ci8fc-gates-pass.log",
+    "docs/qa/2026-11-14-loop-names-final/raw/ci8fc-routing-pass.log",
+    "docs/qa/2026-11-14-loop-names-final/raw/ci8fc-template-pass.log",
+    "docs/qa/2026-11-14-loop-names-final/raw/ci8fc-windows-pass.log",
+    "docs/qa/2026-11-14-loop-names-final/raw/exact.diff.gz",
+    "docs/qa/2026-11-14-loop-names-final/raw/final-identity-readback.json",
+    "docs/qa/2026-11-14-loop-names-final/raw/gate-status.json",
+    "docs/qa/2026-11-14-loop-names-final/raw/identity-pre-admission.json",
+    "docs/qa/2026-11-14-loop-names-final/raw/report.md.txt",
+    "docs/qa/2026-11-14-loop-names-final/raw/source-and-evidence-readback.json",
+    "docs/qa/2026-11-14-node-references-ci-first/README.md",
+    "docs/qa/2026-11-14-node-references-ci-first/gates.log",
+    "docs/qa/2026-11-14-node-references-ci-first/record.json",
+    "docs/qa/2026-11-14-node-references-native/artifact-manifest.json",
+    "docs/qa/2026-11-14-node-references-native/artifact-manifest.sha256",
+    "docs/qa/2026-11-14-node-references-native/raw/failure/attempt3-error-context.md.txt",
+    "docs/qa/2026-11-14-node-references-native/raw/original-report.md.txt"
+  ],
+  "sources": {
+    "apps/api/src/container.ts": {
+      "mapSha256": "a8acb354204bd27c3e1b3f2039106b68f62575a90b1957329f9d74b72688711d",
+      "rawWorktreeSha256": "a8acb354204bd27c3e1b3f2039106b68f62575a90b1957329f9d74b72688711d",
+      "gitHeadBlobSha256": "a8acb354204bd27c3e1b3f2039106b68f62575a90b1957329f9d74b72688711d",
+      "git16aaBlobSha256": "a8acb354204bd27c3e1b3f2039106b68f62575a90b1957329f9d74b72688711d",
+      "headBlobId": "d0412509060807cb854e604b23beba6712e80873",
+      "lstree": "100644 blob d0412509060807cb854e604b23beba6712e80873",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 22417
+    },
+    "apps/api/src/main.ts": {
+      "mapSha256": "ff1d87d808c7109dc0193a9c584a259acc848760ba61d4ad225bf0aa6f27d146",
+      "rawWorktreeSha256": "ff1d87d808c7109dc0193a9c584a259acc848760ba61d4ad225bf0aa6f27d146",
+      "gitHeadBlobSha256": "ff1d87d808c7109dc0193a9c584a259acc848760ba61d4ad225bf0aa6f27d146",
+      "git16aaBlobSha256": "ff1d87d808c7109dc0193a9c584a259acc848760ba61d4ad225bf0aa6f27d146",
+      "headBlobId": "ec8729b665eda0a511d91a1485137202c3ac93cc",
+      "lstree": "100644 blob ec8729b665eda0a511d91a1485137202c3ac93cc",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 5155
+    },
+    "apps/api/src/node-references.test.ts": {
+      "mapSha256": "6abd59405ff2e42645a2e9e5ab1eb3d2906b065ba3992c1440d809c6a06efeb2",
+      "rawWorktreeSha256": "6abd59405ff2e42645a2e9e5ab1eb3d2906b065ba3992c1440d809c6a06efeb2",
+      "gitHeadBlobSha256": "6abd59405ff2e42645a2e9e5ab1eb3d2906b065ba3992c1440d809c6a06efeb2",
+      "git16aaBlobSha256": "6abd59405ff2e42645a2e9e5ab1eb3d2906b065ba3992c1440d809c6a06efeb2",
+      "headBlobId": "24fdf1b713b778112af903fb506a65a06317492e",
+      "lstree": "100644 blob 24fdf1b713b778112af903fb506a65a06317492e",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 4960
+    },
+    "apps/api/src/routes/loops.ts": {
+      "mapSha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f",
+      "rawWorktreeSha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f",
+      "gitHeadBlobSha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f",
+      "git16aaBlobSha256": "cf48f2a98e3983af5da377a6ce87362d6cd969b07fff6c4af23644805f548f3f",
+      "headBlobId": "fa2564fdd036404f42f0ef36f5e146dbae4a9cdb",
+      "lstree": "100644 blob fa2564fdd036404f42f0ef36f5e146dbae4a9cdb",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 19158
+    },
+    "apps/api/src/routes/runs.ts": {
+      "mapSha256": "29a5f6919c437f84eb12f2497075f78bf681a0e441583d0b059f2781ca2c86d7",
+      "rawWorktreeSha256": "29a5f6919c437f84eb12f2497075f78bf681a0e441583d0b059f2781ca2c86d7",
+      "gitHeadBlobSha256": "29a5f6919c437f84eb12f2497075f78bf681a0e441583d0b059f2781ca2c86d7",
+      "git16aaBlobSha256": "29a5f6919c437f84eb12f2497075f78bf681a0e441583d0b059f2781ca2c86d7",
+      "headBlobId": "09104b49e72fb84b52ab5ad37bf0ababcb7e08c6",
+      "lstree": "100644 blob 09104b49e72fb84b52ab5ad37bf0ababcb7e08c6",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 18821
+    },
+    "apps/web/e2e/rename-references.spec.ts": {
+      "mapSha256": "a547686e80d265343134ef03922b50ea69175ff2c34823c794f7184610d56c47",
+      "rawWorktreeSha256": "a547686e80d265343134ef03922b50ea69175ff2c34823c794f7184610d56c47",
+      "gitHeadBlobSha256": "a547686e80d265343134ef03922b50ea69175ff2c34823c794f7184610d56c47",
+      "git16aaBlobSha256": "a547686e80d265343134ef03922b50ea69175ff2c34823c794f7184610d56c47",
+      "headBlobId": "034288c08b4361bce97f9db1b569c96c36568689",
+      "lstree": "100644 blob 034288c08b4361bce97f9db1b569c96c36568689",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 38539
+    },
+    "apps/web/src/api/queries.ts": {
+      "mapSha256": "9580069e2dc27ab3775a273d217cfd74d7ce349bc668da20deeefa995461e0e3",
+      "rawWorktreeSha256": "9580069e2dc27ab3775a273d217cfd74d7ce349bc668da20deeefa995461e0e3",
+      "gitHeadBlobSha256": "9580069e2dc27ab3775a273d217cfd74d7ce349bc668da20deeefa995461e0e3",
+      "git16aaBlobSha256": "9580069e2dc27ab3775a273d217cfd74d7ce349bc668da20deeefa995461e0e3",
+      "headBlobId": "71e940db8166f897db77ac008a2c64c0dd390349",
+      "lstree": "100644 blob 71e940db8166f897db77ac008a2c64c0dd390349",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 17312
+    },
+    "apps/web/src/drafts/local-drafts.ts": {
+      "mapSha256": "9cb15b523a9f2b0ef9c354d010e52226353ec63d06910b16bac0c05acfbc9098",
+      "rawWorktreeSha256": "9cb15b523a9f2b0ef9c354d010e52226353ec63d06910b16bac0c05acfbc9098",
+      "gitHeadBlobSha256": "9cb15b523a9f2b0ef9c354d010e52226353ec63d06910b16bac0c05acfbc9098",
+      "git16aaBlobSha256": "9cb15b523a9f2b0ef9c354d010e52226353ec63d06910b16bac0c05acfbc9098",
+      "headBlobId": "7309fb37cd15a3b0e57ce4ef199136ab4cf7883d",
+      "lstree": "100644 blob 7309fb37cd15a3b0e57ce4ef199136ab4cf7883d",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 15953
+    },
+    "apps/web/src/editor/ConflictNotice.tsx": {
+      "mapSha256": "d21ef4cca94c896989de4d5dee95a8d6e85728c1a23ffaa0424d6c43928ad9e1",
+      "rawWorktreeSha256": "d21ef4cca94c896989de4d5dee95a8d6e85728c1a23ffaa0424d6c43928ad9e1",
+      "gitHeadBlobSha256": "d21ef4cca94c896989de4d5dee95a8d6e85728c1a23ffaa0424d6c43928ad9e1",
+      "git16aaBlobSha256": "d21ef4cca94c896989de4d5dee95a8d6e85728c1a23ffaa0424d6c43928ad9e1",
+      "headBlobId": "62dbacde293925e8195348563b32c64eac684c47",
+      "lstree": "100644 blob 62dbacde293925e8195348563b32c64eac684c47",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 1624
+    },
+    "apps/web/src/editor/EditorPage.name-conflict.test.tsx": {
+      "mapSha256": "07362691ff3e4de6df4507e055f9329951b77c14295afbe6ab2dd657eb738de0",
+      "rawWorktreeSha256": "07362691ff3e4de6df4507e055f9329951b77c14295afbe6ab2dd657eb738de0",
+      "gitHeadBlobSha256": "07362691ff3e4de6df4507e055f9329951b77c14295afbe6ab2dd657eb738de0",
+      "git16aaBlobSha256": "07362691ff3e4de6df4507e055f9329951b77c14295afbe6ab2dd657eb738de0",
+      "headBlobId": "8e73efc64ee103b649c7e6344d33fbea489cc849",
+      "lstree": "100644 blob 8e73efc64ee103b649c7e6344d33fbea489cc849",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": false,
+      "mapEqualsPriorNative": false,
+      "bytes": 18215
+    },
+    "apps/web/src/editor/EditorPage.rename.test.tsx": {
+      "mapSha256": "c525da9a8d0a3cbca8842d068939af3cd83ef366942afcf1116d54ee06cccec4",
+      "rawWorktreeSha256": "c525da9a8d0a3cbca8842d068939af3cd83ef366942afcf1116d54ee06cccec4",
+      "gitHeadBlobSha256": "c525da9a8d0a3cbca8842d068939af3cd83ef366942afcf1116d54ee06cccec4",
+      "git16aaBlobSha256": "c525da9a8d0a3cbca8842d068939af3cd83ef366942afcf1116d54ee06cccec4",
+      "headBlobId": "28cbc834515efaa39359bd8141c214f9e6d72f62",
+      "lstree": "100644 blob 28cbc834515efaa39359bd8141c214f9e6d72f62",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 20545
+    },
+    "apps/web/src/editor/EditorPage.tsx": {
+      "mapSha256": "5a5d8208fa31f885e0ee9ad875282489605e463387443e0000dcd66e82c96a0c",
+      "rawWorktreeSha256": "5a5d8208fa31f885e0ee9ad875282489605e463387443e0000dcd66e82c96a0c",
+      "gitHeadBlobSha256": "5a5d8208fa31f885e0ee9ad875282489605e463387443e0000dcd66e82c96a0c",
+      "git16aaBlobSha256": "5a5d8208fa31f885e0ee9ad875282489605e463387443e0000dcd66e82c96a0c",
+      "headBlobId": "605063de5191f805e45238bc3f67f78c6a23763c",
+      "lstree": "100644 blob 605063de5191f805e45238bc3f67f78c6a23763c",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": false,
+      "mapEqualsPriorNative": false,
+      "bytes": 30582
+    },
+    "apps/web/src/editor/EditorToolbar.tsx": {
+      "mapSha256": "a4831c77398a1872ef7a38a353edaf1c512512e2d097f310a47c569884fac73e",
+      "rawWorktreeSha256": "a4831c77398a1872ef7a38a353edaf1c512512e2d097f310a47c569884fac73e",
+      "gitHeadBlobSha256": "a4831c77398a1872ef7a38a353edaf1c512512e2d097f310a47c569884fac73e",
+      "git16aaBlobSha256": "a4831c77398a1872ef7a38a353edaf1c512512e2d097f310a47c569884fac73e",
+      "headBlobId": "8c7d5d8bc431d382b2012e75fca38ab54416a574",
+      "lstree": "100644 blob 8c7d5d8bc431d382b2012e75fca38ab54416a574",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 5665
+    },
+    "apps/web/src/editor/IssueBadge.tsx": {
+      "mapSha256": "8f1e829e0d496be3c54bf3814704715438bc97a231ba6462a6b6cb606abd7b5c",
+      "rawWorktreeSha256": "8f1e829e0d496be3c54bf3814704715438bc97a231ba6462a6b6cb606abd7b5c",
+      "gitHeadBlobSha256": "8f1e829e0d496be3c54bf3814704715438bc97a231ba6462a6b6cb606abd7b5c",
+      "git16aaBlobSha256": "8f1e829e0d496be3c54bf3814704715438bc97a231ba6462a6b6cb606abd7b5c",
+      "headBlobId": "787db4bb6bf870349489de20985e995b3b062020",
+      "lstree": "100644 blob 787db4bb6bf870349489de20985e995b3b062020",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 3029
+    },
+    "apps/web/src/editor/IssuePopover.tsx": {
+      "mapSha256": "fefa54eddf1f93cddb2a26e3c15e8eb93e2b6a160fa414daa42d2d0ee8c5f175",
+      "rawWorktreeSha256": "fefa54eddf1f93cddb2a26e3c15e8eb93e2b6a160fa414daa42d2d0ee8c5f175",
+      "gitHeadBlobSha256": "fefa54eddf1f93cddb2a26e3c15e8eb93e2b6a160fa414daa42d2d0ee8c5f175",
+      "git16aaBlobSha256": "fefa54eddf1f93cddb2a26e3c15e8eb93e2b6a160fa414daa42d2d0ee8c5f175",
+      "headBlobId": "6b83157d86af0c43bd60d49673ea6f4156142108",
+      "lstree": "100644 blob 6b83157d86af0c43bd60d49673ea6f4156142108",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 4776
+    },
+    "apps/web/src/editor/LoopSettingsPanel.tsx": {
+      "mapSha256": "eec75bb084479245dd37399e7a49982a0b1e3d19c26c703d51167b4f763fb9aa",
+      "rawWorktreeSha256": "eec75bb084479245dd37399e7a49982a0b1e3d19c26c703d51167b4f763fb9aa",
+      "gitHeadBlobSha256": "eec75bb084479245dd37399e7a49982a0b1e3d19c26c703d51167b4f763fb9aa",
+      "git16aaBlobSha256": "eec75bb084479245dd37399e7a49982a0b1e3d19c26c703d51167b4f763fb9aa",
+      "headBlobId": "06f78f5ceb5ca19951bba7ccce8acfeefef41dee",
+      "lstree": "100644 blob 06f78f5ceb5ca19951bba7ccce8acfeefef41dee",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 6039
+    },
+    "apps/web/src/editor/NameConflictNotice.tsx": {
+      "mapSha256": "6d80c089aee24ad61d2cfd58eb8d69756d8c18bc82715759fcad22824233d0b0",
+      "rawWorktreeSha256": "6d80c089aee24ad61d2cfd58eb8d69756d8c18bc82715759fcad22824233d0b0",
+      "gitHeadBlobSha256": "6d80c089aee24ad61d2cfd58eb8d69756d8c18bc82715759fcad22824233d0b0",
+      "git16aaBlobSha256": "6d80c089aee24ad61d2cfd58eb8d69756d8c18bc82715759fcad22824233d0b0",
+      "headBlobId": "d0edc3826aaaab3d8155689dee6341e99b6129bd",
+      "lstree": "100644 blob d0edc3826aaaab3d8155689dee6341e99b6129bd",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 2844
+    },
+    "apps/web/src/editor/NodeEditorDialog.tsx": {
+      "mapSha256": "56384b384b84a7b53502b10364ce83b9fe5e70f999be064599cde84757c9ef08",
+      "rawWorktreeSha256": "56384b384b84a7b53502b10364ce83b9fe5e70f999be064599cde84757c9ef08",
+      "gitHeadBlobSha256": "56384b384b84a7b53502b10364ce83b9fe5e70f999be064599cde84757c9ef08",
+      "git16aaBlobSha256": "56384b384b84a7b53502b10364ce83b9fe5e70f999be064599cde84757c9ef08",
+      "headBlobId": "ca2e3a4ed434c89bafe66bcf6f8ac030be8dfe72",
+      "lstree": "100644 blob ca2e3a4ed434c89bafe66bcf6f8ac030be8dfe72",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 34288
+    },
+    "apps/web/src/editor/RenameNotice.tsx": {
+      "mapSha256": "ebf2cd203d2ab92055a384e95e2954c39e566318da7264a874b84ecba289870b",
+      "rawWorktreeSha256": "ebf2cd203d2ab92055a384e95e2954c39e566318da7264a874b84ecba289870b",
+      "gitHeadBlobSha256": "ebf2cd203d2ab92055a384e95e2954c39e566318da7264a874b84ecba289870b",
+      "git16aaBlobSha256": "ebf2cd203d2ab92055a384e95e2954c39e566318da7264a874b84ecba289870b",
+      "headBlobId": "8fcb337548c1c549450d21fd5482bfb81bd03fef",
+      "lstree": "100644 blob 8fcb337548c1c549450d21fd5482bfb81bd03fef",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 3506
+    },
+    "apps/web/src/editor/ValidationIndicator.tsx": {
+      "mapSha256": "28099d38612c135b060a11121c4060ec64b03b7407d5f7aa2c6cb545e0e4dec8",
+      "rawWorktreeSha256": "28099d38612c135b060a11121c4060ec64b03b7407d5f7aa2c6cb545e0e4dec8",
+      "gitHeadBlobSha256": "28099d38612c135b060a11121c4060ec64b03b7407d5f7aa2c6cb545e0e4dec8",
+      "git16aaBlobSha256": "28099d38612c135b060a11121c4060ec64b03b7407d5f7aa2c6cb545e0e4dec8",
+      "headBlobId": "b493994bcc48851e941eed69deea48b69c34d094",
+      "lstree": "100644 blob b493994bcc48851e941eed69deea48b69c34d094",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 5872
+    },
+    "apps/web/src/editor/store.rename.test.ts": {
+      "mapSha256": "cb002ae54361e508bc2f416b5fcd667bc956c2948e692b64199c994738f350bc",
+      "rawWorktreeSha256": "cb002ae54361e508bc2f416b5fcd667bc956c2948e692b64199c994738f350bc",
+      "gitHeadBlobSha256": "cb002ae54361e508bc2f416b5fcd667bc956c2948e692b64199c994738f350bc",
+      "git16aaBlobSha256": "cb002ae54361e508bc2f416b5fcd667bc956c2948e692b64199c994738f350bc",
+      "headBlobId": "b332462c4887e565957ebd3c0a5bbfc95cf455d0",
+      "lstree": "100644 blob b332462c4887e565957ebd3c0a5bbfc95cf455d0",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 14874
+    },
+    "apps/web/src/editor/store.ts": {
+      "mapSha256": "a9570a8ee980ee4d42c7e5dfdb8debd65c3a01b34a0c5d1a28aa715bb89dae3d",
+      "rawWorktreeSha256": "a9570a8ee980ee4d42c7e5dfdb8debd65c3a01b34a0c5d1a28aa715bb89dae3d",
+      "gitHeadBlobSha256": "a9570a8ee980ee4d42c7e5dfdb8debd65c3a01b34a0c5d1a28aa715bb89dae3d",
+      "git16aaBlobSha256": "a9570a8ee980ee4d42c7e5dfdb8debd65c3a01b34a0c5d1a28aa715bb89dae3d",
+      "headBlobId": "d6c16b612f557fb1df42a518681b0f4483c4cb4a",
+      "lstree": "100644 blob d6c16b612f557fb1df42a518681b0f4483c4cb4a",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": false,
+      "mapEqualsPriorNative": false,
+      "bytes": 36014
+    },
+    "apps/web/src/editor/useAutosave.ts": {
+      "mapSha256": "fbe6a15d55d97217861d62e91e7f4e878dc5b2957c40c8c115c2ec14eaaa8782",
+      "rawWorktreeSha256": "fbe6a15d55d97217861d62e91e7f4e878dc5b2957c40c8c115c2ec14eaaa8782",
+      "gitHeadBlobSha256": "fbe6a15d55d97217861d62e91e7f4e878dc5b2957c40c8c115c2ec14eaaa8782",
+      "git16aaBlobSha256": "fbe6a15d55d97217861d62e91e7f4e878dc5b2957c40c8c115c2ec14eaaa8782",
+      "headBlobId": "9c743847d4963f4908fd8c69b0db4461de2ef96a",
+      "lstree": "100644 blob 9c743847d4963f4908fd8c69b0db4461de2ef96a",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": false,
+      "mapEqualsPriorNative": false,
+      "bytes": 16348
+    },
+    "apps/web/src/editor/useUndoShortcuts.ts": {
+      "mapSha256": "5eb63750db5a747acf7f8a5f3b18413f2ce234b1c555ae35605eacc53273775b",
+      "rawWorktreeSha256": "5eb63750db5a747acf7f8a5f3b18413f2ce234b1c555ae35605eacc53273775b",
+      "gitHeadBlobSha256": "5eb63750db5a747acf7f8a5f3b18413f2ce234b1c555ae35605eacc53273775b",
+      "git16aaBlobSha256": "5eb63750db5a747acf7f8a5f3b18413f2ce234b1c555ae35605eacc53273775b",
+      "headBlobId": "61d08cfefcbf47aca0b0a97c7421579c89df6f29",
+      "lstree": "100644 blob 61d08cfefcbf47aca0b0a97c7421579c89df6f29",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 13791
+    },
+    "apps/web/src/forms/EarlierNodeOutputs.test.tsx": {
+      "mapSha256": "7391f3311c285203630317e253c3bc7d06c5b1691325f16cd34a6c8f50761d72",
+      "rawWorktreeSha256": "7391f3311c285203630317e253c3bc7d06c5b1691325f16cd34a6c8f50761d72",
+      "gitHeadBlobSha256": "7391f3311c285203630317e253c3bc7d06c5b1691325f16cd34a6c8f50761d72",
+      "git16aaBlobSha256": "7391f3311c285203630317e253c3bc7d06c5b1691325f16cd34a6c8f50761d72",
+      "headBlobId": "b8f1a2b4b19771a417fa8f16dbbfdbe72d2dafa4",
+      "lstree": "100644 blob b8f1a2b4b19771a417fa8f16dbbfdbe72d2dafa4",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 14320
+    },
+    "apps/web/src/loops/LoopsPage.tsx": {
+      "mapSha256": "10f790637be9c039c28b0b33535e778ded286e3038eabe3fa441f1d5a50c9268",
+      "rawWorktreeSha256": "10f790637be9c039c28b0b33535e778ded286e3038eabe3fa441f1d5a50c9268",
+      "gitHeadBlobSha256": "10f790637be9c039c28b0b33535e778ded286e3038eabe3fa441f1d5a50c9268",
+      "git16aaBlobSha256": "10f790637be9c039c28b0b33535e778ded286e3038eabe3fa441f1d5a50c9268",
+      "headBlobId": "088b3e874984553078cb292296e47c84f25ea29c",
+      "lstree": "100644 blob 088b3e874984553078cb292296e47c84f25ea29c",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": false,
+      "mapEqualsPriorNative": false,
+      "bytes": 23389
+    },
+    "apps/web/src/loops/loop-names.test.tsx": {
+      "mapSha256": "9f0982ec42f152705d72fdf5cdb2666e569a38d791738692c083a15c844f4403",
+      "rawWorktreeSha256": "9f0982ec42f152705d72fdf5cdb2666e569a38d791738692c083a15c844f4403",
+      "gitHeadBlobSha256": "9f0982ec42f152705d72fdf5cdb2666e569a38d791738692c083a15c844f4403",
+      "git16aaBlobSha256": "9f0982ec42f152705d72fdf5cdb2666e569a38d791738692c083a15c844f4403",
+      "headBlobId": "68ee98f6e09d6d6b774fd27651a8e8fe53f027ee",
+      "lstree": "100644 blob 68ee98f6e09d6d6b774fd27651a8e8fe53f027ee",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": false,
+      "mapEqualsPriorNative": false,
+      "bytes": 27222
+    },
+    "packages/contracts/src/events.ts": {
+      "mapSha256": "5266a8325018cc1c9071e1f54ba74682ae8d605b057662b52b28e0f1719b8c1e",
+      "rawWorktreeSha256": "5266a8325018cc1c9071e1f54ba74682ae8d605b057662b52b28e0f1719b8c1e",
+      "gitHeadBlobSha256": "5266a8325018cc1c9071e1f54ba74682ae8d605b057662b52b28e0f1719b8c1e",
+      "git16aaBlobSha256": "5266a8325018cc1c9071e1f54ba74682ae8d605b057662b52b28e0f1719b8c1e",
+      "headBlobId": "62a1179878a567946750bf5a994a139cc0f6362a",
+      "lstree": "100644 blob 62a1179878a567946750bf5a994a139cc0f6362a",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 10242
+    },
+    "packages/contracts/src/mutations.ts": {
+      "mapSha256": "c8aaa602f1fe3cda7cc6880525cc172f3770110849c3e98cc50c1c8180c63c09",
+      "rawWorktreeSha256": "c8aaa602f1fe3cda7cc6880525cc172f3770110849c3e98cc50c1c8180c63c09",
+      "gitHeadBlobSha256": "c8aaa602f1fe3cda7cc6880525cc172f3770110849c3e98cc50c1c8180c63c09",
+      "git16aaBlobSha256": "c8aaa602f1fe3cda7cc6880525cc172f3770110849c3e98cc50c1c8180c63c09",
+      "headBlobId": "8eaf00c2fe44bc7a35770b1f643accfe21233d40",
+      "lstree": "100644 blob 8eaf00c2fe44bc7a35770b1f643accfe21233d40",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 3916
+    },
+    "packages/contracts/src/run.ts": {
+      "mapSha256": "a6cd5a5aec8dcec8950d76c2d0251898c787ae2e560f6159d9d9b761f97799f3",
+      "rawWorktreeSha256": "a6cd5a5aec8dcec8950d76c2d0251898c787ae2e560f6159d9d9b761f97799f3",
+      "gitHeadBlobSha256": "a6cd5a5aec8dcec8950d76c2d0251898c787ae2e560f6159d9d9b761f97799f3",
+      "git16aaBlobSha256": "a6cd5a5aec8dcec8950d76c2d0251898c787ae2e560f6159d9d9b761f97799f3",
+      "headBlobId": "9518422440724cb088ba75ec6becbb9afd29c02d",
+      "lstree": "100644 blob 9518422440724cb088ba75ec6becbb9afd29c02d",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 12366
+    },
+    "packages/domain/src/chat.ts": {
+      "mapSha256": "4cb9961c7b7e394981f8499427b3c6d96a2bfca0caa1afd921deb5da14abfbcf",
+      "rawWorktreeSha256": "4cb9961c7b7e394981f8499427b3c6d96a2bfca0caa1afd921deb5da14abfbcf",
+      "gitHeadBlobSha256": "4cb9961c7b7e394981f8499427b3c6d96a2bfca0caa1afd921deb5da14abfbcf",
+      "git16aaBlobSha256": "4cb9961c7b7e394981f8499427b3c6d96a2bfca0caa1afd921deb5da14abfbcf",
+      "headBlobId": "eb58c731fe39143e19ec9c59dbee09b4d9e3cc00",
+      "lstree": "100644 blob eb58c731fe39143e19ec9c59dbee09b4d9e3cc00",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 21062
+    },
+    "packages/domain/src/expression-references.ts": {
+      "mapSha256": "539205abaa685907c80613e9a89e7b4581d5b41fa9c1e94638925acadffaa3ae",
+      "rawWorktreeSha256": "539205abaa685907c80613e9a89e7b4581d5b41fa9c1e94638925acadffaa3ae",
+      "gitHeadBlobSha256": "539205abaa685907c80613e9a89e7b4581d5b41fa9c1e94638925acadffaa3ae",
+      "git16aaBlobSha256": "539205abaa685907c80613e9a89e7b4581d5b41fa9c1e94638925acadffaa3ae",
+      "headBlobId": "78f50a44461c982da0da62fb12f53701d38d62da",
+      "lstree": "100644 blob 78f50a44461c982da0da62fb12f53701d38d62da",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 10216
+    },
+    "packages/domain/src/expression.ts": {
+      "mapSha256": "15f08c6af0574dbf76b35854ccb9a2894c1f9f1924a123cf7e7f2da2e42f91e5",
+      "rawWorktreeSha256": "15f08c6af0574dbf76b35854ccb9a2894c1f9f1924a123cf7e7f2da2e42f91e5",
+      "gitHeadBlobSha256": "15f08c6af0574dbf76b35854ccb9a2894c1f9f1924a123cf7e7f2da2e42f91e5",
+      "git16aaBlobSha256": "15f08c6af0574dbf76b35854ccb9a2894c1f9f1924a123cf7e7f2da2e42f91e5",
+      "headBlobId": "461767e1dcf24e4a9fba13f05f6560daf94cbefe",
+      "lstree": "100644 blob 461767e1dcf24e4a9fba13f05f6560daf94cbefe",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 7637
+    },
+    "packages/domain/src/graph.ts": {
+      "mapSha256": "eafd4882dcf70c1ba24c896721529ec333a106601365c66ba3b23aedaf53ff1d",
+      "rawWorktreeSha256": "eafd4882dcf70c1ba24c896721529ec333a106601365c66ba3b23aedaf53ff1d",
+      "gitHeadBlobSha256": "eafd4882dcf70c1ba24c896721529ec333a106601365c66ba3b23aedaf53ff1d",
+      "git16aaBlobSha256": "eafd4882dcf70c1ba24c896721529ec333a106601365c66ba3b23aedaf53ff1d",
+      "headBlobId": "5fd925ed7b608436a44b1a7a24d852b9336be960",
+      "lstree": "100644 blob 5fd925ed7b608436a44b1a7a24d852b9336be960",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 10426
+    },
+    "packages/domain/src/index.ts": {
+      "mapSha256": "4df280d5f7e2def5b80564a598ebcc73edd6d250b3e0019aea1abf253f9832ea",
+      "rawWorktreeSha256": "4df280d5f7e2def5b80564a598ebcc73edd6d250b3e0019aea1abf253f9832ea",
+      "gitHeadBlobSha256": "4df280d5f7e2def5b80564a598ebcc73edd6d250b3e0019aea1abf253f9832ea",
+      "git16aaBlobSha256": "4df280d5f7e2def5b80564a598ebcc73edd6d250b3e0019aea1abf253f9832ea",
+      "headBlobId": "a7839c53c5f8ff9cf48789941b89d34ac873d39f",
+      "lstree": "100644 blob a7839c53c5f8ff9cf48789941b89d34ac873d39f",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 1108
+    },
+    "packages/domain/src/mutations.ts": {
+      "mapSha256": "cbbfbda16ea094cafac9040a9a974f55dab2be114b25c50f43a82312015af1d5",
+      "rawWorktreeSha256": "cbbfbda16ea094cafac9040a9a974f55dab2be114b25c50f43a82312015af1d5",
+      "gitHeadBlobSha256": "cbbfbda16ea094cafac9040a9a974f55dab2be114b25c50f43a82312015af1d5",
+      "git16aaBlobSha256": "cbbfbda16ea094cafac9040a9a974f55dab2be114b25c50f43a82312015af1d5",
+      "headBlobId": "74e42f4cd392587311976ddefc406ab081a13599",
+      "lstree": "100644 blob 74e42f4cd392587311976ddefc406ab081a13599",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 11313
+    },
+    "packages/domain/src/node-reference-path.ts": {
+      "mapSha256": "4fde9d42f276cf6641135994088072a7c58a1e78f24f4d0d7334fd1e6802117e",
+      "rawWorktreeSha256": "4fde9d42f276cf6641135994088072a7c58a1e78f24f4d0d7334fd1e6802117e",
+      "gitHeadBlobSha256": "4fde9d42f276cf6641135994088072a7c58a1e78f24f4d0d7334fd1e6802117e",
+      "git16aaBlobSha256": "4fde9d42f276cf6641135994088072a7c58a1e78f24f4d0d7334fd1e6802117e",
+      "headBlobId": "b697fdb3ab0dfb9deca8a0d24b65e2a3c8461e1d",
+      "lstree": "100644 blob b697fdb3ab0dfb9deca8a0d24b65e2a3c8461e1d",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 2312
+    },
+    "packages/domain/src/node-references.test.ts": {
+      "mapSha256": "cb313aae2a81521846b2eaff02754f1d5c9b272d64691a709ae539f47fbd1bf3",
+      "rawWorktreeSha256": "cb313aae2a81521846b2eaff02754f1d5c9b272d64691a709ae539f47fbd1bf3",
+      "gitHeadBlobSha256": "cb313aae2a81521846b2eaff02754f1d5c9b272d64691a709ae539f47fbd1bf3",
+      "git16aaBlobSha256": "cb313aae2a81521846b2eaff02754f1d5c9b272d64691a709ae539f47fbd1bf3",
+      "headBlobId": "56d6de805843946cfc446643cfe0c6ff17c175ae",
+      "lstree": "100644 blob 56d6de805843946cfc446643cfe0c6ff17c175ae",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 17223
+    },
+    "packages/domain/src/node-references.ts": {
+      "mapSha256": "a1e73c0a981f892978dd1c659999b259811770dc85c050447f9584ebc48c13b4",
+      "rawWorktreeSha256": "a1e73c0a981f892978dd1c659999b259811770dc85c050447f9584ebc48c13b4",
+      "gitHeadBlobSha256": "a1e73c0a981f892978dd1c659999b259811770dc85c050447f9584ebc48c13b4",
+      "git16aaBlobSha256": "a1e73c0a981f892978dd1c659999b259811770dc85c050447f9584ebc48c13b4",
+      "headBlobId": "388afeb0592adc19a8a7a9d7b65e784cf885e2e3",
+      "lstree": "100644 blob 388afeb0592adc19a8a7a9d7b65e784cf885e2e3",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 11430
+    },
+    "packages/domain/src/source-analysis.test.ts": {
+      "mapSha256": "8dc04a23b8ff7279d2e23f57d3403c53c725fc374165884b871ec79c79a20225",
+      "rawWorktreeSha256": "8dc04a23b8ff7279d2e23f57d3403c53c725fc374165884b871ec79c79a20225",
+      "gitHeadBlobSha256": "8dc04a23b8ff7279d2e23f57d3403c53c725fc374165884b871ec79c79a20225",
+      "git16aaBlobSha256": "8dc04a23b8ff7279d2e23f57d3403c53c725fc374165884b871ec79c79a20225",
+      "headBlobId": "cda8d0abdaa374f90d570d9b3b65ff91ea120039",
+      "lstree": "100644 blob cda8d0abdaa374f90d570d9b3b65ff91ea120039",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 7321
+    },
+    "packages/domain/src/source-analysis.ts": {
+      "mapSha256": "f05b040e57db22a3a0d92d3c046606711f3758914b88eca4ed6a8375584fc072",
+      "rawWorktreeSha256": "f05b040e57db22a3a0d92d3c046606711f3758914b88eca4ed6a8375584fc072",
+      "gitHeadBlobSha256": "f05b040e57db22a3a0d92d3c046606711f3758914b88eca4ed6a8375584fc072",
+      "git16aaBlobSha256": "f05b040e57db22a3a0d92d3c046606711f3758914b88eca4ed6a8375584fc072",
+      "headBlobId": "bb2fad1e6641aeaddd8bdf4223e2befa2e586bb3",
+      "lstree": "100644 blob bb2fad1e6641aeaddd8bdf4223e2befa2e586bb3",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 3066
+    },
+    "packages/domain/src/syntax.ts": {
+      "mapSha256": "332aa24184d2dedcd2eeedc7b9caa74fa09f7e6b67bf34b2d18794eb145f2910",
+      "rawWorktreeSha256": "332aa24184d2dedcd2eeedc7b9caa74fa09f7e6b67bf34b2d18794eb145f2910",
+      "gitHeadBlobSha256": "332aa24184d2dedcd2eeedc7b9caa74fa09f7e6b67bf34b2d18794eb145f2910",
+      "git16aaBlobSha256": "332aa24184d2dedcd2eeedc7b9caa74fa09f7e6b67bf34b2d18794eb145f2910",
+      "headBlobId": "7f4aeef7191a8fd996f6b56a6579b437c361511a",
+      "lstree": "100644 blob 7f4aeef7191a8fd996f6b56a6579b437c361511a",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 6053
+    },
+    "packages/domain/src/template-references.ts": {
+      "mapSha256": "7da0affea7df6a3fe6ca941ed1ee48b4abb5f272d8cb81e7f51135263f0c8a21",
+      "rawWorktreeSha256": "7da0affea7df6a3fe6ca941ed1ee48b4abb5f272d8cb81e7f51135263f0c8a21",
+      "gitHeadBlobSha256": "7da0affea7df6a3fe6ca941ed1ee48b4abb5f272d8cb81e7f51135263f0c8a21",
+      "git16aaBlobSha256": "7da0affea7df6a3fe6ca941ed1ee48b4abb5f272d8cb81e7f51135263f0c8a21",
+      "headBlobId": "9d09d5f12ee13ca9bb3f8155c9f47129dc7e4b71",
+      "lstree": "100644 blob 9d09d5f12ee13ca9bb3f8155c9f47129dc7e4b71",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 4901
+    },
+    "packages/domain/src/template.ts": {
+      "mapSha256": "1edd044aafe20fe091c8ad44167712fe842ee58a3f52182f8ed0844bf3930421",
+      "rawWorktreeSha256": "1edd044aafe20fe091c8ad44167712fe842ee58a3f52182f8ed0844bf3930421",
+      "gitHeadBlobSha256": "1edd044aafe20fe091c8ad44167712fe842ee58a3f52182f8ed0844bf3930421",
+      "git16aaBlobSha256": "1edd044aafe20fe091c8ad44167712fe842ee58a3f52182f8ed0844bf3930421",
+      "headBlobId": "d0f61e988c346e36712feb5eb236f1c48a8d6ec3",
+      "lstree": "100644 blob d0f61e988c346e36712feb5eb236f1c48a8d6ec3",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 1899
+    },
+    "packages/domain/src/validation-issue.ts": {
+      "mapSha256": "1e788bb47f2c567c3528ecdd1ae96e4ad9fe0f1a7ca99d5db351eb89974d75d9",
+      "rawWorktreeSha256": "1e788bb47f2c567c3528ecdd1ae96e4ad9fe0f1a7ca99d5db351eb89974d75d9",
+      "gitHeadBlobSha256": "1e788bb47f2c567c3528ecdd1ae96e4ad9fe0f1a7ca99d5db351eb89974d75d9",
+      "git16aaBlobSha256": "1e788bb47f2c567c3528ecdd1ae96e4ad9fe0f1a7ca99d5db351eb89974d75d9",
+      "headBlobId": "e0450ad5790ed9bf1f4fc533e53bdb3d2aae85b1",
+      "lstree": "100644 blob e0450ad5790ed9bf1f4fc533e53bdb3d2aae85b1",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 420
+    },
+    "packages/engine/src/handlers/decision.ts": {
+      "mapSha256": "c3ca1d0287f8fe8e515d63655796fadf690b24d729cde7a3fc1624b69034acde",
+      "rawWorktreeSha256": "c3ca1d0287f8fe8e515d63655796fadf690b24d729cde7a3fc1624b69034acde",
+      "gitHeadBlobSha256": "c3ca1d0287f8fe8e515d63655796fadf690b24d729cde7a3fc1624b69034acde",
+      "git16aaBlobSha256": "c3ca1d0287f8fe8e515d63655796fadf690b24d729cde7a3fc1624b69034acde",
+      "headBlobId": "176a560376d278ee5c7c46613a08e723bb4af9bc",
+      "lstree": "100644 blob 176a560376d278ee5c7c46613a08e723bb4af9bc",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 5659
+    },
+    "packages/engine/src/run-manager.ts": {
+      "mapSha256": "66c38c27ad3ae7f277f7617907911205cb25109870f68baa33122de7691a2849",
+      "rawWorktreeSha256": "66c38c27ad3ae7f277f7617907911205cb25109870f68baa33122de7691a2849",
+      "gitHeadBlobSha256": "66c38c27ad3ae7f277f7617907911205cb25109870f68baa33122de7691a2849",
+      "git16aaBlobSha256": "66c38c27ad3ae7f277f7617907911205cb25109870f68baa33122de7691a2849",
+      "headBlobId": "39fc78a44fc72a9ec3bbd2c1b334728e3e22b106",
+      "lstree": "100644 blob 39fc78a44fc72a9ec3bbd2c1b334728e3e22b106",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 133848
+    },
+    "packages/infrastructure/src/sqlite/loop-names.ts": {
+      "mapSha256": "c077b725593387e21b0e536f21374a82f56458786bb4c82c618792d93b873fc3",
+      "rawWorktreeSha256": "c077b725593387e21b0e536f21374a82f56458786bb4c82c618792d93b873fc3",
+      "gitHeadBlobSha256": "c077b725593387e21b0e536f21374a82f56458786bb4c82c618792d93b873fc3",
+      "git16aaBlobSha256": "c077b725593387e21b0e536f21374a82f56458786bb4c82c618792d93b873fc3",
+      "headBlobId": "8ddb8b2440fa0496022528fd5c21489f4e32dbca",
+      "lstree": "100644 blob 8ddb8b2440fa0496022528fd5c21489f4e32dbca",
+      "rawEqualsGitHead": true,
+      "headEquals16aa": true,
+      "equalsMap": true,
+      "mapEqualsPreviousCandidate": true,
+      "mapEqualsPriorNative": true,
+      "bytes": 2156
+    }
+  },
+  "identity": {
+    "head": "ae8add8a791699e905540465b5ddf929d00c50eb",
+    "tree": "ea2dfcfd46f7d5ab79fd98414db214513d830b52",
+    "branch": "codex/gg-20261114-node-references-native",
+    "originMain": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+    "base": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+    "status": ""
+  },
+  "verdict": "ADMITTED"
+}

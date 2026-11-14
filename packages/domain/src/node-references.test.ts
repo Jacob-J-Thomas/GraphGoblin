@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
-import { minimalLoop } from '@graphgoblin/contracts/testing';
-import { evaluateExpression, renderTemplate, validateLoop } from './index.js';
+import { everyFieldLoop, FIXTURE_IDS, minimalLoop } from '@graphgoblin/contracts/testing';
+import { evaluateExpression, isPublishable, renderTemplate, validateLoop } from './index.js';
 import { renameLoopNode } from './index.js';
 
 function returning(returns: string): LoopDefinitionInput {
@@ -160,6 +160,299 @@ describe('reference scopes and source boundaries', () => {
     const issues = referenceIssues(returning(source));
     if (severity === undefined) expect(issues).toEqual([]);
     else expect(issues).toContainEqual(expect.objectContaining({ severity }));
+  });
+
+  it.each(['decide', 'classifier-decision'])(
+    'uses the message item and $thread in the %s decision selector',
+    (id) => {
+      const fixture = everyFieldLoop().nodes.find((node) => node.id === id);
+      if (fixture?.kind !== 'decision' || fixture.config.kind === 'expression')
+        throw new Error('missing decision fixture');
+      const before = returning('none');
+      const where =
+        'outputs.start or gates.local or $$.counters.nodeVisits.local or ' +
+        '$thread.outputs.start.value or $thread.gates.missing.passes or $thread.counters.nodeVisits.removed';
+      fixture.config.context = { messages: { where } };
+      before.nodes.push(fixture);
+      before.edges = [
+        { id: 'to-decision', from: { node: 'start', port: 'out' }, to: { node: id } },
+        { id: 'to-exit', from: { node: id, port: 'good' }, to: { node: 'done' } },
+        { id: 'repeat', from: { node: id, port: 'bad' }, to: { node: id } },
+        { id: 'at-limit', from: { node: id, port: 'limit-reached' }, to: { node: 'done' } },
+      ];
+      const result = renamed(before, 'changed');
+      expect(result.definition.nodes.at(-1)).toMatchObject({
+        config: {
+          context: {
+            messages: {
+              where:
+                'outputs.start or gates.local or $$.counters.nodeVisits.local or ' +
+                '$thread.outputs.changed.value or $thread.gates.missing.passes or $thread.counters.nodeVisits.removed',
+            },
+          },
+        },
+      });
+      expect(result.repairedReferences).toBe(2);
+      expect(result.warnings).toEqual([]);
+      const parsed = LoopDefinitionSchema.parse(result.definition);
+      expect(validateLoop(parsed).filter((issue) => issue.severity === 'error')).toEqual(
+        ['gates.missing', 'counters.nodeVisits.removed'].map<unknown>((key) =>
+          expect.objectContaining({
+            code: 'NODE_REFERENCE_MISSING',
+            severity: 'error',
+            nodeId: id,
+            path: 'config.context.messages.where',
+            message: expect.stringContaining(key),
+          }),
+        ),
+      );
+      expect(isPublishable(parsed)).toBe(false);
+    },
+  );
+
+  it('uses the parent thread for a child variable named where and binds selectors to their own thread', () => {
+    const before = returning('none');
+    const selector = { where: 'outputs.start or $thread.outputs.start.value' };
+    before.nodes.push({
+      id: 'child',
+      label: 'Child',
+      kind: 'subloop',
+      config: {
+        loopRef: { loopId: FIXTURE_IDS.childLoop },
+        input: {
+          mode: 'project',
+          vars: { where: 'outputs.start.value or $thread.outputs.start or gates.missing.passes' },
+          messages: selector,
+          artifacts: selector,
+        },
+        output: {
+          mode: 'merge',
+          vars: { strategy: 'explicit', map: { where: 'gates.childGate' } },
+          messages: { where: '$thread.outputs.start or $thread.gates.childGate' },
+          artifacts: { where: '$thread.outputs.start or $thread.counters.nodeVisits.childOnly' },
+        },
+      },
+    });
+    const result = renamed(before, 'changed');
+    const selected = { where: 'outputs.start or $thread.outputs.changed.value' };
+    expect(result.definition.nodes.at(-1)).toMatchObject({
+      config: {
+        input: {
+          vars: { where: 'outputs.changed.value or $thread.outputs.start or gates.missing.passes' },
+          messages: selected,
+          artifacts: selected,
+        },
+        output: {
+          vars: { strategy: 'explicit', map: { where: 'gates.childGate' } },
+          messages: { where: '$thread.outputs.start or $thread.gates.childGate' },
+          artifacts: { where: '$thread.outputs.start or $thread.counters.nodeVisits.childOnly' },
+        },
+      },
+    });
+    expect(result.repairedReferences).toBe(4);
+    expect(result.warnings).toEqual([]);
+    expect(referenceIssues(result.definition)).toEqual([
+      expect.objectContaining({
+        code: 'NODE_REFERENCE_MISSING',
+        severity: 'error',
+        nodeId: 'child',
+        path: 'config.input.vars.where',
+        message: expect.stringContaining('gates.missing'),
+      }),
+    ]);
+  });
+
+  it('preserves item scope in mutate operations and inference transforms', () => {
+    const before = returning('none');
+    const where = 'outputs.start or $thread.outputs.start.value';
+    before.nodes.push(
+      {
+        id: 'mutate',
+        kind: 'mutate',
+        label: 'Mutate',
+        config: { operations: [{ op: 'drop', target: 'messages', where }] },
+      },
+      {
+        id: 'infer',
+        kind: 'inference',
+        label: 'Infer',
+        config: {
+          prompt: { template: '{{ outputs.start.value }}' },
+          input: [{ op: 'drop', target: 'messages', where }],
+          output: { transforms: [{ op: 'drop', target: 'artifacts', where }] },
+        },
+      },
+    );
+    const result = renamed(before, 'changed');
+    const predicate = { where: 'outputs.start or $thread.outputs.changed.value' };
+    expect(result.definition.nodes.slice(-2)).toMatchObject([
+      { config: { operations: [predicate] } },
+      {
+        config: {
+          prompt: { template: '{{ outputs.changed.value }}' },
+          input: [predicate],
+          output: { transforms: [predicate] },
+        },
+      },
+    ]);
+    expect(result.repairedReferences).toBe(5);
+    expect(result.warnings).toEqual([]);
+    expect(referenceIssues(result.definition)).toEqual([]);
+  });
+
+  it.each([
+    [
+      '$distinct(rows)[id = $$.outputs.start.value].id',
+      '$distinct(rows)[id = $$.outputs."true".value].id',
+      2,
+    ],
+    [
+      '(rows)[outputs.start.value = $$.outputs.start.value].id',
+      '(rows)[outputs.start.value = $$.outputs."true".value].id',
+      2,
+    ],
+    [
+      '(rows ~> $distinct())[id = $$.outputs.start.value].id',
+      '(rows ~> $distinct())[id = $$.outputs."true".value].id',
+      2,
+    ],
+    [
+      'rows.$distinct($)[id = $$.outputs.start.value].id',
+      'rows.$distinct($)[id = $$.outputs."true".value].id',
+      2,
+    ],
+    [
+      'rows.($distinct($))[id = $$.outputs.start.value].id',
+      'rows.($distinct($))[id = $$.outputs."true".value].id',
+      2,
+    ],
+    [
+      '$distinct(rows){"k": $$.outputs.start.value, "local": $sum($.outputs.start.value)}',
+      '$distinct(rows){"k": $$.outputs."true".value, "local": $sum($.outputs.start.value)}',
+      { k: 2, local: 3 },
+    ],
+    [
+      '(rows){"k": $$.outputs.start.value, "local": $sum(outputs.start.value)}',
+      '(rows){"k": $$.outputs."true".value, "local": $sum(outputs.start.value)}',
+      { k: 2, local: 3 },
+    ],
+    ['[rows]{"k": $$.outputs.start.value}', '[rows]{"k": $$.outputs."true".value}', { k: 2 }],
+    ['rows^(id)[id = $$.outputs.start.value].id', 'rows^(id)[id = $$.outputs."true".value].id', 2],
+    [
+      '$distinct(rows)[id = ($$.outputs /* keep */ .start.value ?? 0)].id',
+      '$distinct(rows)[id = ($$.outputs /* keep */ ."true".value ?? 0)].id',
+      2,
+    ],
+  ] as const)(
+    'repairs each evaluated filter or group key once in %s',
+    async (before, after, value) => {
+      const rows = [
+        { id: 1, outputs: { start: { value: 1 } } },
+        { id: 2, outputs: { start: { value: 2 } } },
+      ];
+      const result = renamed(returning(before));
+      expect(expressionOf(result.definition)).toBe(after);
+      expect(result.repairedReferences).toBe(2);
+      expect(result.warnings).toEqual([]);
+      expect(await evaluateExpression(before, { rows, outputs: { start: { value: 2 } } })).toEqual(
+        value,
+      );
+      expect(await evaluateExpression(after, { rows, outputs: { true: { value: 2 } } })).toEqual(
+        value,
+      );
+    },
+  );
+
+  it.each([
+    ['$distinct(rows)[$$.gates.missing.passes > 1]', false, ['gates.missing']],
+    [
+      '$distinct(rows){"k": $$.counters.nodeVisits.missing}',
+      false,
+      ['counters.nodeVisits.missing'],
+    ],
+    ['$distinct(rows)[$exists($$.gates.missing)]', true, ['gates.missing']],
+    ['$exists((gates.missing)[$$.gates.other])', false, ['gates.missing', 'gates.other']],
+    ['$exists($lookup(gates,"missing")[$$.gates.other])', false, ['gates.missing', 'gates.other']],
+  ] as const)('enforces the publication rule for %s', (source, optional, keys) => {
+    const definition = returning(source);
+    expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe(optional);
+    const issues = referenceIssues(definition);
+    expect(issues).toHaveLength(keys.length);
+    for (const [index, key] of keys.entries()) {
+      expect(issues[index]).toEqual(
+        expect.objectContaining({
+          code: optional ? 'NODE_REFERENCE_OPTIONAL_MISSING' : 'NODE_REFERENCE_MISSING',
+          severity: optional ? 'warning' : 'error',
+          nodeId: 'done',
+          path: 'config.returns',
+          message: expect.stringContaining(key),
+        }),
+      );
+    }
+  });
+
+  it('warns about a shadowed original root within an evaluated filter', () => {
+    const source = '($$ := $fixture; $distinct(rows)[id = $$.outputs.start.value])';
+    const definition = returning(source);
+    const result = renamed(definition);
+    expect(expressionOf(result.definition)).toBe(source);
+    expect(result.repairedReferences).toBe(1);
+    const issue = expect.objectContaining({
+      code: 'NODE_REFERENCE_UNCERTAIN',
+      nodeId: 'done',
+      path: 'config.returns',
+    });
+    expect(result.warnings).toEqual([issue]);
+    expect(referenceIssues(definition)).toEqual([issue]);
+  });
+
+  it.each([
+    'rows ~> $distinct()[$$.gates.missing and $$.outputs.start]',
+    'rows ~> $distinct(){"k": $$.gates.missing, "value": $$.outputs.start}',
+  ])(
+    'warns on references in decorations skipped by JSONata function application %s',
+    async (source) => {
+      const definition = returning(source);
+      const rows = [{ id: 1 }, { id: 2 }];
+      expect(await evaluateExpression(source, { rows })).toEqual(rows);
+      expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe(true);
+      const issue = expect.objectContaining({
+        code: 'NODE_REFERENCE_UNCERTAIN',
+        nodeId: 'done',
+        path: 'config.returns',
+      });
+      expect(referenceIssues(definition)).toEqual([issue]);
+      const result = renamed(definition);
+      expect(expressionOf(result.definition)).toBe(source);
+      expect(result.repairedReferences).toBe(1);
+      expect(result.warnings).toEqual([issue]);
+    },
+  );
+
+  it('repairs evaluated function arguments while warning on its skipped filter', async () => {
+    const source =
+      'rows ~> $filter(function($row){$row.id = $$.outputs.start.value})[$$.outputs.start]';
+    const expected =
+      'rows ~> $filter(function($row){$row.id = $$.outputs."true".value})[$$.outputs.start]';
+    const result = renamed(returning(source));
+    expect(expressionOf(result.definition)).toBe(expected);
+    expect(result.repairedReferences).toBe(2);
+    expect(result.warnings).toEqual([
+      expect.objectContaining({ code: 'NODE_REFERENCE_UNCERTAIN', path: 'config.returns' }),
+    ]);
+    const rows = [{ id: 1 }, { id: 2 }];
+    expect(await evaluateExpression(expected, { rows, outputs: { true: { value: 2 } } })).toEqual({
+      id: 2,
+    });
+  });
+
+  it('keeps an applied presence probe optional when its function has a skipped predicate', () => {
+    const definition = returning('gates.missing ~> $exists()[$$.gates.other]');
+    expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe(true);
+    expect(referenceIssues(definition).map(({ code }) => code)).toEqual([
+      'NODE_REFERENCE_OPTIONAL_MISSING',
+      'NODE_REFERENCE_UNCERTAIN',
+    ]);
   });
 
   it('explains dynamic and opaque identity use without editing source, literals or provenance comparisons', () => {

@@ -92,6 +92,12 @@ Validation rules enforced by `domain` before a version can be published:
 - A known read of a missing node in `counters.nodeVisits` or a missing decision gate in `gates` blocks publication (`NODE_REFERENCE_MISSING`). Direct existence checks warn (`NODE_REFERENCE_OPTIONAL_MISSING`). A missing `outputs` key can come from inherited or authored state and warns when its origin cannot be verified (`NODE_REFERENCE_OUTPUT_UNVERIFIED`). Dynamic and scoped accesses that the authoring checks cannot establish report `NODE_REFERENCE_UNCERTAIN`.
 - No edge targets a trigger node's input.
 
+Reference validation follows the field's evaluation context. An LLM or classifier decision's
+message predicate and a subloop's input message or artifact predicate run against the selected
+item and access the current run through `$thread`. Subloop input variable expressions run against
+the parent thread directly, including a variable named `where`. In a JSONata filter or group
+within a thread expression, `$$` can still refer to the original thread after the focus changes.
+
 Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
 provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
 as unknown keys; imports and API clients must remove it. There is no compatibility parser.

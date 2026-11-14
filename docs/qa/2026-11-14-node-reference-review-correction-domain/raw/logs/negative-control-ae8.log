@@ -1,0 +1,522 @@
+
+ RUN  v5.0.3 C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-273/backend-correction/negative-control/ae8/packages/domain
+
+ ✓ src/node-references.test.ts > known node references > reports known missing local identities and preserves foreign outputs as warnings 15ms
+ ✓ src/node-references.test.ts > known node references > allows direct presence probes without making the probed identity mandatory 9ms
+ ✓ src/node-references.test.ts > known node references > rewrites structural edges, static JSONata and Liquid together, retaining other bytes 9ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs.start.value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in $.outputs.start.value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs. "st\u0061rt".value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs /* start */ . 'start'.value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs.`start` 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows.($.outputs.start.value) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows.($$.outputs.start.value) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows[$$.outputs.start.value] 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows[outputs.start.value] 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows^(outputs.start.value) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in (function(){outputs.start.value})() 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows.(function(){outputs.start.value})() 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows^($$.outputs.start.value) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in $lookup(outputs,"st\u0061rt").value 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in ($lookup := function($x,$key){ $key }; $lookup(vars,"start")) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in ($$ := $fixture; $$.outputs.start.value) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in trigger.nodeId = "start" 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs.starting.value 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists(gates.missing.passes) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in gates.missing ~> $exists() 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists($lookup(gates,"missing")) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists($lookup(gates,"missing").passes) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists((gates.missing)) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists((gates.missing; 1)) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in ($exists := function($x){false}; $exists(gates.missing)) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists(gates.missing[$which]) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in gates.missing ~> $exists(gates.other) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in gates.missing ? gates.missing.passes : 0 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in gates.start.passes 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in counters.nodeVisits.done 0ms
+ × src/node-references.test.ts > reference scopes and source boundaries > uses the message item and $thread in the decide decision selector 14ms
+   → expected { Object (id, kind, ...) } to match object { config: { context: { …(1) } } }
+(15 matching properties omitted from actual)
+ × src/node-references.test.ts > reference scopes and source boundaries > uses the message item and $thread in the classifier-decision decision selector 2ms
+   → expected { id: 'classifier-decision', …(3) } to match object { config: { context: { …(1) } } }
+(15 matching properties omitted from actual)
+ × src/node-references.test.ts > reference scopes and source boundaries > uses the parent thread for a child variable named where and binds selectors to their own thread 3ms
+   → expected { id: 'child', label: 'Child', …(2) } to match object { config: { input: { …(3) }, …(1) } }
+(6 matching properties omitted from actual)
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves item scope in mutate operations and inference transforms 6ms
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows)[id = $$.outputs.start.value].id 3ms
+   → expected '$distinct(rows)[id = $$.outputs.start…' to be '$distinct(rows)[id = $$.outputs."true…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows)[outputs.start.value = $$.outputs.start.value].id 1ms
+   → expected '(rows)[outputs.start.value = $$.outpu…' to be '(rows)[outputs.start.value = $$.outpu…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows ~> $distinct())[id = $$.outputs.start.value].id 1ms
+   → expected '(rows ~> $distinct())[id = $$.outputs…' to be '(rows ~> $distinct())[id = $$.outputs…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows.$distinct($)[id = $$.outputs.start.value].id 1ms
+   → expected 'rows.$distinct($)[id = $$.outputs.sta…' to be 'rows.$distinct($)[id = $$.outputs."tr…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows.($distinct($))[id = $$.outputs.start.value].id 1ms
+   → expected 'rows.($distinct($))[id = $$.outputs.s…' to be 'rows.($distinct($))[id = $$.outputs."…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows){"k": $$.outputs.start.value, "local": $sum($.outputs.start.value)} 1ms
+   → expected '$distinct(rows){"k": $$.outputs.start…' to be '$distinct(rows){"k": $$.outputs."true…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows){"k": $$.outputs.start.value, "local": $sum(outputs.start.value)} 1ms
+   → expected '(rows){"k": $$.outputs.start.value, "…' to be '(rows){"k": $$.outputs."true".value, …' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in [rows]{"k": $$.outputs.start.value} 1ms
+   → expected '[rows]{"k": $$.outputs.start.value}' to be '[rows]{"k": $$.outputs."true".value}' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows^(id)[id = $$.outputs.start.value].id 1ms
+   → expected 'rows^(id)[id = $$.outputs.start.value…' to be 'rows^(id)[id = $$.outputs."true".valu…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows)[id = ($$.outputs /* keep */ .start.value ?? 0)].id 1ms
+   → expected '$distinct(rows)[id = ($$.outputs /* k…' to be '$distinct(rows)[id = ($$.outputs /* k…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows)[$$.gates.missing.passes > 1] 1ms
+   → expected true to be false // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows){"k": $$.counters.nodeVisits.missing} 1ms
+   → expected true to be false // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows)[$exists($$.gates.missing)] 1ms
+   → expected [] to have a length of 1 but got +0
+ × src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $exists((gates.missing)[$$.gates.other]) 1ms
+   → expected true to be false // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $exists($lookup(gates,"missing")[$$.gates.other]) 1ms
+   → expected true to be false // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > warns about a shadowed original root within an evaluated filter 1ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ × src/node-references.test.ts > reference scopes and source boundaries > warns on references in decorations skipped by JSONata function application rows ~> $distinct()[$$.gates.missing and $$.outputs.start] 4ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ × src/node-references.test.ts > reference scopes and source boundaries > warns on references in decorations skipped by JSONata function application rows ~> $distinct(){"k": $$.gates.missing, "value": $$.outputs.start} 1ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs evaluated function arguments while warning on its skipped filter 1ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ × src/node-references.test.ts > reference scopes and source boundaries > keeps an applied presence probe optional when its function has a skipped predicate 1ms
+   → expected [ 'NODE_REFERENCE_OPTIONAL_MISSING' ] to deeply equal [ …(2) ]
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > explains dynamic and opaque identity use without editing source, literals or provenance comparisons 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > identifies the runtime-supplied thread only in signal predicates and heartbeat 4ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > uses typed pointer slots and preserves unrelated decoded segments and arbitrary JSON 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves ambiguous output references when an authored operation can own the slot /outputs/start 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves ambiguous output references when an authored operation can own the slot /outputs/changed 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves ambiguous output references when an authored operation can own the slot /outputs 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves Liquid locals and dynamic keys while repairing supported filters and escaped keys 3ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs a typed source in a discriminated editor branch with another invalid field 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > warns on a Liquid loop else which can fall back to a shadowed global 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > does not treat a dynamic access as a direct Liquid presence probe 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > returns refusal without mutating invalid identity, and retains syntax issues for malformed source 3ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > parses each distinct template once cold and only the changed source on a warm edit 25ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > rechecks output ownership and missing IDs across loops using the same analyzed source 6ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > keeps the language and the actual JSONata scope distinct for identical source 1ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > preserves out-of-scope syntax errors before locally actionable reference issues 14ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > uses the same facts for different rename targets and keeps uncertainty and escaping 3ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > evicts least recently reused facts at both the entry and retained size bounds 30ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > analyzes oversized text and oversized span lists without retaining them or evicting small facts 14ms
+ ✓ src/syntax.test.ts > syntax checks > allows empty and whitespace required templates ("") 40ms
+ ✓ src/syntax.test.ts > syntax checks > allows empty and whitespace required templates (" ") 3ms
+ ✓ src/syntax.test.ts > syntax checks > rejects a whitespace required expression with an expression-specific message 2ms
+ ✓ src/syntax.test.ts > syntax checks > rejects blank expressions before execution (" "), without changing contracts parsing 3ms
+ ✓ src/syntax.test.ts > syntax checks > rejects blank expressions before execution ("\t\n"), without changing contracts parsing 1ms
+ ✓ src/syntax.test.ts > syntax checks > rejects blank expressions before execution (" "), without changing contracts parsing 1ms
+ ✓ src/syntax.test.ts > syntax checks > finds no problems in the kitchen-sink loop 13ms
+ ✓ src/syntax.test.ts > syntax checks > reports templates and expressions that do not parse, wherever they are nested 19ms
+ ✓ src/syntax.test.ts > syntax checks > skips absent values and union branches that do not match 1ms
+ ✓ src/graph.test.ts > outputPorts > derives ports per kind 34ms
+ ✓ src/graph.test.ts > validateLoop > accepts the fixtures 12ms
+ ✓ src/graph.test.ts > validateLoop > reports duplicates, missing endpoints, bad ports, and triggers as targets 1ms
+ ✓ src/graph.test.ts > validateLoop > requires a trigger and an exit 1ms
+ ✓ src/graph.test.ts > validateLoop > reports unconnected ports and unreachable nodes 1ms
+ ✓ src/graph.test.ts > validateLoop > reports undeclared decision variables 4ms
+ ✓ src/graph.test.ts > graph helpers > finds nodes, edges, and reachability 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 23 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > uses the message item and $thread in the decide decision selector
+AssertionError: expected { Object (id, kind, ...) } to match object { config: { context: { …(1) } } }
+(15 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "config": {
+      "context": {
+        "messages": {
+-         "where": "outputs.start or gates.local or $$.counters.nodeVisits.local or $thread.outputs.changed.value or $thread.gates.missing.passes or $thread.counters.nodeVisits.removed",
++         "where": "outputs.changed or gates.local or $$.counters.nodeVisits.local or $thread.outputs.start.value or $thread.gates.missing.passes or $thread.counters.nodeVisits.removed",
+        },
+      },
+    },
+  }
+
+ ❯ src/node-references.test.ts:184:46
+    182|       ];
+    183|       const result = renamed(before, 'changed');
+    184|       expect(result.definition.nodes.at(-1)).toMatchObject({
+       |                                              ^
+    185|         config: {
+    186|           context: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > uses the message item and $thread in the classifier-decision decision selector
+AssertionError: expected { id: 'classifier-decision', …(3) } to match object { config: { context: { …(1) } } }
+(15 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "config": {
+      "context": {
+        "messages": {
+-         "where": "outputs.start or gates.local or $$.counters.nodeVisits.local or $thread.outputs.changed.value or $thread.gates.missing.passes or $thread.counters.nodeVisits.removed",
++         "where": "outputs.changed or gates.local or $$.counters.nodeVisits.local or $thread.outputs.start.value or $thread.gates.missing.passes or $thread.counters.nodeVisits.removed",
+        },
+      },
+    },
+  }
+
+ ❯ src/node-references.test.ts:184:46
+    182|       ];
+    183|       const result = renamed(before, 'changed');
+    184|       expect(result.definition.nodes.at(-1)).toMatchObject({
+       |                                              ^
+    185|         config: {
+    186|           context: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > uses the parent thread for a child variable named where and binds selectors to their own thread
+AssertionError: expected { id: 'child', label: 'Child', …(2) } to match object { config: { input: { …(3) }, …(1) } }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -6,11 +6,11 @@
+        },
+        "messages": {
+          "where": "outputs.start or $thread.outputs.changed.value",
+        },
+        "vars": {
+-         "where": "outputs.changed.value or $thread.outputs.start or gates.missing.passes",
++         "where": "outputs.start.value or $thread.outputs.changed or gates.missing.passes",
+        },
+      },
+      "output": {
+        "artifacts": {
+          "where": "$thread.outputs.start or $thread.counters.nodeVisits.childOnly",
+
+ ❯ src/node-references.test.ts:238:44
+    236|     const result = renamed(before, 'changed');
+    237|     const selected = { where: 'outputs.start or $thread.outputs.change…
+    238|     expect(result.definition.nodes.at(-1)).toMatchObject({
+       |                                            ^
+    239|       config: {
+    240|         input: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows)[id = $$.outputs.start.value].id
+AssertionError: expected '$distinct(rows)[id = $$.outputs.start…' to be '$distinct(rows)[id = $$.outputs."true…' // Object.is equality
+
+Expected: "$distinct(rows)[id = $$.outputs."true".value].id"
+Received: "$distinct(rows)[id = $$.outputs.start.value].id"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows)[outputs.start.value = $$.outputs.start.value].id
+AssertionError: expected '(rows)[outputs.start.value = $$.outpu…' to be '(rows)[outputs.start.value = $$.outpu…' // Object.is equality
+
+Expected: "(rows)[outputs.start.value = $$.outputs."true".value].id"
+Received: "(rows)[outputs.start.value = $$.outputs.start.value].id"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows ~> $distinct())[id = $$.outputs.start.value].id
+AssertionError: expected '(rows ~> $distinct())[id = $$.outputs…' to be '(rows ~> $distinct())[id = $$.outputs…' // Object.is equality
+
+Expected: "(rows ~> $distinct())[id = $$.outputs."true".value].id"
+Received: "(rows ~> $distinct())[id = $$.outputs.start.value].id"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows.$distinct($)[id = $$.outputs.start.value].id
+AssertionError: expected 'rows.$distinct($)[id = $$.outputs.sta…' to be 'rows.$distinct($)[id = $$.outputs."tr…' // Object.is equality
+
+Expected: "rows.$distinct($)[id = $$.outputs."true".value].id"
+Received: "rows.$distinct($)[id = $$.outputs.start.value].id"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows.($distinct($))[id = $$.outputs.start.value].id
+AssertionError: expected 'rows.($distinct($))[id = $$.outputs.s…' to be 'rows.($distinct($))[id = $$.outputs."…' // Object.is equality
+
+Expected: "rows.($distinct($))[id = $$.outputs."true".value].id"
+Received: "rows.($distinct($))[id = $$.outputs.start.value].id"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows){"k": $$.outputs.start.value, "local": $sum($.outputs.start.value)}
+AssertionError: expected '$distinct(rows){"k": $$.outputs.start…' to be '$distinct(rows){"k": $$.outputs."true…' // Object.is equality
+
+Expected: "$distinct(rows){"k": $$.outputs."true".value, "local": $sum($.outputs.start.value)}"
+Received: "$distinct(rows){"k": $$.outputs.start.value, "local": $sum($.outputs.start.value)}"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows){"k": $$.outputs.start.value, "local": $sum(outputs.start.value)}
+AssertionError: expected '(rows){"k": $$.outputs.start.value, "…' to be '(rows){"k": $$.outputs."true".value, …' // Object.is equality
+
+Expected: "(rows){"k": $$.outputs."true".value, "local": $sum(outputs.start.value)}"
+Received: "(rows){"k": $$.outputs.start.value, "local": $sum(outputs.start.value)}"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in [rows]{"k": $$.outputs.start.value}
+AssertionError: expected '[rows]{"k": $$.outputs.start.value}' to be '[rows]{"k": $$.outputs."true".value}' // Object.is equality
+
+Expected: "[rows]{"k": $$.outputs."true".value}"
+Received: "[rows]{"k": $$.outputs.start.value}"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows^(id)[id = $$.outputs.start.value].id
+AssertionError: expected 'rows^(id)[id = $$.outputs.start.value…' to be 'rows^(id)[id = $$.outputs."true".valu…' // Object.is equality
+
+Expected: "rows^(id)[id = $$.outputs."true".value].id"
+Received: "rows^(id)[id = $$.outputs.start.value].id"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows)[id = ($$.outputs /* keep */ .start.value ?? 0)].id
+AssertionError: expected '$distinct(rows)[id = ($$.outputs /* k…' to be '$distinct(rows)[id = ($$.outputs /* k…' // Object.is equality
+
+Expected: "$distinct(rows)[id = ($$.outputs /* keep */ ."true".value ?? 0)].id"
+Received: "$distinct(rows)[id = ($$.outputs /* keep */ .start.value ?? 0)].id"
+
+ ❯ src/node-references.test.ts:354:47
+    352|       ];
+    353|       const result = renamed(returning(before));
+    354|       expect(expressionOf(result.definition)).toBe(after);
+       |                                               ^
+    355|       expect(result.repairedReferences).toBe(2);
+    356|       expect(result.warnings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows)[$$.gates.missing.passes > 1]
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows){"k": $$.counters.nodeVisits.missing}
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $exists((gates.missing)[$$.gates.other])
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $exists($lookup(gates,"missing")[$$.gates.other])
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/node-references.test.ts:378:67
+    376|   ] as const)('enforces the publication rule for %s', (source, optiona…
+    377|     const definition = returning(source);
+    378|     expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe…
+       |                                                                   ^
+    379|     const issues = referenceIssues(definition);
+    380|     expect(issues).toHaveLength(keys.length);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows)[$exists($$.gates.missing)]
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/node-references.test.ts:380:20
+    378|     expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe…
+    379|     const issues = referenceIssues(definition);
+    380|     expect(issues).toHaveLength(keys.length);
+       |                    ^
+    381|     for (const [index, key] of keys.entries()) {
+    382|       expect(issues[index]).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > warns about a shadowed original root within an evaluated filter
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "code": "NODE_REFERENCE_UNCERTAIN",
+-     "nodeId": "done",
+-     "path": "config.returns",
+-   },
+- ]
++ []
+
+ ❯ src/node-references.test.ts:405:29
+    403|       path: 'config.returns',
+    404|     });
+    405|     expect(result.warnings).toEqual([issue]);
+       |                             ^
+    406|     expect(referenceIssues(definition)).toEqual([issue]);
+    407|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > warns on references in decorations skipped by JSONata function application rows ~> $distinct()[$$.gates.missing and $$.outputs.start]
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > warns on references in decorations skipped by JSONata function application rows ~> $distinct(){"k": $$.gates.missing, "value": $$.outputs.start}
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "code": "NODE_REFERENCE_UNCERTAIN",
+-     "nodeId": "done",
+-     "path": "config.returns",
+-   },
+- ]
++ []
+
+ ❯ src/node-references.test.ts:424:43
+    422|         path: 'config.returns',
+    423|       });
+    424|       expect(referenceIssues(definition)).toEqual([issue]);
+       |                                           ^
+    425|       const result = renamed(definition);
+    426|       expect(expressionOf(result.definition)).toBe(source);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs evaluated function arguments while warning on its skipped filter
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "code": "NODE_REFERENCE_UNCERTAIN",
+-     "path": "config.returns",
+-   },
+- ]
++ []
+
+ ❯ src/node-references.test.ts:440:29
+    438|     expect(expressionOf(result.definition)).toBe(expected);
+    439|     expect(result.repairedReferences).toBe(2);
+    440|     expect(result.warnings).toEqual([
+       |                             ^
+    441|       expect.objectContaining({ code: 'NODE_REFERENCE_UNCERTAIN', path…
+    442|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/23]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > keeps an applied presence probe optional when its function has a skipped predicate
+AssertionError: expected [ 'NODE_REFERENCE_OPTIONAL_MISSING' ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    "NODE_REFERENCE_OPTIONAL_MISSING",
+-   "NODE_REFERENCE_UNCERTAIN",
+  ]
+
+ ❯ src/node-references.test.ts:452:65
+    450|     const definition = returning('gates.missing ~> $exists()[$$.gates.…
+    451|     expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe…
+    452|     expect(referenceIssues(definition).map(({ code }) => code)).toEqua…
+       |                                                                 ^
+    453|       'NODE_REFERENCE_OPTIONAL_MISSING',
+    454|       'NODE_REFERENCE_UNCERTAIN',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/23]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  23 failed | 68 passed (91)
+   Start at  13:07:20
+   Duration  5.02s (import 71%, transform 19%, tests 9%, worker 1%)
+
+    Isolate  4 workers spawned · ~243ms startup each (spawn + environment, per file)
+             at least ~728ms faster with isolate: false — reuses workers across files instead of one per file
+
+JSON report written to C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-273/backend-correction/negative-control-ae8.json
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\packages\domain
+

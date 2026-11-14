@@ -1,0 +1,34 @@
+import jsonata from 'jsonata';
+
+const sources = [
+  '$distinct(rows)[id = $$.outputs.start.value].id',
+  '(rows)[outputs.start.value = $$.outputs.start.value].id',
+  '(rows ~> $distinct())[id = $$.outputs.start.value].id',
+  'rows.$distinct($)[id = $$.outputs.start.value].id',
+  'rows.($distinct($))[id = $$.outputs.start.value].id',
+  'rows^(id)[id = $$.outputs.start.value].id',
+  '$distinct(rows){"k": $$.outputs.start.value, "local": $sum($.outputs.start.value)}',
+  '(rows){"k": $$.outputs.start.value, "local": $sum(outputs.start.value)}',
+  '[rows]{"k": $$.outputs.start.value}',
+  '$distinct(rows)[id = ($$.outputs /* keep */ .start.value ?? 0)].id',
+  '$exists((gates.missing)[$$.gates.other])',
+  '$exists($lookup(gates,"missing")[$$.gates.other])',
+  'rows ~> $distinct()[$$.gates.missing and $$.outputs.start]',
+  'rows ~> $distinct(){"k": $$.gates.missing, "value": $$.outputs.start}',
+  'rows ~> $filter(function($row){$row.id = $$.outputs.start.value})[$$.outputs.start]',
+  'gates.missing ~> $exists()[$$.gates.other]',
+  '($$ := $fixture; $distinct(rows)[id = $$.outputs.start.value])',
+];
+const input = {
+  rows: [
+    { id: 1, outputs: { start: { value: 1 } } },
+    { id: 2, outputs: { start: { value: 2 } } },
+  ],
+  outputs: { start: { value: 2 } },
+  gates: {},
+};
+for (const source of sources) {
+  const compiled = jsonata(source);
+  const result = await compiled.evaluate(input);
+  console.log(JSON.stringify({ source, ast: compiled.ast(), result: result ?? null }));
+}

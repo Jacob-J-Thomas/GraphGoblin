@@ -303,6 +303,12 @@ export interface RenameReport {
    * could not verify. Located ones carry the node (by its new id) and the field's path.
    */
   warnings: EditorIssue[];
+  /**
+   * The draft as the rename left it. A warning's path names the field the rename analyzed only
+   * while its node's config is still that same value (undo and redo restore it): after another
+   * edit of that node a path can name a different row, so the notice no longer opens it.
+   */
+  definition: LoopDefinitionInput;
 }
 
 /** The node id rule's wording, shared by the node editor's own check. */
@@ -758,6 +764,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
           ).length,
           references: result.repairedReferences - endpoints,
           warnings: result.warnings,
+          definition,
         },
         ...recordStep(
           historyOf(s),

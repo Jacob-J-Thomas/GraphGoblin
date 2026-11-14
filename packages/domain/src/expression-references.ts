@@ -153,6 +153,24 @@ export function expressionReferences(
       return;
     }
     if (!isAst(value)) return;
+    visitValue(value, localFocus, optional && !stepChangesFocus(value), applied);
+
+    // These parts run against the selected value or group. Only an explicit original root
+    // or a supplied binding can identify the thread from this focus.
+    const siteCount = result.sites.length;
+    visit(value.stages, false);
+    visit(value.predicate, false);
+    if (typeof value.group === 'object' && value.group !== null && 'lhs' in value.group)
+      visit(value.group.lhs, false);
+    // JSONata calls evaluateFunction directly for a function on the RHS of ~>, bypassing
+    // its attachments. Report references there as uncertain without inferring a runtime read.
+    if (applied && value.type === 'function' && result.sites.length > siteCount) {
+      result.sites.length = siteCount;
+      result.uncertain = true;
+    }
+  }
+
+  function visitValue(value: Ast, localFocus: boolean, optional: boolean, applied: boolean): void {
     if (value.type === 'path') {
       const steps = astList(value.steps);
       const map = access(steps, localFocus);
@@ -161,25 +179,14 @@ export function expressionReferences(
         const direct = steps
           .slice(map.keyIndex)
           .every((step) => step.type === 'name' && !stepChangesFocus(step));
-        add(
-          map,
-          key?.type === 'name' ? key : undefined,
-          optional && direct && !value.group && !value.predicate,
-        );
+        add(map, key?.type === 'name' ? key : undefined, optional && direct);
       }
       const simpleSuffix = steps
         .slice(1)
         .every((step) => step.type === 'name' && !stepChangesFocus(step));
       steps.forEach((step, index) =>
-        visit(
-          step,
-          localFocus && index === 0,
-          optional && index === 0 && simpleSuffix && !value.group && !value.predicate,
-        ),
+        visit(step, localFocus && index === 0, optional && index === 0 && simpleSuffix),
       );
-      if (typeof value.group === 'object' && value.group !== null && 'lhs' in value.group)
-        visit(value.group.lhs, false);
-      visit(value.predicate, false);
       return;
     }
     if (value.type === 'block') {
@@ -240,7 +247,7 @@ export function expressionReferences(
             visit(term.expression, false);
         }
       } else {
-        for (const child of Object.values(value)) visit(child, false);
+        visit(value.expr, false);
       }
       return;
     }
@@ -261,10 +268,6 @@ export function expressionReferences(
       };
       if (potentialIdentity(value.lhs) || potentialIdentity(value.rhs)) result.uncertain = true;
     }
-    // A path step's predicate has the step as focus. The other known AST containers
-    // (block, binary, unary, condition and apply) keep the caller's focus for operands.
-    visit(value.stages, false);
-    visit(value.predicate, false);
     for (const [key, child] of Object.entries(value)) {
       if (key !== 'stages' && key !== 'predicate' && key !== 'group') visit(child, localFocus);
     }

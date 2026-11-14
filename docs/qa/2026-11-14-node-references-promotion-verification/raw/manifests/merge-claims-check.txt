@@ -1,0 +1,60 @@
+# Supplementary merge-claim checks (read-only) 2026-11-14T17:52:15Z
+## parent-only files equal main a817 exactly (diff a817..HEAD must be empty):
+EQUAL  apps/web/src/editor/useAutosave.ts  blob 9c743847d4963f4908fd8c69b0db4461de2ef96a
+EQUAL  apps/web/src/loops/LoopsPage.tsx  blob 088b3e874984553078cb292296e47c84f25ea29c
+EQUAL  apps/web/src/editor/EditorPage.name-conflict.test.tsx  blob 8e73efc64ee103b649c7e6344d33fbea489cc849
+EQUAL  apps/web/src/loops/loop-names.test.tsx  blob 68ee98f6e09d6d6b774fd27651a8e8fe53f027ee
+## product-family delta a817..HEAD (apps packages tooling):
+apps/api/src/node-references.test.ts
+apps/web/e2e/rename-references.spec.ts
+apps/web/src/editor/EditorPage.rename.test.tsx
+apps/web/src/editor/EditorPage.tsx
+apps/web/src/editor/LoopSettingsPanel.tsx
+apps/web/src/editor/NodeEditorDialog.tsx
+apps/web/src/editor/RenameNotice.tsx
+apps/web/src/editor/store.rename.test.ts
+apps/web/src/editor/store.ts
+apps/web/src/editor/useUndoShortcuts.ts
+apps/web/src/forms/EarlierNodeOutputs.test.tsx
+packages/domain/src/expression-references.ts
+packages/domain/src/expression.ts
+packages/domain/src/graph.ts
+packages/domain/src/index.ts
+packages/domain/src/node-reference-path.ts
+packages/domain/src/node-references.test.ts
+packages/domain/src/node-references.ts
+packages/domain/src/source-analysis.test.ts
+packages/domain/src/source-analysis.ts
+packages/domain/src/syntax.ts
+packages/domain/src/template-references.ts
+packages/domain/src/template.ts
+packages/domain/src/validation-issue.ts
+count: 24
+## root-config delta a817..HEAD (non-docs, non-apps/packages/tooling):
+CHANGELOG.md
+## compare to promotion-source-map changedByRename (24):
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open 'C:\tmp\delta-main.txt'
+    at Object.readFileSync (node:fs:440:20)
+    at [eval]:3:23
+    at runScriptInThisContext (node:internal/vm:209:10)
+    at node:internal/process/execution:446:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:444:60)
+    at evalFunction (node:internal/process/execution:279:30)
+    at evalTypeScript (node:internal/process/execution:291:3)
+    at node:internal/main/eval_string:74:3 {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\tmp\\delta-main.txt'
+}
+
+Node.js v22.23.4
+
+## FIRST ATTEMPT NOTE: the comparison above failed with ENOENT because the harness script read Git Bash /tmp from Node (C:\tmp). Harness error, not a repository result. Redone via stdin:
+delta equals promotion-source-map.changedByRename: true delta 24 map 24
+## CHANGELOG.md a817..HEAD is the only non-docs non-product root delta; present identically at 16aa and HEAD (see admission-recheck rootEntryObjectIds.CHANGELOG.md)
