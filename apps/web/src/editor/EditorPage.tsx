@@ -1,6 +1,6 @@
-import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
+import { loops } from '@graphgoblin/api-client';
 import { HarnessDefaultsSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
@@ -32,7 +32,7 @@ import {
   UnpreservedDeviceCopy,
   UnsupportedDeviceDraft,
 } from './DeviceCopyNotices.js';
-import { EditorToolbar, OpenInRuns } from './EditorToolbar.js';
+import { EditorToolbar } from './EditorToolbar.js';
 import { unsupportedEffortIssues } from './effort-issues.js';
 import {
   fieldErrorIssues,
@@ -49,6 +49,7 @@ import { hasRenameNotice, RenameNotice } from './RenameNotice.js';
 import { useEditorStore, type EditorState } from './store.js';
 import { AUTOSAVE_DELAY_MS, useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
+import { publishNotice, usePublish, type PublishOutcome } from './usePublish.js';
 import { useResolveConflict } from './useResolveConflict.js';
 import { useUndoShortcuts } from './useUndoShortcuts.js';
 import { SystemLoopNotice } from './SystemLoopNotice.js';
@@ -257,42 +258,8 @@ export function EditorPage() {
     [local, effortIssues, serverCheck.data, fieldErrors],
   );
 
-  const publish = useMutation({
-    mutationFn: async () => {
-      const held = Object.values(useEditorStore.getState().fieldErrors).flatMap((scope) =>
-        Object.values(scope),
-      );
-      if (held.length > 0)
-        throw new Error(
-          held.every((error) => error.input === 'unapplied JSON')
-            ? 'Some fields hold JSON not applied yet; apply or cancel it first.'
-            : 'Some fields hold input that is not a valid value yet; complete or discard it first.',
-        );
-      const saved = await flush();
-      if (!saved && useEditorStore.getState().conflict)
-        throw new Error('The draft changed on the server; reload it or overwrite it first.');
-      if (!saved && useEditorStore.getState().saveState === 'name-conflict')
-        throw new Error(
-          'Another loop already has this name; choose a different name before publishing.',
-        );
-      if (!saved) throw new Error('The draft could not be saved; fix the issues below first.');
-      try {
-        return { version: await loops.publish(client, loopId) };
-      } catch (error) {
-        // Nothing changed since the last publish: say so instead of reporting a failure.
-        if (error instanceof GraphGoblinApiError && error.code === 'NO_DRAFT')
-          return { version: undefined };
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      setPublishedRevision(useEditorStore.getState().revision);
-      void queryClient.invalidateQueries({ queryKey: keys.loop(loopId) });
-      void queryClient.invalidateQueries({ queryKey: keys.loops });
-    },
-  });
-  // The outcome stays visible only until the next edit; after that it describes an older draft.
-  const [publishedRevision, setPublishedRevision] = useState<number | undefined>();
+  const publish = usePublish(loopId, flush);
+  const [dismissedPublish, setDismissedPublish] = useState<PublishOutcome>();
   const [dismissedRestoreGeneration, setDismissedRestoreGeneration] = useState<number>();
   const [dismissedSaveNotice, setDismissedSaveNotice] = useState<
     { generation: number; state: typeof saveState; message: string } | undefined
@@ -426,6 +393,15 @@ export function EditorPage() {
       else focusFallback(saveStatusRef.current);
     });
   };
+  // What the latest Publish of this editor load established (#237), until dismissed.
+  const publishText =
+    publish.outcome && publish.outcome !== dismissedPublish
+      ? publishNotice(
+          publish.outcome,
+          { definition: def, fieldErrors, revision },
+          query.data?.current,
+        )
+      : undefined;
   // The name refusal applies while the draft still has the refused name (#209).
   const showNameConflict =
     nameConflict !== undefined && !conflict && sameLoopName(def.name, nameConflict.name);
@@ -606,18 +582,24 @@ export function EditorPage() {
         onDismissed={announceDismissalAndRestoreFocus}
       />
     ) : null,
-    publish.isSuccess && publishedRevision === revision ? (
-      <Alert key="published" tone="good">
-        <span className="flex flex-wrap items-center gap-x-3">
-          {publish.data.version
-            ? `Published version ${publish.data.version.version}.`
-            : 'Nothing to publish: there are no changes since the published version.'}
-          {/* The "run it" prompt: the same link as the toolbar's, to the New run flow. */}
-          {publish.data.version ? <OpenInRuns loopId={loopId} published /> : null}
-        </span>
+    publishText ? (
+      <Alert
+        key="published"
+        tone={publishText.tone}
+        {...(publishText.title ? { title: publishText.title } : {})}
+        {...(publishText.dismissible
+          ? {
+              onDismiss: () => {
+                setDismissedPublish(publish.outcome);
+                announceDismissalAndRestoreFocus();
+              },
+            }
+          : {})}
+      >
+        {publishText.text}
       </Alert>
     ) : null,
-    publish.isError ? (
+    publish.error ? (
       <Alert key="publish-failed" title="Publish failed">
         {errorMessage(publish.error)}
         <ul className="list-disc pl-4">
@@ -664,13 +646,13 @@ export function EditorPage() {
             unavailableReason={catalogFailureReason}
           />
         }
-        publishing={publish.isPending}
+        publishing={publish.pending}
         publishBlockedReason={
           system && !local.schemaValid
             ? 'Restore the chat contract before publishing.'
             : catalogFailureReason
         }
-        onPublish={() => publish.mutate()}
+        onPublish={publish.start}
         saveStatusRef={saveStatusRef}
       />
       {system ? (

@@ -22,8 +22,8 @@ export function ConflictNotice({
 }) {
   return (
     <Alert tone="warn" title="The draft changed on the server">
-      Another tab or device saved this loop’s draft after this editor loaded it. Your changes{' '}
-      {KEPT[device]} and nothing was overwritten.{' '}
+      The server now holds a different draft from the one this editor’s changes are based on. Your
+      changes {KEPT[device]} and nothing was overwritten.{' '}
       <span className="mt-2 flex flex-wrap gap-2">
         <Button
           size="sm"

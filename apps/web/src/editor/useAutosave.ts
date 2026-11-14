@@ -1,8 +1,8 @@
 import { GraphGoblinApiError, loops, type GraphGoblinClient } from '@graphgoblin/api-client';
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
-import { keys } from '../api/queries.js';
+import { keys, refreshLoopAfterWrite } from '../api/queries.js';
 import {
   deviceStorageProblem,
   recordServerSave,
@@ -51,12 +51,6 @@ function mirror(persist = true): void {
 /** One chain of draft saves per loop: requests for a loop never overlap or complete out of order. */
 const queues = new Map<string, Promise<unknown>>();
 
-/**
- * The newest draft token known per loop: from a load or a completed save. The unmount save is
- * queued behind saves in flight and reads it when it runs, so it is based on their result.
- */
-const latestTokens = new Map<string, string>();
-
 /** Run `job` after every save already queued for `loopId`. */
 export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise<T> {
   const next = (queues.get(loopId) ?? Promise.resolve()).then(job, job);
@@ -68,21 +62,25 @@ export function serializeSave<T>(loopId: string, job: () => Promise<T>): Promise
 }
 
 /**
- * After the server accepted a save: advance the loop's token, whether or not the editor that sent
- * it is still open, and record it on the device copy (`recordServerSave`). A newer edit mirrored
- * since the save started takes `token` only when it shares that save's request base; unrelated
- * device work retains its base and explicit reconciliation requirement.
- * The server holds the draft whether or not this device can record that: a device storage failure
- * is reported as its own notice (`deviceStorageProblem`), never as a save still pending.
+ * After the server accepted a save, whether or not the editor that sent it is still open: record
+ * it on the device copy (`recordServerSave`), then read the Loops list and the loop's detail again
+ * (`refreshLoopAfterWrite`, #237). A newer edit mirrored since the save started takes `token` only
+ * when it shares that save's request base; unrelated device work retains its base and explicit
+ * reconciliation requirement. The device record's in-memory part is set before the reads start,
+ * so an editor reopened meanwhile reconciles the fresh detail against it. The server holds the
+ * draft whether or not this device can record that: a device storage failure is reported as its
+ * own notice (`deviceStorageProblem`), never as a save still pending.
  */
 async function recordSaved(
+  queryClient: QueryClient,
   loopId: string,
   definition: LoopDefinitionInput,
   token: string,
   baseToken: string | undefined,
 ): Promise<void> {
-  latestTokens.set(loopId, token);
-  await recordServerSave(loopId, definition, token, baseToken).catch(() => undefined);
+  const recorded = recordServerSave(loopId, definition, token, baseToken);
+  void refreshLoopAfterWrite(queryClient, loopId);
+  await recorded.catch(() => undefined);
 }
 
 /** The server's token from a 409 `DRAFT_CONFLICT`, or false when `error` is something else. */
@@ -93,7 +91,7 @@ export function draftConflict(error: unknown): { serverToken: string | undefined
 }
 
 export const CONFLICT_MESSAGE =
-  'The draft changed on the server (another tab or device saved it). Nothing is saved to the server until you choose.';
+  'The server holds a different draft from the one these changes are based on. Nothing is saved to the server until you choose.';
 
 /**
  * Debounced autosave. Every edit is mirrored to IndexedDB at once, so nothing is lost offline or
@@ -144,9 +142,16 @@ export function useAutosave(
   enabledRef.current = enabled && serverReconciled;
   const deviceReadyRef = useRef(enabled && deviceReady);
   deviceReadyRef.current = enabled && deviceReady;
+  /**
+   * The token this editor load's work is based on: the load's own (or one it adopted: an
+   * overwrite, a reconciliation, a staged voice draft), advanced by each save of that load the
+   * server accepts, also after unmount. The save sent on leaving is queued behind saves in flight
+   * and reads it when it runs, so it builds on their result; another load's token never applies.
+   */
+  const chain = useRef<{ generation: number; token: string | undefined } | undefined>(undefined);
   useEffect(() => {
-    const { loopId } = useEditorStore.getState();
-    if (loopId && baseToken) latestTokens.set(loopId, baseToken);
+    const { loopId, generation } = useEditorStore.getState();
+    if (loopId) chain.current = { generation, token: baseToken };
   }, [baseToken, loadGeneration]);
 
   const save = useCallback(async (): Promise<boolean> => {
@@ -242,16 +247,22 @@ export function useAutosave(
           const now = useEditorStore.getState();
           return now.loopId === loopId && now.generation === generation;
         };
+        if (chain.current?.generation === generation)
+          chain.current = { generation, token: saved.draftToken };
         // Before the device write, so an edit mirrored from here on carries the new token.
         if (isCurrent()) {
           useEditorStore.getState().setBaseToken(saved.draftToken);
           // The server took this name, so an earlier refusal no longer applies.
           useEditorStore.getState().setNameConflict(undefined);
         }
-        await recordSaved(loopId, definition, saved.draftToken, baseToken);
+        await recordSaved(queryClient, loopId, definition, saved.draftToken, baseToken);
         if (!isCurrent()) return false;
         if (useEditorStore.getState().revision === rev) {
-          setSaveState('saved', undefined, rev);
+          setSaveState('saved', undefined, rev, {
+            revision: rev,
+            definition: saved.draft.definition,
+            token: saved.draftToken,
+          });
           return true;
         }
         // Edited while the request was in flight: the server holds an older revision; go again.
@@ -306,14 +317,17 @@ export function useAutosave(
       const refusedName = latest.current.nameConflict;
       if (refusedName && sameLoopName(last.definition.name, refusedName.name)) return;
       void serializeSave(last.loopId, async () => {
-        const token = latestTokens.get(last.loopId);
+        // A later load of this editor (Reload server draft, a restored device copy) replaced the
+        // one this snapshot came from: the user's choice and the device copy stand, nothing is sent.
+        const base = chain.current;
+        if (base?.generation !== last.generation) return;
         const saved = await loops.saveDraft(client, last.loopId, last.definition, {
-          ...(token ? { ifMatch: token } : {}),
+          ...(base.token ? { ifMatch: base.token } : {}),
         });
-        await recordSaved(last.loopId, last.definition, saved.draftToken, token);
+        await recordSaved(queryClient, last.loopId, last.definition, saved.draftToken, base.token);
       }).catch(() => undefined);
     },
-    [client],
+    [client, queryClient],
   );
 
   useEffect(() => {

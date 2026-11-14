@@ -4,6 +4,23 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Publish reports the version the server actually stored (#237). The editor publishes from its
+  queue of saves, after rechecking held input and conflicts. It then compares the returned
+  immutable version with the draft the server acknowledged for this attempt. A delayed reply no
+  longer presents later editing as published, and a reply never reaches a newer editor load. When
+  the version holds a different stored draft, or **Nothing to publish** finds another current
+  version, the notice says so without naming a writer, and the editor keeps its copy behind the
+  existing **Reload server draft** / **Overwrite with this copy** choice. A lost or failed reply
+  is read back before anything is claimed. If that check fails too, the next Publish checks first.
+  The publish notice no longer carries its own **Open in Runs** link, which opens the loop's
+  current Runs flow rather than a particular version. The toolbar link remains.
+- The Loops list and the loop's detail are read again after every save the server accepts,
+  including the save sent on leaving the editor. A list or detail read that started before the
+  save is dropped. A renamed loop, or a changed or removed description, shows without waiting for
+  the five-second poll (#156, #237). A save sent on leaving the editor uses only its own editor
+  load's draft token. After **Reload server draft** or reopening on another writer's draft, it can
+  no longer overwrite that draft. Publishing no longer re-runs the open draft's API checks.
+
 - Loop creation, rename, import and template copies refuse case- and whitespace-equivalent
   names for the same owner and return a suggested alternative (#209, ADR-0073). The app says
   which name was refused and why, keeps what existed, and retries only when asked: Create offers

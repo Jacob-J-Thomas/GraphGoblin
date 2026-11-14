@@ -565,13 +565,16 @@ describe('EditorPage', () => {
     expect(screen.getByTestId('canvas')).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Publish' }));
     expect(await screen.findByText('Published version 1.')).toBeInTheDocument();
-    // The toolbar link and the published notice's "run it" link both lead to New run.
+    // The toolbar's link leads to the loop's New run flow (#237: the notice names an immutable
+    // version, which that loop-level flow does not pin, so the notice carries no link of its own).
+    // getByRole: exactly one such link.
     await waitFor(() =>
-      expect(screen.getAllByRole('link', { name: 'Open in Runs' })).toHaveLength(2),
+      expect(screen.getByRole('link', { name: 'Open in Runs' })).toHaveAttribute(
+        'href',
+        `/runs/new?loop=${loop.id}`,
+      ),
     );
-    for (const link of screen.getAllByRole('link', { name: 'Open in Runs' }))
-      expect(link).toHaveAttribute('href', `/runs/new?loop=${loop.id}`);
-    await user.click(screen.getAllByRole('link', { name: 'Open in Runs' })[1]!);
+    await user.click(screen.getByRole('link', { name: 'Open in Runs' }));
     expect(await screen.findByRole('heading', { name: 'New run' })).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Start run' }));
     await waitFor(() =>

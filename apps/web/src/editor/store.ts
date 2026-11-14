@@ -117,6 +117,12 @@ export interface EditorState {
   /** The server draft token the edits are based on; autosave sends it as `If-Match`. */
   baseToken: string | undefined;
   /**
+   * What the server answered for this load's latest accepted save (#237): the definition as it
+   * stored it and its token. It describes the server's copy only while `savedRevision` is its
+   * `revision`; a load or reset clears it. Publish compares a published version with it.
+   */
+  acknowledged: AcknowledgedSave | undefined;
+  /**
    * Set when a save was refused because the server draft changed since `baseToken` (409
    * `DRAFT_CONFLICT`). Autosave stops until the user reloads the server draft or overwrites it.
    */
@@ -236,7 +242,13 @@ export interface EditorState {
   updateSettings: (settings: unknown, change?: FormChange) => void;
   /** Replace the loop's variables; `change` as for `updateNode`'s config. */
   updateVariables: (variables: unknown, change?: FormChange) => void;
-  setSaveState: (state: SaveState, message?: string, revision?: number) => void;
+  /** With `acknowledged`, the server's answer for the save of `revision` (see `acknowledged`). */
+  setSaveState: (
+    state: SaveState,
+    message?: string,
+    revision?: number,
+    acknowledged?: AcknowledgedSave,
+  ) => void;
   setBaseToken: (token: string | undefined) => void;
   /** Record that the device copy of `revision` was written (see `deviceRevision`). */
   setDeviceRevision: (revision: number) => void;
@@ -267,6 +279,13 @@ export interface EditorState {
 }
 
 export type FieldError = ParseError;
+
+/** The server's answer to an accepted draft save: what it stored, and that copy's token. */
+export interface AcknowledgedSave {
+  revision: number;
+  definition: LoopDefinitionInput;
+  token: string;
+}
 
 /** A pending focus request for the node editor: the node, and the issue path to focus there. */
 export interface NodeFocusTarget {
@@ -330,6 +349,7 @@ const INITIAL = {
   fieldErrors: {},
   generation: 0,
   baseToken: undefined,
+  acknowledged: undefined as AcknowledgedSave | undefined,
   conflict: undefined,
   nameConflict: undefined,
   past: [] as HistoryEntry[],
@@ -892,11 +912,12 @@ export const useEditorStore = create<EditorState>((set, get) => {
         formStep('edit variables', 'variables', change),
       ),
 
-    setSaveState: (saveState, message, revision) =>
+    setSaveState: (saveState, message, revision, acknowledged) =>
       set((s) => ({
         saveState,
         saveMessage: message,
         savedRevision: revision ?? s.savedRevision,
+        ...(acknowledged ? { acknowledged } : {}),
       })),
 
     setBaseToken: (baseToken) => set({ baseToken }),
