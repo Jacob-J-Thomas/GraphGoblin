@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Exclusion and duplicate-source provenance. Excluded raw files are not copied or presented as raw evidence.",
+  "directFiles": [
+    {
+      "sourcePath": "events.jsonl",
+      "bytes": 12325958,
+      "sha256": "985d817efacca03f2299d2f8bbaea064ea86d9669f80a27851d1310e9df6ee26",
+      "reason": "Launcher event stream omitted; stream may include private or thinking content."
+    },
+    {
+      "sourcePath": "process-baseline-start.txt",
+      "bytes": 9773,
+      "sha256": "b0ef7e0c33b61923fcfb896e1bf7adfe49db88fa1a9ddd1d56d24525055d1561",
+      "reason": "Host process listing omitted because it can contain owner command lines."
+    },
+    {
+      "sourcePath": "process-final.txt",
+      "bytes": 1477,
+      "sha256": "c498ef944b1e989b85e83f7021151a3f0385033b229a14b61cdae0263730c623",
+      "reason": "Host process listing omitted because it can contain owner command lines."
+    },
+    {
+      "sourcePath": "ports-baseline-start.txt",
+      "bytes": 790,
+      "sha256": "212aacd39c5928012f106f9c8d400dcb82f0f4926e7d43565d55dad8deeddfd7",
+      "reason": "Host port/process inventory omitted; cleanup facts are summarized separately."
+    },
+    {
+      "sourcePath": "stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Empty file; no evidence content."
+    }
+  ],
+  "directories": [
+    {
+      "sourcePath": "e2e-full/test-results",
+      "fileCount": 309,
+      "totalBytes": 47159856,
+      "reason": "Generated browser artifacts and large traces omitted. The original failure-trace hashes are retained below."
+    },
+    {
+      "sourcePath": "native/data-aria",
+      "fileCount": 6,
+      "totalBytes": 807664,
+      "reason": "Disposable native SQLite stores, WAL/SHM files, locks, and keys omitted."
+    },
+    {
+      "sourcePath": "native/data-race",
+      "fileCount": 6,
+      "totalBytes": 1063104,
+      "reason": "Disposable native SQLite stores, WAL/SHM files, locks, and keys omitted."
+    },
+    {
+      "sourcePath": "native/data-shape",
+      "fileCount": 6,
+      "totalBytes": 733504,
+      "reason": "Disposable native SQLite stores, WAL/SHM files, locks, and keys omitted."
+    },
+    {
+      "sourcePath": "native/data-smoke",
+      "fileCount": 6,
+      "totalBytes": 725264,
+      "reason": "Disposable native SQLite stores, WAL/SHM files, locks, and keys omitted."
+    },
+    {
+      "sourcePath": "native/data-visual",
+      "fileCount": 6,
+      "totalBytes": 890064,
+      "reason": "Disposable native SQLite stores, WAL/SHM files, locks, and keys omitted."
+    },
+    {
+      "sourcePath": "screens-run1-superseded",
+      "fileCount": 34,
+      "totalBytes": 2997531,
+      "reason": "Initial visual run used invalid fixture setup; screenshots are not evidence and were omitted. Its raw readback and initial script are retained."
+    }
+  ],
+  "omittedFinalScreenshots": [
+    {
+      "sourcePath": "screens/light-768-create-conflict.png",
+      "bytes": 81696,
+      "sha256": "009807a3e0591e3bfabd40f097556031b32d49be537f456e2f23a173db7f2fa3",
+      "reason": "Redundant screenshot variant; original hash remains in screens-sha256.txt."
+    },
+    {
+      "sourcePath": "screens/dark-768-import-name-form.png",
+      "bytes": 85681,
+      "sha256": "e2479db2d9c6725cb943f2034bef4584584f5313b2bd1068d61e4c3f4adb8aab",
+      "reason": "Redundant screenshot variant; original hash remains in screens-sha256.txt."
+    },
+    {
+      "sourcePath": "screens/light-768-template-naming.png",
+      "bytes": 100845,
+      "sha256": "96d89e8ae23e53820ac418c5704ad4b44657f129d4fd760efd97039a58fe8a38",
+      "reason": "Redundant screenshot variant; original hash remains in screens-sha256.txt."
+    },
+    {
+      "sourcePath": "screens/dark-768-editor-name-notice.png",
+      "bytes": 137265,
+      "sha256": "471940f32b231a177f8ae0ffd1e493a9407e8890f20b1b57a135168458cc66f1",
+      "reason": "Redundant screenshot variant; original hash remains in screens-sha256.txt."
+    },
+    {
+      "sourcePath": "screens/dark-360-editor-node-dialog-notice.png",
+      "bytes": 52309,
+      "sha256": "8ff3841658aa9a013dfab03f2783f8755a532cd234b4da272c6534d0f4b51959",
+      "reason": "Redundant screenshot variant; original hash remains in screens-sha256.txt."
+    },
+    {
+      "sourcePath": "screens/light-360-editor-node-dialog-notice.png",
+      "bytes": 51943,
+      "sha256": "4e5b934632fa2d103de256c1871cbcf8fee557226b4f0427dbd4d9914cc27b7b",
+      "reason": "Redundant screenshot variant; original hash remains in screens-sha256.txt."
+    }
+  ],
+  "failedTraceArchives": [
+    {
+      "sha256": "efe5dfa0dad10f368d5fe017c167d5e3011c329fe8e7f25c9f493ae4b03e3807",
+      "sourcePath": "e2e-full/test-results/responsive-responsive-dark-6fc41--controls-at-360-and-768-px-chromium/trace.zip"
+    },
+    {
+      "sha256": "bd2ab149762bac51ced6bb4d37b61fd03d9a525b4b3fcf1221bffa6d511d758a",
+      "sourcePath": "e2e-full/test-results/responsive-responsive-ligh-040b9--controls-at-360-and-768-px-chromium/trace.zip"
+    }
+  ],
+  "exactDuplicateFilesNotCopied": [
+    {
+      "sourcePath": "latest.md",
+      "identicalTo": "report.md",
+      "sha256": "57a36bd00979d8584cf605d451e86c53ae09042cbb2e827681c626edaa038db1",
+      "bytes": 3721
+    },
+    {
+      "sourcePath": "e2e-full/run.log.first-run.keep",
+      "identicalTo": "e2e-full/run.log",
+      "sha256": "8085079556012a844b56ed94e9fd5bc80555626d56a2781abe2d39d0af9628ac",
+      "bytes": 89540
+    },
+    {
+      "sourcePath": "logs/visual-run-1.log.keep",
+      "identicalTo": "logs/visual-run-1.log",
+      "sha256": "65fc0df4445ebb818e62cb53caf142285458b65ac5a50dcd6855daf9d66333e8",
+      "bytes": 795
+    }
+  ],
+  "notIncludedByScope": [
+    "Build outputs, node_modules, browser profiles, and full coverage trees are not included in this evidence proposal."
+  ]
+}

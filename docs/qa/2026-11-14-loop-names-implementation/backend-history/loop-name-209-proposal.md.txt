@@ -1,0 +1,31 @@
+# #209 transactional loop-name uniqueness
+
+## Scope
+
+Preserve one owner-scoped current display name per loop across ordinary create, rename via draft save, raw or enveloped import, template copy and internally generated system Chat loops. Retain loop IDs, current immutable versions, draft compare-and-set behavior, and all existing storage formats. The accepted baseline #280 is in current main. #209 has its dated release and approved bounded architecture. No source changes have been made for #209.
+
+## Transaction and comparison
+
+Use the existing SQLite write transaction for both the check and the subsequent write. Drizzle's libsql session calls Client.transaction(), whose supported default write mode starts BEGIN IMMEDIATE. The existing serialized client mutex serializes inside one connection, and SQLite serializes writers across file-store connections. Read only the current owner's loop IDs and display names by the existing owner_id index, normalize in JavaScript, and exclude only the loop being renamed. Share the helper at the actual insert and name-update writers. The rewrite of an existing draft, workspace metadata and loop row either commits together or rolls back. Do not use the outer client while a transaction holds its mutex.
+
+Define equivalence as ECMAScript trimming, collapsing each internal whitespace run to one space, then Unicode default lowercasing, independent of the machine's locale. The name remains exactly the authored value on disk and in the UI, subject to existing route trimming. Document that rule explicitly, with ASCII and non-ASCII examples and whitespace cases. Treat canonical composition compatibility as its own product feature if requested. Case/whitespace equivalence uses the display name, so old published and pinned snapshot names do not reserve a current loop name. Name scanning is linear in the current owner's loop count only. Use a normalized Set for suffix selection and compute once per transaction.
+
+A persisted normalized column would require existing-row population, while SQLite's simple LOWER and trim expression under native indexing does not provide this comparison. A schema/format increment and stored-name rewrite are unnecessary for the approved behavior. A current-format SHA keeps all existing loop IDs. Store preflight uses the same rule to identify previous duplicates by owner and loop IDs before any write, then states how to rename via the previous build or explicitly reset. Preserve consistent draft and loop-summary names by using the existing editor route for the manual repair. Leave historical published and pinned snapshots intact. Manual SQL writers and older versions bypass the application contract, so ordinary use assumes a single current gateway version as already required by the store ownership lock.
+
+## API and UI handoff
+
+Return RFC 9457 409 LOOP_NAME_CONFLICT, distinct from DRAFT_CONFLICT and its token/reload recovery. Give an actionable detail and a normalized-unique suggestedName extension for import and copy. Suggested names use a visible suffix such as " copy", " copy 2", and so on, with the base truncated safely to the existing limit. A suggestion is advisory until admitted by the same write transaction. Race losers with stale suggestions get a refreshed conflict. Do not auto-create a second authored loop on an import/copy failure. POST /templates/{id}/draft already accepts an explicit name. For import, prefer an optional validated name query on the existing route so the client can retry the original document without rewriting the export. The existing document format, explicit validation and old-format refusal continue. A deliberate retry changes only the imported definition's display name. The Claude UI implementer owns the controls for entering or accepting a suggested name, notice presentation and browser QA.
+
+System-generated Gateway Chat and device loop copies also use the shared insert path. A repeated pairing label is allowed today, and a user can author a loop named Gateway chat. Preserve device label, binding, exact loop identity and existing idempotency. For a newly generated system loop only, select an available display name through the same transaction before inserting its definition and binding. No historical duplicate is renamed in startup or a migration. Confirm system Chat creation and repeated label pairing against a disposable test environment.
+
+## Verification
+
+Reproduce before implementation: current same-owner create/import/copy/draft-save can admit equivalent names. Use a disposable API and file SQLite. Test same-name self rename, cross-owner allowance, whitespace/Unicode equivalence matrices, pinned existing IDs, exact duplicate refusal guidance, and no partial draft/device/binding mutations. Race simultaneous create vs create, create vs rename, and copy/import attempts. Use the actual API plus controlled independent libsql connections to prove write serialization before comparison. Include rollback, stale draft token ordering, restart with valid store, and read-only preflight refusal on an explicitly seeded duplicate store. Prove the previous-build manual repair steps on that disposable store. Template copies with explicit name continue to create independent graphs. No browser UX proposal from the backend worker. Run full gates and independent cross-family review/QA/audit; #209 remains Part of for owner closure.
+
+## References
+
+- https://sqlite.org/lang_transaction.html
+- https://sqlite.org/lang_corefunc.html
+- Pinned repo resolution: drizzle-orm/libsql/session.js, @libsql/client/lib-esm/sqlite3.js, @libsql/core/lib-esm/util.js
+- Writer paths: packages/infrastructure/src/sqlite/loops.ts and chat.ts; routes in apps/api/src/routes/loops.ts and templates.ts.
+- Operator policy: docs/decisions/ADR-0062-stored-data-corrected-by-hand-before-1.0.md

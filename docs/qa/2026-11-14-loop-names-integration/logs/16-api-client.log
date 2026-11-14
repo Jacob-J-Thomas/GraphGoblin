@@ -1,0 +1,69 @@
+$ vitest run
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin/packages/api-client
+
+ ❯ src/contract.test.ts (15 tests | 3 failed) 3305ms
+   ❯ against the in-process API (local trusted mode) (13)
+     × preserves typed run pages including opaque cursors 12ms
+     × streams run events over SSE until the run finishes, and resumes from a sequence 5ms
+     × preserves catalog error paths when invalid defaults reject admission and publication 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/contract.test.ts > against the in-process API (local trusted mode) > preserves typed run pages including opaque cursors
+GraphGoblinApiError: LOOP_NAME_CONFLICT: A loop with an equivalent name already exists. Try "minimal copy".
+ ❯ Function.fromResponse src/errors.ts:57:40
+     55|   /** Build from a non-2xx response and its already-read body (JSON-pa…
+     56|   static fromResponse(response: Response, body: unknown): GraphGoblinA…
+     57|     if (isProblemDetails(body)) return new GraphGoblinApiError(body);
+       |                                        ^
+     58|     const text = typeof body === 'string' ? body.trim() : '';
+     59|     const detail = text ? text.slice(0, 500) : response.statusText;
+ ❯ unwrap src/errors.ts:91:54
+ ❯ Object.create src/resources.ts:59:5
+ ❯ src/contract.test.ts:196:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/contract.test.ts > against the in-process API (local trusted mode) > streams run events over SSE until the run finishes, and resumes from a sequence
+GraphGoblinApiError: LOOP_NAME_CONFLICT: A loop with an equivalent name already exists. Try "wait-for-input copy".
+ ❯ Function.fromResponse src/errors.ts:57:40
+     55|   /** Build from a non-2xx response and its already-read body (JSON-pa…
+     56|   static fromResponse(response: Response, body: unknown): GraphGoblinA…
+     57|     if (isProblemDetails(body)) return new GraphGoblinApiError(body);
+       |                                        ^
+     58|     const text = typeof body === 'string' ? body.trim() : '';
+     59|     const detail = text ? text.slice(0, 500) : response.statusText;
+ ❯ unwrap src/errors.ts:91:54
+ ❯ Object.create src/resources.ts:59:5
+ ❯ src/contract.test.ts:314:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/contract.test.ts > against the in-process API (local trusted mode) > preserves catalog error paths when invalid defaults reject admission and publication
+GraphGoblinApiError: LOOP_NAME_CONFLICT: A loop with an equivalent name already exists. Try "minimal copy".
+ ❯ Function.fromResponse src/errors.ts:57:40
+     55|   /** Build from a non-2xx response and its already-read body (JSON-pa…
+     56|   static fromResponse(response: Response, body: unknown): GraphGoblinA…
+     57|     if (isProblemDetails(body)) return new GraphGoblinApiError(body);
+       |                                        ^
+     58|     const text = typeof body === 'string' ? body.trim() : '';
+     59|     const detail = text ? text.slice(0, 500) : response.statusText;
+ ❯ unwrap src/errors.ts:91:54
+ ❯ Object.create src/resources.ts:59:5
+ ❯ src/contract.test.ts:375:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 10 passed (11)
+      Tests  3 failed | 100 passed (103)
+   Start at  06:03:12
+   Duration  17.72s (import 57%, transform 21%, tests 21%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-loop-names\GraphGoblin\packages\api-client
+

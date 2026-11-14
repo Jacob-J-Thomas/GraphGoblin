@@ -1,0 +1,14 @@
+import { startNative, api, approvalLoop, QA } from './lib.mjs';
+const g = await startNative({ port: 4794, dataDir: `${QA}/native/data-shape`, label: 'shape' });
+process.on('exit', () => g.stop());
+const a = await api(g.url, 'POST', '/loops', { definition: approvalLoop('Shape loop') });
+const p = await api(g.url, 'POST', `/loops/${a.json.loop.id}/publish`);
+console.log('publish', p.status, Object.keys(p.json ?? {}));
+const d = await api(g.url, 'GET', `/loops/${a.json.loop.id}`);
+console.log(Object.keys(d.json), JSON.stringify(d.json.loop));
+for (const k of Object.keys(d.json)) if (d.json[k]?.definition) console.log(k, d.json[k].id, d.json[k].definition.name, d.json[k].status);
+const t = await api(g.url, 'GET', '/templates/starter');
+console.log('template', t.status, Object.keys(t.json ?? {}));
+const ex = await api(g.url, 'GET', `/loops/${a.json.loop.id}/export?draft=true`);
+console.log('export keys', Object.keys(ex.json));
+g.stop();

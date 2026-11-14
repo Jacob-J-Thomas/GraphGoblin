@@ -1,0 +1,216 @@
+import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+import {
+  test as base,
+  expect,
+  type APIRequestContext,
+  type Locator,
+  type Page,
+} from '@playwright/test';
+import { manualTriggerConfig } from '../src/__fixtures__/triggers.js';
+export type { TriggerFields } from '../src/__fixtures__/triggers.js';
+export { triggerConfig, manualTriggerConfig } from '../src/__fixtures__/triggers.js';
+
+/** Tests run against the server global-setup started; its URL arrives through the environment. */
+export const test = base.extend({
+  // Playwright fixtures must destructure their dependencies, even when there are none.
+  // eslint-disable-next-line no-empty-pattern
+  baseURL: async ({}, use) => {
+    const url = process.env['GG_E2E_BASE_URL'];
+    if (!url) throw new Error('GG_E2E_BASE_URL is not set; the global setup did not run');
+    await use(url);
+  },
+});
+
+export { expect };
+
+const fixtureNameCounts = new Map<string, number>();
+
+/**
+ * A loop name that no other fixture in the shared E2E gateway holds. One owner cannot keep two loop
+ * names that differ only in letter case or spacing (#209, ADR-0073), and every spec shares this
+ * gateway's store for the whole run, so a helper or a parameterized test that would repeat a literal
+ * name adds the running test's identity and a count within that test. The base stays readable at
+ * the start, so a `getByText(base)` substring match still finds it; a test that asserts the exact
+ * name uses the returned value.
+ */
+export function uniqueLoopName(base: string): string {
+  const info = test.info();
+  const key = `${info.testId}:${info.repeatEachIndex}:${info.retry}`;
+  const count = (fixtureNameCounts.get(key) ?? 0) + 1;
+  fixtureNameCounts.set(key, count);
+  const repeat = info.repeatEachIndex > 0 ? `x${info.repeatEachIndex}` : '';
+  const retry = info.retry > 0 ? `r${info.retry}` : '';
+  return `${base} [${info.testId.slice(-8)}${repeat}${retry}-${count}]`;
+}
+
+/**
+ * Choose a native select's displayed option with actual keyboard typeahead. On the headless macOS
+ * Chromium test host, ArrowDown/Home/End leave a closed select unchanged. Tab away and back clears the
+ * native search buffer, so consecutive choices cannot accidentally share a prefix. Enter is not
+ * used: on that browser it can submit the select's form instead of choosing an option.
+ */
+export async function chooseOptionByKeyboard(page: Page, select: Locator, label: string) {
+  await expect(select).toBeFocused();
+  await expect(select.getByRole('option', { name: label, exact: true })).toHaveCount(1);
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(select).toBeFocused();
+  await page.keyboard.type(label);
+  await expect(select.getByRole('option', { selected: true })).toHaveText(label);
+}
+
+/** Initialize an explicitly active editor tab before another tab can edit its draft. */
+export async function openDraftTab(page: Page, loopId: string, name: string): Promise<void> {
+  // Multi-page traces show renderer work stalled until explicit activation, even while the
+  // headless page reports visible/focused. A heading alone can also precede reconciliation.
+  // These are state synchronization waits; their timeouts are failure budgets, not delays
+  // or assertions about how fast the editor must render.
+  await page.bringToFront();
+  await page.goto(`/app/loops/${loopId}/edit`);
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  await expect(
+    page.getByText(
+      'The editor is available. Checking the server and this device before saving changes.',
+      { exact: true },
+    ),
+  ).toBeHidden();
+}
+
+/** A manual trigger, a wait-for-input node, and an exit. */
+export function approvalLoop(name: string) {
+  return {
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name,
+    nodes: [
+      {
+        id: 'start',
+        kind: 'trigger',
+        label: 'Start',
+        config: manualTriggerConfig(),
+        ui: { x: 0, y: 80 },
+      },
+      {
+        id: 'approve',
+        kind: 'wait',
+        label: 'Approve',
+        config: { mode: 'input', prompt: 'Approve?' },
+        ui: { x: 260, y: 80 },
+      },
+      { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 520, y: 80 } },
+    ],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'approve' } },
+      { id: 'e2', from: { node: 'approve', port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+}
+
+/** Drive the E2E server's control port, for example to script the fake harness. */
+export async function control(request: APIRequestContext, path: string, body: unknown = {}) {
+  const base = process.env['GG_E2E_CONTROL_URL'];
+  if (!base) throw new Error('GG_E2E_CONTROL_URL is not set; the global setup did not run');
+  const res = await request.post(`${base}${path}`, { data: body });
+  expect(res.ok()).toBe(true);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+/**
+ * Expand the editor's loop panel (the loop's name, description, settings, and variables) unless it
+ * is already open. With nothing remembered it starts expanded at 1280 px and wider, collapsed below.
+ */
+export async function showLoopPanel(page: Page): Promise<void> {
+  await expect(page.getByRole('button', { name: /^(Show|Hide) loop settings$/ })).toBeVisible();
+  const show = page.getByRole('button', { name: 'Show loop settings' });
+  if (await show.isVisible()) await show.click();
+  await expect(page.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+}
+
+/** Open a node's editor by clicking its card (on the header band, away from port handles). */
+export async function openNode(page: Page, nodeId: string) {
+  // Target the rendered header box: a fixed pixel offset can leave the card after zooming.
+  await page.getByTestId(`node-${nodeId}`).locator(':scope > div:has([data-kind])').click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+/**
+ * Expand the node editor's Advanced options (#14) unless they are open already, and return the
+ * toggle. Advanced fields stay collapsed under it until then.
+ */
+export async function openAdvanced(scope: Page | Locator) {
+  const toggle = scope.getByRole('button', { name: /^Advanced\b/ });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  return toggle;
+}
+
+/** Expand a collapsed list item, such as "Operations 1" of a mutate node (#14). */
+export async function openItem(scope: Page | Locator, name: string) {
+  const toggle = scope.getByRole('button', { name: new RegExp(`^${name}\\b`) });
+  if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  return toggle;
+}
+
+/** Close the open node editor with its Done button. */
+export async function closeNode(page: Page): Promise<void> {
+  await page.getByRole('dialog').getByRole('button', { name: 'Done', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+}
+
+/** Create and publish a loop through the API; returns its id. */
+export async function publishLoop(
+  request: APIRequestContext,
+  definition: unknown,
+  baseURL = '',
+): Promise<string> {
+  const created = await request.post(`${baseURL}/loops`, { data: { definition } });
+  expect(created.status()).toBe(201);
+  const { loop } = (await created.json()) as { loop: { id: string } };
+  const published = await request.post(`${baseURL}/loops/${loop.id}/publish`);
+  expect(published.status()).toBe(200);
+  return loop.id;
+}
+
+/** Publish one Event entry per type and return a sender targeting that loop. */
+export async function publishEventLoop(
+  request: APIRequestContext,
+  types: readonly string[],
+  baseURL = '',
+) {
+  const loopId = await publishLoop(
+    request,
+    {
+      schemaVersion: CURRENT_DEFINITION_FORMAT,
+      // Several tests publish one of these on the shared gateway (#209).
+      name: uniqueLoopName('Browser Events'),
+      nodes: [
+        ...types.map((eventType, index) => ({
+          id: `event-${index}`,
+          kind: 'trigger',
+          label: eventType,
+          config: { type: 'event', eventType },
+          ui: { x: 0, y: index * 100 },
+        })),
+        { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 260, y: 0 } },
+      ],
+      edges: types.map((_, index) => ({
+        id: `edge-${index}`,
+        from: { node: `event-${index}`, port: 'out' },
+        to: { node: 'done' },
+      })),
+    },
+    baseURL,
+  );
+  return async (type: string, payload: unknown, dedupeKey?: string) => {
+    const response = await request.post(`${baseURL}/events`, {
+      data: { loopId, type, payload, dedupeKey },
+    });
+    expect(response.status()).toBe(202);
+    return response;
+  };
+}

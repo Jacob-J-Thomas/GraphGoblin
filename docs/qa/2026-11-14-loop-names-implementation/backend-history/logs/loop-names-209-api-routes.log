@@ -1,0 +1,90 @@
+$ vitest run src/loop-names.test.ts src/routes/template-drafts.test.ts src/api.test.ts src/chat.test.ts src/classifiers.test.ts src/drafts.test.ts src/loop-deletion.test.ts src/qa.test.ts
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin/apps/api
+
+ ❯ src/qa.test.ts (10 tests | 2 failed) 6865ms
+   ❯ validate, draft saves, and publish agree (5)
+     × reports cron, subloop, and template problems the same way everywhere 250ms
+     × accepts a published subloop, a pinned version, and a self-reference 244ms
+ ❯ src/classifiers.test.ts (40 tests | 6 failed) 16087ms
+   ❯ classifier publish validation agreement (15)
+     × reports built-in Jev decision warnings on all five endpoints (disabled) 351ms
+     × reports built-in Jev decision warnings on all five endpoints (missing) 284ms
+     × reports built-in Jev decision warnings on all five endpoints (blank) 236ms
+     × reports built-in Jev decision warnings on all five endpoints (unreadable) 340ms
+     × reports built-in Jev decision warnings on all five endpoints (configured) 241ms
+     × exports and imports a clean expression evaluator without unused classifier metadata 191ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (disabled)
+ FAIL  src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (missing)
+ FAIL  src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (blank)
+ FAIL  src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (unreadable)
+ FAIL  src/classifiers.test.ts > classifier publish validation agreement > reports built-in Jev decision warnings on all five endpoints (configured)
+AssertionError: {"suggestedName":"classifier-test copy","type":"https://graphgoblin.dev/problems/loop-name-conflict","title":"loop name conflict","status":409,"code":"LOOP_NAME_CONFLICT","detail":"A loop with an equivalent name already exists. Try \"classifier-test copy\"."}: expected 409 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 409
+
+ ❯ src/classifiers.test.ts:476:52
+    474|       const published = await t.app.inject({ method: 'POST', url: `/lo…
+    475|       for (const response of [saved, imported, validated, published]) {
+    476|         expect(response.statusCode, response.body).toBe(
+       |                                                    ^
+    477|           response === imported
+    478|             ? 201
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/classifiers.test.ts > classifier publish validation agreement > exports and imports a clean expression evaluator without unused classifier metadata
+TypeError: Cannot read properties of undefined (reading 'definition')
+ ❯ src/classifiers.test.ts:634:28
+    632|       payload: exported,
+    633|     });
+    634|     expect(imported.json().draft.definition.nodes[1].config).toMatchOb…
+       |                            ^
+    635|       kind: 'expression',
+    636|       jsonata: '"yes"',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/qa.test.ts > validate, draft saves, and publish agree > reports cron, subloop, and template problems the same way everywhere
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ src/qa.test.ts:158:24
+    156|       const created = await createLoop(definition);
+    157|       expect(
+    158|         created.issues.map((i) => i.code),
+       |                        ^
+    159|         code,
+    160|       ).toContain(code);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/qa.test.ts > validate, draft saves, and publish agree > accepts a published subloop, a pinned version, and a self-reference
+TypeError: Cannot read properties of undefined (reading 'filter')
+ ❯ src/qa.test.ts:188:29
+    186|     for (const ref of [subloop(childId), subloop(childId, 1)]) {
+    187|       const created = await createLoop(chain('ok', ref));
+    188|       expect(created.issues.filter((i) => i.code.startsWith('SUBLOOP')…
+       |                             ^
+    189|     }
+    190|     const missingVersion = await createLoop(chain('v9', subloop(childI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+
+ Test Files  2 failed | 6 passed (8)
+      Tests  8 failed | 123 passed (131)
+   Start at  01:09:31
+   Duration  25.06s (tests 53%, import 32%, transform 15%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-loop-names\GraphGoblin\apps\api
+

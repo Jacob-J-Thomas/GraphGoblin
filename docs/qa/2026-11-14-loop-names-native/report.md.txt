@@ -1,0 +1,47 @@
+Phase 2 is finished: targeted specs and coverage pass. The first whole-suite run had 2 failing tests, which I fixed and rechecked. It's not merge-ready: reviews, behaviour QA, CI and the Astra audit are still required. Evidence and `handoff.md` are in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-209-claude-phase2/`.
+
+**Candidate**
+- HEAD is `5df84b2d`, tree `2428d35f…`, with Node 22.23.4. `pnpm.cmd build` exited 0.
+- The only change in the worktree is one uncommitted fixture fix in `apps/web/e2e/responsive.spec.ts` (8 lines).
+- No product source, backend, docs, thresholds, deadlines or retries changed.
+
+**Results (real Edge 157, retries 0)**
+- **Targeted:** `loop-names` (5) plus `template-gallery` (11) gave 16/16 passed.
+- **Whole suite, run once:** 472 tests, 469 passed, 2 failed, 1 skipped.
+  - The skip is the live-Codex test, skipped by design.
+  - The 2 failures are the same test in dark and light: `responsive.spec.ts` "all nine node dialogs…". A phase-1 fixture named the loop with `uniqueLoopName` but the test waited for the old literal heading.
+  - I fixed it and rechecked those two tests only; both passed. I did not rerun the whole suite.
+- **Web coverage:** 199 files, 2469 tests passed, at unchanged 90% thresholds. Lines 98.50%, branches 93.99%.
+- **Static checks:** web typecheck, lint and prettier pass. `check:tokens`, `check:layers` and `check:deps` pass; `check:deps` shows 4 pre-existing no-orphans warnings.
+
+**Visual**
+- I viewed all 41 screenshots. That covers Create conflict, import name form, template naming and editor notice in both themes at 360/768/1440. It also covers the node-dialog notice, forced-colors, a keyboard-focus example, and 120-character names at 360.
+- I found no defects.
+- There was no sideways scroll or overflow in any of the 41 layout readbacks, and every focus check showed a visible ring.
+
+**Second-client race (native build, real SQLite store)**
+- All four paths (Create, import, template, editor) passed their 53 checks. Each time:
+  - A second client claimed the suggested name before the retry.
+  - The retry was refused again with a fresh suggestion.
+  - The user's text was kept and nothing was created or sent automatically.
+  - Only a new explicit action succeeded.
+- The real 409 bodies and server IDs are in the handoff. The published loop's name was not rewritten.
+
+**Things to know**
+- **Assistive technology:** no screen-reader speech was captured. NVDA isn't installed; Narrator exists but I did not drive it. I have the browser's accessibility-tree readback instead, and I created no new gate.
+- **Mistaken first launch:** my first targeted command passed a literal `--`, so Playwright started all 472 tests. I stopped my own process tree at 232 passed, 0 failed, and kept the log with an explanation.
+- **Script bugs:** my first visual run had script defects (7 of 37 steps failed); I fixed the script and reran. I also left a hung probe, which I killed.
+- **Not exercised:** the startup refusal and repair path for a store that already holds an equivalent pair.
+- **Observation, not changed:** after a refused attempt, client A's Loops list is still the list fetched at page load, so it doesn't yet show the loop that now holds the name.
+
+**Cleanup**
+- No Playwright, gateway, vitest or Edge processes of mine remain, and ports 4791–4795 have no listeners.
+- The owner API on port 4747 existed before I started and was untouched.
+- I deleted my git-ignored `test-results` and `coverage` directories.
+
+**Remaining gates**
+- Root commits the fixture correction.
+- Opposite-family reviews: OpenAI reviews the UI, Claude reviews the backend.
+- Separate behaviour QA.
+- Current-head full Linux CI.
+- A fresh Astra max audit.

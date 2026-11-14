@@ -1,0 +1,707 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin/apps/web
+
+stderr | src/editor/EditorPage.test.tsx > EditorPage > starts with the loop panel expanded on wide windows, and counts issues beside Publish
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ✓ src/editor/harness-switch.test.tsx (30 tests) 35573ms
+   ✓ switches codex using owner defaults and saves the exact choice 2583ms
+   ✓ switches codex using loop defaults and saves the exact choice 1707ms
+   ✓ switches codex using loop-over-owner defaults and saves the exact choice 1609ms
+   ✓ switches codex using absent defaults and saves the exact choice 1566ms
+   ✓ switches codex using disabled defaults and saves the exact choice 1757ms
+   ✓ switches codex using disabled-loop defaults and saves the exact choice 1420ms
+   ✓ keeps codex authored values when catalog lookup fails 637ms
+   ✓ switches claude using owner defaults and saves the exact choice 1456ms
+   ✓ switches claude using loop defaults and saves the exact choice 1541ms
+   ✓ switches claude using loop-over-owner defaults and saves the exact choice 1709ms
+   ✓ switches claude using absent defaults and saves the exact choice 1443ms
+   ✓ switches claude using disabled defaults and saves the exact choice 1506ms
+   ✓ switches claude using disabled-loop defaults and saves the exact choice 1397ms
+   ✓ keeps claude authored values when catalog lookup fails 605ms
+   ✓ preserves an effort supported by the new model 621ms
+   ✓ preserves authored values and explains a switch blocked by settings-failed 629ms
+   ✓ preserves authored values and explains a switch blocked by blocked 620ms
+   ✓ preserves authored values and explains a switch blocked by readiness 651ms
+   ✓ preserves authored values and explains a switch blocked by invalid-defaults 664ms
+   ✓ preserves authored values and explains a switch blocked by no-effort 698ms
+   ✓ holds validation and publication after a failed cached catalog refresh until recovery 1058ms
+   ✓ keeps codex inheritance when switching without waiting for any lookups 774ms
+   ✓ keeps claude inheritance when switching without waiting for any lookups 862ms
+   ✓ waits for the first Settings and preflight loads before authoring an early switch 834ms
+   ✓ keeps codex inheritance after successful lookups, saves and reopens it 1748ms
+   ✓ keeps claude inheritance after successful lookups, saves and reopens it 1635ms
+   ✓ keeps the failed catalog settled during a switch and removes its notice on Undo 957ms
+   ✓ opening trigger and exit dialogs does not start additional harness lookups 824ms
+   ✓ clears a cancelled switch notice after a concurrent prompt edit 1050ms
+   ✓ keeps a newer switch notice when an older pending attempt finishes 1009ms
+ ✓ src/editor/EditorPage.test.tsx (37 tests) 38803ms
+   ✓ EditorPage (37)
+     ✓ describes valid pending JSON accurately and refuses Publish until applied or cancelled 935ms
+     ✓ shows Harness in inference but not in the decision or loop settings 1062ms
+     ✓ collapses and expands the loop panel from its own controls and remembers it 659ms
+     ✓ starts with the loop panel expanded on wide windows, and counts issues beside Publish 803ms
+     ✓ loads a draft, adds nodes from the palette, edits properties, and autosaves 2333ms
+     ✓ opens the node editor’s Advanced group to focus an issue’s field inside it 1602ms
+     ✓ flags a collapsed Advanced group or operation holding an expression that does not compile 1304ms
+     ✓ keeps schema-invalid drafts on the device and explains why 1896ms
+     ✓ shows a dismissed save notice again after the draft returns to the same invalid state 3067ms
+     ✓ keeps a dismissed offline save notice hidden after an edit that remains offline 1656ms
+     ✓ keeps a newer server draft over an older unsynced local copy, and can switch 439ms
+     ✓ restores an unsynced local draft and reports offline saves 871ms
+     ✓ publishes, surfaces 422 issues, and links to the New run flow once published 1261ms
+     ✓ waits for the server check before "Ready to publish", and says when it is unavailable 1022ms
+     ✓ shows the issues only the API finds on the node’s badge and in the counts 507ms
+     ✓ blocks readiness and publish when Monday 07:30 has no day chosen 1032ms
+     ✓ blocks publishing on JSON that does not parse, and discards it from the badges 2127ms
+     ✓ opens a node at an issue’s field from its badge, by pointer or keyboard 1386ms
+     ✓ opens a node at an issue whose path holds a newline, a quote, or a backslash 718ms
+     ✓ connects nodes from the keyboard and customizes a default list 1368ms
+     ✓ shows the right node when the open editor is switched to another node of the same kind 562ms
+     ✓ keeps a node editor open under Strict Mode, as the dev server renders the app 469ms
+     ✓ says in the dialog why a connection was refused 505ms
+     ✓ never lets an older save land after a newer one 1810ms
+     ✓ keeps a set-aside device copy across edits and reloads until restored or discarded 1101ms
+     ✓ keeps a restored device copy when leaving while an earlier save is in flight 1260ms
+     ✓ loads the editor once an API key is entered after a 401 363ms
+     ✓ refuses to publish a draft that cannot be saved 450ms
+     ✓ edits loop settings, variables, node ids, and edges 2510ms
+     ✓ applies an id typed in the dialog when it closes, and stops once for an id that cannot apply 1382ms
+     ✓ picks a published subloop and shows its signature 913ms
+     ✓ shows when the picked subloop has no published version 547ms
+ ✓ src/editor/NodeEditorDialog.test.tsx (32 tests) 33267ms
+   ✓ NodeEditorDialog evaluator-specific decisions (14)
+     ✓ authors terminal success exits with returns and destinations 1072ms
+     ✓ authors terminal failure exits with returns and destinations 613ms
+     ✓ authors terminal exhausted exits with returns and destinations 594ms
+     ✓ says what destinations receive while Returns is None, and names a quiet exit (#129) 387ms
+     ✓ authors and saves a new expression decision from the default editor fields 847ms
+     ✓ authors and saves a new llm decision from the default editor fields 2543ms
+     ✓ authors and saves a new classifier decision from the default editor fields 2312ms
+     ✓ edits and saves a valid expression decision 781ms
+     ✓ edits and saves a valid llm decision 900ms
+     ✓ edits and saves a valid classifier decision 1108ms
+     ✓ edits and saves a valid classifier decision 1091ms
+     ✓ edits and saves a valid classifier decision 1250ms
+     ✓ selects each kind with only its applicable fields and keeps source issue focus 2051ms
+   ✓ NodeEditorDialog webhook receiver (2)
+     ✓ shows Receiver only while the trigger type is Webhook 782ms
+   ✓ NodeEditorDialog GitHub trigger presets (2)
+     ✓ applies an editable body-signed fragment as one undoable graph change 1148ms
+     ✓ shows bounded item controls for the GitHub poll preset 1155ms
+   ✓ NodeEditorDialog disclosures across undo and redo (11)
+     ✓ keeps incomplete Monday 07:30 across closing, reopening, undo and redo 1217ms
+     ✓ keeps Advanced open through an undo and a redo of a basic picker, with focus restored 2544ms
+     ✓ keeps opened and added list items open through an undo and a redo 1631ms
+     ✓ redoing a removal from the removed row keeps its neighbour collapsed 702ms
+     ✓ undoing an add from its picker focuses a shown header without opening that row 613ms
+     ✓ follows the same row when undo and redo move its header toggle 490ms
+     ✓ follows the same row when undo and redo move its header remove 559ms
+     ✓ undoing the only added row returns focus to the collection Add button 415ms
+     ✓ redoing removal from an injected message focuses the surviving operation header (open: false) 1304ms
+     ✓ redoing removal from an injected message focuses the surviving operation header (open: true) 1403ms
+     ✓ undoing an injected message add returns to its surviving operation collection 637ms
+   ✓ NodeEditorDialog inference harness changes (3)
+     ✓ preserves other authored harness options and reports unsupported Claude settings 665ms
+     ✓ selects a compatible model only when ready and resets the policy (ready: true) 1041ms
+     ✓ selects a compatible model only when ready and resets the policy (ready: false) 1151ms
+ ✓ src/editor/DecisionAuthoring.test.tsx (23 tests) 30251ms
+   ✓ guides Expression to Classifier setup with field instructions and diagnostic details 1860ms
+   ✓ guides Noul to Score setup without raw bounds errors in the ordinary form 920ms
+   ✓ decision gates (8)
+     ✓ surfaces a visit-cap warning and focuses Maximum passes without blocking publication 375ms
+     ✓ previews removed gate limits for Routes JSON and applies cleanup with one undo 1277ms
+     ✓ marks only one repeat route and requires maximum passes with focused validation 1180ms
+     ✓ previews removing repeat settings and the Limit reached edge; cancel and undo preserve all 721ms
+     ✓ marks classifier choice repeat routes and retains limits through kind changes 892ms
+     ✓ marks classifier noul repeat routes and retains limits through kind changes 859ms
+     ✓ marks classifier score repeat routes and retains limits through kind changes 903ms
+     ✓ removing the repeat row previews limits and cleans the gate as one undo step 527ms
+   ✓ decision authoring checkpoint (13)
+     ✓ keeps unfinished expression route fields through classifier conversion, cancel and undo 1389ms
+     ✓ keeps unfinished llm route fields through classifier conversion, cancel and undo 1459ms
+     ✓ names lost held route fields in the preview and moves compatible fields between classifier primitives 1066ms
+     ✓ restores active device ownership across reload with unfinished ID "" 1616ms
+     ✓ restores active device ownership across reload with unfinished ID "review" 2362ms
+     ✓ restores set-aside device ownership across reload with unfinished ID "" 1844ms
+     ✓ restores set-aside device ownership across reload with unfinished ID "review" 2234ms
+     ✓ invalidates a connection-removal review when connections change, and keeps compatible held context on kind change 1385ms
+     ✓ previews kind losses before writing; cancel preserves held text and confirm plus undo is atomic 1166ms
+     ✓ leaves new source unsaved, focuses its validation issue, then saves and reloads with edges 2115ms
+     ✓ keeps row ownership through invalid ids, reorders and labels, and reviews removal before one undoable edit 1813ms
+     ✓ refuses a many-route Noul conversion, then preserves ids in an incomplete Score form 1338ms
+     ✓ moves held band input with its row and restores it with undo 943ms
+ ✓ src/settings/sections/ClassifierModelsSection.test.tsx (31 tests) 17920ms
+   ✓ ClassifierModelsSection (31)
+     ✓ follows voice and model defaults and lists the built-in first 630ms
+     ✓ keeps configured and enabled independent, and links a missing key to Secrets 347ms
+     ✓ shows a configured status again once the secret is set, and needs a key after deletion 955ms
+     ✓ adds a custom classifier that starts disabled, after the contract checks pass 1199ms
+     ✓ review: keeps Add unavailable until the list has loaded, then creates only 1186ms
+     ✓ review: says why a new entry waits when the list is being refetched with an error 403ms
+     ✓ review: an id added elsewhere is refused by the server, explained, and named by the refreshed check 1202ms
+     ✓ review: an old save finishing after Cancel does not close the form opened since 856ms
+     ✓ review: an edit saves to the entry it was opened for, whatever the id field is set to 444ms
+     ✓ review: catalog and secret writes mark the editor’s checks of saved drafts stale 1146ms
+     ✓ edits metadata with a fixed id, picks a secret from Secrets, and keeps enabled 1201ms
+     ✓ keeps the current secret when the secret names cannot be loaded, and says why 387ms
+     ✓ lists an unset referenced secret as not set 417ms
+     ✓ keeps the form and the server state when a save is refused (secrets:write) 604ms
+     ✓ keeps the form and the server state when a save is refused (settings:write) 604ms
+     ✓ keeps the form and the server state when a save is refused (validation) 532ms
+     ✓ keeps the form and the server state when a save is refused (validation without details) 625ms
+     ✓ keeps the form and the server state when a save is refused (built-in) 614ms
+     ✓ ignores a second Save while the first is pending 585ms
+     ✓ confirms deletion with its consequences; Keep changes nothing 708ms
+     ✓ keeps a failed deletion open with its error, and refreshes a vanished row on dismissal 624ms
+     ✓ review: a row that vanishes while its toggle is pending still returns focus to the heading, and the next toggle clears the notice 313ms
+ ✓ src/settings/SettingsPage.test.tsx (38 tests) 20076ms
+   ✓ SettingsPage (35)
+     ✓ recovers heading focus when Delete gpt-6-luna refreshes before React commits its row removal 1106ms
+     ✓ recovers heading focus when Delete secret jev-api-key refreshes before React commits its row removal 578ms
+     ✓ recovers heading focus when Revoke mcp refreshes before React commits its row removal 543ms
+     ✓ finishes revocation before a held list refresh, then restores focus after success 616ms
+     ✓ finishes revocation before a held list refresh, then restores focus after 401 565ms
+     ✓ review: refreshes the vanished Delete gpt-6-luna after a 404 is dismissed 818ms
+     ✓ review: refreshes the vanished Delete secret jev-api-key after a 404 is dismissed 647ms
+     ✓ review: refreshes the vanished Revoke mcp after a 404 is dismissed 631ms
+     ✓ review: shows no browser-key warning when no key is stored 388ms
+     ✓ review: describes startup re-seeding in the Jev deletion confirmation 307ms
+     ✓ edits and deletes LiteLLM rows and toggles through PATCH 1642ms
+     ✓ explains catalog removal without promising harness models will return 435ms
+     ✓ shows catalog save errors 622ms
+     ✓ shows only enable switches for harness models and keeps Defaults in sync 386ms
+     ✓ offers Add, Edit and Delete only for LiteLLM rows in a mixed catalog 760ms
+     ✓ refreshes a vanished toggle and preserves focus on another control 312ms
+     ✓ review: focuses the heading when a row vanishes while its toggle is pending, and clears the notice on the next toggle 357ms
+     ✓ shows the saved disabled default truthfully until another model is chosen 442ms
+     ✓ shows the saved missing default truthfully until another model is chosen 321ms
+     ✓ saves default model and effort 455ms
+     ✓ keeps Claude defaults per harness and enables Fable through the catalog 411ms
+     ✓ keeps every harness default while a settings refresh is held between saves 393ms
+     ✓ sets and deletes secrets without ever showing values 1199ms
+     ✓ creates an API key, shows the token once, and revokes keys 615ms
+     ✓ confirms Delete gpt-6-luna, cancels without a request, and surfaces a second-delete error 829ms
+     ✓ confirms Delete secret jev-api-key, cancels without a request, and surfaces a second-delete error 649ms
+     ✓ confirms Revoke mcp, cancels without a request, and surfaces a second-delete error 648ms
+     ✓ locks a secret deletion until the API finishes and returns focus to Secrets 565ms
+     ✓ warns about browser access only when revoking the current key 517ms
+   ✓ Codex catalog rows and readiness (1)
+     ✓ notes a known Codex failure on Codex rows as for Claude, but not during the first check 317ms
+stderr | src/forms/fields/model.test.tsx > readiness in the model picker > notes a known Codex failure with its own Retry button and keeps it while rechecking
+The current testing environment is not configured to support act(...)
+The current testing environment is not configured to support act(...)
+The current testing environment is not configured to support act(...)
+
+ ✓ src/forms/json-sections.test.tsx (39 tests) 14596ms
+   ✓ section JSON mode (29)
+     ✓ returns confirmation cancellation to the JSON editor if parent validation disables Apply 513ms
+     ✓ caches a held candidate across sibling held-input keystrokes and revalidates semantic changes and Apply 393ms
+     ✓ keeps parent revalidation in the parent edit without adding undo steps or losing redo 1521ms
+     ✓ validates Config overrides against the complete inference config before writing 826ms
+     ✓ validates Capabilities against the complete inference config before writing 842ms
+     ✓ requires a separate confirmation, rechecks changed consequences, and cancels review without applying 850ms
+     ✓ round trips declared routes without rewriting saved values and validates empty/absent input 448ms
+     ✓ round trips input without rewriting saved values and validates empty/absent input 522ms
+     ✓ round trips output.transforms without rewriting saved values and validates empty/absent input 508ms
+     ✓ round trips contextFiles without rewriting saved values and validates empty/absent input 491ms
+     ✓ round trips configOverrides without rewriting saved values and validates empty/absent input 352ms
+     ✓ round trips capabilities without rewriting saved values and validates empty/absent input 584ms
+     ✓ round trips choice routes without rewriting saved values and validates empty/absent input 472ms
+     ✓ round trips noul routes without rewriting saved values and validates empty/absent input 418ms
+     ✓ round trips score routes and rubric without rewriting saved values and validates empty/absent input 564ms
+     ✓ round trips provider context without rewriting saved values and validates empty/absent input 501ms
+     ✓ holds syntax/schema errors, blocks switching, cancels, and focuses nested issues in JSON 377ms
+     ✓ retains held text through Advanced, tabs, history and dialog-session remounts; Apply is one step 1647ms
+ ✓ src/forms/fields/model.test.tsx (40 tests) 16146ms
+   ✓ catalog field controls (31)
+     ✓ keeps a saved inherited Claude effort unverified and read-only while readiness is pending 923ms
+     ✓ keeps a saved inherited Claude effort unverified and read-only while readiness is failed 458ms
+     ✓ keeps a saved inherited Claude effort unverified and read-only while readiness is not-ready 379ms
+     ✓ keeps a saved inherited Claude effort unverified and read-only while readiness is signed-out 402ms
+     ✓ bounds inherited Claude effort choices and preserves the saved value undefined 454ms
+     ✓ bounds inherited Claude effort choices and preserves the saved value none 445ms
+     ✓ admits saved Fable and offers both supported Claude models 412ms
+     ✓ changes Claude sandbox and approval only after an explicit supported policy selection 631ms
+     ✓ retains the same focused select while a pending catalog loads without writing values 310ms
+     ✓ derives an omitted harness from the sibling schema default 312ms
+     ✓ shows one warning for a locally missing model instead of repeating the matching server warning 314ms
+     ✓ keeps server warnings when no catalog data is available 362ms
+     ✓ shows an empty catalog with only the inherited choice and a Settings link 417ms
+     ✓ lists none first and labels it as no reasoning (#205) 431ms
+     ✓ selects one entry by display name and id, restricts effort, and clears back to unset 634ms
+     ✓ labels a retained model from Codex with Claude readiness true 570ms
+     ✓ labels a retained model from Codex with Claude readiness false 624ms
+     ✓ filters many entries by the sibling harness and enabled state, watching harness changes 508ms
+     ✓ keeps a unknown model selected and warned without changing the form 450ms
+     ✓ keeps a disabled model selected and warned without changing the form 364ms
+     ✓ keeps an unsupported effort across model changes and updates after catalog refresh 466ms
+     ✓ shows pending and failed fetches as read-only, then retries without changing saved values 611ms
+     ✓ keeps cached choices editable and focused after a failed refresh, then recovers 568ms
+     ✓ shows validation catalog warnings only at their exact field paths 393ms
+   ✓ keeps saved selection while cached lookup is pending or fails 363ms
+   ✓ readiness in the model picker (8)
+     ✓ keeps a ready Claude field editable and labelled during a background recheck 388ms
+     ✓ labels a saved Claude model "(saved)" when readiness is known but not ready 362ms
+     ✓ says when ready Claude preflight lists no models 301ms
+     ✓ notes a known Codex failure with its own Retry button and keeps it while rechecking 573ms
+     ✓ shows no Codex note during the first check 362ms
+     ✓ says when Codex readiness could not be checked 374ms
+stderr | src/editor/TriggerEditor.test.tsx > trigger authoring > restores held input and selector focus through type undo, and focuses validation paths
+A component suspended inside an `act` scope, but the `act` call was not awaited. When testing React components that depend on asynchronous data, you must await the result:
+
+await act(() => ...)
+
+ ✓ src/editor/TriggerEditor.test.tsx (13 tests) 15304ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"manual","exposeTo":["ui","mcp"],"inputSchema":{"type":"object"}} 1563ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"cron","expression":"30 7 * * 1","timezone":"Europe/Paris"} 1106ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"event","eventType":"build-ready","dedupeKey":"id"} 975ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"poll","intervalSeconds":30,"probe":{"kind":"none"},"fireWhen":"true"} 956ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"webhook","authentication":{"type":"hmac-sha256","message":"timestamp-body","secretRef":"hook"}} 944ms
+   ✓ keeps type through editor save, device draft, reopen and export: {"type":"webhook","authentication":{"type":"hmac-sha256","message":"body","secretRef":"github"},"dedupeKey":"id"} 978ms
+   ✓ trigger authoring (4)
+     ✓ starts with five types, shows only their fields, and keeps signing under Webhook 1242ms
+     ✓ restores held input and selector focus through type undo, and focuses validation paths 712ms
+     ✓ previews, cancels and applies issues-poll as one undo step including graph and held input 1761ms
+     ✓ previews, cancels and applies issues-labeled as one undo step including graph and held input 1695ms
+   ✓ edits authentication, body and extraction by keyboard with one-step undo and field validation 2500ms
+   ✓ authors the displayed UTC default on an untouched daily cron schedule 656ms
+ ✓ src/forms/cron/control.test.tsx (28 tests) 16578ms
+   ✓ cron schedule control (28)
+     ✓ loads a saved schedule unchanged and shows trigger and viewer times from the API 651ms
+     ✓ builds every preset, edits numbers and times, and keeps the saved shape 920ms
+     ✓ keeps custom source on load, switch to custom, and unrelated timezone edits; recognises raw presets 788ms
+     ✓ debounces edits, suppresses invalid zones locally, and displays the server CRON_INVALID before save 2098ms
+     ✓ keeps current source and shows a clear unavailable preview when transport fails 485ms
+     ✓ does not show stale results from an earlier in-flight request 892ms
+     ✓ flags incomplete number and time controls without requesting their preview 505ms
+     ✓ accepts the valid zone Etc/UTC even outside the suggestion list 472ms
+     ✓ accepts the valid zone Asia/Kolkata even outside the suggestion list 477ms
+     ✓ opens with no schedule, makes no preview request, and adds no edit until a preset is chosen 959ms
+     ✓ keeps the stored expression 0 9 * * * after clearing At time 890ms
+     ✓ keeps the stored expression */5 * * * * after clearing Every (minutes) 900ms
+     ✓ keeps the stored expression 0 9 12 * * after clearing Day of month 901ms
+     ✓ keeps the stored weekly expression after clearing all days, then commits a complete choice 323ms
+     ✓ says what to choose and retains the last valid time after an incomplete edit (#41) 537ms
+     ✓ retains the last valid weekly days and monthly day after clearing them 686ms
+     ✓ retains time, days, and monthly day even through presets without those fields 462ms
+     ✓ reveals and focuses raw text on Custom selection and when following an expression issue 332ms
+     ✓ shows the expression problem count on Advanced 436ms
+     ✓ announces debounced values through one stable status, not raw typing 505ms
+     ✓ shows the HTTP 403 detail without calling it a transport failure 487ms
+     ✓ shows the HTTP 503 detail without calling it a transport failure 517ms
+     ✓ omits the duplicate viewer time when the zones resolve identically 470ms
+ ✓ src/runs/live-follow.test.tsx (6 tests) 15468ms
+   ✓ follows a fast cycle live without historical thread reads, refreshing at most once per interval (#186) 3737ms
+   ✓ refreshes only the run record while a node streams progress (#186) 4182ms
+   ✓ reads a selected completion exactly once and refreshes the hidden current thread only when shown again (#186) 2389ms
+   ✓ serializes the return to the current thread with the next live refresh (#186 review) 4084ms
+   ✓ keeps the thread on screen while a new selection is read, not an older selection (#186 QA) 870ms
+ ✓ src/editor/EditorPage.conflict.test.tsx (12 tests) 15248ms
+   ✓ draft conflicts (If-Match) (9)
+     ✓ sends the loaded token, and the token from each save after it 1688ms
+     ✓ stops saving on a conflict and reloads the server draft on request 1782ms
+     ✓ overwrites the server draft with this copy on request 823ms
+     ✓ asks the server for its token when the conflict did not carry one, and shows failures 973ms
+     ✓ answers a conflict from inside an open node editor 2260ms
+     ✓ does not save over the server draft when leaving in conflict 792ms
+     ✓ saves an undo or redo like any edit: If-Match, the device copy, and the conflict stop 3807ms
+   ✓ draft tokens across editors and saves (3)
+     ✓ does not load a delayed server draft for loop A into the editor of loop B 1119ms
+     ✓ bases the save sent on leaving on the save still in flight, so it does not conflict 868ms
+     ✓ moves a newer unsynced device copy onto the token of the save it follows 886ms
+ ✓ src/forms/SchemaForm.test.tsx (33 tests) 11355ms
+   ✓ SchemaForm (28)
+     ✓ orders top-level fields without changing field paths or untouched values 496ms
+     ✓ keeps edited script args when adding and removing without remounting 426ms
+     ✓ keeps edited nested decision routes when adding and removing 786ms
+     ✓ keeps script env values through add, rename, and remove 796ms
+     ✓ renders strings, numbers, booleans, enums and reports changes 480ms
+     ✓ edits arrays of strings and records 824ms
+     ✓ switches a root discriminated union and shows literal and nested object fields 892ms
+     ✓ handles the decision evaluation union, context unions, option editing, and previews 888ms
+     ✓ edits JSON fields, optional unions, and tri-state booleans 1184ms
+     ✓ renders the other node kinds and loop settings without crashing 329ms
+   ✓ SchemaForm changes and undo steps (4)
+     ✓ makes the model and then the effort picker two steps 731ms
+     ✓ makes a row removal one step with the unparsed text it moves, apart from the typing 347ms
+ ✓ src/editor/EditorPage.name-conflict.test.tsx (6 tests) 13379ms
+   ✓ renaming to another loop’s name (#209) (6)
+     ✓ keeps the authored name on the device and the server copy intact, and holds saves 3006ms
+     ✓ takes the suggestion as an undoable rename and saves it under the same loop id 2418ms
+     ✓ opens and focuses the Name field from the notice, and Try again sends the name once 2659ms
+     ✓ treats a stale draft as a draft conflict first, then refuses the name on overwrite 1500ms
+     ✓ shows the notice inside the node dialog without Edit name 1094ms
+     ✓ clears the guidance on leaving without saving the refused name, and asks again on return 2699ms
+stderr | src/editor/EditorPage.undo.test.tsx > EditorPage undo and redo > undoes and redoes from the toolbar and the keyboard, not from inside text fields
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ✓ src/editor/EditorPage.undo.test.tsx (8 tests) 10783ms
+   ✓ EditorPage undo and redo (8)
+     ✓ undoes and redoes from the toolbar and the keyboard, not from inside text fields 1899ms
+     ✓ undoes typing in a label in one step, from outside the field 1490ms
+     ✓ shows restored values in the node’s config form and the loop panel’s forms 2017ms
+     ✓ closes the node editor when an undo removes its node, and returns focus to the canvas 687ms
+     ✓ undoes a rename: the id, its edges, and the open editor follow 1470ms
+     ✓ undoes a Discard the unparsed text made right after the typing, from the field or the badge 1982ms
+     ✓ leaves the keys to a code editor’s search panel, checkboxes and all 467ms
+     ✓ takes unparsed text back and forth with the step that typed it 767ms
+ ✓ src/settings/sections/ApiKeysSection.test.tsx (12 tests) 7981ms
+   ✓ current browser key in Settings (12)
+     ✓ marks A and revokes B without the browser warning or losing access 1168ms
+     ✓ warns on A, closes after DELETE, and focuses the key panel on the rejected refresh 634ms
+     ✓ shows the softer trusted-mode warning only when a key is stored, key=undefined 938ms
+     ✓ shows the softer trusted-mode warning only when a key is stored, key=gg_stored 1005ms
+     ✓ recovers with Forget key after revoking the stored key in trusted mode 840ms
+     ✓ refreshes the marker after save without a token in a query key 606ms
+     ✓ refreshes the marker after storage without a token in a query key 711ms
+     ✓ describes the current key on its Revoke button for keyboard and screen-reader users 350ms
+     ✓ closes an open Revoke dialog when another tab changes the key and the list reloads 590ms
+     ✓ ignores a late 401 from A after a storage event saves B, and aborts the old list query 472ms
+     ✓ discards an old in-flight list when the stored key changes during initial loading 460ms
+ ✓ src/editor/model-effort-refresh.test.tsx (24 tests) 7939ms
+   ✓ refreshes owner defaults on window focus 868ms
+   ✓ refreshes process defaults on window focus 424ms
+   ✓ refreshes defaults when the tab becomes visible 352ms
+   ✓ refreshes fresh cached owner defaults when a node dialog opens 898ms
+   ✓ refreshes fresh cached process defaults when a node dialog opens 725ms
+   ✓ inference offers no model-specific effort while owner defaults are unknown (saved undefined) 309ms
+   ✓ inference offers no model-specific effort while owner defaults are unknown (saved max) 339ms
+   ✓ inference offers no model-specific effort while process defaults are unknown (saved undefined) 304ms
+   ✓ inference offers no model-specific effort while process defaults are unknown (saved max) 337ms
+ ✓ src/events/EventsPage.test.tsx (9 tests) 13039ms
+   ✓ EventsPage delivery dispositions (5)
+     ✓ appends an exactly full final event page and preserves expanded content and keyboard focus 1671ms
+     ✓ refreshes a pending receipt when it becomes admitted and stops polling 4261ms
+     ✓ refreshes a pending receipt when it becomes failed and stops polling 4253ms
+     ✓ stops pending refreshes when the Events page unmounts 2263ms
+ ✓ src/forms/session-policy.test.tsx (7 tests) 8499ms
+   ✓ inference Context: Prompt and Session (7)
+     ✓ places Prompt, Session, Input and Advanced Files once on Context, in order, outside Advanced 1259ms
+     ✓ labels each policy, explains the chosen one, and shows only its own field 1107ms
+     ✓ opens a new node at Start fresh and writes nothing by viewing it 565ms
+     ✓ keeps a stored policy exactly and saves edits as before 1452ms
+     ✓ autosaves a policy and a name without moving focus 1522ms
+     ✓ makes a policy change one undo step that restores the earlier policy and its name 1087ms
+     ✓ keeps name, reset and prompt errors with their fields and follows issues into Context 1505ms
+ ✓ src/runs/history-browsing.test.tsx (5 tests) 7723ms
+   ✓ shows an exact oversized event payload even when the event has no thread patch or evaluation panel 596ms
+   ✓ retains a bounded suffix and reconnects after a typed slow-consumer failure at its delivered cursor 839ms
+   ✓ browses older history during execution, reloads at the live acknowledgement and selects an evicted sequence with full projections intact 4294ms
+   ✓ keeps the recorded cancellation actor while older history is browsed 836ms
+   ✓ keeps missing-session recovery and its recorded choices while older history is browsed 1157ms
+ ✓ src/editor/ollama-policy.test.tsx (6 tests) 5958ms
+   ✓ Ollama inference capability presentation (5)
+     ✓ keeps invalid authored controls visible and fixes all policy settings in one edit 1921ms
+     ✓ suppresses unsupported valid controls and keeps Context mutations available 438ms
+     ✓ switches to Ollama without choosing a discovered or configured model 1010ms
+     ✓ leaves other providers’ structured and JSON controls available 559ms
+     ✓ restores all policy settings with one native undo while retaining the selected provider 2025ms
+ ✓ src/runs/RunInspectorPage.test.tsx (26 tests) 7721ms
+   ✓ RunInspectorPage (20)
+     ✓ keeps the previous resolved thread and identifiers while a selected server boundary is pending 981ms
+     ✓ streams the timeline, replays the thread at any event, and shows the patch diff 879ms
+     ✓ resumes the stream after the stored cursor on reload 311ms
+     ✓ renders the input form from the wait node schema and submits input 528ms
+     ✓ sends a signal to a run waiting for one, and describes timer waits 473ms
+     ✓ cancels, pauses, and resumes runs 716ms
+     ✓ keeps the keyboard order: loop, parent run, child runs, then the run controls 366ms
+     ✓ links an available child from a child-finished event 349ms
+     ✓ bounds large values, builds the full thread JSON only when opened, and keeps exact access (#259) 615ms
+ ✓ src/editor/EditorPage.device.test.tsx (2 tests) 9894ms
+   ✓ device storage blocked by an older tab (2)
+     ✓ says a schema-invalid edit is in this window only, then saves it on the device once the old tab closes 5731ms
+     ✓ shows a valid edit saved to the server, with the device notice apart, until the old tab closes 4161ms
+ ✓ src/events/EventsPage.races.test.tsx (5 tests) 6271ms
+   ✓ Events refresh races (#240) (5)
+     ✓ drops Refresh A after filter change, Back, Refresh B and paging 2913ms
+     ✓ drops Refresh A after page unmount, Back, Refresh B and paging 1560ms
+     ✓ updates a pending row at loaded index 0 despite 501 tied head arrivals 687ms
+     ✓ updates a pending row at loaded index 99 despite 501 tied head arrivals 475ms
+     ✓ keeps updating loaded receipts after the loaded page head is deleted 633ms
+ ✓ src/editor/effort-issues.test.tsx (6 tests) 6134ms
+   ✓ a inference node (2)
+     ✓ keeps a chosen max after a switch to GPT-5.5, names it on the field and the node, and clears when changed 2272ms
+     ✓ keeps a chosen none after a switch to GPT-5.5, names it on the field and the node, and clears when changed 1592ms
+   ✓ a llm node (2)
+     ✓ keeps a chosen max after a switch to GPT-5.5, names it on the field and the node, and clears when changed 1169ms
+     ✓ keeps a chosen none after a switch to GPT-5.5, names it on the field and the node, and clears when changed 1096ms
+ ✓ src/settings/VoiceSetupSheet.test.tsx (23 tests) 6371ms
+   ✓ owner voice setup (23)
+     ✓ measures a sample and keeps configuration, testing, staging and publishing separate 774ms
+     ✓ keeps compatible key reuse explicit and discloses the cloud sample upload 385ms
+     ✓ saves a newly entered cloud key through the gateway secret API and clears the field 529ms
+     ✓ checks the same persisted operation after a lost acknowledgement without repeating a cloud test 354ms
+     ✓ does not overwrite a loop changed after preview 478ms
+     ✓ checks explicit Auto fallback under one revision (local true, cloud true) 343ms
+     ✓ checks explicit Auto fallback under one revision (local false, cloud true) 351ms
+     ✓ checks explicit Auto fallback under one revision (local true, cloud false) 353ms
+     ✓ offers the loop editor when a safe voice preview cannot be produced 367ms
+     ✓ guides an unsupported raw-input prompt to manual editor review without staging it 353ms
+ ✓ src/runs/RunsPage.test.tsx (10 tests) 5152ms
+   ✓ RunsPage (9)
+     ✓ lists and filters exhausted runs with their status badge 515ms
+     ✓ lists runs with loop names, parents, and children links, and filters through the URL 788ms
+     ✓ appends filtered pages, retains loaded rows on failure, retries, and resets on filter changes 1516ms
+     ✓ guards repeated next-page clicks and cancels that request on unmount 515ms
+     ✓ omits the exhaustion message on an initial page and focuses it after a keyboard append 684ms
+     ✓ keeps Load more enabled during a background refresh and lets it replace that refresh 738ms
+ ✓ src/app/ShutdownNotice.test.tsx (49 tests) 7143ms
+   ✓ gateway shutdown notice (29)
+     ✓ requires confirmation naming interrupted work and uncertain effects; dismissal sends nothing 306ms
+     ✓ stops shutdown polling after connection closure and allows an explicit read to recover 2196ms
+     ✓ observes connection closure after readiness rather than staying at stopping forever 2049ms
+ ✓ src/forms/structure.test.tsx (16 tests) 4513ms
+   ✓ removes unparsed array text without overwriting the next operation 1042ms
+   ✓ renames an unparsed variable without losing its text or leaving the old issue 308ms
+   ✓ removing array item 2 leaves focus safely on Add, including a second Enter 352ms
+   ✓ S24: conflict reload replaces mounted Settings and Variables and later edits preserve the server values 888ms
+ ✓ src/editor/EditorPage.restore.test.tsx (12 tests) 5380ms
+   ✓ unsupported device drafts (8)
+     ✓ pauses editing for an older unsaved draft, never converts or saves it, and opens the editor only after an explicit discard 1308ms
+     ✓ lists an older archived copy without blocking the editor and discards only that copy 320ms
+   ✓ restoring a set-aside copy (4)
+     ✓ pauses editing when an earlier set-aside copy cannot be archived, and continues once the blocked copy is discarded 1017ms
+     ✓ keeps a dismissed restore notice hidden while the restored editor generation is edited 367ms
+     ✓ does not load into another loop opened while the restore was being persisted 1350ms
+ ✓ src/loops/LoopsPage.test.tsx (21 tests) 4574ms
+   ✓ LoopsPage (21)
+     ✓ lists loops with publish state and last run status 463ms
+     ✓ creates a loop and opens it in the editor 360ms
+     ✓ shows an empty gallery and still creates a template draft without typed settings defaults 303ms
+     ✓ exports the published version or the draft as a download 324ms
+     ✓ deletes a loop after confirmation and shows refusals 676ms
+ ✓ src/events/EventsPage.recovery.test.tsx (5 tests) 3931ms
+   ✓ Events refresh recovery and orientation (#240) (5)
+     ✓ keeps a late Refresh response scoped to the filters it started with 455ms
+     ✓ keeps both loaded pages during a Refresh and after failure, then commits a successful newest page 3101ms
+ ✓ src/editor/EditorPage.freshness.test.tsx (8 tests) 4899ms
+   ✓ freshness of the API checks (phase review F3) (8)
+     ✓ checks a reloaded server draft instead of reusing the clean answer of the loaded one 1889ms
+     ✓ checks again when another tab disables the selected model, once per catalog change 328ms
+     ✓ never reuses a clean unknown-catalog answer as ready when reopened with a held retry 667ms
+     ✓ checks a changed fingerprint once with a slow unchanged classifier catalog (held check: true) 314ms
+     ✓ waits for the check under the resolved catalog even after a clean early answer 320ms
+     ✓ names a draft without a server token by its content, and by the token once saved 929ms
+ ✓ src/editor/SystemChatAudio.test.tsx (11 tests) 4264ms
+   ✓ owner voice configuration (8)
+     ✓ stages a real script, applies once, selects its editor, and removes the full chain through undo 989ms
+     ✓ keeps staged values on helper refusal and never mutates until Add 514ms
+     ✓ chooses an ordinary published subloop and preserves its editable input mapping 895ms
+     ✓ does not overwrite a newer draft while configuration is open 390ms
+   ✓ voice setup draft and recovery limits (3)
+     ✓ holds unfinished normalizer fields until valid and preserves them locally 501ms
+ ✓ src/runs/attempt-history.test.tsx (2 tests) 5692ms
+   ✓ an inspector with cached failure=false follows a remote resume and success 3056ms
+   ✓ an inspector with cached failure=true follows a remote resume and success 2634ms
+ ✓ src/editor/useLoadEditor.review.test.tsx (18 tests) 4912ms
+   ✓ F4: permanently unavailable IndexedDB keeps its warning and Retry while server autosave works 1237ms
+   ✓ F4: a transient active-read failure keeps mirrors memory-only and preserves unread device work 336ms
+   ✓ F5: a current-format set-aside backup reopens with a backup label, apart from an unsupported archived copy 347ms
+   ✓ second review F1: failed-read autosave preserves unread work and requires a choice on reopening (same base=false) 306ms
+   ✓ second review F1: failed-read navigation preserves unread work and requires a choice on reopening (same base=false) 304ms
+   ✓ second review F1: failed-read autosave preserves unread work and requires a choice on reopening (same base=true) 307ms
+   ✓ second review F1: failed-read navigation preserves unread work and requires a choice on reopening (same base=true) 306ms
+ ✓ src/forms/JsonSchemaForm.test.tsx (20 tests) 9540ms
+   ✓ JsonSchemaForm (19)
+     ✓ keeps untouched fields absent and sends explicitly empty text, null, zero and false 1006ms
+     ✓ offers Omit only for edited optional text, number and JSON fields, never for required ones 736ms
+     ✓ empties the number input itself on Omit, before focus, so incomplete native text goes with the field 570ms
+     ✓ validates a cleared optional string against its schema and refuses edited number or JSON blanks 644ms
+     ✓ keeps no input, edited blank JSON, null, "", 0 and false apart in the JSON editor 1164ms
+     ✓ renders one field per property and validates before submitting 778ms
+     ✓ sends each enum choice as its typed value 818ms
+     ✓ keeps an enum choice by value when the schema changes under a mounted form 478ms
+     ✓ says so when a segmented choice is no longer offered, and keeps the required ones marked 452ms
+     ✓ gives each field its own ids, whatever its property is called 490ms
+     ✓ puts each problem beside its field: required boolean, text, enum, and the value as a whole 397ms
+     ✓ links the raw JSON editor to its problems, whether the text does not parse or does not fit 323ms
+     ✓ checks an empty input against the schema as the API will (as null) 459ms
+     ✓ falls back to a JSON editor for non-object schemas or none 505ms
+ ✓ src/editor/model-effort.test.tsx (13 tests) 3852ms
+   ✓ renders an unknown harness without inventing inherited defaults 730ms
+   ✓ inference exposes model and one effort dropdown before Advanced 594ms
+   ✓ llm exposes model and one effort dropdown before Advanced 402ms
+ ✓ src/settings/sections/OllamaModelsSection.test.tsx (24 tests) 4164ms
+   ✓ Ollama model settings (24)
+     ✓ shows the current connection availability reason verbatim: Ollama is off in Settings 303ms
+     ✓ saves the canonical origin, preserves the disclosure and announces only the explicit result 636ms
+     ✓ saves disabled and re-enables through the same connection form 307ms
+     ✓ focuses an invalid address without saving http://models.test/api 516ms
+     ✓ focuses an invalid address without saving http://user:secret@models.test 647ms
+ ✓ src/forms/review.test.tsx (15 tests) 3160ms
+   ✓ saves required templates exactly as typed (""), without a Required message 484ms
+   ✓ focuses a newly added code editor after StrictMode recreates its view 329ms
+   ✓ resynchronizes row identities after an external reset grows and shrinks the array 326ms
+ ✓ src/editor/ClassifierField.editor.test.tsx (6 tests) 3849ms
+   ✓ API checks held across a catalog change (#43 re-review) (3)
+     ✓ drops a check that was running when Settings changed the catalog, and clears after re-enabling 712ms
+   ✓ the classifier picker in the node editor (3)
+     ✓ requires an explicit classifier, changes the saved model, and keeps focus 867ms
+     ✓ makes each pick an undo step of its own, however quick 1388ms
+     ✓ shows a classifier disabled elsewhere on the node badge without a draft edit 414ms
+ ✓ src/runs/ScriptRecovery.test.tsx (6 tests) 3796ms
+   ✓ deliberate script recovery (#321) (6)
+     ✓ follows a resumed script from running through its next outcome without a reload 2655ms
+     ✓ resumes only after the owner explicitly chooses Resume 300ms
+ ✓ src/loops/loop-names.test.tsx (9 tests) 3949ms
+   ✓ Create: a case- or whitespace-equivalent name (#209) (3)
+     ✓ keeps the existing loop, explains the rule, and creates only on a deliberate retry 1000ms
+     ✓ clears the guidance when the name changes and shows a fresh suggestion after a race 698ms
+   ✓ Import: an unchanged export while the original exists (#209) (4)
+     ✓ shows a refreshed suggestion when the retried name was taken meanwhile 363ms
+     ✓ cancels without another request and keeps other failures retryable 429ms
+   ✓ Template copies: repeating Use (#209) (2)
+     ✓ cancels back to Use, keeps one request in flight, and refreshes a raced suggestion 649ms
+ ✓ src/forms/EarlierNodeOutputs.test.tsx (65 tests) 2821ms
+   ✓ field rendering and clipboard (39)
+     ✓ script args.0 (template) shows list: true 352ms
+     ✓ uses the live store definition in the node dialog when edges and ids change 980ms
+ ✓ src/runs/HistoryEligibility.test.tsx (12 tests) 3480ms
+   ✓ returns focus to the selection status and announces a successful mark 569ms
+   ✓ returns focus to the selection status and announces a successful withdraw 301ms
+   ✓ cancels without confirmation, freezes an explicit bulk selection while new history arrives, and shows persisted marks 706ms
+   ✓ removes vanished rows from selection before the next review 304ms
+ ✓ src/editor/Canvas.test.tsx (37 tests) 2457ms
+   ✓ manual edge routes (#44) (14)
+     ✓ keeps the store valid through 32 alternating edits of the first stub from one coordinate 1204ms
+ ✓ src/editor/EditorPage.voice.test.tsx (5 tests) 2767ms
+   ✓ editor voice route handoff (5)
+     ✓ consumes validated route state without applying, freezes editing for CAS, and keeps Undo after the authoritative reload 1410ms
+     ✓ reloads the staged server definition without restoring the previous clean mirror as unsaved work 448ms
+     ✓ removes a consumed preview from its history entry so it does not return on Back and Forward 429ms
+ ✓ src/editor/ClassifierField.test.tsx (7 tests) 2523ms
+   ✓ ClassifierField (7)
+     ✓ requires an explicit classifier and lists enabled Choice models by display name and ID 759ms
+     ✓ keeps a current catalog choice and commits a new explicit selection 314ms
+     ✓ filters enabled classifiers by Noul and Score while retaining the Choice filter 443ms
+ ✓ src/events/EventsPage.refresh.test.tsx (4 tests) 2195ms
+   ✓ Events manual refresh (#240) (4)
+     ✓ announces arrivals on an older page without replacing rows, then refreshes and pages with filters intact 1729ms
+ ✓ src/runs/recovery-controls.test.tsx (5 tests) 1779ms
+   ✓ server-owned recovery controls (#256) (5)
+     ✓ names repeated work and requires explicit consent for a path into the current uncertain script 705ms
+     ✓ Replay explains unavailable selections, cancels without work and freezes its reviewed sequence 464ms
+ ✓ src/api/queries.reconnect.test.tsx (31 tests) 3088ms
+   ✓ query reconnect (31)
+     ✓ keeps a cached-data fetch in flight on reconnect without cancelling or starting another request 329ms
+ ✓ src/editor/model-pickers.test.tsx (1 test) 1802ms
+   ✓ registers the node and loop pickers and forwards exact server validation warnings 1800ms
+ ✓ src/runs/new/NewRunPage.test.tsx (9 tests) 3043ms
+   ✓ New run (9)
+     ✓ lists only published loops and keeps the choice in the address 646ms
+     ✓ opens with the loop of a deep link chosen and starts a run of the current version 548ms
+     ✓ starts from the manual trigger chosen, with that trigger’s input form 341ms
+     ✓ sends empty text, null, zero and false as entered, and leaves out what was not (#235) 830ms
+stderr | src/editor/useLoadEditor.test.tsx > times device rendering (warm=false) and distinguishes late set-aside restoration from an autosave 409 (#171)
+#171 ordering [{"event":"server request","ms":21},{"event":"memory cache miss","ms":21},{"event":"device read started","ms":22},{"event":"device read completed","ms":25},{"event":"memory cache miss","ms":26},{"event":"render device work","ms":29},{"event":"server response","ms":106},{"event":"server query cached","ms":110},{"event":"memory cache miss","ms":123},{"event":"render server copy","ms":124},{"event":"set-aside prompt (not 409)","ms":181}]
+
+stderr | src/editor/useLoadEditor.test.tsx > times device rendering (warm=true) and distinguishes late set-aside restoration from an autosave 409 (#171)
+#171 ordering [{"event":"server request","ms":3},{"event":"memory cache hit","ms":3},{"event":"device read started","ms":3},{"event":"render device work","ms":4},{"event":"device read completed","ms":5},{"event":"memory cache hit","ms":5},{"event":"server response","ms":13},{"event":"server query cached","ms":14},{"event":"memory cache hit","ms":31},{"event":"render server copy","ms":33},{"event":"set-aside prompt (not 409)","ms":90}]
+
+ ✓ src/api/api-key.test.tsx (6 tests) 1968ms
+   ✓ API key entry (6)
+     ✓ review: focuses the key input when access is rejected without stealing it on later renders 377ms
+     ✓ asks for a key on a 401, sends the stored key, and lets Settings forget it 945ms
+     ✓ restarts a run inspector stream that a 401 ended once a key is entered 457ms
+ ✓ src/editor/useLoadEditor.test.tsx (20 tests) 2552ms
+ ✓ src/forms/fields/ollama-model.test.tsx (4 tests) 1611ms
+   ✓ discovered Ollama model choices (4)
+     ✓ keeps exact names and offers only discovered effort controls without selecting a model 906ms
+     ✓ retains an authored missing model and explains its availability 371ms
+     ✓ retains an authored unsupported model and explains its availability 330ms
+ ✓ src/editor/ExecutionLimitField.test.tsx (8 tests) 1653ms
+   ✓ execution limit presentation (6)
+     ✓ shows defaults and persists an explicit unlimited choice with a warning 749ms
+     ✓ uses the explicit unlimited control inside the decision gate override 414ms
+ ✓ src/editor/required-fields.test.tsx (1 test) 1626ms
+   ✓ links a refused loop name and node label to their messages, beside the fields 1624ms
+ ✓ src/editor/useAutosave.test.tsx (11 tests) 2125ms
+   ✓ second review F1: browser reconnect keeps this editor's newer mirror safe (queued after response=false) 321ms
+   ✓ second review F1: API recovery keeps this editor's newer mirror safe (queued after response=false) 322ms
+ ✓ src/loops/TemplateGallery.test.tsx (10 tests) 1769ms
+   ✓ TemplateGallery (10)
+     ✓ offers one Use action for quick-start and opens the returned ordinary draft 369ms
+ ✓ src/runs/inspector/WaitPanel.test.tsx (5 tests) 2120ms
+   ✓ WaitPanel (1)
+     ✓ keeps the form for the same wait, and starts a fresh one for the next wait 788ms
+   ✓ sends empty text, null, zero and false as entered, and no JSON input as null (#235) 646ms
+   ✓ binds the displayed identity before an asynchronous mutation can see a newer wait 419ms
+ ✓ src/settings/shared.test.tsx (10 tests) 1589ms
+ ✓ src/app/App.test.tsx (5 tests) 1219ms
+   ✓ App shell (5)
+     ✓ redirects to Chat and navigates between screens 862ms
+ ✓ src/editor/ClaudePolicyField.test.tsx (7 tests) 1041ms
+   ✓ Claude saved policy readiness (7)
+     ✓ preserves the saved pair as unverified and read-only when readiness is pending 371ms
+ ✓ src/editor/focus-field.classifier.test.tsx (3 tests) 1028ms
+   ✓ classifier issue paths (3)
+     ✓ config.model focuses the classifier picker 722ms
+ ✓ src/settings/sections/DefaultsSection.test.tsx (13 tests) 1140ms
+ ✓ src/editor/WebhookReceiver.test.tsx (11 tests) 1087ms
+ ✓ src/editor/template-readiness.test.tsx (2 tests) 892ms
+   ✓ opens a QA starting point without an instance lookup or configured-parent warning 766ms
+ ✓ src/settings/sections/PreflightSection.test.tsx (10 tests) 773ms
+ ✓ src/editor/useUndoShortcuts.test.tsx (13 tests) 753ms
+ ✓ src/editor/VoicePreviewNotice.test.tsx (13 tests) 760ms
+ ✓ src/editor/IssueBadge.test.tsx (7 tests) 761ms
+ ✓ src/editor/focus-field.cron.test.tsx (2 tests) 609ms
+   ✓ cron issue paths in the node editor (2)
+     ✓ config.expression focuses its control and reveals the expression when needed 448ms
+stderr | src/app/bootstrap.test.tsx > bootstrap > applies the stored theme if the boot script did not, and follows other tabs
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+
+stderr | src/app/bootstrap.test.tsx > bootstrap > follows other tabs only while mounted: mounting again leaves exactly one listener
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+
+stderr | src/app/bootstrap.test.tsx > bootstrap > applies the stored font if the boot script did not, leaves a shown one, and follows other tabs
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+<Router basename="/app"> is not able to match the URL "/" because it does not start with the basename, so the <Router> won't render anything.
+
+ ✓ src/app/bootstrap.test.tsx (10 tests) 785ms
+ ✓ src/editor/ValidationIndicator.test.tsx (6 tests) 578ms
+ ✓ src/app/OwnerChatSummary.test.tsx (10 tests) 582ms
+ ✓ src/editor/UndoRedo.test.tsx (3 tests) 501ms
+   ✓ UndoRedo (3)
+     ✓ names each button by the step it changes, and keeps it focusable when there is none 463ms
+ ✓ src/editor/Palette.test.tsx (4 tests) 460ms
+   ✓ Palette rail (4)
+     ✓ keeps all nine add buttons, names, tooltips, click and Enter actions while collapsed 380ms
+ ✓ src/settings/sections/ollama-defaults.test.tsx (4 tests) 413ms
+ ✓ src/runs/inspector/SessionRecoveryControls.test.tsx (5 tests) 381ms
+ ✓ src/app/StorageNotice.test.tsx (5 tests) 314ms
+ ✓ src/components/status.test.tsx (3 tests) 245ms
+ ✓ src/editor/NodeCard.test.tsx (1 test) 209ms
+ ✓ src/api/ollama.test.tsx (3 tests) 140ms
+ ✓ src/editor/github-fragment.test.ts (29 tests) 108ms
+ ✓ src/editor/store.test.ts (41 tests) 67ms
+ ✓ src/runs/inspector/DeliveryPanel.test.tsx (7 tests) 108ms
+ ✓ src/editor/chat-audio.test.ts (7 tests) 74ms
+ ✓ src/api/templates.test.tsx (1 test) 72ms
+ ✓ src/editor/store.decision-routes.test.ts (20 tests) 61ms
+ ✓ src/editor/chat-protection.test.ts (4 tests) 73ms
+ ✓ src/main.test.ts (1 test) 27ms
+ ✓ src/editor/decision-gates.test.ts (2 tests) 17ms
+ ✓ src/editor/save-status.test.ts (4 tests) 6ms
+ ✓ src/lib/loop-names.test.ts (3 tests) 6ms
+
+ Test Files  95 passed (95)
+      Tests  1256 passed (1256)
+   Start at  05:50:32
+   Duration  509.02s (tests 54%, environment 25%, import 13%, setup 8%, transform 1%)
+
+JSON report written to C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-209-claude-phase3/unit-related/results.json

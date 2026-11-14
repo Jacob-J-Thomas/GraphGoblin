@@ -1,0 +1,520 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index b059c5ea..d87232e7 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -17,6 +17,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   its name and wait for the draft to be saved. Repeat for each duplicate pair, then stop the
+   old build and start the new one. This retains loop IDs and the names in historical published
+   versions or run snapshots. An explicit `--reset` starts with an empty store.
++
++- New run and the waiting-for-input form send what was entered: an untouched field is left
++  out, cleared text is sent as an empty string for its schema to accept or refuse, and a
++  blank or incomplete number or JSON field is refused beside the field instead of being
++  dropped. An edited optional field shows **Omit**, which leaves it out again. Request and
++  stored formats are unchanged (#235).
+ - JSONata limits nested evaluator calls while accepting wide, flat arrays and objects.
+   Separate evaluations of cached source keep their own depth, deadline, bindings and
+   timestamp (#228).
+@@ -305,6 +311,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ### Added
+ 
++- The local GraphGoblin plugin for Claude Code adds `/graphgoblin:design-loop`, `/graphgoblin:run-loop` and `/graphgoblin:inspect-run`. It connects to the existing gateway through its client-owned stdio MCP process. Draft authoring uses the opt-in `--draft-tools` capability and the existing gateway scopes. (#455)
++
+ - GitHub issue implementation template with configurable repository, labels, native gate and role selection. It polls eligible issues, reserves each attempt, runs fresh workers sequentially, verifies gates on an unchanged commit, and opens a closing PR without merging it. Attempt-aware deduplication permits only authenticated QA rework; relabeling does not reset consumed attempts. (#30)
+ 
+ - **Use template** immediately creates and opens an editable starting-point draft, with useful instructions and limits and no mandatory setup form. Starter, implementation, review and QA drafts use run input and existing context; repository details and model choices can be customized later. Each card has one green **Use &lt;template name&gt;** action; gallery settings, automation setup and readiness checks are removed. Configured-instance backend retirement is tracked separately in #165. (#28, #160)
+@@ -344,6 +352,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ### Upgrade notes
+ 
++- The Codex plugin builder replaces only an empty or previously generated output with no detectable foreign filesystem data. It checks Windows named streams and user-visible macOS and Linux extended attributes, including resource forks. Replacing a tree requires Windows PowerShell with `Add-Type`, `/usr/bin/xattr` on macOS, or `/usr/bin/python3` 3.8 or later on Linux. If `dist/marketplace` predates the ownership inventory, contains local edits or metadata, or cannot be inspected, use an unused `--out` or move the directory aside after reviewing it. Reinstall the rebuilt marketplace to refresh the cached plugin. (#344)
++
+ - Fresh SQLite initialisation commits its schema, migration ledger and complete format marker together, allowing interrupted first startup to retry safely while unknown or damaged stores still require explicit recovery. SQLite helper consumers must replace `stampFreshDatabase` with `initializeFreshDatabase`, which owns this transaction; when it returns `current`, apply ordinary migrations. Concurrent initialisation still applies pending migrations, and rollback failures preserve the original error. (#152)
+ 
+ - Template drafts add `POST /templates/{id}/draft`. Installed templates may advertise a separate authored starting-point asset; rebuild strict API clients and the packaged catalog. Existing bound automation instances and stored loops are unchanged; no data migration is needed for this addition.
+diff --git a/apps/web/e2e/form-controls.spec.ts b/apps/web/e2e/form-controls.spec.ts
+index f844fc74..5aff0897 100644
+--- a/apps/web/e2e/form-controls.spec.ts
++++ b/apps/web/e2e/form-controls.spec.ts
+@@ -3,7 +3,7 @@
+  * and save what they show; Tab leaves a code field; required fields carry their marker and
+  * `aria-required`; an error describes its control; the file picker is a labelled native input.
+  */
+-import type { APIRequestContext, Page } from '@playwright/test';
++import type { APIRequestContext, Locator, Page } from '@playwright/test';
+ import {
+   approvalLoop,
+   chooseOptionByKeyboard,
+@@ -269,3 +269,395 @@ test('the run form keeps a long choice inside its field and puts each problem be
+   await expect(reason).toHaveAccessibleDescription(/Reason must NOT have fewer than 3 characters/);
+   await expect(page).toHaveURL(/\/app\/runs\/new/);
+ });
++
++test('New run and Wait send the supplied input and omit untouched or reset fields (#235)', async ({
++  page,
++  request,
++}) => {
++  const inputSchema = {
++    type: 'object',
++    required: ['reason'],
++    properties: {
++      untouched: { type: 'string' },
++      comment: { type: 'string' },
++      message: { type: 'string' },
++      title: { type: 'string', minLength: 1 },
++      reason: { type: 'string' },
++      number: { type: 'number' },
++      metadata: { type: 'null' },
++      approved: { type: 'boolean' },
++    },
++  };
++  const definition = approvalLoop('explicit input presence');
++  const loopId = await publishLoop(request, {
++    ...definition,
++    nodes: definition.nodes.map((node) => {
++      if (node.id === 'start') return { ...node, config: { ...node.config, inputSchema } };
++      if (node.id === 'approve') return { ...node, config: { ...node.config, inputSchema } };
++      return {
++        ...node,
++        config: { returns: '{"started": trigger.payload, "answered": lastOutput.value}' },
++      };
++    }),
++  });
++  const input = {
++    message: '',
++    title: 'ok',
++    reason: '',
++    number: 0,
++    metadata: null,
++    approved: false,
++  };
++
++  async function enterInput(submitLabel: string, omitBy: 'keyboard' | 'click') {
++    const form = page.getByRole('form', { name: submitLabel });
++    const message = form.getByLabel('message', { exact: true });
++    await message.fill('clear this');
++    await message.clear();
++    // Cleared text is the empty string, and its placeholder says so.
++    await expect(message).toHaveAttribute('placeholder', '""');
++    const title = form.getByLabel('title', { exact: true });
++    const reason = form.getByLabel('reason', { exact: true });
++    const number = form.getByLabel('number', { exact: true });
++    const metadata = form.getByLabel('metadata', { exact: true });
++    await title.fill('1');
++    await title.clear();
++    await reason.fill('r');
++    await reason.clear();
++    // The native number input holds "-", which it reports as an empty value.
++    await number.press('-');
++    expect(await number.evaluate((el: HTMLInputElement) => el.validity.badInput)).toBe(true);
++    await metadata.fill(' ');
++    const submit = form.getByRole('button', { name: submitLabel });
++    await submit.click();
++    await expect(title).toHaveAccessibleDescription(/must NOT have fewer than 1/);
++    await expect(number).toHaveAccessibleDescription('number: enter a number');
++    await expect(metadata).toHaveAccessibleDescription(/metadata: invalid JSON/);
++    // Required text cleared to "" is valid here, and has no way back to absent.
++    await expect(reason).not.toHaveAttribute('aria-invalid');
++    await expect(form.getByRole('button', { name: 'Omit reason', exact: true })).toHaveCount(0);
++
++    await number.fill('1');
++    await number.clear();
++    await submit.click();
++    await expect(number).toHaveAccessibleDescription('number: enter a number');
++
++    // Omit appears in the label's line without moving the field, and takes the field back to
++    // absent with focus on it.
++    const comment = form.getByLabel('comment', { exact: true });
++    const omit = form.getByRole('button', { name: 'Omit comment', exact: true });
++    const offset = () =>
++      comment.evaluate(
++        (el) => el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
++      );
++    const resting = await offset();
++    await comment.fill('drop this');
++    await expect(omit).toBeVisible();
++    expect(await offset()).toBe(resting);
++    const [field, button] = await Promise.all([comment.boundingBox(), omit.boundingBox()]);
++    expect(button!.y + button!.height).toBeLessThanOrEqual(field!.y);
++    if (omitBy === 'keyboard') {
++      await comment.press('Shift+Tab');
++      await expect(omit).toBeFocused();
++      await page.keyboard.press('Enter');
++    } else {
++      await omit.click();
++    }
++    await expect(comment).toBeFocused();
++    await expect(comment).toHaveValue('');
++    await expect(omit).toHaveCount(0);
++    expect(await offset()).toBe(resting);
++
++    await title.fill('ok');
++    await number.fill('0');
++    await metadata.fill('null');
++    // The radio is visually hidden: a click on its visible label chooses it.
++    const approved = form.getByRole('radiogroup', { name: 'approved' });
++    await approved.getByText('No', { exact: true }).click();
++    await expect(approved.getByRole('radio', { name: 'No', exact: true })).toBeChecked();
++    return submit;
++  }
++
++  await page.goto(`/app/runs/new?loop=${loopId}`);
++  const start = await enterInput('Start run', 'keyboard');
++  const started = page.waitForRequest(
++    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/loops/${loopId}/runs`,
++  );
++  await start.click();
++  expect((await started).postDataJSON().input).toEqual(input);
++  await expect(page.getByText('Input requested')).toBeVisible();
++  const runId = new URL(page.url()).pathname.split('/').at(-1);
++
++  const respond = await enterInput('Submit input', 'click');
++  const observed = await (await request.get(`/runs/${runId}`)).json();
++  const answered = page.waitForRequest(
++    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/runs/${runId}/input`,
++  );
++  await respond.click();
++  expect((await answered).postDataJSON()).toEqual({ waitId: observed.waiting.waitId, input });
++  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
++  const completed = await (await request.get(`/runs/${runId}`)).json();
++  expect(completed.result).toEqual({ started: input, answered: input });
++});
++
++test('Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235)', async ({
++  page,
++  request,
++}) => {
++  // A number input holding "-" (or "1e") reports `value` "" with `validity.badInput`, the same
++  // empty value React already holds: only the browser's own state, and the request, say whether
++  // Omit took the typed text away with the field. The text is typed with real key presses.
++  const inputSchema = {
++    type: 'object',
++    required: ['limit'],
++    properties: {
++      note: { type: 'string' },
++      size: { type: 'number' },
++      count: { type: 'integer' },
++      limit: { type: 'integer' },
++    },
++  };
++  const definition = approvalLoop('omit incomplete number');
++  const loopId = await publishLoop(request, {
++    ...definition,
++    nodes: definition.nodes.map((node) => {
++      if (node.id === 'start' || node.id === 'approve')
++        return { ...node, config: { ...node.config, inputSchema } };
++      return {
++        ...node,
++        config: { returns: '{"started": trigger.payload, "answered": lastOutput.value}' },
++      };
++    }),
++  });
++  // Count, omitted twice, is never sent; the neighbours' text, a valid zero and the required limit
++  // (which has no Omit) are.
++  const input = { note: 'keep me', size: 0, limit: 0 };
++  const posts: string[] = [];
++  page.on('request', (req) => {
++    const path = new URL(req.url()).pathname;
++    if (req.method() === 'POST' && /^\/(loops\/[^/]+\/runs|runs\/[^/]+\/input)$/.test(path))
++      posts.push(path);
++  });
++  /** What the browser itself says about a number input: its `value` reads "" for incomplete text. */
++  const native = (field: Locator) =>
++    field.evaluate((el: HTMLInputElement) => ({
++      value: el.value,
++      badInput: el.validity.badInput,
++      valid: el.validity.valid,
++    }));
++
++  async function enterInput(submitLabel: string, omitFirstBy: 'keyboard' | 'click') {
++    const form = page.getByRole('form', { name: submitLabel });
++    const note = form.getByLabel('note', { exact: true });
++    const size = form.getByLabel('size', { exact: true });
++    const count = form.getByLabel('count', { exact: true });
++    const limit = form.getByLabel('limit', { exact: true });
++    const omit = form.getByRole('button', { name: 'Omit count', exact: true });
++    const submit = form.getByRole('button', { name: submitLabel, exact: true });
++    const sent = posts.length;
++
++    await note.fill('keep me');
++    await size.fill('0');
++    await count.press('-');
++    await limit.press('-');
++    // Real typing: both read as empty and as bad input. Only count, being optional, offers Omit.
++    expect(await native(count)).toEqual({ value: '', badInput: true, valid: false });
++    expect(await native(limit)).toEqual({ value: '', badInput: true, valid: false });
++    await expect(omit).toBeVisible();
++    await expect(form.getByRole('button', { name: 'Omit limit' })).toHaveCount(0);
++    await submit.click();
++    await expect(count).toHaveAccessibleDescription('count: enter a number');
++    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
++    expect(posts).toHaveLength(sent);
++
++    const omitCount = async (by: 'keyboard' | 'click') => {
++      if (by === 'keyboard') {
++        await count.press('Shift+Tab');
++        await expect(omit).toBeFocused();
++        await page.keyboard.press('Enter');
++      } else {
++        await omit.click();
++      }
++      await expect(omit).toHaveCount(0);
++      await expect(count).toBeFocused();
++      // The text typed into count went with it: the browser no longer holds incomplete input, and
++      // the field is valid, where an unchanged "" value would have said nothing.
++      expect(await native(count)).toEqual({ value: '', badInput: false, valid: true });
++      await expect(count).not.toHaveAttribute('aria-invalid');
++      await expect(form.getByText('count: enter a number')).toHaveCount(0);
++    };
++    await omitCount(omitFirstBy);
++
++    // Nothing else moved: the neighbours keep their text and zero, and the required limit keeps
++    // its incomplete text and its refusal.
++    await expect(note).toHaveValue('keep me');
++    await expect(size).toHaveValue('0');
++    expect(await native(limit)).toEqual({ value: '', badInput: true, valid: false });
++    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
++
++    // The field takes new input afterwards, and goes the same way by the other route.
++    await count.press('-');
++    expect(await native(count)).toEqual({ value: '', badInput: true, valid: false });
++    await expect(omit).toBeVisible();
++    await omitCount(omitFirstBy === 'keyboard' ? 'click' : 'keyboard');
++
++    // The required limit is still refused, and nothing is sent, until it holds a number.
++    await submit.click();
++    await expect(limit).toHaveAccessibleDescription('limit: enter a number');
++    expect(posts).toHaveLength(sent);
++    await limit.fill('0');
++    expect(await native(limit)).toEqual({ value: '0', badInput: false, valid: true });
++    // The form now agrees with what it will send: no control holds text it would leave out.
++    expect(await form.evaluate((el: HTMLFormElement) => el.checkValidity())).toBe(true);
++    return submit;
++  }
++
++  await page.goto(`/app/runs/new?loop=${loopId}`);
++  const start = await enterInput('Start run', 'keyboard');
++  const started = page.waitForRequest(
++    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/loops/${loopId}/runs`,
++  );
++  await start.click();
++  const startBody = (await started).postDataJSON();
++  expect(startBody.input).toEqual(input);
++  expect(startBody.input).not.toHaveProperty('count');
++  await expect(page.getByText('Input requested')).toBeVisible();
++  const runId = new URL(page.url()).pathname.split('/').at(-1);
++
++  const respond = await enterInput('Submit input', 'click');
++  const observed = await (await request.get(`/runs/${runId}`)).json();
++  const answered = page.waitForRequest(
++    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/runs/${runId}/input`,
++  );
++  await respond.click();
++  const answerBody = (await answered).postDataJSON();
++  expect(answerBody).toEqual({ waitId: observed.waiting.waitId, input });
++  expect(answerBody.input).not.toHaveProperty('count');
++  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
++  const completed = await (await request.get(`/runs/${runId}`)).json();
++  expect(completed.result).toEqual({ started: input, answered: input });
++});
++
++test.describe('with a coarse pointer (#235)', () => {
++  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
++
++  // Omit is a 44 px button in a place its label line always holds, 12 px above its field and 16 px
++  // below the field before, with no larger invisible box. The browser moves a touch that lands near
++  // a button onto it, even over a text field, so real taps on both fields must keep the text, and
++  // Omit must still take a tap anywhere on itself.
++  test('Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait', async ({
++    page,
++    request,
++  }) => {
++    const inputSchema = {
++      type: 'object',
++      properties: {
++        first: { type: 'string' },
++        comment: { type: 'string' },
++        details: { type: 'object' },
++      },
++    };
++    const definition = approvalLoop('coarse omit');
++    const loopId = await publishLoop(request, {
++      ...definition,
++      nodes: definition.nodes.map((node) =>
++        node.id === 'start' || node.id === 'approve'
++          ? { ...node, config: { ...node.config, inputSchema } }
++          : node,
++      ),
++    });
++
++    async function tapAround(submitLabel: string) {
++      expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
++      const form = page.getByRole('form', { name: submitLabel });
++      for (const [name, before] of [
++        ['comment', 'first'],
++        ['details', 'comment'],
++      ] as const) {
++        const field = form.getByLabel(name, { exact: true });
++        const omit = form.getByRole('button', { name: `Omit ${name}`, exact: true });
++        const offset = () =>
++          field.evaluate(
++            (el) =>
++              el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
++          );
++        const resting = await offset();
++        await field.fill('typed');
++        await expect(omit).toBeVisible();
++        // Omit appearing moves nothing.
++        expect(await offset()).toBe(resting);
++        await field.evaluate((el) => el.scrollIntoView({ block: 'center' }));
++        const button = (await omit.boundingBox())!;
++        const box = (await field.boundingBox())!;
++        const above = (await form.getByLabel(before, { exact: true }).boundingBox())!;
++        expect(button.width, `Omit ${name}: touch width`).toBeGreaterThanOrEqual(44);
++        expect(button.height, `Omit ${name}: touch height`).toBeGreaterThanOrEqual(44);
++        expect(await omit.evaluate((el) => getComputedStyle(el, '::after').content)).toBe('none');
++        expect(box.y - (button.y + button.height)).toBeGreaterThanOrEqual(12);
++        expect(button.y - (above.y + above.height)).toBeGreaterThanOrEqual(16);
++
++        // Real touches over the top of this field and the bottom of the one before, across and
++        // beyond the button's width, a column at a time: once Omit has gone, no later tap brings
++        // it back, so a column that leaves no Omit had a tap that omitted the field.
++        const wrong: string[] = [];
++        const column = async (where: string, x: number, ys: number[]) => {
++          for (const y of ys) await page.touchscreen.tap(x, y);
++          if ((await omit.count()) === 0) {
++            wrong.push(`${where} at x ${x}, y ${ys.join('/')}`);
++            await field.fill('typed');
++            await expect(omit).toBeVisible();
++          }
++        };
++        const depths = (deepest: number) =>
++          Array.from({ length: deepest / 2 + 1 }, (_, step) => 0.5 + step * 2);
++        for (
++          let x = Math.floor(button.x) - 24;
++          x <= Math.ceil(button.x + button.width) + 24;
++          x += 6
++        ) {
++          if (x > box.x && x < box.x + box.width)
++            await column(
++              name,
++              x,
++              depths(14).map((depth) => box.y + depth),
++            );
++          if (x > above.x && x < above.x + above.width)
++            await column(
++              before,
++              x,
++              depths(10).map((depth) => above.y + above.height - depth),
++            );
++        }
++        expect(wrong).toEqual([]);
++        await expect(field).toHaveValue('typed');
++
++        // A tap anywhere on the button omits the field: 4 px inside each rounded corner, then the
++        // centre.
++        const right = button.x + button.width;
++        const bottom = button.y + button.height;
++        for (const [x, y] of [
++          [button.x + 4, button.y + 4],
++          [right - 4, button.y + 4],
++          [button.x + 4, bottom - 4],
++          [right - 4, bottom - 4],
++          [button.x + button.width / 2, button.y + button.height / 2],
++        ] as const) {
++          await expect(omit).toBeVisible();
++          await page.touchscreen.tap(x, y);
++          await expect(omit).toHaveCount(0);
++          await expect(field).toHaveValue('');
++          await field.fill('typed');
++        }
++        await omit.tap();
++        await expect(omit).toHaveCount(0);
++        expect(await offset()).toBe(resting);
++      }
++      return form.getByRole('button', { name: submitLabel, exact: true });
++    }
++
++    await page.goto(`/app/runs/new?loop=${loopId}`);
++    await (await tapAround('Start run')).tap();
++    await expect(page.getByText('Input requested')).toBeVisible();
++    await tapAround('Submit input');
++  });
++});
+diff --git a/apps/web/e2e/responsive.spec.ts b/apps/web/e2e/responsive.spec.ts
+index d2aa2464..d0a2addb 100644
+--- a/apps/web/e2e/responsive.spec.ts
++++ b/apps/web/e2e/responsive.spec.ts
+@@ -3,7 +3,8 @@ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+ /**
+  * Responsive review (#41): both stored themes, every page and transient state at four widths,
+  * all nine node dialogs at 360/768 px, pointer and keyboard authoring at 768 px, coarse-pointer
+- * targets (including disclosures, code fields, checkbox/radio labels, and port hit boxes), and
++ * targets (including disclosures, code fields, checkbox/radio labels, the Omit an edited run input
++ * shows, and port hit boxes), and
+  * reflow at 200% zoom. Group related
+  * states instead of creating a separate browser test for each matrix cell.
+  */
+@@ -766,6 +767,7 @@ for (const theme of ['dark', 'light'] as const) {
+           ['/app/loops', 'responsive sweep'],
+           [`/app/loops/${loopId}/edit`, 'Approve'],
+           ['/app/runs', 'responsive sweep'],
++          [`/app/runs/new?loop=${loopId}`, 'Start run'],
+           [`/app/runs/${runId}`, 'Input requested'],
+           ['/app/events', 'issue-opened'],
+         ] as const) {
+@@ -773,6 +775,17 @@ for (const theme of ['dark', 'light'] as const) {
+           expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+           await expect(page.getByText(ready).filter({ visible: true }).first()).toBeVisible();
+           expect(await smallTargets(page), path).toEqual([]);
++          if (path.startsWith('/app/runs/')) {
++            // New run's and the waiting run's input: an edited optional field shows Omit (#235).
++            const input = page.getByLabel('Input (JSON)', { exact: true });
++            await input.fill('{}');
++            const omit = page.getByRole('button', { name: 'Omit input', exact: true });
++            await expect(omit).toBeVisible();
++            expect(await smallTargets(page), `${path} with Omit`).toEqual([]);
++            await measure(`Omit input (${path.includes('/new') ? 'New run' : 'Wait'})`, omit);
++            await omit.tap();
++            await expect(input).toHaveValue('');
++          }
+           if (path === `/app/runs/${runId}`) {
+             for (const name of ['Full thread JSON', /^Node progress/]) {
+               const toggle = page.getByRole('button', { name });
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 4ab8f696..a1e4f41a 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -438,7 +438,7 @@ Every form control comes from `components/ui/` and takes its look from the token
+ - **Disclosure** (`disclosure.tsx`, #14). A button with `aria-expanded` and `aria-controls` that shows and hides a panel kept mounted while hidden: `variant="box"` is a bordered section whose full-width header is the toggle (a form's Advanced options), `variant="row"` a compact list item header with `actions` beside it. `summary` adds to the toggle's text, `defaultOpen` sets the first state, `open` with `onOpenChange` lets the caller keep the state instead (so it outlives a remount), and `revealDisclosures(element)` opens every collapsed one around an element at once (through `onOpenChange` when the caller keeps it).
+ - **Labels, help, required.** `Label required` puts the `RequiredMarker` (an asterisk in the bad tone, `aria-hidden`) after the label, outside the `<label>`, so the accessible name stays the field's name; a control carries `aria-required`. A group (an array, a record, a set of checkboxes) shows the marker after its legend instead, since a group takes no `aria-required`, and states its minimum as text that describes it ("Choose at least 1.", "At least 2 items."); its checkboxes are not each marked. A form with required fields starts with `RequiredNote` ("Required fields are marked \*", hidden from assistive technology, which hears "required" on each control instead). Help text (`HelpText`) is linked to its control with `aria-describedby`.
+ - **Errors.** Where a field shows its own error, the message sits under it, describes the control (`aria-describedby`, after any help), sets `aria-invalid`, and is announced (`role="alert"`; a JSON parse error, which changes as you type, is a polite live region instead). That covers every field of the schema-driven forms, including record values (which react-hook-form does not track: their messages come from SchemaForm's check of the whole value, by exact path) and collections (the group's error describes the fieldset, which takes no `aria-invalid`); each `JsonSchemaForm` property and its raw JSON editor; the node dialog's id (its own check) and label (the loop's validation), the loop panel's name (the contract's check, or the API's name refusal, described without a second announcement), Loops create (the API's refusal; a name refusal adds its suggestion, see "Loop names"), the import picker (the refusal describes it and marks it invalid until the next file), the secret name rule (it turns into an alert while the name breaks it), and the Connect form's refusal (it describes the To select). Not linked to a field: a nested object's own error (shown in its fieldset, announced), `JsonSchemaForm` problems with the value as a whole (a summary under the form, announced), the schema-driven forms' Config issues summary, and the API's refusals in Settings (secrets, API keys, defaults), shown under their form without an announcement. Catalog model-form and toggle refusals are announced with an alert, as are the classifier form's field checks (beside each field) and refusals (#43).
+-- **Where.** The schema-driven forms (below), `JsonSchemaForm` (New run and the waiting-for-input form), the node dialog's id and label and its Connect form, the loop panel, Loops create and import, Settings (model form and Enabled switch, the classifier form and its switches, defaults, secrets, API keys), and the API key panel. `JsonSchemaForm` marks the properties in the JSON Schema's `required` list and uses the same controls, with one difference: it starts empty and sends only what it shows, so a boolean is never a switch (always on or off) but **Yes** / **No** segments, after **Not set** unless required (a required one starts with neither chosen). An enum of two to four members is a segmented control (a required one starts with nothing chosen), and a longer one a select ("(choose)" when required, **Not set** otherwise); a default shows as a placeholder (strings, numbers) or as help ("Default: true"). Its ids are generated per field, so a property may have any name. Each problem shows beside its property under the property's title ("Approval is required", "Reason must NOT have fewer than 3 characters", "Labels: invalid JSON (…)"), located through `validateJson`'s `issues` in `domain` (path segments, a missing property at itself); editing a field clears its problems. What it sends is unchanged: a field left unset sends nothing.
++- **Where.** The schema-driven forms (below), `JsonSchemaForm` (New run and the waiting-for-input form), the node dialog's id and label and its Connect form, the loop panel, Loops create and import, Settings (model form and Enabled switch, the classifier form and its switches, defaults, secrets, API keys), and the API key panel. `JsonSchemaForm` marks the properties in the JSON Schema's `required` list and uses the same controls, with one difference: it starts empty and sends only what it shows, so a boolean is never a switch (always on or off) but **Yes** / **No** segments, after **Not set** unless required (a required one starts with neither chosen). An enum of two to four members is a segmented control (a required one starts with nothing chosen), and a longer one a select ("(choose)" when required, **Not set** otherwise); an enum's empty string reads `""`, apart from **Not set**. A default shows as a placeholder while the field is absent (strings, numbers) or as help ("Default: true"). Its ids are generated per field, so a property may have any name. Each problem shows beside its property under the property's title ("Approval is required", "Reason must NOT have fewer than 3 characters", "Labels: invalid JSON (…)", "Count: enter a number"), located through `validateJson`'s `issues` in `domain` (path segments, a missing property at itself); editing a field clears its problems. It sends what was entered (#235): a property nobody touched is absent; edited text is sent as typed, and cleared text as `""` (its placeholder then reads `""`), for the schema to accept or refuse; an edited number or JSON field must hold a number or JSON, so a blank one, or a number the browser holds as incomplete (`-`, `1e`), is a problem beside it, never left out. An edited optional text, number or JSON field shows **Omit** (named "Omit" and the field's title) at the end of its label's line, before any language tag. It puts the field back to absent and moves focus to the field; for a number it first empties the input itself, so incomplete text the browser holds (`-`, `1e`, which reads as an empty value) goes with the field instead of staying on screen, invalid, while the request leaves the field out. The label line of every optional field holds Omit's place while there is none (a hidden stand-in drawn as Omit), so Omit appearing moves neither the label, the tag nor the field. With a fine pointer Omit is a ghost button drawn 20 px high, which fits the label's line and its 6 px gap. With a coarse pointer it is a 44 by 44 px outline button with no larger invisible target: the label line is 44 px high, with the label at its foot and 12 px between the label and Omit; Omit ends 12 px above its field (the label's gap there) and starts at least 16 px below the field before, so a touch on either field stays with that field. Edge touch checks in `e2e/form-controls.spec.ts` measure Omit on New run and Wait, tap a grid over the top of the field and the bottom of the one before (none may omit), and tap inside the button (each omits). A further Edge check types `-` into an optional number on New run and Wait with real key presses, and shows that Omit (by keyboard and by click) leaves `validity.badInput` false with focus on the field, the neighbouring text, a valid `0` and a required number's own refusal unchanged, and the request without the field. Required properties have no Omit, and choices go back with **Not set**. The JSON editor keeps no input, edited blank text (refused), and `null`, `""`, `0` and `false` apart, and offers Omit only when its schema accepts no input (checked as `null`). New run sends no `input` for no input; the wait input endpoint takes an `input`, so no input is sent as `null`.
+ - **Contrast.** The controls use token pairs already in the contrast table (field and track edges, the selected segment, the switch thumb on and off, the checkbox tick, the focus ring on every surface); #8 added the error text and marker, and the invalid edge, on the sunken surface (the model form).
+ 
+ ### Component structure
+@@ -467,9 +467,9 @@ Every screen works from 360 px to wide desktop without sideways page scrolling o
+ - **Forms** (`FieldRow`, or `FIELD_ROW` on a form of its own, in `components/ui/field.tsx`). Fields side by side that wrap; below 640 px one column, every field and note the full width whatever width it asked for, a button at its own width at the start of its line. Used by the Runs filters, Loops create, the model form, Defaults, Secrets, API keys, the API key panel, and the node dialog's Connect form; the schema-driven config fields are one column already.
+ - **Header navigation** (`MainNav`). Below 640 px the links fold into a **Menu** button (`aria-expanded`, `aria-controls`) that opens a full-width panel of 48 px rows; choosing a link or Escape closes it, Escape returning focus to Menu.
+ - **Split panes** (`SidePanel`'s `overlayBelow`). Below its breakpoint an expanded panel floats over the content (absolute, full height, an overlay shadow, at least a rail's width of the content left beside it) instead of taking its own column: the editor's loop settings below `lg` and its palette below `md`, so the canvas keeps its width and no panel pushes the page sideways. Collapsed, both stay rails. The editor's toolbar wraps its actions (Undo, Redo, Open in Runs, the validation indicator, Publish) onto further lines rather than cutting them off, and the editor fills the dynamic viewport height (`100dvh`), at least 320 px.
+-- **Touch.** Where the primary pointer is coarse (`pointer-coarse:`, `@media (pointer: coarse)`), controls are at least 44 px: buttons (`sm`, `md`, and icon sizes), inputs and selects, segment labels (at least 44 px wide and tall, including short Yes/No choices), disclosure toggles (including the inspector's Full thread JSON and Node progress, through the shared `Disclosure`), checkbox rows (`CHECKBOX_LABEL`, at least 44 px wide and tall), the Menu button, Open in Runs, the validation indicator and its rows, issue rows, timeline rows, palette buttons, and the canvas's zoom controls. Controls that keep a small look take the touch with an invisible 44 px box around them (`touch-target`): the switch, the issue badge, and links in tables. Canvas ports counter-scale only their absolutely positioned `::after` hit box through `--gg-canvas-zoom`, clamped to the canvas's 0.1 to 2 range; a 1/32 CSS px allowance covers rounding. On coarse pointers output rows are always **44 CSS px**, with a **2 px gap (46 px pitch)**. Card dimensions, measured handles and the routing cache key never change with viewport zoom. Hit-box height is capped at the row pitch, and width at **half the gap to the next card** within the port's vertical strip, using geometry-only limits and a spatial index. With room horizontally, the on-screen target is about **44 by 44 px at zoom 1 and above**. Below about **0.96 zoom**, height is **46 times zoom**: **36.06 px at 0.784**, **23 px at 0.5** and **4.6 px at the 0.1 floor**, where the Connect form is the practical way to connect. Neighbouring cards can cap width below 44 px as well: at 260 px spacing (76 px card gap), the 38 CSS px cap gives **29.79 px at 0.784** and **19 px at 0.5**. These caps prevent neighbouring targets from overlapping without changing layout or rerouting edges on zoom. Fine-pointer rows remain 18 px with a 2 px gap. The node dialog's **Connect form** is the full-size way to connect on a zoomed-out touch canvas. Nothing needs hover: the issue popovers open on tap, the collapsed palette's tooltips repeat what the expanded palette shows, and the remaining tooltips (a truncated name, Publish's blocking count, Validation unavailable, the disabled Open in Runs link's reason) repeat what the accessible name or description already carries; on touch those few explanations are not shown on screen. Keyboard order and accessible names are unchanged.
++- **Touch.** Where the primary pointer is coarse (`pointer-coarse:`, `@media (pointer: coarse)`), controls are at least 44 px: buttons (`sm`, `md`, and icon sizes), inputs and selects, segment labels (at least 44 px wide and tall, including short Yes/No choices), disclosure toggles (including the inspector's Full thread JSON and Node progress, through the shared `Disclosure`), checkbox rows (`CHECKBOX_LABEL`, at least 44 px wide and tall), the Menu button, Open in Runs, the validation indicator and its rows, issue rows, timeline rows, palette buttons, the canvas's zoom controls, and the Omit of an edited New run or Wait input (drawn 44 by 44 px in a place its label line holds; see Form controls, "Where"). Controls that keep a small look take the touch with an invisible 44 px box around them (`touch-target`): the switch, the issue badge, and links in tables. Canvas ports counter-scale only their absolutely positioned `::after` hit box through `--gg-canvas-zoom`, clamped to the canvas's 0.1 to 2 range; a 1/32 CSS px allowance covers rounding. On coarse pointers output rows are always **44 CSS px**, with a **2 px gap (46 px pitch)**. Card dimensions, measured handles and the routing cache key never change with viewport zoom. Hit-box height is capped at the row pitch, and width at **half the gap to the next card** within the port's vertical strip, using geometry-only limits and a spatial index. With room horizontally, the on-screen target is about **44 by 44 px at zoom 1 and above**. Below about **0.96 zoom**, height is **46 times zoom**: **36.06 px at 0.784**, **23 px at 0.5** and **4.6 px at the 0.1 floor**, where the Connect form is the practical way to connect. Neighbouring cards can cap width below 44 px as well: at 260 px spacing (76 px card gap), the 38 CSS px cap gives **29.79 px at 0.784** and **19 px at 0.5**. These caps prevent neighbouring targets from overlapping without changing layout or rerouting edges on zoom. Fine-pointer rows remain 18 px with a 2 px gap. The node dialog's **Connect form** is the full-size way to connect on a zoomed-out touch canvas. Nothing needs hover: the issue popovers open on tap, the collapsed palette's tooltips repeat what the expanded palette shows, and the remaining tooltips (a truncated name, Publish's blocking count, Validation unavailable, the disabled Open in Runs link's reason) repeat what the accessible name or description already carries; on touch those few explanations are not shown on screen. Keyboard order and accessible names are unchanged.
+ - **Zoom.** At 200% (a 1024 by 768 window lays out in 512 by 384 CSS pixels) Loops, the editor, the run inspector, and Settings reflow without sideways scrolling (WCAG 1.4.10); the editor keeps a usable canvas under its wrapped toolbar.
+-- **Regression.** `components/ui/ui.test.tsx` (stacking, `FieldRow`), `components/ui/side-panel.test.tsx` (overlay), `forms/cron/*.test.ts*`, and Edge `e2e/responsive.spec.ts`: both stored themes before load; no sideways page scroll or control clipped by its container on every screen and Settings section at the four widths, including the required API key panel, a forced API/healthz outage, the update toast, and the Events error-boundary test route; all nine node dialogs and their Advanced options at 360 and 768; the header Menu at 360 and the links at 768, the Runs table stacked at 360 and 768 with its headers kept, the secret form in one column at 360, the editor at 768 (pointer selection/edit/drag connection and keyboard rail addition/edit/Connect form, validation, publish, the floating loop panel), 44 px controls including native summaries, code editors, checkbox/radio labels and short choices on a touch screen, on-screen port hit boxes capped by fixed row pitch and neighbouring-card gaps at fitted zoom at 768 and 360 px, identical three-route card heights at zoom 1, 0.784 and 0.5, and zero routing measurements across eight coarse-pointer zoom changes on 300 nodes, and 200% zoom. The grouped geometry tests attach `scroll-widths.json` with `document.scrollingElement.scrollWidth` and `innerWidth` for the QA evidence table.
++- **Regression.** `components/ui/ui.test.tsx` (stacking, `FieldRow`), `components/ui/side-panel.test.tsx` (overlay), `forms/cron/*.test.ts*`, and Edge `e2e/responsive.spec.ts`: both stored themes before load; no sideways page scroll or control clipped by its container on every screen and Settings section at the four widths, including the required API key panel, a forced API/healthz outage, the update toast, and the Events error-boundary test route; all nine node dialogs and their Advanced options at 360 and 768; the header Menu at 360 and the links at 768, the Runs table stacked at 360 and 768 with its headers kept, the secret form in one column at 360, the editor at 768 (pointer selection/edit/drag connection and keyboard rail addition/edit/Connect form, validation, publish, the floating loop panel), 44 px controls including native summaries, code editors, checkbox/radio labels, short choices, and the Omit of an edited New run and Wait input on a touch screen, on-screen port hit boxes capped by fixed row pitch and neighbouring-card gaps at fitted zoom at 768 and 360 px, identical three-route card heights at zoom 1, 0.784 and 0.5, and zero routing measurements across eight coarse-pointer zoom changes on 300 nodes, and 200% zoom. The grouped geometry tests attach `scroll-widths.json` with `document.scrollingElement.scrollWidth` and `innerWidth` for the QA evidence table.
+ 
+ ### List actions and destructive confirmations (#6, #12)
+ 
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index 6d97bf4d..7688acd3 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -82,4 +82,6 @@ reclamation after PID reuse and shared launcher/API ownership checks.
+ 
+ [ADR-0067: Codex loop turns inherit configured plugins](ADR-0067-codex-inherits-configured-plugins.md) supersedes ADR-0063's Codex plugin-off default, keeps standalone MCP discovery separate, and records the accepted familiar-default D2 policy and CLI diagnostics limit (#439, #442).
+ 
++[ADR-0072: Local Claude Code loop plugin](ADR-0072-claude-code-loop-plugin.md) records the Claude-native local artifact, stdio draft authoring and gateway authorization boundaries (#455).
++
+ [ADR-0073: Transactional loop-name uniqueness](ADR-0073-transactional-loop-names.md) records owner-scoped comparison, copy suggestions, write serialization and explicit repair for existing duplicates (#209).

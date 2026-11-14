@@ -1,0 +1,14 @@
+$ depcruise packages apps --config .dependency-cruiser.cjs
+
+  warn no-orphans: packages/infrastructure/drizzle.config.ts
+  warn no-orphans: apps/web/public/chat-update-worker.js
+  warn no-orphans: apps/web/e2e/shutdown.config.ts
+  warn no-orphans: apps/api/scripts/check-templates.d.mts
+  error no-circular: packages/infrastructure/src/sqlite/db.ts → 
+      packages/infrastructure/src/sqlite/store-format.ts →
+      packages/infrastructure/src/sqlite/loop-names.ts →
+      packages/infrastructure/src/sqlite/db.ts
+
+x 5 dependency violations (1 errors, 4 warnings). 1243 modules, 5340 dependencies cruised.
+
+[ELIFECYCLE] Command failed with exit code 1.
