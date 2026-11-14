@@ -11,6 +11,7 @@ import {
   unlink,
 } from 'node:fs/promises';
 import { dirname, isAbsolute, join, parse, relative, resolve, sep } from 'node:path';
+import { openOutputMetadataCheck } from './plugin-output-metadata.mjs';
 
 const manifestName = '.graphgoblin-plugin-output.json';
 
@@ -79,11 +80,14 @@ function digest(content) {
   return createHash('sha256').update(content).digest('hex');
 }
 
-async function inspectOutput(path, destination, kind, files, directories) {
+async function inspectOutput(path, destination, kind, files, directories, checkMetadata) {
   await checkDirectoryPath(path, destination);
   if (!(await statIfPresent(path))) return 'missing';
   const first = await readdir(path);
-  if (first.length === 0) return 'empty';
+  if (first.length === 0) {
+    await checkMetadata(path, [], []);
+    return 'empty';
+  }
 
   const foreign = (name) =>
     unsafe(
@@ -118,6 +122,7 @@ async function inspectOutput(path, destination, kind, files, directories) {
       throw foreign(name);
     }
   }
+  await checkMetadata(path, directories, [...files, manifestName]);
   for (const name of files) {
     const target = join(path, name);
     if (
@@ -188,9 +193,22 @@ export async function writePluginOutput(options) {
   const createdDirectories = [];
   let staged = false;
   let moved = false;
+  let metadataCheck;
+  const checkMetadata = async (path, directoryNames, fileNames) => {
+    try {
+      metadataCheck ??= await openOutputMetadataCheck();
+      await metadataCheck.check([
+        ...['', ...directoryNames].map((name) => ({ path: join(path, name), directory: true })),
+        ...fileNames.map((name) => ({ path: join(path, name), directory: false })),
+      ]);
+    } catch (error) {
+      throw unsafe(destination, `${error.message}. Choose an unused destination`);
+    }
+  };
   try {
-    const inspect = (path) => inspectOutput(path, destination, options.kind, files, directories);
-    const incumbent = await inspect(destination);
+    const inspect = (path, inspectMetadata) =>
+      inspectOutput(path, destination, options.kind, files, directories, inspectMetadata);
+    const incumbent = await inspect(destination, () => {});
     await mkdir(next);
     staged = true;
     for (const directory of directories) {
@@ -211,14 +229,21 @@ export async function writePluginOutput(options) {
         await handle.close();
       }
     }
-    if ((await inspect(destination)) !== incumbent)
+    if ((await inspect(destination, checkMetadata)) !== incumbent)
       throw unsafe(destination, 'it changed during assembly');
     if (incumbent !== 'missing') {
       await rename(destination, previous);
       moved = true;
       // Once quarantined, check the actual tree that would be removed, including new entries.
-      if ((await inspect(previous)) !== incumbent)
+      if ((await inspect(previous, checkMetadata)) !== incumbent)
         throw unsafe(destination, 'it changed while staging');
+    }
+    if (metadataCheck) {
+      try {
+        await metadataCheck.finish();
+      } catch (error) {
+        throw unsafe(destination, `${error.message}. Choose an unused destination`);
+      }
     }
     await rename(next, destination);
     staged = false;
@@ -234,6 +259,7 @@ export async function writePluginOutput(options) {
     if (moved && staged && !(await statIfPresent(destination))) await rename(previous, destination);
     throw error;
   } finally {
+    if (metadataCheck) await metadataCheck.close();
     if (staged) await removeFiles(next, destination, createdFiles, createdDirectories);
     if (!(await statIfPresent(previous))) await rmdir(lock);
   }

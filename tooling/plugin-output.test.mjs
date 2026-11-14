@@ -192,6 +192,23 @@ describe('generated plugin output', () => {
     expect(await readFile(join(options.outDir, 'foreign'), 'utf8')).toBe('arrived during rename');
   });
 
+  it.runIf(process.platform === 'win32')(
+    'preserves a Windows stream arriving during quarantine',
+    async () => {
+      await writePluginOutput(options);
+      const { rename } = await vi.importActual('node:fs/promises');
+      fs.rename.mockImplementationOnce(async (source, target) => {
+        await rename(source, target);
+        await writeFile(join(target, '.mcp.json') + ':owner-stream', 'arrived during quarantine');
+      });
+      await expect(writePluginOutput(options)).rejects.toThrow(/alternate data stream found/);
+      expect(await readFile(join(options.outDir, '.mcp.json') + ':owner-stream', 'utf8')).toBe(
+        'arrived during quarantine',
+      );
+      expect(await readdir(join(options.packageDir, 'dist'))).toEqual(['marketplace']);
+    },
+  );
+
   it('leaves the prior output staged when another party recreates the destination', async () => {
     await writePluginOutput(options);
     const { rename } = await vi.importActual('node:fs/promises');

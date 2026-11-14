@@ -433,6 +433,8 @@ Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>
 
 The builder stages the complete marketplace and checks the previous generated file list and digests before replacing it. A linked path, an overlapping input directory, or an output with unrelated or modified entries is refused. Use an unused destination or inspect and move the old output aside before rebuilding.
 
+Replacing an existing plugin output also requires the platform metadata check before and after staging the old tree. It checks the root, expected directories and files, and the ownership marker. Windows refuses named data streams through its in-box Windows PowerShell and Win32 APIs. macOS uses `/usr/bin/xattr` and Linux uses system Python 3.8 or later at `/usr/bin/python3` to refuse extended attributes visible to the invoking user. An unsuccessful inspection preserves the old tree. These tools run as the invoking user during replacement and do not read metadata contents.
+
 ## Client (Decided)
 
 `packages/api-client` (`@graphgoblin/api-client`) is the one HTTP client for the web app and the MCP server. It depends only on `contracts` and `openapi-fetch`, and uses nothing but `fetch`, web streams, and `TextDecoderStream`, so it runs in browsers and Node 18+.
