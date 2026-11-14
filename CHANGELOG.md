@@ -15,6 +15,24 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   **Remove connection**, until the pan's own click blocker is gone. Opening a loop, other edits,
   Undo and Redo never move cards by themselves. No stored or exported data changes, so there is
   no upgrade note.
+
+- **Undo** and **Redo** stay where they are (#208, ADR-0078). A native baseline showed them moving
+  with the editor's changing toolbar: 30 to 37 px sideways when the validation text ("Checking…",
+  "Ready to publish", "N errors") or **Publish** / **Publishing…** changed width, 32 px up and down
+  when a long loop name put the bar on the edge of wrapping, and 1 px down while pressed (a press
+  held on a button's top pixel row lost the click). They now fill a fixed, top-aligned slot at the
+  start of the toolbar, first in the page order as on screen, with the rest of the bar wrapping
+  beside it, and they no longer move when pressed (a strong border shows the press; other buttons
+  keep theirs). Names, tooltips, shortcuts, `aria-disabled`, focus and history behaviour are
+  unchanged. Because the slot comes first, Undo and Redo are now the first **Tab** stops of the
+  toolbar, ahead of the **Loops** link. The offline and API-unreachable notice also moved, for a
+  loaded editor only: it appears directly under the editor's toolbar instead of above the whole
+  editor, where it pushed the toolbar and these buttons down by 36 to 80 px; the canvas gives up
+  that height. Its wording, the offline versus API-unreachable distinction, the reconnect grace and
+  what counts as a connectivity failure are unchanged (an HTTP 500 still shows no notice). While a
+  loop is loading, when it cannot be opened, while a voice draft is staged and on every other
+  page it stays under the main header, and the API key, shutdown and storage notices stay there
+  too. No stored or exported data changes, so there is no upgrade note.
 - Connections are drawn, selected and removed only on the canvas (#207, ADR-0076, the owner's
   decision). The node dialog no longer has a **Connections** list, **Remove edge** buttons or the
   **Connect** form, for any node kind. Everything else in it stays: id and label, configuration,
