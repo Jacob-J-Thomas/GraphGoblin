@@ -1,0 +1,13 @@
+# Input presence: final touch correction
+
+Claude Opus 5.5 completed phase 3 at the frozen product later committed as 315f8d9b. Root verified the configured xhigh launch, canonical result model and successful exit. This is implementation evidence; independent QA, cross-family review, current CI and final Astra audit remain separate. The earlier superseded phases and U22 baseline are retained in sibling folders.
+
+The correction uses an actual 44 by 44 CSS pixel coarse-pointer button, reserved label-row space and measured separation from adjacent controls. All 5,630 final taps behaved correctly; 90 intended button taps omitted the chosen field. The deliberately broken spacing variant produced 61 wrong omissions in 2,294 taps, and the new regression tests reject the prior undersized build. Forty-eight geometry configurations showed zero appearance shift. Full form-controls (8) and affected responsive cases (4), 59 focused unit tests, typecheck, lint, formatting and build passed. Affected-form coverage is 100% lines and 96.61% branches; full current-head CI remains required.
+
+[Implementation handoff](handoff.md) records exact source/build hashes, two source correction batches, first fixture failures, screenshots actually inspected, negative controls and remaining limits. Its byte-preserved original is handoff.md.txt. Raw logs and drivers keep their original bytes. The final build manifest is 379a285e0adb1b5f410d7f6b0e46f264381b467d2ff87ae25fa62bfa034acb4d. The later main integration changed builder/tooling/docs only; the independent QA candidate is 22d6eb672f365daa07c1265d460b22defa9cb607.
+
+This compact selection retains fourteen actually inspected screenshots, all small test/geometry/tap logs, native drivers and mutation records. The full external phase archive retains the other images, built negative-control distributions, coverage trees, traces and session event stream. Process inventory logs are also retained externally because they include unrelated host process command lines; the root independently observed zero matching phase-3 test nodes and zero Edge processes after completion. No owner process was stopped. Links to excluded files in the original handoff describe that complete external archive, not files claimed present here.
+
+Touch was emulated in desktop Edge, not tested on physical phones. Actual operating-system forced-colour painting was not verified. Coarse forms are taller to reserve the real targets. Owner acceptance remains open on issue 235.
+
+source-manifest.json records original paths and hashes. Markdown publication formatting is recorded separately; no raw evidence is reformatted. publication-manifest.json inventories the retained publication files.

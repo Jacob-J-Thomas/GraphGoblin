@@ -1,0 +1,134 @@
+# PR469 / #235 numeric Omit correction: implementation handoff
+
+Claude Sonnet 5.5 (`claude-sonnet-5-5`). Implementation only: nothing committed, pushed, merged or closed, no issue touched, no subagents. The changes are uncommitted in the working tree.
+
+| Item | Value |
+| --- | --- |
+| Worktree | `C:/Users/98jak/.codex/worktrees/gg-20261114-i08-input/GraphGoblin` |
+| Base `HEAD` (unchanged) | `e0ff50c5e8fadd4fa53ed30d4e659e670fdf3139` |
+| Runtime | Node v22.23.4 first on PATH, `pnpm` (Git Bash shim; `pnpm.cmd` equivalent) |
+| Changed files | 4 (242 insertions, 5 deletions), listed below |
+| Native browser / build / full suite / full coverage | **NOT RUN** (phase resource limit; #209 holds the heavy slot) |
+
+**The native regression has not been run. Nothing here claims it passes, and nothing here claims the browser-level fix works.** The one unit test I added passes, but it models the native buffer and cannot prove it (see "Genuine uncertainty").
+
+## Source hashes (SHA-256)
+
+| File | HEAD `e0ff50c5` | Now |
+| --- | --- | --- |
+| `apps/web/src/forms/JsonSchemaForm.tsx` | `a216a032fcf253a1d0960adb864aedc76445f45e4def63ddaba6edad251b8274` | `0a250527a92806863dbe41d1ceb3e100386f8c56676dbbb7fb5f41b3c87eda22` |
+| `apps/web/src/forms/JsonSchemaForm.test.tsx` | `8a54aec99ac7629e1fbb0c3afb3ebdc2fb77b139b8874f37425480f9b0ab763b` | `1c45570e4e15facfd98ddb625fbbf3d4b5bd15c857af4060b23ea2ef37c23ab5` |
+| `apps/web/e2e/form-controls.spec.ts` | `c353146723b1f9e9041912e472282b9f52996c11fecad7df1119501035a73d83` | `26c796f482653678de1991af4ab1c88bb6af72285af4a84e80290105dabcb181` |
+| `docs/09-frontend-and-pwa.md` | `c881011a5e9ed66cdd7f47167a8a475039dfdffb79987114f7953c9bb9de70ad` | `db87b91afd8751573e4ecf3dbb5cefcc9f7fa3f59e50a2c2c38e896172c18e90` |
+
+The HEAD hashes of the first and third files match the phase 3 handoff's final hashes. The same table is in `patches/source-hashes.txt`.
+
+Patches (all against `e0ff50c5`, `git diff --check` clean):
+
+- `patches/numeric-omit-correction.patch`, SHA-256 `4434f4a4f3d6a4463aaaa95cc0b668dbf0428611e295947b621f52661d1b0607`. All four files.
+- `patches/product-JsonSchemaForm.patch`, SHA-256 `c6ba003284810a89953ebbc11fa876ebe2ba89b4103cf2ff869ef1a3ba9ab6f5`. The product change alone (27 insertions, 3 deletions).
+- `patches/base-head.txt`.
+
+## The product change (`JsonSchemaForm.tsx`)
+
+1. `clearNumberInput(control)` is new. It sets `control.value = ''` on an `HTMLInputElement`.
+2. `OmitButton` takes an optional `reset?: ((control: HTMLElement) => void) | undefined`. Its click handler now looks up the control once by the existing `controlId`, and if found it runs `reset?.(control)`, then `control.focus()`. It then runs `onOmit()`, which deletes the map entry. Before, the handler did `getElementById(controlId)?.focus()` then `onOmit()`, so the only change in order is that the reset comes first.
+3. `PropertyField` passes `reset={type === 'number' ? clearNumberInput : undefined}`. Text and JSON fields and the raw JSON editor's Omit pass nothing, so they behave exactly as before.
+
+### Why this, and the lifecycle
+
+- **Cause (matches the review).** An incomplete native number reads `value === ''` with `validity.badInput`. The form holds `''` before and after Omit, because `onInput` records `''` as an edited blank and Omit then deletes the entry, which renders as `''`. React's `updateInput` for `type="number"` assigns `node.value` only when `node.value != value` (with a numeric-zero special case), so it assigns nothing and the browser's buffer survives. This is the installed `react-dom@19.3.0` code (`react-dom-client.development.js`, `updateInput` around L1851).
+- **Why an explicit assignment is safe for React.** `trackValueOnNode` (L1738) installs an own `value` accessor on the node whose setter updates the tracker's `currentValue` before calling the native setter. Our `control.value = ''` therefore keeps the tracker at `''`. It fires no `input`, `change` or `blur` event. The next real edit still produces a change event, and a repeated `-` still reaches `onInput` and the `badInput` check.
+- **Order: reset, then focus, then forget.** The reset happens before `focus()` (as asked) and before `onChange(undefined)` removes the map entry and Omit button. React batches state updates in the click handler, so nothing re-renders between the three steps, and the render after them sees `''` against an already-empty node and skips its own write. No ref plumbing, no remount, and no change to `Input`, `LabelLine` or any class string. It uses the same `getElementById` lookup the focus step already used, so the element cleared is the element focused.
+- **Scope.** Number fields only. A nullable number (`type: ['integer','null']`) goes through the same `propertyType === 'number'` branch. Required numbers still have no Omit and keep their text and refusal, which is correct because the form refuses them.
+- **Distinctions kept.** Only the Omit action changed. Absence versus `''`, `null`, `0` and `false` is untouched, and all existing tests asserting it still pass (first and later tests in the same file).
+- **Alternatives rejected.** A `key` remount of the number input would lose focus and need re-focusing after commit. A ref or layout effect keyed on `value === undefined` would add a post-render DOM write and a new `Input` ref type. Changing the `onInput` model so `-` is not recorded would drop the "edited blank is refused" behaviour the review accepted.
+
+### Geometry and appearance
+
+No class string, `OMIT_BUTTON`, `OMIT_ROW`, `LabelLine`, placeholder stand-in or layout code was edited, and the coarse 44 × 44 / 12 px gap / 16 px clearance test is byte-identical. This is visible in `patches/product-JsonSchemaForm.patch`. I did not re-measure geometry (that needs a browser).
+
+## Tests
+
+### Native browser regression (written, NOT RUN): `apps/web/e2e/form-controls.spec.ts`
+
+New test: `Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235)`, placed after the existing #235 test and before the coarse describe. `playwright test --list` (no browser launched, `logs/08-playwright-list-only.log`) discovers it; the file lists 9 tests (8 existing, unchanged, plus this one).
+
+Schema: optional `note` (text), optional `size` (number), optional `count` (integer), and **required** `limit` (integer). The same schema is used for New run's trigger and Wait's `inputSchema` (the shared component).
+Per form (New run: first omit by keyboard then by click; Wait: click then keyboard):
+
+1. `note.fill('keep me')` and `size.fill('0')` (neighbour text and a valid numeric zero).
+2. Real key presses: `count.press('-')` and `limit.press('-')`. It asserts through `el.evaluate` that each has `{ value: '', badInput: true, valid: false }`. `value` alone would read `''` throughout.
+3. Only `count` shows Omit; `limit` (required) has none. Submit sends no POST and shows `count: enter a number` and `limit: enter a number`.
+4. Omit `count`. It asserts Omit is gone, `count` is focused, and the browser's own state is `{ value: '', badInput: false, valid: true }`, with no `aria-invalid` and no error text.
+5. Neighbours preserved: `note` still `keep me`, `size` still `0`, and the required `limit` still `badInput: true` with its refusal.
+6. Re-edit cycle: press `-` again, `badInput` true and Omit reappears, then omit by the other route and assert the same cleared state.
+7. Submit again: still no POST (required `limit` refused). `limit.fill('0')`, then `form.checkValidity() === true` (no control holds text the request would leave out).
+8. Start/answer: POST bodies `.input` equal `{ note: 'keep me', size: 0, limit: 0 }` with no `count` property (checked with `not.toHaveProperty`); the Wait body is `{ waitId, input }`; run result is `{ started: input, answered: input }`.
+
+### Unit regression (RUN, passes): `JsonSchemaForm.test.tsx`
+
+`empties the number input itself on Omit, before focus, so incomplete native text goes with the field`. It overlays a stand-in for the editing buffer (an own `value` accessor on the element wrapping React's tracker accessor, plus a `validity.badInput` getter reading the buffer). It asserts that Omit assigns `""` to a node React already holds as `""`, before focus: the recorded events are exactly `['assign ""', 'focus, buffer ""']`. It also checks `badInput` false afterwards, focus on count, no `aria-invalid`, Omit gone, `note` and a valid `size` zero preserved, and the submitted value `{ size: 0, note: 'keep' }` with no `count` property. It ends with Omit of the complete number and of the text field.
+It establishes the new ordering logic (React does not assign by itself). It does **not** prove that Chromium clears `badInput`; its comment says so and points to the Edge test.
+
+**Mutation evidence (preserved failure).** With `reset={undefined}` substituted for the numeric reset (everything else as shipped), only the new test fails: `AssertionError: expected [ 'focus, buffer "-"' ] to deeply equal [ 'assign ""', 'focus, buffer ""' ]` (`logs/02-unit-without-fix-mutant.log`, 1 failed, 19 passed). The shipped file was restored afterwards and its hash is the "Now" hash above.
+
+### Docs
+
+`docs/09-frontend-and-pwa.md`: two sentences added in the existing "Form controls, Where" bullet. One says Omit on a number first empties the input itself. One describes the new Edge check. No ADR (no decision change). CHANGELOG not edited: the unreleased #235 entry already says Omit leaves an edited field out again, and request/stored formats are unchanged.
+
+## Checks actually run (all in the worktree)
+
+| Log | Command | Result |
+| --- | --- | --- |
+| `logs/01-unit-with-fix.log` | `apps/web: pnpm exec vitest run src/forms/JsonSchemaForm.test.tsx` | exit 0; 20 passed (19 existing + 1 new) |
+| `logs/02-unit-without-fix-mutant.log` | same, with the reset disabled (temporary, reverted) | exit 1; new test fails as described, 19 pass |
+| `logs/03-typecheck-web.log` | `apps/web: pnpm exec tsc -p tsconfig.json --noEmit` (the package's `typecheck`; includes `src` and `e2e`) | exit 0 (first run had 3 `exactOptionalPropertyTypes`/typing errors in my edits; fixed, rerun clean) |
+| `logs/04-eslint-changed.log` | `pnpm exec eslint` on the three changed TS/TSX files | exit 0 |
+| `logs/05-prettier-check.log` | root `pnpm exec prettier --check` on the four changed files | exit 0 |
+| `logs/06-unit-focused-final.log` | `vitest run` JsonSchemaForm + NewRunPage + WaitPanel with V8 coverage on `JsonSchemaForm.tsx` only | exit 0; 3 files, 34 passed; form lines 100%, branches 95.77% (204/213) |
+| `logs/07-unit-four-files-comparable-to-phase3.log` | `vitest run` JsonSchemaForm, NewRunPage, WaitPanel, RunInspectorPage (the phase 3 set) | exit 0; 4 files, **60 passed** (phase 3 recorded 59 for this set; the +1 is the new test) |
+| `logs/08-playwright-list-only.log` | `playwright test e2e/form-controls.spec.ts --list` | exit 0; 9 tests listed; no browser started |
+
+Coverage note: form branch coverage was 96.61% in phase 3 and is 95.77% now. The two new uncovered branches are the defensive `if (control)` else and the `instanceof HTMLInputElement` else in `OmitButton` and `clearNumberInput`; the other seven uncovered branches predate this change. No threshold, exclusion or config was touched. Whole-package coverage was not run.
+
+Not run: `pnpm build`, any Playwright test execution, `pnpm check`, whole-web lint, full unit suite, whole-web coverage.
+
+## Verification for root (heavy; nothing below has been executed)
+
+`apps/web/dist` exists in this worktree but I neither rebuilt nor inspected its contents. Its `index.html` is stamped 2026-11-14 03:58:51 and `JsonSchemaForm.tsx` was last written at 05:03:22 by this work, so the bundle predates the fix. A native run against it would exercise the old product code and would be a pre-fix control. I predict (not observed) that the new test fails there at its first post-Omit `badInput: false` assertion on New run; that is a prediction from the review's record, not a result.
+
+1. Rebuild the web bundle with the change (Node 22.23.4 first on PATH):
+
+   ```
+   cd C:/Users/98jak/.codex/worktrees/gg-20261114-i08-input/GraphGoblin
+   pnpm.cmd --filter @graphgoblin/web build
+   ```
+
+   To leave `apps/web/dist` alone instead, build a disposable copy and point the e2e server at it (the server honours `GG_E2E_WEB_DIST`): `cd apps/web; pnpm.cmd exec vite build --outDir <disposable-dir> --emptyOutDir`, then set `GG_E2E_WEB_DIST=<disposable-dir>` for the run.
+2. The new native test only:
+
+   ```
+   cd apps/web
+   pnpm.cmd exec playwright test e2e/form-controls.spec.ts --retries=0 --grep "Omit takes a number the browser holds as incomplete"
+   ```
+
+3. The whole file, including the unchanged coarse 44/12/16 geometry test and the existing #235 test (expect 9 tests):
+
+   ```
+   pnpm.cmd exec playwright test e2e/form-controls.spec.ts --retries=0
+   ```
+
+Optionally `pnpm.cmd exec playwright test e2e/responsive.spec.ts --retries=0 --grep "on a coarse pointer the controls are at least 44 px"` as in phase 3 for the responsive Omit rows, only because the same component is involved; no geometry code changed.
+
+If the new test fails on the first post-Omit state, keep the trace, and read the failing assertion before changing anything: it separates "`value = ''` did not clear `badInput` in this Edge" from a test-side ordering or locator slip.
+
+## Genuine uncertainty
+
+1. **Native clearing is the premise, and I have not observed it.** The fix assumes assigning `''` to a number input that already reports `value === ''` clears its editing buffer in Chromium/Edge. My basis is Chromium's `TextFieldInputType::SetValue` (an editor update when a `kDispatchNoEvent` assignment differs from the inner editor text) and the usual advice to clear a stuck number input with `input.value = ''`; I did not verify this against the installed Edge. The reviewer's reproduction confirms only the failing state. If Edge keeps the text, the fallback to evaluate is toggling `type` (`text` then `number`) or remounting just that input, both heavier; I did not build them.
+2. **The e2e test was never executed**, so locator, timing or assertion errors in it are possible (e.g. `fill('0')` onto a field holding `-`; the existing test does the same with `fill('1')`). The typecheck and `--list` only show it compiles and registers.
+3. **Coverage** is down 0.84 points on that file's branches from two defensive guards; I chose guarded, type-honest code over an unchecked cast or removing the null guard. The package thresholds are not affected, but I did not run whole-package coverage to confirm.
+
+## Remaining (not done here, no readiness claim)
+
+Native verification of the new test on the rebuilt bundle and the full `form-controls` file, independent affected QA on the corrected head, full current-head CI, and the reserved fresh Astra scan 3. Owner acceptance of #235 stays open. I added no review round and substituted no model or vendor.

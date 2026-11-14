@@ -1,0 +1,53 @@
+$ playwright test e2e/form-controls.spec.ts --grep 'Omit takes a number the browser holds as incomplete' --reporter=list,json --output 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\input-235-numeric-native\negative-old-build-artifacts'
+
+Running 1 test using 1 worker
+
+(node:35236) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\form-controls.spec.ts:401:1 › Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235) (1.6s)
+
+
+  1) [chromium] › e2e\form-controls.spec.ts:401:1 › Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235) 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+    -   "badInput": false,
+    -   "valid": true,
+    +   "badInput": true,
+    +   "valid": false,
+        "value": "",
+      }
+
+      481 |       // The text typed into count went with it: the browser no longer holds incomplete input, and
+      482 |       // the field is valid, where an unchanged "" value would have said nothing.
+    > 483 |       expect(await native(count)).toEqual({ value: '', badInput: false, valid: true });
+          |                                   ^
+      484 |       await expect(count).not.toHaveAttribute('aria-invalid');
+      485 |       await expect(form.getByText('count: enter a number')).toHaveCount(0);
+      486 |     };
+        at omitCount (C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:483:35)
+        at enterInput (C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:487:5)
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:514:17
+
+    Error Context: ..\..\..\..\..\..\graphgoblin-qa\2026-11-13-aidlc-batch\input-235-numeric-native\negative-old-build-artifacts\form-controls-Omit-takes-a-febe5-ld-on-New-run-and-Wait-235--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\..\..\graphgoblin-qa\2026-11-13-aidlc-batch\input-235-numeric-native\negative-old-build-artifacts\form-controls-Omit-takes-a-febe5-ld-on-New-run-and-Wait-235--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\..\..\graphgoblin-qa\2026-11-13-aidlc-batch\input-235-numeric-native\negative-old-build-artifacts\form-controls-Omit-takes-a-febe5-ld-on-New-run-and-Wait-235--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\form-controls.spec.ts:401:1 › Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235) 
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-i08-input\GraphGoblin\apps\web
+

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { JsonSchemaForm } from './JsonSchemaForm.js';
@@ -18,7 +18,387 @@ function radioNames(group: string) {
     .map((r) => r.closest('label')?.textContent);
 }
 
+/** Every Omit button in the document, by accessible name. */
+function omitButtons() {
+  return screen
+    .queryAllByRole('button')
+    .map((button) => button.getAttribute('aria-label') ?? '')
+    .filter((name) => name.startsWith('Omit'));
+}
+
 describe('JsonSchemaForm', () => {
+  it('keeps untouched fields absent and sends explicitly empty text, null, zero and false', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          properties: {
+            untouched: { type: 'string' },
+            note: { type: 'string', default: 'none' },
+            details: { type: 'null' },
+            count: { type: 'integer' },
+            approved: { type: 'boolean' },
+          },
+        }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({});
+    // Nothing to omit until something is entered; an absent field shows its default as the hint.
+    expect(omitButtons()).toEqual([]);
+    const note = screen.getByLabelText('note');
+    expect(note).toHaveAttribute('placeholder', 'none');
+
+    // Cleared text is the empty string, and says so: the default no longer applies.
+    await user.type(note, 'remove me');
+    await user.clear(note);
+    expect(note).toHaveAttribute('placeholder', '""');
+    await user.type(screen.getByLabelText('details'), 'null');
+    await user.type(screen.getByLabelText('count'), '0');
+    await user.click(radio('approved', 'No'));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({ note: '', details: null, count: 0, approved: false });
+    expect(omitButtons()).toEqual(['Omit note', 'Omit details', 'Omit count']);
+
+    // Omit puts the field back as it started, and keeps focus on it.
+    await user.click(screen.getByRole('button', { name: 'Omit note' }));
+    expect(note).toHaveFocus();
+    expect(note).toHaveValue('');
+    expect(note).toHaveAttribute('placeholder', 'none');
+    expect(screen.queryByRole('button', { name: 'Omit note' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({ details: null, count: 0, approved: false });
+  });
+
+  it('omits by keyboard: Shift+Tab from the field reaches Omit, and Enter returns to the field', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{ type: 'object', properties: { note: { type: 'string' } } }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    const note = screen.getByLabelText('note');
+    await user.click(note);
+    await user.keyboard('x{Backspace}');
+    await user.tab({ shift: true });
+    expect(screen.getByRole('button', { name: 'Omit note' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(note).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({});
+  });
+
+  it('offers Omit only for edited optional text, number and JSON fields, never for required ones', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          required: ['name', 'size', 'data'],
+          properties: {
+            name: { type: 'string' },
+            size: { type: 'integer' },
+            data: { type: 'array' },
+            tone: { enum: ['warm', 'cool'] },
+            flag: { type: 'boolean' },
+            note: { type: 'string' },
+          },
+        }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    const name = screen.getByLabelText('name');
+    const size = screen.getByLabelText('size');
+    await user.type(name, 'x');
+    await user.clear(name);
+    await user.type(size, '1');
+    await user.clear(size);
+    await user.type(screen.getByLabelText('data'), '[[]');
+    // Choices go back with Not set, so they need no Omit.
+    await user.click(radio('tone', 'warm'));
+    await user.click(radio('flag', 'Yes'));
+    await user.type(screen.getByLabelText('note'), 'n');
+    expect(omitButtons()).toEqual(['Omit note']);
+
+    // A required number left blank is refused as a number, not as missing; required text that is
+    // cleared is the empty string, which this schema accepts.
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(size).toHaveAccessibleDescription('size: enter a number');
+    expect(name).not.toHaveAttribute('aria-invalid');
+    expect(submit).not.toHaveBeenCalled();
+    await user.type(size, '2');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({
+      name: '',
+      size: 2,
+      data: [],
+      tone: 'warm',
+      flag: true,
+      note: 'n',
+    });
+  });
+
+  it('holds Omit’s place in an optional field’s label line with a hidden stand-in drawn as Omit', async () => {
+    const user = userEvent.setup();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          required: ['name', 'data'],
+          properties: {
+            name: { type: 'string' },
+            data: { type: 'object' },
+            note: { type: 'string' },
+            details: { type: 'object' },
+          },
+        }}
+        submitLabel="Send"
+        onSubmit={vi.fn()}
+      />,
+    );
+    /** The text "Omit" in a field's label line: its stand-in, or the button once it shows. */
+    const omitText = (label: string) =>
+      within(screen.getByLabelText(label).previousElementSibling as HTMLElement).queryAllByText(
+        'Omit',
+      );
+    const [note] = omitText('note');
+    const [details] = omitText('details');
+    for (const standIn of [note, details]) {
+      expect(standIn?.tagName).toBe('SPAN');
+      expect(standIn).toHaveAttribute('aria-hidden', 'true');
+      expect(standIn).toHaveClass('invisible');
+    }
+    // Required fields never show Omit, so they hold no place for it.
+    expect(omitText('name')).toEqual([]);
+    expect(omitText('data')).toEqual([]);
+    expect(omitButtons()).toEqual([]);
+
+    // Omit takes the stand-in's place, drawn the same way, so it takes the same room.
+    await user.type(screen.getByLabelText('note'), 'x');
+    const button = screen.getByRole('button', { name: 'Omit note' });
+    expect(omitText('note')).toHaveLength(1);
+    expect(omitText('note')[0]).toBe(button);
+    expect(details?.className).toBe(`${button.className} invisible`);
+    await user.click(button);
+    expect(omitText('note')).toHaveLength(1);
+    expect(omitText('note')[0]).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('checks a number the browser reports as incomplete rather than leaving it out', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{ type: 'object', properties: { count: { type: 'number' } } }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    const count = screen.getByLabelText('count');
+    // A native number input holding "-" reports an empty value with validity.badInput, which is
+    // also what it reported before the key: only the input event says something was typed.
+    let badInput = true;
+    Object.defineProperty(count, 'validity', { configurable: true, get: () => ({ badInput }) });
+    fireEvent.input(count, { target: { value: '' }, data: '-', inputType: 'insertText' });
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(count).toHaveAttribute('aria-invalid', 'true');
+    expect(count).toHaveAccessibleDescription('count: enter a number');
+    expect(submit).not.toHaveBeenCalled();
+
+    badInput = false;
+    fireEvent.input(count, { target: { value: '-5' }, data: '5', inputType: 'insertText' });
+    expect(count).not.toHaveAttribute('aria-invalid');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({ count: -5 });
+  });
+
+  it('empties the number input itself on Omit, before focus, so incomplete native text goes with the field', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          properties: {
+            count: { type: 'integer' },
+            size: { type: 'number' },
+            note: { type: 'string' },
+          },
+        }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    const count = screen.getByLabelText<HTMLInputElement>('count');
+    // A browser holds typed text in an editing buffer that is not the input's `value`: "-" reads as
+    // an empty value with validity.badInput, and only an assignment to `value` replaces it. jsdom
+    // has no such buffer, so stand one in. This models the sequence; the native behaviour itself is
+    // exercised in Edge (e2e/form-controls.spec.ts).
+    let buffer = '';
+    const happened: string[] = [];
+    const tracked = Object.getOwnPropertyDescriptor(count, 'value')!;
+    Object.defineProperty(count, 'value', {
+      configurable: true,
+      get: tracked.get!,
+      set(value: string) {
+        happened.push(`assign ${JSON.stringify(value)}`);
+        buffer = value;
+        tracked.set!.call(count, value);
+      },
+    });
+    Object.defineProperty(count, 'validity', {
+      configurable: true,
+      get: () => ({ badInput: buffer !== '' }),
+    });
+    count.addEventListener('focus', () => happened.push(`focus, buffer ${JSON.stringify(buffer)}`));
+
+    await user.type(screen.getByLabelText('note'), 'keep');
+    await user.type(screen.getByLabelText('size'), '0');
+    buffer = '-';
+    fireEvent.input(count, { target: { value: '' }, data: '-', inputType: 'insertText' });
+    expect(happened).toEqual([]);
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(count).toHaveAccessibleDescription('count: enter a number');
+    expect(submit).not.toHaveBeenCalled();
+
+    // React already holds "" for the field, so it would assign nothing: Omit empties the input
+    // first, then focuses it, and only then does the form let go of the field.
+    await user.click(screen.getByRole('button', { name: 'Omit count' }));
+    expect(happened).toEqual(['assign ""', 'focus, buffer ""']);
+    expect(buffer).toBe('');
+    expect(count.validity.badInput).toBe(false);
+    expect(count).toHaveFocus();
+    expect(count).not.toHaveAttribute('aria-invalid');
+    expect(screen.queryByRole('button', { name: 'Omit count' })).toBeNull();
+
+    // What stays is untouched: the neighbours' text and a valid zero. Count is not sent.
+    expect(screen.getByLabelText('note')).toHaveValue('keep');
+    expect(screen.getByLabelText('size')).toHaveValue(0);
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({ size: 0, note: 'keep' });
+    expect(submit.mock.lastCall?.[0]).not.toHaveProperty('count');
+
+    // Omit still takes a complete number and plain text back to absent.
+    await user.click(screen.getByRole('button', { name: 'Omit size' }));
+    expect(screen.getByLabelText('size')).toHaveValue(null);
+    await user.click(screen.getByRole('button', { name: 'Omit note' }));
+    expect(screen.getByLabelText('note')).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenLastCalledWith({});
+  });
+
+  it('validates a cleared optional string against its schema and refuses edited number or JSON blanks', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{
+          type: 'object',
+          properties: {
+            title: { type: 'string', minLength: 1 },
+            count: { type: 'integer' },
+            list: { type: 'array' },
+          },
+        }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    const title = screen.getByLabelText('title');
+    const count = screen.getByLabelText('count');
+    const list = screen.getByLabelText('list');
+    await user.type(title, 'x');
+    await user.clear(title);
+    await user.type(count, '1');
+    await user.clear(count);
+    await user.type(list, '[[]');
+    await user.clear(list);
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(title).toHaveAccessibleDescription('title must NOT have fewer than 1 characters');
+    expect(count).toHaveAccessibleDescription('count: enter a number');
+    expect(list).toHaveAccessibleDescription(/list: invalid JSON/);
+    expect(submit).not.toHaveBeenCalled();
+
+    for (const name of ['title', 'count', 'list']) {
+      await user.click(screen.getByRole('button', { name: `Omit ${name}` }));
+    }
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(submit).toHaveBeenCalledWith({});
+  });
+
+  it('keeps no input, edited blank JSON, null, "", 0 and false apart in the JSON editor', async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    render(
+      <JsonSchemaForm
+        schema={{ type: ['string', 'number', 'boolean', 'null'] }}
+        submitLabel="Send"
+        onSubmit={submit}
+      />,
+    );
+    const input = screen.getByLabelText('Input (JSON)');
+    const send = screen.getByRole('button', { name: 'Send' });
+    await user.click(send);
+    expect(submit).toHaveBeenLastCalledWith(undefined);
+    expect(omitButtons()).toEqual([]);
+    await user.type(input, 'null');
+    await user.click(send);
+    expect(submit).toHaveBeenLastCalledWith(null);
+    // Edited and then emptied, or only spaces: not JSON, and never quietly no input.
+    await user.clear(input);
+    await user.click(send);
+    expect(input).toHaveAccessibleDescription(/^Invalid JSON/);
+    await user.type(input, '  ');
+    await user.click(send);
+    expect(input).toHaveAccessibleDescription(/^Invalid JSON/);
+    expect(submit).toHaveBeenCalledTimes(2);
+    for (const [text, value] of [
+      ['""', ''],
+      ['0', 0],
+      ['false', false],
+    ] as const) {
+      await user.clear(input);
+      await user.type(input, text);
+      await user.click(send);
+      expect(submit).toHaveBeenLastCalledWith(value);
+    }
+    await user.click(screen.getByRole('button', { name: 'Omit input' }));
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue('');
+    await user.click(send);
+    expect(submit).toHaveBeenCalledTimes(6);
+    expect(submit).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('offers no Omit in the JSON editor when the schema refuses no input', async () => {
+    const user = userEvent.setup();
+    render(<JsonSchemaForm schema={{ type: 'number' }} submitLabel="Send" onSubmit={vi.fn()} />);
+    const input = screen.getByLabelText('Input (JSON)');
+    // Nor a place held for it in the label line.
+    expect(within(input.previousElementSibling as HTMLElement).queryByText('Omit')).toBeNull();
+    await user.type(input, '1');
+    expect(omitButtons()).toEqual([]);
+  });
+
+  it('holds Omit’s place in the JSON editor when the schema accepts no input', async () => {
+    const user = userEvent.setup();
+    render(<JsonSchemaForm schema={undefined} submitLabel="Send" onSubmit={vi.fn()} />);
+    const input = screen.getByLabelText('Input (JSON)');
+    const line = input.previousElementSibling as HTMLElement;
+    expect(within(line).getByText('Omit')).toHaveAttribute('aria-hidden', 'true');
+    await user.type(input, '{{}');
+    expect(within(line).getByText('Omit')).toBe(screen.getByRole('button', { name: 'Omit input' }));
+  });
+
   it('renders one field per property and validates before submitting', async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
@@ -69,7 +449,7 @@ describe('JsonSchemaForm', () => {
     });
   });
 
-  it('sends an enum choice as the value it stands for, not its text', async () => {
+  it('sends each enum choice as its typed value', async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
     render(
@@ -81,6 +461,8 @@ describe('JsonSchemaForm', () => {
             priority: { type: 'integer', enum: [1, 2] },
             strict: { enum: [true, false, null] },
             mode: { enum: ['1', 1] },
+            optionalText: { enum: ['', 'filled'] },
+            longText: { enum: ['', 'a', 'b', 'c', 'd'] },
           },
         }}
         submitLabel="Go"
@@ -94,12 +476,30 @@ describe('JsonSchemaForm', () => {
     // A string and a number with the same text stay apart.
     expect(radioNames('mode')).toEqual(['Not set', '"1"', '1']);
     await user.click(radio('mode', '"1"'));
+    // The empty string reads "" in segments and in a select, apart from Not set.
+    expect(radioNames('optionalText')).toEqual(['Not set', '""', 'filled']);
+    await user.click(radio('optionalText', '""'));
+    const longText = screen.getByLabelText('longText');
+    expect(
+      within(longText)
+        .getAllByRole('option')
+        .map((option) => option.textContent),
+    ).toEqual(['Not set', '""', 'a', 'b', 'c', 'd']);
+    await user.selectOptions(longText, '""');
     await user.click(screen.getByRole('button', { name: 'Go' }));
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(submit).toHaveBeenLastCalledWith({ priority: 1, strict: null, mode: '1' });
+    expect(submit).toHaveBeenLastCalledWith({
+      priority: 1,
+      strict: null,
+      mode: '1',
+      optionalText: '',
+      longText: '',
+    });
 
     await user.click(radio('strict', 'false'));
     await user.click(radio('mode', '1'));
+    await user.click(radio('optionalText', 'Not set'));
+    await user.selectOptions(longText, 'Not set');
     await user.click(screen.getByRole('button', { name: 'Go' }));
     expect(submit).toHaveBeenLastCalledWith({ priority: 1, strict: false, mode: 1 });
   });

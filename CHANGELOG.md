@@ -4,6 +4,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- New run and the waiting-for-input form send what was entered: an untouched field is left
+  out, cleared text is sent as an empty string for its schema to accept or refuse, and a
+  blank or incomplete number or JSON field is refused beside the field instead of being
+  dropped. An edited optional field shows **Omit**, which leaves it out again. Request and
+  stored formats are unchanged (#235).
+
 - JSONata limits nested evaluator calls while accepting wide, flat arrays and objects.
   Separate evaluations of cached source keep their own depth, deadline, bindings and
   timestamp (#228).

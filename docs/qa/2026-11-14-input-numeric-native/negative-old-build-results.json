@@ -1,0 +1,156 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "e2e/form-controls.spec.ts",
+      "--grep",
+      "Omit takes a number the browser holds as incomplete",
+      "--reporter=list,json",
+      "--output",
+      "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\input-235-numeric-native\\negative-old-build-artifacts"
+    ],
+    "configFile": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\playwright.config.ts",
+    "rootDir": "C:/Users/98jak/.codex/worktrees/gg-20261114-i08-input/GraphGoblin/apps/web/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/input-235-numeric-native/negative-old-build-artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/98jak/.codex/worktrees/gg-20261114-i08-input/GraphGoblin/apps/web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "form-controls.spec.ts",
+      "file": "form-controls.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235)",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 60000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 1624,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 2\u001b[39m\n\u001b[31m+ Received  + 2\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[32m-   \"badInput\": false,\u001b[39m\n\u001b[32m-   \"valid\": true,\u001b[39m\n\u001b[31m+   \"badInput\": true,\u001b[39m\n\u001b[31m+   \"valid\": false,\u001b[39m\n\u001b[2m    \"value\": \"\",\u001b[22m\n\u001b[2m  }\u001b[22m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 2\u001b[39m\n\u001b[31m+ Received  + 2\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[32m-   \"badInput\": false,\u001b[39m\n\u001b[32m-   \"valid\": true,\u001b[39m\n\u001b[31m+   \"badInput\": true,\u001b[39m\n\u001b[31m+   \"valid\": false,\u001b[39m\n\u001b[2m    \"value\": \"\",\u001b[22m\n\u001b[2m  }\u001b[22m\n    at omitCount (C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts:483:35)\n    at enterInput (C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts:487:5)\n    at C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts:514:17",
+                    "location": {
+                      "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts",
+                      "column": 35,
+                      "line": 483
+                    },
+                    "snippet": "  481 |       // The text typed into count went with it: the browser no longer holds incomplete input, and\n  482 |       // the field is valid, where an unchanged \"\" value would have said nothing.\n> 483 |       expect(await native(count)).toEqual({ value: '', badInput: false, valid: true });\n      |                                   ^\n  484 |       await expect(count).not.toHaveAttribute('aria-invalid');\n  485 |       await expect(form.getByText('count: enter a number')).toHaveCount(0);\n  486 |     };"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts",
+                        "column": 35,
+                        "line": 483
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 2\u001b[39m\n\u001b[31m+ Received  + 2\u001b[39m\n\n\u001b[2m  Object {\u001b[22m\n\u001b[32m-   \"badInput\": false,\u001b[39m\n\u001b[32m-   \"valid\": true,\u001b[39m\n\u001b[31m+   \"badInput\": true,\u001b[39m\n\u001b[31m+   \"valid\": false,\u001b[39m\n\u001b[2m    \"value\": \"\",\u001b[22m\n\u001b[2m  }\u001b[22m\n\n  481 |       // The text typed into count went with it: the browser no longer holds incomplete input, and\n  482 |       // the field is valid, where an unchanged \"\" value would have said nothing.\n> 483 |       expect(await native(count)).toEqual({ value: '', badInput: false, valid: true });\n      |                                   ^\n  484 |       await expect(count).not.toHaveAttribute('aria-invalid');\n  485 |       await expect(form.getByText('count: enter a number')).toHaveCount(0);\n  486 |     };\n    at omitCount (C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts:483:35)\n    at enterInput (C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts:487:5)\n    at C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts:514:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-14T11:25:58.392Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\input-235-numeric-native\\negative-old-build-artifacts\\form-controls-Omit-takes-a-febe5-ld-on-New-run-and-Wait-235--chromium\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\input-235-numeric-native\\negative-old-build-artifacts\\form-controls-Omit-takes-a-febe5-ld-on-New-run-and-Wait-235--chromium\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-i08-input\\GraphGoblin\\apps\\web\\e2e\\form-controls.spec.ts",
+                    "column": 35,
+                    "line": 483
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "f14566ae9f7fead1702e-9c5ec020fecc7c76a7da",
+          "file": "form-controls.spec.ts",
+          "line": 401,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-14T11:25:50.208Z",
+    "duration": 18096.226,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

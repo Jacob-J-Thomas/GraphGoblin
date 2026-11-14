@@ -1,0 +1,918 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a8bcecf3..f9b5cc7d 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- New run and the waiting-for-input form send what was entered: an untouched field is left
++  out, cleared text is sent as an empty string for its schema to accept or refuse, and a
++  blank or incomplete number or JSON field is refused beside the field instead of being
++  dropped. An edited optional field shows **Omit**, which leaves it out again. Request and
++  stored formats are unchanged (#235).
++
+ - JSONata limits nested evaluator calls while accepting wide, flat arrays and objects.
+   Separate evaluations of cached source keep their own depth, deadline, bindings and
+   timestamp (#228).
+diff --git a/apps/web/e2e/form-controls.spec.ts b/apps/web/e2e/form-controls.spec.ts
+index a10e8880..db58bc8a 100644
+--- a/apps/web/e2e/form-controls.spec.ts
++++ b/apps/web/e2e/form-controls.spec.ts
+@@ -267,3 +267,133 @@ test('the run form keeps a long choice inside its field and puts each problem be
+   await expect(reason).toHaveAccessibleDescription(/Reason must NOT have fewer than 3 characters/);
+   await expect(page).toHaveURL(/\/app\/runs\/new/);
+ });
++
++test('New run and Wait send the supplied input and omit untouched or reset fields (#235)', async ({
++  page,
++  request,
++}) => {
++  const inputSchema = {
++    type: 'object',
++    required: ['reason'],
++    properties: {
++      untouched: { type: 'string' },
++      comment: { type: 'string' },
++      message: { type: 'string' },
++      title: { type: 'string', minLength: 1 },
++      reason: { type: 'string' },
++      number: { type: 'number' },
++      metadata: { type: 'null' },
++      approved: { type: 'boolean' },
++    },
++  };
++  const definition = approvalLoop('explicit input presence');
++  const loopId = await publishLoop(request, {
++    ...definition,
++    nodes: definition.nodes.map((node) => {
++      if (node.id === 'start') return { ...node, config: { ...node.config, inputSchema } };
++      if (node.id === 'approve') return { ...node, config: { ...node.config, inputSchema } };
++      return {
++        ...node,
++        config: { returns: '{"started": trigger.payload, "answered": lastOutput.value}' },
++      };
++    }),
++  });
++  const input = {
++    message: '',
++    title: 'ok',
++    reason: '',
++    number: 0,
++    metadata: null,
++    approved: false,
++  };
++
++  async function enterInput(submitLabel: string, omitBy: 'keyboard' | 'click') {
++    const form = page.getByRole('form', { name: submitLabel });
++    const message = form.getByLabel('message', { exact: true });
++    await message.fill('clear this');
++    await message.clear();
++    // Cleared text is the empty string, and its placeholder says so.
++    await expect(message).toHaveAttribute('placeholder', '""');
++    const title = form.getByLabel('title', { exact: true });
++    const reason = form.getByLabel('reason', { exact: true });
++    const number = form.getByLabel('number', { exact: true });
++    const metadata = form.getByLabel('metadata', { exact: true });
++    await title.fill('1');
++    await title.clear();
++    await reason.fill('r');
++    await reason.clear();
++    // The native number input holds "-", which it reports as an empty value.
++    await number.press('-');
++    expect(await number.evaluate((el: HTMLInputElement) => el.validity.badInput)).toBe(true);
++    await metadata.fill(' ');
++    const submit = form.getByRole('button', { name: submitLabel });
++    await submit.click();
++    await expect(title).toHaveAccessibleDescription(/must NOT have fewer than 1/);
++    await expect(number).toHaveAccessibleDescription('number: enter a number');
++    await expect(metadata).toHaveAccessibleDescription(/metadata: invalid JSON/);
++    // Required text cleared to "" is valid here, and has no way back to absent.
++    await expect(reason).not.toHaveAttribute('aria-invalid');
++    await expect(form.getByRole('button', { name: 'Omit reason', exact: true })).toHaveCount(0);
++
++    await number.fill('1');
++    await number.clear();
++    await submit.click();
++    await expect(number).toHaveAccessibleDescription('number: enter a number');
++
++    // Omit appears in the label's line without moving the field, and takes the field back to
++    // absent with focus on it.
++    const comment = form.getByLabel('comment', { exact: true });
++    const omit = form.getByRole('button', { name: 'Omit comment', exact: true });
++    const offset = () =>
++      comment.evaluate(
++        (el) => el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
++      );
++    const resting = await offset();
++    await comment.fill('drop this');
++    await expect(omit).toBeVisible();
++    expect(await offset()).toBe(resting);
++    const [field, button] = await Promise.all([comment.boundingBox(), omit.boundingBox()]);
++    expect(button!.y + button!.height).toBeLessThanOrEqual(field!.y);
++    if (omitBy === 'keyboard') {
++      await comment.press('Shift+Tab');
++      await expect(omit).toBeFocused();
++      await page.keyboard.press('Enter');
++    } else {
++      await omit.click();
++    }
++    await expect(comment).toBeFocused();
++    await expect(comment).toHaveValue('');
++    await expect(omit).toHaveCount(0);
++    expect(await offset()).toBe(resting);
++
++    await title.fill('ok');
++    await number.fill('0');
++    await metadata.fill('null');
++    await form
++      .getByRole('radiogroup', { name: 'approved' })
++      .getByRole('radio', { name: 'No' })
++      .check();
++    return submit;
++  }
++
++  await page.goto(`/app/runs/new?loop=${loopId}`);
++  const start = await enterInput('Start run', 'keyboard');
++  const started = page.waitForRequest(
++    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/loops/${loopId}/runs`,
++  );
++  await start.click();
++  expect((await started).postDataJSON().input).toEqual(input);
++  await expect(page.getByText('Input requested')).toBeVisible();
++  const runId = new URL(page.url()).pathname.split('/').at(-1);
++
++  const respond = await enterInput('Submit input', 'click');
++  const observed = await (await request.get(`/runs/${runId}`)).json();
++  const answered = page.waitForRequest(
++    (req) => req.method() === 'POST' && new URL(req.url()).pathname === `/runs/${runId}/input`,
++  );
++  await respond.click();
++  expect((await answered).postDataJSON()).toEqual({ waitId: observed.waiting.waitId, input });
++  await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
++  const completed = await (await request.get(`/runs/${runId}`)).json();
++  expect(completed.result).toEqual({ started: input, answered: input });
++});
+diff --git a/apps/web/src/forms/JsonSchemaForm.test.tsx b/apps/web/src/forms/JsonSchemaForm.test.tsx
+index 2d5bb0cb..eea70799 100644
+--- a/apps/web/src/forms/JsonSchemaForm.test.tsx
++++ b/apps/web/src/forms/JsonSchemaForm.test.tsx
+@@ -1,4 +1,4 @@
+-import { render, screen, within } from '@testing-library/react';
++import { fireEvent, render, screen, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { describe, expect, it, vi } from 'vitest';
+ import { JsonSchemaForm } from './JsonSchemaForm.js';
+@@ -18,7 +18,253 @@ function radioNames(group: string) {
+     .map((r) => r.closest('label')?.textContent);
+ }
+ 
++/** Every Omit button in the document, by accessible name. */
++function omitButtons() {
++  return screen
++    .queryAllByRole('button')
++    .map((button) => button.getAttribute('aria-label') ?? '')
++    .filter((name) => name.startsWith('Omit'));
++}
++
+ describe('JsonSchemaForm', () => {
++  it('keeps untouched fields absent and sends explicitly empty text, null, zero and false', async () => {
++    const user = userEvent.setup();
++    const submit = vi.fn();
++    render(
++      <JsonSchemaForm
++        schema={{
++          type: 'object',
++          properties: {
++            untouched: { type: 'string' },
++            note: { type: 'string', default: 'none' },
++            details: { type: 'null' },
++            count: { type: 'integer' },
++            approved: { type: 'boolean' },
++          },
++        }}
++        submitLabel="Send"
++        onSubmit={submit}
++      />,
++    );
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(submit).toHaveBeenLastCalledWith({});
++    // Nothing to omit until something is entered; an absent field shows its default as the hint.
++    expect(omitButtons()).toEqual([]);
++    const note = screen.getByLabelText('note');
++    expect(note).toHaveAttribute('placeholder', 'none');
++
++    // Cleared text is the empty string, and says so: the default no longer applies.
++    await user.type(note, 'remove me');
++    await user.clear(note);
++    expect(note).toHaveAttribute('placeholder', '""');
++    await user.type(screen.getByLabelText('details'), 'null');
++    await user.type(screen.getByLabelText('count'), '0');
++    await user.click(radio('approved', 'No'));
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(submit).toHaveBeenLastCalledWith({ note: '', details: null, count: 0, approved: false });
++    expect(omitButtons()).toEqual(['Omit note', 'Omit details', 'Omit count']);
++
++    // Omit puts the field back as it started, and keeps focus on it.
++    await user.click(screen.getByRole('button', { name: 'Omit note' }));
++    expect(note).toHaveFocus();
++    expect(note).toHaveValue('');
++    expect(note).toHaveAttribute('placeholder', 'none');
++    expect(screen.queryByRole('button', { name: 'Omit note' })).toBeNull();
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(submit).toHaveBeenLastCalledWith({ details: null, count: 0, approved: false });
++  });
++
++  it('omits by keyboard: Shift+Tab from the field reaches Omit, and Enter returns to the field', async () => {
++    const user = userEvent.setup();
++    const submit = vi.fn();
++    render(
++      <JsonSchemaForm
++        schema={{ type: 'object', properties: { note: { type: 'string' } } }}
++        submitLabel="Send"
++        onSubmit={submit}
++      />,
++    );
++    const note = screen.getByLabelText('note');
++    await user.click(note);
++    await user.keyboard('x{Backspace}');
++    await user.tab({ shift: true });
++    expect(screen.getByRole('button', { name: 'Omit note' })).toHaveFocus();
++    await user.keyboard('{Enter}');
++    expect(note).toHaveFocus();
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(submit).toHaveBeenLastCalledWith({});
++  });
++
++  it('offers Omit only for edited optional text, number and JSON fields, never for required ones', async () => {
++    const user = userEvent.setup();
++    const submit = vi.fn();
++    render(
++      <JsonSchemaForm
++        schema={{
++          type: 'object',
++          required: ['name', 'size', 'data'],
++          properties: {
++            name: { type: 'string' },
++            size: { type: 'integer' },
++            data: { type: 'array' },
++            tone: { enum: ['warm', 'cool'] },
++            flag: { type: 'boolean' },
++            note: { type: 'string' },
++          },
++        }}
++        submitLabel="Send"
++        onSubmit={submit}
++      />,
++    );
++    const name = screen.getByLabelText('name');
++    const size = screen.getByLabelText('size');
++    await user.type(name, 'x');
++    await user.clear(name);
++    await user.type(size, '1');
++    await user.clear(size);
++    await user.type(screen.getByLabelText('data'), '[[]');
++    // Choices go back with Not set, so they need no Omit.
++    await user.click(radio('tone', 'warm'));
++    await user.click(radio('flag', 'Yes'));
++    await user.type(screen.getByLabelText('note'), 'n');
++    expect(omitButtons()).toEqual(['Omit note']);
++
++    // A required number left blank is refused as a number, not as missing; required text that is
++    // cleared is the empty string, which this schema accepts.
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(size).toHaveAccessibleDescription('size: enter a number');
++    expect(name).not.toHaveAttribute('aria-invalid');
++    expect(submit).not.toHaveBeenCalled();
++    await user.type(size, '2');
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(submit).toHaveBeenLastCalledWith({
++      name: '',
++      size: 2,
++      data: [],
++      tone: 'warm',
++      flag: true,
++      note: 'n',
++    });
++  });
++
++  it('checks a number the browser reports as incomplete rather than leaving it out', async () => {
++    const user = userEvent.setup();
++    const submit = vi.fn();
++    render(
++      <JsonSchemaForm
++        schema={{ type: 'object', properties: { count: { type: 'number' } } }}
++        submitLabel="Send"
++        onSubmit={submit}
++      />,
++    );
++    const count = screen.getByLabelText('count');
++    // A native number input holding "-" reports an empty value with validity.badInput, which is
++    // also what it reported before the key: only the input event says something was typed.
++    let badInput = true;
++    Object.defineProperty(count, 'validity', { configurable: true, get: () => ({ badInput }) });
++    fireEvent.input(count, { target: { value: '' }, data: '-', inputType: 'insertText' });
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(count).toHaveAttribute('aria-invalid', 'true');
++    expect(count).toHaveAccessibleDescription('count: enter a number');
++    expect(submit).not.toHaveBeenCalled();
++
++    badInput = false;
++    fireEvent.input(count, { target: { value: '-5' }, data: '5', inputType: 'insertText' });
++    expect(count).not.toHaveAttribute('aria-invalid');
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(submit).toHaveBeenLastCalledWith({ count: -5 });
++  });
++
++  it('validates a cleared optional string against its schema and refuses edited number or JSON blanks', async () => {
++    const user = userEvent.setup();
++    const submit = vi.fn();
++    render(
++      <JsonSchemaForm
++        schema={{
++          type: 'object',
++          properties: {
++            title: { type: 'string', minLength: 1 },
++            count: { type: 'integer' },
++            list: { type: 'array' },
++          },
++        }}
++        submitLabel="Send"
++        onSubmit={submit}
++      />,
++    );
++    const title = screen.getByLabelText('title');
++    const count = screen.getByLabelText('count');
++    const list = screen.getByLabelText('list');
++    await user.type(title, 'x');
++    await user.clear(title);
++    await user.type(count, '1');
++    await user.clear(count);
++    await user.type(list, '[[]');
++    await user.clear(list);
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(title).toHaveAccessibleDescription('title must NOT have fewer than 1 characters');
++    expect(count).toHaveAccessibleDescription('count: enter a number');
++    expect(list).toHaveAccessibleDescription(/list: invalid JSON/);
++    expect(submit).not.toHaveBeenCalled();
++
++    for (const name of ['title', 'count', 'list']) {
++      await user.click(screen.getByRole('button', { name: `Omit ${name}` }));
++    }
++    await user.click(screen.getByRole('button', { name: 'Send' }));
++    expect(submit).toHaveBeenCalledWith({});
++  });
++
++  it('keeps no input, edited blank JSON, null, "", 0 and false apart in the JSON editor', async () => {
++    const user = userEvent.setup();
++    const submit = vi.fn();
++    render(
++      <JsonSchemaForm
++        schema={{ type: ['string', 'number', 'boolean', 'null'] }}
++        submitLabel="Send"
++        onSubmit={submit}
++      />,
++    );
++    const input = screen.getByLabelText('Input (JSON)');
++    const send = screen.getByRole('button', { name: 'Send' });
++    await user.click(send);
++    expect(submit).toHaveBeenLastCalledWith(undefined);
++    expect(omitButtons()).toEqual([]);
++    await user.type(input, 'null');
++    await user.click(send);
++    expect(submit).toHaveBeenLastCalledWith(null);
++    // Edited and then emptied, or only spaces: not JSON, and never quietly no input.
++    await user.clear(input);
++    await user.click(send);
++    expect(input).toHaveAccessibleDescription(/^Invalid JSON/);
++    await user.type(input, '  ');
++    await user.click(send);
++    expect(input).toHaveAccessibleDescription(/^Invalid JSON/);
++    expect(submit).toHaveBeenCalledTimes(2);
++    for (const [text, value] of [
++      ['""', ''],
++      ['0', 0],
++      ['false', false],
++    ] as const) {
++      await user.clear(input);
++      await user.type(input, text);
++      await user.click(send);
++      expect(submit).toHaveBeenLastCalledWith(value);
++    }
++    await user.click(screen.getByRole('button', { name: 'Omit input' }));
++    expect(input).toHaveFocus();
++    expect(input).toHaveValue('');
++    await user.click(send);
++    expect(submit).toHaveBeenCalledTimes(6);
++    expect(submit).toHaveBeenLastCalledWith(undefined);
++  });
++
++  it('offers no Omit in the JSON editor when the schema refuses no input', async () => {
++    const user = userEvent.setup();
++    render(<JsonSchemaForm schema={{ type: 'number' }} submitLabel="Send" onSubmit={vi.fn()} />);
++    await user.type(screen.getByLabelText('Input (JSON)'), '1');
++    expect(omitButtons()).toEqual([]);
++  });
++
+   it('renders one field per property and validates before submitting', async () => {
+     const user = userEvent.setup();
+     const submit = vi.fn();
+@@ -69,7 +315,7 @@ describe('JsonSchemaForm', () => {
+     });
+   });
+ 
+-  it('sends an enum choice as the value it stands for, not its text', async () => {
++  it('sends each enum choice as its typed value', async () => {
+     const user = userEvent.setup();
+     const submit = vi.fn();
+     render(
+@@ -81,6 +327,8 @@ describe('JsonSchemaForm', () => {
+             priority: { type: 'integer', enum: [1, 2] },
+             strict: { enum: [true, false, null] },
+             mode: { enum: ['1', 1] },
++            optionalText: { enum: ['', 'filled'] },
++            longText: { enum: ['', 'a', 'b', 'c', 'd'] },
+           },
+         }}
+         submitLabel="Go"
+@@ -94,12 +342,30 @@ describe('JsonSchemaForm', () => {
+     // A string and a number with the same text stay apart.
+     expect(radioNames('mode')).toEqual(['Not set', '"1"', '1']);
+     await user.click(radio('mode', '"1"'));
++    // The empty string reads "" in segments and in a select, apart from Not set.
++    expect(radioNames('optionalText')).toEqual(['Not set', '""', 'filled']);
++    await user.click(radio('optionalText', '""'));
++    const longText = screen.getByLabelText('longText');
++    expect(
++      within(longText)
++        .getAllByRole('option')
++        .map((option) => option.textContent),
++    ).toEqual(['Not set', '""', 'a', 'b', 'c', 'd']);
++    await user.selectOptions(longText, '""');
+     await user.click(screen.getByRole('button', { name: 'Go' }));
+     expect(screen.queryByRole('alert')).toBeNull();
+-    expect(submit).toHaveBeenLastCalledWith({ priority: 1, strict: null, mode: '1' });
++    expect(submit).toHaveBeenLastCalledWith({
++      priority: 1,
++      strict: null,
++      mode: '1',
++      optionalText: '',
++      longText: '',
++    });
+ 
+     await user.click(radio('strict', 'false'));
+     await user.click(radio('mode', '1'));
++    await user.click(radio('optionalText', 'Not set'));
++    await user.selectOptions(longText, 'Not set');
+     await user.click(screen.getByRole('button', { name: 'Go' }));
+     expect(submit).toHaveBeenLastCalledWith({ priority: 1, strict: false, mode: 1 });
+   });
+diff --git a/apps/web/src/forms/JsonSchemaForm.tsx b/apps/web/src/forms/JsonSchemaForm.tsx
+index 8c17e314..308d56d7 100644
+--- a/apps/web/src/forms/JsonSchemaForm.tsx
++++ b/apps/web/src/forms/JsonSchemaForm.tsx
+@@ -1,6 +1,6 @@
+ import type { JsonSchema } from '@graphgoblin/contracts';
+ import { validateJson, type SchemaIssue } from '@graphgoblin/domain';
+-import { useId, useState, type FormEvent, type ReactNode } from 'react';
++import { useId, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+ import {
+   Button,
+   FieldGroup,
+@@ -35,9 +35,11 @@ function propertyType(schema: PropertySchema): 'string' | 'number' | 'boolean' |
+ 
+ /**
+  * How an enum value reads in its control: a string as itself unless the enum also holds a value
+- * that reads the same (a string "1" beside the number 1), then quoted; anything else as JSON.
++ * that reads the same (a string "1" beside the number 1), then quoted; anything else as JSON. The
++ * empty string reads `""`, so it never looks like Not set.
+  */
+ function enumLabel(option: unknown, options: unknown[]): string {
++  if (option === '') return '""';
+   if (typeof option !== 'string') return JSON.stringify(option);
+   const clash = options.some((other) => other !== option && JSON.stringify(other) === option);
+   return clash ? JSON.stringify(option) : option;
+@@ -129,6 +131,45 @@ interface Control {
+   'aria-required'?: true;
+ }
+ 
++/**
++ * The ghost button's look, drawn 20 px high so it fits the label's line: showing it never moves the
++ * control below (the label keeps its 6 px gap). A coarse pointer gets a 44 px target (touch-target).
++ */
++const OMIT_BUTTON = cn(
++  'touch-target -my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center rounded-sm px-1.5',
++  'border border-transparent bg-transparent text-xs leading-none font-semibold text-default',
++  'transition-[background-color] hover:bg-surface-hover',
++  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
++);
++
++/**
++ * Omit, at the end of an edited optional field's label line: the field goes back to absent, as it
++ * started, and focus goes to its control (the button itself goes away).
++ */
++function OmitButton({
++  controlId,
++  label,
++  onOmit,
++}: {
++  controlId: string;
++  label: string;
++  onOmit: () => void;
++}) {
++  return (
++    <button
++      type="button"
++      aria-label={`Omit ${label}`}
++      className={OMIT_BUTTON}
++      onClick={(event) => {
++        event.currentTarget.ownerDocument.getElementById(controlId)?.focus();
++        onOmit();
++      }}
++    >
++      Omit
++    </button>
++  );
++}
++
+ /**
+  * A choice among an enum's members: a segmented control for two to four, a select for more. An
+  * optional enum offers "Not set"; a required one starts with nothing chosen. When the chosen member
+@@ -147,7 +188,7 @@ function EnumChoice({
+   label: string;
+   options: unknown[];
+   value: string;
+-  onChange: (value: string) => void;
++  onChange: (value: string | undefined) => void;
+   control: Control;
+   required: boolean;
+   goneId: string;
+@@ -177,11 +218,7 @@ function EnumChoice({
+         {required ? (
+           <SegmentedControl {...common} onChange={onChange} />
+         ) : (
+-          <SegmentedControl
+-            {...common}
+-            notSet={NOT_SET}
+-            onChange={(next) => onChange(next ?? '')}
+-          />
++          <SegmentedControl {...common} notSet={NOT_SET} onChange={onChange} />
+         )}
+         {message}
+       </>
+@@ -197,7 +234,7 @@ function EnumChoice({
+         value={gone ? '' : value}
+         aria-invalid={invalid || undefined}
+         aria-describedby={describedBy}
+-        onChange={(e) => onChange(e.target.value)}
++        onChange={(e) => onChange(e.target.value || undefined)}
+       >
+         <option value="">{required ? '(choose)' : NOT_SET}</option>
+         {options.map((option, index) => (
+@@ -214,7 +251,8 @@ function EnumChoice({
+ /**
+  * One property's field: label (or legend), control, help, and its errors, linked by ids generated
+  * here (the property's name is data, used only to look its value up). Help is the property's
+- * description, then its default when a placeholder cannot show it.
++ * description, then its default when a placeholder cannot show it. The placeholder shows the
++ * default only while the field is absent; cleared text shows `""`, the empty string it sends.
+  */
+ function PropertyField({
+   name,
+@@ -235,11 +273,13 @@ function PropertyField({
+   const type = propertyType(prop);
+   const label = titleOf(name, prop);
+   const hasDefault = prop.default !== undefined;
+-  const placeholder =
++  const defaultText =
+     hasDefault && (type === 'string' || type === 'number') ? String(prop.default) : undefined;
++  const placeholder =
++    value === undefined ? defaultText : type === 'string' && value === '' ? '""' : undefined;
+   const help = [
+     prop.description,
+-    hasDefault && placeholder === undefined ? `Default: ${JSON.stringify(prop.default)}` : '',
++    hasDefault && defaultText === undefined ? `Default: ${JSON.stringify(prop.default)}` : '',
+   ]
+     .filter(Boolean)
+     .join(' · ');
+@@ -287,20 +327,45 @@ function PropertyField({
+     );
+   } else {
+     const text = typeof value === 'string' ? value : '';
++    // Only an edited optional field can go back to absent; a required one has no such state.
++    const omit =
++      !required && value !== undefined ? (
++        <OmitButton controlId={id} label={label} onOmit={() => onChange(undefined)} />
++      ) : null;
+     field = (
+       <>
+         <div className="flex min-w-0 items-center justify-between gap-2">
+           <Label htmlFor={id} required={required}>
+             {label}
+           </Label>
+-          {type === 'json' ? <LanguageTag>JSON</LanguageTag> : null}
++          {omit || type === 'json' ? (
++            // Omit appears before the tag, so the tag never moves.
++            <span className="flex shrink-0 items-center gap-2">
++              {omit}
++              {type === 'json' ? <LanguageTag>JSON</LanguageTag> : null}
++            </span>
++          ) : null}
+         </div>
+         {type === 'json' ? (
+           <Textarea {...control} value={text} onChange={(e) => onChange(e.target.value)} />
++        ) : type === 'number' ? (
++          <Input
++            {...control}
++            type="number"
++            value={text}
++            placeholder={placeholder}
++            // A native number input reports incomplete text ("-", "1e") as an empty value, and
++            // React sends no change when the value was already empty: the input event still
++            // records the edit, so the field is checked rather than left out.
++            onInput={(event) => {
++              if (event.currentTarget.validity.badInput) onChange('');
++            }}
++            onChange={(e) => onChange(e.target.value)}
++          />
+         ) : (
+           <Input
+             {...control}
+-            type={type === 'number' ? 'number' : 'text'}
++            type="text"
+             value={text}
+             placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)}
+@@ -325,9 +390,12 @@ function PropertyField({
+  * or select for an enum, and anything else as JSON), with the properties the schema requires
+  * marked; any other schema, or none, gets a single JSON editor. The form starts empty, so nothing
+  * shows a value it would not send (a switch, always on or off, has no place here). An enum choice is
+- * kept by value and sent as the value it stands for (a number stays a number). A field left unset
+- * is not sent. The value is checked with `domain`'s validator before `onSubmit`, as the API will
+- * check it: an empty JSON editor as `null`, which is what the API validates when no input is sent.
++ * kept by value and sent as the value it stands for (a number stays a number). A field nobody
++ * touched is absent from the value. Edited text is sent as typed, cleared text as the empty string,
++ * and the schema decides whether either is valid; an edited number or JSON field must hold a number
++ * or JSON, so a blank one is a problem, never left out. Omit puts an edited optional field (or the
++ * JSON editor, when the schema accepts no input) back to absent. The value is checked with
++ * `domain`'s validator before `onSubmit`, as the API will check it: no JSON input as `null`.
+  * Each problem shows beside its field (linked to the control, which is marked invalid, and
+  * announced); a problem with the value as a whole shows under the form, or under the JSON editor.
+  * Editing a field clears its problems.
+@@ -347,8 +415,14 @@ export function JsonSchemaForm({
+   const properties = objectProperties(schema);
+   const required = requiredProperties(schema);
+   const [values, setValues] = useState<ReadonlyMap<string, string | boolean>>(() => new Map());
+-  const [raw, setRaw] = useState('');
++  // The JSON editor's text: undefined until edited (no input), then exactly what was typed.
++  const [raw, setRaw] = useState<string>();
+   const [problems, setProblems] = useState<Problems>(NO_PROBLEMS);
++  // No input reaches the API's check as null: only a schema that accepts it makes input optional.
++  const rawOptional = useMemo(
++    () => schema === undefined || validateJson(schema, null).ok,
++    [schema],
++  );
+ 
+   const set = (key: string, value: string | boolean | undefined) => {
+     setValues((current) => {
+@@ -366,8 +440,9 @@ export function JsonSchemaForm({
+   };
+ 
+   /**
+-   * The value the fields stand for, and what is wrong with a field before the schema is asked (an
+-   * enum choice no longer offered, JSON that does not parse): those fields are left out.
++   * The value the fields stand for, and what is wrong with a field before the schema is asked (a
++   * blank or incomplete number, JSON that does not parse, an enum choice no longer offered): those
++   * fields are left out of the value, and the form refuses to send it.
+    */
+   const collectFields = (props: [string, PropertySchema][]) => {
+     // Entries, then an object: a property named "__proto__" stays an own property.
+@@ -375,9 +450,14 @@ export function JsonSchemaForm({
+     const fields = new Map<string, string[]>();
+     for (const [key, prop] of props) {
+       const value = values.get(key);
+-      if (value === undefined || value === '') continue;
++      if (value === undefined) continue;
+       const type = propertyType(prop);
+-      if (type === 'number') out.push([key, Number(value)]);
++      if (type === 'number') {
++        const number = Number(value);
++        if (value === '' || !Number.isFinite(number))
++          fields.set(key, [`${titleOf(key, prop)}: enter a number`]);
++        else out.push([key, number]);
++      }
+       // Enum controls hold the chosen member's JSON text: the member comes back with its type. A
+       // choice the schema no longer offers is refused, never silently left out.
+       else if (type === 'enum') {
+@@ -415,7 +495,7 @@ export function JsonSchemaForm({
+       for (const [key, messages] of collected.fields) fields.set(key, messages);
+       next = { fields, form: placed.form };
+     } else {
+-      if (raw.trim() !== '') {
++      if (raw !== undefined) {
+         const parsed = parseJson(raw);
+         if (!parsed.ok)
+           return setProblems({ fields: new Map(), form: [`Invalid JSON: ${parsed.error}`] });
+@@ -448,10 +528,22 @@ export function JsonSchemaForm({
+         ))
+       ) : (
+         <FieldGroup className="max-w-[440px]">
+-          <Label htmlFor={rawId}>Input (JSON)</Label>
++          <div className="flex min-w-0 items-center justify-between gap-2">
++            <Label htmlFor={rawId}>Input (JSON)</Label>
++            {rawOptional && raw !== undefined ? (
++              <OmitButton
++                controlId={rawId}
++                label="input"
++                onOmit={() => {
++                  setRaw(undefined);
++                  setProblems(NO_PROBLEMS);
++                }}
++              />
++            ) : null}
++          </div>
+           <Textarea
+             id={rawId}
+-            value={raw}
++            value={raw ?? ''}
+             placeholder="{}"
+             aria-invalid={rawInvalid || undefined}
+             aria-describedby={rawInvalid ? `${rawId}-error` : undefined}
+diff --git a/apps/web/src/runs/inspector/WaitPanel.test.tsx b/apps/web/src/runs/inspector/WaitPanel.test.tsx
+index 087c5836..eb839cb5 100644
+--- a/apps/web/src/runs/inspector/WaitPanel.test.tsx
++++ b/apps/web/src/runs/inspector/WaitPanel.test.tsx
+@@ -1,5 +1,5 @@
+ import type { RunRecord } from '@graphgoblin/contracts';
+-import { screen, waitFor } from '@testing-library/react';
++import { screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { useState } from 'react';
+ import { describe, expect, it } from 'vitest';
+@@ -67,6 +67,69 @@ it('submits the identity associated with the displayed input form', async () =>
+   });
+ });
+ 
++it('sends empty text, null, zero and false as entered, and no JSON input as null (#235)', async () => {
++  const user = userEvent.setup();
++  const api = new FakeApi();
++  const inputs = (id: string) => api.callsTo('POST', `/runs/${id}/input`);
++  const typed = runRecord({
++    id: '01ARZ3NDEKTSV4RRFFQ69G5FAW',
++    status: 'waiting',
++    lastEventSeq: 5,
++    waiting: {
++      waitId: '4',
++      nodeId: 'ask',
++      kind: 'input',
++      inputSchema: {
++        type: 'object',
++        properties: {
++          untouched: { type: 'string' },
++          note: { type: 'string' },
++          details: { type: 'null' },
++          count: { type: 'integer' },
++          approved: { type: 'boolean' },
++        },
++      },
++      startedSeq: 4,
++    },
++  });
++  api.runs.set(typed.id, typed);
++  const view = renderWith(<WaitPanel run={typed} />, '/', api);
++  await user.type(screen.getByLabelText('note'), 'x');
++  await user.clear(screen.getByLabelText('note'));
++  await user.type(screen.getByLabelText('details'), 'null');
++  await user.type(screen.getByLabelText('count'), '0');
++  await user.click(
++    within(screen.getByRole('radiogroup', { name: 'approved' })).getByRole('radio', {
++      name: 'No',
++    }),
++  );
++  await user.click(screen.getByRole('button', { name: 'Submit input' }));
++  await waitFor(() => expect(inputs(typed.id)).toHaveLength(1));
++  expect(inputs(typed.id)[0]!.body).toStrictEqual({
++    waitId: '4',
++    input: { note: '', details: null, count: 0, approved: false },
++  });
++  view.unmount();
++
++  // No schema: a JSON editor. The endpoint takes an input, so none is sent as null; "" stays "".
++  const free = runRecord({
++    id: '01ARZ3NDEKTSV4RRFFQ69G5FAX',
++    status: 'waiting',
++    lastEventSeq: 5,
++    waiting: { waitId: '5', nodeId: 'ask', kind: 'input', startedSeq: 5 },
++  });
++  api.runs.set(free.id, free);
++  renderWith(<WaitPanel run={free} />, '/', api);
++  await user.click(screen.getByRole('button', { name: 'Submit input' }));
++  await waitFor(() => expect(inputs(free.id)).toHaveLength(1));
++  expect(inputs(free.id)[0]!.body).toStrictEqual({ waitId: '5', input: null });
++  api.runs.set(free.id, free);
++  await user.type(screen.getByLabelText('Input (JSON)'), '""');
++  await user.click(screen.getByRole('button', { name: 'Submit input' }));
++  await waitFor(() => expect(inputs(free.id)).toHaveLength(2));
++  expect(inputs(free.id)[1]!.body).toStrictEqual({ waitId: '5', input: '' });
++});
++
+ it('binds the displayed identity before an asynchronous mutation can see a newer wait', async () => {
+   const user = userEvent.setup();
+   const api = new FakeApi();
+diff --git a/apps/web/src/runs/new/NewRunPage.test.tsx b/apps/web/src/runs/new/NewRunPage.test.tsx
+index 164fb295..45c863cd 100644
+--- a/apps/web/src/runs/new/NewRunPage.test.tsx
++++ b/apps/web/src/runs/new/NewRunPage.test.tsx
+@@ -175,6 +175,66 @@ describe('New run', () => {
+     expect(runStarts(api)[0]!.body).toMatchObject({ triggerNodeId: 'quick', input: { n: 1 } });
+   });
+ 
++  it('sends empty text, null, zero and false as entered, and leaves out what was not (#235)', async () => {
++    const user = userEvent.setup();
++    const api = new FakeApi();
++    const typed = minimalLoop();
++    typed.nodes[0] = {
++      id: 'start',
++      kind: 'trigger',
++      label: 'Start',
++      config: {
++        type: 'manual',
++        inputSchema: {
++          type: 'object',
++          properties: {
++            untouched: { type: 'string' },
++            note: { type: 'string' },
++            details: { type: 'null' },
++            count: { type: 'integer' },
++            approved: { type: 'boolean' },
++          },
++        },
++      },
++    };
++    const loop = api.addLoop(typed, { published: true });
++    const view = renderApp(newRunPath(loop.id), api);
++    const launcher = await screen.findByRole('region', { name: 'Start a run' });
++    await user.type(within(launcher).getByLabelText('note'), 'x');
++    await user.clear(within(launcher).getByLabelText('note'));
++    await user.type(within(launcher).getByLabelText('details'), 'null');
++    await user.type(within(launcher).getByLabelText('count'), '0');
++    await user.click(
++      within(within(launcher).getByRole('radiogroup', { name: 'approved' })).getByRole('radio', {
++        name: 'No',
++      }),
++    );
++    await user.click(within(launcher).getByRole('button', { name: 'Start run' }));
++    await waitFor(() => expect(runStarts(api)).toHaveLength(1));
++    expect((runStarts(api)[0]!.body as { input: unknown }).input).toStrictEqual({
++      note: '',
++      details: null,
++      count: 0,
++      approved: false,
++    });
++    view.unmount();
++
++    // A free JSON input: none sends no input at all, while null is an input.
++    const free = api.addLoop({ ...minimalLoop(), name: 'free' }, { published: true });
++    const again = renderApp(newRunPath(free.id), api);
++    const launcherAgain = await screen.findByRole('region', { name: 'Start a run' });
++    await user.click(within(launcherAgain).getByRole('button', { name: 'Start run' }));
++    await waitFor(() => expect(runStarts(api)).toHaveLength(2));
++    expect(runStarts(api)[1]!.body).not.toHaveProperty('input');
++    again.unmount();
++    renderApp(newRunPath(free.id), api);
++    const third = await screen.findByRole('region', { name: 'Start a run' });
++    await user.type(within(third).getByLabelText('Input (JSON)'), 'null');
++    await user.click(within(third).getByRole('button', { name: 'Start run' }));
++    await waitFor(() => expect(runStarts(api)).toHaveLength(3));
++    expect(runStarts(api)[2]!.body).toHaveProperty('input', null);
++  });
++
+   it('shows why a run could not start', async () => {
+     const user = userEvent.setup();
+     const api = new FakeApi();
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 94f27607..ae53a79e 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -438,7 +438,7 @@ Every form control comes from `components/ui/` and takes its look from the token
+ - **Disclosure** (`disclosure.tsx`, #14). A button with `aria-expanded` and `aria-controls` that shows and hides a panel kept mounted while hidden: `variant="box"` is a bordered section whose full-width header is the toggle (a form's Advanced options), `variant="row"` a compact list item header with `actions` beside it. `summary` adds to the toggle's text, `defaultOpen` sets the first state, `open` with `onOpenChange` lets the caller keep the state instead (so it outlives a remount), and `revealDisclosures(element)` opens every collapsed one around an element at once (through `onOpenChange` when the caller keeps it).
+ - **Labels, help, required.** `Label required` puts the `RequiredMarker` (an asterisk in the bad tone, `aria-hidden`) after the label, outside the `<label>`, so the accessible name stays the field's name; a control carries `aria-required`. A group (an array, a record, a set of checkboxes) shows the marker after its legend instead, since a group takes no `aria-required`, and states its minimum as text that describes it ("Choose at least 1.", "At least 2 items."); its checkboxes are not each marked. A form with required fields starts with `RequiredNote` ("Required fields are marked \*", hidden from assistive technology, which hears "required" on each control instead). Help text (`HelpText`) is linked to its control with `aria-describedby`.
+ - **Errors.** Where a field shows its own error, the message sits under it, describes the control (`aria-describedby`, after any help), sets `aria-invalid`, and is announced (`role="alert"`; a JSON parse error, which changes as you type, is a polite live region instead). That covers every field of the schema-driven forms, including record values (which react-hook-form does not track: their messages come from SchemaForm's check of the whole value, by exact path) and collections (the group's error describes the fieldset, which takes no `aria-invalid`); each `JsonSchemaForm` property and its raw JSON editor; the node dialog's id (its own check) and label (the loop's validation), the loop panel's name (the contract's check), Loops create (the API's refusal), the import picker (the refusal describes it and marks it invalid until the next file), the secret name rule (it turns into an alert while the name breaks it), and the Connect form's refusal (it describes the To select). Not linked to a field: a nested object's own error (shown in its fieldset, announced), `JsonSchemaForm` problems with the value as a whole (a summary under the form, announced), the schema-driven forms' Config issues summary, and the API's refusals in Settings (secrets, API keys, defaults), shown under their form without an announcement. Catalog model-form and toggle refusals are announced with an alert, as are the classifier form's field checks (beside each field) and refusals (#43).
+-- **Where.** The schema-driven forms (below), `JsonSchemaForm` (New run and the waiting-for-input form), the node dialog's id and label and its Connect form, the loop panel, Loops create and import, Settings (model form and Enabled switch, the classifier form and its switches, defaults, secrets, API keys), and the API key panel. `JsonSchemaForm` marks the properties in the JSON Schema's `required` list and uses the same controls, with one difference: it starts empty and sends only what it shows, so a boolean is never a switch (always on or off) but **Yes** / **No** segments, after **Not set** unless required (a required one starts with neither chosen). An enum of two to four members is a segmented control (a required one starts with nothing chosen), and a longer one a select ("(choose)" when required, **Not set** otherwise); a default shows as a placeholder (strings, numbers) or as help ("Default: true"). Its ids are generated per field, so a property may have any name. Each problem shows beside its property under the property's title ("Approval is required", "Reason must NOT have fewer than 3 characters", "Labels: invalid JSON (…)"), located through `validateJson`'s `issues` in `domain` (path segments, a missing property at itself); editing a field clears its problems. What it sends is unchanged: a field left unset sends nothing.
++- **Where.** The schema-driven forms (below), `JsonSchemaForm` (New run and the waiting-for-input form), the node dialog's id and label and its Connect form, the loop panel, Loops create and import, Settings (model form and Enabled switch, the classifier form and its switches, defaults, secrets, API keys), and the API key panel. `JsonSchemaForm` marks the properties in the JSON Schema's `required` list and uses the same controls, with one difference: it starts empty and sends only what it shows, so a boolean is never a switch (always on or off) but **Yes** / **No** segments, after **Not set** unless required (a required one starts with neither chosen). An enum of two to four members is a segmented control (a required one starts with nothing chosen), and a longer one a select ("(choose)" when required, **Not set** otherwise); an enum's empty string reads `""`, apart from **Not set**. A default shows as a placeholder while the field is absent (strings, numbers) or as help ("Default: true"). Its ids are generated per field, so a property may have any name. Each problem shows beside its property under the property's title ("Approval is required", "Reason must NOT have fewer than 3 characters", "Labels: invalid JSON (…)", "Count: enter a number"), located through `validateJson`'s `issues` in `domain` (path segments, a missing property at itself); editing a field clears its problems. It sends what was entered (#235): a property nobody touched is absent; edited text is sent as typed, and cleared text as `""` (its placeholder then reads `""`), for the schema to accept or refuse; an edited number or JSON field must hold a number or JSON, so a blank one, or a number the browser holds as incomplete (`-`, `1e`), is a problem beside it, never left out. An edited optional text, number or JSON field shows **Omit** (named "Omit" and the field's title) at the end of its label's line, before any language tag: a ghost button drawn 20 px high, with a 44 px target on a coarse pointer, so it appears without moving the field or the 6 px gap. It puts the field back to absent and moves focus to the field. Required properties have no Omit, and choices go back with **Not set**. The JSON editor keeps no input, edited blank text (refused), and `null`, `""`, `0` and `false` apart, and offers Omit only when its schema accepts no input (checked as `null`). New run sends no `input` for no input; the wait input endpoint takes an `input`, so no input is sent as `null`.
+ - **Contrast.** The controls use token pairs already in the contrast table (field and track edges, the selected segment, the switch thumb on and off, the checkbox tick, the focus ring on every surface); #8 added the error text and marker, and the invalid edge, on the sunken surface (the model form).
+ 
+ ### Component structure
+diff --git a/docs/guide/03-run-and-observe.md b/docs/guide/03-run-and-observe.md
+index f72aebee..39836e13 100644
+--- a/docs/guide/03-run-and-observe.md
++++ b/docs/guide/03-run-and-observe.md
+@@ -2,7 +2,7 @@
+ 
+ ## Start from the UI
+ 
+-Runs start from the **Runs** screen. Click **New run** and choose a published loop. Then choose its version (the current one unless you pick an older published version; the run keeps the version it started with), one of its manual triggers, and the input, in a form generated from the trigger's `inputSchema`. The input is checked against that schema before anything is sent, and a refusal from the API is shown under the form. Click **Start run**; the inspector opens for the new run. You can start more runs of the same loop while earlier ones are still running. Runs started here record the invocation source `manual.ui`.
++Runs start from the **Runs** screen. Click **New run** and choose a published loop. Then choose its version (the current one unless you pick an older published version; the run keeps the version it started with), one of its manual triggers, and the input, in a form generated from the trigger's `inputSchema`. The input is checked against that schema before anything is sent, and a refusal from the API is shown under the form. A field you leave untouched is left out of the input; a text field you clear sends empty text, a cleared number or JSON field must be filled in, and **Omit** beside an optional field you have edited leaves it out again. The form for a waiting run works the same way. Click **Start run**; the inspector opens for the new run. You can start more runs of the same loop while earlier ones are still running. Runs started here record the invocation source `manual.ui`.
+ 
+ In the editor, **Open in Runs** (in the toolbar, and in the notice after a publish) opens New run with that loop already chosen. Until the loop has a published version it is disabled and says why. The editor itself starts no runs.
+ 

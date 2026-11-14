@@ -1,0 +1,39 @@
+
+Running 1 test using 1 worker
+
+(node:27668) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\form-controls.spec.ts:408:3 › with a coarse pointer (#235) › Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait (1.3s)
+
+
+  1) [chromium] › e2e\form-controls.spec.ts:408:3 › with a coarse pointer (#235) › Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait 
+
+    Error: Omit comment: touch width
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 44
+    Received:    41.75
+
+      451 |         const box = (await field.boundingBox())!;
+      452 |         const above = (await form.getByLabel(before, { exact: true }).boundingBox())!;
+    > 453 |         expect(button.width, `Omit ${name}: touch width`).toBeGreaterThanOrEqual(44);
+          |                                                           ^
+      454 |         expect(button.height, `Omit ${name}: touch height`).toBeGreaterThanOrEqual(44);
+      455 |         expect(await omit.evaluate((el) => getComputedStyle(el, '::after').content)).toBe('none');
+      456 |         expect(box.y - (button.y + button.height)).toBeGreaterThanOrEqual(12);
+        at tapAround (C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:453:59)
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:519:12
+
+    Error Context: test-results\form-controls-with-a-coars-0e743-r-reach-on-New-run-and-Wait-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\form-controls-with-a-coars-0e743-r-reach-on-New-run-and-Wait-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\form-controls-with-a-coars-0e743-r-reach-on-New-run-and-Wait-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\form-controls.spec.ts:408:3 › with a coarse pointer (#235) › Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait 

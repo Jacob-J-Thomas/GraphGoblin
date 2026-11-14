@@ -1,0 +1,50 @@
+
+Running 1 test using 1 worker
+
+(node:12284) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [chromium] › e2e\zz-negative-control-235.spec.ts:408:3 › with a coarse pointer (#235) › Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait (9.8s)
+
+
+  1) [chromium] › e2e\zz-negative-control-235.spec.ts:408:3 › with a coarse pointer (#235) › Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 11
+
+    - Array []
+    + Array [
+    +   "details at x 260, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    +   "details at x 266, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    +   "details at x 272, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    +   "details at x 278, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    +   "details at x 284, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    +   "details at x 290, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    +   "details at x 296, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    +   "details at x 302, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    +   "details at x 308, y 683.546875/685.546875/687.546875/689.546875/691.546875/693.546875/695.546875/697.546875",
+    + ]
+
+      487 |             );
+      488 |         }
+    > 489 |         expect(wrong).toEqual([]);
+          |                       ^
+      490 |         await expect(field).toHaveValue('typed');
+      491 |
+      492 |         // A tap anywhere on the button omits the field: 4 px inside each rounded corner, then the
+        at tapAround (C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\zz-negative-control-235.spec.ts:489:23)
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\zz-negative-control-235.spec.ts:517:12
+
+    Error Context: test-results\zz-negative-control-235-wi-a534c-r-reach-on-New-run-and-Wait-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\zz-negative-control-235-wi-a534c-r-reach-on-New-run-and-Wait-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\zz-negative-control-235-wi-a534c-r-reach-on-New-run-and-Wait-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\zz-negative-control-235.spec.ts:408:3 › with a coarse pointer (#235) › Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait 
