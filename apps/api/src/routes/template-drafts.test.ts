@@ -81,7 +81,7 @@ describe('editable template starting points', () => {
       const packaged = await app.container.templates.catalog.draft(kind);
       const name = 'Literal {{ vars.private }}; $(not-a-command)';
       const first = await createDraft(kind, name);
-      const second = await createDraft(kind, name);
+      const second = await createDraft(kind, name + ' copy');
       expect(first.loop.id).not.toBe(second.loop.id);
       expect(first.draft.id).not.toBe(second.draft.id);
       expect(first.draft.definition.name).toBe(name);

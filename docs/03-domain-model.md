@@ -22,6 +22,12 @@
 
 ## Loop definition (Decided shape, Draft details)
 
+The current display name is unique within each owner after whitespace runs are collapsed
+to one space, leading and trailing whitespace are removed, and Unicode default lowercase
+is applied. For example, `Écho  Board` and `écho\tboard` identify the same current name.
+The original spelling stays with the loop. Historical versions and run snapshots retain
+the names they were authored with. See [ADR-0073](decisions/ADR-0073-transactional-loop-names.md).
+
 Stored as JSON in `loop_versions.definition`, validated by `contracts`. Migration
 `0019_completion_deadline_defaults` materializes omitted `structuredTimeoutMs` and
 `runDeadlineSeconds` as null in drafts, published versions, immutable run snapshots,

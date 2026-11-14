@@ -19,6 +19,8 @@ export function registerTemplateRoutes(app: ApiInstance, container: Container): 
       schema: {
         tags: ['templates'],
         summary: 'Create an editable manual loop draft from a template',
+        description:
+          'An equivalent loop name returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName. Retry with an explicit name to create a distinct copy.',
         operationId: 'createTemplateDraft',
         params: TemplateParams,
         body: TemplateDraftRequestSchema,

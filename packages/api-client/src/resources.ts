@@ -111,8 +111,17 @@ export const loops = {
         },
       }),
     ),
-  import: async (client: GraphGoblinClient, exported: RequestBody<'/loops/import', 'post'>) =>
-    unwrap(await client.POST('/loops/import', { body: exported })),
+  import: async (
+    client: GraphGoblinClient,
+    exported: RequestBody<'/loops/import', 'post'>,
+    query?: QueryParams<'/loops/import', 'post'>,
+  ) =>
+    unwrap(
+      await client.POST('/loops/import', {
+        body: exported,
+        ...(query ? { params: { query } } : {}),
+      }),
+    ),
   remove: async (client: GraphGoblinClient, loopId: string): Promise<void> => {
     unwrap(await client.DELETE('/loops/{id}', id(loopId)));
   },

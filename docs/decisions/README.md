@@ -81,3 +81,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0066: Native Ollama inference and capability-bound model discovery](ADR-0066-native-ollama-and-model-discovery.md) records a gateway-wide saved connection, immediate/five-minute/manual discovery, exact model/control metadata, preference-preserving availability and fresh tool-free inference without fabricated provider sessions (#443).
 
 [ADR-0067: Codex loop turns inherit configured plugins](ADR-0067-codex-inherits-configured-plugins.md) supersedes ADR-0063's Codex plugin-off default, keeps standalone MCP discovery separate, and records the accepted familiar-default D2 policy and CLI diagnostics limit (#439, #442).
+
+[ADR-0073: Transactional loop-name uniqueness](ADR-0073-transactional-loop-names.md) records owner-scoped comparison, copy suggestions, write serialization and explicit repair for existing duplicates (#209).

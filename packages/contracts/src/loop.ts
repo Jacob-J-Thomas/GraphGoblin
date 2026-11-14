@@ -9,6 +9,18 @@ import { SystemChatBindingSchema } from './chat.js';
 /** The one current definition/export/storage format. Older formats are refused, never converted (ADR-0042). */
 export const CURRENT_DEFINITION_FORMAT = 4 as const;
 
+export const MAX_LOOP_NAME_LENGTH = 120;
+export const LoopNameSchema = z.string().min(1).max(MAX_LOOP_NAME_LENGTH);
+/** A name that can round-trip through the native SQLite text driver unchanged. */
+export function isStorableLoopName(value: string): boolean {
+  return !value.includes('\0') && !/[\uD800-\uDFFF]/u.test(value);
+}
+
+export const ExplicitLoopNameSchema = LoopNameSchema.refine(
+  (value) => value.trim().length > 0,
+  'must not be blank',
+);
+
 /** Where a run works. Fixed path, templated from the trigger, or a fresh temporary directory. */
 export const WorkingDirectorySpecSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('fixed'), path: z.string().min(1).max(4096) }),
@@ -97,7 +109,7 @@ export type Edge = z.infer<typeof EdgeSchema>;
 
 export const LoopDefinitionSchema = z.strictObject({
   schemaVersion: z.literal(CURRENT_DEFINITION_FORMAT),
-  name: z.string().min(1).max(120),
+  name: LoopNameSchema,
   description: z.string().max(4000).optional(),
   settings: LoopSettingsSchema.prefault({}),
   variables: VariableDeclarationsSchema.prefault({}),
@@ -119,7 +131,7 @@ export type LoopExport = z.infer<typeof LoopExportSchema>;
 export const LoopRecordSchema = z.strictObject({
   id: UlidSchema,
   ownerId: z.string().min(1).max(128),
-  name: z.string().min(1).max(120),
+  name: LoopNameSchema,
   description: z.string().max(4000).optional(),
   currentVersionId: UlidSchema.optional(),
   draftVersionId: UlidSchema.optional(),

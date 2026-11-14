@@ -214,6 +214,7 @@ describe('DELETE /loops/:id', () => {
   it('keeps a cross-loop parent and its published subloop reference after deleting the child', async () => {
     const childLoopId = await t.publishLoop(minimalLoop());
     const definition = minimalLoop();
+    definition.name = 'Cross-loop delete parent';
     definition.nodes.push({
       id: 'sub',
       kind: 'subloop',

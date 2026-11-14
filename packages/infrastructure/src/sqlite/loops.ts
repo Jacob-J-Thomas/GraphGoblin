@@ -18,6 +18,7 @@ import { recordWorkspacePhysical } from './workspace-references.js';
 import type { Database, SqliteTransaction } from './db.js';
 import { deleteRuns } from './delete-runs.js';
 import { SqliteEventStore } from './events.js';
+import { admitLoopName } from './loop-names.js';
 import { decodeRunRecord, decodeStoredThread, rawRunColumns } from './run-decoding.js';
 import {
   loopVersions,
@@ -403,6 +404,7 @@ export class SqliteLoopRepository implements LoopRepository {
             'The loop or voice configuration changed. Refresh and review a new preview.',
           );
       }
+      await admitLoopName(tx, loop.ownerId, definition.name, { exceptLoopId: loopId });
       const updated = existingDraftId
         ? await tx
             .update(loopVersions)
@@ -551,9 +553,15 @@ export async function insertLoopWithVersion(
     now: string;
     published: boolean;
     physical?: string | null;
+    systemGeneratedName?: boolean;
   },
 ) {
-  const { ownerId, loopId, versionId, definition, now, published } = input;
+  const { ownerId, loopId, versionId, now, published } = input;
+  const name = await admitLoopName(tx, ownerId, input.definition.name, {
+    chooseAvailable: input.systemGeneratedName === true,
+  });
+  const definition =
+    name === input.definition.name ? input.definition : { ...input.definition, name };
   await tx.insert(loops).values({
     id: loopId,
     ownerId,

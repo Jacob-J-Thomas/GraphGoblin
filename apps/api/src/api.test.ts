@@ -73,7 +73,7 @@ describe('engine request errors through ordinary routes', () => {
     const created = await t.app.inject({
       method: 'POST',
       url: '/loops',
-      payload: { definition: minimalLoop() },
+      payload: { definition: { ...minimalLoop(), name: 'Unpublished fixture' } },
     });
     expect(created.statusCode).toBe(201);
     const draft = created.json<{ loop: { id: string }; draft: { id: string } }>();
@@ -174,7 +174,7 @@ describe('loops', () => {
       expect(document.loop.nodes[0]!.config).toEqual(config);
       const imported = await t.app.inject({
         method: 'POST',
-        url: '/loops/import',
+        url: '/loops/import?name=Imported%20Trigger',
         payload: document,
       });
       expect(imported.statusCode).toBe(201);
@@ -284,7 +284,7 @@ describe('loops', () => {
 
     const imported = await t.app.inject({
       method: 'POST',
-      url: '/loops/import',
+      url: '/loops/import?name=Imported%20Minimal',
       payload: exported.json<object>(),
     });
     expect(imported.statusCode).toBe(201);

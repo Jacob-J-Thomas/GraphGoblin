@@ -4,6 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Loop creation, rename, import and template copies refuse case- and whitespace-equivalent
+  names for the same owner and return a suggested alternative (#209, ADR-0073). **Upgrade:**
+  startup reports existing duplicate pairs or a stored loop name containing NUL without writing
+  the store. Open the previous build, locate the NUL-bearing loop or one of a duplicate pair by
+  ID at `/app/loops/<id>/edit`, change
+  its name and wait for the draft to be saved. Repeat for each duplicate pair, then stop the
+  old build and start the new one. This retains loop IDs and the names in historical published
+  versions or run snapshots. An explicit `--reset` starts with an empty store.
+
 - Windows startup recovers abandoned ownership records when a reused PID has a different verified
   OS process creation identity. The launcher shares the API's ownership checks and reports
   unverifiable ownership instead of an unexplained access-denied error (ADR-0069). **Upgrade:**

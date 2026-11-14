@@ -1,5 +1,22 @@
 import { expect, it } from 'vitest';
-import { apiKeys, cron, events, runs, createGraphGoblinClient } from './index.js';
+import { apiKeys, cron, events, loops, runs, createGraphGoblinClient } from './index.js';
+
+it('sends the import name separately from the original export', async () => {
+  const requests: Request[] = [];
+  const client = createGraphGoblinClient({
+    baseUrl: 'http://graphgoblin.test',
+    fetch: (request) => {
+      requests.push(request);
+      return Promise.resolve(Response.json({}));
+    },
+  });
+  const exportBody = { format: 'graphgoblin-loop', loop: { name: 'Original' } };
+  await loops.import(client, exportBody);
+  await loops.import(client, exportBody, { name: 'Écho copy' });
+  expect(new URL(requests[0]!.url).searchParams.has('name')).toBe(false);
+  expect(new URL(requests[1]!.url).searchParams.get('name')).toBe('Écho copy');
+  expect(await requests[1]!.json()).toEqual(exportBody);
+});
 
 it('forwards explicit deletion review and confirmation through the generated API', async () => {
   const requests: Request[] = [];
