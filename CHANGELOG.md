@@ -17,6 +17,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   its name and wait for the draft to be saved. Repeat for each duplicate pair, then stop the
   old build and start the new one. This retains loop IDs and the names in historical published
   versions or run snapshots. An explicit `--reset` starts with an empty store.
+
+- New run and the waiting-for-input form send what was entered: an untouched field is left
+  out, cleared text is sent as an empty string for its schema to accept or refuse, and a
+  blank or incomplete number or JSON field is refused beside the field instead of being
+  dropped. An edited optional field shows **Omit**, which leaves it out again. Request and
+  stored formats are unchanged (#235).
 - JSONata limits nested evaluator calls while accepting wide, flat arrays and objects.
   Separate evaluations of cached source keep their own depth, deadline, bindings and
   timestamp (#228).
@@ -305,6 +311,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ### Added
 
+- The local GraphGoblin plugin for Claude Code adds `/graphgoblin:design-loop`, `/graphgoblin:run-loop` and `/graphgoblin:inspect-run`. It connects to the existing gateway through its client-owned stdio MCP process. Draft authoring uses the opt-in `--draft-tools` capability and the existing gateway scopes. (#455)
+
 - GitHub issue implementation template with configurable repository, labels, native gate and role selection. It polls eligible issues, reserves each attempt, runs fresh workers sequentially, verifies gates on an unchanged commit, and opens a closing PR without merging it. Attempt-aware deduplication permits only authenticated QA rework; relabeling does not reset consumed attempts. (#30)
 
 - **Use template** immediately creates and opens an editable starting-point draft, with useful instructions and limits and no mandatory setup form. Starter, implementation, review and QA drafts use run input and existing context; repository details and model choices can be customized later. Each card has one green **Use &lt;template name&gt;** action; gallery settings, automation setup and readiness checks are removed. Configured-instance backend retirement is tracked separately in #165. (#28, #160)
@@ -343,6 +351,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Settings' Model catalog uses Enabled switches to turn entries on or off. If a refresh removes a row while its switch is saving, focus returns to the section heading, and the notice that the model is no longer available clears on the next toggle. (#24)
 
 ### Upgrade notes
+
+- The Codex plugin builder replaces only an empty or previously generated output with no detectable foreign filesystem data. It checks Windows named streams and user-visible macOS and Linux extended attributes, including resource forks. Replacing a tree requires Windows PowerShell with `Add-Type`, `/usr/bin/xattr` on macOS, or `/usr/bin/python3` 3.8 or later on Linux. If `dist/marketplace` predates the ownership inventory, contains local edits or metadata, or cannot be inspected, use an unused `--out` or move the directory aside after reviewing it. Reinstall the rebuilt marketplace to refresh the cached plugin. (#344)
 
 - Fresh SQLite initialisation commits its schema, migration ledger and complete format marker together, allowing interrupted first startup to retry safely while unknown or damaged stores still require explicit recovery. SQLite helper consumers must replace `stampFreshDatabase` with `initializeFreshDatabase`, which owns this transaction; when it returns `current`, apply ordinary migrations. Concurrent initialisation still applies pending migrations, and rollback failures preserve the original error. (#152)
 

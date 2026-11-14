@@ -1,0 +1,47 @@
+
+Running 7 tests using 1 worker
+
+(node:40884) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › e2e\form-controls.spec.ts:49:1 › switches and segmented controls work by keyboard and save what they show (3.4s)
+  ok 2 [chromium] › e2e\form-controls.spec.ts:73:1 › a switch toggles with Space and Enter, and an optional boolean can go back to unset (7.6s)
+  ok 3 [chromium] › e2e\form-controls.spec.ts:138:1 › Tab and Shift+Tab leave a code field (1.3s)
+  ok 4 [chromium] › e2e\form-controls.spec.ts:161:1 › required fields are marked, and an error describes its control (1.1s)
+  ok 5 [chromium] › e2e\form-controls.spec.ts:182:1 › the import file picker is a labelled native input that names the chosen file (1.1s)
+  ok 6 [chromium] › e2e\form-controls.spec.ts:207:1 › the run form keeps a long choice inside its field and puts each problem beside its field (1.5s)
+  x  7 [chromium] › e2e\form-controls.spec.ts:271:1 › New run and Wait send the supplied input and omit untouched or reset fields (#235) (1.9s)
+
+
+  1) [chromium] › e2e\form-controls.spec.ts:271:1 › New run and Wait send the supplied input and omit untouched or reset fields (#235) 
+
+    Error: locator.check: Error: strict mode violation: getByRole('form', { name: 'Start run' }).getByRole('radiogroup', { name: 'approved' }).getByRole('radio', { name: 'No' }) resolved to 2 elements:
+        1) <input checked value="" type="radio" name="_r_c_" class="peer sr-only"/> aka getByRole('radio', { name: 'Not set' })
+        2) <input type="radio" name="_r_c_" value="false" class="peer sr-only"/> aka getByRole('radio', { name: 'No', exact: true })
+
+    Call log:
+      - waiting for getByRole('form', { name: 'Start run' }).getByRole('radiogroup', { name: 'approved' }).getByRole('radio', { name: 'No' })
+
+
+      373 |       .getByRole('radiogroup', { name: 'approved' })
+      374 |       .getByRole('radio', { name: 'No' })
+    > 375 |       .check();
+          |        ^
+      376 |     return submit;
+      377 |   }
+      378 |
+        at enterInput (C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:375:8)
+        at C:\Users\98jak\.codex\worktrees\gg-20261114-i08-input\GraphGoblin\apps\web\e2e\form-controls.spec.ts:380:17
+
+    Error Context: test-results\form-controls-New-run-and--dff0c-ouched-or-reset-fields-235--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\form-controls-New-run-and--dff0c-ouched-or-reset-fields-235--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results\form-controls-New-run-and--dff0c-ouched-or-reset-fields-235--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e\form-controls.spec.ts:271:1 › New run and Wait send the supplied input and omit untouched or reset fields (#235) 
+  6 passed (27.9s)

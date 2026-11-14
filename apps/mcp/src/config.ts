@@ -8,6 +8,8 @@ export interface McpConfig {
   apiKey?: string;
   /** `stdio` (default) or `http` (Streamable HTTP, `--http`). */
   transport: 'stdio' | 'http';
+  /** Whether to expose the optional loop draft authoring tools on stdio. */
+  draftTools?: true;
   /** HTTP bind address. `GG_MCP_HOST` or `--host`; default `127.0.0.1`. */
   host: string;
   /** HTTP port. `GG_MCP_PORT` or `--port`; default 4748. `0` picks a free port. */
@@ -21,10 +23,11 @@ export const DEFAULT_HTTP_PORT = 4748;
 
 export const USAGE = `graphgoblin-mcp - GraphGoblin MCP server
 
-Usage: graphgoblin-mcp [--api-url <url>] [--api-key <key>] [--http [--port <n>] [--host <addr>]]
+Usage: graphgoblin-mcp [--api-url <url>] [--api-key <key>] [--draft-tools | --http [--port <n>] [--host <addr>]]
 
   --api-url <url>   Gateway origin (env GG_API_URL, default ${DEFAULT_API_URL})
   --api-key <key>   Gateway API key (env GG_API_KEY; optional in local trusted mode)
+  --draft-tools    Expose draft authoring tools on stdio
   --http            Serve Streamable HTTP at /mcp instead of stdio
   --port <n>        HTTP port (env GG_MCP_PORT, default ${DEFAULT_HTTP_PORT}; 0 picks a free port)
   --host <addr>     HTTP bind address (env GG_MCP_HOST, default 127.0.0.1)
@@ -66,6 +69,7 @@ export function loadConfig(argv: readonly string[], env: NodeJS.ProcessEnv): Mcp
       options: {
         'api-url': { type: 'string' },
         'api-key': { type: 'string' },
+        'draft-tools': { type: 'boolean' },
         http: { type: 'boolean' },
         port: { type: 'string' },
         host: { type: 'string' },
@@ -79,10 +83,13 @@ export function loadConfig(argv: readonly string[], env: NodeJS.ProcessEnv): Mcp
   }
   const apiKey = values['api-key'] ?? (env['GG_API_KEY'] || undefined);
   const port = values.port ?? env['GG_MCP_PORT'];
+  if (values.http && values['draft-tools'])
+    throw new ConfigError('--draft-tools is supported only on stdio');
   return {
     apiUrl: parseUrl(values['api-url'] ?? (env['GG_API_URL'] || DEFAULT_API_URL)),
     ...(apiKey ? { apiKey } : {}),
     transport: values.http ? 'http' : 'stdio',
+    ...(values['draft-tools'] ? { draftTools: true } : {}),
     host: values.host ?? (env['GG_MCP_HOST'] || '127.0.0.1'),
     port: port ? parsePort(port) : DEFAULT_HTTP_PORT,
     help: values.help ?? false,

@@ -1,5 +1,6 @@
 import { createGraphGoblinClient, type GraphGoblinClient } from '@graphgoblin/api-client';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerDraftTools } from './draft-tools.js';
 import { registerResources } from './resources.js';
 import { registerTools, type ToolOptions } from './tools.js';
 
@@ -15,7 +16,7 @@ export type GatewayOptions =
   | { client: GraphGoblinClient }
   | { apiUrl: string; apiKey?: string; fetch?: (request: Request) => Promise<Response> };
 
-export type CreateServerOptions = GatewayOptions & ToolOptions;
+export type CreateServerOptions = GatewayOptions & ToolOptions & { draftTools?: boolean };
 
 /** The gateway client the MCP server uses; `client: 'mcp'` makes runs record `manual.mcp`. */
 export function createGatewayClient(options: GatewayOptions): GraphGoblinClient {
@@ -36,6 +37,7 @@ export function createMcpServer(options: CreateServerOptions): McpServer {
     { instructions: INSTRUCTIONS, capabilities: { tools: {}, resources: {} } },
   );
   registerTools(server, client, options);
+  if (options.draftTools) registerDraftTools(server, client);
   registerResources(server, client);
   return server;
 }

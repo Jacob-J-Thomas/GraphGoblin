@@ -149,3 +149,7 @@ shipped by whisper.cpp (`samples/jfk.wav`), a US federal government speech recor
 and deterministic canonical-WAV conversion are recorded alongside the sample in the API. A cloud
 probe explicitly discloses sample upload and provider billing; private microphone input is not
 used for an automatic benchmark. OpenAI transcription uses native fetch; no provider SDK is added.
+
+## Plugin output metadata inspection
+
+On Linux, replacing an existing plugin build directory uses the host's Python 3.8 or later and its standard library. Python uses the permissive [Python Software Foundation License Version 2](https://docs.python.org/3/license.html). GraphGoblin does not package or install the interpreter or any Python package. Windows PowerShell and macOS xattr are host OS tools.

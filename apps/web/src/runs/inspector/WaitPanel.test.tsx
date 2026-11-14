@@ -1,5 +1,5 @@
 import type { RunRecord } from '@graphgoblin/contracts';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -65,6 +65,69 @@ it('submits the identity associated with the displayed input form', async () => 
     waitId: '3',
     input: { note: 'answer' },
   });
+});
+
+it('sends empty text, null, zero and false as entered, and no JSON input as null (#235)', async () => {
+  const user = userEvent.setup();
+  const api = new FakeApi();
+  const inputs = (id: string) => api.callsTo('POST', `/runs/${id}/input`);
+  const typed = runRecord({
+    id: '01ARZ3NDEKTSV4RRFFQ69G5FAW',
+    status: 'waiting',
+    lastEventSeq: 5,
+    waiting: {
+      waitId: '4',
+      nodeId: 'ask',
+      kind: 'input',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          untouched: { type: 'string' },
+          note: { type: 'string' },
+          details: { type: 'null' },
+          count: { type: 'integer' },
+          approved: { type: 'boolean' },
+        },
+      },
+      startedSeq: 4,
+    },
+  });
+  api.runs.set(typed.id, typed);
+  const view = renderWith(<WaitPanel run={typed} />, '/', api);
+  await user.type(screen.getByLabelText('note'), 'x');
+  await user.clear(screen.getByLabelText('note'));
+  await user.type(screen.getByLabelText('details'), 'null');
+  await user.type(screen.getByLabelText('count'), '0');
+  await user.click(
+    within(screen.getByRole('radiogroup', { name: 'approved' })).getByRole('radio', {
+      name: 'No',
+    }),
+  );
+  await user.click(screen.getByRole('button', { name: 'Submit input' }));
+  await waitFor(() => expect(inputs(typed.id)).toHaveLength(1));
+  expect(inputs(typed.id)[0]!.body).toStrictEqual({
+    waitId: '4',
+    input: { note: '', details: null, count: 0, approved: false },
+  });
+  view.unmount();
+
+  // No schema: a JSON editor. The endpoint takes an input, so none is sent as null; "" stays "".
+  const free = runRecord({
+    id: '01ARZ3NDEKTSV4RRFFQ69G5FAX',
+    status: 'waiting',
+    lastEventSeq: 5,
+    waiting: { waitId: '5', nodeId: 'ask', kind: 'input', startedSeq: 5 },
+  });
+  api.runs.set(free.id, free);
+  renderWith(<WaitPanel run={free} />, '/', api);
+  await user.click(screen.getByRole('button', { name: 'Submit input' }));
+  await waitFor(() => expect(inputs(free.id)).toHaveLength(1));
+  expect(inputs(free.id)[0]!.body).toStrictEqual({ waitId: '5', input: null });
+  api.runs.set(free.id, free);
+  await user.type(screen.getByLabelText('Input (JSON)'), '""');
+  await user.click(screen.getByRole('button', { name: 'Submit input' }));
+  await waitFor(() => expect(inputs(free.id)).toHaveLength(2));
+  expect(inputs(free.id)[1]!.body).toStrictEqual({ waitId: '5', input: '' });
 });
 
 it('binds the displayed identity before an asynchronous mutation can see a newer wait', async () => {

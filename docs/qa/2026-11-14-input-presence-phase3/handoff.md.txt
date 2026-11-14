@@ -1,0 +1,248 @@
+# #235 coarse Omit target — Claude Opus phase 3 handoff
+
+**Status: correction complete on the worktree; NOT merge-ready.** Independent QA, independent GPT review, current-head full CI
+and the fresh Astra audit are still required (see "Remaining gates"). Nothing was staged, committed, pushed or published; no
+issue was touched; no subagents.
+
+- **Model:** Claude Opus 5.5 (`claude-opus-5-5`), an implementation escalation, not an adversarial review (no scan consumed). I cannot
+  verify the effective reasoning effort from inside the session; root should trust its launch config.
+- **Worktree / branch / HEAD:** `C:/Users/98jak/.codex/worktrees/gg-20261114-i08-input/GraphGoblin`, `codex/gg-20261114-i08-input`,
+  HEAD `ccd780201f5fa7522f34ac3bed407f9702d491ee` (unchanged; clean tree at start, phase2 hashes verified, `logs/00-*`).
+- **Runtime:** Node v22.23.4 for every `pnpm.cmd` call (`logs/00-node.txt`, `logs/50-node-final.txt`).
+- **Browser/backend:** installed Edge (`channel: msedge`) against the repository's disposable e2e backend (`apps/web/e2e/server.ts`:
+  real API, in-memory store, fake harness, ephemeral loopback port). No owner store, credentials, providers, or ports 4747/4748.
+
+## Result
+
+On a coarse pointer, Omit is now a real **44 × 44 px** outline button. Its own box is the whole target; there is no invisible
+`::after` box. Every optional field's label line holds the button's place before it appears: on a coarse pointer the line is
+44 px high, with the label at its foot. Omit ends **12 px above its field** (the last measured-safe separation is kept), starts
+**≥ 16 px below the previous control**, and sits **≥ 12 px from the label**.
+
+Appearing moves nothing (0 shift in 48 measured configurations). **0 of 5,630 real taps** on the current field, the previous
+control or the label fired Omit, and **90 of 90** taps inside the drawn button did. The fine-pointer look and density are
+unchanged; the one fine change is that the held place also stops a pre-existing label re-wrap shift (below). Omission semantics, the API and required-field
+behaviour are untouched (`RunLauncher.tsx` / `WaitPanel.tsx` unchanged). docs09 again states a truthful ≥ 44 px coarse contract.
+
+## Final identity
+
+| Item                                                     | sha256                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------ |
+| `apps/web/src/forms/JsonSchemaForm.tsx`                  | `a216a032fcf253a1d0960adb864aedc76445f45e4def63ddaba6edad251b8274` |
+| `apps/web/src/forms/JsonSchemaForm.test.tsx`             | `8a54aec99ac7629e1fbb0c3afb3ebdc2fb77b139b8874f37425480f9b0ab763b` |
+| `apps/web/e2e/form-controls.spec.ts`                     | `c353146723b1f9e9041912e472282b9f52996c11fecad7df1119501035a73d83` |
+| `apps/web/e2e/responsive.spec.ts`                        | `688c9f8d0c516157027653630ebe691001f861ab1d1811cf6ca13d620998380c` |
+| `docs/09-frontend-and-pwa.md`                            | `c881011a5e9ed66cdd7f47167a8a475039dfdffb79987114f7953c9bb9de70ad` |
+| `final-phase3-tracked.diff` (`git diff HEAD`)            | `70d4c137ca291a0ef814d0e46cdd7aca1c0f951904000e2ac9e230d0fb375da4` |
+| `apps/web/dist` manifest (sorted sha256 list, no `.map`) | `379a285e0adb1b5f410d7f6b0e46f264381b467d2ff87ae25fa62bfa034acb4d` |
+| `dist/assets/index-DD_TemKs.js`                          | `bd27289f30065fc0d01feb5fefc6af4ff97fa5239e5f52162bef99ce522cdb09` |
+| `dist/assets/index-DSoHGgpa.css`                         | `e4eaa8b3b3d9fa4a4be90f65bedf3f842d1f09c5d935f93a89cec6c0d84985dc` |
+
+`git diff HEAD --stat`: 5 files, 252 insertions, 101 deletions; `git status` shows those five ` M` files plus the untouched untracked
+baseline bundle. `RunLauncher.tsx` `4336923c…` and `WaitPanel.tsx` `6fc154fe…` are unchanged from the start.
+
+**Build chain.** All browser evidence ran on the dist from `logs/21` (manifest `379a285e…`). After it, the only source change was the
+comment wording in `JsonSchemaForm.tsx` (`20987308…` → `a216a032…`: "starts 16 px" → "starts at least 16 px"). The final `pnpm.cmd build`
+(`logs/65`, 11/11 tasks) produced a byte-identical dist (`cmp` of manifests clean). Prettier, ESLint, typecheck, web lint and the
+focused unit files were rerun on the final tree (`logs/60`–`64`). The HEAD dist was `a3ac69c4…`, identical to phase2's final dist
+(`logs/01`).
+
+## Design (what the source does)
+
+`JsonSchemaForm.tsx` only. `LabelLine` (new) is shared by property fields and the raw JSON editor.
+
+- **Coarse Omit** (`OMIT_BUTTON`): `pointer-coarse:h-11 min-w-11 my-0 rounded-md border-strong bg-surface-raised shadow-ledge`, the
+  repo's outline-button look at its coarse 44 px size, text centred. The fine look is the same 20 px ghost button (only `justify-center`
+  added, which changes nothing at its content width).
+- **Coarse label line of an optional field** (`OMIT_ROW`): `pointer-coarse:items-end gap-3 pb-1.5`. The line is as high as Omit's place
+  (44 px), the label and any JSON tag sit at its foot, and the label is 12 px from Omit. The 6 px under the line plus the
+  `FieldGroup` 6 px gap put Omit 12 px above the field. The form's 16 px gap puts the line's top ≥ 16 px below the previous field.
+- **Held place** (both pointers): while there is no Omit, an `aria-hidden` `invisible` `<span>` drawn with the same classes and text
+  stands in for it. It is the same size in any font, takes no hit test, no focus and no accessibility node, so Omit appearing moves
+  neither label, tag nor field. Required fields hold nothing. The raw editor holds a place only when its schema accepts no input.
+
+## Actual dimensions (CSS px, Edge; `logs/23-omit-geometry-batch2.log`, `logs/omit-geometry-batch2.json`)
+
+| Pointer / width       | Revealed Omit | Label line | Omit → field | Label → field | Prev. control → Omit | Label → Omit | `::after` |
+| --------------------- | ------------- | ---------- | ------------ | ------------- | -------------------- | ------------ | --------- |
+| coarse 390 and 1280   | **44 × 44**   | 50 (44 + 6) | **12.00**   | 12.00         | **16.00** (22.67 with a 3-line title) | ≥ **12** | `none` |
+| fine 1280 and 390     | 41.75 × 20 (unchanged) | 16.89 (18.5 JSON) | 4.45 (5.25 JSON) | 6.00 (6.81) | 14.44 | ≥ 8 | `none` |
+
+Coarse values hold on both entry points (New run and Wait) for text, number, JSON, the raw editor and long titles (`LONG_SCHEMA`: 101-
+and 74-character titles wrapping to 2–3 lines). The e2e `responsive` coarse case logs **"Omit input (New run) 44 x 44 px"** and
+**"(Wait) 44 x 44 px"** in both themes (`logs/26`). Coarse forms are taller than phase2: +187 CSS px on the 10-property visual
+form (7 optional text/number/JSON rows, about 26 px each), +28 px on the raw editor. Fine 1280 forms keep phase2's exact image size
+(`logs/70`).
+
+## No shift when Omit appears
+
+- **Final:** 48 configurations × {field top, label box, tag position, form height} = **0.000 px** change (`logs/23`: coarse 390/1280
+  and fine 1280/390; New run and Wait; text, number, JSON, raw, long titles).
+- **HEAD dist, same probe** (`logs/71`): 4 of 48 shifted **16.89 px**. The 74-character JSON title re-wrapped from 2 to 3 lines when
+  Omit took width, at 390 on coarse **and fine**. Batch 1 removed it on coarse; batch 2's stand-in removed it on fine too.
+- e2e `form-controls` coarse case: the field's offset is identical before Omit appears, after, and after a tap on Omit, on both entry
+  points for text and JSON. The original #235 case's fine no-shift check still passes.
+
+## Real taps (`page.touchscreen.tap`, CDP touch events, coarse pointer)
+
+Driver `drivers/tap-grid.mjs` taps:
+
+- the current field's top 14 px every 1 px, and the previous control's bottom 12 px every 2 px, across Omit's x-range ±26 px every 4 px;
+- the label's text-line boxes nearest Omit, every 3 px;
+- 9 points inside the drawn button.
+
+A capture-phase click counter on Omit attributes every firing, including late ones.
+
+| Run                                    | Taps  | Wrong omissions (field / previous / label) | Taps inside button that omitted | Late clicks |
+| -------------------------------------- | ----- | ------------------------------------------ | ------------------------------- | ----------- |
+| **Final build** (`logs/27`, 10 configs: New run and Wait × 390/1280 × text/JSON, + long title at 390) | **5,630** | **0** (3,120 / 1,456 / 924 taps) | **90 / 90** | 0 |
+| Batch 1 build (`logs/12`)              | 5,630 | 0                                          | 90 / 90                         | 0           |
+| Mutant: final minus the 6 px under the line (Omit 6 px above the field) (`negative-control/45`) | 2,294 | **61** (all in the field; up to 3 px deep in text, 1 px in JSON) | 36 / 36 | 0 |
+
+Four extra taps per configuration, 1 px inside the button's corners, never fired. They lie outside its 8 px rounded corners and are
+recorded as information, not counted. The e2e corner taps use 4 px insets, which are inside the shape.
+
+**e2e regression (`form-controls.spec.ts`, "with a coarse pointer (#235)"):**
+
+- On New run and then Wait (reached by tapping Start run), for `comment` (text) and `details` (JSON), it asserts:
+  - Omit ≥ 44 wide and ≥ 44 high, with no `::after`;
+  - field top − Omit bottom ≥ 12, and Omit top − previous field bottom ≥ 16;
+  - no shift when Omit appears.
+- Real taps over the field's top 14 px and the previous field's bottom 10 px (every 2 px, x every 6 px, ±24 px) must not omit.
+- Taps 4 px inside each corner and at the centre must omit.
+- It runs in **22.5 s** locally (of the 60 s default timeout). I kept the tap points and checked once per column/region instead of
+  per tap (27.9 s before), rather than raising the timeout.
+
+`responsive.spec.ts` coarse case: now also visits New run, and on New run and the waiting run it types into the raw editor to reveal
+Omit, reruns `smallTargets`, measures Omit (≥ 44 × 44) and taps it.
+
+## Negative controls (kept and extended)
+
+| Control                                                                                 | Result                                                                                         |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| New coarse e2e case vs **HEAD dist** (phase2's 41.75 × 20 Omit) (`negative-control/40`) | **fails**: `Omit comment: touch width — Expected >= 44, Received 41.75`                        |
+| Extended responsive coarse case vs HEAD dist (`negative-control/41`)                    | **fails**: `/app/runs/new?loop=… with Omit` → `smallTargets` lists `"Omit input"`               |
+| New coarse e2e case vs **no-clearance mutant** (`negative-control/42`, `43`)            | **fails** on clearance: `Expected >= 12, Received 6`                                            |
+| Same case with the two clearance assertions removed (temporary copy, deleted) (`44`)   | **fails on the real-tap grid**: 9 columns of taps on `details` omitted it (x 260–308). The real wrong-action control still bites at the new geometry |
+
+Phase2's recorded wrong-action control (`ui-235-claude-phase2/mutation/`) is untouched. The mutant was built from a temporary edit
+of `OMIT_ROW` into `negative-control/dist-nogap`. The source was restored and verified by hash (`negative-control/restored.check`).
+
+## Screenshots actually inspected (`screenshots/final/`, device scale 2; 140 files, `logs/30`, notes `logs/screenshots-final-notes.json`)
+
+All 50 keyboard-focus states put focus on Omit with `:focus-visible` true. Inspected:
+
+- `newrun-390-coarse-light-edited.png` — whole New run form, Omit on comment/message/title/number/payload, JSON tags fixed at the line's
+  foot, required `reason` without Omit, choices unaffected.
+- `newrun-390-coarse-light-rows-text.png`, `newrun-390-coarse-light-rows-json.png` (batch 1, identical design on coarse) — row detail.
+- `newrun-390-coarse-dark-focus-omit.png` — focus ring fully around the 44 px button, clear of the field.
+- `wait-390-coarse-dark-edited.png` (batch 1 set) and `wait-390-coarse-dark-focus-omit-json.png` — Wait form, dark, JSON row with tag.
+- `long-newrun-390-coarse-light-edited.png` (batch 1) and `long-wait-390-coarse-dark-focus-omit-json.png` — 3-line titles readable,
+  Omit and tag at the line's foot, 12 px from the label.
+- `rawopt-wait-390-coarse-light-focus-omit.png` — raw editor on Wait.
+- `wait-1280-fine-light-focus-omit-json.png`, `wait-1280-fine-dark-focus-omit.png`, `newrun-1280-fine-dark-rows-json.png` — fine
+  pointer unchanged: 20 px ghost Omit, ring visible.
+
+**Fine vs phase2, pixel diff** (`logs/31`, `drivers/png-diff.mjs`): every 1280 fine image has the same size. Untouched states are
+pixel-identical (0 px). Edited/error states differ only inside the focused field's frame (focus transition/caret timing); Omit's line
+is identical. Example: `rawopt-newrun-1280-fine-light-edited.png` against phase2 `rawopt-newrun-1280-light-edited.png`.
+
+Not inspected beyond the set above: the other light/dark duplicates in `screenshots/final` and `screenshots/batch1`.
+
+## First failures and corrections (two source batches, as allowed)
+
+1. **Batch 1** (source): coarse 44 × 44 outline Omit, 44 px label line with a coarse-only empty 44 × 44 slot, label at the foot,
+   `gap-3`, `pb-1.5`; `LabelLine` extracted; docs09 Touch/Where/Regression; e2e coarse case rewritten; responsive reveal added.
+   Evidence: coarse sizes and clearances as designed, 5,630 taps / 0 wrong. **First failure found by measurement** (`logs/11`): at 390 px
+   on a **fine** pointer the 74-character JSON title re-wrapped 2 → 3 lines when Omit appeared (16.89 px field shift). Also a design
+   risk: a fixed 44 px slot would not match Omit's width in a wider Font-control face (OpenDyslexic).
+2. **Batch 2** (source, final): the empty slot is replaced by an `aria-hidden` invisible stand-in drawn exactly as Omit, on both
+   pointers. It removes the conditional `hidden`/`pointer-coarse:flex` classes (`cn` is plain `clsx`, so they would have relied on CSS
+   order). Result: 0 of 48 shift (`logs/23`), taps 0 wrong (`logs/27`). Added unit tests for the held place (`JsonSchemaForm.test.tsx`,
+   2 new and 1 extended).
+3. Test-only refinement: the coarse e2e grid checks once per column/region (same points), 27.9 s → 22.5 s.
+4. Comment-only wording fix after the final gates ("at least 16 px"); gates rerun, bundle identical.
+
+Driver mistakes (mine, not product defects; corrected before relying on any result):
+
+- the first geometry run looked fields up by name instead of title and measured viewport-relative positions;
+- the first tap-grid launch only checked whether Omit vanished within 60 ms, so I stopped it by PID before it produced results
+  (`logs/12a-first-tap-launch-stopped.txt`) and added the click counter;
+- the smoke run counted 1 px corner taps as misses until I saw they are outside the rounded shape.
+
+## Commands and exit codes (cwd `apps/web` unless the repo root is shown; all `pnpm.cmd`, Node 22.23.4)
+
+| # | Command                                                                                                         | Exit / result |
+| - | --------------------------------------------------------------------------------------------------------------- | ------------- |
+| 01 | root `pnpm.cmd build` (HEAD baseline)                                                                          | 0, FULL TURBO, dist `a3ac69c4…` |
+| 10 | root `pnpm.cmd --filter @graphgoblin/web build` (batch 1)                                                      | 0 |
+| 11 | `node drivers/omit-geometry.mjs batch1`                                                                        | 1 (driver bug), then 0 |
+| 12 | `node drivers/tap-grid.mjs batch1` (`GG_STEP=4`)                                                               | 0; 5,630 taps, 0 wrong |
+| 13 | `pnpm.cmd exec vitest run src/forms/JsonSchemaForm.test.tsx` (batch 2 draft)                                  | 0; 19/19 |
+| 14 | `node drivers/screenshots.mjs batch1`                                                                          | 0; 140 images |
+| 20 | root `pnpm.cmd exec prettier --check <5 files>` then `--write`                                                 | 1 (two line wraps), then 0 |
+| 21 | root `pnpm.cmd build` (batch 2)                                                                                | 0; 11/11; dist `379a285e…` |
+| 22 | `pnpm.cmd run typecheck`; `pnpm.cmd exec eslint <4 touched TS files>`                                          | 0; 0 |
+| 23 | `node drivers/omit-geometry.mjs batch2`                                                                        | 0; 48 configs, 0 shift |
+| 24 | `pnpm.cmd exec playwright test e2e/form-controls.spec.ts --retries=0`                                          | 0; 8/8 (coarse 27.9 s) |
+| 25 | same, final spec                                                                                               | **0; 8/8** (coarse 22.5 s, total 43.7 s) |
+| 26 | `pnpm.cmd exec playwright test e2e/responsive.spec.ts --retries=0 --grep "screens and transient states fit\|on a coarse pointer the controls are at least 44 px"` | **0; 4/4** (dark, light) |
+| 27 | `node drivers/tap-grid.mjs final` (`GG_STEP=4`)                                                                | **0; 5,630 taps, 0 wrong, 90/90** |
+| 28 | `pnpm.cmd exec vitest run` JsonSchemaForm, NewRunPage, WaitPanel, RunInspectorPage tests                       | **0; 4 files, 59/59** |
+| 29 | same 4 files `--coverage --coverage.include=src/forms/JsonSchemaForm.tsx` (reports in this folder)             | 0; **lines 100, statements 100, functions 100, branches 96.61** |
+| 30 | `node drivers/screenshots.mjs final`                                                                           | 0; 140 images |
+| 40, 41, 43, 44 | negative controls above (`GG_E2E_WEB_DIST=…`)                                                          | 1 each, as intended |
+| 42 | `pnpm.cmd exec vite build --outDir <qa>/negative-control/dist-nogap --emptyOutDir` (temporary mutant)          | 0 |
+| 45 | `node drivers/tap-grid.mjs nogap-mutant` (mutant dist)                                                         | 0; 61 wrong of 2,294 |
+| 51–55 | prettier `--check` (5 files); eslint (4 files); `run typecheck`; `run lint` (web package); root `pnpm.cmd build` | 0; 0; 0; 0; 0 (dist identical) |
+| 60–65 | the same after the comment fix, plus the 4 focused unit files                                              | 0 each; 59/59; dist identical |
+| 71 | `node drivers/omit-geometry.mjs head-dist` (HEAD dist)                                                         | 0; 4 shifts of 16.89 px |
+
+**Coverage reasoning.** The change is rendering structure plus classes. `LabelLine` and the stand-in add conditional rendering, but
+omission semantics, values and validation are untouched. Focused coverage of `JsonSchemaForm.tsx` over the form and consumer tests is
+100 % lines, statements and functions and 96.61 % branches. The 7 uncovered branches are all pre-existing lines (54, 63, 103, 290, 361,
+371, 511: enum keys, issue placement, select options); none is in `LabelLine` (lines 160–199) or the stand-in (`logs/29b`). As the
+brief allows, I did not repeat the 18-minute whole-package coverage; current-head full CI must run it.
+
+## Not proven / residual risks
+
+1. **Emulated touch only:** CDP touch on desktop Edge, default touch area. No real fingers, Android Chrome, iOS Safari, or browser
+   zoom-out (which shrinks CSS-px clearances). The 12 px clearance compares with a measured firing threshold of 6–7.5 px (phase2 at
+   20 px; the mutant at 6 px here).
+2. **Forced colours:** not re-examined in this phase. Phase2's limitation stands: emulation changes media/computed styles but does not
+   paint the OS palette, and no real High Contrast run was done. The coarse Omit's `border-strong` becomes the system button border in
+   forced colours, but that was not verified.
+3. **e2e density:** the e2e grid (x every 6 px, depth every 2 px) caught the mutant on the JSON field but not on the text field, where
+   the driver's 1 px grid found 9 wrong taps. The deterministic ≥ 12 / ≥ 16 clearance assertions are what fail first on any spacing
+   regression. The dense evidence is in the driver logs, not CI.
+4. **CI timing:** the coarse e2e case takes 22.5 s of the 60 s default locally; CI runners may be slower.
+5. **Layout cost:** coarse optional rows are about 26 px taller than phase2 (+187 px on a 7-optional-row form). On fine pointers a long
+   optional title wraps about 50 px earlier, because Omit's place is held.
+6. No WCAG conformance claim is made beyond the repo's ≥ 44 px coarse convention (the target box is 44 × 44 CSS px with 8 px rounded
+   corners).
+7. Unchanged and out of scope, as before: Omit still discards the typed text; the raw editor's `{}` placeholder; text cannot send
+   `null`.
+
+## Remaining gates (this source is not merge-ready until they pass)
+
+1. Independent QA. 2. Independent GPT review. 3. Current-head full CI: `pnpm check`, whole web coverage, the full Edge suite,
+   including the other New run/Wait e2e files not run here. 4. Fresh Astra audit. 5. Owner product acceptance (the PR should say
+   "Part of #235"). Root still owns committing (the AGENTS rule: no assistant attribution in commits) and formatting/committing the
+   untracked baseline bundle.
+
+## Cleanup
+
+- Every driver and Playwright run stopped its own e2e server and Edge. The first tap-grid launch was stopped by PID 17672, and its
+  e2e server and Edge exited with it (`logs/12a-…`). Final scan (`logs/68`, `logs/69`): **0 msedge, 0 e2e servers, 0 Playwright/vitest, no phase3 driver process.**
+  - Remaining node processes belong to others: PID 49572 is the wrapper that launched this session (present at baseline,
+    `logs/00-process-baseline.txt`); 39124 is another session's review-463 runner; 19500 is the owner API on 4747. None was touched.
+- `apps/web/test-results` removed. The temporary spec `e2e/zz-negative-control-235.spec.ts` was deleted. The mutant edit was reverted
+  and hash-verified. `apps/web/dist` holds the final build (git-ignored); coverage reports went to this folder, not the repo.
+- **`docs/qa/2026-11-14-i08-u22-baseline` untouched:** 31 files, `cmp` of sha256 lists before/after identical (`logs/00-…`, `logs/67-…`).
+- Phase2's folder was read only; nothing in it was written.
+
+## Artifact index (this folder)
+
+`handoff.md` (this), `final-phase3-tracked.diff`, `drivers/` (see `drivers/README.md`), `logs/` (numbered in run order),
+`screenshots/{batch1,final}/`, `negative-control/` (HEAD dist copy, mutant dist, logs, diffs, restored hash),
+`coverage-focused*/`. `report.md`/`result.json` are the wrapper's, not mine.
