@@ -35,6 +35,8 @@ Start the API (`pnpm --filter @graphgoblin/api start`, default `http://127.0.0.1
 
 After rebuilding, run `pnpm --filter @graphgoblin/plugin-codex assemble` (part of `build`) and reinstall with `codex plugin add` to refresh the cached copy. Remove with `codex plugin remove graphgoblin@graphgoblin-local` and `codex plugin marketplace remove graphgoblin-local`.
 
+The builder accepts an unused destination, an empty directory, or its own complete generated output. Foreign, modified, pre-ownership, or linked destinations are refused. Use an unused `--out <path>` or manually move the existing output aside before rebuilding the default `dist/marketplace`. If an interrupted build leaves a sibling `.marketplace.graphgoblin-build` directory, verify that no build is active and inspect its `previous` and `next` directories. Preserve or restore a prior artifact before moving the staging directory aside or choosing a new destination.
+
 ## Without the plugin
 
 Register only the MCP server:

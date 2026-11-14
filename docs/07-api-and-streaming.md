@@ -431,6 +431,8 @@ apps/plugin-codex/dist/marketplace/      assembled by pnpm build
 
 Codex installs a plugin by copying it into `~/.codex/plugins/cache/<marketplace>/<plugin>/<version>`, so the source `.mcp.json` carries the placeholder `${GRAPHGOBLIN_MCP_ENTRY}` and the build writes the absolute path. Install with `codex plugin marketplace add <repo>/apps/plugin-codex/dist/marketplace` and `codex plugin add graphgoblin@graphgoblin-local`; `codex mcp list` then shows the server. `env_vars` passes `GG_API_URL` and `GG_API_KEY` through from the environment Codex runs in. See `apps/plugin-codex/README.md`.
 
+The builder stages the complete marketplace and checks the previous generated file list and digests before replacing it. A linked path, an overlapping input directory, or an output with unrelated or modified entries is refused. Use an unused destination or inspect and move the old output aside before rebuilding.
+
 ## Client (Decided)
 
 `packages/api-client` (`@graphgoblin/api-client`) is the one HTTP client for the web app and the MCP server. It depends only on `contracts` and `openapi-fetch`, and uses nothing but `fetch`, web streams, and `TextDecoderStream`, so it runs in browsers and Node 18+.

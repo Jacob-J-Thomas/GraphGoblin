@@ -54,5 +54,10 @@ export function isEntryPoint(entry: string | undefined, moduleUrl: string): bool
 
 if (isEntryPoint(process.argv[1], import.meta.url)) {
   const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  process.exitCode = await run(process.argv.slice(2), packageDir, console.error);
+  try {
+    process.exitCode = await run(process.argv.slice(2), packageDir, console.error);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  }
 }
