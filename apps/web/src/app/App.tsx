@@ -1,7 +1,13 @@
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router';
 import { ApiKeyPanel } from '../api/ApiKeyPanel.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
-import { AppShell, Page, PageHeader, type NavItem } from '../components/layout/index.js';
+import {
+  AppShell,
+  Page,
+  PageHeader,
+  useConnectionBannerClaimed,
+  type NavItem,
+} from '../components/layout/index.js';
 import { buttonStyles, Card } from '../components/ui/index.js';
 import { EditorPage } from '../editor/EditorPage.js';
 import { EventsPage } from '../events/EventsPage.js';
@@ -27,12 +33,15 @@ const NAV: readonly NavItem[] = [
 
 function Layout() {
   const connection = useConnectionStatus();
+  // A loaded editor shows the one connection banner under its own toolbar, so Undo and Redo do
+  // not move when it appears; every other screen and state keeps the shell's (#208).
+  const bannerClaimed = useConnectionBannerClaimed();
   const location = useLocation();
   return (
     <AppShell
       nav={NAV}
-      offline={connection === 'offline'}
-      apiUnreachable={connection === 'api-unreachable'}
+      offline={!bannerClaimed && connection === 'offline'}
+      apiUnreachable={!bannerClaimed && connection === 'api-unreachable'}
     >
       <ApiKeyPanel />
       <ShutdownNotice />

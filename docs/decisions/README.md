@@ -89,3 +89,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0075 — Repair references in the current loop's node state](ADR-0075-node-id-reference-repair.md) records the repair and publication boundaries for node-ID changes (#273).
 
 [ADR-0076 — Canvas-only connection authoring](ADR-0076-canvas-only-connection-authoring.md) records the owner decision that connections are authored only on the canvas, that changing one means removing it and drawing it again, and the keyboard connection-creation path it removes (#207).
+
+[ADR-0078 — Stationary history controls and a one-owner connection banner](ADR-0078-stationary-history-controls.md) records the fixed leading Undo and Redo slot, their non-moving press, and the loaded editor owning the one connection banner under its toolbar, with the baseline causes and the shell fallback for every other state (#208).
