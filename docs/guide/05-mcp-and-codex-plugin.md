@@ -63,7 +63,7 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 | `provide_input`   | Supply the observed `waiting.waitId` and schema-valid input to an input wait.                   |
 | `send_signal`     | Send the observed `waiting.waitId` and a named signal with an optional payload; inspect `woke`. |
 
-`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for an unpublished loop; a draft run keeps a snapshot of the draft as it was at start. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
+`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for a loop with no published version; a draft run keeps a snapshot of the draft as it was at start. `allowDraft` cannot select a newer draft of a published loop. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
 
 `list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
 
@@ -151,7 +151,7 @@ claude --plugin-dir $pluginPath
 The plugin inherits `GG_API_URL` and, when needed, `GG_API_KEY`. In an authenticated configuration, authoring needs `loops:write`, starting a known loop needs `loops:read` and `runs:write`, and inspection by run ID needs `runs:read`.
 
 - Use `/graphgoblin:design-loop` to create or update an unpublished draft and see validation issues.
-- Use `/graphgoblin:run-loop` to start a loop. Explicitly request draft execution when the loop has no published version.
+- Use `/graphgoblin:run-loop` to start a loop. Explicitly request draft execution when the loop has no published version. For a published loop with a newer draft, explain that the draft cannot be selected and do not substitute a published run unless the user confirms it.
 - Use `/graphgoblin:inspect-run` with the run ID to read the outcome and events.
 
 Claude uses the existing stdio MCP server for all three commands, including its opt-in draft tools. See [local installation and refresh](../../apps/plugin-claude/README.md) for a persistent copy, alternate Node selection, and troubleshooting.

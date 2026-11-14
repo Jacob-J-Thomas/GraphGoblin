@@ -47,6 +47,8 @@ export function adaptSkill(name: Skill, markdown: string, designInstructions: st
           'Only start a run when the user explicitly requests one. An ambiguous request or a failed',
           'response after starting a run is a reason to check its current state before retrying.',
           'On `FORBIDDEN`, report the gateway scope required for the operation.',
+          '`allowDraft: true` permits execution only when the loop has no published version; it cannot select a newer draft of a published loop.',
+          'Tell the user this limitation and do not run the published version as a substitute unless they explicitly confirm running the published version.',
           '',
           '## 1. Find the loop',
         ].join('\n'),

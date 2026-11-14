@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
@@ -63,6 +64,14 @@ describe('Claude plugin artifact', () => {
     );
     expect(run).toContain('/graphgoblin:inspect-run');
     expect(run).toContain('explicitly requested the draft or confirmed draft execution');
+    expect(run).toContain(
+      '`allowDraft: true` permits execution only when the loop has no published version; it cannot select a newer draft of a published loop.',
+    );
+    expect(run).toContain(
+      'do not run the published version as a substitute unless they explicitly confirm running the published version.',
+    );
+    expect(design).toContain('`allowDraft: true` cannot select a newer draft of a published loop.');
+    expect(design).toContain('do not run the published version in its place');
     const inspect = await readSkill('inspect-run');
     expect(inspect).toContain('plugin:graphgoblin:graphgoblin');
     expect(inspect).toContain('read_run_events');
@@ -93,6 +102,98 @@ describe('Claude plugin artifact', () => {
       );
     }
     expect(defaultPaths(packageDir).outDir).toBe(join(packageDir, 'dist', 'plugin', 'graphgoblin'));
+  });
+
+  it('checks the runtime floor and rejects malformed or missing-entry invocations', async () => {
+    await assembleClaudePlugin(packageDir, { outDir, mcpEntry: entry });
+    const guard = join(outDir, 'check-runtime.cjs');
+    const versionStub = join(scratch, 'stub-version.cjs');
+    await writeFile(
+      versionStub,
+      "Object.defineProperty(process.versions, 'node', { value: process.env.GG_TEST_NODE_VERSION });\n",
+    );
+    await writeFile(entry, "console.log('fixture-entry-ran');\n");
+
+    const runWithSimulatedVersion = (nodeVersion: string, entryPath: string) => {
+      const env: NodeJS.ProcessEnv = { ...process.env, GG_TEST_NODE_VERSION: nodeVersion };
+      delete env.GG_NODE_BINARY;
+      return spawnSync(
+        process.execPath,
+        ['--require', versionStub, '--require', guard, entryPath],
+        { encoding: 'utf8', env },
+      );
+    };
+
+    const simulatedCases = [
+      { version: '22.22.2', accepted: true },
+      { version: '22.22.1', accepted: false },
+      { version: '21.99.99', accepted: false },
+      { version: '23.0.0', accepted: false },
+      { version: '22.invalid.0', accepted: false },
+    ];
+    for (const { version, accepted } of simulatedCases) {
+      const result = runWithSimulatedVersion(version, entry);
+      expect(result.error, `simulated Node ${version} should spawn`).toBeUndefined();
+      if (accepted) {
+        expect(result.status, `simulated Node ${version} is at the supported floor`).toBe(0);
+        expect(result.stdout).toContain('fixture-entry-ran');
+      } else {
+        expect(result.status, `simulated Node ${version} should be refused`).toBe(1);
+        expect(result.stderr).toContain('requires Node 22.22.2 or later in major 22');
+        expect(result.stdout).not.toContain('fixture-entry-ran');
+      }
+    }
+
+    const missing = runWithSimulatedVersion('22.22.2', join(scratch, 'missing-entry.js'));
+    expect(missing.status).toBe(1);
+    expect(missing.stderr).toContain('could not find its MCP entry');
+
+    const noEntryEnv: NodeJS.ProcessEnv = { ...process.env, GG_TEST_NODE_VERSION: '22.22.2' };
+    delete noEntryEnv.GG_NODE_BINARY;
+    const noEntry = spawnSync(process.execPath, ['--require', versionStub, '--require', guard], {
+      encoding: 'utf8',
+      env: noEntryEnv,
+      input: '',
+    });
+    expect(noEntry.status).toBe(1);
+    expect(noEntry.stderr).toContain('could not find its MCP entry');
+  });
+
+  it('runs the generated default node command from PATH with this native Node runtime', async () => {
+    await assembleClaudePlugin(packageDir, { outDir, mcpEntry: entry });
+    const config = JSON.parse(await readFile(join(outDir, '.mcp.json'), 'utf8'));
+    const command = config.mcpServers.graphgoblin.command as string;
+    expect(command).toBe('${GG_NODE_BINARY:-node}');
+
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    delete env.GG_NODE_BINARY;
+    const selectedNode = spawnSync('node', ['-p', 'process.execPath'], {
+      encoding: 'utf8',
+      env,
+    });
+    expect(selectedNode.status).toBe(0);
+    expect(await realpath(selectedNode.stdout.trim())).toBe(await realpath(process.execPath));
+    const selectedVersion = spawnSync('node', ['-p', 'process.versions.node'], {
+      encoding: 'utf8',
+      env,
+    });
+    expect(selectedVersion.status).toBe(0);
+    expect(selectedVersion.stdout.trim()).toBe(process.versions.node);
+    const major = Number(process.versions.node.split('.')[0]);
+    const minor = Number(process.versions.node.split('.')[1]);
+    const patch = Number(process.versions.node.split('.')[2]);
+    expect(major).toBe(22);
+    expect(minor > 22 || (minor === 22 && patch >= 2)).toBe(true);
+
+    await writeFile(entry, "console.log('fixture-entry-ran');\n");
+    const actual = spawnSync('node', ['--require', join(outDir, 'check-runtime.cjs'), entry], {
+      encoding: 'utf8',
+      env,
+    });
+    expect(actual.error).toBeUndefined();
+    expect(actual.status).toBe(0);
+    expect(actual.stdout).toContain('fixture-entry-ran');
+    expect(actual.stderr).toBe('');
   });
 
   it('refuses assembly when the shared design skill no longer has its draft boundary', () => {

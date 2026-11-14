@@ -9,7 +9,7 @@ GraphGoblin is a pnpm + Turborepo monorepo in TypeScript. Read `docs/README.md` 
 - `packages/engine` - executor, run manager, node handlers, written against ports. `@graphgoblin/engine/testing` has fakes for every port.
 - `packages/infrastructure` - Node implementations of the engine ports, one folder per concern (`src/sqlite`, `src/fs`, `src/process`, `src/http`, `src/scheduler`), each with its own `index.ts` and an `@graphgoblin/infrastructure/<folder>` subpath. Folders may import each other.
 - `packages/adapter-*` - reserved for optional external-service adapters with their own dependency (`adapter-codex`, `adapter-jev`). New packages only at real boundaries: a different runtime, reuse by several apps, or an optional or licence-sensitive dependency (ADR-0014). Otherwise add a folder.
-- `apps/*` - composition roots: `api`, `mcp`, `web`, `plugin-codex`.
+- `apps/*` - composition roots: `api`, `mcp`, `web`, `plugin-codex`, `plugin-claude`.
 - `tooling/` - shared config and the repository gate scripts.
 
 Layer rules are enforced by `pnpm check:layers` (declared workspace dependencies) and `pnpm check:deps` (dependency-cruiser). Reach other packages only through their `@graphgoblin/*` entry points.
