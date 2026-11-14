@@ -1,9 +1,10 @@
-import { mkdtemp, readFile, rm, writeFile, mkdir, cp } from 'node:fs/promises';
+import { mkdtemp, readFile, realpath, rm, writeFile, mkdir, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
+import { runCli } from './cli.js';
 import {
   assemblePlugin,
   defaultPaths,
@@ -112,7 +113,7 @@ describe('assemble', () => {
   const fileIoTimeout = 20_000;
   let scratch: string;
   beforeEach(async () => {
-    scratch = await mkdtemp(join(tmpdir(), 'gg-plugin-'));
+    scratch = await mkdtemp(join(await realpath(tmpdir()), 'gg-plugin-'));
   });
   afterEach(async () => {
     await rm(scratch, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
@@ -146,10 +147,18 @@ describe('assemble', () => {
       );
       expect(written).toEqual(assembled.mcp);
 
-      // Assembling again replaces the previous output.
-      await writeFile(join(outDir, 'stale.txt'), 'x');
-      await assemblePlugin({ pluginDir, outDir, mcpEntry });
-      await expect(readFile(join(outDir, 'stale.txt'), 'utf8')).rejects.toThrow();
+      // A repeat can refresh generated files, but preserves foreign contents.
+      const newEntry = join(testDir, 'next entry 漢.js');
+      await assemblePlugin({ pluginDir, outDir, mcpEntry: newEntry });
+      const rebuilt = await loadPlugin(join(outDir, 'plugins', 'graphgoblin'));
+      expect(rebuilt.mcp.mcpServers['graphgoblin']?.args).toEqual([newEntry]);
+
+      const sentinel = join(outDir, 'foreign.txt');
+      await writeFile(sentinel, 'keep');
+      await expect(assemblePlugin({ pluginDir, outDir, mcpEntry })).rejects.toThrow(
+        /foreign.txt.*not owned/,
+      );
+      expect(await readFile(sentinel, 'utf8')).toBe('keep');
     },
     fileIoTimeout,
   );
@@ -187,10 +196,17 @@ describe('assemble', () => {
       const out = join(testDir, 'cli-out');
       lines.length = 0;
       expect(
-        await run(['--out', out, '--mcp-entry', entry], fakePackage, (l) => lines.push(l)),
+        await runCli(['--out', out, '--mcp-entry', entry], fakePackage, (l) => lines.push(l)),
       ).toBe(0);
       expect(lines).toHaveLength(1);
       expect(lines[0]).toContain(resolve(out));
+      const sentinel = join(out, 'unrelated.txt');
+      await writeFile(sentinel, 'preserve');
+      expect(
+        await runCli(['--out', out, '--mcp-entry', entry], fakePackage, (line) => lines.push(line)),
+      ).toBe(1);
+      expect(lines.at(-1)).toMatch(/Unsafe plugin output destination.*unrelated.txt.*not owned/);
+      expect(await readFile(sentinel, 'utf8')).toBe('preserve');
     },
     fileIoTimeout,
   );

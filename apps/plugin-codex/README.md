@@ -35,6 +35,10 @@ Start the API (`pnpm --filter @graphgoblin/api start`, default `http://127.0.0.1
 
 After rebuilding, run `pnpm --filter @graphgoblin/plugin-codex assemble` (part of `build`) and reinstall with `codex plugin add` to refresh the cached copy. Remove with `codex plugin remove graphgoblin@graphgoblin-local` and `codex plugin marketplace remove graphgoblin-local`.
 
+The builder accepts an unused destination, an empty directory, or its own complete generated output. Foreign, modified, pre-ownership, or linked destinations are refused. Use an unused `--out <path>` or manually move the existing output aside before rebuilding the default `dist/marketplace`. If an interrupted build leaves a sibling `.marketplace.graphgoblin-build` directory, verify that no build is active and inspect its `previous` and `next` directories. Preserve or restore a prior artifact before moving the staging directory aside or choosing a new destination.
+
+Replacing an existing destination also requires inspecting metadata on the directory, generated files and subdirectories, and ownership marker. The builder rejects Windows alternate data streams and extended attributes visible to the current user on macOS and Linux, including macOS resource forks. Windows uses in-box Windows PowerShell with `Add-Type` and the Windows stream APIs. macOS uses `/usr/bin/xattr`, and Linux needs `/usr/bin/python3` version 3.8 or later with its standard library. If inspection is unavailable or fails, use an unused destination so the builder can leave the existing tree intact. The check runs only during assembly and does not install software or read attribute or stream contents.
+
 ## Without the plugin
 
 Register only the MCP server:

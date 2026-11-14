@@ -103,6 +103,8 @@ pnpm.cmd --filter @graphgoblin/plugin-codex assemble
 codex plugin add graphgoblin@graphgoblin-local
 ```
 
+Rebuilding an existing output requires Windows PowerShell with `Add-Type` on Windows, `/usr/bin/xattr` on macOS, or `/usr/bin/python3` 3.8 or later on Linux. If the builder cannot verify the destination or detects an alternate data stream or extended attribute, keep that directory and assemble to an unused `--out` path. See the [plugin build instructions](../../apps/plugin-codex/README.md).
+
 Set `GG_API_URL` and, when required, `GG_API_KEY` before starting Codex. The plugin passes those variables to MCP. Its MCP tool timeout is 660 seconds to accommodate the longest wait call.
 
 Codex turns inside a loop inherit your enabled configured plugins, including this plugin's tools ([ADR-0067](../decisions/ADR-0067-codex-inherits-configured-plugins.md)). An inference node excludes all plugins from its sessions, including same-session output-schema repair, by adding `"features":{"plugins":false}` to its existing **Config overrides**. Separate LLM decision and coerce/output-transform repair calls have no node override and run in a fresh temporary directory; they inherit user/global configuration, not the caller's override or trusted-project layer. Exclude plugins from those calls in effective user/global Codex configuration, which also affects ordinary sessions. Node override keys cannot contain `@`, so they cannot target an individual plugin ID. An explicit inference feature enable can override a user feature disable; individually disabled plugins remain disabled.
