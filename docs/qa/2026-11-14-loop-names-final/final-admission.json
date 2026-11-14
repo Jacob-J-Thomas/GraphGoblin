@@ -1,0 +1,93 @@
+{
+  "packet": "PR #470 final audit and current CI",
+  "pr": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/470",
+  "reviewComment": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/470#issuecomment-6881200714",
+  "audit": {
+    "head": "8fc8c0a5240c304dfe4f309caad8bd1ebf540948",
+    "tree": "af0e9f76b750ecbd308b3e12c589fb729b3ebf23",
+    "target": "7c6e635539e12c56b82f226f1ee734d83b985ad4",
+    "scan": 3,
+    "scanLimit": 3,
+    "verdict": "SIGN-OFF",
+    "blockingFindings": 0,
+    "reportPath": "raw/report.md.txt",
+    "reportSha256": "1e4ec4b45ca021c465e8087f87acc32cc574c03fd852897ace633a272f53ee32"
+  },
+  "ci": {
+    "head": "8fc8c0a5240c304dfe4f309caad8bd1ebf540948",
+    "allFiveJobsFirstAttempt": true,
+    "runs": [
+      {
+        "id": 43614498888,
+        "name": "CI",
+        "attempt": 1,
+        "conclusion": "success",
+        "jobs": [
+          "Gates",
+          "Browser",
+          "Windows launcher",
+          "Template image"
+        ]
+      },
+      {
+        "id": 43614498893,
+        "name": "Routing performance",
+        "attempt": 1,
+        "conclusion": "success",
+        "jobs": [
+          "routing"
+        ]
+      }
+    ],
+    "counts": {
+      "coverageTasks": 22,
+      "webTests": 2491,
+      "browserPassed": 474,
+      "browserExpectedSkips": 1,
+      "windowsPassed": 14,
+      "windowsSkipped": 0,
+      "routingPassed": 2
+    },
+    "dependencyAudit": {
+      "threshold": "passed",
+      "lowAdvisories": 8,
+      "moderateAdvisories": 13,
+      "zeroAdvisoryClaim": false
+    }
+  },
+  "merge": {
+    "commit": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+    "tree": "af0e9f76b750ecbd308b3e12c589fb729b3ebf23",
+    "parents": [
+      "7c6e635539e12c56b82f226f1ee734d83b985ad4",
+      "8fc8c0a5240c304dfe4f309caad8bd1ebf540948"
+    ],
+    "mergedAtUtc": "2026-11-14T17:08:58Z"
+  },
+  "ownerAcceptance": "open",
+  "openIssue471": "unresolved; first-pass Windows success does not resolve the historical EPERM cause",
+  "sourceCounts": {
+    "manifestBoundQaFiles": 577,
+    "nonQaFiles": 82,
+    "supplementalLegacyQaFiles": 6,
+    "totalChangedFiles": 665
+  },
+  "exactDiff": {
+    "included": true,
+    "representation": "gzip",
+    "path": "raw/exact.diff.gz",
+    "compressedBytes": 7729039,
+    "compressedSha256": "41fe06f7f6d2da530247bf0af20ef013d78fc584c5588da53b3de01534aa1459",
+    "uncompressedBytes": 14791378,
+    "sha256": "d2372898b66f3099a7acfbad969a500dc70526dc7de5930bfdf3e38fe041babc",
+    "sourcePath": "review-209/final-audit/exact.diff",
+    "regeneration": "git diff --binary 7c6e635539e12c56b82f226f1ee734d83b985ad4 8fc8c0a5240c304dfe4f309caad8bd1ebf540948 > exact.diff"
+  },
+  "limits": [
+    "No owner acceptance claim.",
+    "#471 remains unresolved.",
+    "The dependency audit passed its threshold with advisories.",
+    "Routing checks do not claim physical 60 fps.",
+    "No physical-device, assistive-technology speech, or live-provider proof."
+  ]
+}
