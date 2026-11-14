@@ -1,0 +1,61 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-save-publish/GraphGoblin/apps/web
+
+ ✓ src/editor/EditorPage.reconcile.test.tsx > Loops list after a save (#156, #237) > converges after the server accepts the save, warm, leaving before the debounce, and an older read cannot roll it back 1077ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > Loops list after a save (#156, #237) > converges after the server accepts the save, warm, save in flight, and an older read cannot roll it back 1267ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > names the stored version when its reply arrives after newer work, and queues that work behind it 2549ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > Loops list after a save (#156, #237) > converges after the server accepts the save, cold, and an older read cannot roll it back 438ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > shows nothing in a newer load of the editor, though its caches refresh 620ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > Loops list after a save (#156, #237) > reopens on the server’s copy when the reopened editor’s read was answered before the leaving save 563ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > Loops list after a save (#156, #237) > keeps a failed refresh in its own query and the save acknowledged 795ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > says a different stored draft was published when another write lands before admission 999ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > separates nothing to publish from a competing publication of another draft 1027ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > the save sent on leaving (#237) > stays on its own load’s token when a later load took another writer’s draft 1193ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > confirms a matching no-op without a false mismatch, and clears it on the next edit 189ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > reads the server back when the reply is lost after the commit, and claims no failure 1004ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > the save sent on leaving (#237) > sends nothing for an earlier load’s snapshot after Reload server draft 1893ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > offers a retry when the check finds the draft unpublished (a request lost before admission) 1024ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > caches after a publish (#237) > re-runs no check of the unchanged open draft, and marks other loops’ checks stale 790ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > reports a server error after the commit as unconfirmed, with the server’s reason 911ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > never sends another request blind after an unknown outcome whose check failed 1074ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > caches after a publish (#237) > drops another loop’s check answered before the publish, and checks it again on reopening 1599ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > refuses when input is held while the publish’s save is in flight 423ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > rechecks the load and held input where the request is sent, behind queued saves 749ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > caches after a publish (#237) > drops another loop’s first check answered before the publish (nothing cached) 1102ms
+ ✓ src/editor/EditorPage.reconcile.test.tsx > caches after a publish (#237) > cancels a running check of another loop before marking it stale (installed query library) 2ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > describes a release that a newer publication has since replaced, and keeps the toolbar current 1020ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > describes a delayed reply by its own version when a later version holds the newer work 972ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > describes a returned different draft by its own version when a later version holds the editor’s work 1049ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish (#237) > sends one request for two clicks in the same task 863ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, while its check is answered (#237) > refuses held input that arrived during the check, and sends nothing 1251ms
+ ✓ src/editor/usePublish.test.ts > publish comparisons > treats omitted defaults and key order as the same draft, and other content as different 4ms
+ ✓ src/editor/usePublish.test.ts > publish comparisons > does not hold a version while input is unfinished or the draft does not parse 1ms
+ ✓ src/editor/usePublish.test.ts > publish comparisons > takes the server’s answer for the saved revision, else the loaded copy as the server stored it 2ms
+ ✓ src/editor/usePublish.test.ts > publish notice > names the returned version, plainly until the editor changes 3ms
+ ✓ src/editor/usePublish.test.ts > publish notice > says what the version holds when the reply arrives after more editing, and nothing broader 1ms
+ ✓ src/editor/usePublish.test.ts > publish notice > warns separately about input held in fields, which is in no version 1ms
+ ✓ src/editor/usePublish.test.ts > publish notice > states a different stored draft without naming who saved it 4ms
+ ✓ src/editor/usePublish.test.ts > publish notice > separates nothing to publish from a different current version and a failed check 2ms
+ ✓ src/editor/usePublish.test.ts > publish notice > keeps an unknown outcome unknown unless the check establishes it 1ms
+ ✓ src/editor/usePublish.test.ts > publish notice > says a retry sent nothing when its check found another draft on the server 1ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, while its check is answered (#237) > sends nothing, and shows nothing, once another editor opened during the check 1304ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, while its check is answered (#237) > sends one request after the check when nothing changed meanwhile 1025ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > sends nothing when the check before a retry finds another draft, and keeps both copies 1132ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > keeps that evidence when held input arrives during the check 1149ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > applies that evidence to no newer load of the editor, even on the same token (control) 984ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > points to the conflict choice when the check after a lost request finds another draft 930ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome and a refusal that sent nothing (#237) > reads the server first after a held-input refusal, and sends no second request 1949ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome and a refusal that sent nothing (#237) > stays unresolved through refusals and a failed check, until a check answers 2297ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome and a refusal that sent nothing (#237) > stays unresolved through a Publish whose save failed, then sends once after a check 1903ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome and a refusal that sent nothing (#237) > stays unresolved through a refusal met where the request would be sent 1762ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome and a refusal that sent nothing (#237) > sends at once after a refusal when the last outcome was known (control) 2545ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome and a refusal that sent nothing (#237) > sends at once after a refusal when the check after a lost request answered (control) 1595ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome and a refusal that sent nothing (#237) > does not carry an unresolved request into a newer load of the editor (control) 1775ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Readiness beside a refusal that holds the draft (#237) > does not claim Ready to publish while another loop has the name 2691ms
+ ✓ src/editor/EditorPage.publish.test.tsx > Readiness beside a refusal that holds the draft (#237) > does not claim Ready to publish in a draft conflict 1944ms
+
+ Test Files  3 passed (3)
+      Tests  52 passed (52)
+   Start at  13:30:05
+   Duration  51.43s (tests 66%, environment 13%, transform 10%, import 6%, setup 4%)
+
