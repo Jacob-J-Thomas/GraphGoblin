@@ -1,0 +1,13 @@
+# PR 470 invalid companion retry baseline
+
+The issue reproduced on the first and only native run. Windows Edge 157 used the real built gateway on Node 22.23.4 with disposable file SQLite. The runtime corresponds to immutable baseline `0d2fad63c448bc5591c530d087dd05c9af7821cc`, tree `f095a8cd37122e36d65958482897e7fd55311853`, target `7c6e635539e12c56b82f226f1ee734d83b985ad4`. Verified seven source hashes from Git objects and 655 existing distribution files in the four trees previously bound to this baseline. Before and after readbacks are identical. Any active checkout edits were outside the binding. [Artifact binding](binding-before.json) · [Served bytes](served.json)
+
+1. An ordinary browser rename tried the holder’s exact name. Its conditional PUT returned `409 LOOP_NAME_CONFLICT`. The target’s original server draft and token stayed intact.
+2. Native text entry pasted a 4,001-character Description. The only click on **Try again** produced no PUT. After more than the 600 ms autosave interval, the button still showed **Trying again…** with `aria-disabled=true` and `aria-busy=true`. The public detail was unchanged, and the local device record retained the complete invalid description and refused name with the original token and `synced: false`.
+3. An independent conditional API write renamed the holder, freeing the name. The target remained unchanged. Replacing only the Description caused the browser to send a 200 PUT using the unchanged refused name and original conditional token. No second retry interaction occurred. Public GET showed the exact requested definition under the same draft ID with an advanced token. The device copy became synced to the new token.
+
+There were two target browser PUTs and zero unhandled page errors. Complete payloads, API responses and readbacks are retained with consistent aliases for the conditional content tokens. The inspected screenshots show the stuck button beside the validation notice and the later saved editor. [Request and state proof](observations.json) · [Invalid retry](baseline-invalid-retry-stuck.png) · [Repair-only save](baseline-repair-only-saved.png)
+
+The compiled application used the exported main function of `apps/api/dist/main.js`; the fixture did not serve source TypeScript. The gateway, Edge and a transient child process all exited, and the assigned socket and store lock were gone. The initial cleanup readback preserved the transient child, which exited without intervention before the final check. [Fixture cleanup](baseline-cleanup.json)
+
+The queued older-save settlement case remains a proposed controlled component check. This run focused on reproducing the original behavior. Corrected-candidate QA and owner acceptance remain pending.

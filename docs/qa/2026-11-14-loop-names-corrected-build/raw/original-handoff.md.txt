@@ -1,0 +1,150 @@
+# PR470 #209 corrected build and selected Edge verification · handoff
+
+**Result: PASS (implementation level).** The forced root build completed 12/12. The two selected Edge specs passed 16/16 with retries off. The tree stayed clean, the source and build hashes were unchanged across the run, and every owned process and listener is gone.
+
+This is not native QA, current-head CI or an audit. The limits are at the end.
+
+Model: Claude Sonnet 5.5 (`claude-sonnet-5-5`), effort xhigh, per `launch.json` (dispatched 2026-11-14T15:43:44Z). I made no source edits, commits, staging, pushes, issue writes or provider calls. I did not touch the owner service, store, or ports 4747/4748. The heavy slot is released (see Cleanup).
+
+## Identity
+
+| Item | Value |
+| --- | --- |
+| Worktree | `C:/Users/98jak/.codex/worktrees/gg-20261114-loop-names/GraphGoblin` |
+| Branch | `codex/gg-20261114-loop-names` |
+| HEAD | `2367b15b310eac52d95af77c570d5ce36f741527` (matches, before and after) |
+| Tree | `6bcc8e4eb74ee2d82dd793f88538b08d260002d8` (matches, before and after) |
+| `git status --porcelain` | 0 lines at the start, after the build and after the e2e run |
+| Remote feature ref | `0d2fad63…` (expected, because the correction is unpublished) |
+| Remote `main` | `7c6e635539e12c56b82f226f1ee734d83b985ad4` |
+| `git diff --name-status 0d2fad6 HEAD` | exactly the 8 paths in the brief, all `M` |
+
+Runtime, from [runtime-and-identity-final.txt](artifacts/runtime-and-identity-final.txt):
+- Node `v22.23.4` was the first `node` on PATH, at `C:/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64`. The process list confirmed the e2e server and Playwright ran under that executable.
+- `pnpm.cmd` 12.8.1, Turbo 2.11.6, Vite 8.3.4, Playwright 1.63.0, Microsoft Edge (`msedge` channel; install directory `157.0.4341.46`).
+- `GITHUB_PAT` exists in the ambient environment. `tools/run-logged.sh` unset it for each logged command and it was never printed. `LIVE=0` was set for the e2e run only. `CI` and `GG_E2E_*` were unset.
+
+### Source hashes
+
+All 9 recorded sources matched `review-209/correction-precommit-binding.json` before the build (0 mismatches). They were unchanged after the build and after the e2e run. The git blob ids are in [after-e2e/identity.json](artifacts/after-e2e/identity.json).
+
+| Path | sha256 |
+| --- | --- |
+| `apps/web/src/loops/LoopsPage.tsx` | `10f790637be9c039c28b0b33535e778ded286e3038eabe3fa441f1d5a50c9268` |
+| `apps/web/src/loops/loop-names.test.tsx` | `9f0982ec42f152705d72fdf5cdb2666e569a38d791738692c083a15c844f4403` |
+| `apps/web/src/editor/useAutosave.ts` | `fbe6a15d55d97217861d62e91e7f4e878dc5b2957c40c8c115c2ec14eaaa8782` |
+| `apps/web/src/editor/EditorPage.tsx` | `39186a122441df1eeb0583c62c0137844ce250a84b6fe6c1390a63097980d472` |
+| `apps/web/src/editor/store.ts` | `50489916ffb1be326ba23b1553fc3e094cdba703ee43002176a55890a88f6bc9` |
+| `apps/web/src/editor/NameConflictNotice.tsx` | `6d80c089aee24ad61d2cfd58eb8d69756d8c18bc82715759fcad22824233d0b0` |
+| `apps/web/src/editor/EditorPage.name-conflict.test.tsx` | `07362691ff3e4de6df4507e055f9329951b77c14295afbe6ab2dd657eb738de0` |
+| `docs/09-frontend-and-pwa.md` | `cead69102dfeef3bc9fae04b54a4bd43c1d419b86ab147f3518c98b630b91373` |
+| `docs/guide/02-build-a-loop.md` | `974ed31a190c249f2c2896bcdba91152c72aab1474e5398c546c55738189eeed` |
+
+## Commands, exit codes, timestamps
+
+The two substantive commands were run through `tools/run-logged.sh`. Its record is [commands.log](artifacts/commands.log), with stdout and stderr in separate files per command. The working directory was the worktree root.
+
+| # | Command | Start (UTC) | End (UTC) | Exit |
+| --- | --- | --- | --- | --- |
+| 1 | `pnpm.cmd build --force --cache-dir=.turbo/local-cache` | 2026-11-14T15:46:09.198Z | 15:46:24.868Z | **0** |
+| 2 | `env LIVE=0 PLAYWRIGHT_JSON_OUTPUT_NAME=… pnpm.cmd --filter @graphgoblin/web test:e2e e2e/loop-names.spec.ts e2e/template-gallery.spec.ts --retries=0 --reporter=list,json --output=<artifacts>/playwright-test-results` | 15:47:18.891Z | 15:47:49.634Z | **0** |
+
+Read-only helper commands, with approximate times:
+- 15:43:48Z: `git rev-parse` identity and `git ls-remote`.
+- 15:45:48Z: `tools/snapshot.mjs before-build` (source and dist hashes).
+- 15:45:49Z: `tools/procs.ps1` baseline of processes and listeners.
+- After the build: `snapshot.mjs after-build`, the before/after comparison and the source-map binding check.
+- After the e2e run: `snapshot.mjs after-e2e`, `procs.ps1` twice (`processes-after-e2e.txt` and `processes-final.txt`), and a process, port and temp-directory check.
+- Last: `make-manifest.mjs`.
+
+### Build
+
+I confirmed before running it that the root `build` script is `turbo run build`. pnpm echoed `turbo run build --force --cache-dir=.turbo/local-cache` on stderr (see [build-force.stderr.log](artifacts/build-force.stderr.log) and [build-force.stdout.log](artifacts/build-force.stdout.log)). There was no refusal, so there was nothing to report on ownership, and I deleted nothing.
+- Turbo reported `Tasks: 12 successful, 12 total`, `Cached: 0 cached, 12 total`, `Time: 15.091s`. All 12 tasks logged `cache bypass, force executing`. The packages are contracts, domain, engine, adapter-jev, adapter-codex, infrastructure, api, api-client, web, mcp, plugin-codex and plugin-claude.
+- `.turbo/local-cache` was created (gitignored). `git status` stayed clean.
+
+## Build output binding
+
+Per-file `sha256 *relpath` listings for 13 build trees are in `artifacts/after-e2e/tree-*.sha256`. The pre-build listings are in `artifacts/before-build/`. They were byte-identical between the post-build and post-e2e snapshots.
+
+| Tree | Files | Bytes | Listing sha256 | Changed by this build |
+| --- | --- | --- | --- | --- |
+| `apps/web/dist` | 28 | 12170281 | `5d796b26f7210d5241279d6eade5548c5d860631bb73f01c753265fa4801786c` | **yes** |
+| `apps/web/dist-goblin` | 28 | 3278713 | `3dd8d56ea3c60d1dc0741d4f3000a33703dc2937f7e77d30cbe60a72bfd7daa9` | **yes** (one file) |
+| `apps/api/dist` | 306 | 1621443 | `e2f6d817cdd334dea6da37ffd8aa9fd382ff0877d1d1581754f53fac01301f83` | no |
+| `packages/infrastructure/dist` | 293 | 1870671 | `69535110484399c7afa4c2c9b4de8af943b267efbcb868ff80bb5943348ef78f` | no |
+| `packages/contracts/dist` | 117 | 892623 | `cccd8776e048ac38c4d6f4539f5cea8a5c3e1cf5e498d1e30cb25662c6efbb08` | no |
+| `packages/domain/dist` | 97 | 373047 | `7d86b662018f933df1c1e65b7ea7a9fbf4adb2d36cd2ef2a5d1d885d9231a9b6` | no |
+| `packages/engine/dist` | 161 | 1035456 | `ac5153d1dfe0b9cc88c21fd6297783a8b0ca7c0aa9db9f77efd86a0cd33e8955` | no |
+| `packages/api-client/dist` | 33 | 2169043 | `68452cf68c0f83c73a121627bbda7f5a7e1c0f711ca095f51d66ee8f3d874959` | no |
+| `packages/adapter-codex/dist` | 49 | 220929 | `60f754730b3870762bdaccf71f3c91ce0b0c20268abf02cf8e856878593d6bf5` | no |
+| `packages/adapter-jev/dist` | 9 | 93191 | `a47f12eeb8c91655df91eea6655fdb01185576318e2a0ba4c3f9f87fb7a28fd7` | no |
+| `apps/mcp/dist` | 41 | 345099 | `221abd47770d1f171928ddc589bb02518869f517b60f8e8f5ec41d7a2d39e462` | no |
+| `apps/plugin-codex/dist` | 24 | 111284 | `dafc8aa5a2b52c204210abb8e0a0889240a7087368312fe74b38cbf37e69b228` | no |
+| `apps/plugin-claude/dist` | 17 | 78337 | `50e60962a99876638691c7751c9b6c8f751af2a2d7e8f09df2e46f6e54cb0c0a` | no |
+
+The listing sha256 is the hash of the `sha256 *relpath` text file, so it is not comparable to the older `listingSha256` values in `correction-precommit-binding.json`, which hash a differently formatted listing.
+
+**Old state.** Before building, all four old trees (`web/dist`, `web/dist-goblin`, `api/dist`, `infrastructure/dist`; 655 files) were byte-identical to the recorded 0d2 listings in `ui-209-claude-phase3/build-listings/`. That confirms the brief's statement.
+
+**What the build replaced** ([build-before-after-comparison.json](artifacts/build-before-after-comparison.json)):
+- `apps/web/dist`: `assets/index-LZq9N9nK.js` and `.js.map` were replaced by `assets/index-CCILPoqP.js` (sha256 `8b2d02ab6e7384f6d2fe4c8f70ce2a2f2eeac3e69f295d42ea40df59b03cdba2`) and `.js.map` (sha256 `e83455d24853b139a5b2dd2b84a2fdb8f52b1bc7e0002396fe0986fd012b5f05`). `index.html` (`b12794578a1aebedc59a040c9bb3c0c6f5b2b0cc8e67e92f2b36a8e8a40b2f36`), `sw.js` (`491920b4919a45062ed1d7dee93e64d7088554faddf15ab0be983b67b162e07e`) and `sw.js.map` (`2d877ce053788804d829a519faa92479464a6220a6ca1bb2d50c2fd593ff36ba`) also changed. The file count stayed at 28 (+2/−2). The other 23 files are unchanged.
+- `apps/web/dist-goblin`: only `sw.js.map` changed (was `e81d00e9e6e8e12b44314b704f8424681b10b7df24879bfe1c9244185c76850a`, now `1de005fe3e65d975e2884355774bf11509f7ba45a9881a5f5247dc929b61a985`). The other 27 files are unchanged. I did not investigate why only the map differs.
+- Every other tree is byte-identical to its pre-build state.
+
+**Binding the new bundle to the corrected source** ([bundle-source-binding.json](artifacts/bundle-source-binding.json)): `index-CCILPoqP.js.map` embeds `sourcesContent`. The five runtime sources `LoopsPage.tsx`, `useAutosave.ts`, `EditorPage.tsx`, `store.ts` and `NameConflictNotice.tsx` hash identically to the files on disk. Compiled strings for the correction ("could not be read", "Import under another name", "Trying again", "Name for the imported loop") are present in the new bundle. The old bundle has been overwritten, so I did not diff those strings against it. The old-versus-new difference rests on the replaced bundle hash.
+
+## Selected Edge specs
+
+I read `apps/web/playwright.config.ts`, `e2e/global-setup.ts`, `e2e/server.ts` and `e2e/fixtures.ts` before running. The e2e directory is unchanged from 0d2 (`git diff 0d2fad6 HEAD -- apps/web/e2e` is empty).
+
+**Evidence tier.** This is a **source-TypeScript, in-memory-store, fake-harness** tier, not the built API and not file SQLite.
+- Global setup spawns `node --conditions=development --import tsx e2e/server.ts`. That runs the real API from workspace TypeScript source through `createTestApp`, with an in-memory database and `FakeHarness` for codex.
+- It serves the freshly built `apps/web/dist` through `GG_WEB_DIST`, so the browser runs the new bundle.
+- It listens on `127.0.0.1` with an ephemeral port (`GG_E2E_MAIN_PORT` was unset, so port 0). No 4747/4748 and no owner browser profile.
+- Edge ran headless under Playwright with a temporary profile, `playwright_chromiumdev_profile-LbbcXo`. It was observed during the run and is gone afterwards.
+- Config: 1 worker, `retries: 0` (also passed as a CLI flag), 60 s test timeout, 10 s expect timeout. I changed no timeout, assertion or source. `--reporter=list,json` and `--output` are CLI overrides I added for evidence capture.
+
+**Result:** 16 passed, 0 failed, 0 flaky, 0 skipped. Every test ran as a single attempt. See [e2e-selected.stdout.log](artifacts/e2e-selected.stdout.log), [e2e-selected.results.json](artifacts/e2e-selected.results.json) and the digest in [e2e-selected.results-summary.json](artifacts/e2e-selected.results-summary.json). stderr holds only the pnpm echo and a Node `NO_COLOR`/`FORCE_COLOR` warning.
+
+- `loop-names.spec.ts` (5 tests):
+  - Create refuses an equivalent name, then creates on a deliberate retry.
+  - A rename refused as an equivalent name keeps the device draft, and "Edit name" then saves it.
+  - Import: a 409, then Enter retries the unchanged upload under the suggested name and keeps the graph.
+  - A stale draft is a draft conflict before the name refusal.
+  - At 360 px the Create and Import guidance reflows and works from the keyboard.
+- `template-gallery.spec.ts` (11 tests):
+  - Gallery keyboard open, one Use per card, fit and keyboard order at 1440/390/320 px, and focus guards while a copy is pending.
+  - Failed-creation announcement.
+  - The repeated-Use naming flow (#209), including the naming form at 390 and 320 px.
+  - The QA starting point.
+  - The gallery-fit tests wrote three full-page screenshots through `testInfo.outputPath`: `gallery-1440.png`, `gallery-390.png` and `gallery-320.png`, in `artifacts/playwright-test-results/`. These are the specs' own output; I took no extra screenshots.
+
+**What these specs do not test.** They are existing happy-path and regression checks of the name flows through the fresh bundle. They do **not** drive the new U1/U2 corrections. In particular:
+- No test picks a newer file during an in-flight import, uses Cancel and then receives a late answer, makes a double retry activation, or reads an unreadable file.
+- No test clicks **Try again** or covers the invalid-companion or queued-Try-again cases.
+
+Those cases are covered by the 10 component tests, which Opus ran (9 fail on the original runtime, and the stale-token control passes both). They are for the separate native QA the brief describes.
+
+## Cleanup
+
+- After the e2e run and again at the end, the process and listener lists ([processes-after-e2e.txt](artifacts/processes-after-e2e.txt), [processes-final.txt](artifacts/processes-final.txt)) differ from the pre-build baseline ([processes-before-build.txt](artifacts/processes-before-build.txt)) in one line only: an unrelated `chrome.exe` renderer pid. There is no leftover `node`, `playwright`, `e2e/server.ts`, `msedge`, `turbo`, `pnpm`, `vite` or `tsx` process of mine.
+- The only listener on 4747 or 4748 is `127.0.0.1:4747`, pid 19500 (`node`). It was there before I started and I left it alone. 4748 has no listener. No ephemeral e2e port remains listening.
+- My Edge temp profile `playwright_chromiumdev_profile-LbbcXo` is gone. The other `playwright_*` entries in `%TEMP%` have mtimes between 03:16 and 04:22 local, before this run, so they belong to other sessions and I did not touch them.
+- The e2e store was in-memory, so there is no database or WAL lock. A search of `apps/` and `packages/` (to depth 3, excluding `node_modules`) for `*.db`, `-wal`, `-shm` and `*.lock` newer than my pre-build snapshot found none. `apps/web/test-results` and `playwright-report` were never created because I redirected `--output`.
+- The build is left in place for independent QA. The hashes are as above and unchanged across the run.
+
+**Heavy slot released.** All owned work is finished and quiescent.
+
+## Limits for root and the audit
+
+1. **Native QA is not done.** The e2e tier above is source-TS, in-memory and fake harness. Nothing here exercised the compiled API against file SQLite, nor the corrected import-selection or retry cases natively. The GPT QA agent is expected to do that against the new `index-CCILPoqP.js` bundle.
+2. **API, infrastructure and package builds were not re-emitted.** `--force` bypassed the Turbo cache and all 12 tasks executed. However, every `tsc -b` package and app left its files untouched: the newest file mtimes of `api`, `infrastructure`, `contracts`, `domain`, `engine`, `api-client`, `adapter-*` and `mcp` are identical before and after (for example `apps/api/dist` 2026-11-14T10:10:47Z). `tsc -b` judged them up to date from its incremental state. Only `web/dist`, `web/dist-goblin` and the two plugin `dist` trees were rewritten. The plugin outputs are byte-identical. This is consistent with the sources of those packages being unchanged since 0d2 (the diff touches only `apps/web` and docs), but it is not proof of a from-scratch emit. If independent QA wants that proof, `tsc -b --force` on those packages needs a root grant. I did not delete any output.
+3. **CI.** The 0d2 CI (43603766841) is not current evidence for 2367. Corrected-head CI must run the full configured gates. I did not run web coverage, a full-repo check, or the unit, type and lint checks that already passed. The earlier 25 focused and 184 related passes are Opus's and were not repeated here.
+4. **Regression counts, for the record.** Nine new defect regressions fail on the original runtime, and the tenth new stale-token preservation test passes on both runtimes. Do not repeat the original final report's "all ten fail" phrase.
+5. **No adversarial review or audit was done here.** I did not read or review the source diff and make no code-quality claim.
+
+## Artifacts
+
+- Index: [manifest.json](manifest.json), sha256 `5ab37edca68950795bd19bac1bcb9b036f0c52ac17817829f3ff900292562acd`. It lists 63 files with sizes and hashes, the command table, the tree digests and the e2e digest. It does not include this handoff.
+- Everything is under `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-209-correction-verification/`: `artifacts/` (logs, JSON, tree listings, screenshots) and `tools/` (the scripts I used). The runner's `events.jsonl`, `latest.md` and `launch.json` are separate and untouched.
