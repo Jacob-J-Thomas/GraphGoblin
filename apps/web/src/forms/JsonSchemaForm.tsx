@@ -133,14 +133,24 @@ interface Control {
 
 /**
  * The ghost button's look, drawn 20 px high so it fits the label's line: showing it never moves the
- * control below (the label keeps its 6 px gap). A coarse pointer gets a 44 px target (touch-target).
+ * control below. It has no larger invisible target (`touch-target`'s 44 px square would lie 7.5 px
+ * over the field below, and a tap there would omit it and lose what was typed).
  */
 const OMIT_BUTTON = cn(
-  'touch-target -my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center rounded-sm px-1.5',
+  '-my-0.5 inline-flex h-5 shrink-0 cursor-pointer items-center rounded-sm px-1.5',
   'border border-transparent bg-transparent text-xs leading-none font-semibold text-default',
   'transition-[background-color] hover:bg-surface-hover',
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
 );
+
+/**
+ * The label line of a field that can show Omit. On a coarse pointer Edge moves a tap that lands just
+ * under a button onto it, even over a text field. At the 6 px gap (the button ends 4.5 px above the
+ * field) real touches up to 5 px inside the top of the field omitted it and lost the typed text;
+ * they still did at 6.5 px, and none did from 7.5 px. 6 px more, always there so that Omit appearing
+ * moves nothing, leaves 10.5 px. A fine pointer keeps the 6 px gap.
+ */
+const OMIT_ROW = 'pointer-coarse:pb-1.5';
 
 /**
  * Omit, at the end of an edited optional field's label line: the field goes back to absent, as it
@@ -334,7 +344,9 @@ function PropertyField({
       ) : null;
     field = (
       <>
-        <div className="flex min-w-0 items-center justify-between gap-2">
+        <div
+          className={cn('flex min-w-0 items-center justify-between gap-2', !required && OMIT_ROW)}
+        >
           <Label htmlFor={id} required={required}>
             {label}
           </Label>
@@ -528,7 +540,12 @@ export function JsonSchemaForm({
         ))
       ) : (
         <FieldGroup className="max-w-[440px]">
-          <div className="flex min-w-0 items-center justify-between gap-2">
+          <div
+            className={cn(
+              'flex min-w-0 items-center justify-between gap-2',
+              rawOptional && OMIT_ROW,
+            )}
+          >
             <Label htmlFor={rawId}>Input (JSON)</Label>
             {rawOptional && raw !== undefined ? (
               <OmitButton

@@ -369,10 +369,10 @@ test('New run and Wait send the supplied input and omit untouched or reset field
     await title.fill('ok');
     await number.fill('0');
     await metadata.fill('null');
-    await form
-      .getByRole('radiogroup', { name: 'approved' })
-      .getByRole('radio', { name: 'No' })
-      .check();
+    // The radio is visually hidden: a click on its visible label chooses it.
+    const approved = form.getByRole('radiogroup', { name: 'approved' });
+    await approved.getByText('No', { exact: true }).click();
+    await expect(approved.getByRole('radio', { name: 'No', exact: true })).toBeChecked();
     return submit;
   }
 
@@ -396,4 +396,83 @@ test('New run and Wait send the supplied input and omit untouched or reset field
   await expect(page.locator('[data-status="succeeded"]').first()).toBeVisible();
   const completed = await (await request.get(`/runs/${runId}`)).json();
   expect(completed.result).toEqual({ started: input, answered: input });
+});
+
+test.describe('with a coarse pointer (#235)', () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+
+  // The browser moves a touch that lands near a button onto it, even over a text field. A tap on
+  // the top of an edited field must keep its text, and Omit must still take a tap of its own.
+  test('a tap on an edited field never omits it, and a tap on Omit does', async ({
+    page,
+    request,
+  }) => {
+    const definition = approvalLoop('coarse omit');
+    const loopId = await publishLoop(request, {
+      ...definition,
+      nodes: definition.nodes.map((node) =>
+        node.id === 'start'
+          ? {
+              ...node,
+              config: {
+                ...node.config,
+                inputSchema: {
+                  type: 'object',
+                  properties: {
+                    first: { type: 'string' },
+                    comment: { type: 'string' },
+                    details: { type: 'object' },
+                  },
+                },
+              },
+            }
+          : node,
+      ),
+    });
+    await page.goto(`/app/runs/new?loop=${loopId}`);
+    expect(await page.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+    const form = page.getByRole('form', { name: 'Start run' });
+
+    for (const name of ['comment', 'details']) {
+      const field = form.getByLabel(name, { exact: true });
+      const omit = form.getByRole('button', { name: `Omit ${name}`, exact: true });
+      const offset = () =>
+        field.evaluate(
+          (el) => el.getBoundingClientRect().top - el.closest('form')!.getBoundingClientRect().top,
+        );
+      const resting = await offset();
+      await field.fill('typed');
+      await expect(omit).toBeVisible();
+      expect(await offset()).toBe(resting);
+      await field.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+      const button = (await omit.boundingBox())!;
+      const top = (await field.boundingBox())!.y;
+      // The button stands clear of the field, beyond where the browser would move a tap onto it.
+      expect(top - (button.y + button.height)).toBeGreaterThanOrEqual(8);
+
+      // Real touches over the top of the field, across and beyond the button's width.
+      const wrong: string[] = [];
+      for (
+        let x = Math.floor(button.x) - 24;
+        x <= Math.ceil(button.x + button.width) + 24;
+        x += 6
+      ) {
+        for (let depth = 0; depth <= 14; depth += 2) {
+          await page.touchscreen.tap(x, top + depth);
+          if ((await omit.count()) === 0) {
+            wrong.push(`x ${x}, ${depth} px into the field`);
+            await field.fill('typed');
+            await expect(omit).toBeVisible();
+          }
+        }
+      }
+      expect(wrong).toEqual([]);
+      await expect(field).toHaveValue('typed');
+
+      // A tap on the button itself omits the field.
+      await page.touchscreen.tap(button.x + button.width / 2, button.y + button.height / 2);
+      await expect(omit).toHaveCount(0);
+      await expect(field).toHaveValue('');
+    }
+  });
 });
