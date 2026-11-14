@@ -3,6 +3,7 @@ import { Fragment } from 'react';
 import { Alert } from '../components/ui/index.js';
 import { IssueList } from './IssuePopover.js';
 import type { EditorIssue } from './model.js';
+import { useHeldDuringPress } from './pointer-press.js';
 import { useEditorStore, type RenameReport } from './store.js';
 
 function counted(count: number, noun: string): string {
@@ -42,9 +43,15 @@ function configOf(definition: LoopDefinitionInput, nodeId: string): unknown {
  *
  * The editor shows it above the canvas and, while the node dialog is open (the page is inert
  * then), inside the dialog as well, as it does the draft conflict notice.
+ *
+ * It appears, changes and goes only between presses: while a primary pointer press is under way it
+ * keeps showing what it showed when the press began, until the click the press produces has been
+ * delivered or the press ends without one (`usePrimaryPress`). Pressing a button of the dialog is
+ * what commits an id typed there (the id's blur renames), and a notice appearing above that button
+ * before its click would move it from under the pointer, so the click would land elsewhere.
  */
 export function RenameNotice({
-  definition,
+  definition: current,
   onChoose,
   onDismissed,
 }: {
@@ -53,7 +60,11 @@ export function RenameNotice({
   /** After Dismiss: put focus somewhere that stays. */
   onDismissed?: () => void;
 }) {
-  const report = useEditorStore((s) => s.renameReport);
+  const live = useEditorStore((s) => s.renameReport);
+  const { report, definition } = useHeldDuringPress(
+    { report: live, definition: current },
+    (a, b) => a.report === b.report && a.definition === b.definition,
+  );
   if (!hasRenameNotice(report)) return null;
   const unchanged = (nodeId: string) => {
     const config = configOf(definition, nodeId);

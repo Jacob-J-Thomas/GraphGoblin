@@ -1,5 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { memo, use, useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  use,
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from 'react';
 import { FormEditReviewContext } from './edit-review.js';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import { Disclosure, FieldGroup, Label, Select } from '../components/ui/index.js';
@@ -41,7 +51,27 @@ import {
   type ParseErrorReason,
 } from './parse-errors.js';
 import { FormPanels } from './sections.js';
+import { sameJson } from './layout.js';
+import { stringRepairs, withStringRepairs } from './repair.js';
 import { stripUnset } from './unset.js';
+
+/**
+ * What a mounted SchemaForm offers its owner through `ref` (#273): a way to take a value that an
+ * edit outside the form made from the one it shows, without remounting.
+ */
+export interface SchemaFormHandle {
+  /**
+   * Take `repaired` in place of `previous`, the value the form shows, when `repaired` only rewrote
+   * strings in it (`stringRepairs`): a node rename's reference repair. The form sets those strings
+   * and reports nothing, since the change is already the owner's. Every element stays, so a
+   * control under a pressed pointer still receives its click, and rows, disclosures, focus, and
+   * held or unapplied input in other fields stay as they are; fields follow their new value as they
+   * follow any value (a code editor replaces its document). Returns false, changing nothing, when
+   * the form does not show `previous` or `repaired` is another kind of change; the owner then
+   * remounts the form with `key`.
+   */
+  applyRepair: (previous: unknown, repaired: unknown) => boolean;
+}
 
 export interface SchemaFormProps {
   /** A Zod object or discriminated-union schema, for example a node kind's config schema. */
@@ -96,6 +126,8 @@ export interface SchemaFormProps {
    * from its default on every mount.
    */
   disclosures?: DisclosureStore | undefined;
+  /** Receives the mounted form's `SchemaFormHandle`. */
+  ref?: Ref<SchemaFormHandle> | undefined;
 }
 
 const NO_CONTROLS: FieldControls = {};
@@ -126,7 +158,8 @@ function asValues(value: unknown): FieldValues {
 /**
  * A form generated from a Zod schema with react-hook-form and the Zod resolver. Every change is
  * reported upward as-is so the caller (the editor store) never loses input; schema issues are shown
- * inline per field and as a summary. Remount with a `key` to load a different value.
+ * inline per field and as a summary. Remount with a `key` to load a different value; a repair made
+ * outside the form can be taken in place instead (`SchemaFormHandle`, through `ref`).
  *
  * The contracts' field metadata places the fields (`formLayout`): the basic ones first, in schema
  * order unless `fieldOrder` overrides the top-level object, then the advanced ones under a collapsed
@@ -175,6 +208,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   problems,
   disclosures,
   fieldOrder,
+  ref,
 }: SchemaFormProps) {
   const shape = shapeOf(schema);
   const id = useId();
@@ -250,6 +284,8 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
   );
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  // Set while `applyRepair` writes values the owner already holds: they are not reported back.
+  const repairingRef = useRef(false);
 
   useEffect(() => {
     void form.trigger();
@@ -264,6 +300,7 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
         // Refresh sibling refinements only when schema issues change, not on each keystroke.
         void form.trigger();
       }
+      if (repairingRef.current) return;
       // Every field describes its changes; a write that does not is a step of its own.
       const change = pendingChangeRef.current ?? {
         path: name ?? '',
@@ -277,6 +314,38 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
 
   const [unionIndex, setUnionIndex] = useState(() =>
     shape.kind === 'union' ? matchOption(shape.options, value, shape.discriminator) : 0,
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      applyRepair: (previous, repaired) => {
+        const repairs = stringRepairs(previous, repaired);
+        if (repairs === undefined) return false;
+        if (repairs.length === 0) return true;
+        // Only the value this form shows can be repaired in place, in the variant it shows.
+        if (!sameJson(stripUnset(form.getValues()), stripUnset(previous))) return false;
+        if (
+          shape.kind === 'union' &&
+          matchOption(shape.options, repaired, shape.discriminator) !== unionIndex
+        )
+          return false;
+        repairingRef.current = true;
+        try {
+          // Each top-level field takes its section with the new strings, so whichever control
+          // shows one (a field, a record row, a JSON section) follows; the rest of the section
+          // keeps the form's own values, cleared-field markers included.
+          for (const key of new Set(repairs.map(({ path }) => String(path[0])))) {
+            const section = repairs.filter(({ path }) => String(path[0]) === key);
+            form.setValue(key, withStringRepairs(form.getValues(key), section, 1));
+          }
+        } finally {
+          repairingRef.current = false;
+        }
+        return sameJson(stripUnset(form.getValues()), stripUnset(repaired));
+      },
+    }),
+    [form, shape, unionIndex],
   );
   const variantSchema = shape.kind === 'union' ? (shape.options[unionIndex] as Schema) : schema;
   const discriminator = shape.kind === 'union' ? shape.discriminator : undefined;

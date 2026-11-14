@@ -220,7 +220,14 @@ export function expressionReferences(
         const steps = astList(args[0]?.steps);
         const map = access(steps, localFocus);
         if (map && map.keyIndex === steps.length && !args[0]?.group && !args[0]?.predicate) {
-          add(map, args[1]?.type === 'string' ? args[1] : undefined, optional);
+          const key = args[1];
+          if (key?.type === 'string' && !stepChangesFocus(key)) {
+            add(map, key, optional);
+          } else {
+            result.uncertain = true;
+            // The key is evaluated even when the lookup result is only probed for presence.
+            visit(key, localFocus);
+          }
           return;
         }
       }

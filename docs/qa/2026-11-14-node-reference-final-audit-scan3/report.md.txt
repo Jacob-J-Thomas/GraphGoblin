@@ -1,0 +1,117 @@
+PR #474 final independent whole-PR audit — scan 3 of 3
+
+**CHANGES REQUIRED.** Two introduced P2 defects remain at the audited head: the JSONata walker skips evaluated computed-key arguments of a recognized `$lookup`, and a self-reference rename consumes the first pointer activation of a remounted form button. Both violate the accepted #273 contract and need FIX-IN-PR disposition. Passing CI and the corrected evidence for the original five findings do not cover these paths.
+
+This is the final adversarial scan, performed independently by GPT-6 Astra at max effort. No additional reviewer was delegated. Root owns dispositions, corrections, publication and merge. The documented D-035 completion path applies: correct the known in-scope causes, obtain independent behavioral QA and green CI for the resulting exact head/current target, then perform root's completion inspection. This report does not authorize a fourth adversarial scan or waive either defect. Owner product acceptance and closure remain open on #273.
+
+**Exact identity and admission**
+
+| Item | Independently verified value |
+| --- | --- |
+| PR | https://github.com/Jacob-J-Thomas/GraphGoblin/pull/474 |
+| Checkout | `C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin` |
+| Branch | `codex/gg-20261114-node-references-native` |
+| Audited head | `5a4fb439c63755eeb2b5bef945319772623a9905` |
+| Audited tree | `caf777a63de7d9938b03dfa81b9ee60e9a1bf3e5` |
+| Actual current main and PR target | `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c` |
+| GitHub synthetic merge used by CI | `9255f13c7c69c1dd5239585dd06d5f012d7869a8` |
+| Synthetic merge parents/tree | Parents are exactly target `a817e5c…` and head `5a4fb43…`; its tree equals audited tree `caf777a…` |
+| Retained corrected native source | `164c01a2e3a52bf0ef69a409e1a428b45817b1b8`, tree `30af5edcf429af416a37833ea2bd21a17c752e66` |
+| Final identity readback | 2026-11-14, approximately 21:03 UTC; local status clean, local/remote head equal, live GitHub main/PR target equal; PR draft/open/unmerged |
+
+I verified the identity records against `git rev-parse`, `git status --porcelain=v1`, `git ls-remote` and live read-only GitHub PR/branch/commit metadata. I regenerated the effective diff against the actual target. Its 834 changed paths include 37 outside `docs/qa`. All 834 entries in `source-and-evidence-readback.json` matched current file size, SHA-256 and Git blob, covering 25,542,483 bytes. The full binary diff is 28,769,480 bytes, SHA-256 `f2f5c484fb2d211da1934530202398100cca2d07118f57247d26e36aa78c9b5b`; the non-QA diff is 278,087 bytes, SHA-256 `70cd45198bc09caf034e67c00867a9923cc98770202ab2857d270aec0397b7d9`. These match the supplied artifacts. Native-source-to-final changes comprise 138 paths: 137 QA paths and the delivery register. There is no product, test or build-input delta across that interval.
+
+The brief's PREPARATION wording was superseded by root's explicit admission, the complete identity/readback records and the passing current-head `gate-status.json`. I verified the gate identities independently rather than inheriting the earlier `164c01a2` CI result.
+
+**A1 — P2, FIX-IN-PR: visit references inside evaluated `$lookup` keys**
+
+Primary location: [packages/domain/src/expression-references.ts:222](C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/packages/domain/src/expression-references.ts:222), especially lines 222–224. Confidence: confirmed by source, installed evaluator, public domain API and separate native HTTP/execution evidence.
+
+When the first argument identifies a node map, the special `$lookup` branch records the outer key and immediately returns. For a computed key it records uncertainty, but never visits the key expression that JSONata actually evaluates. The uncertainty of the outer lookup does not make a structurally known read inside its key ambiguous.
+
+Reproduction through public domain exports on the frozen compiled runtime:
+
+- Renaming `start` to `renamed` in `$lookup(outputs, outputs.start.value).value` leaves the entire source unchanged. Only the edge endpoint is counted as repaired. With `outputs.start.value = "choice"` and `outputs.choice.value = "chosen"`, the original expression returns `"chosen"`; the renamed view returns `undefined`; changing just the nested static read to `outputs.renamed.value` restores `"chosen"`.
+- `$lookup(outputs, $string(counters.nodeVisits.missing))` produces only `NODE_REFERENCE_UNCERTAIN`, and `isPublishable(validateLoop(...))` is true. The direct control `$string(counters.nodeVisits.missing)` produces the required `NODE_REFERENCE_MISSING` error and is not publishable.
+
+The authored exit-return path is reachable in ordinary loops. Both editor `validateDraft` and API `loopPublicationIssues` consume `validateLoop`; `apps/api/src/routes/loops.ts:385` blocks publication only when those issues block publication. Independent native QA subsequently confirmed the actual boundary on the same retained compiled API and disposable file SQLite: public domain rename followed by conditional HTTP draft save left the stale nested source, publication returned 200, and the new pinned run returned JSON `null` while the original pin returned `"start"`. The missing-visit case also validated as publishable and returned 200 from publish, installing v2; immutable v1 remained exact and an explicit v1 pin still returned `"original release"`. This was not a rename HTTP endpoint: the probe called the public pure rename function, then the existing save/publish/run endpoints.
+
+This is introduced by the new reference walker and directly defeats its repair/publication contract. It is distinct from original F2's evaluated attachment traversal: these are ordinary evaluated function arguments skipped by the `$lookup` early return.
+
+Smallest necessary outcome: analyze the evaluated key expression under its actual scope and requiredness while retaining the honest warning for the outer computed lookup. Repair the nested static reference; block a nested known missing gate/visit; retain explicit presence-probe optionality. Do not propagate the optionality of an outer `$exists($lookup(...))` into a key read that must execute, and do not replace the parser or infer the computed outer identity. Cover the nested repair, missing-reference admission, explicit inner presence probe and ordinary dynamic-key controls. Preserve the existing attachment/item-scope fixes.
+
+Evidence:
+
+- [Auditor probe script](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-273/final-audit/lookup-probe.mjs) and [exact output](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-273/final-audit/lookup-probe.json), first attempt, exit 0 at `2026-11-14T20:56:49.972Z`.
+- [Independent native verifier](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/node-reference-273-activation-supplement/verify-lookup.mjs) and [native observations](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/node-reference-273-activation-supplement/runs/corrected-lookup-old/observed.json), two groups/26 requests on their first invocation, zero probe failures. Observation SHA-256: `6476433cce648971a9bd4cdc2e09a9de5f7dfe7dfcd78e830d779514461b0ae7`.
+
+**A2 — P2, FIX-IN-PR: preserve the first button activation through self-reference rename**
+
+Primary location: [apps/web/src/editor/NodeEditorDialog.tsx:342](C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web/src/editor/NodeEditorDialog.tsx:342), with the new form key at line 708. Related path: `store.ts:727–737` and `useUndoShortcuts.ts:234`. Confidence: confirmed native pointer behavior, with introducedness established against the actual parent source.
+
+Blur of a changed Node id calls `keepFocusThrough(rename, relatedTarget)`. Its synchronous flush publishes the reference repair, bumps the new `formEpoch`, and replaces the SchemaForm before the initiating pointer reaches mouseup/click. Restoring focus to the equivalent new button does not preserve the browser's activation of the original button.
+
+Independent native Edge QA used a mutate node `work` with a Coerce source `/counters/nodeVisits/work` and one ordinary second operation. It filled Node id with `worker`, then used actual mouse down/up at the enabled, hit-tested Add operations or Remove operations 2 button. In both cases the old target was detached after down and before up; no trusted click reached it. The graph save and synced device copy contained the repaired ID/pointer/endpoints and exactly the original two operations: the intended Add or Remove did not happen. With a steady ID, the same first gestures delivered trusted clicks and produced exactly three/one rows respectively. A second click after rename acted once. Separate Undo operations reversed the action, then the preceding rename, preserving the exact graphs and device copies.
+
+This is an introduced regression, not an inherited rename issue. In actual parent `a817e5c…`, `NodeEditorDialog.tsx:312–315` simply called renameNode; its SchemaForm key at line 673 was `${node.kind}:${epoch}:${historyEpoch}`. Parent `store.ts:631–659` changed the node ID/endpoints and moved field errors while retaining the same config object, without changing those key inputs. The dialog itself is keyed by unchanged `nodeDialogSession`. SchemaForm is unchanged in this PR and treats `value` as its mount's initial value. The new reference-repair config replacement and new formEpoch introduce this remount during blur. No parent-native run is claimed; the source difference establishes that this specific detachment path did not exist there.
+
+Smallest necessary outcome: the user's intended Add/Remove activation must occur exactly once when it commits a valid self-reference rename, while the repaired config remains authoritative. Preserve collection identity, disclosures, held text and focus, and keep rename one undoable edit. Avoid a fix that lets an old form callback overwrite the repaired source or synthesizes an action after a canceled gesture. Verify actual down/up/click sequencing, exact resulting graph/device/token state, Undo/Redo, ordinary steady-ID controls and canceled/invalid-rename behavior. The reproduced scope is Add/Remove; boolean-toggle activation was not exercised and is not claimed as a confirmed separate defect.
+
+Evidence: [Independent native supplement](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/node-reference-273-activation-supplement/README.md), [passive event/graph observations](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/node-reference-273-activation-supplement/runs/corrected-activation-canonical-add/observed.json), and [gesture/assertion implementation](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/node-reference-273-activation-supplement/verify-corrected.playwright.js:172). Observation SHA-256: `3cf5b49cf8ad1bce9fe5d6f464924eb46fd5fb6351bc1e178b64d3b0ce7d0a89`. The first fixture attempt incorrectly expected the default added Set row's blank path to remain device-only; the actual gateway accepted it. The corrected fixture asserted that exact synced control behavior. Both attempts are retained; no product change or weakened defect assertion explains the result.
+
+**Original dispositions remain intact**
+
+I read the complete original opposite-family reports, retained root dispositions and the correction packets. Original F1 (item/thread scopes and subloop variable names), F2 (evaluated attachments), U1 (collection identity/disclosure/focus), U2 (historical warning navigation) and U3 (externally equal held JSON) have source corrections and paired/independent evidence for their stated cases. A1 and A2 identify additional evaluated-argument and activation paths; they do not erase those corrections or convert old negative observations into passes.
+
+F3's duplicated count ownership remains **DEFER-ISSUE #476**. F4's unused syntax diagnostic production remains **DEFER-ISSUE #477**. I found no new evidence invalidating those dispositions. PR #475 save/publish reconciliation, #471–#473 and parked follow-ups remain separate. Existing save/publish lifecycle behavior was not relabeled as a new #273 blocker. No additional style-only findings or speculative architecture prerequisites are added.
+
+**Whole effective-PR coverage**
+
+I reviewed all 37 non-QA changed paths, their substantive test assertions and relevant full callers. This included the new domain scanners/policy/cache/path code, syntax and parser entry points, graph validation/export integration, API publication checks, editor model/store/history/rename notice/form synchronization, collection identity and focus machinery, held JSON, autosave ancestry, five promoted browser cases, docs and ADR-0075. Runtime scope checks included context-item predicates and `$thread`, subloop parent/child paths, signal payload filters, heartbeat probe/thread views and mutation evaluation. I verified archived bytes separately from semantic source/evidence review; I do not claim line-by-line semantic review of every QA archive file.
+
+| Requirement | Assessment and evidence boundary |
+| --- | --- |
+| Known JSONata/Liquid references and typed pointers repaired atomically | Ordinary cases, source spans/escaping, conservative roots, one store write and history are covered; **A1 remains** for evaluated computed-key arguments. |
+| Known missing gate/visit blocks publication | Direct/pointer and corrected attachment cases are covered by domain/API/native evidence; **A1 proves a current admission gap**. |
+| Optional/computed/ambiguous references stay honest | Existing presence, dynamic, shadowing, child/item, ignored-apply-decoration cases are conservatively handled; A1 must preserve this while analyzing its evaluated nested read. |
+| Literal/prose/opaque scripts unchanged; config/edges/geometry preserved | Structural field discovery and path replacement, store tests, browser and native readbacks support these bounded invariants; no generic search/replace or migration added. |
+| Collection IDs, disclosures, focus and held text | U1/U3 source and paired native cases support their stated controls; **A2 shows focus restoration alone loses a pointer action**. |
+| Warning location safety | Object-identity freshness guard withdraws actionable historical paths after config changes; Undo restoration and native stale-row case are retained. |
+| Undo/Redo, conditional saves, device state, immutable versions/pins | Atomic snapshots and ancestry paths reviewed; promoted/source-API and independent native evidence distinguished. New native probes also preserve old immutable/pinned state while demonstrating the defects. |
+| Protected Chat boundary | Protection paths and envelope repair reviewed, source/browser cases and corrected native seeded control retained; no real provider/owner acceptance inferred. |
+| Bounded source analysis | Cache is keyed by language/source/scope, limits entries/bytes, freezes retained facts and does not retain execution ASTs or graph-policy outcomes. Parsing remains with installed evaluators; graph policy is recomputed. No new package/dependency/migration boundary. |
+| Documentation | Changed numbered docs, guide, CHANGELOG and ADR-0075 consistently state the intended contract. A1/A2 require implementation correction to satisfy it, not documentation relaxation. |
+
+**Current CI and retained behavioral evidence**
+
+Live GitHub run/job metadata, `gate-status.json`, and the five full raw job logs in [current-ci-5a4](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-273/current-ci-5a4) agree. All five jobs succeeded on attempt 1 for head `5a4fb439…` and target `a817e5cc…`. The checked synthetic merge tree is exactly the audited head tree.
+
+| Run / job | Result readback |
+| --- | --- |
+| CI `43636963530`, Gates `132575767997` | All steps passed; 22 coverage tasks, web 2,520 tests/203 files, domain 452/29; type/lint/format/layers/dependencies/licenses/generated-docs and configured audit gates passed. |
+| Same run, Browser `132575767737` | 479 passes, one expected live-provider skip, no retries; all five promoted rename cases passed. |
+| Same run, Windows launcher `132575768015` | 14/14 passed. |
+| Same run, Template image `132575767934` | Distributed image build and installed-template loading without network/writable storage passed. |
+| Routing `43636963544`, job `132575767544` | Two checks passed. The retained 300-node typing experiment exceeded 16.7 ms on both parent/candidate; this establishes no 60-fps claim. |
+
+All five raw log hashes matched their manifest: Gates `5580cd1d04572d21c62cca6acf739f278d5ef2d6d02776bba76c3c5ae6834e87`; Browser `87b480694612b342cbfeec633336933dd6903547a6409b827039fab1d2ef5eef`; Windows `bba1431cbfacb939746447c78bff91bef6132bc602e6176d0c91070b8436e430`; Template `7ab682c5b74dd3c8273bde082bda0072be07af28e67ede120e0695c3794ba5b5`; Routing `7bd0195e01e7df9eb632de78e505b71031fbda6a352564a6d4327a299d5f28c0`. The dependency audit passed `--audit-level=high` with 8 low and 13 moderate advisories; it was not advisory-free.
+
+Retained correction evidence was reviewed, not rerun by this auditor: identical domain tests yielded 23 intended failures/68 controls on original source and 91 passes on corrected source; five old UI regressions failed before correction, with corrected focused/related/static checks passing. Historical native QA has four first-attempt UI negatives and three backend groups/29 requests after two retained fixture corrections. Corrected native QA at `164c01a2…` passed four UI scenarios and three backend groups/29 requests on first invocations. Four promoted positive controls passed; protected Chat passed after restoring its omitted seed. Original fixture failures remain visible. The initially rejected Turbo flags started no tasks; the corrected forced build ran 12 tasks with zero cache hits and re-emitted the two changed domain modules, while unaffected backend trees remained incremental. No claim that all backend files were freshly emitted.
+
+Native source/artifact identity is supported by 54 tracked source hashes, 11 embedded sources and 1,227 artifacts across 13 trees. The served web bundle is `index-BSN6gKGW.js`, SHA-256 `77bba77dfb8439dda032ec63cb056e03c6c98eb486f3c4b3b616af04c01145dc`; compiled API entry SHA-256 `e011151e143f07f29181c03f616b6d8e5b7c04e1f136f001b508e9a480c8cc98`. For the new native supplements, before/after binding records and the post-lookup binding are byte-identical, SHA-256 `c66bf3368cd6f9e406ae64c5ec03bbb32bb69c4b069595eac59730ff853a7bcb`. I read their binding metadata, exact observations, assertion code and cleanup records. Cleanup after both activation process pairs and the lookup gateway reports no live recorded processes/listeners or residual lock/WAL/SHM. The earlier seven-gateway/six-Edge corrected-native cleanup remains separately retained.
+
+**What I executed and limits**
+
+My work was static/read-only Git, file/hash and GitHub inspection, plus one explicitly authorized in-memory probe using the installed evaluator and public domain exports. Exact command, from the audited checkout:
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+node --version
+pnpm.cmd exec node 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-273\final-audit\lookup-probe.mjs' | Tee-Object -FilePath 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-273\final-audit\lookup-probe.json'
+```
+
+It ran on Node `v22.23.4`, with installed JSONata `2.2.2` entry SHA-256 `10965a9e3d86ccaf87f55294959637898e918c7ef5181af72d13279c8fc8e6de`. The probe matched 54 source files and 29 critical compiled artifacts before execution and all 29 critical artifacts afterward against retained binding record SHA-256 `55f94ab7e6c46e8418120b0364231be5180bf19351617c04807a3eb9f017b2d3`. It did not itself rehash all 1,227 artifacts. Relevant compiled modules were `expression-references.js` SHA-256 `4bc1101aa067674148014850e175c57037d22be2f506b1b8e97797ef96556f88` and `node-references.js` SHA-256 `5b65621f879f1fa01a53f068b2d20e165c14eec9aabb1bfc403ae8159ed16ee2`.
+
+I ran no build, coverage or broad test suite and launched no browser, provider, API or owner service. I changed no source, Git index, refs or GitHub state. Only this external report and the specifically authorized external probe script/output were written. The separately authorized independent QA lane supplied the new native behavioral evidence during this scan; that is validation of concrete candidates, not another adversarial review. Source-API/in-memory/FakeHarness browser tests, compiled native API/file-SQLite observations, direct domain/evaluator probes and static inference are distinct evidence tiers. Physical input devices, screen readers, live providers and owner subjective acceptance are not established by this review.
+
+The frozen head is not ready to merge. Retain this negative audit and both new causes alongside the original findings, then complete the documented bounded correction path without resetting the three-scan count.

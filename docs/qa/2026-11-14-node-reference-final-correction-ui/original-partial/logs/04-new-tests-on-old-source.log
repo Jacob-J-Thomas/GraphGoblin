@@ -1,0 +1,167 @@
+2026-11-14T21:27:05Z
+v22.23.4
+old-source probe: product web source at HEAD 5a4fb439; only the new test file added
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx (5 tests | 5 failed) 6638ms
+   ❯ a pointer press that commits a self-reference rename (#273 A2) (5)
+     × adds exactly one operation on the repaired source, as one step after the rename 2171ms
+     × removes exactly the pressed row, keeping the repaired Coerce row and its held JSON 1572ms
+     × keeps a press released elsewhere canceled: the rename stays, nothing is added later 1141ms
+     × keeps an invalid or duplicate id with its message and acts once on the unchanged node 1013ms
+     × acts once with a steady id, as the control 737ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected [ { op: 'coerce', …(4) }, …(1) ] to deeply equal [ { op: 'coerce', …(4) }, …(1) ]
+
+- Expected
++ Received
+
+@@ -4,10 +4,12 @@
+        "type": "integer",
+      },
+      "op": "coerce",
+      "repair": {
+        "enabled": false,
++       "maxAttempts": 1,
++       "onFailure": "fail-run",
+      },
+      "source": "/counters/nodeVisits/worker",
+      "target": "/vars/visits",
+    },
+    {
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:134:34
+    132|     await press(user, add);
+    133|     // The id's blur renamed the node and repaired its own Coerce sour…
+    134|     expect(operations('worker')).toEqual([REPAIRED, NOTE]);
+       |                                  ^
+    135|     expect(labels()).toEqual(['rename work to worker']);
+    136|     expect(screen.getByRole('dialog', { name: 'Edit mutate worker' }))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > removes exactly the pressed row, keeping the repaired Coerce row and its held JSON
+AssertionError: expected [ { op: 'coerce', …(4) }, …(1) ] to deeply equal [ { op: 'coerce', …(4) }, …(1) ]
+
+- Expected
++ Received
+
+@@ -4,10 +4,12 @@
+        "type": "integer",
+      },
+      "op": "coerce",
+      "repair": {
+        "enabled": false,
++       "maxAttempts": 1,
++       "onFailure": "fail-run",
+      },
+      "source": "/counters/nodeVisits/worker",
+      "target": "/vars/visits",
+    },
+    {
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:219:34
+    217|
+    218|     await press(user, remove);
+    219|     expect(operations('worker')).toEqual([REPAIRED, NOTE]);
+       |                                  ^
+    220|     expect(labels().at(-1)).toBe('rename work to worker');
+    221|     expect(remove.isConnected).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > keeps a press released elsewhere canceled: the rename stays, nothing is added later
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:259:29
+    257|
+    258|     await press(user, add);
+    259|     expect(add.isConnected).toBe(true);
+       |                             ^
+    260|     expect(renamedNotice(dialog)).toBeNull();
+    261|     // The pointer leaves the button before it is released: no click r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > keeps an invalid or duplicate id with its message and acts once on the unchanged node
+AssertionError: expected [ { op: 'coerce', …(4) }, …(2) ] to deeply equal [ { op: 'coerce', …(4) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -4,10 +4,12 @@
+        "type": "integer",
+      },
+      "op": "coerce",
+      "repair": {
+        "enabled": false,
++       "maxAttempts": 1,
++       "onFailure": "fail-run",
+      },
+      "source": "/counters/nodeVisits/work",
+      "target": "/vars/visits",
+    },
+    {
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:288:32
+    286|     expect(within(dialog).getByText('Use a letter first, then letters,…
+    287|     expect(node('9lives')).toBeUndefined();
+    288|     expect(operations('work')).toEqual([COERCE, NOTE, ADDED]);
+       |                                ^
+    289|     expect(labels()).toEqual(['edit config of work']);
+    290|     expect(store().renameReport).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > acts once with a steady id, as the control
+AssertionError: expected [ { op: 'coerce', …(4) }, …(2) ] to deeply equal [ { op: 'coerce', …(4) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -4,10 +4,12 @@
+        "type": "integer",
+      },
+      "op": "coerce",
+      "repair": {
+        "enabled": false,
++       "maxAttempts": 1,
++       "onFailure": "fail-run",
+      },
+      "source": "/counters/nodeVisits/work",
+      "target": "/vars/visits",
+    },
+    {
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:312:32
+    310|     await press(user, add);
+    311|     await release(user, add);
+    312|     expect(operations('work')).toEqual([COERCE, NOTE, ADDED]);
+       |                                ^
+    313|     const remove = within(dialog).getByRole('button', { name: 'Remove …
+    314|     await press(user, remove);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  15:27:06
+   Duration  15.45s (tests 44%, transform 21%, environment 17%, import 13%, setup 5%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\apps\web
+
+exit=1

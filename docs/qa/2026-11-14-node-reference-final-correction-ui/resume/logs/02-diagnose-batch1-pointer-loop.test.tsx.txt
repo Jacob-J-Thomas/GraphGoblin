@@ -1,0 +1,35 @@
+// TEMPORARY diagnostic (resume worker): which terminating event left the old loop pressed. Deleted after use.
+import { fireEvent, render, screen } from '@testing-library/react';
+import { expect, it } from 'vitest';
+import { usePrimaryPress } from './pointer-press.js';
+
+function Probe() {
+  return <output aria-label="pressed">{String(usePrimaryPress())}</output>;
+}
+const pressed = () => screen.getByLabelText('pressed').textContent;
+
+it('diagnoses each terminating event of the batch-1 loop in isolation', () => {
+  render(
+    <>
+      <Probe />
+      <button type="button">target</button>
+    </>,
+  );
+  const button = screen.getByRole('button', { name: 'target' });
+  const ends: [string, () => void][] = [
+    ['pointercancel', () => fireEvent.pointerCancel(button)],
+    ['mouseup', () => fireEvent.mouseUp(button, { button: 0 })],
+    ['dragend', () => fireEvent.dragEnd(button)],
+    ['window blur', () => fireEvent.blur(window)],
+  ];
+  const observed: Record<string, string | null> = {};
+  for (const [name, end] of ends) {
+    fireEvent.pointerUp(button, { button: 0 });
+    fireEvent.pointerDown(button, { button: 0 });
+    const down = pressed();
+    end();
+    observed[name] = `${String(down)}->${String(pressed())}`;
+  }
+  console.log('DIAGNOSE', JSON.stringify(observed), 'PointerEvent' in window, 'DragEvent' in window);
+  expect(observed).toBeDefined();
+});

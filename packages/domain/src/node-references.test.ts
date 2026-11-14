@@ -162,6 +162,111 @@ describe('reference scopes and source boundaries', () => {
     else expect(issues).toContainEqual(expect.objectContaining({ severity }));
   });
 
+  it.each([
+    [
+      '$lookup(outputs, outputs./* key source */start.value).value',
+      '$lookup(outputs, outputs./* key source */"true".value).value',
+      'chosen',
+    ],
+    [
+      'rows[$lookup($$.outputs, outputs.start.value & $$.outputs.start.value).value = "chosen"].id',
+      'rows[$lookup($$.outputs, outputs.start.value & $$.outputs."true".value).value = "chosen"].id',
+      2,
+    ],
+  ] as const)(
+    'repairs nested thread references in a computed lookup key %s',
+    async (before, after, value) => {
+      const rows = [
+        { id: 1, outputs: { start: { value: 'a-' } } },
+        { id: 2, outputs: { start: { value: 'b-' } } },
+      ];
+      const outputs = { choice: { value: 'chosen' }, 'b-choice': { value: 'chosen' } };
+      const result = renamed(returning(before));
+      const expression = expressionOf(result.definition);
+      expect(expression).toBe(after);
+      expect(result.repairedReferences).toBe(2);
+      expect(result.warnings).toMatchObject([
+        { code: 'NODE_REFERENCE_UNCERTAIN', nodeId: 'done', path: 'config.returns' },
+      ]);
+      expect(
+        await evaluateExpression(before, {
+          rows,
+          outputs: { ...outputs, start: { value: 'choice' } },
+        }),
+      ).toBe(value);
+      expect(
+        await evaluateExpression(expression!, {
+          rows,
+          outputs: { ...outputs, true: { value: 'choice' } },
+        }),
+      ).toBe(value);
+    },
+  );
+
+  it.each([
+    ['$lookup(outputs, $string(counters.nodeVisits.missing))', 'counters.nodeVisits.missing'],
+    ['$exists($lookup(outputs, gates.missing.passes))', 'gates.missing'],
+    ['$lookup(outputs, "start"[$$.gates.missing])', 'gates.missing'],
+  ])('blocks publication for a required read inside a lookup key %s', (source, key) => {
+    const definition = returning(source);
+    expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe(false);
+    expect(referenceIssues(definition)).toMatchObject([
+      {
+        code: 'NODE_REFERENCE_MISSING',
+        severity: 'error',
+        nodeId: 'done',
+        path: 'config.returns',
+        message: expect.stringContaining(key),
+      },
+      { code: 'NODE_REFERENCE_UNCERTAIN', severity: 'warning' },
+    ]);
+  });
+
+  it('keeps an explicit presence probe inside a computed lookup key optional', async () => {
+    const source = '$lookup(outputs, $exists(gates.missing) ? "start" : "choice").value';
+    const definition = returning(source);
+    expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe(true);
+    expect(referenceIssues(definition)).toMatchObject([
+      {
+        code: 'NODE_REFERENCE_OPTIONAL_MISSING',
+        severity: 'warning',
+        nodeId: 'done',
+        path: 'config.returns',
+        message: expect.stringContaining('gates.missing'),
+      },
+      { code: 'NODE_REFERENCE_UNCERTAIN', severity: 'warning' },
+    ]);
+    const result = renamed(definition);
+    expect(expressionOf(result.definition)).toBe(source);
+    expect(result.repairedReferences).toBe(1);
+    expect(await evaluateExpression(source, { outputs: { choice: { value: 'chosen' } } })).toBe(
+      'chosen',
+    );
+  });
+
+  it('keeps a vars-based lookup key dynamic and non-blocking', async () => {
+    const source = '$lookup(outputs, vars.key).value';
+    const definition = returning(source);
+    expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe(true);
+    expect(referenceIssues(definition)).toMatchObject([
+      {
+        code: 'NODE_REFERENCE_UNCERTAIN',
+        severity: 'warning',
+        nodeId: 'done',
+        path: 'config.returns',
+      },
+    ]);
+    const result = renamed(definition);
+    expect(expressionOf(result.definition)).toBe(source);
+    expect(result.repairedReferences).toBe(1);
+    expect(
+      await evaluateExpression(source, {
+        outputs: { start: { value: 'chosen' } },
+        vars: { key: 'start' },
+      }),
+    ).toBe('chosen');
+  });
+
   it.each(['decide', 'classifier-decision'])(
     'uses the message item and $thread in the %s decision selector',
     (id) => {
