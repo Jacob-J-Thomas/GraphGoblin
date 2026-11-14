@@ -1,0 +1,1606 @@
+{
+  "schemaVersion": 1,
+  "packet": "2026-11-14-node-references-promotion-verification",
+  "sourceRun": {
+    "sourceDirectory": "ui-273-promotion-verification",
+    "worker": "Claude Sonnet 5.5 (claude-sonnet-5-5)",
+    "requestedEffort": "xhigh",
+    "exitCode": 0,
+    "finishedAt": "2026-11-14T18:24:28.272Z",
+    "handoffSha256": "4f5fc26e662f437d1334644a03bd6ac5dc3e10a6c97829341742efef94375b2c"
+  },
+  "sourceIdentity": {
+    "head": "ae8add8a791699e905540465b5ddf929d00c50eb",
+    "tree": "ea2dfcfd46f7d5ab79fd98414db214513d830b52",
+    "base": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+    "productFreeze": "16aa9a2aed50710e68875b991a8eedb668fdecf8",
+    "sourceHashListSha256": "9e910079f8b0f4502ec1e9a693428a1fdbeacbf30f586ae02d396c5faf170b5b"
+  },
+  "verificationSummary": {
+    "admission": "27/27",
+    "domainNodeReference": "44/44",
+    "preparedWebRename": "44/44",
+    "extendedWebNeighbourhood": "402/402, 0 failed/skipped/todo",
+    "domainFull": "428/428",
+    "apiNodeReference": "2/2, in-memory createTestApp",
+    "webTypecheckLintPrettierDomainTypecheckLint": "pass",
+    "forcedBuild": "12/12 tasks, 0 cached",
+    "browser": "2 specs 10/10 retries=0; supplementary traced run 10/10",
+    "coverage": "not run",
+    "buildTrees": 13,
+    "filesPerTree": 1227,
+    "backendBuild": "incremental; TypeScript projects were already up to date",
+    "scratchDeclarationComparison": "five contracts declaration member-order differences; equal line count/multiset does not prove semantic equality",
+    "postbuildFinal": "all 1227 per-file manifest entries match; sw.js was rewritten byte-identically with newer mtime during Edge",
+    "tier": "built web + in-process TypeScript-source API + in-memory DB + FakeHarness; not compiled gateway/file SQLite native verification",
+    "screenshotsSelectedAndInspected": 6
+  },
+  "curatedCounts": {
+    "rawFiles": 252,
+    "rawBytes": 3181452,
+    "logFiles": 59,
+    "logBytes": 352716,
+    "manifestEvidenceFiles": 163,
+    "manifestEvidenceBytes": 1924206,
+    "scriptFiles": 11,
+    "scriptBytes": 45489,
+    "edgeTraceSelectedFiles": 9,
+    "edgeTraceSelectedBytes": 810003,
+    "screenshotFiles": 6,
+    "patchFiles": 3,
+    "copiedSourceFilesVerifiedByteForByte": 252
+  },
+  "exclusions": [
+    "events.jsonl and raw launcher result",
+    "trace archives and bulk trace contents",
+    "scratch-emitted output tree",
+    "store/database/key",
+    "formal review and owner acceptance claims"
+  ],
+  "relatedPackets": [
+    {
+      "canonical": "../2026-11-14-node-references-promoted-ci/README.md",
+      "stagedSourcePath": "review-273/current-ci-ae8-curation/proposed/docs/qa/2026-11-14-node-references-promoted-ci/README.md",
+      "sha256": "fcb51e571f15a0352a0091fb3269b4cc5447ae3ed6d355d49664a6a96d885e54",
+      "role": "current-head CI evidence; not duplicated"
+    },
+    {
+      "canonical": "../2026-11-14-node-reference-promotion-independent/README.md",
+      "stagedSourcePath": "node-reference-273-promotion-independent/proposed/docs/qa/2026-11-14-node-reference-promotion-independent/README.md",
+      "sha256": "89dea3ced6c56d4bc129eb5b371b18f8c2e08b22e127f1f6911c151a865fc630",
+      "role": "separate independent native promotion evidence; not duplicated"
+    }
+  ],
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 126,
+      "sha256": "acaff1f4e36d057b50c626b5180bab7e31d3f68cfc593b36609901eba971a432",
+      "authored": true
+    },
+    {
+      "path": "link-checks.json",
+      "bytes": 11271,
+      "sha256": "27e0b10b9c80bc28547195cdb8dfffdb6a4b66a0b903e68f0ef47091ed1ce42d",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/inspected/case2-078-publish-refused-known-missing.jpeg",
+      "bytes": 64120,
+      "sha256": "2fedbc94de7799c6f415a1332b3f91782dfb4591aa77765f1c513ff9169f03b4",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/inspected/case5-072-respond-renamed-to-reply.jpeg",
+      "bytes": 45821,
+      "sha256": "b89cc71715417d4449d4706091d9b609f698d4990d4986d7959da2a4068eadec",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/inspected/case8-020-held-variables-before-rename.jpeg",
+      "bytes": 60791,
+      "sha256": "b826911f2c20135d9679e74850f34ee55c676f2aa36f01033fa41c4e2058fedd",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/inspected/case8-194-after-rename-template-repaired-variables-held.jpeg",
+      "bytes": 64454,
+      "sha256": "b6df81dcafcc15ab1b732473d27ed4892f5e526894b419950896d55f30afeae1",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/inspected/case8-261-trigger-schedule-still-held-at-end.jpeg",
+      "bytes": 44423,
+      "sha256": "be4916a90f3372d59830823d14bc27142b8482ae75dbfdff953b73fdbf780af4",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/inspected/INSPECTION-NOTES.md.txt",
+      "bytes": 4095,
+      "sha256": "fb3ed4db912feaf23948810f722d1740c2d159c7f62e3910235167b6f55e9cb3",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/inspected/loopnames5-056-narrow-360-final.jpeg",
+      "bytes": 23849,
+      "sha256": "7adb1b03772f29e03b98ab4657552aa5fbadf7813df5357cdd462036bd0f9277",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/results.json",
+      "bytes": 17438,
+      "sha256": "dba067b4d60b0232baf020724b689c219bcc65414d373c68699abab10e201320",
+      "authored": true
+    },
+    {
+      "path": "raw/edge-trace/trace-frames.json",
+      "bytes": 485012,
+      "sha256": "398b8a4c9b3e056da403c62c8aaac3564412f445264652d8e0f74ba3910ebf5a",
+      "authored": true
+    },
+    {
+      "path": "raw/edge/pre-existing-last-run.txt",
+      "bytes": 105,
+      "sha256": "b37b1d1bac73789dfbe9f3ae700b1e4a32593fde99b744ae364174db3e544aee",
+      "authored": true
+    },
+    {
+      "path": "raw/edge/results.json",
+      "bytes": 13546,
+      "sha256": "430d9a1a20d3334e3be0b4907dba87be4bfc12ebaa5c0123a5b454d30bca58ad",
+      "authored": true
+    },
+    {
+      "path": "raw/edge/test-results/.last-run.json",
+      "bytes": 45,
+      "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
+      "authored": true
+    },
+    {
+      "path": "raw/exit.json",
+      "bytes": 50,
+      "sha256": "0ccc121b38f51a6fc26393045d82a74a4a354e716d1d0b7de3e1e402bb321795",
+      "authored": true
+    },
+    {
+      "path": "raw/handoff.md.txt",
+      "bytes": 30295,
+      "sha256": "4f5fc26e662f437d1334644a03bd6ac5dc3e10a6c97829341742efef94375b2c",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/00-admission-recheck.log",
+      "bytes": 1779,
+      "sha256": "f9a7b395fbd7f9b6ec6673f9a4a195990b0cc21be9789793974a7b0a796a9f42",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/01-manifest-start.log",
+      "bytes": 519,
+      "sha256": "0b6c3deceb7d7fd4c3846d63733a8d59bd7a8765f6aaa8d1a3f103253d6e6f2e",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/02-plugin-ownership-before-build.log",
+      "bytes": 273,
+      "sha256": "f275922650a37b98e0f26f7c72f7bbb59aabc07e03bc8c6cfb75a745be4e6ace",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/03-bundle-source-check-prebuild.log",
+      "bytes": 2905,
+      "sha256": "5ba02bd605d5fbd778e79d4b4b109246a34fbc25338fe57a2984a195584b496f",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/03a-bundle-source-check-prebuild.v1-with-dts-noise.log",
+      "bytes": 2872,
+      "sha256": "f47debab86f28fbd641ba3e0d71124babc7f1957496b3d6ecf61cefe13e41a54",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/03b-patch-crash-first-rerun.log",
+      "bytes": 523,
+      "sha256": "cac6bf153a9633b4c742bdc92e830de4184a48c66f3fede0c32cd5587e71de62",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/10-domain-node-references.log",
+      "bytes": 245,
+      "sha256": "8ae3a86f819cf9ab9d1930d9d298562cdd8ff2c7baaf1e545ea82494b28630cc",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/10-domain-node-references.meta",
+      "bytes": 262,
+      "sha256": "36340043937a3a5dfb58ac838293a168c6785f340eb3a432df2c62750bf4b360",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/11-web-prep-four-suites.log",
+      "bytes": 265,
+      "sha256": "827053c2e688a993e8a1dc004e57cf3fc00d92f71879dd018d11d11284739b11",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/11-web-prep-four-suites.meta",
+      "bytes": 376,
+      "sha256": "e894079ff5381195bc4504d3ab3d37aedba2b6ab9bc598d556c6e15bfd8f4767",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/12-web-extended-26-suites.json",
+      "bytes": 142778,
+      "sha256": "b06b27c0493bd7941e2318766da3d292d7042f393882521b22c9042544c6ff76",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/12-web-extended-26-suites.log",
+      "bytes": 18023,
+      "sha256": "016265a5c538b0ccefa3c46d11d1eb66a0b392ee28a21fe431d73b62ab7c0235",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/12-web-extended-26-suites.meta",
+      "bytes": 1317,
+      "sha256": "cc2fc1ab3381099a20b3ac2d1212cb0a3bf4f974f80b31cd0f856db9e5c6511f",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/13-web-typecheck.log",
+      "bytes": 32,
+      "sha256": "38ac890c60e7f38d59ddfb410325cdfb5fca83c9411765c5481754e01c021630",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/13-web-typecheck.meta",
+      "bytes": 225,
+      "sha256": "b553cbc34343c84eaef89b7ba56859fa72e59d3b64b4473947aa8a633cddf1f8",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/14-web-lint.log",
+      "bytes": 11,
+      "sha256": "050c69da23536758722729aeda55a8d0fb9d557495ef6d33d70873a3b64a71c1",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/14-web-lint.meta",
+      "bytes": 220,
+      "sha256": "555348a8567a99ef20a33ddee2aa7d66251cc0bf7a16a2a0c260d4b770ea82ea",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/15-prettier-check-targeted.log",
+      "bytes": 66,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/15-prettier-check-targeted.meta",
+      "bytes": 1405,
+      "sha256": "9bc5fc44465dd72050fe46320773b5f4dc6ce6f1a752d916b61d638d0a341f25",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/16-format-check-whole-repo.log",
+      "bytes": 87,
+      "sha256": "1d66faad74f5e8709353f7288592866bd3a9095da1174a916e7aa632949971e2",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/16-format-check-whole-repo.meta",
+      "bytes": 202,
+      "sha256": "d4c69d9e2939671c0cd1a1b720deb9b4b071ba8bad5ce658c8781fdbeed32b4f",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/17-domain-full-unit-suite.json",
+      "bytes": 147417,
+      "sha256": "82ef846fb0b492c312e53e5f56ee15a771fcca069148f7c2ce4c79217103a2f2",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/17-domain-full-unit-suite.log",
+      "bytes": 2441,
+      "sha256": "e8144ccca0fce479934cf62e37c2cf6a533531876152a41b4dbc238667cc8127",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/17-domain-full-unit-suite.meta",
+      "bytes": 406,
+      "sha256": "33548c3334bdc8750090c376250ac53aa76b69cb17a4c47ae0474bbc753f0247",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/18-api-node-references.log",
+      "bytes": 492,
+      "sha256": "3ddb645bbdfcf77940bb79f65441c5480f923726bb013e6c0cdf076e6c4cedc4",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/18-api-node-references.meta",
+      "bytes": 259,
+      "sha256": "980829948194b1ae57c136f051e98f0acfe509919ed7e4b79f4737b8a8e4fb5a",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/19-domain-tsc-noEmit.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/19-domain-tsc-noEmit.meta",
+      "bytes": 244,
+      "sha256": "bc1235ba66e798c6eb159c4f9ce4275158c2d832ba8db3c16d12495569b50d06",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/20-api-tsc-noEmit.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/20-api-tsc-noEmit.meta",
+      "bytes": 241,
+      "sha256": "e4c2238b5b78e7979c0edfda4d54f8ea5dcdee1efe0a3d952e3648c546074f64",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/21-domain-lint.log",
+      "bytes": 11,
+      "sha256": "050c69da23536758722729aeda55a8d0fb9d557495ef6d33d70873a3b64a71c1",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/21-domain-lint.meta",
+      "bytes": 223,
+      "sha256": "767c2e9a6f8160ac236accc31fa05532c099de878ac2b683bacd44976b6d57b5",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/22-manifest-prebuild.log",
+      "bytes": 522,
+      "sha256": "2069b094202e1fe6e596783e7c1d8a696a7faf071c503b778d1e2368f22a9bf1",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/23-plugin-ownership-immediately-before-build.log",
+      "bytes": 273,
+      "sha256": "f275922650a37b98e0f26f7c72f7bbb59aabc07e03bc8c6cfb75a745be4e6ace",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/24-build-force.log",
+      "bytes": 5126,
+      "sha256": "450fb52065954b8afcf7948ac662bc6d62333a1b185dd02837ba4b4b4eba632d",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/24-build-force.meta",
+      "bytes": 234,
+      "sha256": "0211514d0a2d9e442bf671c175f5958e2c52d3b2b10588a2770a25f9d1c99605",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/25-manifest-postbuild.log",
+      "bytes": 523,
+      "sha256": "1c5fef33f3fb601b70a1a1d11dd5e5129746be44a7f6233631888d0301ae553e",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/26-compare-prebuild-postbuild.log",
+      "bytes": 2450,
+      "sha256": "714ad2ea792731cbdd8d3f68b84a874a793dca9f3965d7ee898d9dd868bc100b",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/27-bundle-source-check-postbuild.log",
+      "bytes": 1945,
+      "sha256": "074de3b756ceaabfc9985c2858ccfbed419d13d44df3de8ccd786f619613c8d1",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/28-plugin-ownership-after-build.log",
+      "bytes": 273,
+      "sha256": "f275922650a37b98e0f26f7c72f7bbb59aabc07e03bc8c6cfb75a745be4e6ace",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/29-bundled-dist-packages-postbuild.log",
+      "bytes": 179,
+      "sha256": "9368de017bfc3dc141bb4279109f72e0fd80078c112f6a52e7194ce9ec9fea36",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/30-edge-rename-references-and-loop-names.log",
+      "bytes": 1746,
+      "sha256": "923aefb83d8301cce321fcdd45dbe58dc0c64360e950c8c4b5c0376e8f7c4288",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/30-edge-rename-references-and-loop-names.meta",
+      "bytes": 432,
+      "sha256": "0bef187d9d176a39e980475e432f59b67e03a184210f3402cc47f267409c1bdb",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/31-manifest-postedge1.log",
+      "bytes": 523,
+      "sha256": "d60560688b5a90f8257c6418f1cce9fb29e2a3023068437e591b03d0f73be461",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/32-edge-supplementary-trace-run.log",
+      "bytes": 1746,
+      "sha256": "19ffd9c9d698aa739bb11605d555d25fd44a89710122d7ac42811cf55287f62f",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/32-edge-supplementary-trace-run.meta",
+      "bytes": 449,
+      "sha256": "e72efd4f42c10cebb95702859314219e957049c7ecf799771ad47a9810b5483e",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/33-manifest-postedge2.log",
+      "bytes": 523,
+      "sha256": "907408996179a47dafc699687cd9b747b49a77cf208ed673d3af0733fa473244",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/34-bundle-source-check-postedge2.log",
+      "bytes": 1945,
+      "sha256": "e6f99be680cdc8b5e76c6e8c39cb4ba19479857ce50bed60a266b91cbc8dcd97",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/35-scratch-emit-domain.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/35-scratch-emit-domain.meta",
+      "bytes": 496,
+      "sha256": "2c395daf3486d5e593250c81a243944f66c8e440171cb0291346ef3ce2aa3085",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/36-compare-scratch-emit-domain.log",
+      "bytes": 1347,
+      "sha256": "e3116f328737dd67645fc81ac898efa5f6bd5ff69baa14eed2dd9dc34ad57823",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/37-scratch-emit-map-normalized-compare.log",
+      "bytes": 78,
+      "sha256": "51f9f20046fc8062f76cbcdb0a04829b09ba2942ef0294e5d4df101fa88211f2",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/38-manifest-postscratch.log",
+      "bytes": 525,
+      "sha256": "1ccf65ff3c0dc4838b626ccf7ce12d6eff7f0c17ba694ebe511d071da0c55d18",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/39-scratch-emit-remaining-projects.log",
+      "bytes": 3429,
+      "sha256": "ae241c6032ad93fc6fcad4e3a81f023e148253bf59ffadbbdc38a6457250418e",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/39-scratch-emit-remaining-projects.meta",
+      "bytes": 296,
+      "sha256": "60714468e2512645ccd20449d2364e9c501fbb766873be7a8e29bf8dae152eba",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/40-contracts-dts-order-only-check.log",
+      "bytes": 623,
+      "sha256": "eb35bcae12465f9877204ba5a3aefc3cd3b253f65437a35eb141d0ca5acdd0ab",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/41-manifest-final.log",
+      "bytes": 519,
+      "sha256": "22e0519f0d94ffbf3f0d7ea05a9dfe27e8a63b4b4900c0cff45b37f9de11e0ef",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/42-make-proposed-specs.log",
+      "bytes": 345,
+      "sha256": "595f8abd2d43b4ce9132f54bc1b868bd735a9ab2cc20002507df3731813bd32a",
+      "authored": true
+    },
+    {
+      "path": "raw/logs/43-verify-binding-dryrun.log",
+      "bytes": 50,
+      "sha256": "43a830d318bec82d497e4f1c9fd1938400bd03660dfd8ad3d6babc671b481ed3",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/admission-recheck.json",
+      "bytes": 44843,
+      "sha256": "e03d6acd94cfe89fc3fdadfeccb9df64fa6d88af73a4ccee5325067ab6727db3",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/bundle-source-check-postbuild.json",
+      "bytes": 30667,
+      "sha256": "49cfbea0086f424835b6d3bde6d442f35486c9a14b6c5e45a406746e7de6b00d",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/bundle-source-check-postedge2.json",
+      "bytes": 30667,
+      "sha256": "e86ab3eb4cde5967ba859278044aff8d2900a0c334b3e87a0bf84ad0a39ac7b9",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/bundle-source-check-prebuild.json",
+      "bytes": 31829,
+      "sha256": "ba01beff479172fbdcc61ad43468235a59d47b5022218bbeb185b960c057170c",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/bundle-source-check-prebuild.v1-with-dts-noise.json",
+      "bytes": 60683,
+      "sha256": "0e844b7946ff9ce76067b73a1d0184b988a1413dc2234219fd25a667b015c245",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/bundled-dist-packages-postbuild.json",
+      "bytes": 17546,
+      "sha256": "c849ff9fef7f4f7ce683f932dca85d6df6c729a2beef0ff1d41b6306e387a6a6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/dryrun-binding-report.json",
+      "bytes": 13769,
+      "sha256": "52436589aee85e43f46248135d6daafbf0767eaac0709c760e29a5a5756da7f7",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/end-identity.txt",
+      "bytes": 737,
+      "sha256": "188e29711ffd25b842c8ffc9c446cc3dcddcca20ce79143f5bfbcc9ac02fe0f2",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/apps_api_dist.sha256",
+      "bytes": 27508,
+      "sha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/apps_mcp_dist.sha256",
+      "bytes": 3341,
+      "sha256": "945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/apps_plugin-claude_dist.sha256",
+      "bytes": 1587,
+      "sha256": "a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/apps_plugin-codex_dist.sha256",
+      "bytes": 2219,
+      "sha256": "f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/apps_web_dist-goblin.sha256",
+      "bytes": 2591,
+      "sha256": "3b197f9e2d2218fd17089807fd82bfe351de5fe0f1ca6b92a5da7af7d1c09780",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/apps_web_dist.sha256",
+      "bytes": 2591,
+      "sha256": "3ad928ebe229b703511af4e6c716c82af7d116b4461add3fcbb10489080f786f",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/mtimes.tsv",
+      "bytes": 82226,
+      "sha256": "56ae3b08b837edee1530d6f7251d5068f1e1a913d16810989ac2be5acf2cdf4b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/packages_adapter-codex_dist.sha256",
+      "bytes": 4021,
+      "sha256": "e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/packages_adapter-jev_dist.sha256",
+      "bytes": 729,
+      "sha256": "2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/packages_api-client_dist.sha256",
+      "bytes": 2701,
+      "sha256": "6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/packages_contracts_dist.sha256",
+      "bytes": 9749,
+      "sha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/packages_domain_dist.sha256",
+      "bytes": 10413,
+      "sha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/packages_engine_dist.sha256",
+      "bytes": 14569,
+      "sha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/packages_infrastructure_dist.sha256",
+      "bytes": 26805,
+      "sha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/final/trees-summary.json",
+      "bytes": 2436,
+      "sha256": "2288a312446cb71a0e4dea49a32a017e702c8d96f6cfc18a98b19ac9b4b966e2",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/format-targeted-files.txt",
+      "bytes": 1177,
+      "sha256": "2f3bfe0154cb585a34691ddc0537c92d9be3ed835557f57666f927ea6ed79053",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/apps_api_dist.sha256",
+      "bytes": 27508,
+      "sha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/apps_mcp_dist.sha256",
+      "bytes": 3341,
+      "sha256": "945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/apps_plugin-claude_dist.sha256",
+      "bytes": 1587,
+      "sha256": "a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/apps_plugin-codex_dist.sha256",
+      "bytes": 2219,
+      "sha256": "f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/apps_web_dist-goblin.sha256",
+      "bytes": 2591,
+      "sha256": "3b197f9e2d2218fd17089807fd82bfe351de5fe0f1ca6b92a5da7af7d1c09780",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/apps_web_dist.sha256",
+      "bytes": 2591,
+      "sha256": "3ad928ebe229b703511af4e6c716c82af7d116b4461add3fcbb10489080f786f",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/mtimes.tsv",
+      "bytes": 82226,
+      "sha256": "56ae3b08b837edee1530d6f7251d5068f1e1a913d16810989ac2be5acf2cdf4b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/packages_adapter-codex_dist.sha256",
+      "bytes": 4021,
+      "sha256": "e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/packages_adapter-jev_dist.sha256",
+      "bytes": 729,
+      "sha256": "2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/packages_api-client_dist.sha256",
+      "bytes": 2701,
+      "sha256": "6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/packages_contracts_dist.sha256",
+      "bytes": 9749,
+      "sha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/packages_domain_dist.sha256",
+      "bytes": 10413,
+      "sha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/packages_engine_dist.sha256",
+      "bytes": 14569,
+      "sha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/packages_infrastructure_dist.sha256",
+      "bytes": 26805,
+      "sha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/last/trees-summary.json",
+      "bytes": 2435,
+      "sha256": "4d28e0bd1428ede664e033679c5cadfafaf5efcee85d7925046beaf6a7cb4d16",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/manifest-spec.dryrun.json",
+      "bytes": 2383,
+      "sha256": "464276475386d0ed49a1e70167dfe5f56860724c7c1bc674450fe054b5e2b9dc",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/manifest-spec.proposed.json",
+      "bytes": 2386,
+      "sha256": "fad7e8b0304beca9f7998198c4b92afd92dbc25e18fc064f530a0570ba160bf7",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/merge-claims-check.txt",
+      "bytes": 2813,
+      "sha256": "4fb6341bcdbfe50737f91ff82d7559058b573dcfb49d83b2b1a34ab4c4a795a9",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/plugin-ownership-after-build.json",
+      "bytes": 715,
+      "sha256": "e9621ecf87a6b65488f40bd7e829243ee84c66b5391913f6300b252ed8aac0c5",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/plugin-ownership-before-build.json",
+      "bytes": 715,
+      "sha256": "798341dbadbcc4dc7fe9a8a1bd871abbbd8ba69903d3b3a43aacaf08878b54f1",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/plugin-ownership-immediately-before-build.json",
+      "bytes": 715,
+      "sha256": "9679ce0b8cc4ad2a09d09dd9444dd05a98e2ffb861e7a2fc22a9c2cbbc5260c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild-vs-final.json",
+      "bytes": 5673,
+      "sha256": "8101e5ff113d5c7817efede9ca26a2703678c79f31afab23c80afd9da20a96c9",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild-vs-last.json",
+      "bytes": 5672,
+      "sha256": "410b889874b978ee8d8abaaa4560456803dc8e425bfaf054f46017dfbbf4d571",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild-vs-postedge1.json",
+      "bytes": 5677,
+      "sha256": "2dbcb521df68829fd66e9eabef724bed84f32b72c90022af39011317643254bf",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild-vs-postedge2.json",
+      "bytes": 5677,
+      "sha256": "3aad1d36d5040ab2863f23a0c1ca05cfc6ee91a8d14a9f79b8bfb14bd57088d6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/apps_api_dist.sha256",
+      "bytes": 27508,
+      "sha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/apps_mcp_dist.sha256",
+      "bytes": 3341,
+      "sha256": "945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/apps_plugin-claude_dist.sha256",
+      "bytes": 1587,
+      "sha256": "a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/apps_plugin-codex_dist.sha256",
+      "bytes": 2219,
+      "sha256": "f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/apps_web_dist-goblin.sha256",
+      "bytes": 2591,
+      "sha256": "3b197f9e2d2218fd17089807fd82bfe351de5fe0f1ca6b92a5da7af7d1c09780",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/apps_web_dist.sha256",
+      "bytes": 2591,
+      "sha256": "3ad928ebe229b703511af4e6c716c82af7d116b4461add3fcbb10489080f786f",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/mtimes.tsv",
+      "bytes": 82226,
+      "sha256": "e4157bdbf4bd7376a40581bab29ca6dcad42e52aa2ea1aee2639f5e3be1744c1",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/packages_adapter-codex_dist.sha256",
+      "bytes": 4021,
+      "sha256": "e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/packages_adapter-jev_dist.sha256",
+      "bytes": 729,
+      "sha256": "2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/packages_api-client_dist.sha256",
+      "bytes": 2701,
+      "sha256": "6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/packages_contracts_dist.sha256",
+      "bytes": 9749,
+      "sha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/packages_domain_dist.sha256",
+      "bytes": 10413,
+      "sha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/packages_engine_dist.sha256",
+      "bytes": 14569,
+      "sha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/packages_infrastructure_dist.sha256",
+      "bytes": 26805,
+      "sha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postbuild/trees-summary.json",
+      "bytes": 2440,
+      "sha256": "799660fc7d4313482cacaff1c6982c7305aedca9f7b9824a3f9a6bc8bd3f19c4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/apps_api_dist.sha256",
+      "bytes": 27508,
+      "sha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/apps_mcp_dist.sha256",
+      "bytes": 3341,
+      "sha256": "945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/apps_plugin-claude_dist.sha256",
+      "bytes": 1587,
+      "sha256": "a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/apps_plugin-codex_dist.sha256",
+      "bytes": 2219,
+      "sha256": "f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/apps_web_dist-goblin.sha256",
+      "bytes": 2591,
+      "sha256": "3b197f9e2d2218fd17089807fd82bfe351de5fe0f1ca6b92a5da7af7d1c09780",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/apps_web_dist.sha256",
+      "bytes": 2591,
+      "sha256": "3ad928ebe229b703511af4e6c716c82af7d116b4461add3fcbb10489080f786f",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/mtimes.tsv",
+      "bytes": 82226,
+      "sha256": "faa55c6f0f54aa78731eb5d7969fe7118c54ebbda626e7e99d5fa28c88207fb3",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/packages_adapter-codex_dist.sha256",
+      "bytes": 4021,
+      "sha256": "e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/packages_adapter-jev_dist.sha256",
+      "bytes": 729,
+      "sha256": "2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/packages_api-client_dist.sha256",
+      "bytes": 2701,
+      "sha256": "6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/packages_contracts_dist.sha256",
+      "bytes": 9749,
+      "sha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/packages_domain_dist.sha256",
+      "bytes": 10413,
+      "sha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/packages_engine_dist.sha256",
+      "bytes": 14569,
+      "sha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/packages_infrastructure_dist.sha256",
+      "bytes": 26805,
+      "sha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge1/trees-summary.json",
+      "bytes": 2440,
+      "sha256": "00f7446bf728bf3b7a1ed9b471bc8856e7a1ea68c9c0e0f889a7b991a5955e26",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2-vs-postscratch.json",
+      "bytes": 5649,
+      "sha256": "cac96db8a67baf51aa98614aecef0a51c2cd5a7a179e10899cd53a15449b472e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/apps_api_dist.sha256",
+      "bytes": 27508,
+      "sha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/apps_mcp_dist.sha256",
+      "bytes": 3341,
+      "sha256": "945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/apps_plugin-claude_dist.sha256",
+      "bytes": 1587,
+      "sha256": "a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/apps_plugin-codex_dist.sha256",
+      "bytes": 2219,
+      "sha256": "f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/apps_web_dist-goblin.sha256",
+      "bytes": 2591,
+      "sha256": "3b197f9e2d2218fd17089807fd82bfe351de5fe0f1ca6b92a5da7af7d1c09780",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/apps_web_dist.sha256",
+      "bytes": 2591,
+      "sha256": "3ad928ebe229b703511af4e6c716c82af7d116b4461add3fcbb10489080f786f",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/mtimes.tsv",
+      "bytes": 82226,
+      "sha256": "56ae3b08b837edee1530d6f7251d5068f1e1a913d16810989ac2be5acf2cdf4b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/packages_adapter-codex_dist.sha256",
+      "bytes": 4021,
+      "sha256": "e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/packages_adapter-jev_dist.sha256",
+      "bytes": 729,
+      "sha256": "2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/packages_api-client_dist.sha256",
+      "bytes": 2701,
+      "sha256": "6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/packages_contracts_dist.sha256",
+      "bytes": 9749,
+      "sha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/packages_domain_dist.sha256",
+      "bytes": 10413,
+      "sha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/packages_engine_dist.sha256",
+      "bytes": 14569,
+      "sha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/packages_infrastructure_dist.sha256",
+      "bytes": 26805,
+      "sha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postedge2/trees-summary.json",
+      "bytes": 2440,
+      "sha256": "e6959b05b9c604cb79277a893474b7ef1919162d65b345480ad2721d9a616d8b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/apps_api_dist.sha256",
+      "bytes": 27508,
+      "sha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/apps_mcp_dist.sha256",
+      "bytes": 3341,
+      "sha256": "945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/apps_plugin-claude_dist.sha256",
+      "bytes": 1587,
+      "sha256": "a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/apps_plugin-codex_dist.sha256",
+      "bytes": 2219,
+      "sha256": "f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/apps_web_dist-goblin.sha256",
+      "bytes": 2591,
+      "sha256": "3b197f9e2d2218fd17089807fd82bfe351de5fe0f1ca6b92a5da7af7d1c09780",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/apps_web_dist.sha256",
+      "bytes": 2591,
+      "sha256": "3ad928ebe229b703511af4e6c716c82af7d116b4461add3fcbb10489080f786f",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/mtimes.tsv",
+      "bytes": 82226,
+      "sha256": "56ae3b08b837edee1530d6f7251d5068f1e1a913d16810989ac2be5acf2cdf4b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/packages_adapter-codex_dist.sha256",
+      "bytes": 4021,
+      "sha256": "e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/packages_adapter-jev_dist.sha256",
+      "bytes": 729,
+      "sha256": "2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/packages_api-client_dist.sha256",
+      "bytes": 2701,
+      "sha256": "6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/packages_contracts_dist.sha256",
+      "bytes": 9749,
+      "sha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/packages_domain_dist.sha256",
+      "bytes": 10413,
+      "sha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/packages_engine_dist.sha256",
+      "bytes": 14569,
+      "sha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/packages_infrastructure_dist.sha256",
+      "bytes": 26805,
+      "sha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/postscratch/trees-summary.json",
+      "bytes": 2442,
+      "sha256": "cda31e74a6052fb2b5c43728215f548886218638071a3b3d40f38d793ca4a589",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild-vs-postbuild.json",
+      "bytes": 7693,
+      "sha256": "87e95f9a232fc1bed5ee303147d3f2312559a7422b133c9b02f1883f38d91da0",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/apps_api_dist.sha256",
+      "bytes": 27508,
+      "sha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/apps_mcp_dist.sha256",
+      "bytes": 3341,
+      "sha256": "945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/apps_plugin-claude_dist.sha256",
+      "bytes": 1587,
+      "sha256": "a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/apps_plugin-codex_dist.sha256",
+      "bytes": 2219,
+      "sha256": "f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/apps_web_dist-goblin.sha256",
+      "bytes": 2591,
+      "sha256": "ed652d122095f20695827ff95e62cb32d31fd6fdb89a4037c22ade4b0b060081",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/apps_web_dist.sha256",
+      "bytes": 2591,
+      "sha256": "b732610b34d9b02812a876b46d50478e6486e9164e8300d94979fc3cbf54df30",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/mtimes.tsv",
+      "bytes": 82226,
+      "sha256": "e0b96c38a3de1d85e7481ba26cdb39d4903ed7a1a77e64a17cb968c5a91e9970",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/packages_adapter-codex_dist.sha256",
+      "bytes": 4021,
+      "sha256": "e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/packages_adapter-jev_dist.sha256",
+      "bytes": 729,
+      "sha256": "2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/packages_api-client_dist.sha256",
+      "bytes": 2701,
+      "sha256": "6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/packages_contracts_dist.sha256",
+      "bytes": 9749,
+      "sha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/packages_domain_dist.sha256",
+      "bytes": 10413,
+      "sha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/packages_engine_dist.sha256",
+      "bytes": 14569,
+      "sha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/packages_infrastructure_dist.sha256",
+      "bytes": 26805,
+      "sha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/prebuild/trees-summary.json",
+      "bytes": 2439,
+      "sha256": "7e20a52850501568fbe629bed1064991dec7d5ee33aff6dc8222a907a68da212",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/processes-after-edge1.json",
+      "bytes": 1897,
+      "sha256": "00ec9c7fe0d16335d54ce0d6950cfa549a69bba157a4d81ac1c29a6e4fa04a5f",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/processes-after-edge2.json",
+      "bytes": 1897,
+      "sha256": "e75ec3b162816c4e1e2e4d2cdee8346bf687f09957103d084bbc31dd84049532",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/processes-before-edge.json",
+      "bytes": 1897,
+      "sha256": "22e5b48b47a48efc7df6e8dff55fabc5e9b1831cf1dea737ee3d26e04a0fa60f",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/processes-final.json",
+      "bytes": 1897,
+      "sha256": "b51fc6f2744be26afe5318b0defafe7d8afb37d7cb59f67674cf091e18ce7109",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-adapter-codex-vs-dist.json",
+      "bytes": 3284,
+      "sha256": "9cdf8e68e9f1f40227e6ed709837b8433f8517266eb37fd497dac1cc26bef8f7",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-adapter-jev-vs-dist.json",
+      "bytes": 1228,
+      "sha256": "04c37b319fd677ea37776bf521c647c4334148246670cff2697910bc6f0762c7",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-api-client-vs-dist.json",
+      "bytes": 2456,
+      "sha256": "8b2dc74e42419f922a120659015616e5829f873aa05a2e4e879d235f4ec7a022",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-api-vs-dist.json",
+      "bytes": 17394,
+      "sha256": "94a2497e66bac74cdcd7a3592471e5e66caa2215e15151b36608f6358cb07ebe",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-contracts-vs-dist.json",
+      "bytes": 7311,
+      "sha256": "3919ff50d69d9b402dd7901ce0d4d2684ad954441f5682bc09470ba7e0f36f56",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-domain-vs-dist.json",
+      "bytes": 7202,
+      "sha256": "239d8a66a5516d9993cc3375a72db6c92dfbb20931882c7b2b845e6d809e938e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-engine-vs-dist.json",
+      "bytes": 9680,
+      "sha256": "8014889e95ea9d413a927dcde683456fddb83624c7373dad560d5511a136fc35",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-infrastructure-vs-dist.json",
+      "bytes": 17118,
+      "sha256": "e8fc941261c0020d524ebbdb384da50d36fd5c21a3f4196d547427357ab68c91",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-mcp-vs-dist.json",
+      "bytes": 2864,
+      "sha256": "950266b82dc0b64ba3fcef188bb7fcf01426602a9dcdf7d667d1f979a12a4155",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-plugin-claude-vs-dist.json",
+      "bytes": 1609,
+      "sha256": "ffdf18a1266957c2385c9537654c3707ba55302ed85509f1bae52a3dd3b50828",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/scratch-emit-plugin-codex-vs-dist.json",
+      "bytes": 2051,
+      "sha256": "1edceece04de7b83e5b7bdef18d158398d31380d8dc20ac539768e9b99aa5f65",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/source-sha256.txt",
+      "bytes": 4944,
+      "sha256": "9e910079f8b0f4502ec1e9a693428a1fdbeacbf30f586ae02d396c5faf170b5b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start-identity.txt",
+      "bytes": 670,
+      "sha256": "411c5a5cafea8a609fb6c9c40c3c57f278a7a00f8db56232597ec13183f7289a",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start-vs-prebuild.json",
+      "bytes": 5642,
+      "sha256": "dd621ecb38b983692875ad14dc40886b0a09020fb6adb2143f67f370c098d567",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/apps_api_dist.sha256",
+      "bytes": 27508,
+      "sha256": "549f6c30c76d4962c3ac708c3c5eabe94c77690e5d5f1af94374e429b2e9c370",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/apps_mcp_dist.sha256",
+      "bytes": 3341,
+      "sha256": "945f3a4ec32946209fae2289ea29e5061035fad2e130f99011a340efafdff8c6",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/apps_plugin-claude_dist.sha256",
+      "bytes": 1587,
+      "sha256": "a934ee87db00d8e00045701729bca16f615de68b94ed588b52a9b8cb733d077b",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/apps_plugin-codex_dist.sha256",
+      "bytes": 2219,
+      "sha256": "f60b1892fbb86dc545dcf9a3b96284a367aee425887fccf34039c9aa6f258e7e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/apps_web_dist-goblin.sha256",
+      "bytes": 2591,
+      "sha256": "ed652d122095f20695827ff95e62cb32d31fd6fdb89a4037c22ade4b0b060081",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/apps_web_dist.sha256",
+      "bytes": 2591,
+      "sha256": "b732610b34d9b02812a876b46d50478e6486e9164e8300d94979fc3cbf54df30",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/mtimes.tsv",
+      "bytes": 82226,
+      "sha256": "e0b96c38a3de1d85e7481ba26cdb39d4903ed7a1a77e64a17cb968c5a91e9970",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/packages_adapter-codex_dist.sha256",
+      "bytes": 4021,
+      "sha256": "e386d3989ba4882ee860f6c5c5a5e6ca19fb4b1badceaa64e67e1a42ed433503",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/packages_adapter-jev_dist.sha256",
+      "bytes": 729,
+      "sha256": "2702a151f3f3c892c13c9390a618fe2996e6c46848f7389394ad3f73a0066368",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/packages_api-client_dist.sha256",
+      "bytes": 2701,
+      "sha256": "6b5f879dd6b213f5863cf461a365cf34cba5240fc59d8fc005d19653bd7d8db4",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/packages_contracts_dist.sha256",
+      "bytes": 9749,
+      "sha256": "26ec4ac12a06f6fa9debc4957da5b2e6010a8d9302e72cfa0809842f0cfc6ada",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/packages_domain_dist.sha256",
+      "bytes": 10413,
+      "sha256": "90aaa6ce5348ce8f2104aaf10d74c129023aa00782fbf29e135101d118950117",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/packages_engine_dist.sha256",
+      "bytes": 14569,
+      "sha256": "605d569438e6f50ea378296781a833b82d5505e1df68d06e83fd7d247c581266",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/packages_infrastructure_dist.sha256",
+      "bytes": 26805,
+      "sha256": "5a3a7e6a896b4f363d056da62c457b565b53dc79f26a7aed914b011bb6831075",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/start/trees-summary.json",
+      "bytes": 2436,
+      "sha256": "3d8fe4451e5971bf13a88d2466400ca43a5c63c02204e13f517167351d6a5975",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/ui-mapping.dryrun.json",
+      "bytes": 2561,
+      "sha256": "63d19ebb9c2b2b5414618dc4720e3888301f66e5579c6a6acb870af5b3523b40",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/ui-mapping.proposed.json",
+      "bytes": 2562,
+      "sha256": "a81c367fd7ddf19089c44ee5a1543a664c61337c8e6c4c0d51f10ded0a7d105e",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/web-extended-files.txt",
+      "bytes": 914,
+      "sha256": "29b613216574742161f5a3fb0b747f2c21d4c620b6ed82d86ae571a158230eb1",
+      "authored": true
+    },
+    {
+      "path": "raw/manifests/web-extended-per-file-counts.tsv",
+      "bytes": 1534,
+      "sha256": "ddcf864528bded3bb3cf9049bdef46563fa89fdaf44f5fc0fade8fdc553b9a23",
+      "authored": true
+    },
+    {
+      "path": "raw/patch/index-change.patch",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "authored": true
+    },
+    {
+      "path": "raw/patch/source-change.patch",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "authored": true
+    },
+    {
+      "path": "raw/patch/source-change.stat.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "authored": true
+    },
+    {
+      "path": "raw/report.md.txt",
+      "bytes": 4289,
+      "sha256": "b162d403cf8c75d5afcaec53a2a3a780263ad8a902d4303cf33ff86ab75261e1",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/admission.mjs",
+      "bytes": 11488,
+      "sha256": "ceb5644d59c82df0cca2e17e5c2d3c20ff565898d75327cd76a6cfc5510c0bac",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/compare-manifests.mjs",
+      "bytes": 3963,
+      "sha256": "2efd805ea5b707fe4d353892692f2d87f7841009a904d2b9275a5b15a5d51eb2",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/compare-scratch-emit.mjs",
+      "bytes": 2142,
+      "sha256": "a95df205f28e572ca85f347c91a8d9faf1804e60551cffc93921d30acbba29aa",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/env.sh",
+      "bytes": 900,
+      "sha256": "e5cd16f976461de2be439991fc465bfdeb067e15c7db863bb91bfe035c7c723e",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/manifest-trees.mjs",
+      "bytes": 3768,
+      "sha256": "5125115ab7e697a8b3371552667594aae529b49cd75dd8c6edd4e274ef7a1bd7",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/run-logged.sh",
+      "bytes": 893,
+      "sha256": "8f104df5cce57975a06382ed7e59462265f0b92983d397c0b0ca746dcfc73b59",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/scratch-emit-all.sh",
+      "bytes": 1850,
+      "sha256": "81b36f2e6a55a8d303fb373bdc0300d03315e84367d0b3cd5145ece539f4e86d",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/verify-bundle-sources.mjs",
+      "bytes": 12801,
+      "sha256": "4ca497f87132d95a54cd1bdc8f3880e9d128bd115269c32f332dae3ac472e13d",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/verify-bundled-dist-packages.mjs",
+      "bytes": 3046,
+      "sha256": "e18d4b9c95e7c0ed0215a4ceaec1e03504cd0bf67c614e5bdd9e8406dcac22f4",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/verify-plugin-ownership.mjs",
+      "bytes": 3482,
+      "sha256": "d2996221d1753c81201adf512605004cda1f330f0a6ab6aeea8a1269ac3bed02",
+      "authored": true
+    },
+    {
+      "path": "raw/scripts/vitest-json-table.mjs",
+      "bytes": 1156,
+      "sha256": "15683b13369fbab3cb5981d78dea140947d83c0c92c827caa577e07396465b71",
+      "authored": true
+    },
+    {
+      "path": "raw/ui-273-promotion-verification-slot-grant.json",
+      "bytes": 708,
+      "sha256": "886f20e5ba8ab48ce0c6b5470a6df7cb3b0d4f27d23c495edeb61ac6f6de4c67",
+      "authored": true
+    },
+    {
+      "path": "README.md",
+      "bytes": 7263,
+      "sha256": "5b69db4c7e35252b28d84adfce751d0e3564955827e43e5de2fe5a52f086a066",
+      "authored": true
+    }
+  ]
+}

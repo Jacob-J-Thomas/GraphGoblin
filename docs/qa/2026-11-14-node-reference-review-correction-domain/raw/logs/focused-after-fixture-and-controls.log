@@ -1,0 +1,50 @@
+$ vitest run src/node-references.test.ts src/source-analysis.test.ts src/syntax.test.ts src/graph.test.ts --maxWorkers=1
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/packages/domain
+
+ ❯ src/node-references.test.ts (68 tests | 1 failed) 193ms
+   ❯ reference scopes and source boundaries (65)
+     × repairs evaluated function arguments while warning on its skipped filter 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs evaluated function arguments while warning on its skipped filter
+AssertionError: expected { id: 2 } to deeply equal [ { id: 2 } ]
+
+- Expected:
+[
+  {
+    "id": 2,
+  },
+]
+
++ Received:
+{
+  "id": 2,
+}
+
+ ❯ src/node-references.test.ts:440:91
+    438|     ]);
+    439|     const rows = [{ id: 1 }, { id: 2 }];
+    440|     expect(await evaluateExpression(expected, { rows, outputs: { true:…
+       |                                                                                           ^
+    441|       [{ id: 2 }],
+    442|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 90 passed (91)
+   Start at  13:00:24
+   Duration  5.19s (import 66%, transform 22%, tests 11%, worker 1%)
+
+    Isolate  4 workers spawned · ~262ms startup each (spawn + environment, per file)
+             at least ~787ms faster with isolate: false — reuses workers across files instead of one per file
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\packages\domain
+

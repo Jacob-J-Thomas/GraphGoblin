@@ -1,0 +1,122 @@
+# PR #474 / #273: formal scan 1 of 3 (backend/domain), Claude Opus 5.5 xhigh
+
+**Verdict: CHANGES REQUESTED.** One P2 correctness gap in the core domain contract (F1); I recommend fixing it in this PR. No P0 or P1 findings. Three P3 items can become follow-up issues. Once F1 is fixed with regression tests, I have nothing else blocking on the backend/domain surface.
+
+## Identity
+- **Head:** `ae8add8a791699e905540465b5ddf929d00c50eb`. I confirmed this by reading the checkout's branch ref (`codex/gg-20261114-node-references-native`).
+- **Tree:** `ea2dfcfd46f7d5ab79fd98414db214513d830b52`. Taken from the snapshot `identity.json` and the native QA binding; I could not recompute it.
+- **Target:** main `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`, the merged naming parent. I reviewed the child diff against it.
+- The snapshot's `reviewGate` text ("preparation only") was written at 18:27, before the 18:34 dispatch. The dispatch takes precedence.
+
+## What I actually did
+- Static, read-only inspection with Read/Grep/Glob only. I ran no shell, Git, build, test or browser commands and wrote no files.
+- **Policy and contract read:** `AGENTS.md`, `review-policy.md`, the snapshot `identity.json`, `non-qa-paths.txt` and the domain/docs/CHANGELOG parts of `non-qa.diff`. I did not recompute the diff's SHA-256.
+- **Domain sources read in full:** `node-references.ts`, `node-reference-path.ts`, `expression-references.ts`, `template-references.ts`, `source-analysis.ts`, `syntax.ts`, `template.ts`, `expression.ts`, `validation-issue.ts`, and the `graph.ts` and `index.ts` changes.
+- **Tests read:** `node-references.test.ts`, `source-analysis.test.ts`, `syntax.test.ts` and `apps/api/src/node-references.test.ts`.
+- **Ground truth checked:**
+  - Contracts: `nodes.ts`, `mutations.ts`, `evaluation.ts`, `common.ts`, `loop.ts`, `thread.ts`.
+  - Engine evaluation roots: decision, subloop, heartbeat, inference, common, wait-filter and working-directory code.
+  - Domain helpers: `pointer.ts`, `mutations.ts`, `thread-view.ts`.
+  - API: `loop-issues.ts`.
+  - Web interface: the `store.ts` `renameNode` code and `EarlierNodeOutputs.tsx` `usesRunThread`.
+- **Evidence read:** the current CI packet (CI43622692936, routing43622692920), the promoted native QA README, and the in-checkout backend-independent and implementation QA READMEs. I kept the evidence tiers separate as instructed.
+
+## Findings
+
+### F1 · P2 · Introduced · Recommend FIX-IN-PR
+**Signature:** `reference-scope/where-predicate-root-misclassified`
+
+**Where:** `packages/domain/src/node-references.ts:40-56` (`referenceScope`). The `where → 'binding'` rule only applies under `operations`, `input` or `output.transforms`.
+
+**What's wrong:** In two typed slots, the domain's evaluation root differs from what the engine actually evaluates against:
+
+1. **LLM and classifier decisions, `config.context.messages.where`.**
+   - The contracts declare it (`evaluation.ts:218-219`, `382`, `435`).
+   - The engine evaluates it once per message with a `$thread` binding (`engine/handlers/decision.ts:20` calls `selectMessages`, which binds `{ thread: view, index }` at `common.ts:117-118`).
+   - That is the same function and binding the domain already classifies as `'binding'` for subloop `input.messages`. Here the domain falls through to `'thread'`.
+2. **Subloop `config.input.vars.where`, i.e. a child variable named `where`.**
+   - The engine evaluates it against the parent thread view (`subloop.ts:54-55`).
+   - The domain classifies it as `'binding'` because `first === 'input'`.
+
+The editor already encodes both rules correctly in `apps/web/src/forms/EarlierNodeOutputs.tsx:44-51` (`usesRunThread`, including the explicit `input.vars.where` carve-out). The new domain classifier diverges from it.
+
+**Reachable scenarios:**
+- **Silent missed repair:** an LLM decision has `context.messages = { where: "$thread.outputs.classify.value.includeHistory or role = 'user'" }`. The user renames `classify` to `triage`.
+  - Edges and the other references are repaired.
+  - In `'thread'` scope a `$thread` root is never recognised (`expression-references.ts:116-125`), so this predicate is neither repaired nor marked uncertain.
+  - The rename notice lists nothing for `config.context.messages.where`.
+  - After the rename the predicate reads `undefined`, so the decision silently gets a different message context.
+- **Missed publication refusal:** `$thread.gates.loop.passes > 1` there, after `loop` is removed, produces no `NODE_REFERENCE_MISSING`, so publish succeeds.
+- **Bare-key side effect:** bare `gates.x` or `outputs.x` in the same predicate reads the message's fields, which have no such keys. They are still rewritten, and can raise a blocking error for a read that has nothing to do with gates.
+- **Case 2:** `outputs.classify.value` in `input.vars.where` is likewise never repaired, warned about or validated.
+
+**Why it matters:** This breaks two accepted invariants: "known missing gate/visit IDs refuse publication" and "ambiguous reads have bounded explanations". Because the notice lists nothing, it implies the rename was complete. It is not P1: there is no data loss, and the base branch never repaired references at all.
+
+**Required outcome:**
+- Classify every `MessageSelection`/`CollectionSelection` `where` — including the decision's `context.messages.where` — as the item/`$thread` binding scope.
+- Classify a subloop `input.vars` entry keyed `where` as thread scope.
+- Add domain regression cases for both slots covering rename repair and the missing-gate error.
+- The implementation is the root's choice, for example deriving the scope from the selection schema rather than listing parent fields.
+
+### F2 · P3 · Introduced · DEFER-ISSUE (or batch with F1 if cheap)
+**Signature:** `expression-references/non-path-predicate-group-unvisited`
+
+**Where:** `packages/domain/src/expression-references.ts:185-228`. The block, apply and function branches return early without visiting `value.predicate` or `value.group`. The generic branch at `:266-270` also skips `group`.
+
+**What's wrong:** JSONata attaches `[...]` filters and `{...}` group-by constructors directly to non-path nodes. Examples: `$distinct(rows)[id = $$.outputs.pick.value]`, `(rows)[...]`, `$f(x){ "k": $$.gates.g.passes }`.
+
+**Impact:** A thread reference rooted at `$$` inside those parts is silently not repaired, not marked uncertain and not validated. It is the same invariant as F1 but needs an unusual expression form.
+
+**Required outcome:** Visit or mark-uncertain the predicate and group parts of every node type, with focus not local, and add one test.
+
+### F3 · P3 · Introduced · DEFER-ISSUE (NO-CHANGE is acceptable)
+**Signature:** `rename-result/combined-count-recomputed-by-caller`
+
+**Where:** `node-references.ts:280-286`, where `repairedReferences` adds edge endpoints to source repairs. `apps/web/src/editor/store.ts:733-737,759` then recomputes the domain's endpoint rule to subtract them out again.
+
+**Why it matters:** The count is correct today. But the counting rule is duplicated across a package boundary, so a later change on the domain side would silently miscount the notice.
+
+**Required outcome:** Return source-reference and endpoint counts as separate fields.
+
+### F4 · P3 · Introduced · DEFER-ISSUE
+**Signature:** `syntax/parallel-unused-producer`
+
+**Where:** `validateLoop` now uses `authoredSourceIssues` (`graph.ts:306`). `syntaxIssues` (`syntax.ts:143-164`) is still exported (`index.ts:23`) but no production code uses it.
+
+**Why it matters:**
+- It is still the main subject of `syntax.test.ts` (lines 58, 75, 92, 105, 171).
+- The two producers already pick discriminated-union branches differently: `safeParse` versus the new discriminator path.
+- Tests can pass on the path production no longer runs, which conflicts with AGENTS.md's "no dual code paths" rule.
+- The `validateLoop` assertions at lines 59, 99 and 196 limit the risk today.
+
+**Required outcome:** Keep one syntax-issue producer, with the syntax tests asserting through it.
+
+## Checked and found consistent (no finding)
+- **Scope classification against the engine**, apart from F1: exit returns; inference prompt, context files and repair prompts (thread view plus extras); mutation and transform `where` (binding); output transforms (working thread); wait `filter` (`$thread`); heartbeat `until` (`{probe, thread, beat}`); probe and deadline templates (thread view); subloop custom patch (`parent`); subloop output vars, messages and artifacts (child root, excluded); inject, trigger payload and vars (thread); loop working directory (thread view); trigger fields (excluded).
+- **Identity semantics:**
+  - A gate is written only when the decision returns gate evidence, which requires a repeat route, and a repeat route requires `maxPasses`. This matches `canProduceGate`.
+  - Subloop seeds never inherit gates or visit counts.
+  - The `outputPatch` call sites match `canProduceOutput`.
+  - Outputs are only ever warnings, which is correct given inheritance and authored writes.
+- **Rewrite safety:**
+  - Spans are applied in descending order and overlaps are refused.
+  - The rewritten source is re-parsed.
+  - JSONata reserved words and hyphenated IDs are quoted.
+  - Escaped string tokens are checked against their decoded value.
+  - Pointer keys use raw, unescaped tokens.
+  - Liquid shadowing, `else` branches, `capture`/`increment` locals and raw blocks are handled conservatively.
+- **Immutability:** `updateAtPointer` copies on write, so untouched configs and settings keep their object identity. The store's form-remount logic relies on this.
+- **Cache:**
+  - Least-recently-used eviction with both a count bound (1024) and a size bound (1 MiB).
+  - Oversized sources bypass the cache without evicting other entries.
+  - Cached facts are frozen.
+  - The key is language plus scope plus source, and nothing graph-specific is cached.
+  - The JSONata parse tree is reused read-only from the existing compile cache.
+- **API:** No API code changed. `loopPublicationIssues` already includes `validateLoop`. The API test covers: draft save returns 200 with the error, validate reports it not publishable, publish returns 422 `LOOP_INVALID`, and the published version is retained. It also covers the inherited-output warning end to end.
+- **Exports:** Narrowing the `index.ts` exports hides only the new internals; nothing previously exported is removed.
+- **Docs:** ADR-0075, docs 03/07/09, the guide and the CHANGELOG upgrade note match the code, except for the F1 gap and the F4 dual path.
+
+## Limits
+- I did not recompute the tree hash or the diff SHA.
+- I did not re-run any evidence. CI, native QA and Sonnet verification are taken as reported in the dispatched evidence tiers.
+- The UI implementation is scan 2's territory; I inspected only its call into the domain.

@@ -1,0 +1,1004 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 7fa20d52..cbcf8bbb 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -8,12 +8,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   queue of saves, after rechecking held input and conflicts, and checks them again right before
+   the request when it first reads the server back. It then compares the returned immutable
+   version with the draft the server acknowledged for this attempt. A delayed reply no
+-  longer presents later editing as published, and a reply never reaches a newer editor load. When
+-  the version holds a different stored draft, or **Nothing to publish** finds another current
+-  version, the notice says so without naming a writer, and the editor keeps its copy behind the
+-  existing **Reload server draft** / **Overwrite with this copy** choice. A lost or failed reply
+-  is read back before anything is claimed. If that check fails too, each later Publish in that
+-  editor checks first until a check answers, also after a Publish refused in between.
++  longer presents later editing as published, and a reply never reaches a newer editor load. Its
++  notice compares the editor with that version only, since a later version may hold the same
++  work; input still held in fields is reported separately. When the version holds a different
++  stored draft, or **Nothing to publish** finds another current version, the notice says so
++  without naming a writer, and the editor keeps its copy behind the existing **Reload server
++  draft** / **Overwrite with this copy** choice. A lost or failed reply is read back before
++  anything is claimed; a read-back that finds a different draft points to that choice instead of
++  offering Publish again. If that check fails too, each later Publish in that editor checks first
++  until a check answers, also after a Publish refused in between. A check that fails again says
++  that this Publish sent no request and that the earlier request's outcome is still unknown. A
++  check that finds a different draft on the server sends nothing and enters the draft conflict,
++  also when held input appears meanwhile.
+   The publish notice no longer carries its own **Open in Runs** link, which opens the loop's
+   current Runs flow rather than a particular version. The toolbar link remains. While a draft
+   conflict or a name refusal keeps the draft from the server, the indicator beside Publish shows
+@@ -23,7 +29,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   save is dropped. A renamed loop, or a changed or removed description, shows without waiting for
+   the five-second poll (#156, #237). A save sent on leaving the editor uses only its own editor
+   load's draft token. After **Reload server draft** or reopening on another writer's draft, it can
+-  no longer overwrite that draft. Publishing no longer re-runs the open draft's API checks.
++  no longer overwrite that draft. Publishing no longer re-runs the open draft's API checks. Other
++  loops' checks are marked stale, and one still running is dropped, so an answer read before the
++  publication (a subloop not yet published, say) cannot stay current; it is checked again on next
++  use.
+ 
+ - Loop creation, rename, import and template copies refuse case- and whitespace-equivalent
+   names for the same owner and return a suggested alternative (#209, ADR-0073). The app says
+diff --git a/apps/web/src/api/queries.ts b/apps/web/src/api/queries.ts
+index d719952f..c5319cef 100644
+--- a/apps/web/src/api/queries.ts
++++ b/apps/web/src/api/queries.ts
+@@ -279,7 +279,11 @@ export function isValidationKey(queryKey: readonly unknown[]): boolean {
+  *
+  * A publish also refreshes the loop's versions and webhook endpoints, and marks other loops' API
+  * checks stale without running them (a subloop reference reads this loop's published version).
+- * The open editor's checks of its own draft are keyed by its token and are left alone.
++ * Such a check still running may have read the loop before the publication, and an answer that
++ * lands after the mark would make its key fresh again: it is cancelled first and its answer
++ * dropped. The query keeps its earlier answer, if any, marked stale, and checks again on its next
++ * use (reopening, a refocus, a new draft). The open editor's checks of its own draft are keyed by
++ * its token and are left alone, running or not.
+  *
+  * Failed reads stay in their queries' error state (TanStack does not reject here), so the returned
+  * promise never rejects and can be left unawaited.
+@@ -294,19 +298,17 @@ export async function refreshLoopAfterWrite(
+     keys.loop(loopId),
+     ...(published ? [keys.versions(loopId), keys.triggers(loopId)] : []),
+   ].map((queryKey) => ({ queryKey, exact: true }));
+-  await Promise.all(
+-    exact.map((filters) => queryClient.cancelQueries(filters, { silent: true, revert: false })),
+-  );
++  const dependents = {
++    predicate: ({ queryKey }: { queryKey: readonly unknown[] }) =>
++      isValidationKey(queryKey) && queryKey[1] !== loopId,
++  };
++  await Promise.all([
++    ...exact.map((filters) => queryClient.cancelQueries(filters, { silent: true, revert: false })),
++    ...(published ? [queryClient.cancelQueries(dependents)] : []),
++  ]);
+   await Promise.all([
+     ...exact.map((filters) => queryClient.invalidateQueries(filters)),
+-    ...(published
+-      ? [
+-          queryClient.invalidateQueries({
+-            predicate: ({ queryKey }) => isValidationKey(queryKey) && queryKey[1] !== loopId,
+-            refetchType: 'none',
+-          }),
+-        ]
+-      : []),
++    ...(published ? [queryClient.invalidateQueries({ ...dependents, refetchType: 'none' })] : []),
+   ]);
+ }
+ 
+diff --git a/apps/web/src/editor/EditorPage.publish.test.tsx b/apps/web/src/editor/EditorPage.publish.test.tsx
+index 527b3cd7..16a800da 100644
+--- a/apps/web/src/editor/EditorPage.publish.test.tsx
++++ b/apps/web/src/editor/EditorPage.publish.test.tsx
+@@ -9,6 +9,7 @@ import { loadLocalDraft, saveLocalDraft } from '../drafts/local-drafts.js';
+ import { newLoopDefinition } from './model.js';
+ import { useEditorStore } from './store.js';
+ import { serializeSave } from './useAutosave.js';
++import { CONFLICT_REFUSAL } from './usePublish.js';
+ 
+ const SAVE_WAIT = { timeout: 4000 };
+ const RECONCILING =
+@@ -37,18 +38,29 @@ async function savedEditor(api: FakeApi, name = 'mine', first = 'A1') {
+ const publishButton = () => screen.getByRole('button', { name: /^Publish/ });
+ const PUBLISH_FEEDBACK =
+   /Publish failed|Published version|Publish not confirmed|Nothing to publish|Nothing was published/;
++/** A failed check before a retry, as the notice states it in full (#237 review F2). */
++const CHECK_FAILED =
++  'Checking the server before publishing again failed: The GraphGoblin API cannot be reached. This Publish sent no request, and the outcome of the earlier Publish request is still not known. Publish again checks the server first.';
++const RECOVER = 'Choose Reload server draft or Overwrite with this copy before publishing again.';
+ const posts = (api: FakeApi, loopId: string) => api.callsTo('POST', `/loops/${loopId}/publish`);
+ const puts = (api: FakeApi, loopId: string) => api.callsTo('PUT', `/loops/${loopId}/draft`);
+-async function detail(api: FakeApi, loopId: string) {
++type Version = { id: string; version: number; definition: { description?: string } };
++async function read(api: FakeApi, path: string) {
+   const response = await api.builtIn({
+     method: 'GET',
+-    path: `/loops/${loopId}`,
++    path,
+     search: new URLSearchParams(),
+     body: undefined,
+     headers: new Headers(),
+   });
+-  type Version = { id: string; version: number; definition: { description?: string } };
+-  return (await response.json()) as { current?: Version; draft?: Version };
++  return (await response.json()) as unknown;
++}
++async function detail(api: FakeApi, loopId: string) {
++  return (await read(api, `/loops/${loopId}`)) as { current?: Version; draft?: Version };
++}
++/** An immutable version, read by its ID. */
++async function version(api: FakeApi, loopId: string, versionId: string) {
++  return (await read(api, `/loops/${loopId}/versions/${versionId}`)) as Version;
+ }
+ 
+ describe('Publish (#237)', () => {
+@@ -73,7 +85,7 @@ describe('Publish (#237)', () => {
+     reply.release();
+     expect(
+       await screen.findByText(
+-        'Published version 1. It holds the draft saved for this publish; changes made after that are not published.',
++        'Published version 1. It holds the draft saved for this publish, without the changes made after that.',
+       ),
+     ).toBeInTheDocument();
+     await waitFor(() => expect(puts(api, loop.id)).toHaveLength(2), SAVE_WAIT);
+@@ -146,7 +158,7 @@ describe('Publish (#237)', () => {
+     expect(await screen.findByText('A different draft was published')).toBeInTheDocument();
+     expect(
+       screen.getByText(
+-        'Version 1 holds a different stored draft from the draft saved for this publish. This editor’s draft is not published.',
++        'Version 1 holds a different stored draft from the draft saved for this publish. It does not hold the editor’s current draft.',
+       ),
+     ).toBeInTheDocument();
+     // The same draft row and number as this editor's save, holding different content.
+@@ -286,11 +298,7 @@ describe('Publish (#237)', () => {
+       ),
+     ).toBeInTheDocument();
+     await user.click(publishButton());
+-    expect(
+-      await screen.findByText(
+-        /^Checking the server before publishing again failed: .* Nothing was sent/,
+-      ),
+-    ).toBeInTheDocument();
++    expect(await screen.findByText(CHECK_FAILED)).toBeInTheDocument();
+     expect(posts(api, loop.id)).toHaveLength(1);
+     reachable = true;
+     await user.click(publishButton());
+@@ -405,6 +413,88 @@ describe('Publish (#237)', () => {
+     expect(within(notice as HTMLElement).queryByRole('link')).toBeNull();
+   });
+ 
++  /**
++   * Version 1's reply is held while the editor moves on to A2, and A2 exactly is saved and
++   * published elsewhere as version 2: the reply describes version 1 only (#237 review F3).
++   */
++  async function laterVersionHoldsTheEdit(api: FakeApi, loopId: string, release: () => void) {
++    act(() => useEditorStore.getState().updateMeta({ description: 'A2' }));
++    api.saveDraftElsewhere(loopId, useEditorStore.getState().definition!);
++    const v2 = api.publishElsewhere(loopId);
++    release();
++    await waitFor(() => expect(screen.getByText('published v2')).toBeInTheDocument());
++    expect(await version(api, loopId, v2.id)).toMatchObject({
++      version: 2,
++      definition: { description: 'A2' },
++    });
++    expect((await detail(api, loopId)).current).toMatchObject({
++      id: v2.id,
++      version: 2,
++      definition: { description: 'A2' },
++    });
++    return v2;
++  }
++
++  it('describes a delayed reply by its own version when a later version holds the newer work', async () => {
++    const user = userEvent.setup();
++    const api = new FakeApi();
++    const reply = gate();
++    api.override('POST /loops/:id/publish', async (call) => {
++      const committed = await api.builtIn(call);
++      await reply.promise;
++      return committed;
++    });
++    const { loop } = await savedEditor(api);
++    await user.click(publishButton());
++    await waitFor(() => expect(posts(api, loop.id)).toHaveLength(1));
++    const v1 = (await detail(api, loop.id)).current!;
++    await laterVersionHoldsTheEdit(api, loop.id, reply.release);
++    expect(
++      await screen.findByText(
++        'Published version 1. It holds the draft saved for this publish, without the changes made after that. Version 2 has been published since.',
++      ),
++    ).toBeInTheDocument();
++    expect(await version(api, loop.id, v1.id)).toMatchObject({
++      version: 1,
++      definition: { description: 'A1' },
++    });
++    expect(useEditorStore.getState().definition?.description).toBe('A2');
++  });
++
++  it('describes a returned different draft by its own version when a later version holds the editor’s work', async () => {
++    const user = userEvent.setup();
++    const api = new FakeApi();
++    const admission = gate();
++    const reply = gate();
++    api.override('POST /loops/:id/publish', async (call) => {
++      await admission.promise;
++      const committed = await api.builtIn(call);
++      await reply.promise;
++      return committed;
++    });
++    const { loop } = await savedEditor(api);
++    await user.click(publishButton());
++    await waitFor(() => expect(posts(api, loop.id)).toHaveLength(1));
++    api.saveDraftElsewhere(loop.id, { ...newLoopDefinition('mine'), description: 'B' });
++    admission.release();
++    await waitFor(async () => expect((await detail(api, loop.id)).current?.version).toBe(1));
++    const v1 = (await detail(api, loop.id)).current!;
++    await laterVersionHoldsTheEdit(api, loop.id, reply.release);
++    expect(await screen.findByText('A different draft was published')).toBeInTheDocument();
++    expect(
++      await screen.findByText(
++        'Version 1 holds a different stored draft from the draft saved for this publish. It does not hold the editor’s current draft. Version 2 has been published since.',
++      ),
++    ).toBeInTheDocument();
++    expect(await version(api, loop.id, v1.id)).toMatchObject({
++      version: 1,
++      definition: { description: 'B' },
++    });
++    // The existing recovery still applies to the mismatch.
++    expect(screen.getByText('The draft changed on the server')).toBeInTheDocument();
++    expect(useEditorStore.getState().definition?.description).toBe('A2');
++  });
++
+   it('sends one request for two clicks in the same task', async () => {
+     const api = new FakeApi();
+     const { loop } = await savedEditor(api);
+@@ -559,6 +649,138 @@ describe('Publish after an unknown outcome, while its check is answered (#237)',
+   });
+ });
+ 
++/** Another writer's draft B, saved without this editor's token. */
++const B = { ...newLoopDefinition('mine'), description: 'B' };
++/** A retry's check found B, not A1, as the server's draft, so it sent nothing (#237 review F1). */
++const CHANGED = `This Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. Its current version, version 1, does not hold the draft saved for this publish either. ${RECOVER}`;
++
++describe('Publish after an unknown outcome, when the server holds another draft (#237)', () => {
++  /** B saved elsewhere after the unknown outcome: the server's draft, as it must stay. */
++  async function otherDraft(api: FakeApi, loopId: string) {
++    const own = api.draftToken(loopId)!;
++    api.saveDraftElsewhere(loopId, B);
++    const theirs = { draft: (await detail(api, loopId)).draft!, token: api.draftToken(loopId)! };
++    expect(theirs.draft.definition.description).toBe('B');
++    expect(theirs.token).not.toBe(own);
++    return { own, theirs };
++  }
++
++  /** v1 still current, B still the server's draft, A1 kept unsynced here on its own token. */
++  async function bothKept(
++    api: FakeApi,
++    loopId: string,
++    v1: Version,
++    { own, theirs }: Awaited<ReturnType<typeof otherDraft>>,
++  ) {
++    const after = await detail(api, loopId);
++    expect(after.current).toEqual(v1);
++    expect(after.draft).toEqual(theirs.draft);
++    expect(api.draftToken(loopId)).toBe(theirs.token);
++    expect(useEditorStore.getState().definition?.description).toBe('A1');
++    await waitFor(async () =>
++      expect(await loadLocalDraft(loopId)).toMatchObject({
++        synced: false,
++        baseToken: own,
++        definition: { description: 'A1' },
++      }),
++    );
++  }
++
++  it('sends nothing when the check before a retry finds another draft, and keeps both copies', async () => {
++    const api = new FakeApi();
++    const { user, loop, v1 } = await unconfirmedPublish(api);
++    const copies = await otherDraft(api, loop.id);
++    await user.click(publishButton());
++    expect(await screen.findByText(CHANGED)).toBeInTheDocument();
++    expect(screen.getByText('Nothing was published')).toBeInTheDocument();
++    expect(posts(api, loop.id)).toHaveLength(1);
++    // The existing explicit recovery: nothing is resubmitted on its own.
++    expect(screen.getByText('The draft changed on the server')).toBeInTheDocument();
++    expect(screen.getByTestId('save-state')).toHaveTextContent('Draft changed elsewhere');
++    await bothKept(api, loop.id, v1, copies);
++    await user.click(publishButton());
++    expect(await screen.findByText(CONFLICT_REFUSAL)).toBeInTheDocument();
++    expect(posts(api, loop.id)).toHaveLength(1);
++    await bothKept(api, loop.id, v1, copies);
++  });
++
++  it('keeps that evidence when held input arrives during the check', async () => {
++    const api = new FakeApi();
++    const { user, loop, reads, v1 } = await unconfirmedPublish(api);
++    const copies = await otherDraft(api, loop.id);
++    const hold = await retryHeldAtCheck(user, api, loop.id, reads);
++    act(() =>
++      useEditorStore.getState().setFieldError('variables', 'variables', {
++        message: 'invalid JSON',
++        text: '{',
++        input: 'unparsed text',
++      }),
++    );
++    hold.release();
++    expect(await screen.findByText(CHANGED)).toBeInTheDocument();
++    expect(screen.getByText('The draft changed on the server')).toBeInTheDocument();
++    expect(posts(api, loop.id)).toHaveLength(1);
++    expect(useEditorStore.getState().fieldErrors['variables']?.['variables']?.text).toBe('{');
++
++    // Discarding the text sends nothing, and the next Publish meets the conflict, not B.
++    reads.hold = undefined;
++    act(() => useEditorStore.getState().setFieldError('variables', 'variables', undefined));
++    await user.click(publishButton());
++    expect(await screen.findByText(CONFLICT_REFUSAL)).toBeInTheDocument();
++    expect(posts(api, loop.id)).toHaveLength(1);
++    await bothKept(api, loop.id, v1, copies);
++  });
++
++  it('applies that evidence to no newer load of the editor, even on the same token (control)', async () => {
++    const api = new FakeApi();
++    const { user, loop, reads, queryClient } = await unconfirmedPublish(api);
++    const a1 = useEditorStore.getState().definition!;
++    const { own } = await otherDraft(api, loop.id);
++    const hold = await retryHeldAtCheck(user, api, loop.id, reads);
++    const generation = useEditorStore.getState().generation;
++    act(() => useEditorStore.getState().load(loop.id, a1, { baseToken: own }));
++    expect(useEditorStore.getState().generation).toBeGreaterThan(generation);
++    hold.release();
++    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
++    expect(useEditorStore.getState()).toMatchObject({ conflict: undefined, baseToken: own });
++    expect(screen.queryByText(PUBLISH_FEEDBACK)).toBeNull();
++    expect(screen.queryByText('The draft changed on the server')).toBeNull();
++    expect(posts(api, loop.id)).toHaveLength(1);
++  });
++
++  it('points to the conflict choice when the check after a lost request finds another draft', async () => {
++    const user = userEvent.setup();
++    const api = new FakeApi();
++    const { loop, token } = await savedEditor(api);
++    api.override('POST /loops/:id/publish', () => {
++      // Lost before admission; B is saved elsewhere before the editor reads the server back.
++      api.saveDraftElsewhere(loop.id, B);
++      throw new TypeError('Failed to fetch');
++    });
++    await user.click(publishButton());
++    expect(await screen.findByText('Publish not confirmed')).toBeInTheDocument();
++    expect(
++      screen.getByText(
++        `The GraphGoblin API cannot be reached. A check of the server found that the draft saved for this publish is not its current published version, and that the server holds a different draft from it. ${RECOVER}`,
++      ),
++    ).toBeInTheDocument();
++    expect(screen.getByText('The draft changed on the server')).toBeInTheDocument();
++    const after = await detail(api, loop.id);
++    expect(after.current).toBeUndefined();
++    expect(after.draft?.definition.description).toBe('B');
++    await waitFor(async () =>
++      expect(await loadLocalDraft(loop.id)).toMatchObject({
++        synced: false,
++        baseToken: token,
++        definition: { description: 'A1' },
++      }),
++    );
++    await user.click(publishButton());
++    expect(await screen.findByText(CONFLICT_REFUSAL)).toBeInTheDocument();
++    expect(posts(api, loop.id)).toHaveLength(1);
++  });
++});
++
+ /**
+  * The editor for a loop with one variable (so Loop settings shows its Variables field), saved once
+  * with description A1. While `reads.fail` is above zero, each of this loop's detail reads fails and
+@@ -624,7 +846,6 @@ async function committedButUnconfirmed(api: FakeApi) {
+ 
+ const HELD_REFUSAL =
+   'Some fields hold input that is not a valid value yet; complete or discard it first.';
+-const CHECK_FAILED = /^Checking the server before publishing again failed: .* Nothing was sent/;
+ 
+ /** Make the Variables text unparsable, as typing `[` before it would; returns the valid text. */
+ async function holdVariables(user: ReturnType<typeof userEvent.setup>) {
+@@ -744,8 +965,14 @@ describe('Publish after an unknown outcome and a refusal that sent nothing (#237
+     await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+     reads.fail = 1;
+     await user.click(publishButton());
++    // The whole notice: it is about the earlier request (for A1), whose outcome is still unknown,
++    // and says this click sent nothing; it does not present this click's saved A3 as that request's.
+     expect(await screen.findByText(CHECK_FAILED)).toBeInTheDocument();
++    expect(screen.queryByText(/the draft saved for this publish/)).toBeNull();
+     expect(posts(api, loop.id)).toHaveLength(1);
++    const pending = await detail(api, loop.id);
++    expect(pending.current).toMatchObject({ version: 1, definition: { description: 'A1' } });
++    expect(pending.draft?.definition.description).toBe('A3');
+ 
+     // A check that answers settles it: version 1 holds A1, so A3 is published, once.
+     const before = api.calls.length;
+diff --git a/apps/web/src/editor/EditorPage.reconcile.test.tsx b/apps/web/src/editor/EditorPage.reconcile.test.tsx
+index a071df27..70214313 100644
+--- a/apps/web/src/editor/EditorPage.reconcile.test.tsx
++++ b/apps/web/src/editor/EditorPage.reconcile.test.tsx
+@@ -1,9 +1,11 @@
++import type { LoopIssue } from '@graphgoblin/contracts';
++import { QueryClient } from '@tanstack/react-query';
+ import { act, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { describe, expect, it } from 'vitest';
+ import { FakeApi, problem, TS } from '../__fixtures__/fake-api.js';
+ import { renderApp } from '../__fixtures__/render.js';
+-import { keys } from '../api/queries.js';
++import { cachedCatalogFingerprint, keys, refreshLoopAfterWrite } from '../api/queries.js';
+ import { newLoopDefinition } from './model.js';
+ import { useEditorStore } from './store.js';
+ import { AUTOSAVE_DELAY_MS } from './useAutosave.js';
+@@ -221,6 +223,67 @@ describe('the save sent on leaving (#237)', () => {
+   });
+ });
+ 
++const validations = (api: FakeApi, loopId: string) =>
++  api.callsTo('POST', `/loops/${loopId}/validate`).length;
++const nodeBadge = (id: string) =>
++  screen
++    .getByTestId(`node-${id}`)
++    .querySelector<HTMLButtonElement>(`button[aria-label$=" on ${id}"]`);
++/** The open editor's API check of a loop's unchanged draft, under the catalogs cached now. */
++const checkKey = (api: FakeApi, queryClient: QueryClient, loopId: string) =>
++  keys.validation(loopId, api.draftToken(loopId)!, cachedCatalogFingerprint(queryClient));
++
++/**
++ * Loop `parent` runs loop `target`, a draft only, as a subloop. The parent's API checks report the
++ * target unpublished while it is, as the API does, and while `checks.hold` is set each waits for it
++ * after reading the target (`checks.held` counts them).
++ */
++function subloopLoops(api: FakeApi) {
++  const target = api.addLoop(newLoopDefinition('target'));
++  const definition = newLoopDefinition('parent');
++  const parent = api.addLoop({
++    ...definition,
++    nodes: [
++      ...definition.nodes,
++      { id: 'sub', kind: 'subloop', label: 'Sub', config: { loopRef: { loopId: target.id } } },
++    ],
++    edges: [
++      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'sub' } },
++      { id: 'e2', from: { node: 'sub', port: 'out' }, to: { node: 'done' } },
++    ],
++  });
++  const checks: { hold: ReturnType<typeof gate> | undefined; held: number } = {
++    hold: undefined,
++    held: 0,
++  };
++  api.override('POST /loops/:id/validate', async (call, [id]) => {
++    const { issues } = (await (await api.builtIn(call)).json()) as { issues: LoopIssue[] };
++    if (id === parent.id && !api.loops.get(target.id)?.current)
++      issues.push({
++        code: 'SUBLOOP_NOT_PUBLISHED',
++        severity: 'error',
++        nodeId: 'sub',
++        message: 'subloop "sub" references "target", which has no published version',
++      });
++    const hold = id === parent.id ? checks.hold : undefined;
++    if (hold) {
++      checks.held += 1;
++      await hold.promise;
++    }
++    return new Response(
++      JSON.stringify({ issues, publishable: !issues.some((i) => i.severity === 'error') }),
++      { headers: { 'content-type': 'application/json' } },
++    );
++  });
++  return { target, parent, checks };
++}
++
++async function open(user: ReturnType<typeof userEvent.setup>, name: string) {
++  await leave(user);
++  await user.click(await screen.findByRole('link', { name }));
++  await editorReady(name);
++}
++
+ describe('caches after a publish (#237)', () => {
+   it('re-runs no check of the unchanged open draft, and marks other loops’ checks stale', async () => {
+     const user = userEvent.setup();
+@@ -233,13 +296,161 @@ describe('caches after a publish (#237)', () => {
+     );
+     await tick(200);
+     const checks = api.callsTo('POST', `/loops/${loop.id}/validate`).length;
++    const own = checkKey(api, view.queryClient, loop.id);
++    const ownAnswer = view.queryClient.getQueryData(own);
++    expect(ownAnswer).toBeDefined();
+     // Another loop's check, which can read this loop's published version as a subloop.
+     const other = keys.validation('other-loop', 'its-draft', 'catalogs');
+     view.queryClient.setQueryData(other, []);
++    // Caches no publication changes: another loop's detail, and the catalog.
++    const otherDetail = keys.loop('other-loop');
++    view.queryClient.setQueryData(otherDetail, { loop: { id: 'other-loop' } });
+     await user.click(screen.getByRole('button', { name: /^Publish/ }));
+     expect(await screen.findByText(/^Published version \d+\.$/)).toBeInTheDocument();
+     await tick(300);
+     expect(api.callsTo('POST', `/loops/${loop.id}/validate`)).toHaveLength(checks);
+-    expect(view.queryClient.getQueryState(other)?.isInvalidated).toBe(true);
++    expect(view.queryClient.getQueryState(other)).toMatchObject({ data: [], isInvalidated: true });
++    // The open draft's own check is the same key, still answered and fresh.
++    expect(checkKey(api, view.queryClient, loop.id)).toEqual(own);
++    expect(view.queryClient.getQueryState(own)).toMatchObject({
++      data: ownAnswer,
++      isInvalidated: false,
++    });
++    expect(view.queryClient.getQueryState(otherDetail)?.isInvalidated).toBe(false);
++    expect(view.queryClient.getQueryState(keys.catalog)?.isInvalidated).toBe(false);
++  });
++
++  it('drops another loop’s check answered before the publish, and checks it again on reopening', async () => {
++    const user = userEvent.setup();
++    const api = new FakeApi();
++    const { target, parent, checks } = subloopLoops(api);
++    api.addLoop(newLoopDefinition('unrelated'));
++    const { queryClient } = renderApp(`/loops/${parent.id}/edit`, api);
++    await editorReady('parent');
++    await waitFor(() => expect(nodeBadge('sub')).toHaveAttribute('aria-label', '1 issue on sub'));
++    const key = checkKey(api, queryClient, parent.id);
++    expect(queryClient.getQueryState(key)?.isInvalidated).toBe(false);
++
++    // An unrelated publication marks the parent's warm answer stale for its next use.
++    await open(user, 'unrelated');
++    await user.click(screen.getByRole('button', { name: /^Publish/ }));
++    expect(await screen.findByText(/^Published version \d+\.$/)).toBeInTheDocument();
++    expect(queryClient.getQueryState(key)?.isInvalidated).toBe(true);
++
++    // Publish the target with its request held before admission, and go back to the parent,
++    // whose stale answer is checked again: that check reads the target before the publication.
++    const admission = gate();
++    api.override('POST /loops/:id/publish', async (call) => {
++      await admission.promise;
++      return api.builtIn(call);
++    });
++    await open(user, 'target');
++    await user.click(screen.getByRole('button', { name: /^Publish/ }));
++    await waitFor(() => expect(api.callsTo('POST', `/loops/${target.id}/publish`)).toHaveLength(1));
++    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
++    const targetChecks = validations(api, target.id);
++    checks.hold = gate();
++    await open(user, 'parent');
++    await waitFor(() => expect(checks.held).toBe(1));
++    expect(queryClient.getQueryState(key)?.fetchStatus).toBe('fetching');
++    admission.release();
++    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
++    expect(api.loops.get(target.id)?.current).toBeDefined();
++    checks.hold.release();
++    checks.hold = undefined;
++    await tick();
++
++    // That answer predates the publication: it never makes the key fresh.
++    expect(queryClient.getQueryState(key)).toMatchObject({
++      fetchStatus: 'idle',
++      isInvalidated: true,
++    });
++    const before = validations(api, parent.id);
++    await open(user, 'parent');
++    await waitFor(() => expect(validations(api, parent.id)).toBe(before + 1));
++    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
++    expect(nodeBadge('sub')).toBeNull();
++    expect(queryClient.getQueryState(key)?.isInvalidated).toBe(false);
++    // The target's own unchanged check was not run again by its publication.
++    expect(validations(api, target.id)).toBe(targetChecks);
++  });
++
++  it('drops another loop’s first check answered before the publish (nothing cached)', async () => {
++    const user = userEvent.setup();
++    const api = new FakeApi();
++    const { target, parent, checks } = subloopLoops(api);
++    const admission = gate();
++    api.override('POST /loops/:id/publish', async (call) => {
++      await admission.promise;
++      return api.builtIn(call);
++    });
++    const { queryClient } = renderApp(`/loops/${target.id}/edit`, api);
++    await editorReady('target');
++    await user.click(screen.getByRole('button', { name: /^Publish/ }));
++    await waitFor(() => expect(api.callsTo('POST', `/loops/${target.id}/publish`)).toHaveLength(1));
++    checks.hold = gate();
++    await open(user, 'parent');
++    const key = checkKey(api, queryClient, parent.id);
++    await waitFor(() => expect(queryClient.getQueryState(key)?.fetchStatus).toBe('fetching'));
++    expect(queryClient.getQueryState(key)?.data).toBeUndefined();
++    admission.release();
++    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
++    expect(api.loops.get(target.id)?.current).toBeDefined();
++    checks.hold.release();
++    checks.hold = undefined;
++    await tick();
++
++    expect(queryClient.getQueryState(key)).toMatchObject({ data: undefined, isInvalidated: true });
++    expect(nodeBadge('sub')).toBeNull();
++    expect(screen.queryByText('Ready to publish')).toBeNull();
++    await open(user, 'parent');
++    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
++    expect(nodeBadge('sub')).toBeNull();
++  });
++
++  it('cancels a running check of another loop before marking it stale (installed query library)', async () => {
++    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++    const key = keys.validation('loop-b', 'draft-b', 'catalogs');
++    const running = (answer: string[]) => {
++      const late = gate();
++      const fetched = queryClient
++        .fetchQuery({
++          queryKey: key,
++          queryFn: async () => {
++            await late.promise;
++            return answer;
++          },
++          staleTime: 0,
++        })
++        .catch(() => undefined);
++      return async () => {
++        late.release();
++        await fetched;
++      };
++    };
++    // Control: in this query library, marking a running query stale does not outlast its answer.
++    const plain = running(['before publication']);
++    await queryClient.invalidateQueries({ queryKey: key, refetchType: 'none' });
++    await plain();
++    expect(queryClient.getQueryState(key)).toMatchObject({
++      data: ['before publication'],
++      isInvalidated: false,
++    });
++
++    // After a publish of loop A, loop B's running check is dropped and B stays stale.
++    queryClient.setQueryData(key, ['earlier']);
++    const late = running(['before publication']);
++    await refreshLoopAfterWrite(queryClient, 'loop-a', { published: true });
++    await late();
++    expect(queryClient.getQueryState(key)).toMatchObject({
++      data: ['earlier'],
++      isInvalidated: true,
++      fetchStatus: 'idle',
++    });
++    // Loop A's own check, running or not, is not touched.
++    const own = keys.validation('loop-a', 'draft-a', 'catalogs');
++    queryClient.setQueryData(own, ['own']);
++    await refreshLoopAfterWrite(queryClient, 'loop-a', { published: true });
++    expect(queryClient.getQueryState(own)).toMatchObject({ data: ['own'], isInvalidated: false });
+   });
+ });
+diff --git a/apps/web/src/editor/EditorPage.tsx b/apps/web/src/editor/EditorPage.tsx
+index 5e3966d8..5a1c30e8 100644
+--- a/apps/web/src/editor/EditorPage.tsx
++++ b/apps/web/src/editor/EditorPage.tsx
+@@ -404,7 +404,7 @@ export function EditorPage() {
+     publish.outcome && publish.outcome !== dismissedPublish
+       ? publishNotice(
+           publish.outcome,
+-          { definition: def, fieldErrors, revision },
++          { definition: def, fieldErrors, revision, conflict },
+           query.data?.current,
+         )
+       : undefined;
+diff --git a/apps/web/src/editor/usePublish.test.ts b/apps/web/src/editor/usePublish.test.ts
+index d5b42627..30bc6705 100644
+--- a/apps/web/src/editor/usePublish.test.ts
++++ b/apps/web/src/editor/usePublish.test.ts
+@@ -37,7 +37,9 @@ function version(n: number, definition: unknown) {
+ }
+ 
+ const fieldErrors = {};
+-const editor = { definition: input, fieldErrors, revision: 3 };
++const editor = { definition: input, fieldErrors, revision: 3, conflict: undefined };
++/** Text held in a field that never became part of the draft. */
++const heldInput = { settings: { maxNodeVisits: { message: 'Enter a number', text: '1e' } } };
+ const base = {
+   attempt: { loopId: 'loop', generation: 1, checkFirst: false },
+   acknowledged: { definition: stored, token: 'token-mine' },
+@@ -105,30 +107,52 @@ describe('publish notice', () => {
+     );
+   });
+ 
+-  it('says later work is not published when the reply arrives after more editing', () => {
++  it('says what the version holds when the reply arrives after more editing, and nothing broader', () => {
+     const later = { ...editor, definition: { ...input, description: 'newer' } };
+     expect(publishNotice(published(stored, false), later, undefined)).toEqual({
+       tone: 'good',
+-      text: 'Published version 1. It holds the draft saved for this publish; changes made after that are not published.',
++      text: 'Published version 1. It holds the draft saved for this publish, without the changes made after that.',
+       dismissible: true,
+     });
++    // A later version may hold that work: the notice compares the editor with version 1 only.
++    expect(publishNotice(published(stored, false), later, { version: 2 })?.text).toBe(
++      'Published version 1. It holds the draft saved for this publish, without the changes made after that. Version 2 has been published since.',
++    );
+     // Undone back to the published content: nothing later remains unpublished.
+     expect(publishNotice(published(stored, false), editor, undefined)?.text).toBe(
+       'Published version 1. It holds the draft saved for this publish.',
+     );
+   });
+ 
++  it('warns separately about input held in fields, which is in no version', () => {
++    const held = { ...editor, fieldErrors: heldInput };
++    expect(publishNotice(published(stored, false), held, undefined)?.text).toBe(
++      'Published version 1. It holds the draft saved for this publish. Some fields still hold input that is not saved or published.',
++    );
++    const both = { ...held, definition: { ...input, description: 'newer' } };
++    expect(publishNotice(published(stored, false), both, { version: 2 })?.text).toBe(
++      'Published version 1. It holds the draft saved for this publish, without the changes made after that. Some fields still hold input that is not saved or published. Version 2 has been published since.',
++    );
++    const matching = { ...held, definition: { ...input, description: 'theirs' } };
++    expect(publishNotice(published(other, false), matching, undefined)?.text).toBe(
++      'Version 1 holds a different stored draft from the draft saved for this publish. It matches the editor’s current draft. Some fields still hold input that is not saved or published.',
++    );
++  });
++
+   it('states a different stored draft without naming who saved it', () => {
+     expect(publishNotice(published(other, false), editor, undefined)).toEqual({
+       tone: 'warn',
+       title: 'A different draft was published',
+-      text: 'Version 1 holds a different stored draft from the draft saved for this publish. This editor’s draft is not published.',
++      text: 'Version 1 holds a different stored draft from the draft saved for this publish. It does not hold the editor’s current draft.',
+       dismissible: true,
+     });
+     const matching = { ...editor, definition: { ...input, description: 'theirs' } };
+     expect(publishNotice(published(other, false), matching, undefined)?.text).toBe(
+       'Version 1 holds a different stored draft from the draft saved for this publish. It matches the editor’s current draft.',
+     );
++    expect(publishNotice(published(other, false), editor, { version: 2 })?.text).toBe(
++      'Version 1 holds a different stored draft from the draft saved for this publish. It does not hold the editor’s current draft. Version 2 has been published since.',
++    );
+   });
+ 
+   it('separates nothing to publish from a different current version and a failed check', () => {
+@@ -149,7 +173,7 @@ describe('publish notice', () => {
+     } as PublishOutcome;
+     expect(publishNotice(delayed, later, undefined)).toEqual({
+       tone: 'good',
+-      text: 'Nothing to publish: version 1 already holds the draft saved for this publish; changes made after that are not published.',
++      text: 'Nothing to publish: version 1 already holds the draft saved for this publish, without the changes made after that.',
+       dismissible: true,
+     });
+     expect(publishNotice(notPublished(ok(version(2, other))), editor, undefined)).toEqual({
+@@ -186,22 +210,57 @@ describe('publish notice', () => {
+       text: 'No answer. A check of the server found that version 1, its current published version, holds the draft saved for this publish.',
+       dismissible: true,
+     });
++    // The server's draft is still the copy saved for this publish: a retry would publish it.
+     expect(
+-      publishNotice(unknown({ ok: true, current: undefined, draftToken: 'x' }), editor, undefined)
+-        ?.text,
++      publishNotice(
++        unknown({ ok: true, current: undefined, draftToken: 'token-mine' }),
++        editor,
++        undefined,
++      )?.text,
+     ).toBe(
+       'No answer. A check of the server found that the draft saved for this publish is not its current published version. Publish again to retry.',
+     );
++    // Another draft: no retry is offered; the conflict's own choice is named while it shows.
++    const changed = unknown({ ok: true, current: undefined, draftToken: 'token-theirs' });
++    expect(publishNotice(changed, editor, undefined)?.text).toBe(
++      'No answer. A check of the server found that the draft saved for this publish is not its current published version, and that the server holds a different draft from it.',
++    );
++    const inConflict = { ...editor, conflict: { serverToken: undefined } };
++    expect(publishNotice(changed, inConflict, undefined)?.text).toBe(
++      'No answer. A check of the server found that the draft saved for this publish is not its current published version, and that the server holds a different draft from it. Choose Reload server draft or Overwrite with this copy before publishing again.',
++    );
+     expect(
+       publishNotice(unknown({ ok: false, reason: 'Still offline.' }), editor, undefined)?.text,
+     ).toBe(
+       'No answer. Checking the server failed too: Still offline. It is not known whether the draft saved for this publish was published. Publish again checks the server first.',
+     );
++    // A failed check before a retry is about the earlier request, not this click's saved draft.
+     expect(
+-      publishNotice(unknown({ ok: false, reason: 'Still offline.' }, false), editor, undefined)
+-        ?.text,
+-    ).toBe(
+-      'Checking the server before publishing again failed: No answer. Nothing was sent, and it is still not known whether the earlier request published the draft saved for this publish.',
++      publishNotice(unknown({ ok: false, reason: 'Still offline.' }, false), editor, undefined),
++    ).toEqual({
++      tone: 'warn',
++      title: 'Publish not confirmed',
++      text: 'Checking the server before publishing again failed: No answer. This Publish sent no request, and the outcome of the earlier Publish request is still not known. Publish again checks the server first.',
++      dismissible: true,
++    });
++  });
++
++  it('says a retry sent nothing when its check found another draft on the server', () => {
++    const changed = (current: ReturnType<typeof version> | undefined) =>
++      ({
++        ...base,
++        kind: 'changed',
++        readback: { ok: true, current, draftToken: 'token-theirs' },
++      }) as PublishOutcome;
++    const inConflict = { ...editor, conflict: { serverToken: undefined } };
++    expect(publishNotice(changed(version(1, other)), inConflict, { version: 1 })).toEqual({
++      tone: 'warn',
++      title: 'Nothing was published',
++      text: 'This Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. Its current version, version 1, does not hold the draft saved for this publish either. Choose Reload server draft or Overwrite with this copy before publishing again.',
++      dismissible: true,
++    });
++    expect(publishNotice(changed(undefined), editor, undefined)?.text).toBe(
++      'This Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. The loop has no published version.',
+     );
+   });
+ });
+diff --git a/apps/web/src/editor/usePublish.ts b/apps/web/src/editor/usePublish.ts
+index 7edb1b8b..e8238705 100644
+--- a/apps/web/src/editor/usePublish.ts
++++ b/apps/web/src/editor/usePublish.ts
+@@ -39,12 +39,15 @@ export type Readback =
+ /**
+  * What one attempt established. `published`: the server answered with the immutable version it
+  * stored. `not-published`: this attempt stored nothing (the server had no draft, or a check found
+- * the draft already current). `unknown`: no usable answer (a network failure or a server error),
+- * so the server was read back; `sent` is false when even the check before sending failed.
++ * the draft already current). `changed`: the check before a retry found that the server's draft is
++ * no longer the copy this attempt saved, so nothing was sent (a request would publish that other
++ * draft). `unknown`: no usable answer (a network failure or a server error), so the server was read
++ * back; `sent` is false when even the check before sending failed.
+  */
+ type Answer =
+   | { kind: 'published'; version: Version }
+   | { kind: 'not-published'; readback: Readback }
++  | { kind: 'changed'; readback: Extract<Readback, { ok: true }> }
+   | { kind: 'unknown'; sent: boolean; reason: string; readback: Readback };
+ export type PublishOutcome = Answer & {
+   attempt: PublishAttempt;
+@@ -119,11 +122,14 @@ async function readBack(client: GraphGoblinClient, loopId: string): Promise<Read
+  * One Publish: save, then send `POST /loops/{id}/publish` in this window's queue of the loop's
+  * saves, so this editor's own later saves cannot reach the server before it. The request publishes
+  * whatever draft the server holds when it admits it; the outcome compares that with the copy the
+- * attempt saved. Resolves to undefined, sending nothing, when another load replaced this one before
+- * the request; a refusal that applies by then is thrown, and nothing is sent either. `unresolved`
+- * records whether this load is left with a request whose outcome no read has established: a check
+- * that answers, or a request the server answers, settles it; a failed check keeps it; a request
+- * with no answer whose check failed too leaves it. A refusal, sending nothing, changes nothing.
++ * attempt saved. The check before a retry sends nothing when the server's draft is no longer that
++ * copy, and that outcome stands even if held input or a refusal appeared meanwhile; it reaches only
++ * the same load, still on that copy's token. Resolves to undefined, sending nothing, when another
++ * load replaced this one before the request; a refusal that applies by then is thrown, and nothing
++ * is sent either. `unresolved` records whether this load is left with a request whose outcome no
++ * read has established: a check that answers, or a request the server answers, settles it; a
++ * failed check keeps it; a request with no answer whose check failed too leaves it. A refusal,
++ * sending nothing, changes nothing.
+  */
+ async function publishAttempt(
+   client: GraphGoblinClient,
+@@ -168,6 +174,11 @@ async function publishAttempt(
+         sameDefinition(checked.current.definition, acknowledged.definition)
+       )
+         result = { kind: 'not-published', readback: checked };
++      // The server's draft is no longer this attempt's copy: a request would publish that other
++      // draft. Nothing is sent, and the evidence is applied below as a mismatch (the draft conflict)
++      // before held input or a refusal met now could set it aside.
++      else if (checked.draftToken !== acknowledged.token)
++        result = { kind: 'changed', readback: checked };
+     }
+     if (!result) {
+       if (!sendable()) return undefined;
+@@ -286,16 +297,21 @@ export interface PublishNoticeText {
+ }
+ 
+ const SAVED = 'the draft saved for this publish';
++/** While the editor shows the draft conflict, its two choices are what comes before Publish. */
++const RECOVER = ' Choose Reload server draft or Overwrite with this copy before publishing again.';
++const HELD = ' Some fields still hold input that is not saved or published.';
+ 
+ /**
+  * The words for an outcome, given the editor now and the loop's current version as last read. A
+  * confirmation names the immutable version the server returned or read back, never the editor's
+- * revision. "Changes made after that" compares the editor's content and unfinished input with that
+- * version now, so a reply that arrives after more editing never presents that work as published.
++ * revision. Claims about the editor's content are about that version only: "without the changes
++ * made after that" compares the editor's content with it now, so a reply that arrives after more
++ * editing never presents that work as published, nor as unpublished in a later version (which may
++ * hold it). Input still held in fields is in no version at all, and is said so separately.
+  */
+ export function publishNotice(
+   outcome: PublishOutcome,
+-  editor: Pick<EditorState, 'definition' | 'fieldErrors' | 'revision'>,
++  editor: Pick<EditorState, 'definition' | 'fieldErrors' | 'revision' | 'conflict'>,
+   current: { version: number } | undefined,
+ ): PublishNoticeText | undefined {
+   const { acknowledged, arrival } = outcome;
+@@ -311,17 +327,22 @@ export function publishNotice(
+     release && current && current.version > release.version
+       ? ` Version ${current.version} has been published since.`
+       : '';
++  const content = LoopDefinitionSchema.safeParse(editor.definition);
++  const holdsEditor = (definition: unknown) =>
++    content.success && sameDefinition(content.data, definition);
+   const later =
+-    release && !editorHolds(editor, release.definition)
+-      ? '; changes made after that are not published.'
+-      : '.';
++    release && !holdsEditor(release.definition) ? ', without the changes made after that.' : '.';
++  const held = hasHeldInput(editor) ? HELD : '';
++  const recover = editor.conflict ? RECOVER : '';
+   if (outcome.kind === 'unknown') {
+     const title = 'Publish not confirmed';
++    // This click's own snapshot is not the earlier request's: say nothing about which draft that
++    // request carried.
+     if (!outcome.sent)
+       return {
+         tone: 'warn',
+         title,
+-        text: `Checking the server before publishing again failed: ${outcome.reason} Nothing was sent, and it is still not known whether the earlier request published ${SAVED}.`,
++        text: `Checking the server before publishing again failed: ${outcome.reason} This Publish sent no request, and the outcome of the earlier Publish request is still not known. Publish again checks the server first.`,
+         dismissible: true,
+       };
+     if (!outcome.readback.ok)
+@@ -331,15 +352,26 @@ export function publishNotice(
+         text: `${outcome.reason} Checking the server failed too: ${outcome.readback.reason} It is not known whether ${SAVED} was published. Publish again checks the server first.`,
+         dismissible: true,
+       };
++    // Another draft on the server: Publish again would publish it, so no retry is offered.
++    const changed = outcome.readback.draftToken !== acknowledged.token;
+     return {
+       tone: 'warn',
+       title,
+       text: holdsSaved
+-        ? `${outcome.reason} A check of the server found that version ${release.version}, its current published version, holds ${SAVED}${later}${since}`
+-        : `${outcome.reason} A check of the server found that ${SAVED} is not its current published version. Publish again to retry.`,
++        ? `${outcome.reason} A check of the server found that version ${release.version}, its current published version, holds ${SAVED}${later}${held}${since}`
++        : changed
++          ? `${outcome.reason} A check of the server found that ${SAVED} is not its current published version, and that the server holds a different draft from it.${recover}`
++          : `${outcome.reason} A check of the server found that ${SAVED} is not its current published version. Publish again to retry.`,
+       dismissible: true,
+     };
+   }
++  if (outcome.kind === 'changed')
++    return {
++      tone: 'warn',
++      title: 'Nothing was published',
++      text: `This Publish sent no request: a check found that the server holds a different draft from ${SAVED}. ${release ? `Its current version, version ${release.version}, does not hold ${SAVED} either.` : 'The loop has no published version.'}${since}${recover}`,
++      dismissible: true,
++    };
+   if (outcome.kind === 'not-published' && !outcome.readback.ok)
+     return {
+       tone: 'warn',
+@@ -352,7 +384,7 @@ export function publishNotice(
+       ? {
+           tone: 'warn',
+           title: 'A different draft was published',
+-          text: `Version ${outcome.version.version} holds a different stored draft from ${SAVED}. ${editorHolds(editor, outcome.version.definition) ? 'It matches the editor’s current draft.' : 'This editor’s draft is not published.'}${since}`,
++          text: `Version ${outcome.version.version} holds a different stored draft from ${SAVED}. ${holdsEditor(outcome.version.definition) ? 'It matches the editor’s current draft.' : 'It does not hold the editor’s current draft.'}${held}${since}`,
+           dismissible: true,
+         }
+       : {
+@@ -376,8 +408,8 @@ export function publishNotice(
+   return {
+     tone: 'good',
+     text: published
+-      ? `Published version ${release.version}. It holds ${SAVED}${later}${since}`
+-      : `Nothing to publish: version ${release.version} already holds ${SAVED}${later}${since}`,
++      ? `Published version ${release.version}. It holds ${SAVED}${later}${held}${since}`
++      : `Nothing to publish: version ${release.version} already holds ${SAVED}${later}${held}${since}`,
+     dismissible: true,
+   };
+ }
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 3749a8b4..76a66a81 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -583,16 +583,18 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
+ 
+ - **One attempt.** Publish refuses held input, saves, and then queues the request with the loop's saves in this window, so this editor's own later saves reach the server after it. It records the server's copy for the attempt as the save's answer (`draft.definition` and `draftToken`), or the loaded copy parsed as the server stored it when this load made no save. When the queue reaches the attempt, and again immediately before the request is sent (after any read of the server that comes first), it rechecks that the same editor load is still open and that no held input, draft conflict or name refusal appeared, and sends nothing otherwise: a replaced load shows nothing, and a refusal shows as **Publish failed** with its reason. A second click while an attempt runs is ignored. An outcome shows only in the editor load that made it; a reply that arrives after a reload or in another editor shows nothing there.
+ - **What the notice says.** Definitions are compared by content, as the server stores them: absent defaults and key order do not matter, and a draft row ID, version number, local revision or hash alone never confirms anything.
+-  - **Published version N.** The returned version holds the draft saved for this attempt. If the editor changed before the reply came, the notice adds "changes made after that are not published" and stays until dismissed.
+-  - **A different draft was published.** The returned version holds a different stored draft. The notice does not name who saved it.
++  - **Published version N.** The returned version holds the draft saved for this attempt. If the editor changed before the reply came, the notice says the version holds it "without the changes made after that" and stays until dismissed. That compares the editor with version N only: a later version may hold the same changes, so the notice never calls them unpublished.
++  - **A different draft was published.** The returned version holds a different stored draft. The notice does not name who saved it, and says only whether that version holds the editor's current draft.
+   - **Nothing to publish: version N already holds this draft.** The server had no draft and its current version holds the attempt's draft. When the current version holds something else, the notice is **Nothing was published** instead.
+-  - **Publish not confirmed.** The reply was lost or was a server error. Before anything is claimed, the editor reads the loop back. If the check shows the draft is current, the notice names that version without saying which request published it. Otherwise it offers Publish again. When the check fails too, the outcome stays unknown in that editor load until a read of the server answers: each later Publish there reads the server before it sends anything. A Publish refused in between (held input, a failed save) still shows as **Publish failed** and leaves the outcome unknown, as does a check that fails again. A newer load of the editor starts without it. A refusal such as 422 `LOOP_INVALID` stays **Publish failed** with its issues.
++  - Input still held in fields (unparsed JSON, say) never became a draft, so a notice that compares the editor with a version adds that some fields hold input that is not saved or published.
++  - **Publish not confirmed.** The reply was lost or was a server error. Before anything is claimed, the editor reads the loop back. If the check shows the draft is current, the notice names that version without saying which request published it. If the server still holds the attempt's draft, it offers Publish again. If it holds a different draft, it offers no retry, and while the editor shows the draft conflict it names **Reload server draft** and **Overwrite with this copy**. When the check fails too, the outcome stays unknown in that editor load until a read of the server answers: each later Publish there reads the server before it sends anything. A check that fails again says that this Publish sent no request and that the earlier request's outcome is still unknown, without naming a draft for it. A Publish refused in between (held input, a failed save) still shows as **Publish failed** and leaves the outcome unknown. A newer load of the editor starts without it. A refusal such as 422 `LOOP_INVALID` stays **Publish failed** with its issues.
++  - **Nothing was published** after such a check. When the check finds a different draft from the one saved for this Publish, which a request would publish, nothing is sent. The notice says so, with the current version found, and the editor enters the draft conflict below. That evidence is applied before held input or another refusal met meanwhile can set it aside, and only to the same editor load. The check still sends the one request when the server's draft is the attempt's own and is not yet current. A first Publish can still meet a draft saved elsewhere after the request is sent; the returned version then shows the mismatch, as above.
+   - Only a plain confirmation clears on the next edit; the others stay until dismissed. When a later publication has replaced the version, the notice adds "Version M has been published since". The toolbar's version comes from a fresh detail read, never from a publish reply.
+-- **Mismatch recovery.** When the server's draft no longer descends from the attempt's copy, the editor enters the existing draft conflict. This applies to a different version, a different current version or a different draft found by the read-back. The editor's copy stays as unsynced work on the device, and **Reload server draft** or **Overwrite with this copy** decides. It enters the conflict only while the same load is still on that copy's token. The conflict notice says the server holds a different draft, without naming a writer.
++- **Mismatch recovery.** When the server's draft no longer descends from the attempt's copy, the editor enters the existing draft conflict. This applies to a different version, a different current version or a different draft found by the read-back, including the check before a retry. The editor's copy stays as unsynced work on the device, and **Reload server draft** or **Overwrite with this copy** decides. It enters the conflict only while the same load is still on that copy's token. The conflict notice says the server holds a different draft, without naming a writer.
+ - **Readiness.** While a draft conflict or a name refusal keeps the draft from the server, the indicator beside Publish does not show **Ready to publish** from an earlier check of the server's copy: it shows **Validation unavailable**, with Publish's refusal as its tooltip, until the conflict is resolved or the name changes.
+ - **Runs.** The notice carries no Runs link: it names an immutable version, while New run starts the loop's current version, which a later publication may replace. The toolbar's **Open in Runs** link remains.
+-- **Lists and caches.** Every save the server accepts makes the editor read the Loops list and the loop's detail again (`refreshLoopAfterWrite`). This includes the save sent on leaving the editor and saves whose editor has closed. A publish answer also refreshes the loop's versions and webhook endpoints. A read that started before the write is cancelled first, and its answer is never stored, even when it is a first load. Nothing is copied from a write's own answer, so an older write cannot replace a newer snapshot, and list order, other loops and run summaries come from the server. A refused or failed save refreshes nothing. A failed read stays in its query's error state. Publishing does not re-run the open draft's API checks, which are keyed by its draft token; other loops' checks are marked stale without being run, because a subloop reference reads this loop's published version.
+-- **Regression.** `src/editor/EditorPage.publish.test.tsx`, `src/editor/EditorPage.reconcile.test.tsx` and `src/editor/usePublish.test.ts` (fake API with held requests and replies, including a retry whose check of the server is answered after held input or another editor appeared, a retry after refusals that sent nothing, and readiness beside a refusal). Native Edge evidence against the built gateway and a file store is retained outside the repository with the #237 delivery record.
++- **Lists and caches.** Every save the server accepts makes the editor read the Loops list and the loop's detail again (`refreshLoopAfterWrite`). This includes the save sent on leaving the editor and saves whose editor has closed. A publish answer also refreshes the loop's versions and webhook endpoints. A read that started before the write is cancelled first, and its answer is never stored, even when it is a first load. Nothing is copied from a write's own answer, so an older write cannot replace a newer snapshot, and list order, other loops and run summaries come from the server. A refused or failed save refreshes nothing. A failed read stays in its query's error state. Publishing does not re-run the open draft's API checks, which are keyed by its draft token, running or not. Other loops' checks are marked stale without being run, because a subloop reference reads this loop's published version. A check of another loop that is still running may have read this loop before the publication, so it is cancelled first and its answer dropped; otherwise that late answer would make its key fresh again. Such a check keeps its earlier answer, if any, marked stale, or shows **Checking…** when it had none, until its next use (reopening the editor, a refocus or a new draft) checks it again.
++- **Regression.** `src/editor/EditorPage.publish.test.tsx`, `src/editor/EditorPage.reconcile.test.tsx` and `src/editor/usePublish.test.ts` (fake API with held requests and replies). They cover a retry whose check of the server is answered after held input or another editor appeared, a retry whose check finds a different draft, a retry after refusals that sent nothing, and a held reply followed by a later version holding the editor's work. They also cover another loop's check held across a publication, with or without an earlier answer, and readiness beside a refusal. Native Edge evidence against the built gateway and a file store is retained outside the repository with the #237 delivery record.
+ 
+ ## Loop names (#209)
+ 

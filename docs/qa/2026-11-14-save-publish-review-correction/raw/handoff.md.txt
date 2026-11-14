@@ -1,0 +1,135 @@
+# PR #475 scoped UI correction F1–F4: implementer handoff
+
+Claude Opus 5.5 (xhigh), 2026-11-14. Implementation only, not a review scan. This evidence comes from the implementer's own focused checks. It is not independent QA.
+
+## Identity
+
+- Checkout `C:/Users/98jak/.codex/worktrees/gg-20261114-save-publish/GraphGoblin`. HEAD is unchanged at `1dcee36b16cc4662e8acb691e9166aff52949ad9` (tree `2936f795e624932fd7d42747f8316066fa4af7ec`). The candidate exists only as unstaged working-tree edits. Nothing was staged or committed, and there was no index write, push or GitHub action.
+- The findings source is `review-237/ui-sol/report.md`. Its SHA-256 `f20cfa9d728becca1f0d02a3ffe192b986a8feee2c7b561ac6f632d9ab3c53ec` was verified before editing. I read AGENTS.md, docs/README.md, docs/15, `ui-237-design-decisions.md` and `i08/save-publish-237-architecture.md` first.
+- Candidate diff against HEAD: 8 files, 63,603 bytes, SHA-256 `02638d48f8108a2e4362dbb560fb037130abf93121053dd7bbc6503a24e3d524` (`logs/candidate.diff`).
+- Correction batches used: **1 of 2**. One test-fixture correction came before the fix and is described under F4.
+
+## Final source hashes (SHA-256)
+
+| Path | SHA-256 |
+| --- | --- |
+| `apps/web/src/editor/usePublish.ts` | `07e50116a38cfef45a50fd81526539c351c245c3e1d180d853938481aec73be8` |
+| `apps/web/src/api/queries.ts` | `b8bd732beb5a22382940b5a8cc4dd56430c85682259c524b0599f0969037e9c8` |
+| `apps/web/src/editor/EditorPage.tsx` | `528de39ccabccf26435b21c99a0b656b995e8d90e9ea5c084f8859cc33dae3d1` |
+| `apps/web/src/editor/EditorPage.publish.test.tsx` | `3ca683fa2162ff9c1ab8668416e46f52d3bb4e8cf09ee4cdb83d7f6821aa75bc` |
+| `apps/web/src/editor/EditorPage.reconcile.test.tsx` | `e026a2cdbec7795bbe4f9f076bdb688e308181e8a40a058c2504bf1ee061e6a1` |
+| `apps/web/src/editor/usePublish.test.ts` | `7f9fdb5dc60c82c23423408de5d73775f6c42634edd99f35c34457887271dc06` |
+| `docs/09-frontend-and-pwa.md` | `a662b029b74270076a16d9ee16e9bd76364a0339b20106cd5f8d1f75e1d0af5b` |
+| `CHANGELOG.md` | `fc1f57079cfa72d1fb7c9ae005cafba70b925ade0850d3b37e31b2023a8049bc` |
+
+At the recorded first failures, the reconcile and usePublish test files had the same bytes as their final versions. The publish test file then had SHA-256 `3b9e105b5accdbee34cf3ea5d2297e36172d0a9d7beee5b5fab4c044f384d251`. Its only later change was Prettier joining the two-line `RECOVER` constant onto one line, which is whitespace only.
+
+## First failures on the unchanged source
+
+The final regression tests were run against unchanged HEAD source (`logs/first-failures-final.log`). Of 52 tests in 3 files, **20 failed and 32 passed**. The baseline before any edit was 41/41 in the same 3 files.
+
+### F1 (P1): a retry check that reads a divergent draft token still sent a POST
+
+- *sends nothing when the check before a retry finds another draft, and keeps both copies*: the expected notice was missing. A temporary diagnostic, removed before the fix (`logs/first-failures-f1-diag.log`), showed what the old code did. It sent a **second POST** (2 in total), the server's current version became **version 2 holding B**, and the notice read "A different draft was published".
+- *keeps that evidence when held input arrives during the check*: the old code showed only the held-input refusal (1 POST, no conflict), so the check's evidence was lost. After the text was discarded, the next Publish **sent a POST and published B as version 2** (same diagnostic log).
+- *points to the conflict choice when the check after a lost request finds another draft*: in the first post-failure readback, the old notice ended "Publish again to retry." although the editor was in the draft conflict and Publish would refuse.
+- Control, passing on both old and new code: *applies that evidence to no newer load of the editor, even on the same token*. During the check, a newer load of the same loop opens on the same token. Release produces no conflict, no notice, the token unchanged and no POST.
+
+### F2 (P2): failed-check wording named this click's snapshot
+
+Four EditorPage tests and one unit test fail on the full-text assertion, which replaced the earlier prefix regex. The old text ended "…Nothing was sent, and it is still not known whether the earlier request published the draft saved for this publish."
+
+In the A1/A3 scenario (*stays unresolved through a Publish whose save failed, then sends once after a check*), the test now also asserts three things:
+- The notice does not contain "the draft saved for this publish".
+- The server still has current version 1 = A1 and draft A3.
+- Afterwards, one GET-then-POST publishes A3 as version 2.
+
+### F3 (P2): the notice made claims beyond the named release
+
+- *describes a delayed reply by its own version when a later version holds the newer work*: the v1 (A1) reply is held, the editor moves to A2, and exactly A2 is saved and published elsewhere as v2. The old notice said "…; changes made after that are not published. Version 2 has been published since." Immutable v2 holds exactly A2.
+- *describes a returned different draft by its own version when a later version holds the editor’s work*: returned v1 holds B, and v2 holds the editor's exact A2. The old notice said "This editor’s draft is not published."
+- Both tests assert the immutable v1 and v2 contents by version ID, the current detail (v2 = A2) and the toolbar's "published v2".
+
+### F4 (P2): a late validation answer from before the publication made the key fresh
+
+- *Warm, active*: B's warm check is marked stale by an unrelated publication. A's Publish is held before admission while the user returns to B. B's check reads A as unpublished and is held. A is then admitted and B released. Old code: `isInvalidated: false` with the `SUBLOOP_NOT_PUBLISHED` data, so reopening B would not check again (`logs/first-failures-f4-warm.log`).
+- *Nothing cached (cold control)*: the old code stored `[SUBLOOP_NOT_PUBLISHED]` as fresh. The test expected no data and `isInvalidated: true`.
+- *Installed query library control* (TanStack Query 5.104.0, real `QueryClient`): first it confirms the library's own behaviour, where a fetch answer landing after `invalidateQueries({ refetchType: 'none' })` clears `isInvalidated`. Then, with old code, `refreshLoopAfterWrite(A, { published: true })` let B's late answer replace the earlier data as fresh.
+- Test-fixture correction (not a product finding): the warm test's first draft failed at the unrelated loop's notice because an unedited draft-only fake loop publishes as "version 2". I changed that assertion to `/^Published version \d+\.$/`, matching the existing test, before recording the failures above.
+
+## Changes (batch 1)
+
+- **`usePublish.ts` (F1)**: new outcome kind `changed`. When the check before a retry answers, the current version does not hold the attempt's acknowledged copy and `draftToken !== acknowledged.token`, nothing is sent. This outcome is decided before the `sendable()` recheck, so held input or a refusal that appears during the GET cannot discard it. It goes through the existing mismatch path, which enters the conflict only when the same loop **and** generation is still loaded, still on the acknowledged token and not already in conflict. Device copy and server B are both kept.
+  - An unchanged acknowledged draft still gets exactly one POST after an answering check.
+  - A first POST is unchanged; its race after dispatch still relies on the existing immutable-mismatch recovery.
+  - No API, token or conditional contract was added.
+- **`usePublish.ts` notices**:
+  - **F1, `changed`**: "Nothing was published / This Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. Its current version, version N, does not hold … either." It names the recovery choices while the editor is in conflict.
+  - **F1, initial readback with a different draft token**: no "Publish again to retry"; it names **Reload server draft** / **Overwrite with this copy** while the editor shows the conflict.
+  - **F2**: "This Publish sent no request, and the outcome of the earlier Publish request is still not known. Publish again checks the server first." No snapshot state was added.
+  - **F3**: content comparisons are scoped to the named release ("…, without the changes made after that."; "It does not hold the editor’s current draft."). Held input gets its own warning: "Some fields still hold input that is not saved or published."
+- **`EditorPage.tsx`**: passes the live `conflict` into `publishNotice`.
+- **`queries.ts` (F4)**: on a publish, `refreshLoopAfterWrite` now cancels other loops' validation queries first (default `revert`), then marks them stale with `refetchType: 'none'` as before. The publishing loop's own checks stay excluded, running or not. There is no forced refetch, dependency graph or new cache layer.
+- **Docs**: the #237 section of `docs/09-frontend-and-pwa.md` and the #237 CHANGELOG entries. `docs/guide` has no notice wording, so it is unchanged. No API, contracts, schema, runtime evaluator or parent #273 file was touched.
+
+## F4 bounded-policy consequence (not broadened)
+
+Under the root's policy, another loop's editor that is open while a publication lands does not check again immediately. If its check was running, that check is cancelled.
+- With an earlier answer, the editor keeps it, marked stale.
+- With no answer yet, it shows **Checking…**. That does not block Publish.
+
+It checks again on next use: reopening, refocus (the app's `QueryClient` sets `refetchOnWindowFocus: true`) or a new draft key. This is the same state a completed, non-running check already had under the existing policy, and it makes no false fresh claim. A targeted refetch of cancelled active checks would be the broadening option. I did not take it, because correctness does not require it.
+
+## Effective controls (green on the final source)
+
+- **Positive same-draft retry**: *sends one request after the check when nothing changed meanwhile*; the A1→A3 GET-then-single-POST case.
+- **Loop and generation ownership**: the new same-token newer-load control; *sends nothing, and shows nothing, once another editor opened during the check*.
+- **U2 (unknown survives a local refusal)**: *reads the server first after a held-input refusal*; *stays unresolved through refusals and a failed check*; *stays unresolved through a refusal met where the request would be sent*.
+- **Ready-to-send check after the await**: *refuses held input that arrived during the check, and sends nothing*, where the draft is unchanged.
+- **Same-loop token ancestry**: both *the save sent on leaving* tests.
+- **Explicit conflict recovery**: *does not carry an unresolved request into a newer load (control)* and the existing conflict/readiness tests.
+- **Exact refresh**: the *Loops list after a save* convergence tests.
+- **F4 extended test**: after a publish, A's own key is the same key with the same data, `isInvalidated: false`, and no new validate call. Another loop's detail key and the model catalog are not invalidated. Another loop's seeded check keeps its data, marked stale. A's own check runs no more times when the target is published.
+
+## Commands and counts
+
+Run with `PATH=$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH` (Node v22.23.4, pnpm 12.8.1) from `apps/web`, and `GIT_OPTIONAL_LOCKS=0` for Git reads.
+
+| Command | Result |
+| --- | --- |
+| `pnpm exec vitest run src/editor/EditorPage.publish.test.tsx src/editor/EditorPage.reconcile.test.tsx src/editor/usePublish.test.ts`, baseline before edits | 41/41 |
+| Same files, final tests on old source | 20 failed / 32 passed |
+| Same files after batch 1, and again on the final source | **52/52** |
+| Related suites, final (`logs/final-related.log`): `EditorPage.test`, `.conflict`, `.name-conflict`, `.voice`, `.freshness`, `.device`, `.restore`, `.rename`, `.undo`, `useAutosave.test` (queue), `history.test`, `useLoadEditor` ×2, `ClassifierField.editor`, `harness-switch`, `template-readiness`, `model-pickers`, `model-effort-refresh`, `settings/sections/ClassifierModelsSection`, `api/queries.reconnect` | **20 files, 284/284** |
+| `pnpm run typecheck` (`tsc -p tsconfig.json --noEmit`; the web tsconfig has `noEmit: true`, `incremental: false`, `composite: false`) | exit 0 |
+| `pnpm run lint` (`eslint .`, no cache flag) | exit 0 |
+| `pnpm exec prettier --check` on the 8 changed files (from the repository root); `--write` was applied only to `queries.ts` and `EditorPage.publish.test.tsx` | clean |
+
+**No emission:** the fingerprint of every `dist`, `dist-goblin`, `coverage` and `test-results` tree, plus every `*.tsbuildinfo` outside `node_modules`, is byte-identical before and after (SHA-256 `09f27a08…a8bd1`, `logs/output-trees-*.txt`). The bound runtime remains **13 trees, 1,227 files**. Vitest's own results cache, `apps/web/node_modules/.vite/vitest/<hash>/results.json` (which already existed), was rewritten; it is a runner cache inside `node_modules`.
+
+There was no build, full coverage, root `pnpm typecheck`, browser, native, API or service run, and no use of ports 4747/4748, the owner store, credentials, Mac or provider turns.
+
+## Pending (not established here)
+
+- Build, independent before-fix native negatives against the preserved bound runtime, and after-fix native or browser acceptance of the F1–F4 schedules.
+- Full `pnpm check` and coverage gates, current CI on the candidate, independent QA, the cross-family review, the fresh Astra final audit (scan 2; scan 3 in reserve) and owner acceptance.
+- The root's integration with the #273 corrections, and the retarget to actual main. Current CI green applies only to the old reviewed stack.
+
+## Evidence files (`logs/`, SHA-256)
+
+`first-failures-f1-diag.log` comes from a run with temporary diagnostic lines that were removed before the fix.
+
+- `batch1-focused.log` `7930e50b737f55b4c95b045478ec9434ece9a9df1bb3324306eaf6be66e63cb3`
+- `batch1-related.log` `5f639e1549af9c45755f2f5ffd9c89a6d4a51d6a5d7e742d3cd27f1153836574`
+- `candidate.diff` `02638d48f8108a2e4362dbb560fb037130abf93121053dd7bbc6503a24e3d524`
+- `final-focused.log` `5bced5fd10f7b80939bd1b4dfaf7f134e2fd41ee6d049e97a1db8f3ffa1367d1`
+- `final-lint.log` `050c69da23536758722729aeda55a8d0fb9d557495ef6d33d70873a3b64a71c1`
+- `final-prettier.log` `17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20`
+- `final-related.log` `9de6dda3ba6563b40e38adcf436ce9c29847c92006c1c36c57314ff796f66c39`
+- `final-typecheck.log` `38ac890c60e7f38d59ddfb410325cdfb5fca83c9411765c5481754e01c021630`
+- `first-failures-f1-diag.log` `2767ba93a0ec2f52559316ddc5f3e194acfb3fe3b40b81c6acbf8d67a97baf56`
+- `first-failures-f4-warm.log` `c05556228324b8e837d1873085094582f525a707447dfa271ce9240c576916f9`
+- `first-failures-final.log` `a16095756e9956e95bf20337fd2d3938641624248844144885950e40c3edc276`
+- `output-trees-after.txt` `09f27a0867d44d6eba669c58403412020f237ac9e97c2342d310256a304a8bd1`
+- `output-trees-before.txt` `09f27a0867d44d6eba669c58403412020f237ac9e97c2342d310256a304a8bd1`
+- `source-hashes-final.txt` `f6be6bd3e0d38e1991dd0b0b2d02eb7634901c3f121df685f56c9c5fbe160572`

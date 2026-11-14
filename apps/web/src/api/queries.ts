@@ -279,7 +279,11 @@ export function isValidationKey(queryKey: readonly unknown[]): boolean {
  *
  * A publish also refreshes the loop's versions and webhook endpoints, and marks other loops' API
  * checks stale without running them (a subloop reference reads this loop's published version).
- * The open editor's checks of its own draft are keyed by its token and are left alone.
+ * Such a check still running may have read the loop before the publication, and an answer that
+ * lands after the mark would make its key fresh again: it is cancelled first and its answer
+ * dropped. The query keeps its earlier answer, if any, marked stale, and checks again on its next
+ * use (reopening, a refocus, a new draft). The open editor's checks of its own draft are keyed by
+ * its token and are left alone, running or not.
  *
  * Failed reads stay in their queries' error state (TanStack does not reject here), so the returned
  * promise never rejects and can be left unawaited.
@@ -294,19 +298,17 @@ export async function refreshLoopAfterWrite(
     keys.loop(loopId),
     ...(published ? [keys.versions(loopId), keys.triggers(loopId)] : []),
   ].map((queryKey) => ({ queryKey, exact: true }));
-  await Promise.all(
-    exact.map((filters) => queryClient.cancelQueries(filters, { silent: true, revert: false })),
-  );
+  const dependents = {
+    predicate: ({ queryKey }: { queryKey: readonly unknown[] }) =>
+      isValidationKey(queryKey) && queryKey[1] !== loopId,
+  };
+  await Promise.all([
+    ...exact.map((filters) => queryClient.cancelQueries(filters, { silent: true, revert: false })),
+    ...(published ? [queryClient.cancelQueries(dependents)] : []),
+  ]);
   await Promise.all([
     ...exact.map((filters) => queryClient.invalidateQueries(filters)),
-    ...(published
-      ? [
-          queryClient.invalidateQueries({
-            predicate: ({ queryKey }) => isValidationKey(queryKey) && queryKey[1] !== loopId,
-            refetchType: 'none',
-          }),
-        ]
-      : []),
+    ...(published ? [queryClient.invalidateQueries({ ...dependents, refetchType: 'none' })] : []),
   ]);
 }
 

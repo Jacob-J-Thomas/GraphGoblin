@@ -8,12 +8,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   queue of saves, after rechecking held input and conflicts, and checks them again right before
   the request when it first reads the server back. It then compares the returned immutable
   version with the draft the server acknowledged for this attempt. A delayed reply no
-  longer presents later editing as published, and a reply never reaches a newer editor load. When
-  the version holds a different stored draft, or **Nothing to publish** finds another current
-  version, the notice says so without naming a writer, and the editor keeps its copy behind the
-  existing **Reload server draft** / **Overwrite with this copy** choice. A lost or failed reply
-  is read back before anything is claimed. If that check fails too, each later Publish in that
-  editor checks first until a check answers, also after a Publish refused in between.
+  longer presents later editing as published, and a reply never reaches a newer editor load. Its
+  notice compares the editor with that version only, since a later version may hold the same
+  work; input still held in fields is reported separately. When the version holds a different
+  stored draft, or **Nothing to publish** finds another current version, the notice says so
+  without naming a writer, and the editor keeps its copy behind the existing **Reload server
+  draft** / **Overwrite with this copy** choice. A lost or failed reply is read back before
+  anything is claimed; a read-back that finds a different draft points to that choice instead of
+  offering Publish again. If that check fails too, each later Publish in that editor checks first
+  until a check answers, also after a Publish refused in between. A check that fails again says
+  that this Publish sent no request and that the earlier request's outcome is still unknown. A
+  check that finds a different draft on the server sends nothing and enters the draft conflict,
+  also when held input appears meanwhile.
   The publish notice no longer carries its own **Open in Runs** link, which opens the loop's
   current Runs flow rather than a particular version. The toolbar link remains. While a draft
   conflict or a name refusal keeps the draft from the server, the indicator beside Publish shows
@@ -23,7 +29,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   save is dropped. A renamed loop, or a changed or removed description, shows without waiting for
   the five-second poll (#156, #237). A save sent on leaving the editor uses only its own editor
   load's draft token. After **Reload server draft** or reopening on another writer's draft, it can
-  no longer overwrite that draft. Publishing no longer re-runs the open draft's API checks.
+  no longer overwrite that draft. Publishing no longer re-runs the open draft's API checks. Other
+  loops' checks are marked stale, and one still running is dropped, so an answer read before the
+  publication (a subloop not yet published, say) cannot stay current; it is checked again on next
+  use.
 
 - Loop creation, rename, import and template copies refuse case- and whitespace-equivalent
   names for the same owner and return a suggested alternative (#209, ADR-0073). The app says
@@ -55,13 +64,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 - Node-ID changes can repair edge endpoints, typed mutation pointers and statically understood
   JSONata and Liquid references as one draft edit (#273). Publication rejects known missing
-  gate and visit-count identities. Direct existence checks and unresolved inherited or custom
-  output keys warn. The editor applies the repair when a node ID is committed, as one undo step
-  and one saved revision, and remounts only forms showing a repaired source. A notice counts the
-  updated references and connections and lists places where the old ID may remain, each opening
-  its field. **Upgrade:** open a draft that reports a missing reference, correct the
-  source field or restore the referenced node, then publish a new version. Existing published
-  versions and runs retain their definitions.
+  gate and visit-count identities. A direct presence check of one such reference alone, and
+  unresolved inherited or custom output keys, warn. The editor applies the repair when a node ID
+  is committed, as one undo step and one saved revision, and remounts only forms showing a
+  repaired source; the node dialog keeps its list rows, open operations and focus. Unapplied
+  section JSON keeps its exact text until the author applies or cancels it. A notice counts the
+  updated references and connections and lists places where the old ID may remain. A listed
+  field opens while its node is as the rename left it; places in loop settings, scripts and
+  nodes edited since only inform. **Upgrade:** open a draft that reports a missing reference,
+  correct the source field or restore the referenced node, then publish a new version. Existing
+  published versions and runs retain their definitions.
 
 - Windows startup recovers abandoned ownership records when a reused PID has a different verified
   OS process creation identity. The launcher shares the API's ownership checks and reports

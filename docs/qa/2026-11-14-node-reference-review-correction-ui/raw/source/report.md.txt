@@ -1,0 +1,36 @@
+U1, U2 and U3 are fixed in `apps/web`, with the docs corrections. All five new regressions failed on the old code for the reported reasons and pass now. Nothing was committed and HEAD is still `ae8add8a`. The full handoff, diffs and logs are in `review-273/ui-correction/` (start with `handoff.md`).
+
+**How each finding failed on the old code, and the fix**
+- **U1 (operation rows collapse on rename):**
+  - Old code: pressing Enter collapsed the open Coerce row. Clicking the nested Source sent focus to the operations list instead of the Source input.
+  - Fix: when the rename succeeds, the dialog gives the repaired config the same row ids as before. It only does this if every list kept its length, and never by matching row content. Open and closed rows now keep their state on Enter, and a click keeps focus on the new Source input. Undo and redo keep both.
+- **U2 (stale review links):**
+  - Old code: after removing the first operation, the notice's link focused "Third note" at index 1.
+  - Fix: the rename report now keeps the draft as the rename left it. A row stays a link only while its node's config is unchanged from that draft. Otherwise it stays listed as information, and the notice says "audit changed after the rename. Its places show where they were then and no longer open a field." The counts and summary are unchanged, and undo brings the link back.
+  - I chose to withdraw the link rather than follow the moved row. It is conservative: any edit to that node, even fixing the warned field itself, removes that node's links until undo.
+- **U3 (held JSON lost after rename):**
+  - Old code: the remount cleared the held Input JSON and added an extra undo step.
+  - Fix: held section JSON is now released only by the author: typing, Apply, Cancel or discard. The 4-space formatted buffer keeps its exact text. One undo and one redo restore the whole graph and the buffer with no extra step, and redo is not erased. Apply is then an ordinary step.
+  - This applies to all held section JSON. A buffer that becomes equal through a sibling fix also stays held, and it blocks Publish and editor switching until Apply or Cancel, as any held JSON does.
+- **Docs:** docs/09, the guide and the CHANGELOG now separate automatic form writeback from explicit raw Apply. They give JSONata and Liquid bracket examples separately, add the direct single-presence caveat, and say which listed places open a field. I did not edit ADR-0075; it makes no conflicting claim.
+
+**Checks**
+
+| Run | Result |
+|---|---|
+| Old code, two files | 5 failed, 49 passed |
+| Fixed, same two files | 54/54 |
+| 20 focused existing files (rename, undo, dialog row identity, JSON, disclosures) | 406/406 |
+| Final rerun, 6 files including two small new unit files | 70/70 |
+| Web typecheck (no output files) and web lint | both pass |
+| Prettier check on all 12 touched files | passes |
+
+The two new unit files cover the plural "changed" message and the cases where row ids are not carried. They were added after the fix, so they were not run on the old code. The 13 compiled trees (1227 files) and the 11 `.tsbuildinfo` files are byte-identical to before.
+
+**Not done, by the brief:** no builds, full web suite or coverage, browser or native runs, or API tests. Coverage percentage was not measured. The plan's three native scenarios have not been run. I added no Edge case.
+
+**Remaining facts:**
+- The backend worker's changes appeared during the session (`docs/03`, three `packages/domain` files). I left them alone, but my web typecheck and tests ran against that in-progress domain code.
+- The loop settings form still resets its own open/closed state when a rename repairs settings. U1 was about the node dialog, so I left it unchanged and did not check that form's list rows.
+- The row-id carry only works when the store's old config is the object the form last saw. Where it isn't (for example decision configs the dialog normalises), rows get new ids as before, never matched by content.
+- I used one correction batch of the two allowed.

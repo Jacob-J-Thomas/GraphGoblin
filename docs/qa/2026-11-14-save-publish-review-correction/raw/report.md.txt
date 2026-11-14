@@ -1,0 +1,26 @@
+I fixed all four findings in one correction batch, and the focused checks pass. On the unchanged source, the new tests failed 20 of 52, each for the reported problem. After the fix, those 3 files pass 52/52, and the 20 related suites pass 284/284, covering queue, history, conflict, freshness, voice, load and catalog. The web typecheck (no emit), lint and Prettier check are clean. HEAD is still `1dcee36b`; the changes are unstaged edits in 8 files.
+
+**F1 (P1):**
+- **Old behaviour:** a retry whose server check found another writer's draft B still sent a second POST and published B as v2. With held input typed during that check, it refused first, then the next click published B.
+- **Fix:** that check result now means nothing is sent. The editor enters the existing draft conflict, keeping A1 on the device and B on the server, and the decision is made before held input or a refusal can discard it. It applies only to the same loop and editor load, still on A1's token. A same-token newer load is a passing control.
+- **Unchanged:** an unchanged saved draft still gets exactly one POST after the check. No API or contract change.
+- **First readback:** when the check right after a failed first POST finds B, the notice no longer says "Publish again to retry". It names **Reload server draft** / **Overwrite with this copy**.
+
+**F2:** the failed-check notice now says "This Publish sent no request, and the outcome of the earlier Publish request is still not known." It no longer names this click's draft. The A1/A3 test asserts the full text and the server state (v1 = A1, draft A3).
+
+**F3:** the notice now says only what the named version holds ("…, without the changes made after that."; "It does not hold the editor's current draft."). Held field input gets its own warning. Both new cases end with v2 holding exactly A2: one with a held v1 = A1 reply, one with a returned v1 = B. Both check the immutable versions, the current detail and the full notice text.
+
+**F4:**
+- **Fix:** after a publish, other loops' validation checks that are still running are now cancelled before being marked stale. A pre-publication `SUBLOOP_NOT_PUBLISHED` answer can no longer land as fresh, and B checks again when reopened.
+- **Coverage:** the warm and nothing-cached cases are both covered. The publishing loop's own check is not rerun, and unrelated cache keys stay fresh. A control against the installed TanStack 5.104.0 confirms the late-answer behaviour the bug depended on.
+- **Not broadened:** an open editor of another loop whose check was cancelled keeps its old answer marked stale, or shows **Checking…** if it had none. That does not block Publish. It checks again on reopen, window refocus or its next edit. A targeted refetch would be the broader option, and correctness doesn't need it.
+
+`docs/09` and the CHANGELOG are updated; the user guide has no notice wording, so it is unchanged. Before recording first failures I fixed one test-fixture mistake: an unedited fake loop publishes as "version 2", so that assertion now matches any version number.
+
+No build output was written: all 13 build trees (1,227 files) and every tsbuildinfo are byte-identical before and after. The only file the runs rewrote is Vitest's own results cache inside `node_modules`.
+
+Still pending: build, the independent before-fix native negatives against the preserved runtime, native acceptance after the fix, full gates and current CI, independent QA, cross-family review, the fresh Astra audit, owner acceptance, and your #273 integration and retarget to main.
+
+Files are in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-237/ui-correction`:
+- handoff.md
+- logs/candidate.diff

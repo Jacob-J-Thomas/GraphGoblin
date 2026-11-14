@@ -1,0 +1,211 @@
+diff --git a/apps/web/src/editor/NodeEditorDialog.tsx b/apps/web/src/editor/NodeEditorDialog.tsx
+index ca2e3a4e..2a21a1d0 100644
+--- a/apps/web/src/editor/NodeEditorDialog.tsx
++++ b/apps/web/src/editor/NodeEditorDialog.tsx
+@@ -18,7 +18,11 @@ import {
+   RequiredNote,
+   type DialogCloseReason,
+ } from '../components/ui/index.js';
+-import { createDisclosureIdentities, type DisclosureStates } from '../forms/disclosures.js';
++import {
++  carryCollectionIdentities,
++  createDisclosureIdentities,
++  type DisclosureStates,
++} from '../forms/disclosures.js';
+ import { SchemaForm } from '../forms/SchemaForm.js';
+ import { NodeOutputsContext } from '../forms/EarlierNodeOutputs.js';
+ import { FieldLabelsContext } from '../forms/fields/shared.js';
+@@ -315,7 +319,8 @@ export function NodeEditorDialog({
+   /**
+    * Apply the id being typed, on Enter or as the field loses focus (`next` is where focus is going).
+    * The rename repairs references in one step; when it repaired one in this node's own fields, the
+-   * config form remounts with the new source, and focus follows to the same control there.
++   * config form remounts with the new source. The repair rewrites strings in place, so the form
++   * keeps its collection rows and their open state, and focus follows to the same control there.
+    */
+   const commitId = (next?: Element | null) => {
+     const problem = idProblem(id.value, node.id, definition);
+@@ -323,8 +328,18 @@ export function NodeEditorDialog({
+       setIdState({ ...id, error: problem });
+       return;
+     }
++    const nextId = id.value;
++    const rename = () => {
++      const configOf = (nodeId: string) =>
++        useEditorStore.getState().definition?.nodes.find((n) => n.id === nodeId)?.config;
++      const previous = configOf(node.id);
++      const refused = renameNode(node.id, nextId);
++      // Before the remount renders: the repaired config takes this config's row ids.
++      if (!refused) carryCollectionIdentities(disclosureIdentities, previous, configOf(nextId));
++      return refused;
++    };
+     // A refusal stays with the typed text; after a rename the draft follows the new id.
+-    setIdState({ ...id, error: keepFocusThrough(() => renameNode(node.id, id.value), next) });
++    setIdState({ ...id, error: keepFocusThrough(rename, next) });
+   };
+ 
+   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
+diff --git a/apps/web/src/editor/RenameNotice.tsx b/apps/web/src/editor/RenameNotice.tsx
+index 8fcb3375..3fda86df 100644
+--- a/apps/web/src/editor/RenameNotice.tsx
++++ b/apps/web/src/editor/RenameNotice.tsx
+@@ -1,4 +1,5 @@
+ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
++import { Fragment } from 'react';
+ import { Alert } from '../components/ui/index.js';
+ import { IssueList } from './IssuePopover.js';
+ import type { EditorIssue } from './model.js';
+@@ -25,12 +26,19 @@ export function hasRenameNotice(report: RenameReport | undefined): report is Ren
+   return report !== undefined && (report.references > 0 || report.warnings.length > 0);
+ }
+ 
++function configOf(definition: LoopDefinitionInput, nodeId: string): unknown {
++  return definition.nodes.find((node) => node.id === nodeId)?.config;
++}
++
+ /**
+  * The latest rename's report (#273): how many references and connections it updated, and the
+  * places where the old id may remain because the domain could not settle them (dynamic, inherited
+- * or authored keys, unverifiable edits, scripts and generated patches). Rows on a node that is
+- * still in the draft open it at the field (`onChoose`); others only inform. Plain text, JSON values
+- * and scripts are never described as updated.
++ * or authored keys, unverifiable edits, scripts and generated patches). A row opens its node at
++ * the field (`onChoose`) only while that node's config is still the value the rename left, which
++ * undo and redo restore: after another edit of the node an index in the path can name a different
++ * row, so its rows then only inform and the notice says the node changed. Loop-level rows, and
++ * rows on a node no longer in the draft, only inform. Plain text, JSON values and scripts are
++ * never described as updated.
+  *
+  * The editor shows it above the canvas and, while the node dialog is open (the page is inert
+  * then), inside the dialog as well, as it does the draft conflict notice.
+@@ -47,11 +55,23 @@ export function RenameNotice({
+ }) {
+   const report = useEditorStore((s) => s.renameReport);
+   if (!hasRenameNotice(report)) return null;
+-  const present = new Set(definition.nodes.map((node) => node.id));
++  const unchanged = (nodeId: string) => {
++    const config = configOf(definition, nodeId);
++    return config !== undefined && config === configOf(report.definition, nodeId);
++  };
+   const reviewable = report.warnings.filter(
+-    (issue) => issue.nodeId !== undefined && present.has(issue.nodeId),
++    (issue) => issue.nodeId !== undefined && unchanged(issue.nodeId),
+   );
+   const informational = report.warnings.filter((issue) => !reviewable.includes(issue));
++  const changed = [
++    ...new Set(
++      informational.flatMap((issue) =>
++        issue.nodeId !== undefined && configOf(definition, issue.nodeId) !== undefined
++          ? [issue.nodeId]
++          : [],
++      ),
++    ),
++  ];
+   const summary = renameSummary(report);
+   const places = report.warnings.length;
+   return (
+@@ -75,6 +95,18 @@ export function RenameNotice({
+               <IssueList issues={reviewable} subject onChoose={onChoose} />
+             ) : null}
+             {informational.length > 0 ? <IssueList issues={informational} subject /> : null}
++            {changed.length > 0 ? (
++              <p>
++                {changed.map((nodeId, index) => (
++                  <Fragment key={nodeId}>
++                    {index === 0 ? null : index === changed.length - 1 ? ' and ' : ', '}
++                    <code>{nodeId}</code>
++                  </Fragment>
++                ))}{' '}
++                changed after the rename. {changed.length === 1 ? 'Its' : 'Their'} places show where
++                they were then and no longer open a field.
++              </p>
++            ) : null}
+           </>
+         ) : null}
+         <p>Undo reverses the whole rename.</p>
+diff --git a/apps/web/src/editor/store.ts b/apps/web/src/editor/store.ts
+index d6c16b61..fb045663 100644
+--- a/apps/web/src/editor/store.ts
++++ b/apps/web/src/editor/store.ts
+@@ -303,6 +303,12 @@ export interface RenameReport {
+    * could not verify. Located ones carry the node (by its new id) and the field's path.
+    */
+   warnings: EditorIssue[];
++  /**
++   * The draft as the rename left it. A warning's path names the field the rename analyzed only
++   * while its node's config is still that same value (undo and redo restore it): after another
++   * edit of that node a path can name a different row, so the notice no longer opens it.
++   */
++  definition: LoopDefinitionInput;
+ }
+ 
+ /** The node id rule's wording, shared by the node editor's own check. */
+@@ -758,6 +764,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
+           ).length,
+           references: result.repairedReferences - endpoints,
+           warnings: result.warnings,
++          definition,
+         },
+         ...recordStep(
+           historyOf(s),
+diff --git a/apps/web/src/forms/disclosures.ts b/apps/web/src/forms/disclosures.ts
+index 10da5164..1ce0f8c6 100644
+--- a/apps/web/src/forms/disclosures.ts
++++ b/apps/web/src/forms/disclosures.ts
+@@ -107,6 +107,38 @@ export function createCollectionIdentities(identities: DisclosureIdentities, val
+   };
+ }
+ 
++/** The length of the list at a dotted form path, or -1 where there is none. */
++function listLength(value: unknown, path: string): number {
++  let current = value;
++  for (const key of path.split('.')) {
++    if (typeof current !== 'object' || current === null) return -1;
++    current = (current as Record<string, unknown>)[key];
++  }
++  return Array.isArray(current) ? current.length : -1;
++}
++
++/**
++ * Give `next` the row ids recorded for `previous`, when `next` replaced it by an edit that changed
++ * values inside rows but kept every collection's rows in place: a rename's reference repair
++ * rewrites strings only. A form remounting with `next` then keeps its rows, so their open state
++ * and focus follow them. Nothing is carried when a recorded collection's length differs; rows are
++ * never matched by their contents.
++ */
++export function carryCollectionIdentities(
++  identities: DisclosureIdentities,
++  previous: unknown,
++  next: unknown,
++): void {
++  if (typeof previous !== 'object' || previous === null) return;
++  if (typeof next !== 'object' || next === null || identities.snapshots.has(next)) return;
++  const rows = identities.snapshots.get(previous);
++  if (!rows) return;
++  const kept = Object.keys(rows).every(
++    (path) => listLength(previous, path) === listLength(next, path),
++  );
++  if (kept) identities.snapshots.set(next, rows);
++}
++
+ export const CollectionIdentitiesContext = createContext<
+   ReturnType<typeof createCollectionIdentities> | undefined
+ >(undefined);
+diff --git a/apps/web/src/forms/fields/json.tsx b/apps/web/src/forms/fields/json.tsx
+index 2fb4aa69..240b00cf 100644
+--- a/apps/web/src/forms/fields/json.tsx
++++ b/apps/web/src/forms/fields/json.tsx
+@@ -132,9 +132,10 @@ export function JsonText({
+       ? validateText(text, schema, validateValue)
+       : undefined;
+   }, [text, schema, validateValue, validationVersion, ownError]);
+-  const error = candidate
+-    ? (candidate.error ?? (sameJson(candidate.value, value) ? undefined : PENDING_JSON))
+-    : ownError;
++  // Held text ends only by the author's hand: typing it back to the section's value, Apply, Cancel
++  // or a discard. A valid candidate that a change elsewhere made equal to the section (a rename's
++  // repair, a sibling fix, a remount after undo) stays held exactly as written, with no step.
++  const error = candidate ? (candidate.error ?? PENDING_JSON) : ownError;
+   const [confirmation, setConfirmation] = useState<{
+     text: string;
+     connections: readonly RemovedConnection[];

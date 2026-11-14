@@ -1,0 +1,51 @@
+# PR #474 domain correction handoff
+
+The correction is ready for the parent to integrate. The worktree was based on head ae8add8a791699e905540465b5ddf929d00c50eb, tree ea2dfcfd46f7d5ab79fd98414db214513d830b52 and origin/main a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c. The earlier non-QA diff SHA-256 was independently read back as c40c2fe6a405ede21f65918f33c0666ca0950932ef57f2e3bbfb867d1c7179db. The four owned files' current Git blobs and SHA-256 values are in [identity.json](identity.json). The scoped [correction diff](backend-correction.diff) is 19,794 bytes with SHA-256 16372bb2b9247528ba790d0d270e966a3f25dd55f5a41e0ceb6ec857ac367240. The owned index diff was empty.
+
+## F1
+
+The scope classifier uses the node type and exact typed slots. Both LLM and classifier decision message predicates evaluate against the selected message with $thread bound to the current run. Projected subloop input message and artifact selectors use the parent-thread binding and an item root. Subloop input variable values are evaluated directly against the parent thread, including input.vars.where. Subloop output selectors and mapped variables refer to the child and stay outside the parent's analysis. Custom output patches retain the parent view. Mutate and inference transform predicates still receive an item and $thread. The existing heartbeat, wait, trigger, and custom subloop root tests passed.
+
+Regression tests verify repaired source and counts, untouched item reads, exact gate and visit errors, and publication refusal through the exported domain API with no other validation errors. The contract and runtime checks were based on packages/contracts/src/evaluation.ts, nodes.ts and mutations.ts, packages/engine/src/handlers/common.ts, decision.ts and subloop.ts, and packages/domain/src/mutations.ts. Updated docs/03-domain-model.md describes the scopes.
+
+## F2
+
+JSONata 2.2.2 places filters and groups on function and block nodes, generic containers, and path steps. Path steps and sorts can carry stages. The visitor analyzes those attachments against the selected item or group, retaining access through the explicit original root or injected thread binding. Tests exercise actual compiled expressions and evaluate the results before and after renaming. They cover unchanged local bare and current-item references, duplicated source spans from a coalescing expression, preservation of outside-key text, original-root shadowing and direct versus composite existence checks.
+
+The installed evaluator implements a special case for a function directly on the right of ~>. It calls evaluateFunction rather than evaluate, so decorations on that function itself are skipped. Explicit authored references in those decorations produce a conservative uncertainty warning without claiming a repair or a runtime missing reference. Evaluated function arguments still participate in repairs, and an applied direct $exists remains optional. The exact installed evaluator SHA-256 is in identity.json. The 17-case [probe](jsonata-attachment-probe.mjs.txt) and [readback](jsonata-attachment-probe.jsonl) record the AST shapes and observed execution. The probe ran from packages/domain by piping the script to node --input-type=module.
+
+## Verification
+
+PowerShell used the scoped Node v22.23.4 and pnpm.cmd 12.8.1.
+
+- Old source, regression tests only. Ran pnpm.cmd --filter @graphgoblin/domain test src/node-references.test.ts src/source-analysis.test.ts src/syntax.test.ts --maxWorkers=1. The [first run](focused-before.log) had 21 failures and 60 passes, including two test fixture selection errors. After selecting the existing everyFieldLoop fixtures, the [confirmed original failure run](focused-before-final-fixtures.log) had 21 intended assertion failures and 60 passes on the original product source.
+- The [first corrected run](focused-after.log) passed 78 of 81 tests. Three regressions reached fixture defects hidden by the original failures. The subloop fixture switched to a valid ULID, and group assertions used scalar sums instead of comparing JSONata's sequence metadata with a plain array. The [next run](focused-after-fixture-and-controls.log) passed 90 of 91. Its final new control expected a singleton array where JSONata returned a scalar object. The expected object was corrected. None of these adjustments changed production source.
+- Final focused command. pnpm.cmd --filter @graphgoblin/domain test src/node-references.test.ts src/source-analysis.test.ts src/syntax.test.ts src/graph.test.ts --maxWorkers=1. [All 91 tests across four files passed](focused-final.log).
+- No-emit typecheck passed. pnpm.cmd --filter @graphgoblin/domain exec tsc -p tsconfig.json --noEmit --incremental false --composite false.
+- Focused ESLint passed. pnpm.cmd --filter @graphgoblin/domain exec eslint src/node-references.ts src/expression-references.ts src/node-references.test.ts.
+- Prettier --check and Git diff --check passed for all four owned paths.
+- [Runtime artifact readback](runtime-artifact-readback.json) compared every file listed by the concurrent UI correction's pre-change manifests. All 1,227 dist entries and 11 tsbuildinfo entries matched. The comparison verifies logged paths and content hashes.
+
+The public-domain tests establish publication issue behavior. API subprocess, runtime rebuild, browser/native QA, complete coverage, exact-head CI and the final independent review remain with the parent. This was a correction to findings F1 and F2 after the first two formal reviews. It consumed no additional formal review slot.
+
+## Final-fixture replay against the original source
+
+The two external source mirrors use the exact final node-references.test.ts bytes, SHA-256 8e1c41dd27ecbd20a3796efe82e267fb1a57bca03d8c935eeb907aa065e98d45. The original mirror uses ae8 Git blobs for all other domain sources and configs. The paired corrected mirror changes only the two corrected production sources relative to that original mirror. The [source manifest](negative-control/source-manifest.json) verifies 66 copied files per side and records exact Git blobs, SHA-256 values and dependency junction targets. Its SHA-256 is 4164e7a98410d0c90ef0dd50193103680843a15981220e0188b6ea2108b70342. The available contracts, tooling, dependency lock and patches showed no Git diff against ae8. The installed dependencies were reused using individual junctions. Each mirror kept its own writable node_modules root.
+
+Run the [preparation script](prepare-negative-control.mjs) using scoped Node 22 from the admitted checkout:
+
+    node "$evidence/prepare-negative-control.mjs" (Get-Location).Path
+
+Use Node v22.23.4 and pnpm.cmd 12.8.1. Set $evidence to the absolute backend-correction evidence directory and $candidate to ae8 or corrected, then launch Vitest from the admitted workspace:
+
+    $packageDirectory = "$evidence/negative-control/$candidate/packages/domain"
+    $outputJson = "$evidence/negative-control-$candidate.json"
+    pnpm.cmd --filter @graphgoblin/domain exec node "$packageDirectory/node_modules/vitest/vitest.mjs" run --root $packageDirectory src/node-references.test.ts src/source-analysis.test.ts src/syntax.test.ts src/graph.test.ts --maxWorkers=1 --no-cache --reporter=verbose --reporter=json "--outputFile.json=$outputJson"
+
+Launching pnpm with -C directly in the external copy hit its workspace dependency bootstrap before any tests ran. [Bootstrap log](negative-control-pnpm-bootstrap.log)
+
+- Original source exited 1. All 23 failures were intended assertions from the new regressions, including 3 F1 cases and 20 F2 cases. The 68 controls passed, including the new mutate/inference scope control and all assertions in the graph, source-analysis and syntax files. [Original log](negative-control-ae8.log) and [Vitest JSON](negative-control-ae8.json).
+- Paired corrected source exited 0 with 91 of 91 passing. [Corrected log](negative-control-corrected.log) and [Vitest JSON](negative-control-corrected.json).
+- [Per-file counts and failed assertion inventory](negative-control-results.json) confirm that the original failures were assertion errors. This supersedes the earlier runs as evidence about the final regression fixtures. The interim fixture selection, ULID, sequence metadata and singleton shape issues described above are absent from the paired replay.
+
+No build or TypeScript emission ran. The source mirrors exclude runtime artifacts. The shared checkout's source files and Git index were read-only during this replay.

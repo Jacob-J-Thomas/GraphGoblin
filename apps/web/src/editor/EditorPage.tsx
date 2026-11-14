@@ -404,7 +404,7 @@ export function EditorPage() {
     publish.outcome && publish.outcome !== dismissedPublish
       ? publishNotice(
           publish.outcome,
-          { definition: def, fieldErrors, revision },
+          { definition: def, fieldErrors, revision, conflict },
           query.data?.current,
         )
       : undefined;

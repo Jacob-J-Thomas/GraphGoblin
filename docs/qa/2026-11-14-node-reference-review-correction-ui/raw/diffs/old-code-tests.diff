@@ -1,0 +1,467 @@
+diff --git a/apps/web/src/editor/EditorPage.rename.test.tsx b/apps/web/src/editor/EditorPage.rename.test.tsx
+index 28cbc834..a0d91f92 100644
+--- a/apps/web/src/editor/EditorPage.rename.test.tsx
++++ b/apps/web/src/editor/EditorPage.rename.test.tsx
+@@ -1,3 +1,4 @@
++import { EditorView } from '@codemirror/view';
+ import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '@graphgoblin/contracts';
+ import { act, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+@@ -11,9 +12,47 @@ import { newLoopDefinition } from './model.js';
+ import { useEditorStore } from './store.js';
+ 
+ const SAVE_WAIT = { timeout: 4000 };
++const UNDO = '{Control>}z{/Control}';
++const REDO = '{Control>}{Shift>}z{/Shift}{/Control}';
++const PENDING = 'Choose Apply JSON or Cancel JSON to finish this edit.';
+ const store = () => useEditorStore.getState();
+ const node = (id: string) => store().definition!.nodes.find((n) => n.id === id);
+ const config = (id: string) => node(id)!.config as Record<string, unknown>;
++const labels = () => store().past.map((step) => step.label);
++
++/** The text of the code editor that has focus. */
++function focusedCode(): string | undefined {
++  const active = document.activeElement;
++  return active instanceof HTMLElement && active.classList.contains('cm-content')
++    ? EditorView.findFromDOM(active)?.state.doc.toString()
++    : undefined;
++}
++
++/** The header of operation `n` (1-based) in `scope`, which toggles its row. */
++function operation(scope: HTMLElement, n: number): HTMLElement {
++  return within(scope).getByRole('button', { name: new RegExp(`^Operations ${n}\\b`) });
++}
++
++/** The stable row ids of the first `count` operations, as rendered. */
++function operationRows(scope: HTMLElement, count: number): (string | null | undefined)[] {
++  return Array.from({ length: count }, (_, index) =>
++    scope.querySelector(`[data-row-path="operations.${index}"]`)?.getAttribute('data-row-id'),
++  );
++}
++
++/** The open state of the first `count` operations. */
++function opened(scope: HTMLElement, count: number): (string | null)[] {
++  return Array.from({ length: count }, (_, index) =>
++    operation(scope, index + 1).getAttribute('aria-expanded'),
++  );
++}
++
++/** The Coerce operation's Source input, inside its open row. */
++function coerceSource(scope: HTMLElement): HTMLElement {
++  return within(within(scope).getByRole('group', { name: 'Operations 3' })).getByLabelText(
++    'Source',
++  );
++}
+ 
+ /**
+  * Work feeds a review and an exit. A sibling's Liquid and the exit's JSONata read it, the exit
+@@ -98,6 +137,114 @@ function selfReading(): LoopDefinitionInput {
+   };
+ }
+ 
++/**
++ * A Mutate node that coerces its own visit count, after two identical notes (#273 U1): the rename
++ * repairs the Coerce source in place, so the operations keep their rows.
++ */
++function selfCoercing(): LoopDefinitionInput {
++  return {
++    schemaVersion: CURRENT_DEFINITION_FORMAT,
++    name: 'coerce',
++    variables: { visits: { type: 'integer' } },
++    nodes: [
++      {
++        id: 'start',
++        kind: 'trigger',
++        label: 'Start',
++        config: { type: 'manual' },
++        ui: { x: 0, y: 0 },
++      },
++      {
++        id: 'work',
++        kind: 'mutate',
++        label: 'Work',
++        config: {
++          operations: [
++            { op: 'append-message', role: 'note', content: 'Same note' },
++            { op: 'append-message', role: 'note', content: 'Same note' },
++            {
++              op: 'coerce',
++              source: '/counters/nodeVisits/work',
++              jsonSchema: { type: 'integer' },
++              repair: { enabled: false },
++              target: '/vars/visits',
++            },
++          ],
++        },
++        ui: { x: 300, y: 0 },
++      },
++      {
++        id: 'done',
++        kind: 'exit',
++        label: 'Done',
++        config: { returns: 'vars.visits' },
++        ui: { x: 600, y: 0 },
++      },
++    ],
++    edges: [
++      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'work', port: 'in' } },
++      { id: 'e2', from: { node: 'work', port: 'out' }, to: { node: 'done', port: 'in' } },
++    ],
++  };
++}
++
++/**
++ * Audit sits between review and the exit with three notes; only the second reads a computed key,
++ * so every rename lists it for review (#273 U2).
++ */
++function auditing(): LoopDefinitionInput {
++  const definition = referencing();
++  return {
++    ...definition,
++    nodes: [
++      ...definition.nodes,
++      {
++        id: 'audit',
++        kind: 'mutate',
++        label: 'Audit',
++        config: {
++          operations: [
++            { op: 'append-message', role: 'note', content: 'First note' },
++            { op: 'append-message', role: 'note', content: 'Read {{ outputs[vars.key] }}' },
++            { op: 'append-message', role: 'note', content: 'Third note' },
++          ],
++        },
++        ui: { x: 750, y: 200 },
++      },
++    ],
++    edges: [
++      ...definition.edges.filter((edge) => edge.id !== 'e3'),
++      { id: 'e3', from: { node: 'review', port: 'out' }, to: { node: 'audit', port: 'in' } },
++      { id: 'e4', from: { node: 'audit', port: 'out' }, to: { node: 'done', port: 'in' } },
++    ],
++  };
++}
++
++/** Work's own Input mutation reads its visit count (#273 U3). */
++function selfInput(): LoopDefinitionInput {
++  const definition = referencing();
++  return {
++    ...definition,
++    nodes: definition.nodes.map((n) =>
++      n.id === 'work' && n.kind === 'inference'
++        ? {
++            ...n,
++            config: {
++              ...n.config,
++              input: [
++                {
++                  op: 'append-message',
++                  role: 'note',
++                  content: 'Visit {{ counters.nodeVisits.work }}',
++                },
++              ],
++            },
++          }
++        : n,
++    ),
++  };
++}
++
+ async function openEditor(definition: LoopDefinitionInput = referencing()) {
+   const api = new FakeApi();
+   const loop = api.addLoop(definition);
+@@ -463,4 +610,226 @@ describe('renaming a node in the editor (#273)', () => {
+       }),
+     );
+   });
++
++  it('keeps each operation row and its open state when Enter repairs a Coerce source in place', async () => {
++    const user = userEvent.setup();
++    await openEditor(selfCoercing());
++    const dialog = await editNode('work', 'Edit mutate work');
++    // Identical neighbours differ only in their open state; the Coerce row is open too.
++    await user.click(operation(dialog, 1));
++    await user.click(operation(dialog, 3));
++    expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
++    const rows = operationRows(dialog, 3);
++    const source = coerceSource(dialog);
++    expect(source).toHaveValue('/counters/nodeVisits/work');
++
++    const id = within(dialog).getByLabelText('Node id');
++    await user.clear(id);
++    await user.type(id, 'draft{Enter}');
++    expect(screen.getByRole('dialog', { name: 'Edit mutate draft' })).toBe(dialog);
++    expect(id).toHaveFocus();
++    expect(config('draft')['operations']).toEqual([
++      { op: 'append-message', role: 'note', content: 'Same note' },
++      { op: 'append-message', role: 'note', content: 'Same note' },
++      expect.objectContaining({ op: 'coerce', source: '/counters/nodeVisits/draft' }),
++    ]);
++    expect(labels()).toEqual(['rename work to draft']);
++
++    // The form remounted with the repaired source, on the same rows in the same open state.
++    expect(coerceSource(dialog)).not.toBe(source);
++    expect(coerceSource(dialog)).toHaveValue('/counters/nodeVisits/draft');
++    expect(operationRows(dialog, 3)).toEqual(rows);
++    expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
++
++    // Undo and redo from the Coerce header keep the rows, their state and the header's focus.
++    act(() => operation(dialog, 3).focus());
++    await user.keyboard(UNDO);
++    expect(screen.getByRole('dialog', { name: 'Edit mutate work' })).toBe(dialog);
++    expect(coerceSource(dialog)).toHaveValue('/counters/nodeVisits/work');
++    expect(operationRows(dialog, 3)).toEqual(rows);
++    expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
++    expect(operation(dialog, 3)).toHaveFocus();
++    await user.keyboard(REDO);
++    expect(screen.getByRole('dialog', { name: 'Edit mutate draft' })).toBe(dialog);
++    expect(coerceSource(dialog)).toHaveValue('/counters/nodeVisits/draft');
++    expect(operationRows(dialog, 3)).toEqual(rows);
++    expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
++    expect(operation(dialog, 3)).toHaveFocus();
++  });
++
++  it('moves focus to the remounted nested Source the pointer chose when leaving the id renames', async () => {
++    const user = userEvent.setup();
++    await openEditor(selfCoercing());
++    const dialog = await editNode('work', 'Edit mutate work');
++    await user.click(operation(dialog, 2));
++    await user.click(operation(dialog, 3));
++    expect(opened(dialog, 3)).toEqual(['false', 'true', 'true']);
++    const rows = operationRows(dialog, 3);
++    const id = within(dialog).getByLabelText('Node id');
++    await user.clear(id);
++    await user.type(id, 'draft');
++
++    // Pressing the visible Source commits the id as it loses focus; the form remounts under it.
++    const source = coerceSource(dialog);
++    await user.click(source);
++    expect(screen.getByRole('dialog', { name: 'Edit mutate draft' })).toBe(dialog);
++    const repaired = coerceSource(dialog);
++    expect(repaired).not.toBe(source);
++    expect(repaired).toHaveValue('/counters/nodeVisits/draft');
++    expect(repaired).toHaveFocus();
++    expect(operationRows(dialog, 3)).toEqual(rows);
++    expect(opened(dialog, 3)).toEqual(['false', 'true', 'true']);
++    expect(labels()).toEqual(['rename work to draft']);
++
++    // Typing then edits the repaired source; the old one is never written back.
++    await user.keyboard('/x');
++    expect(config('draft')['operations']).toEqual([
++      expect.anything(),
++      expect.anything(),
++      expect.objectContaining({ op: 'coerce', source: '/counters/nodeVisits/draft/x' }),
++    ]);
++  });
++
++  it('never leads a review row to another operation after the warned row moves', async () => {
++    const user = userEvent.setup();
++    await openEditor(auditing());
++    const dialog = await editNode('work', 'Edit inference work');
++    const id = within(dialog).getByLabelText('Node id');
++    await user.clear(id);
++    await user.type(id, 'draft{Enter}');
++    const summary =
++      'Updated 3 references in expressions, templates and mutation paths, and 2 connections.';
++    const auditRow = (scope: HTMLElement) =>
++      within(notice(scope, 'Renamed work to draft')).queryAllByRole('button', {
++        name: /node audit config\.operations\.1\.content/,
++      });
++
++    // At first the row is exact: it opens Audit at the second operation's computed read.
++    expect(notice(dialog, 'Renamed work to draft')).toHaveTextContent(summary);
++    await user.click(auditRow(dialog)[0]!);
++    const audit = await screen.findByRole('dialog', { name: 'Edit mutate audit' });
++    await waitFor(() => expect(focusedCode()).toBe('Read {{ outputs[vars.key] }}'));
++    const warned = document.activeElement!.closest('[data-row-id]')!.getAttribute('data-row-id');
++
++    // Removing the first operation moves that read to index 0 and the third note to index 1.
++    await user.click(within(audit).getByRole('button', { name: 'Remove operations 1' }));
++    expect(config('audit')['operations']).toEqual([
++      { op: 'append-message', role: 'note', content: 'Read {{ outputs[vars.key] }}' },
++      { op: 'append-message', role: 'note', content: 'Third note' },
++    ]);
++    expect(audit.querySelector('[data-row-path="operations.0"]')).toHaveAttribute(
++      'data-row-id',
++      warned,
++    );
++
++    // Whatever the notice still offers for Audit must reach the computed read, never the note.
++    for (const row of auditRow(audit)) {
++      await user.click(row);
++      await waitFor(() => expect(focusedCode()).toBe('Read {{ outputs[vars.key] }}'));
++    }
++    // It keeps the place and the summary, and says why the place no longer opens.
++    const inDialog = notice(audit, 'Renamed work to draft');
++    expect(auditRow(audit)).toEqual([]);
++    expect(inDialog).toHaveTextContent(summary);
++    expect(inDialog).toHaveTextContent('Review 2 places where work may remain:');
++    expect(inDialog).toHaveTextContent('node audit config.operations.1.content');
++    expect(inDialog).toHaveTextContent(
++      'audit changed after the rename. Its places show where they were then and no longer open a field.',
++    );
++    expect(within(inDialog).getByRole('button', { name: /node done config\.returns/ })).toBeEnabled();
++    expect(focusedCode()).not.toBe('Third note');
++
++    // Undoing the removal restores the configuration the rename left, and with it the exact row.
++    act(() => operation(audit, 1).focus());
++    await user.keyboard(UNDO);
++    expect(config('audit')['operations']).toHaveLength(3);
++    await user.click(auditRow(audit)[0]!);
++    await waitFor(() => expect(focusedCode()).toBe('Read {{ outputs[vars.key] }}'));
++    act(() => operation(audit, 1).focus());
++    await user.keyboard(REDO);
++    expect(config('audit')['operations']).toHaveLength(2);
++
++    // Above the canvas the same row only informs too.
++    await user.click(within(audit).getByRole('button', { name: 'Done' }));
++    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
++    expect(auditRow(document.body)).toEqual([]);
++    expect(notice(document.body, 'Renamed work to draft')).toHaveTextContent(
++      'node audit config.operations.1.content',
++    );
++  });
++
++  it('keeps held section JSON exactly when a rename makes the applied section equal to it', async () => {
++    const user = userEvent.setup();
++    await openEditor(selfInput());
++    const dialog = await editNode('work', 'Edit inference work');
++    await user.click(within(dialog).getByRole('tab', { name: /^Context/ }));
++    await user.click(within(dialog).getByRole('button', { name: 'Edit as JSON: Input' }));
++    // Valid, differently spaced, and already naming the id the node is about to get.
++    const text = [
++      '[',
++      '    {',
++      '        "op": "append-message",',
++      '        "role": "note",',
++      '        "content": "Visit {{ counters.nodeVisits.draft }}"',
++      '    }',
++      ']',
++    ].join('\n');
++    setCode('Input JSON', text);
++    const held = { message: PENDING, text, input: 'unapplied JSON' };
++    expect(within(dialog).getByText(PENDING)).toBeVisible();
++    expect(store().fieldErrors).toEqual({ 'node:work': { input: held } });
++    expect(config('work')['input']).toEqual([
++      { op: 'append-message', role: 'note', content: 'Visit {{ counters.nodeVisits.work }}' },
++    ]);
++    const original = store().definition;
++    const before = labels();
++
++    const id = within(dialog).getByLabelText('Node id');
++    await user.clear(id);
++    await user.type(id, 'draft{Enter}');
++    const renamed = store().definition;
++    // The accepted section is repaired and now equals the buffer, which still waits for the author.
++    expect(config('draft')['input']).toEqual([
++      { op: 'append-message', role: 'note', content: 'Visit {{ counters.nodeVisits.draft }}' },
++    ]);
++    expect(renamed!.edges.filter((edge) => edge.to.node === 'draft')).toHaveLength(1);
++    expect(getCode('Input JSON')).toBe(text);
++    expect(within(dialog).getByText(PENDING)).toBeVisible();
++    expect(store().fieldErrors).toEqual({ 'node:draft': { input: held } });
++    expect(labels()).toEqual([...before, 'rename work to draft']);
++    expect(store().future).toEqual([]);
++
++    // One undo, from a control without text, restores the id, source, edges and the exact buffer.
++    act(() => within(dialog).getByRole('button', { name: 'Apply JSON' }).focus());
++    await user.keyboard(UNDO);
++    expect(screen.getByRole('dialog', { name: 'Edit inference work' })).toBe(dialog);
++    expect(store().definition).toBe(original);
++    expect(store().fieldErrors).toEqual({ 'node:work': { input: held } });
++    expect(getCode('Input JSON')).toBe(text);
++    expect(within(dialog).getByText(PENDING)).toBeVisible();
++    expect(labels()).toEqual(before);
++    expect(store().future.map((step) => step.label)).toEqual(['rename work to draft']);
++
++    // One redo restores the repair and the same held buffer, with nothing left to redo.
++    act(() => within(dialog).getByRole('button', { name: 'Apply JSON' }).focus());
++    await user.keyboard(REDO);
++    expect(screen.getByRole('dialog', { name: 'Edit inference draft' })).toBe(dialog);
++    expect(store().definition).toBe(renamed);
++    expect(store().fieldErrors).toEqual({ 'node:draft': { input: held } });
++    expect(getCode('Input JSON')).toBe(text);
++    expect(labels()).toEqual([...before, 'rename work to draft']);
++    expect(store().future).toEqual([]);
++
++    // Apply stays the author's own step: it ends the hold and leaves the equal section as it is.
++    await user.click(within(dialog).getByRole('button', { name: 'Apply JSON' }));
++    expect(store().fieldErrors).toEqual({});
++    expect(store().definition).toBe(renamed);
++    expect(within(dialog).queryByText(PENDING)).toBeNull();
++    expect(labels()).toEqual([...before, 'rename work to draft', 'edit config of draft']);
++    act(() => within(dialog).getByRole('button', { name: 'Apply JSON' }).focus());
++    await user.keyboard(UNDO);
++    expect(store().fieldErrors).toEqual({ 'node:draft': { input: held } });
++    expect(getCode('Input JSON')).toBe(text);
++    expect(store().definition).toBe(renamed);
++  });
+ });
+diff --git a/apps/web/src/forms/json-sections.test.tsx b/apps/web/src/forms/json-sections.test.tsx
+index dc44885d..15a32f98 100644
+--- a/apps/web/src/forms/json-sections.test.tsx
++++ b/apps/web/src/forms/json-sections.test.tsx
+@@ -379,6 +379,63 @@ describe('section JSON mode', () => {
+     expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
+   });
+ 
++  it('keeps held text that later validation finds equal to the section until the author settles it', async () => {
++    const schema = z
++      .object({
++        enabled: z.boolean(),
++        section: z.array(z.number()).meta({ jsonEditor: true }),
++      })
++      .superRefine((config, ctx) => {
++        if (!config.enabled && config.section.length)
++          ctx.addIssue({
++            code: 'custom',
++            path: ['enabled'],
++            message: 'Enable this collection first',
++          });
++      });
++    const spy = vi.fn();
++    const report = vi.fn();
++    render(
++      <Harness
++        schema={schema}
++        initial={{ enabled: false, section: [1] }}
++        spy={spy}
++        report={report}
++      />,
++    );
++    const user = userEvent.setup();
++    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
++    // The applied value, spaced by the author, is held while a parent rule refuses it.
++    const text = '[ 1 ]';
++    setCode('Section JSON', text);
++    expect(
++      screen.getByText('section (config.enabled): Enable this collection first'),
++    ).toBeInTheDocument();
++    report.mockClear();
++
++    // Fixing the sibling makes the held text valid and equal to the section. It stays held as typed.
++    await user.click(screen.getByRole('switch', { name: 'Enabled' }));
++    expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
++    expect(getCode('Section JSON')).toBe(text);
++    expect(screen.getByText(/Choose Apply JSON/)).toBeInTheDocument();
++    expect(report).toHaveBeenLastCalledWith('section', {
++      message: 'Choose Apply JSON or Cancel JSON to finish this edit.',
++      text,
++      input: 'unapplied JSON',
++    });
++    expect(report).not.toHaveBeenCalledWith('section', undefined);
++    await user.click(screen.getByRole('button', { name: 'Use structured editor for Section' }));
++    expect(screen.getByText(/before switching editors/)).toBeVisible();
++
++    // Typing it back to the section's value is the author's own resolution: nothing stays held.
++    setCode('Section JSON', '[1]');
++    expect(report).toHaveBeenLastCalledWith('section', undefined);
++    expect(screen.queryByText(/Choose Apply JSON/)).not.toBeInTheDocument();
++    await user.click(screen.getByRole('button', { name: 'Use structured editor for Section' }));
++    expect(screen.queryByLabelText('Section JSON')).not.toBeInTheDocument();
++    expect(spy).toHaveBeenLastCalledWith({ enabled: true, section: [1] });
++  });
++
+   it('validates nested array replacements and root refinements without changing the live candidate', async () => {
+     const schema = z
+       .object({

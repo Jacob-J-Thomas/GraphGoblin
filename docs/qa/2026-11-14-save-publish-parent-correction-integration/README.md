@@ -1,0 +1,13 @@
+# PR #475 parent correction integration
+
+This packet records the root-owned integration of the PR #475 UI correction with the parent PR #474 correction. The eight-file UI correction was frozen as `ea8eda378cf726a169aa32a24db11aa9a6eee8c5` (tree `3d991fa7f1d8fdb1c9851b524db04e7f2b4fffde`). Root then merged parent commit `164c01a2e3a52bf0ef69a409e1a428b45817b1b8` conflict-free into `313407136fa591ed2238ee4c3bbc9551d4c866a0` (tree `b51e1bb37fa3e6d5bf134cd99ef99c012d671468`), with those two commits as parents. The original [freeze binding](raw/source-correction-freeze.json) and post-integration [identity](raw/identity.json) bind the source state.
+
+The integration readback preserves six child correction application files and eleven parent-correction source files byte-for-byte, plus 374 inherited QA evidence blobs totaling 6,026,623 bytes. Root's exact staged-delta read found that the combined editor store adds only `RenameReport.definition` and its assignment. No conflict remained. The [freeze helper](raw/freeze-source-correction.mjs) and [integration helper](raw/finish-parent-integration-164c.mjs) are preserved exactly as executed, with their captured bindings and check logs. They contain Git commit/index operations: this packet is historical evidence, and the scripts were not rerun during curation.
+
+## Checks and limits
+
+The integrated candidate passed the focused 9-file web suite (122 tests), web no-emit TypeScript check, and web lint. The exact [focused](raw/focused.log), [typecheck](raw/typecheck.log), and [lint](raw/lint.log) outputs are preserved. This is root integration verification, not independent QA or a formal review. No build was run; the pre-existing compiled distributions from the original `1dcee36b16cc4662e8acb691e9166aff52949ad9` tree were retained. The metadata says `published: false`.
+
+At this capture, main remained `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`; parent PR #474 had not yet merged. Actual-main integration, final retargeting, and current-target CI were still pending. This packet does not establish those later gates or owner acceptance. See the prior [PR #475 initial review](../2026-11-14-save-publish-initial-review/README.md) and [UI correction candidate evidence](../2026-11-14-save-publish-review-correction/README.md) for their separate provenance; neither is replaced by this integration record.
+
+See [manifest.json](manifest.json) for exact source-to-copy hashes, [link-checks.json](link-checks.json) for local and sibling links, and [SHA256SUMS.txt](SHA256SUMS.txt) for packet integrity. Raw evidence and scripts are protected from line-ending conversion by `.gitattributes`.
