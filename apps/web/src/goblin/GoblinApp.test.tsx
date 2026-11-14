@@ -81,7 +81,7 @@ describe('standalone Goblin shell', () => {
     expect(notice.parentElement).toBe(shell);
     expect(notice.previousElementSibling).toBe(screen.getByRole('banner'));
     expect(notice.nextElementSibling).toBe(screen.getByText('Shared chat'));
-    expect(screen.getByRole('heading', { name: 'Goblin' })).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Goblin' })).toHaveFocus());
     expect(fetcher.mock.calls.filter(([url]) => url === '/chat/pairings/claim')).toHaveLength(1);
   });
 
