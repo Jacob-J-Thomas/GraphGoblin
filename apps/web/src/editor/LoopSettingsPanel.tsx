@@ -38,6 +38,9 @@ export function LoopSettingsPanel({
 }) {
   const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
+  // Bumped when a rename repaired a reference in the settings: only that form remounts with it, so
+  // the variables form keeps its own state.
+  const settingsEpoch = useEditorStore((s) => s.formEpochs['settings'] ?? 0);
   // The contract's own message for a name it refuses (a blank one, say).
   const nameError = LoopDefinitionSchema.shape.name.safeParse(definition.name).error?.issues[0]
     ?.message;
@@ -93,6 +96,7 @@ export function LoopSettingsPanel({
           }}
         >
           <SchemaForm
+            key={settingsEpoch}
             schema={LoopSettingsSchema}
             controls={LOOP_FIELD_CONTROLS}
             value={definition.settings ?? {}}

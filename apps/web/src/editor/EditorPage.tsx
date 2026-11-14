@@ -42,6 +42,7 @@ import { NodeEditorDialog } from './NodeEditorDialog.js';
 import { deviceCopyOf, deviceNotice, saveNotice, useDeviceStorageProblem } from './save-status.js';
 import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
 import { PALETTE_STORAGE_KEY, Palette, palettePanelDefault } from './Palette.js';
+import { hasRenameNotice, RenameNotice } from './RenameNotice.js';
 import { useEditorStore, type EditorState } from './store.js';
 import { AUTOSAVE_DELAY_MS, useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
@@ -111,6 +112,7 @@ export function EditorPage() {
   const saveMessage = useEditorStore((s) => s.saveMessage);
   const generation = useEditorStore((s) => s.generation);
   const connectionError = useEditorStore((s) => s.connectionError);
+  const renameReport = useEditorStore((s) => s.renameReport);
   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
   const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
   const nodeDialogSession = useEditorStore((s) => s.nodeDialogSession);
@@ -543,6 +545,16 @@ export function EditorPage() {
       >
         {deviceProblem.body}
       </Alert>
+    ) : null,
+    hasRenameNotice(renameReport) ? (
+      <RenameNotice
+        key="rename"
+        definition={def}
+        onChoose={(issue) => {
+          if (issue.nodeId) useEditorStore.getState().openNode(issue.nodeId, { field: issue.path });
+        }}
+        onDismissed={announceDismissalAndRestoreFocus}
+      />
     ) : null,
     publish.isSuccess && publishedRevision === revision ? (
       <Alert key="published" tone="good">

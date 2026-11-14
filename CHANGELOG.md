@@ -16,7 +16,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 - Node-ID changes can repair edge endpoints, typed mutation pointers and statically understood
   JSONata and Liquid references as one draft edit (#273). Publication rejects known missing
   gate and visit-count identities. Direct existence checks and unresolved inherited or custom
-  output keys warn. **Upgrade:** open a draft that reports a missing reference, correct the
+  output keys warn. The editor applies the repair when a node ID is committed, as one undo step
+  and one saved revision, and remounts only forms showing a repaired source. A notice counts the
+  updated references and connections and lists places where the old ID may remain, each opening
+  its field. **Upgrade:** open a draft that reports a missing reference, correct the
   source field or restore the referenced node, then publish a new version. Existing published
   versions and runs retain their definitions.
 

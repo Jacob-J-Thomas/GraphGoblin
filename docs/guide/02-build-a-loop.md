@@ -398,7 +398,9 @@ Save and import this complete deterministic example as `bounded-repeat.json`, th
 }
 ```
 
-Changing a node ID updates its connections. Update authored references such as `gates."old-id".passes` and `outputs."old-id".value` yourself.
+Changing a node ID updates its connections and the references GraphGoblin can read, in one undoable edit. These include `outputs."old-id".value`, `gates."old-id".passes` and `counters.nodeVisits."old-id"` in JSONata and Liquid, and mutation paths such as `/outputs/old-id/value`. A notice titled **Renamed old-id to new-id** says how many references and connections changed. It lists any place where the old ID may remain: a computed key such as `$lookup(outputs, vars.name)`, an output key that a mutation may write, or a script or generated patch. Choose a listed place to open that field and check it yourself. Plain text in prompts, JSON values and scripts are never changed. **Undo** reverses the whole rename.
+
+Badges also flag references that no longer match a node. A missing gate or visit count is an error and blocks publishing. An `$exists` check or `{% if %}` test of a missing node, an output key whose origin is unknown and a computed key are warnings.
 
 To find a reference, expand **Earlier node outputs (N)** under a template or expression field in the node dialog. It lists the nodes that can run before this one, nearest first, each with its reference in that field's syntax, a **Copy** button and a note on what it outputs. For example, a script's default output is its stdout itself, parsed as JSON when possible: `42`, not `{stdout: 42}`. IDs with a hyphen are quoted for you: `{{ outputs["old-id"].value }}` in Liquid and `outputs."old-id".value` in JSONata.
 

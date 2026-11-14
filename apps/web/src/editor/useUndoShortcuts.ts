@@ -187,7 +187,22 @@ function focusCollection(root: Element, path: string | undefined, index: number)
  * control is the one with the same element, type, role, and name, counted among its namesakes.
  */
 export function runHistory(direction: HistoryDirection): void {
-  const before = document.activeElement;
+  keepFocusThrough(() => useEditorStore.getState()[direction]());
+}
+
+/**
+ * Run a store action that can remount forms (undo, redo, a rename that repaired a source the open
+ * form shows) and return its result, keeping keyboard focus as `runHistory` describes. `target` is
+ * the control to keep instead of the focused one: where focus is going when the action runs as the
+ * node id field loses it.
+ */
+export function keepFocusThrough<T>(action: () => T, target?: Element | null): T {
+  let result: { value: T } | undefined;
+  runKeepingFocus(() => (result = { value: action() }), target ?? document.activeElement);
+  return result!.value;
+}
+
+function runKeepingFocus(action: () => void, before: Element | null): void {
   const control = before instanceof HTMLElement && before !== document.body ? before : undefined;
   const field = control?.closest('[data-field]');
   const path = field?.getAttribute('data-field') ?? undefined;
@@ -216,7 +231,7 @@ export function runHistory(direction: HistoryDirection): void {
       around.push({ element: el, where: whereabouts(control, el) });
     }
   }
-  flushSync(() => useEditorStore.getState()[direction]());
+  flushSync(action);
   if (!control || control.isConnected) return;
   // Something already placed focus (a node editor that closed returns it to the canvas).
   if (document.activeElement && document.activeElement !== document.body) return;

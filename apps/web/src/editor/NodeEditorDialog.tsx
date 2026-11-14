@@ -64,7 +64,9 @@ import {
   SystemChatTriggerType,
 } from './SystemChatFields.js';
 import { hasChatVoiceSteps, isProtectedVoiceNode } from './chat-protection.js';
-import { useEditorStore } from './store.js';
+import { RenameNotice } from './RenameNotice.js';
+import { ID_FORMAT_MESSAGE, useEditorStore } from './store.js';
+import { keepFocusThrough } from './useUndoShortcuts.js';
 
 /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
 const DECISION_UNION_PICKERS = {
@@ -97,8 +99,7 @@ export function idProblem(
   definition: LoopDefinitionInput,
 ): string | undefined {
   if (draft === nodeId) return undefined;
-  if (!SlugSchema.safeParse(draft).success)
-    return 'Use a letter first, then letters, digits, _ or -';
+  if (!SlugSchema.safeParse(draft).success) return ID_FORMAT_MESSAGE;
   if (definition.nodes.some((n) => n.id === draft)) return `"${draft}" is already used`;
   return undefined;
 }
@@ -185,6 +186,8 @@ export function NodeEditorDialog({
   const nodeFocus = useEditorStore((s) => s.nodeFocus);
   // Bumped by undo and redo: the config form remounts with the restored values.
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
+  // Bumped when a rename repaired a reference in this node's own fields: the form remounts with it.
+  const formEpoch = useEditorStore((s) => s.formEpochs[`node:${node.id}`] ?? 0);
   const generation = useEditorStore((s) => s.generation);
   const bodyRef = useRef<HTMLElement>(null);
   const [epoch, setEpoch] = useState(0);
@@ -234,7 +237,7 @@ export function NodeEditorDialog({
     idState.for === node.id && idState.epoch === historyEpoch
       ? idState
       : { for: node.id, epoch: historyEpoch, value: node.id };
-  const { updateNode, removeNode, renameNode, closeNodeDialog, setFieldError } =
+  const { updateNode, removeNode, renameNode, closeNodeDialog, setFieldError, openNode } =
     useEditorStore.getState();
   const info = KIND_INFO[node.kind];
   const nodeIssues = useMemo(() => issues.filter((i) => i.nodeId === node.id), [issues, node.id]);
@@ -309,10 +312,19 @@ export function NodeEditorDialog({
     return () => clearTimeout(timer);
   }, [nodeFocus, node.id]);
 
-  const commitId = () => {
-    const error = idProblem(id.value, node.id, definition);
-    setIdState({ ...id, error });
-    if (!error && id.value !== node.id) renameNode(node.id, id.value);
+  /**
+   * Apply the id being typed, on Enter or as the field loses focus (`next` is where focus is going).
+   * The rename repairs references in one step; when it repaired one in this node's own fields, the
+   * config form remounts with the new source, and focus follows to the same control there.
+   */
+  const commitId = (next?: Element | null) => {
+    const problem = idProblem(id.value, node.id, definition);
+    if (problem || id.value === node.id) {
+      setIdState({ ...id, error: problem });
+      return;
+    }
+    // A refusal stays with the typed text; after a rename the draft follows the new id.
+    setIdState({ ...id, error: keepFocusThrough(() => renameNode(node.id, id.value), next) });
   };
 
   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
@@ -433,10 +445,9 @@ export function NodeEditorDialog({
   };
 
   const requestClose = (reason: DialogCloseReason) => {
-    const error = idProblem(id.value, node.id, definition);
-    if (!error && id.value !== node.id) {
-      renameNode(node.id, id.value);
-    } else if (error && reason !== 'dismissed' && id.warned !== id.value) {
+    let error = idProblem(id.value, node.id, definition);
+    if (!error && id.value !== node.id) error = renameNode(node.id, id.value);
+    if (error && reason !== 'dismissed' && id.warned !== id.value) {
       // Stop once for an id that cannot apply, so typed text is never dropped unseen.
       setIdState({ ...id, error, warned: id.value });
       document.getElementById('node-id')?.focus();
@@ -488,6 +499,15 @@ export function NodeEditorDialog({
     >
       <section ref={bodyRef} aria-label="Node properties" className="grid gap-field">
         {notice}
+        <RenameNotice
+          definition={definition}
+          onChoose={(issue) => {
+            // A field of this node is focused in place; another node's editor opens at its field.
+            if (issue.nodeId === node.id) focusIssue(bodyRef.current, issue.path);
+            else if (issue.nodeId) openNode(issue.nodeId, { field: issue.path });
+          }}
+          onDismissed={() => document.getElementById('node-id')?.focus()}
+        />
         {protectedCheck ? (
           <HelpText>Protected voice check. Turn off voice messages removes it.</HelpText>
         ) : null}
@@ -507,7 +527,7 @@ export function NodeEditorDialog({
               aria-invalid={id.error ? true : undefined}
               aria-describedby={id.error ? 'node-id-error' : undefined}
               onChange={(e) => setIdState({ ...id, value: e.target.value })}
-              onBlur={commitId}
+              onBlur={(e) => commitId(e.relatedTarget)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') commitId();
               }}
@@ -670,7 +690,7 @@ export function NodeEditorDialog({
                           >
                             <NodeOutputsContext value={nodeOutputs}>
                               <SchemaForm
-                                key={`${node.kind}:${epoch}:${historyEpoch}`}
+                                key={`${node.kind}:${epoch}:${historyEpoch}:${formEpoch}`}
                                 schema={NodeConfigSchemas[node.kind]}
                                 fieldOrder={
                                   node.kind === 'decision'
