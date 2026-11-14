@@ -4,6 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- A loop that opens with all its cards stacked in one spot, for example one written through the
+  API or an import, now offers **Space cards** in a panel at the top of the canvas (#208,
+  ADR-0077, the owner's decision). It puts the cards in columns that follow the connections and
+  keeps the first card where it is. Only card positions change, in one **Undo** step ("Undo space
+  cards") that is saved like any edit. Focus stays on the canvas, and the view fits once after the
+  cards move. The panel shows only while every card is at the same spot and no connection has a
+  route you set; **Dismiss suggestion** hides it until the loop is opened or reloaded again.
+  Opening a loop, other edits, Undo and Redo never move cards by themselves. No stored or exported
+  data changes, so there is no upgrade note.
 - Connections are drawn, selected and removed only on the canvas (#207, ADR-0076, the owner's
   decision). The node dialog no longer has a **Connections** list, **Remove edge** buttons or the
   **Connect** form, for any node kind. Everything else in it stays: id and label, configuration,

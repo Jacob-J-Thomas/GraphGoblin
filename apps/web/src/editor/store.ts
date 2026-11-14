@@ -39,6 +39,7 @@ import {
   type ConnectionRequest,
   type EditorIssue,
 } from './model.js';
+import { spaceCardsEligible, spacedPositions, withSpacedPositions } from './space-cards.js';
 
 type EdgeInput = z.input<typeof EdgeSchema>;
 
@@ -239,6 +240,15 @@ export interface EditorState {
     expected: Pick<EditorState, 'fieldErrors' | 'historyEpoch' | 'generation'>,
   ) => string | undefined;
   moveNode: (nodeId: string, position: { x: number; y: number }) => void;
+  /**
+   * Space cards (#208, ADR-0077): spread a loop whose cards all sit at the origin into columns that
+   * follow its connections (`space-cards.ts`), as one ordinary edit labelled "space cards". It
+   * reads the current draft and checks it again: unless that draft is still eligible
+   * (`spaceCardsEligible`) it changes nothing and returns `'ineligible'`. `measured` holds card
+   * heights in flow pixels by node id; a card whose id another card shares gets none, so it never
+   * takes another card's height. Only node `ui` changes, and the first node keeps its object.
+   */
+  spaceCards: (measured?: ReadonlyMap<string, number>) => 'applied' | 'ineligible';
   removeNode: (nodeId: string) => void;
   connect: (connection: ConnectionRequest) => string | null;
   removeEdge: (edgeId: string) => void;
@@ -422,6 +432,19 @@ function scopeName(scope: string): string {
 
 function configStep(nodeId: string, change: FormChange | undefined): HistoryStep {
   return formStep(`edit config of ${nodeId}`, `config:${nodeId}`, change);
+}
+
+/**
+ * The measured heights of the current draft's cards, by node index. An id that more than one card
+ * uses names no single card, so those cards keep the conservative footprint (`spacedPositions`).
+ */
+function heightsByIndex(
+  nodes: readonly NodeInput[],
+  measured: ReadonlyMap<string, number>,
+): (number | undefined)[] {
+  const uses = new Map<string, number>();
+  for (const node of nodes) uses.set(node.id, (uses.get(node.id) ?? 0) + 1);
+  return nodes.map((node) => (uses.get(node.id) === 1 ? measured.get(node.id) : undefined));
 }
 
 /** An edge in an undo label: "start to done", or "decide yes to infer" from a named port. */
@@ -808,6 +831,32 @@ export const useEditorStore = create<EditorState>((set, get) => {
         }),
         { label: `move ${nodeId}`, coalesceKey: `move:${nodeId}` },
       ),
+
+    spaceCards: (measured = new Map()) => {
+      const s = get();
+      const def = s.definition;
+      if (!def || !spaceCardsEligible(def)) return 'ineligible';
+      const definition = withSpacedPositions(
+        def,
+        spacedPositions(def, heightsByIndex(def.nodes, measured)),
+      );
+      // Not `edit`: its decision-route pass may rewrite edges, and this edit only moves cards. The
+      // routes table, held input, selection, the dialog and the save and conflict state stay.
+      const { fieldErrors, decisionRoutes } = s;
+      set({
+        definition,
+        revision: s.revision + 1,
+        saveState: 'pending',
+        ...recordStep(
+          historyOf(s),
+          { definition: def, fieldErrors, decisionRoutes },
+          { definition, fieldErrors, decisionRoutes },
+          { label: 'space cards' },
+          performance.now(),
+        ),
+      });
+      return 'applied';
+    },
 
     removeNode: (nodeId) => {
       const state = get();

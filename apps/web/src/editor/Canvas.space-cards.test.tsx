@@ -1,0 +1,215 @@
+import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import type { NodeChange, ReactFlowProps } from '@xyflow/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Canvas } from './Canvas.js';
+import type { FlowNode } from './NodeCard.js';
+import { spacedPositions } from './space-cards.js';
+import { useEditorStore } from './store.js';
+import type { RoutingGeometry } from './useRouting.js';
+
+let props: ReactFlowProps<FlowNode> | undefined;
+const fitView = vi.fn(() => Promise.resolve(true));
+const geometry: RoutingGeometry = { nodes: [], preparationMs: 0, outputOrder: new Map() };
+
+vi.mock('@xyflow/react', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    ReactFlow: (p: ReactFlowProps<FlowNode>) => {
+      props = p;
+      return <div data-testid="flow" />;
+    },
+    useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p, fitView }),
+    useStore: (selector?: { name?: string }) => (selector?.name === 'zoomOf' ? 1 : geometry),
+  };
+});
+
+const store = () => useEditorStore.getState();
+const flow = () => props as ReactFlowProps<FlowNode>;
+const CARDS = kitchenSinkLoop().nodes.length;
+const OFFER = `${CARDS} cards are stacked in one spot`;
+const offer = () => screen.queryByRole('region', { name: OFFER });
+const spaceButton = () => screen.getByRole('button', { name: 'Space cards' });
+const canvas = () => screen.getByTestId('canvas');
+const announced = () => canvas().querySelector('[aria-live="polite"]')!.textContent;
+const labels = () => store().past.map((step) => step.label);
+const positions = () => store().definition!.nodes.map((node) => node.ui ?? { x: 0, y: 0 });
+const OPENING_FIT = {
+  padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
+  minZoom: 0.5,
+};
+
+/** xyflow's measurement of every card in the current draft: `heights` by id, else 100. */
+const measure = (heights: Record<string, number> = {}) =>
+  act(() =>
+    flow().onNodesChange!(
+      store().definition!.nodes.map((node): NodeChange<FlowNode> => ({
+        type: 'dimensions',
+        id: node.id,
+        dimensions: { width: 184, height: heights[node.id] ?? 100 },
+      })),
+    ),
+  );
+
+/** The canvas as the editor page renders it: on the store's current draft. */
+function Live() {
+  const definition = useEditorStore((s) => s.definition)!;
+  return <Canvas definition={definition} issues={[]} />;
+}
+
+describe('Space cards on the canvas (#208)', () => {
+  beforeEach(() => {
+    fitView.mockClear();
+    store().load('L1', kitchenSinkLoop());
+  });
+
+  it('floats the offer over a pile, named and described, ahead of the cards in the Tab order', () => {
+    render(<Live />);
+    const region = screen.getByRole('region', { name: OFFER });
+    const space = within(region).getByRole('button', { name: 'Space cards' });
+    expect(space).toHaveAccessibleDescription(
+      'Space cards puts them in columns that follow the connections. Only card positions change; Undo puts them back.',
+    );
+    const dismiss = within(region).getByRole('button', { name: 'Dismiss suggestion' });
+    // DOM order is focus order: the action, then Dismiss, then the flow and its cards.
+    expect(space.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      dismiss.compareDocumentPosition(screen.getByTestId('flow')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Placed over the canvas rather than in the page flow, and shielded from the canvas keys.
+    expect(canvas()).toHaveClass('relative');
+    expect(region.parentElement).toHaveClass('nokey', 'absolute');
+  });
+
+  it('hides the offer while a card is dragged and for a draft that is not a pile, and offers it again on undo', () => {
+    render(<Live />);
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'prep', position: { x: 50, y: 60 }, dragging: true },
+      ]),
+    );
+    expect(offer()).toBeNull();
+    act(() =>
+      flow().onNodesChange!([
+        { type: 'position', id: 'prep', position: { x: 50, y: 60 }, dragging: false },
+      ]),
+    );
+    expect(labels()).toEqual(['move prep']);
+    expect(offer()).toBeNull();
+    act(() => store().undo());
+    expect(offer()).not.toBeNull();
+    act(() => store().setEdgeRoute('e1', [240, 360, 420]));
+    expect(offer()).toBeNull();
+  });
+
+  it('spaces with measured heights in one step, focuses the canvas, announces Undo, and fits once', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    const original = store().definition!;
+    measure({ prep: 400 });
+    await user.click(spaceButton());
+    expect(labels()).toEqual(['space cards']);
+    expect(positions()).toEqual(
+      spacedPositions(
+        original,
+        original.nodes.map((node) => (node.id === 'prep' ? 400 : 100)),
+      ),
+    );
+    expect(canvas()).toHaveFocus();
+    expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
+    expect(offer()).toBeNull();
+    expect(fitView).toHaveBeenCalledTimes(1);
+    expect(fitView).toHaveBeenCalledWith(OPENING_FIT);
+    // Undo, redo, an ordinary edit and later measurements never fit the view again.
+    act(() => store().undo());
+    act(() => store().redo());
+    act(() => store().moveNode('prep', { x: 1, y: 1 }));
+    measure({ prep: 410 });
+    expect(fitView).toHaveBeenCalledTimes(1);
+  });
+
+  it('fits only once the spaced cards are measured, and drops the fit when an undo or a load comes first', async () => {
+    const user = userEvent.setup();
+    let view = render(<Live />);
+    await user.click(spaceButton());
+    expect(fitView).not.toHaveBeenCalled();
+    measure();
+    expect(fitView).toHaveBeenCalledTimes(1);
+
+    for (const first of [() => store().undo(), () => store().load('L1', kitchenSinkLoop())]) {
+      // A new canvas, with nothing measured yet.
+      act(() => store().load('L1', kitchenSinkLoop()));
+      view.unmount();
+      view = render(<Live />);
+      fitView.mockClear();
+      await user.click(spaceButton());
+      act(first);
+      measure();
+      expect(fitView).not.toHaveBeenCalled();
+    }
+  });
+
+  it('refuses an offer the store has moved past: nothing changes, focus is on the canvas, and it says why', async () => {
+    const user = userEvent.setup();
+    // Rendered with the pile; the store's draft then changes without this canvas rendering again.
+    render(<Canvas definition={store().definition!} issues={[]} />);
+    act(() => store().moveNode('prep', { x: 5, y: 5 }));
+    const state = store();
+    await user.click(spaceButton());
+    expect(store()).toBe(state);
+    expect(canvas()).toHaveFocus();
+    expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
+    expect(fitView).not.toHaveBeenCalled();
+  });
+
+  it('keeps keys on the offer from the canvas, and spaces once for a held Enter or Space', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    act(() => store().select('prep'));
+    act(() => spaceButton().focus());
+    // Delete and Backspace on its buttons never remove the selected card.
+    fireEvent.keyDown(spaceButton(), { key: 'Delete' });
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Dismiss suggestion' }), {
+      key: 'Backspace',
+    });
+    expect(store().definition!.nodes.some((node) => node.id === 'prep')).toBe(true);
+    expect(labels()).toEqual([]);
+    // Enter held down: the first press spaces and moves focus to the canvas, where the repeats
+    // neither space again nor open or delete the selected card.
+    await user.keyboard('{Enter>4/}');
+    expect(labels()).toEqual(['space cards']);
+    expect(canvas()).toHaveFocus();
+    expect(store()).toMatchObject({ selectedNodeId: 'prep', nodeDialogOpen: false });
+    // Space held down acts once, on release.
+    act(() => store().undo());
+    act(() => spaceButton().focus());
+    await user.keyboard('[Space>4/]');
+    expect(labels()).toEqual(['space cards']);
+    expect(store().future).toEqual([]);
+    expect(canvas()).toHaveFocus();
+  });
+
+  it('dismisses the offer for this editor load only', async () => {
+    const user = userEvent.setup();
+    const view = render(<Live />);
+    await user.click(screen.getByRole('button', { name: 'Dismiss suggestion' }));
+    expect(offer()).toBeNull();
+    expect(canvas()).toHaveFocus();
+    expect(announced()).toBe('Suggestion dismissed.');
+    expect(store()).toMatchObject({ revision: 0, past: [] });
+    // Edits and undo within the load keep it dismissed.
+    act(() => store().moveNode('prep', { x: 1, y: 1 }));
+    act(() => store().undo());
+    expect(offer()).toBeNull();
+    // A load (reopening, Reload server draft) offers it again, and so does a new canvas.
+    act(() => store().load('L1', kitchenSinkLoop()));
+    expect(offer()).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Dismiss suggestion' }));
+    view.unmount();
+    render(<Live />);
+    expect(offer()).not.toBeNull();
+  });
+});

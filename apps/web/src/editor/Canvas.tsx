@@ -25,6 +25,7 @@ import {
 } from '@xyflow/react';
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -71,6 +72,8 @@ import { ForwardEdge } from './ForwardEdge.js';
 import { edgeLabelText } from './edge-label-text.js';
 import { loopBackEdgeIds } from './loop-back-edges.js';
 import { removalFocusTarget } from './canvas-focus.js';
+import { spaceCardsEligible } from './space-cards.js';
+import { SpaceCardsOffer } from './SpaceCardsOffer.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
@@ -452,6 +455,7 @@ export function Canvas({
   issues: readonly EditorIssue[];
 }) {
   const selected = useEditorStore((s) => s.selectedNodeId);
+  const generation = useEditorStore((s) => s.generation);
   const {
     select,
     openNode,
@@ -462,8 +466,9 @@ export function Canvas({
     addNode,
     closeStep,
     setEdgeRoute,
+    spaceCards,
   } = useEditorStore.getState();
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   // A segment drag in progress (#44): its route is routed as a preview until the pointer is up.
   const [routeDrag, setRouteDrag] = useState<{ edgeId: string; route: readonly number[] }>();
   const [announcement, setAnnouncement] = useState({ text: '', key: 0 });
@@ -905,6 +910,50 @@ export function Canvas({
     event.preventDefault();
   };
 
+  // Space cards (#208, ADR-0077): offered while every card is at the origin and no card or route
+  // is being dragged. Dismissing it lasts for this editor load; a load or a remount offers it again.
+  const pile = useMemo(() => spaceCardsEligible(definition), [definition]);
+  const [dismissedOffer, setDismissedOffer] = useState<number>();
+  const offered = pile && !moving && dismissedOffer !== generation;
+  // The one view fit that Space cards asks for: the draft it produced, kept until that draft has
+  // rendered with every card measured (this passive effect runs after xyflow's own, which hands it
+  // the new positions). Another edit, an undo or a load first drops it; no edit, undo or redo
+  // fits the view by itself.
+  const spacedFitRef = useRef<{ definition: LoopDefinitionInput; generation: number }>(undefined);
+  useEffect(() => {
+    const pending = spacedFitRef.current;
+    if (!pending) return;
+    if (pending.definition !== definition || pending.generation !== generation) {
+      spacedFitRef.current = undefined;
+      return;
+    }
+    if (!definition.nodes.every((node) => Object.hasOwn(measured, node.id))) return;
+    spacedFitRef.current = undefined;
+    void fitView(INITIAL_FIT_VIEW_OPTIONS);
+  }, [definition, generation, measured, fitView]);
+  // The store checks its current draft again, so a second press, a repeated key or an offer left
+  // from an older render changes nothing.
+  const spaceAll = () => {
+    // xyflow measures each card's layout box, which zoom does not scale: flow pixels.
+    const heights = new Map(Object.entries(measured).map(([id, size]) => [id, size.height]));
+    const result = spaceCards(heights);
+    // The canvas, never Undo: a held or repeated Enter must not undo what it just did.
+    rootRef.current?.focus();
+    if (result === 'applied') {
+      const state = useEditorStore.getState();
+      const spaced = state.definition!;
+      spacedFitRef.current = { definition: spaced, generation: state.generation };
+      announce(`Spaced ${spaced.nodes.length} cards. Undo puts them back.`);
+    } else {
+      announce('Cards were not spaced: they are no longer all in one spot.');
+    }
+  };
+  const dismissOffer = () => {
+    setDismissedOffer(generation);
+    rootRef.current?.focus();
+    announce('Suggestion dismissed.');
+  };
+
   // A geometry-only update publishes edge channels without rendering the whole canvas again.
   const flow = useMemo(
     () => (
@@ -961,10 +1010,10 @@ export function Canvas({
   return (
     <div
       ref={rootRef}
-      className="h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+      className="relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
       data-testid="canvas"
       data-editor-canvas=""
-      // Focus lands here when the node editor closes on a deleted node.
+      // Focus lands here when the node editor closes on a deleted node, and after Space cards.
       tabIndex={-1}
       onKeyDown={onKeyDown}
       onDragOver={(event) => {
@@ -973,6 +1022,14 @@ export function Canvas({
       }}
       onDrop={onDrop}
     >
+      {/* Before the flow: after the palette and before the first card in the Tab order. */}
+      {offered ? (
+        <SpaceCardsOffer
+          count={definition.nodes.length}
+          onSpace={spaceAll}
+          onDismiss={dismissOffer}
+        />
+      ) : null}
       {flow}
       <CanvasZoom canvasRef={rootRef} nodes={plan.nodes} />
       <span aria-live="polite" aria-atomic="true" className="sr-only">

@@ -89,3 +89,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0075 — Repair references in the current loop's node state](ADR-0075-node-id-reference-repair.md) records the repair and publication boundaries for node-ID changes (#273).
 
 [ADR-0076 — Canvas-only connection authoring](ADR-0076-canvas-only-connection-authoring.md) records the owner decision that connections are authored only on the canvas, that changing one means removing it and drawing it again, and the keyboard connection-creation path it removes (#207).
+
+[ADR-0077 — Explicit Space cards for loops stacked in one spot](ADR-0077-explicit-space-cards.md) records the owner decision that a loop whose cards all sit in one spot is spaced only by an explicit, undoable action that writes node positions alone, and the rejected implicit layout and preview (#208).

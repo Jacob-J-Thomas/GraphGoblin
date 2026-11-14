@@ -1,0 +1,1121 @@
+import {
+  CURRENT_DEFINITION_FORMAT,
+  LoopDefinitionSchema,
+  type LoopDefinitionInput,
+  type NodeInput,
+} from '@graphgoblin/contracts';
+import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import { describe, expect, it } from 'vitest';
+import { canvasPorts } from './model.js';
+import { NODE_CARD_SIZE, nodeCardHeight, type Point } from './routing-geometry.js';
+import {
+  SPACE_CARDS,
+  spaceCardsEligible,
+  spacedCardHeight,
+  spacedPositions,
+  withSpacedPositions,
+} from './space-cards.js';
+
+type Graph = Pick<LoopDefinitionInput, 'nodes' | 'edges'>;
+type Edge = Graph['edges'][number];
+
+// The layout contract, written out: 272 px between columns, 44 px between stacked cards, and a
+// card is 92 px tall plus 46 px for each output (44 px coarse row and 2 px gap) and a 2 px lead-in.
+const COLUMN = 272;
+const GAP = 44;
+const footprint = (ports: number): number => 92 + (ports > 0 ? 2 + 46 * ports : 0);
+// Cards by output count: exit 92, trigger or work 140, script 186, three-way decision 232.
+
+const trigger = (id: string): NodeInput => ({
+  id,
+  kind: 'trigger',
+  label: id,
+  config: { type: 'manual' },
+});
+const work = (id: string): NodeInput => ({
+  id,
+  kind: 'mutate',
+  label: id,
+  config: { operations: [{ op: 'delete', path: '/scratch' }] },
+});
+const exit = (id: string): NodeInput => ({ id, kind: 'exit', label: id, config: {} });
+const script = (id: string): NodeInput => ({
+  id,
+  kind: 'script',
+  label: id,
+  config: { command: 'true', exitCodeRoutes: { '1': 'retry' } },
+});
+const choice = (id: string, ports: readonly string[]): NodeInput => ({
+  id,
+  kind: 'decision',
+  label: id,
+  config: {
+    kind: 'expression',
+    jsonata: '"next"',
+    routes: ports.map((port) => ({ id: port, label: `Route ${port}` })),
+  },
+});
+const at = (node: NodeInput, x: number, y: number): NodeInput => ({ ...node, ui: { x, y } });
+const edge = (id: string, from: string, to: string, port = 'out'): Edge => ({
+  id,
+  from: { node: from, port },
+  to: { node: to },
+});
+const loop = (nodes: NodeInput[], edges: Edge[] = []): LoopDefinitionInput => ({
+  ...minimalLoop(),
+  nodes,
+  edges,
+});
+const pt = (x: number, y: number): Point => ({ x, y });
+
+function deepFreeze<T>(value: T): T {
+  if (typeof value === 'object' && value !== null && !Object.isFrozen(value)) {
+    for (const child of Object.values(value) as unknown[]) deepFreeze(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
+describe('test fixtures', () => {
+  it('have the output ports the expected layouts assume', () => {
+    expect(canvasPorts(trigger('t'))).toEqual(['out']);
+    expect(canvasPorts(work('w'))).toEqual(['out']);
+    expect(canvasPorts(exit('x'))).toEqual([]);
+    expect(canvasPorts(script('s'))).toEqual(['out', 'retry']);
+    expect(canvasPorts(choice('d', ['a', 'b', 'c']))).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('SPACE_CARDS and spacedCardHeight', () => {
+  it('fix the column step and row gap', () => {
+    expect(SPACE_CARDS).toEqual({ column: 272, rowGap: 44 });
+    // 184 px cards leave 88 px between neighbouring columns.
+    expect(SPACE_CARDS.column - NODE_CARD_SIZE.width).toBe(88);
+  });
+
+  it('give a conservative coarse-pointer footprint by output count', () => {
+    expect(spacedCardHeight(0)).toBe(92);
+    expect(spacedCardHeight(1)).toBe(140);
+    expect(spacedCardHeight(2)).toBe(186);
+    expect(spacedCardHeight(3)).toBe(232);
+    expect(spacedCardHeight(64)).toBe(92 + 2 + 46 * 64);
+    // Never below the fine-pointer estimate the canvas uses before measuring.
+    for (let ports = 0; ports <= 64; ports += 1)
+      expect(spacedCardHeight(ports)).toBeGreaterThanOrEqual(nodeCardHeight(ports));
+  });
+});
+
+describe('spaceCardsEligible', () => {
+  const malformedUi = (ui: unknown): NodeInput['ui'] => ui as NodeInput['ui'];
+  const routed = (id: string, from: string, to: string): Edge => ({
+    ...edge(id, from, to),
+    ui: { route: [120] },
+  });
+  const zero = (id: string): NodeInput => at(work(id), 0, 0);
+
+  const cases: [string, LoopDefinitionInput, boolean][] = [
+    ['no cards', loop([]), false],
+    ['one card without a position', loop([work('a')]), false],
+    ['one card at an explicit zero', loop([zero('a')]), false],
+    ['two cards without positions', loop([work('a'), work('b')]), true],
+    ['two cards at explicit zeros', loop([zero('a'), zero('b')]), true],
+    ['an absent position beside an explicit zero', loop([work('a'), zero('b')]), true],
+    [
+      'negative zeros',
+      loop([at(work('a'), -0, -0), at(work('b'), 0, -0), at(work('c'), -0, 0)]),
+      true,
+    ],
+    ['two cards and no connections', loop([work('a'), work('b')], []), true],
+    [
+      'plain connections',
+      loop(
+        [work('a'), work('b')],
+        [edge('e1', 'a', 'b'), { ...edge('e2', 'b', 'a'), ui: undefined }],
+      ),
+      true,
+    ],
+    ['the minimal loop', minimalLoop(), true],
+    ['the kitchen sink loop', kitchenSinkLoop(), true],
+    ['a nonzero x', loop([work('a'), at(work('b'), 1, 0)]), false],
+    ['a nonzero y', loop([work('a'), at(work('b'), 0, 1)]), false],
+    ['a negative offset', loop([work('a'), at(work('b'), 0, -1)]), false],
+    ['a tiny offset', loop([work('a'), at(work('b'), 0, 1e-9)]), false],
+    ['a position that is not a number', loop([work('a'), at(work('b'), Number.NaN, 0)]), false],
+    ['the first card off the origin', loop([at(work('a'), 5, 5), work('b')]), false],
+    [
+      'a deliberate pile at one nonzero point',
+      loop([at(work('a'), 40, 40), at(work('b'), 40, 40), at(work('c'), 40, 40)]),
+      false,
+    ],
+    [
+      'a partly positioned loop',
+      loop([work('a'), work('b'), at(work('c'), 300, 0), work('d')]),
+      false,
+    ],
+    ['a position missing y', loop([work('a'), { ...work('b'), ui: malformedUi({ x: 0 }) }]), false],
+    ['a position missing x', loop([work('a'), { ...work('b'), ui: malformedUi({ y: 0 }) }]), false],
+    [
+      'a routed connection on an origin pile',
+      loop([zero('a'), zero('b')], [routed('e1', 'a', 'b')]),
+      false,
+    ],
+    [
+      'one routed connection among plain ones',
+      loop(
+        [work('a'), work('b'), work('c')],
+        [edge('e1', 'a', 'b'), routed('e2', 'b', 'c'), edge('e3', 'c', 'a')],
+      ),
+      false,
+    ],
+  ];
+
+  it.each(cases)('%s', (_name, definition, expected) => {
+    expect(spaceCardsEligible(definition)).toBe(expected);
+  });
+});
+
+describe('spacedPositions: representative layouts', () => {
+  it('places nothing for no cards and the origin for one card', () => {
+    expect(spacedPositions(loop([]))).toEqual([]);
+    expect(spacedPositions(loop([work('a')]))).toEqual([pt(0, 0)]);
+  });
+
+  it('puts the minimal loop exit one column right of its trigger', () => {
+    expect(spacedPositions(minimalLoop())).toEqual([pt(0, 0), pt(272, 0)]);
+  });
+
+  it('lays out the kitchen sink loop by connection depth', () => {
+    // Two triggers share column 0 (a trigger is 140 tall: 140 + 44 = 184). The chain
+    // prep, infer, check, decide runs right, the back edge from check changes nothing, and
+    // decide's two routes share a column, stacked in edge order.
+    expect(spacedPositions(kitchenSinkLoop())).toEqual([
+      pt(0, 0), // start
+      pt(0, 184), // nightly
+      pt(272, 0), // prep
+      pt(544, 0), // infer
+      pt(816, 0), // check
+      pt(1088, 0), // decide
+      pt(1360, 0), // sub
+      pt(1360, 184), // approve
+      pt(1632, 0), // poll
+      pt(1904, 0), // done
+    ]);
+  });
+
+  it('runs a chain left to right', () => {
+    const chain = loop(
+      [trigger('t'), work('a'), work('b'), exit('c')],
+      [edge('e1', 't', 'a'), edge('e2', 'a', 'b'), edge('e3', 'b', 'c')],
+    );
+    expect(spacedPositions(chain)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0), pt(816, 0)]);
+  });
+
+  it('stacks a branch in the order its connections are stored, not the card order', () => {
+    const branch = loop(
+      [trigger('t'), choice('d', ['a', 'b', 'c']), work('l1'), work('l2'), work('l3')],
+      [
+        edge('e1', 't', 'd'),
+        edge('e2', 'd', 'l2', 'b'),
+        edge('e3', 'd', 'l3', 'c'),
+        edge('e4', 'd', 'l1', 'a'),
+      ],
+    );
+    expect(spacedPositions(branch)).toEqual([
+      pt(0, 0),
+      pt(272, 0),
+      pt(544, 368), // l1: third discovered, below two 140 tall cards
+      pt(544, 0), // l2
+      pt(544, 184), // l3
+    ]);
+  });
+
+  it('clears taller cards: a stack of cards with more outputs is spaced further apart', () => {
+    const tall = loop(
+      [trigger('t'), script('s1'), script('s2'), choice('d', ['a', 'b', 'c']), work('w')],
+      [edge('e1', 't', 's1'), edge('e2', 't', 'd'), edge('e3', 't', 's2'), edge('e4', 't', 'w')],
+    );
+    // Column 1 in discovery order is s1 (186 tall), d (232), s2 (186), w (140), each followed by 44.
+    expect(spacedPositions(tall)).toEqual([
+      pt(0, 0), // t
+      pt(272, 0), // s1
+      pt(272, 506), // s2: 186 + 44 + 232 + 44
+      pt(272, 230), // d: 186 + 44
+      pt(272, 736), // w: 506 + 186 + 44
+    ]);
+  });
+
+  it('places a merge once, below the first parent that reaches it', () => {
+    const merge = loop(
+      [trigger('t'), work('a'), work('b'), exit('m')],
+      [edge('e1', 't', 'a'), edge('e2', 'a', 'm'), edge('e3', 't', 'b'), edge('e4', 'b', 'm')],
+    );
+    expect(spacedPositions(merge)).toEqual([pt(0, 0), pt(272, 0), pt(272, 184), pt(544, 0)]);
+  });
+
+  it('uses the shortest route when a shortcut and a long path reach one card', () => {
+    const shortcut = loop(
+      [trigger('t'), work('a'), work('b'), exit('d')],
+      [edge('e1', 't', 'a'), edge('e2', 'a', 'b'), edge('e3', 'b', 'd'), edge('e4', 't', 'd')],
+    );
+    expect(spacedPositions(shortcut)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0), pt(272, 184)]);
+  });
+
+  it('finishes on a cycle and keeps the forward columns', () => {
+    const cycle = loop(
+      [trigger('t'), work('a'), work('b')],
+      [edge('e1', 't', 'a'), edge('e2', 'a', 'b'), edge('e3', 'b', 'a')],
+    );
+    expect(spacedPositions(cycle)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0)]);
+  });
+
+  it('ignores a self-loop', () => {
+    const plain = loop([trigger('t'), work('a')], [edge('e1', 't', 'a')]);
+    const looped = loop([trigger('t'), work('a')], [edge('e1', 't', 'a'), edge('e2', 'a', 'a')]);
+    expect(spacedPositions(looped)).toEqual(spacedPositions(plain));
+    expect(spacedPositions(looped)).toEqual([pt(0, 0), pt(272, 0)]);
+  });
+
+  it('starts every trigger in column 0, stacked in card order', () => {
+    const triggers = loop(
+      [trigger('t1'), trigger('t2'), work('a'), work('b')],
+      [edge('e1', 't1', 'a'), edge('e2', 't2', 'b')],
+    );
+    expect(spacedPositions(triggers)).toEqual([pt(0, 0), pt(0, 184), pt(272, 0), pt(272, 184)]);
+  });
+
+  it('starts from the cards nothing leads to when there is no trigger', () => {
+    const roots = loop(
+      [work('x'), work('y'), exit('z')],
+      [edge('e1', 'x', 'z'), edge('e2', 'y', 'z')],
+    );
+    expect(spacedPositions(roots)).toEqual([pt(0, 0), pt(0, 184), pt(272, 0)]);
+  });
+
+  it('starts all those cards together, so a later one reaches a shared card by its shorter path', () => {
+    // No trigger, so a and b are both entries, and a comes first. b -> c is one hop and
+    // a -> x -> c is two, so c is in column 1. Starting from a alone would put c in column 2.
+    const sources = loop(
+      [work('a'), work('x'), exit('c'), work('b')],
+      [edge('e1', 'a', 'x'), edge('e2', 'x', 'c'), edge('e3', 'b', 'c')],
+    );
+    expect(spacedPositions(sources)).toEqual([
+      pt(0, 0), // a
+      pt(272, 0), // x
+      pt(272, 184), // c: column 1, below x
+      pt(0, 184), // b: column 0, below a
+    ]);
+  });
+
+  it('starts from the first card when every card is led to', () => {
+    // a -> b -> c -> a with the cycle entered at the first card of the array.
+    const ring = loop(
+      [work('c'), work('a'), work('b')],
+      [edge('e1', 'a', 'b'), edge('e2', 'b', 'c'), edge('e3', 'c', 'a')],
+    );
+    expect(spacedPositions(ring)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0)]);
+  });
+
+  it('prefers a card nothing leads to over the first card when there is no trigger', () => {
+    // c leads into the a <-> b cycle, so c is the only entry even though a is first.
+    const fed = loop(
+      [work('a'), work('b'), work('c')],
+      [edge('e1', 'a', 'b'), edge('e2', 'b', 'a'), edge('e3', 'c', 'a')],
+    );
+    // c at column 0, a at 1, b at 2, then shifted so a (the first card) is the origin.
+    expect(spacedPositions(fed)).toEqual([pt(0, 0), pt(272, 0), pt(-272, 0)]);
+  });
+
+  it('puts disconnected cards in column 0 beneath the entries, in card order', () => {
+    const parts = loop(
+      [trigger('t'), work('a'), work('p'), work('q'), exit('r')],
+      [edge('e1', 't', 'a'), edge('e2', 'p', 'q')],
+    );
+    expect(spacedPositions(parts)).toEqual([
+      pt(0, 0), // t
+      pt(272, 0), // a
+      pt(0, 184), // p starts the first leftover search
+      pt(272, 184), // q: below a in column 1
+      pt(0, 368), // r
+    ]);
+  });
+
+  it('starts each unreached part at its first card in array order', () => {
+    // p leads to q, but q comes first in the array, so q starts its own search at column 0.
+    const parts = loop([trigger('t'), work('q'), work('p')], [edge('e1', 'p', 'q')]);
+    expect(spacedPositions(parts)).toEqual([pt(0, 0), pt(0, 184), pt(0, 368)]);
+  });
+
+  it('shifts so the first card is the origin, even when it sits deep in the graph', () => {
+    const reversed = loop([exit('done'), trigger('start')], [edge('e1', 'start', 'done')]);
+    expect(spacedPositions(reversed)).toEqual([pt(0, 0), pt(-272, 0)]);
+
+    const lower = loop([work('m'), trigger('t')]);
+    expect(spacedPositions(lower)).toEqual([pt(0, 0), pt(0, -184)]);
+  });
+
+  it('shifts both axes together relative to the first card', () => {
+    // Triggers t2, t1 enter in that order; b leads from t2 and a from t1. a is the first card.
+    const mixed = loop(
+      [work('a'), trigger('t2'), trigger('t1'), work('b')],
+      [edge('e1', 't1', 'a'), edge('e2', 't2', 'b')],
+    );
+    // Absolute: t2 (0,0), t1 (0,184), b (272,0), a (272,184). Relative to a:
+    expect(spacedPositions(mixed)).toEqual([pt(0, 0), pt(-272, -184), pt(-272, 0), pt(0, -184)]);
+  });
+
+  it('counts the ports the canvas draws on a half-edited decision', () => {
+    // One route is not a valid decision, but the canvas still draws its handle, so a connection
+    // from it is drawn and counts.
+    const half = loop(
+      [trigger('t'), choice('d', ['solo']), exit('x')],
+      [edge('e1', 't', 'd'), edge('e2', 'd', 'x', 'solo')],
+    );
+    expect(spacedPositions(half)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0)]);
+  });
+});
+
+describe('spacedPositions: ambiguous and invalid drafts', () => {
+  it('places every card, and invents no path through an id used twice', () => {
+    const ambiguous = loop(
+      [trigger('t'), work('d'), work('d'), work('b')],
+      [edge('e1', 't', 'd'), edge('e2', 'd', 'b')],
+    );
+    const before = structuredClone(ambiguous);
+    // Neither connection names one card, so nothing is adjacent: each card after the trigger
+    // starts its own search in column 0.
+    expect(spacedPositions(ambiguous)).toEqual([pt(0, 0), pt(0, 184), pt(0, 368), pt(0, 552)]);
+    expect(ambiguous).toEqual(before);
+
+    // The same connections do count once the ids are told apart: this is not a vacuous result.
+    const resolved = loop(
+      [trigger('t'), work('d'), work('d2'), work('b')],
+      [edge('e1', 't', 'd'), edge('e2', 'd', 'b')],
+    );
+    expect(spacedPositions(resolved)).toEqual([pt(0, 0), pt(272, 0), pt(0, 184), pt(544, 0)]);
+  });
+
+  it('still enters every trigger at column 0 when trigger ids repeat', () => {
+    const twins = loop([trigger('t'), trigger('t'), work('a')], [edge('e1', 't', 'a')]);
+    expect(spacedPositions(twins)).toEqual([pt(0, 0), pt(0, 184), pt(0, 368)]);
+  });
+
+  it('ignores both connections that share an id', () => {
+    const shared = loop(
+      [trigger('t'), work('a'), work('b')],
+      [edge('e', 't', 'a'), edge('e', 'a', 'b'), edge('f', 't', 'b')],
+    );
+    // Only f counts: b is in column 1, and a is an unreached card below the trigger.
+    expect(spacedPositions(shared)).toEqual([pt(0, 0), pt(0, 184), pt(272, 0)]);
+
+    const unique = loop(
+      [trigger('t'), work('a'), work('b')],
+      [edge('e1', 't', 'a'), edge('e2', 'a', 'b'), edge('f', 't', 'b')],
+    );
+    expect(spacedPositions(unique)).toEqual([pt(0, 0), pt(272, 0), pt(272, 184)]);
+  });
+
+  const base = (): Graph => ({
+    nodes: [trigger('t'), work('a'), work('b')],
+    edges: [edge('e1', 't', 'a')],
+  });
+  const baseline = (): Point[] => spacedPositions(base());
+
+  it('has a baseline in which b is an unreached card', () => {
+    expect(baseline()).toEqual([pt(0, 0), pt(272, 0), pt(0, 184)]);
+  });
+
+  const notCounted: [string, Edge[], Edge][] = [
+    [
+      'a repeated connection id',
+      [edge('dup', 'a', 'b'), edge('dup', 'a', 'b')],
+      edge('ok', 'a', 'b'),
+    ],
+    ['a port the source does not have', [edge('x', 'a', 'b', 'gone')], edge('x', 'a', 'b')],
+  ];
+  it.each(notCounted)('does not count %s', (_name, invalid, valid) => {
+    const { nodes, edges } = base();
+    expect(spacedPositions({ nodes, edges: [...edges, ...invalid] })).toEqual(baseline());
+    // The same connection in a valid form moves b right, so the check above bites.
+    expect(spacedPositions({ nodes, edges: [...edges, valid] })[2]).toEqual(pt(544, 0));
+  });
+
+  it('counts a connection only from a port its source draws', () => {
+    const nodes = [trigger('t'), choice('d', ['yes', 'no']), exit('b'), script('s'), exit('c')];
+    const graph = (edges: Edge[]): Graph => ({ nodes, edges: [edge('e1', 't', 'd'), ...edges] });
+    // A decision has no "out" port, and an exit has none at all.
+    expect(spacedPositions(graph([edge('x', 'd', 'b')]))).toEqual(spacedPositions(graph([])));
+    expect(spacedPositions(graph([edge('x', 'b', 'c')]))).toEqual(spacedPositions(graph([])));
+    expect(spacedPositions(graph([edge('x', 's', 'c', 'bogus')]))).toEqual(
+      spacedPositions(graph([])),
+    );
+    // Its real ports do count, including a script's exit-code label.
+    expect(spacedPositions(graph([edge('x', 'd', 'b', 'yes')]))[2]).toEqual(pt(544, 0));
+    const fromScript = spacedPositions(graph([edge('x', 't', 's'), edge('y', 's', 'c', 'retry')]));
+    expect(fromScript[3]).toEqual(pt(272, 230)); // s: below the two-output decision, 186 + 44
+    expect(fromScript[4]).toEqual(pt(544, 0)); // c: reached through the script's "retry" port
+  });
+
+  const harmless: [string, Edge][] = [
+    ['a missing source', edge('x', 'ghost', 'b')],
+    ['a missing target', edge('x', 'a', 'ghost')],
+    ['a trigger target', edge('x', 'a', 't')],
+    ['a self-loop', edge('x', 'a', 'a')],
+    ['a self-loop on a trigger', edge('x', 't', 't')],
+  ];
+  it.each(harmless)('does not change positions for %s', (_name, extra) => {
+    const { nodes, edges } = base();
+    expect(spacedPositions({ nodes, edges: [...edges, extra] })).toEqual(baseline());
+    expect(spacedPositions({ nodes, edges: [extra, ...edges] })).toEqual(baseline());
+  });
+
+  it('does not let a connection that cannot count stop a card being an entry', () => {
+    // With no trigger, the cards nothing leads to are the entries. A connection that is not
+    // counted must not take that away: x, y and z all stay entries.
+    const nodes = [work('x'), work('y'), work('z')];
+    const plain = spacedPositions({ nodes, edges: [] });
+    const junk = spacedPositions({
+      nodes,
+      edges: [edge('e1', 'ghost', 'y'), edge('e2', 'x', 'x'), edge('e3', 'x', 'z', 'gone')],
+    });
+    expect(junk).toEqual(plain);
+    expect(plain).toEqual([pt(0, 0), pt(0, 184), pt(0, 368)]);
+  });
+});
+
+describe('spacedPositions: measured heights', () => {
+  // Three triggers stack in column 0, each 140 tall unless measured.
+  const three = loop([trigger('t1'), trigger('t2'), trigger('t3')]);
+  const second = (heights?: readonly (number | undefined)[]): number =>
+    spacedPositions(three, heights)[1]!.y;
+  const third = (heights?: readonly (number | undefined)[]): number =>
+    spacedPositions(three, heights)[2]!.y;
+
+  it('stacks by the footprint when nothing is measured', () => {
+    expect(second()).toBe(184);
+    expect(second([])).toBe(184);
+    expect(third()).toBe(368);
+  });
+
+  it('uses a measured height that is larger than the footprint', () => {
+    expect(second([300])).toBe(344);
+    expect(second([141])).toBe(185);
+    // Only the card's own height moves what is below it.
+    expect(third([undefined, 300])).toBe(184 + 300 + 44);
+    expect(third([300, 300])).toBe(344 + 300 + 44);
+  });
+
+  it('never goes below the footprint', () => {
+    expect(second([140])).toBe(184);
+    expect(second([139])).toBe(184);
+    expect(second([1])).toBe(184);
+  });
+
+  const invalid: [string, number | undefined][] = [
+    ['NaN', Number.NaN],
+    ['Infinity', Number.POSITIVE_INFINITY],
+    ['-Infinity', Number.NEGATIVE_INFINITY],
+    ['zero', 0],
+    ['negative zero', -0],
+    ['a negative height', -300],
+    ['a missing entry', undefined],
+  ];
+  it.each(invalid)('ignores %s', (_name, measured) => {
+    expect(spacedPositions(three, [measured])).toEqual(spacedPositions(three));
+    expect(spacedPositions(three, [measured, measured, measured])).toEqual(spacedPositions(three));
+    // Ignoring one entry leaves a valid neighbour in force.
+    expect(third([measured, 300])).toBe(184 + 300 + 44);
+  });
+
+  it('ignores a hole in the list and a value that is not a number', () => {
+    const sparse: (number | undefined)[] = [];
+    sparse[1] = 300; // index 0 is a hole
+    expect(spacedPositions(three, sparse)).toEqual([pt(0, 0), pt(0, 184), pt(0, 528)]);
+    expect(second(['300' as unknown as number])).toBe(184);
+  });
+
+  it('passes a fractional measurement through unrounded', () => {
+    expect(second([150.5])).toBe(194.5);
+  });
+
+  it('ignores entries past the last card and never changes columns', () => {
+    expect(spacedPositions(three, [undefined, undefined, undefined, 999, 999])).toEqual(
+      spacedPositions(three),
+    );
+    const chain = loop([trigger('t'), work('a')], [edge('e1', 't', 'a')]);
+    expect(spacedPositions(chain, [500, 500]).map((p) => p.x)).toEqual([0, 272]);
+  });
+
+  it('is indexed by position, so cards that share an id keep their own measurements', () => {
+    const twins = loop([trigger('t'), work('x'), work('x')]);
+    expect(spacedPositions(twins, [undefined, 300, 200])).toEqual([
+      pt(0, 0),
+      pt(0, 184),
+      pt(0, 528),
+    ]);
+    expect(spacedPositions(twins, [undefined, 200, 300])).toEqual([
+      pt(0, 0),
+      pt(0, 184),
+      pt(0, 428),
+    ]);
+  });
+
+  it('moves the origin shift with the first card when it is measured', () => {
+    // m is first, below t. Measuring t pushes m further down, but m stays the origin.
+    const lower = loop([work('m'), trigger('t')]);
+    expect(spacedPositions(lower, [undefined, 300])).toEqual([pt(0, 0), pt(0, -344)]);
+  });
+});
+
+describe('withSpacedPositions', () => {
+  it('writes only ui on the other cards and keeps everything else by identity', () => {
+    const definition = deepFreeze(kitchenSinkLoop());
+    const positions = spacedPositions(definition);
+    const spaced = withSpacedPositions(definition, positions);
+
+    expect(spaced).not.toBe(definition);
+    expect(spaced.nodes).not.toBe(definition.nodes);
+    expect(spaced.nodes).toHaveLength(definition.nodes.length);
+    expect(spaced.edges).toBe(definition.edges);
+    expect(spaced.settings).toBe(definition.settings);
+    expect(spaced.variables).toBe(definition.variables);
+    expect(spaced.name).toBe(definition.name);
+    expect(spaced.description).toBe(definition.description);
+    expect(spaced.schemaVersion).toBe(definition.schemaVersion);
+
+    definition.nodes.forEach((original, index) => {
+      const node = spaced.nodes[index]!;
+      if (index === 0) {
+        expect(node).toBe(original);
+        return;
+      }
+      expect(node.ui).toEqual(positions[index]);
+      expect(node.ui).not.toBe(positions[index]);
+      expect(node.id).toBe(original.id);
+      expect(node.kind).toBe(original.kind);
+      expect(node.label).toBe(original.label);
+      expect(node.config).toBe(original.config);
+      // The fixture's cards have no ui, so the only new key is ui.
+      expect(Object.keys(node).sort()).toEqual(['config', 'id', 'kind', 'label', 'ui']);
+    });
+  });
+
+  it('keeps the first card exactly as it is, including an absent ui', () => {
+    const definition = kitchenSinkLoop();
+    expect('ui' in definition.nodes[0]!).toBe(false);
+    const spaced = withSpacedPositions(definition, spacedPositions(definition));
+    expect(spaced.nodes[0]).toBe(definition.nodes[0]);
+    expect('ui' in spaced.nodes[0]!).toBe(false);
+
+    const explicit = loop([at(work('a'), -0, 0), work('b')]);
+    const next = withSpacedPositions(explicit, [pt(5, 5), pt(272, 0)]);
+    expect(next.nodes[0]).toBe(explicit.nodes[0]);
+    expect(Object.is(next.nodes[0]!.ui!.x, -0)).toBe(true);
+  });
+
+  it('leaves the input untouched', () => {
+    const definition = deepFreeze(minimalLoop());
+    const snapshot = structuredClone(definition);
+    const spaced = withSpacedPositions(definition, [pt(0, 0), pt(272, 0)]);
+    expect(spaced.nodes[0]).toBe(definition.nodes[0]);
+    expect(spaced.nodes[1]!.ui).toEqual(pt(272, 0));
+    expect(definition).toEqual(snapshot);
+    expect('ui' in definition.nodes[1]!).toBe(false);
+  });
+
+  it('refuses positions that are not one per card, before returning or changing anything', () => {
+    for (const definition of [deepFreeze(minimalLoop()), deepFreeze(kitchenSinkLoop())]) {
+      const snapshot = structuredClone(definition);
+      const full = spacedPositions(definition);
+      const cards = definition.nodes.length;
+      expect(full).toHaveLength(cards);
+
+      // Too few would space only some cards, and too many means the positions are for another loop.
+      const wrongCounts = [[], full.slice(0, cards - 1), [...full, pt(9 * COLUMN, 0)]];
+      for (const positions of wrongCounts) {
+        expect(() => withSpacedPositions(definition, positions)).toThrow(
+          `one position for each of the ${cards} cards, but got ${positions.length}`,
+        );
+      }
+      expect(definition).toEqual(snapshot);
+
+      // The exact count is still accepted, so the refusal is about the count alone.
+      expect(withSpacedPositions(definition, full).nodes).toHaveLength(cards);
+    }
+  });
+
+  it('copies the position values, so later edits of the positions do not reach the loop', () => {
+    const positions = [pt(0, 0), pt(272, 0)];
+    const spaced = withSpacedPositions(minimalLoop(), positions);
+    positions[1]!.x = 9999;
+    expect(spaced.nodes[1]!.ui).toEqual(pt(272, 0));
+  });
+
+  it('turns an eligible loop into one that can no longer be spaced', () => {
+    for (const definition of [minimalLoop(), kitchenSinkLoop()]) {
+      expect(spaceCardsEligible(definition)).toBe(true);
+      const spaced = withSpacedPositions(definition, spacedPositions(definition));
+      expect(spaceCardsEligible(spaced)).toBe(false);
+      // Every card but the anchor now has a distinct, nonzero position.
+      const shown = spaced.nodes.map((node) => `${node.ui?.x ?? 0},${node.ui?.y ?? 0}`);
+      expect(new Set(shown).size).toBe(shown.length);
+    }
+  });
+
+  it('differs from the original only in node ui when everything else is compared', () => {
+    const definition = kitchenSinkLoop();
+    const spaced = withSpacedPositions(definition, spacedPositions(definition));
+    const withoutUi = (d: LoopDefinitionInput): unknown =>
+      JSON.parse(
+        JSON.stringify(d, (key, value: unknown) => (key === 'ui' ? undefined : value)),
+      ) as unknown;
+    expect(withoutUi(spaced)).toEqual(withoutUi(definition));
+    expect(LoopDefinitionSchema.safeParse(spaced).success).toBe(true);
+  });
+});
+
+describe('purity', () => {
+  it('does not modify frozen input and returns fresh values each time', () => {
+    const definition = deepFreeze(kitchenSinkLoop());
+    const heights = Object.freeze([undefined, 400, Number.NaN, 150]);
+    expect(() => spaceCardsEligible(definition)).not.toThrow();
+    const first = spacedPositions(definition, heights);
+    const second = spacedPositions(definition, heights);
+    expect(second).toEqual(first);
+    expect(second).not.toBe(first);
+    expect(second[0]).not.toBe(first[0]);
+  });
+
+  it('gives the same result for the same graph and heights', () => {
+    for (let seed = 1; seed <= 30; seed += 1) {
+      const { definition } = randomGraph(seed);
+      const heights = randomHeights(seed, definition.nodes.length);
+      expect(spacedPositions(definition, heights)).toEqual(spacedPositions(definition, heights));
+      expect(spacedPositions(structuredClone(definition), heights)).toEqual(
+        spacedPositions(definition, heights),
+      );
+    }
+  });
+
+  it('never returns a negative zero', () => {
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const { definition } = randomGraph(seed);
+      for (const p of spacedPositions(definition)) {
+        expect(Object.is(p.x, -0)).toBe(false);
+        expect(Object.is(p.y, -0)).toBe(false);
+      }
+    }
+  });
+});
+
+describe('ids', () => {
+  const rename = (definition: Graph, to: (id: string) => string): Graph => ({
+    nodes: definition.nodes.map((node) => ({ ...node, id: to(node.id) })),
+    edges: definition.edges.map((e) => ({
+      ...e,
+      id: to(e.id),
+      from: { ...e.from, node: to(e.from.node) },
+      to: { ...e.to, node: to(e.to.node) },
+    })),
+  });
+  const renames: [string, (id: string) => string][] = [
+    ['reversed text', (id) => `r_${[...id].reverse().join('')}`],
+    ['uppercase with a suffix', (id) => `${id.toUpperCase()}-renamed`],
+    ['one shared prefix that sorts last', (id) => `zz-${id}`],
+  ];
+
+  it.each(renames)('does not move any card when ids are renamed consistently: %s', (_name, to) => {
+    const kitchen = kitchenSinkLoop();
+    expect(spacedPositions(rename(kitchen, to))).toEqual(spacedPositions(kitchen));
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const { definition } = randomGraph(seed);
+      const heights = randomHeights(seed, definition.nodes.length);
+      expect(spacedPositions(rename(definition, to), heights)).toEqual(
+        spacedPositions(definition, heights),
+      );
+    }
+  });
+
+  it('does not order cards by id: a reversed id order gives the same layout', () => {
+    const named = (ids: string[]): Graph => ({
+      nodes: [trigger(ids[0]!), work(ids[1]!), work(ids[2]!), work(ids[3]!)],
+      edges: [
+        edge('e1', ids[0]!, ids[3]!),
+        edge('e2', ids[0]!, ids[1]!),
+        edge('e3', ids[1]!, ids[2]!),
+      ],
+    });
+    expect(spacedPositions(named(['a', 'b', 'c', 'd']))).toEqual(
+      spacedPositions(named(['d', 'c', 'b', 'a'])),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Generated drafts
+// ---------------------------------------------------------------------------
+
+interface Generated {
+  definition: LoopDefinitionInput;
+  /** Output port names of each card by index, from how it was built. */
+  ports: string[][];
+}
+
+function random(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** A draft with duplicate ids, repeated connection ids, missing endpoints and stale ports. */
+function randomGraph(seed: number): Generated {
+  const rand = random(seed);
+  const int = (below: number): number => Math.floor(rand() * below);
+  const count = 2 + int(28);
+  // Odd seeds enter through a trigger that is also the first card, so columns are absolute.
+  const nodes: NodeInput[] = [];
+  const ports: string[][] = [];
+  for (let index = 0; index < count; index += 1) {
+    const id = index > 0 && rand() < 0.08 ? nodes[index - 1]!.id : `n${index}`;
+    const roll = index === 0 && seed % 2 === 1 ? 0 : rand();
+    if (roll < 0.15) {
+      nodes.push(trigger(id));
+      ports.push(['out']);
+    } else if (roll < 0.5) {
+      nodes.push(work(id));
+      ports.push(['out']);
+    } else if (roll < 0.65) {
+      nodes.push(exit(id));
+      ports.push([]);
+    } else if (roll < 0.9) {
+      const routes = Array.from({ length: 2 + int(3) }, (_, r) => `r${r}`);
+      nodes.push(choice(id, routes));
+      ports.push(routes);
+    } else {
+      nodes.push(script(id));
+      ports.push(['out', 'retry']);
+    }
+  }
+  const edges: Edge[] = [];
+  const total = int(count * 2.5);
+  for (let k = 0; k < total; k += 1) {
+    const source = int(count);
+    const own = ports[source]!;
+    const port = rand() < 0.88 && own.length > 0 ? own[int(own.length)]! : 'bogus';
+    const from = rand() < 0.03 ? 'ghost' : nodes[source]!.id;
+    const to = rand() < 0.06 ? 'ghost' : nodes[int(count)]!.id;
+    const id = k > 0 && rand() < 0.05 ? edges[int(k)]!.id : `e${k}`;
+    edges.push(edge(id, from, to, port));
+  }
+  return { definition: loop(nodes, edges), ports };
+}
+
+function randomHeights(seed: number, count: number): (number | undefined)[] {
+  const rand = random(seed * 7919);
+  const options = [undefined, undefined, Number.NaN, Number.POSITIVE_INFINITY, 0, -20];
+  // Half-pixel steps keep every sum exact, so clearance can be compared without a tolerance.
+  return Array.from({ length: count }, () =>
+    rand() < 0.5 ? 100 + Math.floor(rand() * 800) / 2 : options[Math.floor(rand() * 6)],
+  );
+}
+
+/** What the card needs: the footprint, or a finite measurement above it. */
+function boxHeight(ports: number, measured: number | undefined): number {
+  const base = footprint(ports);
+  return measured !== undefined && Number.isFinite(measured) && measured > base ? measured : base;
+}
+
+/** Cards that overlap, or sit closer than the column gap and row gap, as readable strings. */
+function crowding(positions: readonly Point[], heights: readonly number[]): string[] {
+  const problems: string[] = [];
+  for (let i = 0; i < positions.length; i += 1) {
+    for (let j = i + 1; j < positions.length; j += 1) {
+      const [a, b] = [positions[i]!, positions[j]!];
+      if (a.x !== b.x) {
+        if (Math.abs(a.x - b.x) < NODE_CARD_SIZE.width + 88)
+          problems.push(`${i} and ${j}: columns too close`);
+        continue;
+      }
+      const [upper, lower, upperHeight] = a.y <= b.y ? [a, b, heights[i]!] : [b, a, heights[j]!];
+      if (lower.y < upper.y + upperHeight + GAP) problems.push(`${i} and ${j}: ${a.y} vs ${b.y}`);
+    }
+  }
+  return problems;
+}
+
+/** The connections the canvas draws between cards that each have one id, by the layout contract. */
+function countedEdges({ definition, ports }: Generated): Edge[] {
+  const nodeCounts = new Map<string, number>();
+  for (const node of definition.nodes) nodeCounts.set(node.id, (nodeCounts.get(node.id) ?? 0) + 1);
+  const edgeCounts = new Map<string, number>();
+  for (const e of definition.edges) edgeCounts.set(e.id, (edgeCounts.get(e.id) ?? 0) + 1);
+  const indexOf = (id: string): number =>
+    nodeCounts.get(id) === 1 ? definition.nodes.findIndex((node) => node.id === id) : -1;
+  return definition.edges.filter((e) => {
+    const from = indexOf(e.from.node);
+    const to = indexOf(e.to.node);
+    return (
+      edgeCounts.get(e.id) === 1 &&
+      from >= 0 &&
+      to >= 0 &&
+      from !== to &&
+      definition.nodes[to]!.kind !== 'trigger' &&
+      ports[from]!.includes(e.from.port)
+    );
+  });
+}
+
+/** Shortest hop count from any trigger, by repeated relaxation (not a breadth-first search). */
+function distancesFromTriggers(generated: Generated): (number | undefined)[] {
+  const { definition } = generated;
+  const counted = countedEdges(generated);
+  const unique = (id: string): number => {
+    const matches = definition.nodes.filter((node) => node.id === id);
+    return matches.length === 1 ? definition.nodes.indexOf(matches[0]!) : -1;
+  };
+  const distance: (number | undefined)[] = definition.nodes.map((node) =>
+    node.kind === 'trigger' ? 0 : undefined,
+  );
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const e of counted) {
+      const from = distance[unique(e.from.node)];
+      const to = unique(e.to.node);
+      if (from !== undefined && (distance[to] === undefined || from + 1 < distance[to])) {
+        distance[to] = from + 1;
+        changed = true;
+      }
+    }
+  }
+  return distance;
+}
+
+describe('spacedPositions: invariants over generated drafts', () => {
+  const seeds = Array.from({ length: 150 }, (_, k) => k + 1);
+
+  it('places every card exactly once, on its own spot, with the first card at the origin', () => {
+    for (const seed of seeds) {
+      const { definition } = randomGraph(seed);
+      const positions = spacedPositions(definition);
+      expect(positions).toHaveLength(definition.nodes.length);
+      expect(positions[0]).toEqual(pt(0, 0));
+      for (const p of positions) {
+        expect(Number.isFinite(p.x)).toBe(true);
+        expect(Number.isFinite(p.y)).toBe(true);
+        // Columns are whole steps from the first card's column (abs: -272 % 272 is -0).
+        expect(Math.abs(p.x % COLUMN)).toBe(0);
+      }
+      const spots = positions.map((p) => `${p.x},${p.y}`);
+      expect(new Set(spots).size).toBe(spots.length);
+    }
+  });
+
+  it('never overlaps cards or crowds them closer than the gaps, by the footprint', () => {
+    for (const seed of seeds) {
+      const generated = randomGraph(seed);
+      const heights = generated.ports.map((p) => boxHeight(p.length, undefined));
+      expect(crowding(spacedPositions(generated.definition), heights)).toEqual([]);
+    }
+  });
+
+  it('keeps that clearance for whatever valid measured heights are larger', () => {
+    for (const seed of seeds) {
+      const generated = randomGraph(seed);
+      const measured = randomHeights(seed, generated.ports.length);
+      const heights = generated.ports.map((p, i) => boxHeight(p.length, measured[i]));
+      expect(crowding(spacedPositions(generated.definition, measured), heights)).toEqual([]);
+    }
+  });
+
+  it('keeps every card in its column when measurements are added', () => {
+    for (const seed of seeds) {
+      const { definition } = randomGraph(seed);
+      const plain = spacedPositions(definition);
+      const measured = spacedPositions(definition, randomHeights(seed, definition.nodes.length));
+      expect(measured.map((p) => p.x)).toEqual(plain.map((p) => p.x));
+    }
+  });
+
+  it('puts each card reachable from a trigger at its shortest hop count from a trigger', () => {
+    for (const seed of seeds.filter((s) => s % 2 === 1)) {
+      const generated = randomGraph(seed);
+      expect(generated.definition.nodes[0]!.kind).toBe('trigger');
+      const positions = spacedPositions(generated.definition);
+      distancesFromTriggers(generated).forEach((distance, index) => {
+        const column = positions[index]!.x / COLUMN;
+        if (distance === undefined) expect(column).toBeGreaterThanOrEqual(0);
+        else expect(column).toBe(distance);
+      });
+    }
+  });
+
+  it('is the same as dropping every connection that cannot be drawn', () => {
+    for (const seed of seeds) {
+      const generated = randomGraph(seed);
+      const { definition } = generated;
+      const drawable = { nodes: definition.nodes, edges: countedEdges(generated) };
+      expect(spacedPositions(definition)).toEqual(spacedPositions(drawable));
+    }
+  });
+
+  it('is not changed by the edge order of connections that do not count', () => {
+    for (const seed of seeds) {
+      const generated = randomGraph(seed);
+      const { definition } = generated;
+      const counted = new Set(countedEdges(generated));
+      const junk = definition.edges.filter((e) => !counted.has(e));
+      const kept = definition.edges.filter((e) => counted.has(e));
+      // Moving the uncounted edges to the front or the back of the array changes nothing.
+      expect(spacedPositions({ nodes: definition.nodes, edges: [...junk, ...kept] })).toEqual(
+        spacedPositions({ nodes: definition.nodes, edges: [...kept, ...junk] }),
+      );
+    }
+  });
+
+  it('makes an eligible draft ineligible and still ends at the same positions', () => {
+    for (const seed of seeds) {
+      const { definition } = randomGraph(seed);
+      expect(spaceCardsEligible(definition)).toBe(true);
+      const positions = spacedPositions(definition);
+      const spaced = withSpacedPositions(definition, positions);
+      expect(spaceCardsEligible(spaced)).toBe(false);
+      expect(spaced.nodes.map((node, i) => (i === 0 ? pt(0, 0) : node.ui))).toEqual(positions);
+      expect(spaced.edges).toBe(definition.edges);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The contract's limits: 500 cards and 2,000 connections
+// ---------------------------------------------------------------------------
+
+/** Wraps an array so the test can see how often each element is read. */
+function counted<T extends object>(items: T[]): { items: T[]; reads: () => number } {
+  let reads = 0;
+  const proxy = new Proxy(items, {
+    get(target, key, receiver) {
+      if (typeof key === 'string' && /^\d+$/.test(key)) reads += 1;
+      return Reflect.get(target, key, receiver) as unknown;
+    },
+  });
+  return { items: proxy, reads: () => reads };
+}
+
+/**
+ * Each fixture has exactly 500 cards and 2,000 connections with unique ids. The shapes are
+ * deliberately beyond what the editor lets a user draw (several connections from one port, and
+ * connections into a trigger), since an imported or API-written draft can hold them.
+ */
+const limitFixtures = {
+  // A long chain: trigger -> n1 -> ... -> n499, each decision also leading back to earlier cards.
+  chain(): LoopDefinitionInput {
+    const nodes = [trigger('n0')];
+    const edges = [edge('start', 'n0', 'n1')];
+    for (let i = 1; i < 500; i += 1) {
+      const targets = [
+        i < 499 ? i + 1 : 1,
+        Math.max(1, i - 1),
+        Math.max(1, i - 2),
+        Math.max(1, i - 3),
+      ];
+      if (i <= 3) targets.push(Math.max(1, i - 4));
+      nodes.push(
+        choice(
+          `n${i}`,
+          targets.map((_, r) => `r${r}`),
+        ),
+      );
+      targets.forEach((target, r) =>
+        edges.push(edge(`e${i}-${r}`, `n${i}`, `n${target}`, `r${r}`)),
+      );
+    }
+    return loop(nodes, edges);
+  },
+  // One hub leading to 499 leaves that lead on to each other and back to the hub.
+  star(): LoopDefinitionInput {
+    const nodes = [trigger('hub'), ...Array.from({ length: 499 }, (_, k) => work(`l${k + 1}`))];
+    const edges: Edge[] = [];
+    for (let i = 1; i <= 499; i += 1) edges.push(edge(`out-${i}`, 'hub', `l${i}`));
+    for (let i = 1; i <= 499; i += 1) edges.push(edge(`ring-${i}`, `l${i}`, `l${(i % 499) + 1}`));
+    for (let i = 1; i <= 499; i += 1)
+      edges.push(edge(`skip-${i}`, `l${i}`, `l${((i + 1) % 499) + 1}`));
+    for (let i = 1; i <= 499; i += 1) edges.push(edge(`back-${i}`, `l${i}`, 'hub'));
+    for (let i = 1; i <= 4; i += 1) edges.push(edge(`extra-${i}`, 'hub', `l${i}`));
+    return loop(nodes, edges);
+  },
+  // No trigger and no card without an incoming connection: every card reaches the next four.
+  denseCycle(): LoopDefinitionInput {
+    const nodes = Array.from({ length: 500 }, (_, i) => choice(`n${i}`, ['r0', 'r1', 'r2', 'r3']));
+    const edges: Edge[] = [];
+    for (let i = 0; i < 500; i += 1)
+      for (let r = 0; r < 4; r += 1)
+        edges.push(edge(`e${i}-${r}`, `n${i}`, `n${(i + 1 + r) % 500}`, `r${r}`));
+    return loop(nodes, edges);
+  },
+};
+
+describe('spacedPositions: the 500 card and 2,000 connection limit', () => {
+  it.each(Object.entries(limitFixtures))(
+    '%s is a full-size, contract-valid draft',
+    (_name, build) => {
+      const definition = build();
+      expect(definition.nodes).toHaveLength(500);
+      expect(definition.edges).toHaveLength(2000);
+      expect(new Set(definition.edges.map((e) => e.id)).size).toBe(2000);
+      expect(new Set(definition.nodes.map((n) => n.id)).size).toBe(500);
+      expect(LoopDefinitionSchema.safeParse(definition).success).toBe(true);
+      expect(definition.schemaVersion).toBe(CURRENT_DEFINITION_FORMAT);
+      expect(spaceCardsEligible(definition)).toBe(true);
+    },
+  );
+
+  it('lays out a 500 card chain one card per column', () => {
+    const positions = spacedPositions(limitFixtures.chain());
+    expect(positions).toHaveLength(500);
+    positions.forEach((p, i) => expect(p).toEqual(pt(272 * i, 0)));
+  });
+
+  it('lays out a 500 card star as one hub and one column of 499 leaves', () => {
+    const positions = spacedPositions(limitFixtures.star());
+    expect(positions[0]).toEqual(pt(0, 0));
+    for (let i = 1; i <= 499; i += 1) expect(positions[i]).toEqual(pt(272, 184 * (i - 1)));
+  });
+
+  it('lays out a 500 card dense cycle from its first card, four cards per column', () => {
+    const positions = spacedPositions(limitFixtures.denseCycle());
+    expect(positions[0]).toEqual(pt(0, 0));
+    // Each card leads to the next four, so card i is ceil(i / 4) steps from card 0. A decision
+    // with four outputs is 278 tall, so its column stacks at 278 + 44 = 322.
+    for (let i = 1; i < 500; i += 1)
+      expect(positions[i]).toEqual(pt(272 * Math.ceil(i / 4), 322 * ((i - 1) % 4)));
+  });
+
+  it.each(Object.entries(limitFixtures))(
+    'reads each card and connection of %s a small, fixed number of times',
+    (_name, build) => {
+      const definition = build();
+      const nodes = counted(definition.nodes);
+      const edges = counted(definition.edges);
+      const expected = spacedPositions(definition);
+      expect(spacedPositions({ nodes: nodes.items, edges: edges.items })).toEqual(expected);
+      // A scan of every connection for each card would read edges about 500 times each.
+      expect(edges.reads()).toBeLessThanOrEqual(4 * 2000);
+      expect(nodes.reads()).toBeLessThanOrEqual(4 * 500);
+    },
+  );
+
+  it('keeps the clearance at full size, with and without measured heights', () => {
+    for (const build of Object.values(limitFixtures)) {
+      const definition = build();
+      const heights = definition.nodes.map((node) => footprint(canvasPorts(node).length));
+      expect(crowding(spacedPositions(definition), heights)).toEqual([]);
+      const measured = definition.nodes.map((_, i) => 100 + ((i * 37) % 400));
+      const taller = heights.map((h, i) => Math.max(h, measured[i]!));
+      expect(crowding(spacedPositions(definition, measured), taller)).toEqual([]);
+    }
+  });
+});
