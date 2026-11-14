@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 1403994,
+  "stop_reason": "end_turn",
+  "session_id": "cc783e94-4999-424f-9638-8791a9b70f3b",
+  "total_cost_usd": 12.4703438,
+  "usage": {
+    "input_tokens": 272,
+    "cache_creation_input_tokens": 363780,
+    "cache_read_input_tokens": 32679979,
+    "output_tokens": 151151,
+    "output_tokens_details": {
+      "thinking_tokens": 69274
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 363780,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1264,
+        "cache_read_input_tokens": 367978,
+        "cache_creation_input_tokens": 576,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 576
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 272,
+      "outputTokens": 151151,
+      "cacheReadInputTokens": 32679979,
+      "cacheCreationInputTokens": 363780,
+      "webSearchRequests": 0,
+      "costUSD": 12.4703438,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 69274,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 363780,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 183,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "I've built the editor half of #273. All 88 test files under `src/editor` and `src/forms` pass (1,133 tests) on the final source, and web typecheck, lint, format and the dependency check are clean. The handoff is in `ui-273-claude-phase1/handoff.md`. Nothing is staged, committed or pushed, the backend files are untouched, and the browser/native checks and reviews are still to come. This is not a merge-ready claim.\n\n**Root decision needed: typing gets slower on large graphs.** The editor re-runs validation on every keystroke, and the new reference check roughly triples that cost. I measured it in Vitest on a 300-node graph:\n\n| Graph | Validation per edit (median / p95) | Existing syntax checks | New reference check |\n| --- | --- | --- | --- |\n| 300 nodes, with references | 50.5 / 60.8 ms | 12.9 ms | 37.4 ms |\n| 300 nodes, no node references | 44.2 / 49.2 ms | 13.1 ms | 27.6 ms |\n\nThat is about 13 ms per keystroke before and about 50 ms after, well past a 16.7 ms frame. It costs about 28 ms even when no field mentions a node, because it re-parses every field on every edit. I didn't hide this in the UI: delaying validation would change the documented \"live\" behaviour, and the domain code is frozen. A likely backend fix is to cache each field's analysis by its text, so a keystroke only re-checks the field that changed. A rename itself (about 33 ms) is fine.\n\n**What the editor now does**\n- **One edit:** confirming a node id calls `renameLoopNode` on the current draft. The id, connections, repaired references, decision route bookkeeping, unfinished field text, selection and pending issue focus all change in one store write. That write is one undo step and one revision, and autosave, the device copy and the draft-token handling see it once. Voice-protected nodes and the invalid/duplicate id messages behave as before. Other refusals show under the id field and change nothing.\n- **Open forms can't write the old text back:** only forms whose own text was repaired (the open node's form, or loop settings) reload. Focus follows to the same control, and unrelated forms and unfinished text are left alone. Removing the reload makes the tests show the old text; removing the focus handling makes the focus test fail.\n- **Feedback:** a notice titled \"Renamed old to new\" appears above the canvas and inside the open node dialog. It says how many references and connections were updated, and that plain text, JSON values and scripts are not changed. It lists places where the old id may remain; each item on a node opens that node at the field, while script and loop-level items only inform. A rename that only moved connections stays quiet, as before. I chose no preview; Undo reverses the whole rename.\n\n**Behaviour you'll notice:** any rename in a loop with a computed key such as `$lookup(outputs, vars.key)` lists that field for review, because the key could name any node. That comes from the domain and is correct, but it shows up on every rename.\n\n**Still to do**\n- Native checks: Starter rename, save/reload/publish/run, the guard and missing-gate cases, voice nodes, stale tab, focus, and a large-graph typing-latency comparison in Edge. The plan is in `phase2-native-plan.md`; none of it has run, since #235 holds the heavy slot.\n- Full web coverage, root `check`, browser end-to-end tests, the OpenAI-family review, separate behaviour QA, CI and the final audit.\n\nEverything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-273-claude-phase1`; open `handoff.md` first. It also lists all logs, including the kept first failures, the file hashes, and how each requirement is tested.",
+  "ttft_ms": 576,
+  "type": "result",
+  "duration_ms": 2757740,
+  "uuid": "7b7e1ec3-11f5-4c15-8ee3-fe37f0296f59",
+  "ttft_stream_ms": 531,
+  "time_to_request_ms": 99,
+  "first_content_frame_ms": 531,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 272,
+      "outputTokens": 151151,
+      "cacheReadInputTokens": 32679979,
+      "cacheCreationInputTokens": 363780,
+      "webSearchRequests": 0,
+      "costUSD": 12.4703438,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 69274,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 363780,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

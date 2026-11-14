@@ -1,0 +1,53 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.rename.test.tsx (8 tests | 2 failed | 6 skipped) 3817ms
+   ❯ renaming a node in the editor (#273) (8)
+     × remounts the open form with its repaired source and keeps focus where the user went 1971ms
+     × remounts only the settings form, keeping unfinished variables text 1843ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename.test.tsx > renaming a node in the editor (#273) > remounts the open form with its repaired source and keeps focus where the user went
+AssertionError: expected 'counters.nodeVisits.gate > 2 ? "stop"…' to be 'counters.nodeVisits.check > 2 ? "stop…' // Object.is equality
+
+Expected: "counters.nodeVisits.check > 2 ? "stop" : "again""
+Received: "counters.nodeVisits.gate > 2 ? "stop" : "again""
+
+ ❯ src/editor/EditorPage.rename.test.tsx:243:32
+    241|
+    242|     expect(screen.getByRole('dialog', { name: 'Edit decision check' })…
+    243|     expect(getCode('Jsonata')).toBe('counters.nodeVisits.check > 2 ? "…
+       |                                ^
+    244|     const remounted = within(dialog).getByLabelText('Maximum passes', …
+    245|     expect(remounted).not.toBe(passes);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/editor/EditorPage.rename.test.tsx > renaming a node in the editor (#273) > remounts only the settings form, keeping unfinished variables text
+AssertionError: expected '/tmp/{{ outputs.work.value }}' to be '/tmp/{{ outputs.draft.value }}' // Object.is equality
+
+Expected: "/tmp/{{ outputs.draft.value }}"
+Received: "/tmp/{{ outputs.work.value }}"
+
+ ❯ src/editor/EditorPage.rename.test.tsx:277:33
+    275|     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull(…
+    276|
+    277|     expect(getCode('Template')).toBe('/tmp/{{ outputs.draft.value }}');
+       |                                 ^
+    278|     expect(getCode('Variables value 1')).toBe('[1, ');
+    279|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)
+   Start at  02:42:06
+   Duration  12.13s (tests 32%, transform 26%, environment 21%, import 14%, setup 7%)
+
+  Transform  transforming modules took 3.12s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit=1

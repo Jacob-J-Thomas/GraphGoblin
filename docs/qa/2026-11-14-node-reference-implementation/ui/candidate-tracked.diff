@@ -1,0 +1,501 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4fc5e812..c58f6f41 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -16,7 +16,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ - Node-ID changes can repair edge endpoints, typed mutation pointers and statically understood
+   JSONata and Liquid references as one draft edit (#273). Publication rejects known missing
+   gate and visit-count identities. Direct existence checks and unresolved inherited or custom
+-  output keys warn. **Upgrade:** open a draft that reports a missing reference, correct the
++  output keys warn. The editor applies the repair when a node ID is committed, as one undo step
++  and one saved revision, and remounts only forms showing a repaired source. A notice counts the
++  updated references and connections and lists places where the old ID may remain, each opening
++  its field. **Upgrade:** open a draft that reports a missing reference, correct the
+   source field or restore the referenced node, then publish a new version. Existing published
+   versions and runs retain their definitions.
+ 
+diff --git a/apps/web/src/editor/EditorPage.tsx b/apps/web/src/editor/EditorPage.tsx
+index d86f0b59..d3e48883 100644
+--- a/apps/web/src/editor/EditorPage.tsx
++++ b/apps/web/src/editor/EditorPage.tsx
+@@ -42,6 +42,7 @@ import { NodeEditorDialog } from './NodeEditorDialog.js';
+ import { deviceCopyOf, deviceNotice, saveNotice, useDeviceStorageProblem } from './save-status.js';
+ import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
+ import { PALETTE_STORAGE_KEY, Palette, palettePanelDefault } from './Palette.js';
++import { hasRenameNotice, RenameNotice } from './RenameNotice.js';
+ import { useEditorStore, type EditorState } from './store.js';
+ import { AUTOSAVE_DELAY_MS, useAutosave } from './useAutosave.js';
+ import { useLoadEditor } from './useLoadEditor.js';
+@@ -111,6 +112,7 @@ export function EditorPage() {
+   const saveMessage = useEditorStore((s) => s.saveMessage);
+   const generation = useEditorStore((s) => s.generation);
+   const connectionError = useEditorStore((s) => s.connectionError);
++  const renameReport = useEditorStore((s) => s.renameReport);
+   const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+   const nodeDialogOpen = useEditorStore((s) => s.nodeDialogOpen);
+   const nodeDialogSession = useEditorStore((s) => s.nodeDialogSession);
+@@ -544,6 +546,16 @@ export function EditorPage() {
+         {deviceProblem.body}
+       </Alert>
+     ) : null,
++    hasRenameNotice(renameReport) ? (
++      <RenameNotice
++        key="rename"
++        definition={def}
++        onChoose={(issue) => {
++          if (issue.nodeId) useEditorStore.getState().openNode(issue.nodeId, { field: issue.path });
++        }}
++        onDismissed={announceDismissalAndRestoreFocus}
++      />
++    ) : null,
+     publish.isSuccess && publishedRevision === revision ? (
+       <Alert key="published" tone="good">
+         <span className="flex flex-wrap items-center gap-x-3">
+diff --git a/apps/web/src/editor/LoopSettingsPanel.tsx b/apps/web/src/editor/LoopSettingsPanel.tsx
+index e2a38574..b001e357 100644
+--- a/apps/web/src/editor/LoopSettingsPanel.tsx
++++ b/apps/web/src/editor/LoopSettingsPanel.tsx
+@@ -38,6 +38,9 @@ export function LoopSettingsPanel({
+ }) {
+   const { updateMeta, updateSettings, updateVariables, setFieldError } = useEditorStore.getState();
+   const fieldErrors = useEditorStore((s) => s.fieldErrors);
++  // Bumped when a rename repaired a reference in the settings: only that form remounts with it, so
++  // the variables form keeps its own state.
++  const settingsEpoch = useEditorStore((s) => s.formEpochs['settings'] ?? 0);
+   // The contract's own message for a name it refuses (a blank one, say).
+   const nameError = LoopDefinitionSchema.shape.name.safeParse(definition.name).error?.issues[0]
+     ?.message;
+@@ -93,6 +96,7 @@ export function LoopSettingsPanel({
+           }}
+         >
+           <SchemaForm
++            key={settingsEpoch}
+             schema={LoopSettingsSchema}
+             controls={LOOP_FIELD_CONTROLS}
+             value={definition.settings ?? {}}
+diff --git a/apps/web/src/editor/NodeEditorDialog.tsx b/apps/web/src/editor/NodeEditorDialog.tsx
+index 7713db0d..ca2e3a4e 100644
+--- a/apps/web/src/editor/NodeEditorDialog.tsx
++++ b/apps/web/src/editor/NodeEditorDialog.tsx
+@@ -64,7 +64,9 @@ import {
+   SystemChatTriggerType,
+ } from './SystemChatFields.js';
+ import { hasChatVoiceSteps, isProtectedVoiceNode } from './chat-protection.js';
+-import { useEditorStore } from './store.js';
++import { RenameNotice } from './RenameNotice.js';
++import { ID_FORMAT_MESSAGE, useEditorStore } from './store.js';
++import { keepFocusThrough } from './useUndoShortcuts.js';
+ 
+ /** Why `draft` cannot become the id of node `nodeId`, or undefined when it can (or is unchanged). */
+ const DECISION_UNION_PICKERS = {
+@@ -97,8 +99,7 @@ export function idProblem(
+   definition: LoopDefinitionInput,
+ ): string | undefined {
+   if (draft === nodeId) return undefined;
+-  if (!SlugSchema.safeParse(draft).success)
+-    return 'Use a letter first, then letters, digits, _ or -';
++  if (!SlugSchema.safeParse(draft).success) return ID_FORMAT_MESSAGE;
+   if (definition.nodes.some((n) => n.id === draft)) return `"${draft}" is already used`;
+   return undefined;
+ }
+@@ -185,6 +186,8 @@ export function NodeEditorDialog({
+   const nodeFocus = useEditorStore((s) => s.nodeFocus);
+   // Bumped by undo and redo: the config form remounts with the restored values.
+   const historyEpoch = useEditorStore((s) => s.historyEpoch);
++  // Bumped when a rename repaired a reference in this node's own fields: the form remounts with it.
++  const formEpoch = useEditorStore((s) => s.formEpochs[`node:${node.id}`] ?? 0);
+   const generation = useEditorStore((s) => s.generation);
+   const bodyRef = useRef<HTMLElement>(null);
+   const [epoch, setEpoch] = useState(0);
+@@ -234,7 +237,7 @@ export function NodeEditorDialog({
+     idState.for === node.id && idState.epoch === historyEpoch
+       ? idState
+       : { for: node.id, epoch: historyEpoch, value: node.id };
+-  const { updateNode, removeNode, renameNode, closeNodeDialog, setFieldError } =
++  const { updateNode, removeNode, renameNode, closeNodeDialog, setFieldError, openNode } =
+     useEditorStore.getState();
+   const info = KIND_INFO[node.kind];
+   const nodeIssues = useMemo(() => issues.filter((i) => i.nodeId === node.id), [issues, node.id]);
+@@ -309,10 +312,19 @@ export function NodeEditorDialog({
+     return () => clearTimeout(timer);
+   }, [nodeFocus, node.id]);
+ 
+-  const commitId = () => {
+-    const error = idProblem(id.value, node.id, definition);
+-    setIdState({ ...id, error });
+-    if (!error && id.value !== node.id) renameNode(node.id, id.value);
++  /**
++   * Apply the id being typed, on Enter or as the field loses focus (`next` is where focus is going).
++   * The rename repairs references in one step; when it repaired one in this node's own fields, the
++   * config form remounts with the new source, and focus follows to the same control there.
++   */
++  const commitId = (next?: Element | null) => {
++    const problem = idProblem(id.value, node.id, definition);
++    if (problem || id.value === node.id) {
++      setIdState({ ...id, error: problem });
++      return;
++    }
++    // A refusal stays with the typed text; after a rename the draft follows the new id.
++    setIdState({ ...id, error: keepFocusThrough(() => renameNode(node.id, id.value), next) });
+   };
+ 
+   const handleConfigChange = (config: unknown, change: Parameters<typeof updateNode>[2]) => {
+@@ -433,10 +445,9 @@ export function NodeEditorDialog({
+   };
+ 
+   const requestClose = (reason: DialogCloseReason) => {
+-    const error = idProblem(id.value, node.id, definition);
+-    if (!error && id.value !== node.id) {
+-      renameNode(node.id, id.value);
+-    } else if (error && reason !== 'dismissed' && id.warned !== id.value) {
++    let error = idProblem(id.value, node.id, definition);
++    if (!error && id.value !== node.id) error = renameNode(node.id, id.value);
++    if (error && reason !== 'dismissed' && id.warned !== id.value) {
+       // Stop once for an id that cannot apply, so typed text is never dropped unseen.
+       setIdState({ ...id, error, warned: id.value });
+       document.getElementById('node-id')?.focus();
+@@ -488,6 +499,15 @@ export function NodeEditorDialog({
+     >
+       <section ref={bodyRef} aria-label="Node properties" className="grid gap-field">
+         {notice}
++        <RenameNotice
++          definition={definition}
++          onChoose={(issue) => {
++            // A field of this node is focused in place; another node's editor opens at its field.
++            if (issue.nodeId === node.id) focusIssue(bodyRef.current, issue.path);
++            else if (issue.nodeId) openNode(issue.nodeId, { field: issue.path });
++          }}
++          onDismissed={() => document.getElementById('node-id')?.focus()}
++        />
+         {protectedCheck ? (
+           <HelpText>Protected voice check. Turn off voice messages removes it.</HelpText>
+         ) : null}
+@@ -507,7 +527,7 @@ export function NodeEditorDialog({
+               aria-invalid={id.error ? true : undefined}
+               aria-describedby={id.error ? 'node-id-error' : undefined}
+               onChange={(e) => setIdState({ ...id, value: e.target.value })}
+-              onBlur={commitId}
++              onBlur={(e) => commitId(e.relatedTarget)}
+               onKeyDown={(e) => {
+                 if (e.key === 'Enter') commitId();
+               }}
+@@ -670,7 +690,7 @@ export function NodeEditorDialog({
+                           >
+                             <NodeOutputsContext value={nodeOutputs}>
+                               <SchemaForm
+-                                key={`${node.kind}:${epoch}:${historyEpoch}`}
++                                key={`${node.kind}:${epoch}:${historyEpoch}:${formEpoch}`}
+                                 schema={NodeConfigSchemas[node.kind]}
+                                 fieldOrder={
+                                   node.kind === 'decision'
+diff --git a/apps/web/src/editor/store.ts b/apps/web/src/editor/store.ts
+index 64c00b30..d8d9de6d 100644
+--- a/apps/web/src/editor/store.ts
++++ b/apps/web/src/editor/store.ts
+@@ -5,6 +5,7 @@ import {
+   type NodeInput,
+   type NodeKind,
+ } from '@graphgoblin/contracts';
++import { renameLoopNode, type NodeRenameResult } from '@graphgoblin/domain';
+ import type { z } from 'zod';
+ import { create } from 'zustand';
+ import type { FormChange } from '../forms/changes.js';
+@@ -36,6 +37,7 @@ import {
+   nextNodeId,
+   validateDraft,
+   type ConnectionRequest,
++  type EditorIssue,
+ } from './model.js';
+ 
+ type EdgeInput = z.input<typeof EdgeSchema>;
+@@ -107,6 +109,18 @@ export interface EditorState {
+    * form, the loop panel's forms) include it in their keys, so they show the restored values.
+    */
+   historyEpoch: number;
++  /**
++   * Bumped per form scope ("node:<id>", "settings") when an edit made outside that form replaced
++   * values it holds: a rename that repaired references in its fields. The node editor's config form
++   * and the loop settings form include their scope's count in their keys, so only the forms whose
++   * source changed remount; other forms keep their state and unfinished input. Not undo history.
++   */
++  formEpochs: Readonly<Record<string, number>>;
++  /**
++   * What the latest rename changed and what it could not settle (#273), until it is dismissed,
++   * undone or redone, replaced by another rename, or the editor loads again. Not undo history.
++   */
++  renameReport: RenameReport | undefined;
+ 
+   load: (
+     loopId: string,
+@@ -140,7 +154,15 @@ export interface EditorState {
+     changes: { label?: string; config?: unknown },
+     change?: FormChange,
+   ) => void;
+-  renameNode: (nodeId: string, nextId: string) => void;
++  /**
++   * Change a node's id, and in the same undo step and revision its connections, the references
++   * to it that the domain understands (`renameLoopNode`), decision route ownership, its unfinished
++   * field input, the selection and a pending focus target. Returns why the id cannot change, or
++   * undefined when it changed (or was already that id).
++   */
++  renameNode: (nodeId: string, nextId: string) => string | undefined;
++  /** Forget the rename report (the notice's Dismiss). */
++  dismissRenameReport: () => void;
+   applyChatAudio: (
+     source: LoopDefinitionInput,
+     next: LoopDefinitionInput,
+@@ -224,6 +246,42 @@ export interface NodeFocusTarget {
+   field: string;
+ }
+ 
++/** What one accepted rename changed, and the fields it could not settle (#273). */
++export interface RenameReport {
++  from: string;
++  to: string;
++  /** Connections with an end on the node; they follow it. */
++  connections: number;
++  /** References rewritten in expressions, templates and mutation paths. */
++  references: number;
++  /**
++   * Fields the rename left for the author: dynamic, inherited or authored keys, and sources it
++   * could not verify. Located ones carry the node (by its new id) and the field's path.
++   */
++  warnings: EditorIssue[];
++}
++
++/** The node id rule's wording, shared by the node editor's own check. */
++export const ID_FORMAT_MESSAGE = 'Use a letter first, then letters, digits, _ or -';
++
++/** Why the domain refused a rename, in the node editor's words. */
++function renameRefusal(
++  kind: Exclude<NodeRenameResult['kind'], 'renamed' | 'unchanged'>,
++  nodeId: string,
++  nextId: string,
++): string {
++  switch (kind) {
++    case 'invalid-id':
++      return ID_FORMAT_MESSAGE;
++    case 'duplicate-id':
++      return `"${nextId}" is already used`;
++    case 'missing-node':
++      return `"${nodeId}" is no longer in this draft`;
++    case 'ambiguous-node':
++      return `More than one node uses "${nodeId}"; give the others their own ids first`;
++  }
++}
++
+ let generations = 0;
+ 
+ const INITIAL = {
+@@ -249,6 +307,8 @@ const INITIAL = {
+   future: [] as HistoryEntry[],
+   openStep: undefined,
+   historyEpoch: 0,
++  formEpochs: {} as Readonly<Record<string, number>>,
++  renameReport: undefined as RenameReport | undefined,
+ };
+ 
+ /**
+@@ -374,6 +434,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
+         : { revision: s.revision + 1, saveState: 'pending' as SaveState }),
+       selectedNodeId: kept ? selected : undefined,
+       ...(kept ? {} : { nodeDialogOpen: false, nodeFocus: undefined }),
++      // The report describes the draft after its rename: undoing (or redoing) that step ends it.
++      // Undoing a later edit, such as a fix made while reviewing, keeps it.
++      ...(entry.renamed &&
++      entry.renamed.from === s.renameReport?.from &&
++      entry.renamed.to === s.renameReport.to
++        ? { renameReport: undefined }
++        : {}),
+     });
+   };
+ 
+@@ -584,36 +651,82 @@ export const useEditorStore = create<EditorState>((set, get) => {
+     },
+ 
+     renameNode: (nodeId, nextId) => {
+-      const state = get();
+-      if (state.definition && isProtectedVoiceNode(state.definition, state.systemChat, nodeId)) {
++      const s = get();
++      const def = s.definition;
++      if (!def) return undefined;
++      if (isProtectedVoiceNode(def, s.systemChat, nodeId)) {
+         set({ connectionError: VOICE_STEP_MESSAGE });
+-        return;
++        return VOICE_STEP_MESSAGE;
+       }
+-      if (nodeId === nextId) return;
+-      const step = {
+-        label: `rename ${nodeId} to ${nextId}`,
+-        renamed: { from: nodeId, to: nextId },
+-      };
+-      edit(
+-        (d) => ({
+-          ...d,
+-          nodes: d.nodes.map((n) => (n.id === nodeId ? { ...n, id: nextId } : n)),
+-          edges: d.edges.map((e) => ({
+-            ...e,
+-            from: e.from.node === nodeId ? { ...e.from, node: nextId } : e.from,
+-            to: e.to.node === nodeId ? { ...e.to, node: nextId } : e.to,
+-          })),
+-        }),
+-        step,
++      // The exact current draft: the id, its edge ends and the references the domain understands
++      // change together, or nothing changes.
++      const result = renameLoopNode(def, nodeId, nextId);
++      if (result.kind === 'unchanged') return undefined;
++      if (result.kind !== 'renamed') return renameRefusal(result.kind, nodeId, nextId);
++      const renamed = { from: nodeId, to: nextId };
++      const { definition, decisionRoutes } = decisionRouteEdges(
++        result.definition,
++        s.decisionRoutes,
++        undefined,
++        renamed,
+       );
+-      if (get().selectedNodeId === nodeId) set({ selectedNodeId: nextId });
+-      // Unparsed field text follows the node to its new id (part of the same step).
+-      set((s) => {
+-        const { [`node:${nodeId}`]: moved, ...rest } = s.fieldErrors;
+-        return { fieldErrors: moved ? { ...rest, [`node:${nextId}`]: moved } : rest };
++      // Unparsed field text follows the node to its new id; other forms' text stays as typed.
++      const { [`node:${nodeId}`]: moved, ...otherErrors } = s.fieldErrors;
++      const fieldErrors = moved ? { ...otherErrors, [`node:${nextId}`]: moved } : s.fieldErrors;
++      // Forms holding a repaired source remount with it, so a field still showing the old text
++      // cannot write it back. The renamed node's own count moves with it.
++      const { [`node:${nodeId}`]: ownEpoch, ...formEpochs } = s.formEpochs as Record<
++        string,
++        number
++      >;
++      if (ownEpoch !== undefined) formEpochs[`node:${nextId}`] = ownEpoch;
++      const bump = (scope: string) => (formEpochs[scope] = (formEpochs[scope] ?? 0) + 1);
++      result.definition.nodes.forEach((node, index) => {
++        if (node.config !== def.nodes[index]?.config) bump(`node:${node.id}`);
+       });
++      if (result.definition.settings !== def.settings) bump('settings');
++      const endpoints = def.edges.reduce(
++        (count, edge) =>
++          count + Number(edge.from.node === nodeId) + Number(edge.to.node === nodeId),
++        0,
++      );
++      const before = {
++        definition: def,
++        fieldErrors: s.fieldErrors,
++        decisionRoutes: s.decisionRoutes,
++      };
++      const after = { definition, fieldErrors, decisionRoutes };
++      // One write: autosave, the device mirror and every subscriber see the whole rename at once.
++      set({
++        ...after,
++        revision: s.revision + 1,
++        saveState: 'pending',
++        selectedNodeId: s.selectedNodeId === nodeId ? nextId : s.selectedNodeId,
++        nodeFocus:
++          s.nodeFocus?.nodeId === nodeId ? { ...s.nodeFocus, nodeId: nextId } : s.nodeFocus,
++        formEpochs,
++        renameReport: {
++          from: nodeId,
++          to: nextId,
++          connections: def.edges.filter(
++            (edge) => edge.from.node === nodeId || edge.to.node === nodeId,
++          ).length,
++          references: result.repairedReferences - endpoints,
++          warnings: result.warnings,
++        },
++        ...recordStep(
++          historyOf(s),
++          before,
++          after,
++          { label: `rename ${nodeId} to ${nextId}`, renamed },
++          performance.now(),
++        ),
++      });
++      return undefined;
+     },
+ 
++    dismissRenameReport: () => set({ renameReport: undefined }),
++
+     // A drag ends in one move; a run of arrow-key nudges of one node merges into one step.
+     moveNode: (nodeId, position) =>
+       edit(
+diff --git a/apps/web/src/editor/useUndoShortcuts.ts b/apps/web/src/editor/useUndoShortcuts.ts
+index 232fe351..61d08cfe 100644
+--- a/apps/web/src/editor/useUndoShortcuts.ts
++++ b/apps/web/src/editor/useUndoShortcuts.ts
+@@ -187,7 +187,22 @@ function focusCollection(root: Element, path: string | undefined, index: number)
+  * control is the one with the same element, type, role, and name, counted among its namesakes.
+  */
+ export function runHistory(direction: HistoryDirection): void {
+-  const before = document.activeElement;
++  keepFocusThrough(() => useEditorStore.getState()[direction]());
++}
++
++/**
++ * Run a store action that can remount forms (undo, redo, a rename that repaired a source the open
++ * form shows) and return its result, keeping keyboard focus as `runHistory` describes. `target` is
++ * the control to keep instead of the focused one: where focus is going when the action runs as the
++ * node id field loses it.
++ */
++export function keepFocusThrough<T>(action: () => T, target?: Element | null): T {
++  let result: { value: T } | undefined;
++  runKeepingFocus(() => (result = { value: action() }), target ?? document.activeElement);
++  return result!.value;
++}
++
++function runKeepingFocus(action: () => void, before: Element | null): void {
+   const control = before instanceof HTMLElement && before !== document.body ? before : undefined;
+   const field = control?.closest('[data-field]');
+   const path = field?.getAttribute('data-field') ?? undefined;
+@@ -216,7 +231,7 @@ export function runHistory(direction: HistoryDirection): void {
+       around.push({ element: el, where: whereabouts(control, el) });
+     }
+   }
+-  flushSync(() => useEditorStore.getState()[direction]());
++  flushSync(action);
+   if (!control || control.isConnected) return;
+   // Something already placed focus (a node editor that closed returns it to the canvas).
+   if (document.activeElement && document.activeElement !== document.body) return;
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 94f27607..2f7f0c3d 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -253,7 +253,7 @@ for inference limits and [ADR-0066](decisions/ADR-0066-native-ollama-and-model-d
+ - Canvas: `@xyflow/react` with custom node components per kind, labelled output handles for decision routes and exit loop-back, and edge validation that refuses connections into triggers or out of unknown ports.
+ - Palette: the nine node kinds, drag to add.
+ - Node editor: a modal dialog opened from the canvas, generated from the node kind's Zod schema with react-hook-form (see "Node editor, loop panel, and New run" below). Templates and expressions use CodeMirror with Liquid and JSONata modes and a preview that renders against a sample thread.
+-- Run-thread template and expression fields have a collapsed **Earlier node outputs (N)** list with syntax-specific copyable references and output notes. It follows draft paths, nearest first, includes a cyclic node's previous visit, and omits nodes without automatic outputs. Empty lists and fields with other evaluation roots show nothing. This is interim help, not validation; it does not populate the sample preview or repair renamed references. (#341)
++- Run-thread template and expression fields have a collapsed **Earlier node outputs (N)** list with syntax-specific copyable references and output notes. It follows draft paths, nearest first, includes a cyclic node's previous visit, and omits nodes without automatic outputs. Empty lists and fields with other evaluation roots show nothing. This is interim help, not validation; it does not populate the sample preview. Renaming a node repairs the references it understands (see "Renaming a node" below). (#341)
+ - Webhook receiver: webhook trigger dialogs show a **Receiver** section with the published, enabled endpoint URL from `GET /loops/{id}/triggers`, resolved against the API base URL. The secret token is absent from the DOM while masked; Reveal/Hide and Copy receiver URL control access to the address, with polite copy feedback and Retry after a failed load. Publish again to apply draft changes. The section provides the address only; signing instructions stay in the [trigger guide](guide/04-triggers.md).
+ - Validation: the same `domain` validation the backend runs, surfaced live as an issue badge on each node and the counts beside Publish (see "Validation badges" below), so publish never fails by surprise.
+ - Subloop picker: searches published loops and shows their trigger input schema and return shape.
+@@ -265,6 +265,16 @@ for inference limits and [ADR-0066](decisions/ADR-0066-native-ollama-and-model-d
+ 
+ Pressing a palette entry places the new card at x = 40, below the lowest existing card bottom plus 22 px clearance, and pans to it. Placement takes the larger of the measured height and the current port count's card footprint, including a Decision's Limit reached row. An empty canvas starts at (40, 40). Existing nodes stay where authored; dragging from the palette still uses the drop point. Routed labels retain their reserved positions and shortening. A forward label leaves xyflow's default position only when its pill collides with a card, an earlier label or another edge's segment (4 px card/label clearance and a 2 px segment envelope). A short straight segment or a rounded corner alone never moves it. Only a label with a collision searches for the nearest free interval along its own horizontal or vertical segments, with 10 px corner allowance and stable edge-ID priority. A squeezed label searches for a local callout within 96 px of its edge, with a straight leader that never enters a card and a pill clear of other edge lanes. If no legal local candidate exists, it keeps its default position without a leader. Placements are solved after edits and drag release; displaced labels follow their own segment during a drag without rebuilding the obstacle index. These are view positions, not definition changes. Regression: `node-placement.test.ts`, `edge-label-placement.test.ts`, and `e2e/palette-placement.spec.ts` (#425).
+ 
++### Renaming a node (#273)
++
++The node dialog's **Node id** applies on Enter, on leaving the field and when the dialog closes, as before. Invalid and duplicate ids keep their messages, and protected voice steps keep their read-only id and "Voice steps stay" refusal. An accepted id goes through the domain's `renameLoopNode` with the exact current draft. The node, its connection ends, and the references the domain understands (typed mutation pointers and static JSONata and Liquid reads of `outputs`, `gates` and `counters.nodeVisits`) change in one store write. Decision route ownership, the node's unfinished field input, the selection and a pending issue focus follow it in the same write. That write is one undo step and one revision. Autosave, the device mirror and the draft token handling see the complete renamed draft once. Undo and Redo restore every repaired field, edge end, held input and the selection together. Unfinished input in other forms is never touched. A refusal the dialog did not foresee (another node with the same id, say) shows under the field like the existing id messages and changes nothing.
++
++Forms keep their own state, so a rename that repaired a source the open node's config form or the loop settings form shows remounts only that form (`formEpochs` in the store, per form scope). The variables form and other buffers stay mounted, and a field still showing the old text cannot write it back. When the id field loses focus to a control in the remounting form, focus moves to the same control in the new form, as undo does (`keepFocusThrough` in `editor/useUndoShortcuts.ts`).
++
++A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row on a node still in the draft opens that node's editor at the field (in place for the open node). Loop-level rows only inform. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
++
++The persistent reference diagnostics come from the same local `domain` validation as other issues, on node badges and beside Publish. A known missing gate or visit count is an error (`NODE_REFERENCE_MISSING`), and Publish refuses with it. Direct existence checks (`NODE_REFERENCE_OPTIONAL_MISSING`), unverified output keys (`NODE_REFERENCE_OUTPUT_UNVERIFIED`) and dynamic reads (`NODE_REFERENCE_UNCERTAIN`) are warnings. Regression: `editor/store.rename.test.ts` and `editor/EditorPage.rename.test.tsx`.
++
+ ### Editing decision routes
+ 
+ Adding, renaming, reordering, or removing a decision route refreshes the canvas's measured output handles after the new rows render, including changes that leave the card the same height. New and renamed outputs can be connected immediately by dragging or through the node dialog's Connections form, without reloading. A connected route's rename keeps its edge id, target, and manual layout while changing its source port; removing a route removes its outgoing edge, even while its label is temporarily invalid. The config and edge change are one undo step, and redo restores both. Reordering routes keeps connections with their labels. Blank, duplicate, and otherwise invalid labels still block publishing; temporarily invalid input stays visible in the draft without rewiring a connection to an invalid port. Each row owns its connections while being edited, so completing multiple incomplete rows in any order keeps each connection with its own row, including when another row remains blank.
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index 0aac5a2a..fd930b23 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -398,7 +398,9 @@ Save and import this complete deterministic example as `bounded-repeat.json`, th
+ }
+ ```
+ 
+-Changing a node ID updates its connections. Update authored references such as `gates."old-id".passes` and `outputs."old-id".value` yourself.
++Changing a node ID updates its connections and the references GraphGoblin can read, in one undoable edit. These include `outputs."old-id".value`, `gates."old-id".passes` and `counters.nodeVisits."old-id"` in JSONata and Liquid, and mutation paths such as `/outputs/old-id/value`. A notice titled **Renamed old-id to new-id** says how many references and connections changed. It lists any place where the old ID may remain: a computed key such as `$lookup(outputs, vars.name)`, an output key that a mutation may write, or a script or generated patch. Choose a listed place to open that field and check it yourself. Plain text in prompts, JSON values and scripts are never changed. **Undo** reverses the whole rename.
++
++Badges also flag references that no longer match a node. A missing gate or visit count is an error and blocks publishing. An `$exists` check or `{% if %}` test of a missing node, an output key whose origin is unknown and a computed key are warnings.
+ 
+ To find a reference, expand **Earlier node outputs (N)** under a template or expression field in the node dialog. It lists the nodes that can run before this one, nearest first, each with its reference in that field's syntax, a **Copy** button and a note on what it outputs. For example, a script's default output is its stdout itself, parsed as JSON when possible: `42`, not `{stdout: 42}`. IDs with a hyphen are quoted for you: `{{ outputs["old-id"].value }}` in Liquid and `outputs."old-id".value` in JSONata.
+ 

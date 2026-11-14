@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import { performance } from 'node:perf_hooks';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+const current = process.cwd();
+const old = 'C:/Users/98jak/.codex/worktrees/gg-20261113-i08-validation/GraphGoblin';
+const load = (root, file) => import(pathToFileURL(resolve(root, file)).href);
+const { validateDraft: original } = await load(old, 'apps/web/src/editor/model.ts');
+const { validateDraft: candidate } = await load(current, 'apps/web/src/editor/model.ts');
+const { LoopDefinitionSchema } = await load(current, 'packages/contracts/src/index.ts');
+const { Liquid } = await import('./packages/domain/node_modules/liquidjs/dist/liquid.node.mjs');
+const { Liquid: LiquidCjs } = (await import('./packages/domain/node_modules/liquidjs/dist/liquid.node.js')).default;
+function graph(count, refs) {
+  const fixtureKey = count + '/' + refs;
+  const nodes = [{id:'start', kind:'trigger', label:'Start', config:{type:'manual'}}];
+  const edges = [];
+  let previous = 'start';
+  let producer = 'start';
+  for (let i = 1; i < count - 1; i += 1) {
+    const id = 'n' + i;
+    const read = refs ? 'outputs.' + producer + '.value' : 'trigger.payload';
+    const count = refs ? 'counters.nodeVisits.' + producer : 'vars.count';
+    const node = i % 3 === 0
+      ? { id, kind:'mutate', label:id, config:{ operations:[
+          {op:'set',path:'/vars/value',value:{kind:'expression',jsonata:read + ' & $string(' + count + ')'}},
+          {op:'append-message',content:'Note ' + fixtureKey + '/' + i + ' {{ ' + read + ' | json }}'},
+        ]}}
+      : { id, kind:'inference', label:id, config:{ prompt:{template:
+          'Step ' + fixtureKey + '/' + i + '. {% if ' + read + ' %} {{ ' + read + ' | json }} {% endif %} {{ ' + count + ' }}'}} };
+    nodes.push(node);
+    if (node.kind === 'inference') producer = id;
+    edges.push({id:'e'+i,from:{node:previous,port:'out'},to:{node:id}});
+    previous = id;
+  }
+  nodes.push({ id:'done',kind:'exit',label:'Done',config:{returns:refs?'outputs.'+producer+'.value':'trigger.payload'} });
+  edges.push({id:'end',from:{node:previous,port:'out'},to:{node:'done'}});
+  return {schemaVersion:4,name:'Perf',nodes,edges};
+}
+const order = [0,1,2,3];
+const describe = (samples) => {
+  const s = [...samples].sort((a,b)=>a-b);
+  return [s[Math.ceil(s.length/2)-1],s[Math.ceil(s.length*.95)-1]].map(v=>Number(v.toFixed(2)));
+};
+function changed(raw, suffix) {
+  const nodes = raw.nodes.slice();
+  const node = nodes[1];
+  nodes[1] = { ...node, config: { prompt: { template:node.config.prompt.template + suffix } } };
+  return { ...raw, nodes };
+}
+function countLiquid(run) {
+  let syntaxCount=0, analysisCount=0;
+  const restores = [];
+  for (const Prototype of new Set([Liquid.prototype, LiquidCjs.prototype])) {
+    for (const method of ['parse','analyzeSync']) {
+      const saved = Prototype[method];
+      Prototype[method] = function(...args) {
+        if(method==='parse') syntaxCount += 1; else analysisCount += 1;
+        return saved.apply(this,args);
+      };
+      restores.push(() => { Prototype[method] = saved; });
+    }
+  }
+  let result;
+  try { result=run(); } finally { restores.forEach(f=>f()); }
+  return { result, counts: {templateParse:syntaxCount,templateAnalyze:analysisCount} };
+}
+for (const [size, refs] of [[100,true],[300,true],[300,false]]) {
+  const raw = graph(size,refs);
+  const cold = countLiquid(()=>candidate(raw));
+  const before = original(raw);
+  assert.equal(before.issues.length,0,JSON.stringify(before.issues.slice(0,2)));
+  assert.deepEqual(cold.result,before);
+  const repeated = countLiquid(()=>candidate(LoopDefinitionSchema.parse(raw)));
+  const fresh = countLiquid(()=>candidate(changed(raw,' proof edit')));
+  assert.deepEqual(repeated.result,before);
+  assert.deepEqual(fresh.result,before);
+  const samples = [[],[],[],[]];
+  for (let i=0;i<4;i+=1) {
+    original(raw); candidate(raw);
+    original(changed(raw,' warmup '+i)); candidate(changed(raw,' warmup '+i));
+  }
+  for(let cycle=0;cycle<25;cycle+=1) for(const step of order){
+    const index=(step+cycle)%4;
+    const variant=index < 2 ? raw : changed(raw,' edit '+cycle);
+    const start=performance.now();
+    (index % 2 === 0 ? original : candidate)(variant);
+    samples[index].push(performance.now()-start);
+  }
+  console.log(JSON.stringify({
+    nodes:size, references:refs, publicResultEqual:true, cold:cold.counts, repeated:repeated.counts, edit:fresh.counts,
+    medianP95Ms:Object.fromEntries(['baselineWarm','candidateWarm','baselineOneField','candidateOneField'].map((name,i)=>[name,describe(samples[i])])),
+  }));
+}
