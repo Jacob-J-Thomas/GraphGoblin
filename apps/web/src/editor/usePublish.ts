@@ -82,6 +82,11 @@ export function acknowledgedDraft(state: EditorState): Acknowledged {
   return { definition: parsed.success ? parsed.data : state.definition, token: state.baseToken };
 }
 
+/** Publish's refusals while the server cannot take this draft (also beside Publish, as readiness). */
+export const CONFLICT_REFUSAL = 'The draft changed on the server; reload it or overwrite it first.';
+export const NAME_REFUSAL =
+  'Another loop already has this name; choose a different name before publishing.';
+
 /** Why Publish cannot go ahead in this state, in the editor's existing words. */
 function refusal(state: EditorState, saved = true): string | undefined {
   const held = Object.values(state.fieldErrors).flatMap((scope) => Object.values(scope));
@@ -89,9 +94,8 @@ function refusal(state: EditorState, saved = true): string | undefined {
     return held.every((error) => error.input === 'unapplied JSON')
       ? 'Some fields hold JSON not applied yet; apply or cancel it first.'
       : 'Some fields hold input that is not a valid value yet; complete or discard it first.';
-  if (state.conflict) return 'The draft changed on the server; reload it or overwrite it first.';
-  if (state.saveState === 'name-conflict')
-    return 'Another loop already has this name; choose a different name before publishing.';
+  if (state.conflict) return CONFLICT_REFUSAL;
+  if (state.saveState === 'name-conflict') return NAME_REFUSAL;
   if (!saved) return 'The draft could not be saved; fix the issues below first.';
   return undefined;
 }
@@ -109,7 +113,8 @@ async function readBack(client: GraphGoblinClient, loopId: string): Promise<Read
  * One Publish: save, then send `POST /loops/{id}/publish` in this window's queue of the loop's
  * saves, so this editor's own later saves cannot reach the server before it. The request publishes
  * whatever draft the server holds when it admits it; the outcome compares that with the copy the
- * attempt saved. Resolves to undefined, sending nothing, when another load replaced this one first.
+ * attempt saved. Resolves to undefined, sending nothing, when another load replaced this one before
+ * the request; a refusal that applies by then is thrown, and nothing is sent either.
  */
 async function publishAttempt(
   client: GraphGoblinClient,
@@ -130,11 +135,17 @@ async function publishAttempt(
   if (flushed) throw new Error(flushed);
   // Captured now: a later revision is later work, never this attempt's snapshot.
   const acknowledged = acknowledgedDraft(useEditorStore.getState());
+  // Checked when the queue reaches this attempt and again right before the request: saves queued
+  // ahead, or the check of the server before a retry, may have ended this load, met held input,
+  // or stopped at a refusal.
+  const sendable = () => {
+    if (!sameLoad()) return false;
+    const refused = refusal(useEditorStore.getState());
+    if (refused) throw new Error(refused);
+    return true;
+  };
   return serializeSave(loopId, async (): Promise<PublishOutcome | undefined> => {
-    // Saves queued ahead may have ended this load, met held input, or stopped at a refusal.
-    if (!sameLoad()) return undefined;
-    const queued = refusal(useEditorStore.getState());
-    if (queued) throw new Error(queued);
+    if (!sendable()) return undefined;
     let result: Answer | undefined;
     if (attempt.checkFirst) {
       const checked = await readBack(client, loopId);
@@ -147,6 +158,7 @@ async function publishAttempt(
         result = { kind: 'not-published', readback: checked };
     }
     if (!result) {
+      if (!sendable()) return undefined;
       try {
         result = { kind: 'published', version: await loops.publish(client, loopId) };
       } catch (error) {

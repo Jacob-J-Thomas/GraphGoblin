@@ -49,7 +49,13 @@ import { hasRenameNotice, RenameNotice } from './RenameNotice.js';
 import { useEditorStore, type EditorState } from './store.js';
 import { AUTOSAVE_DELAY_MS, useAutosave } from './useAutosave.js';
 import { useLoadEditor } from './useLoadEditor.js';
-import { publishNotice, usePublish, type PublishOutcome } from './usePublish.js';
+import {
+  CONFLICT_REFUSAL,
+  NAME_REFUSAL,
+  publishNotice,
+  usePublish,
+  type PublishOutcome,
+} from './usePublish.js';
 import { useResolveConflict } from './useResolveConflict.js';
 import { useUndoShortcuts } from './useUndoShortcuts.js';
 import { SystemLoopNotice } from './SystemLoopNotice.js';
@@ -405,6 +411,10 @@ export function EditorPage() {
   // The name refusal applies while the draft still has the refused name (#209).
   const showNameConflict =
     nameConflict !== undefined && !conflict && sameLoopName(def.name, nameConflict.name);
+  // A draft conflict or a name refusal keeps this draft from the server: Publish refuses it and
+  // the API's checks cannot run on it, so an earlier check of the server's copy (cached under its
+  // token) never reads as ready beside Publish (#237).
+  const heldReason = conflict ? CONFLICT_REFUSAL : showNameConflict ? NAME_REFUSAL : undefined;
   /** Take the API's suggestion as an ordinary, undoable rename; autosave then tries it. */
   const applySuggestedName = (name: string, inDialog: boolean) => {
     // A step of its own, so Undo returns to the refused text rather than past the typing too.
@@ -423,13 +433,18 @@ export function EditorPage() {
     setPanelExpanded(true);
     focusById('loop-name', true);
   };
-  /** Send the refused name once more, for when the other loop has since been renamed. */
+  /**
+   * Send the refused name once more, for when the other loop has since been renamed. The
+   * permission goes with this one save only (`NameRetry`): ordinary autosaves keep holding the
+   * name, and a save that cannot send (invalid input, say) ends the attempt without sending.
+   */
   const retryName = () => {
     const state = useEditorStore.getState();
-    if (!state.nameConflict || state.nameConflict.retrying) return;
-    state.setNameConflict({ ...state.nameConflict, retrying: true, retried: false });
+    if (!state.loopId || !state.nameConflict || state.nameConflict.retrying) return;
+    const refusal = { ...state.nameConflict, retrying: true, retried: false };
+    state.setNameConflict(refusal);
     state.setSaveState('pending');
-    void flush();
+    void flush({ loopId: state.loopId, generation: state.generation, refusal });
   };
   const nameConflictNotice = (inDialog: boolean) =>
     showNameConflict ? (
@@ -637,13 +652,13 @@ export function EditorPage() {
             issues={validation.issues}
             definition={def}
             check={
-              serverCheck.isError || catalogFailure
+              serverCheck.isError || catalogFailure || heldReason !== undefined
                 ? 'error'
                 : !catalogsResolved || serverCheck.isPending || serverCheck.isFetching
                   ? 'pending'
                   : 'done'
             }
-            unavailableReason={catalogFailureReason}
+            unavailableReason={catalogFailureReason ?? heldReason}
           />
         }
         publishing={publish.pending}

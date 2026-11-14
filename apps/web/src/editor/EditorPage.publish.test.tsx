@@ -33,6 +33,8 @@ async function savedEditor(api: FakeApi, name = 'mine', first = 'A1') {
 }
 
 const publishButton = () => screen.getByRole('button', { name: /^Publish/ });
+const PUBLISH_FEEDBACK =
+  /Publish failed|Published version|Publish not confirmed|Nothing to publish|Nothing was published/;
 const posts = (api: FakeApi, loopId: string) => api.callsTo('POST', `/loops/${loopId}/publish`);
 const puts = (api: FakeApi, loopId: string) => api.callsTo('PUT', `/loops/${loopId}/draft`);
 async function detail(api: FakeApi, loopId: string) {
@@ -410,5 +412,197 @@ describe('Publish (#237)', () => {
     });
     expect(await screen.findByText('Published version 1.')).toBeInTheDocument();
     expect(posts(api, loop.id)).toHaveLength(1);
+  });
+});
+
+/**
+ * Version 1 published and a newer draft saved, whose Publish request was lost before the server
+ * admitted it, and whose check after that failed too: the next Publish reads the server first.
+ * Once `reads.hold` is set, this loop's detail reads wait for it (`reads.held` counts them).
+ */
+async function unconfirmedPublish(api: FakeApi) {
+  const loop = api.addLoop(newLoopDefinition('mine'), { published: true });
+  const reads: { hold: ReturnType<typeof gate> | undefined; held: number } = {
+    hold: undefined,
+    held: 0,
+  };
+  let lose = true;
+  let failCheck = false;
+  api.override('POST /loops/:id/publish', (call) => {
+    if (!lose) return api.builtIn(call);
+    lose = false;
+    failCheck = true;
+    throw new TypeError('Failed to fetch');
+  });
+  api.override('GET /loops/:id', async (call, [id]) => {
+    if (id === loop.id && failCheck) {
+      failCheck = false;
+      throw new TypeError('Failed to fetch');
+    }
+    if (id === loop.id && reads.hold) {
+      reads.held += 1;
+      await reads.hold.promise;
+    }
+    return api.builtIn(call);
+  });
+  const { queryClient } = renderApp(`/loops/${loop.id}/edit`, api);
+  await screen.findByRole('heading', { name: 'mine' });
+  await waitFor(() => expect(screen.queryByText(RECONCILING)).toBeNull());
+  act(() => useEditorStore.getState().updateMeta({ description: 'A1' }));
+  await waitFor(
+    () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+    SAVE_WAIT,
+  );
+  const user = userEvent.setup();
+  await user.click(publishButton());
+  expect(
+    await screen.findByText(
+      /Checking the server failed too: .* Publish again checks the server first\./,
+    ),
+  ).toBeInTheDocument();
+  const before = await detail(api, loop.id);
+  expect(before.current?.version).toBe(1);
+  expect(before.draft?.definition.description).toBe('A1');
+  expect(posts(api, loop.id)).toHaveLength(1);
+  await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+  return { user, loop, reads, v1: before.current!, queryClient };
+}
+
+/** Publish again, and wait until its check of the server is held there. */
+async function retryHeldAtCheck(
+  user: ReturnType<typeof userEvent.setup>,
+  api: FakeApi,
+  loopId: string,
+  reads: Awaited<ReturnType<typeof unconfirmedPublish>>['reads'],
+) {
+  const hold = gate();
+  reads.hold = hold;
+  const before = api.callsTo('GET', `/loops/${loopId}`).length;
+  await user.click(publishButton());
+  await waitFor(() => expect(reads.held).toBe(1));
+  expect(api.callsTo('GET', `/loops/${loopId}`)).toHaveLength(before + 1);
+  expect(posts(api, loopId)).toHaveLength(1);
+  return hold;
+}
+
+describe('Publish after an unknown outcome, while its check is answered (#237)', () => {
+  it('refuses held input that arrived during the check, and sends nothing', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads, v1 } = await unconfirmedPublish(api);
+    const hold = await retryHeldAtCheck(user, api, loop.id, reads);
+    // Variables text that does not parse, typed while the check's answer waits.
+    act(() =>
+      useEditorStore.getState().setFieldError('variables', 'variables', {
+        message: 'invalid JSON',
+        text: '{',
+        input: 'unparsed text',
+      }),
+    );
+    hold.release();
+    expect(
+      await screen.findByText(
+        'Some fields hold input that is not a valid value yet; complete or discard it first.',
+      ),
+    ).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(1);
+    const after = await detail(api, loop.id);
+    expect(after.current).toMatchObject({ id: v1.id, version: 1 });
+    expect(after.draft?.definition.description).toBe('A1');
+    expect(screen.queryByText(/Published version/)).toBeNull();
+    expect(useEditorStore.getState().fieldErrors['variables']?.['variables']?.text).toBe('{');
+
+    // Discarding the text sends nothing by itself; one deliberate Publish sends one request.
+    reads.hold = undefined;
+    act(() => useEditorStore.getState().setFieldError('variables', 'variables', undefined));
+    expect(posts(api, loop.id)).toHaveLength(1);
+    await user.click(publishButton());
+    expect(await screen.findByText('Published version 2.')).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(2);
+  });
+
+  it('sends nothing, and shows nothing, once another editor opened during the check', async () => {
+    const api = new FakeApi();
+    const other = api.addLoop({ ...newLoopDefinition('other'), description: 'theirs' });
+    const { user, loop, reads, v1, queryClient } = await unconfirmedPublish(api);
+    const hold = await retryHeldAtCheck(user, api, loop.id, reads);
+    const toolbar = screen.getByTestId('save-state').closest('header')!;
+    await user.click(within(toolbar).getByRole('link', { name: 'Loops' }));
+    await user.click(await screen.findByRole('link', { name: 'other' }));
+    await screen.findByRole('heading', { name: 'other' });
+    await waitFor(() => expect(screen.queryByText(RECONCILING)).toBeNull());
+    hold.release();
+    await waitFor(() => expect(queryClient.isMutating()).toBe(0));
+    expect(posts(api, loop.id)).toHaveLength(1);
+    expect(posts(api, other.id)).toHaveLength(0);
+    expect((await detail(api, loop.id)).current).toMatchObject({ id: v1.id, version: 1 });
+    expect(screen.queryByText(PUBLISH_FEEDBACK)).toBeNull();
+    expect(useEditorStore.getState()).toMatchObject({
+      loopId: other.id,
+      definition: { description: 'theirs' },
+    });
+  });
+
+  it('sends one request after the check when nothing changed meanwhile', async () => {
+    const api = new FakeApi();
+    const { user, loop, reads } = await unconfirmedPublish(api);
+    const hold = await retryHeldAtCheck(user, api, loop.id, reads);
+    const check = api.calls.indexOf(api.callsTo('GET', `/loops/${loop.id}`).at(-1)!);
+    hold.release();
+    expect(await screen.findByText('Published version 2.')).toBeInTheDocument();
+    expect(posts(api, loop.id)).toHaveLength(2);
+    expect(api.calls.indexOf(posts(api, loop.id)[1]!)).toBeGreaterThan(check);
+    const after = await detail(api, loop.id);
+    expect(after.current).toMatchObject({ version: 2, definition: { description: 'A1' } });
+    expect(after.draft).toBeUndefined();
+  });
+});
+
+describe('Readiness beside a refusal that holds the draft (#237)', () => {
+  it('does not claim Ready to publish while another loop has the name', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.addLoop(newLoopDefinition('Nightly Triage'));
+    const mine = api.addLoop(newLoopDefinition('Daytime Triage'));
+    renderApp(`/loops/${mine.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'Daytime Triage' });
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    const show = screen.queryByRole('button', { name: 'Show loop settings' });
+    if (show) await user.click(show);
+    const field = screen.getByRole('textbox', { name: 'Name' });
+    await user.clear(field);
+    await user.type(field, 'nightly triage');
+    await screen.findByText('Another loop already has this name', undefined, SAVE_WAIT);
+    expect(screen.getByTestId('save-state')).toHaveTextContent('Not saved: name in use');
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(screen.getByText('Validation unavailable')).toHaveAttribute(
+      'title',
+      'Another loop already has this name; choose a different name before publishing.',
+    );
+    // Another name ends the refusal; once saved and checked, the draft is ready again.
+    await user.type(field, ' b');
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+  });
+
+  it('does not claim Ready to publish in a draft conflict', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const { loop } = await savedEditor(api);
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    api.saveDraftElsewhere(loop.id, { ...newLoopDefinition('mine'), description: 'B' });
+    act(() => useEditorStore.getState().updateMeta({ description: 'A2' }));
+    expect(
+      await screen.findByText('The draft changed on the server', undefined, SAVE_WAIT),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(screen.getByText('Validation unavailable')).toHaveAttribute(
+      'title',
+      'The draft changed on the server; reload it or overwrite it first.',
+    );
+    await user.click(screen.getByRole('button', { name: 'Reload server draft' }));
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
   });
 });
