@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { SlugSchema } from './common.js';
-import { LoopRecordSchema, LoopVersionRecordSchema } from './loop.js';
+import { ExplicitLoopNameSchema, LoopRecordSchema, LoopVersionRecordSchema } from './loop.js';
 import { LoopIssueSchema } from './issues.js';
 
 export const TemplateVersionSchema = z
@@ -38,12 +38,7 @@ export const TemplateListResponseSchema = z.strictObject({
 });
 export type TemplateListResponse = z.infer<typeof TemplateListResponseSchema>;
 export const TemplateDraftRequestSchema = z.strictObject({
-  name: z
-    .string()
-    .min(1)
-    .max(120)
-    .refine((value) => value.trim().length > 0, 'must not be blank')
-    .optional(),
+  name: ExplicitLoopNameSchema.optional(),
 });
 export type TemplateDraftRequest = z.infer<typeof TemplateDraftRequestSchema>;
 /** An ordinary editable loop draft, without template execution authority. */

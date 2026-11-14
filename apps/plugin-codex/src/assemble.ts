@@ -1,5 +1,6 @@
-import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { readdir, readFile } from 'node:fs/promises';
+import { join, posix, resolve } from 'node:path';
+import { writePluginOutput } from '@graphgoblin/tooling/plugin-output';
 import {
   MarketplaceSchema,
   McpConfigSchema,
@@ -47,7 +48,7 @@ export async function loadPlugin(pluginDir: string): Promise<LoadedPlugin> {
 export interface AssembleOptions {
   /** The plugin source directory (`apps/plugin-codex/plugin/graphgoblin`). */
   pluginDir: string;
-  /** Where to write the local marketplace; replaced if it exists. */
+  /** Where to write the local marketplace; existing output must be empty or owned. */
   outDir: string;
   /** Absolute path of the built MCP server entry, `apps/mcp/dist/main.js`. */
   mcpEntry: string;
@@ -71,9 +72,6 @@ export async function assemblePlugin(options: AssembleOptions): Promise<Assemble
   const name = source.manifest.name;
   const marketplaceDir = resolve(options.outDir);
   const installedPluginDir = join(marketplaceDir, 'plugins', name);
-  await rm(marketplaceDir, { recursive: true, force: true });
-  await mkdir(join(marketplaceDir, '.agents', 'plugins'), { recursive: true });
-  await cp(options.pluginDir, installedPluginDir, { recursive: true });
 
   const mcp: McpConfig = {
     mcpServers: Object.fromEntries(
@@ -82,17 +80,12 @@ export async function assemblePlugin(options: AssembleOptions): Promise<Assemble
         {
           ...server,
           args: server.args.map((arg) =>
-            arg.replace(MCP_ENTRY_PLACEHOLDER, resolve(options.mcpEntry)),
+            arg.replace(MCP_ENTRY_PLACEHOLDER, () => resolve(options.mcpEntry)),
           ),
         },
       ]),
     ),
   };
-  await writeFile(
-    resolve(installedPluginDir, source.manifest.mcpServers),
-    `${JSON.stringify(mcp, null, 2)}\n`,
-  );
-
   const marketplace = MarketplaceSchema.parse({
     name: MARKETPLACE_NAME,
     interface: { displayName: 'GraphGoblin (local build)' },
@@ -105,9 +98,28 @@ export async function assemblePlugin(options: AssembleOptions): Promise<Assemble
       },
     ],
   });
-  await writeFile(
-    join(marketplaceDir, '.agents', 'plugins', 'marketplace.json'),
-    `${JSON.stringify(marketplace, null, 2)}\n`,
+  const packageDir = resolve(options.pluginDir, '..', '..');
+  const prefix = `plugins/${name}`;
+  const skillFiles = await Promise.all(
+    source.skills.map(async (skill) => {
+      const file = posix.join(source.manifest.skills, skill.name, 'SKILL.md');
+      return [`${prefix}/${file}`, await readFile(join(options.pluginDir, file))] as const;
+    }),
   );
+  await writePluginOutput({
+    outDir: marketplaceDir,
+    packageDir,
+    defaultOutDir: resolve(packageDir, 'dist', 'marketplace'),
+    protectedPaths: [options.pluginDir, options.mcpEntry],
+    kind: 'codex-marketplace',
+    files: {
+      '.agents/plugins/marketplace.json': `${JSON.stringify(marketplace, null, 2)}\n`,
+      [`${prefix}/.codex-plugin/plugin.json`]: await readFile(
+        join(options.pluginDir, '.codex-plugin', 'plugin.json'),
+      ),
+      [`${prefix}/${source.manifest.mcpServers.slice(2)}`]: `${JSON.stringify(mcp, null, 2)}\n`,
+      ...Object.fromEntries(skillFiles),
+    },
+  });
   return { ...source, mcp, marketplace, marketplaceDir, installedPluginDir };
 }

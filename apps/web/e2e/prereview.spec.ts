@@ -2,7 +2,8 @@ import { approvalLoop, closeNode, expect, openNode, showLoopPanel, test } from '
 
 for (const from of ['manual', 'event']) {
   test(`untouched UTC previews after ${from} to Cron`, async ({ page, request }) => {
-    const definition = approvalLoop('Synthetic cron setup');
+    // One loop per case on the shared gateway, where one owner cannot repeat a name (#209).
+    const definition = approvalLoop(`Synthetic cron setup from ${from}`);
     const created = await request.post('/loops', {
       data: {
         definition: {

@@ -71,6 +71,30 @@ export function problem(status: number, code: string, detail?: string, errors?: 
   );
 }
 
+/**
+ * The API's loop-name admission (ADR-0073), written apart from the app's own `loopNameKey` so a
+ * divergence shows in the tests: names compare trimmed, with whitespace runs collapsed, lowercased.
+ * Fixtures seeded with `addLoop` are not checked, as stored rows were not.
+ */
+function nameKey(name: string): string {
+  return name.trim().replace(/\s+/gu, ' ').toLowerCase();
+}
+
+/** 409 `LOOP_NAME_CONFLICT` with the API's suggestion: the first free "<name> copy[ N]". */
+export function loopNameConflictProblem(suggestedName: string): Response {
+  return new Response(
+    JSON.stringify({
+      type: 'about:blank',
+      title: 'LOOP_NAME_CONFLICT',
+      status: 409,
+      code: 'LOOP_NAME_CONFLICT',
+      detail: `A loop with an equivalent name already exists. Try ${JSON.stringify(suggestedName)}.`,
+      suggestedName,
+    }),
+    { status: 409, headers: { 'content-type': 'application/problem+json' } },
+  );
+}
+
 let counter = 0;
 export function id(seed: string): string {
   counter += 1;
@@ -257,6 +281,21 @@ export class FakeApi {
   /** Replace the handler for `METHOD /path/pattern` (`:id` matches one segment). */
   override(route: string, handler: Handler): void {
     this.overrides.set(route, handler);
+  }
+
+  /** The refusal the API answers when another loop has a name equivalent to `name`. */
+  nameConflict(name: string, exceptLoopId?: string): Response | undefined {
+    const used = new Set(
+      [...this.loops.values()]
+        .filter(({ loop }) => loop.id !== exceptLoopId)
+        .map(({ loop }) => nameKey(loop.name)),
+    );
+    if (!used.has(nameKey(name))) return undefined;
+    const base = name.trim().replace(/\s+/gu, ' ') || 'Loop';
+    for (let index = 1; ; index += 1) {
+      const candidate = `${base}${index === 1 ? ' copy' : ` copy ${index}`}`;
+      if (!used.has(nameKey(candidate))) return loopNameConflictProblem(candidate);
+    }
   }
 
   addLoop(
@@ -586,10 +625,10 @@ export class FakeApi {
         if (!entry.manifest.draftFile)
           return problem(409, 'TEMPLATE_DRAFT_UNAVAILABLE', 'editable draft not available');
         const request = call.body as TemplateDraftRequest;
-        const loop = this.addLoop({
-          ...minimalLoop(),
-          name: request.name ?? entry.manifest.title,
-        });
+        const name = request.name ?? entry.manifest.title;
+        const taken = this.nameConflict(name);
+        if (taken) return taken;
+        const loop = this.addLoop({ ...minimalLoop(), name });
         const draft = this.loops.get(loop.id)!.draft!;
         return json({ loop, draft, issues: validateLoop(draft.definition) }, 201);
       },
@@ -622,6 +661,8 @@ export class FakeApi {
       'POST /loops',
       (call) => {
         const def = (call.body as { definition: LoopDefinitionInput }).definition;
+        const taken = this.nameConflict(def.name);
+        if (taken) return taken;
         const loop = this.addLoop(def);
         const entry = this.loops.get(loop.id)!;
         return json(
@@ -639,7 +680,13 @@ export class FakeApi {
       (call) => {
         try {
           const imported = importLoop(call.body);
-          const loop = this.addLoop(imported.definition);
+          // The explicit copy name travels in the query; the uploaded document is unchanged.
+          const name = call.search.get('name');
+          const definition =
+            name === null ? imported.definition : { ...imported.definition, name: name.trim() };
+          const taken = this.nameConflict(definition.name);
+          if (taken) return taken;
+          const loop = this.addLoop(definition);
           return json(
             { loop, draft: this.loops.get(loop.id)!.draft, issues: imported.issues },
             201,
@@ -688,6 +735,9 @@ export class FakeApi {
             { status: 409, headers: { 'content-type': 'application/problem+json' } },
           );
         }
+        // A stale token answers first; then another loop's equivalent name.
+        const taken = this.nameConflict(parsed.data.name, loopId);
+        if (taken) return taken;
         const draft: LoopVersionRecord = {
           id: entry.draft?.id ?? id('version'),
           loopId: loopId!,

@@ -189,6 +189,7 @@ export class SqliteChatRepository {
         now,
         published: true,
         physical,
+        systemGeneratedName: true,
       });
       await tx
         .insert(chatBindings)
@@ -312,7 +313,10 @@ export class SqliteChatRepository {
           .where(eq(chatDevices.tokenHash, input.tokenHash));
         if (tokenExists) return invalid();
         const definition = structuredClone(version.definition);
-        definition.name = input.label + ' Chat';
+        // The device label has its own identity contract. Derive a loop display name
+        // that round-trips through SQLite without changing that label.
+        definition.name =
+          input.label.replace(/[\uD800-\uDFFF]/gu, '\uFFFD').replaceAll('\0', '\uFFFD') + ' Chat';
         await insertLoopWithVersion(tx, {
           ownerId: pair.ownerId,
           loopId,
@@ -321,6 +325,7 @@ export class SqliteChatRepository {
           now,
           published: true,
           physical: source.physical,
+          systemGeneratedName: true,
         });
         await tx.insert(chatDevices).values({
           id: deviceId,

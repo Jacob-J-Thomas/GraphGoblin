@@ -1,0 +1,22 @@
+Public Claude assembly metadata refusal and recovery
+Runtime: Node v22.23.4 selected from project PATH
+Output: <external plugin-463-corrections artifact>
+Fixture: a synthetic named stream created on the disposable generated README.md
+Pre-refusal README SHA256: 11869703136ce0400a4571305fc0f1e8d5cf4ed00d2861c6da020f7190f0ba1d
+Created stream payload: GraphGoblin PR463 disposable metadata probe
+$ node dist/cli.js --out '<external-output>'
+Error: Unsafe plugin output destination "<external-output>": Unowned alternate data stream found at "<external-output>\README.md". Choose an unused destination
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <worktree>
+  │ apps/plugin-claude
+
+Refusal exit code: 1 (expected 1)
+Post-refusal README SHA256: 11869703136ce0400a4571305fc0f1e8d5cf4ed00d2861c6da020f7190f0ba1d
+Post-refusal stream payload: GraphGoblin PR463 disposable metadata probe
+Removed the test-created stream; remaining stream: :$DATA
+$ node dist/cli.js --out '<external-output>'
+Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "<external-output>"
+Rebuild exit code: 0 (expected 0)
+Rebuilt owned artifact; all 7 generated file hashes match the ownership manifest.

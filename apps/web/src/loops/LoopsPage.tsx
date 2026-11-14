@@ -1,4 +1,4 @@
-import { loops } from '@graphgoblin/api-client';
+import { GraphGoblinApiError, loops } from '@graphgoblin/api-client';
 import type { ChatDevice } from '@graphgoblin/contracts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
@@ -8,6 +8,12 @@ import { useApi } from '../api/context.js';
 import { keys, useCreateTemplateDraft, useLoops, useTemplates } from '../api/queries.js';
 import { Icon } from '../components/icons/index.js';
 import { Page, PageHeader } from '../components/layout/index.js';
+import {
+  focusById,
+  LoopNameRetryForm,
+  LoopNameTakenHelp,
+  refusedNow,
+} from '../components/loop-name-conflict.js';
 import { QueryState, RunStatusBadge } from '../components/status.js';
 import { TemplateGallery } from './TemplateGallery.js';
 import {
@@ -31,6 +37,12 @@ import {
 import { clearLocalDraft } from '../drafts/local-drafts.js';
 import { newLoopDefinition } from '../editor/model.js';
 import {
+  importedLoopName,
+  LOOP_NAME_RULE,
+  loopNameConflict,
+  type LoopNameConflict,
+} from '../lib/loop-names.js';
+import {
   cn,
   downloadJson,
   errorMessage,
@@ -52,17 +64,23 @@ function CreateLoop() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
+  // The API's name refusal, kept while the field still holds the refused name (#209).
+  const [conflict, setConflict] = useState<LoopNameConflict>();
   const create = useMutation({
     mutationFn: (loopName: string) => loops.create(client, newLoopDefinition(loopName) as never),
+    onMutate: () => setConflict(undefined),
     onSuccess: (created) => {
       void queryClient.invalidateQueries({ queryKey: keys.loops });
       void navigate(`/loops/${created.loop.id}/edit`);
     },
+    onError: (error, loopName) => setConflict(loopNameConflict(error, loopName)),
   });
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (name.trim()) create.mutate(name.trim());
   };
+  const taken = conflict !== undefined && refusedNow(conflict, name);
+  const failed = create.isError && conflict === undefined;
   return (
     <form
       onSubmit={submit}
@@ -79,8 +97,8 @@ function CreateLoop() {
           id="new-loop-name"
           value={name}
           aria-required
-          aria-invalid={create.isError || undefined}
-          aria-describedby={create.isError ? 'new-loop-error' : undefined}
+          aria-invalid={failed || taken || undefined}
+          aria-describedby={taken ? 'new-loop-taken' : failed ? 'new-loop-error' : undefined}
           onChange={(e) => setName(e.target.value)}
           placeholder="nightly-triage"
         />
@@ -88,13 +106,43 @@ function CreateLoop() {
       <Button type="submit" disabled={!name.trim() || create.isPending}>
         Create
       </Button>
-      {create.isError ? (
+      {failed ? (
         <HelpText id="new-loop-error" role="alert" tone="bad" className="basis-full">
           {errorMessage(create.error)}
         </HelpText>
       ) : null}
+      {taken ? (
+        <LoopNameTakenHelp
+          id="new-loop-taken"
+          className="basis-full"
+          conflict={conflict}
+          onUseSuggestion={(suggested) => {
+            // Replace the text only; Create stays the user's deliberate next attempt.
+            setName(suggested);
+            focusById('new-loop-name');
+          }}
+        />
+      ) : null}
     </form>
   );
+}
+
+/** An import the API refused for its name, kept until the user retries under another or cancels. */
+interface HeldImport {
+  fileName: string;
+  /** The parsed upload, sent unchanged on every retry; the chosen name travels in the query. */
+  document: Record<string, unknown>;
+  /** The first refusal, of the name the document itself carries. */
+  original: LoopNameConflict;
+  /** The latest refusal, which may be of a retried name. */
+  latest: LoopNameConflict;
+  /** Any other failure of the last retry; `uncertain` when the request may have committed. */
+  error?: { text: string; uncertain: boolean } | undefined;
+}
+
+/** A failure after which the request may still have reached the API (no answer, or a 5xx). */
+function mayHaveCommitted(error: unknown): boolean {
+  return !(error instanceof GraphGoblinApiError) || isOfflineError(error) || error.status >= 500;
 }
 
 function ImportLoop() {
@@ -103,18 +151,50 @@ function ImportLoop() {
   const [message, setMessage] = useState<
     { tone: 'good' | 'bad'; text: string; issues?: string[] } | undefined
   >();
+  const [held, setHeld] = useState<HeldImport>();
   const importLoop = useMutation({
-    mutationFn: (document: Record<string, unknown>) => loops.import(client, document),
+    mutationFn: ({
+      document,
+      name,
+    }: {
+      fileName: string;
+      document: Record<string, unknown>;
+      name?: string;
+    }) => loops.import(client, document, name === undefined ? undefined : { name }),
     onSuccess: (created) => {
       void queryClient.invalidateQueries({ queryKey: keys.loops });
+      setHeld(undefined);
       setMessage({
         tone: 'good',
         text: `Imported "${created.loop.name}".`,
         issues: created.issues.map((i) => `${i.code}: ${i.message}`),
       });
     },
-    onError: (error) =>
-      setMessage({ tone: 'bad', text: errorMessage(error), issues: problemIssues(error) }),
+    onError: (error, { fileName, document, name }) => {
+      const refused = loopNameConflict(error, name ?? importedLoopName(document));
+      if (name !== undefined) {
+        // A retry: keep the held document and say why this attempt failed too. The list refresh
+        // shows the loop that holds the name, or an import that committed without an answer.
+        setHeld((current) =>
+          current?.document === document
+            ? refused
+              ? { ...current, latest: refused, error: undefined }
+              : {
+                  ...current,
+                  error: { text: errorMessage(error), uncertain: mayHaveCommitted(error) },
+                }
+            : current,
+        );
+        void queryClient.invalidateQueries({ queryKey: keys.loops });
+        return;
+      }
+      if (refused) {
+        setHeld({ fileName, document, original: refused, latest: refused });
+        void queryClient.invalidateQueries({ queryKey: keys.loops });
+        return;
+      }
+      setMessage({ tone: 'bad', text: errorMessage(error), issues: problemIssues(error) });
+    },
   });
   const onFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -122,38 +202,89 @@ function ImportLoop() {
     if (!file) return;
     // A new choice starts over: the last result no longer describes the picker.
     setMessage(undefined);
+    setHeld(undefined);
     const parsed = parseJson(await file.text());
     if (!parsed.ok || typeof parsed.value !== 'object' || parsed.value === null) {
       setMessage({ tone: 'bad', text: `${file.name} is not a JSON document.` });
       return;
     }
-    importLoop.mutate(parsed.value as Record<string, unknown>);
+    importLoop.mutate({ fileName: file.name, document: parsed.value as Record<string, unknown> });
   };
   return (
-    <FieldGroup>
-      <Label htmlFor="import-loop">Import an exported loop (JSON)</Label>
-      {/* A refused file describes the picker and marks it invalid until the next choice. */}
-      <FilePicker
-        id="import-loop"
-        accept="application/json,.json"
-        aria-invalid={message?.tone === 'bad' || undefined}
-        aria-describedby={message?.tone === 'bad' ? 'import-loop-result' : undefined}
-        onChange={(e) => void onFile(e)}
-      />
-      {message ? (
-        <div id="import-loop-result">
-          <Alert tone={message.tone} title={message.text}>
-            {message.issues && message.issues.length > 0 ? (
-              <ul className="list-disc pl-4 text-xs">
-                {message.issues.map((issue, i) => (
-                  <li key={i}>{issue}</li>
-                ))}
-              </ul>
-            ) : null}
-          </Alert>
-        </div>
+    <>
+      <FieldGroup>
+        <Label htmlFor="import-loop">Import an exported loop (JSON)</Label>
+        {/* A refused file describes the picker and marks it invalid until the next choice. */}
+        <FilePicker
+          id="import-loop"
+          accept="application/json,.json"
+          aria-invalid={message?.tone === 'bad' || undefined}
+          aria-describedby={
+            message?.tone === 'bad'
+              ? 'import-loop-result'
+              : held
+                ? 'import-name-conflict-text'
+                : undefined
+          }
+          onChange={(e) => void onFile(e)}
+        />
+        {message ? (
+          <div id="import-loop-result">
+            <Alert tone={message.tone} title={message.text}>
+              {message.issues && message.issues.length > 0 ? (
+                <ul className="list-disc pl-4 text-xs">
+                  {message.issues.map((issue, i) => (
+                    <li key={i}>{issue}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </Alert>
+          </div>
+        ) : null}
+      </FieldGroup>
+      {held ? (
+        // Its own full-width line, so the taller panel never pushes the Create form down.
+        <section aria-label="Import under another name" className="grid min-w-0 basis-full gap-3">
+          <div id="import-name-conflict-text">
+            <Alert tone="warn" title={`${held.fileName} was not imported`}>
+              {held.original.name === undefined
+                ? 'Another loop already has the name this file uses.'
+                : `Another loop already has the name “${held.original.name.trim()}”.`}{' '}
+              {LOOP_NAME_RULE} Import it as a separate loop under another name, or cancel. Neither
+              the file nor the existing loop is changed.
+            </Alert>
+          </div>
+          <LoopNameRetryForm
+            label="Name for the imported loop"
+            submitLabel="Import as new loop"
+            pendingLabel="Importing…"
+            initialName={held.original.suggestedName ?? held.original.name ?? ''}
+            conflict={held.latest}
+            pending={importLoop.isPending}
+            describedBy="import-name-conflict-text"
+            onSubmit={(name) => {
+              if (importLoop.isPending) return;
+              setHeld({ ...held, error: undefined });
+              importLoop.mutate({ fileName: held.fileName, document: held.document, name });
+            }}
+            onCancel={() => {
+              setHeld(undefined);
+              focusById('import-loop');
+            }}
+          />
+          {held.error ? (
+            <Alert title="The import was not completed">
+              <p>{held.error.text}</p>
+              {held.error.uncertain ? (
+                <p className="mt-2">
+                  If the request timed out, check the loop list for the import before trying again.
+                </p>
+              ) : null}
+            </Alert>
+          ) : null}
+        </section>
       ) : null}
-    </FieldGroup>
+    </>
   );
 }
 
@@ -359,7 +490,11 @@ export function LoopsPage() {
               {(items) => (
                 <TemplateGallery
                   templates={items}
-                  onCreateDraft={(templateId) => createTemplateDraft.mutateAsync({ templateId })}
+                  onCreateDraft={(templateId, name) =>
+                    createTemplateDraft.mutateAsync(
+                      name === undefined ? { templateId } : { templateId, name },
+                    )
+                  }
                   onCreated={async (loopId) => {
                     await queryClient.invalidateQueries({ queryKey: keys.loops });
                     await navigate(`/loops/${loopId}/edit`);

@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 1473223,
+  "stop_reason": "end_turn",
+  "session_id": "88387e12-5eba-41af-ac31-1b41b0981926",
+  "total_cost_usd": 10.450180200000005,
+  "usage": {
+    "input_tokens": 256,
+    "cache_creation_input_tokens": 318159,
+    "cache_read_input_tokens": 23549721,
+    "output_tokens": 159697,
+    "output_tokens_details": {
+      "thinking_tokens": 77140
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 318159,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1595,
+        "cache_read_input_tokens": 317000,
+        "cache_creation_input_tokens": 1159,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1159
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 256,
+      "outputTokens": 159697,
+      "cacheReadInputTokens": 23549721,
+      "cacheCreationInputTokens": 318159,
+      "webSearchRequests": 0,
+      "costUSD": 10.450180200000005,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 77140,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 318159,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 152,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "On touch devices Omit is now a real **44 × 44 px** button. The ≥ 44 px coarse rule in docs09 is restored with no exception. The source is still not merge-ready: independent QA, GPT review, full CI and the Astra audit still have to pass. Nothing was staged, committed or pushed.\n\n**What changed (`JsonSchemaForm.tsx` only; omission behaviour, the API and required fields are untouched):**\n- **Touch layout:** every optional field's label line is 44 px high, with the label at the bottom. Omit is an outline button in the 44 × 44 spot at the end of that line. There is no invisible larger hit box.\n- **Spacing:** Omit ends 12 px above its field (the last safe distance, kept), starts at least 16 px below the field before, and sits at least 12 px from the label.\n- **Held place:** until Omit shows, an invisible copy of it keeps its spot, so it takes no taps, focus or screen-reader attention. This works on both pointer types and in any font, so Omit appearing moves nothing.\n- **Mouse/fine pointers:** the 20 px Omit looks the same as before. Untouched forms at 1280 are pixel-identical to phase2.\n\n**Measured results (real Edge, throwaway backend):**\n- **Size:** Omit is 44 × 44 on New run and Wait, for text, number, JSON, the raw editor and long titles, at 390 and 1280. The responsive test logs \"Omit input 44 x 44 px\" for both pages in both themes.\n- **No shift:** 0 px movement of field, label, tag or form height in all 48 configurations. The same check on the current HEAD build finds 4 shifts of 16.89 px: a long JSON title rewraps to 3 lines when Omit appears, on both touch and mouse. That defect predates this phase and is now fixed.\n- **Real taps:** 5,630 taps on the current field, the field before and the label never fired Omit. All 90 taps inside the drawn button did.\n\n**Negative controls (all fail as they should):**\n- The new touch test on HEAD's build fails on width (41.75 < 44), and the extended responsive test lists \"Omit input\" as too small.\n- A deliberately broken build with Omit only 6 px above its field gets 61 wrong omissions in 2,294 taps.\n- With the clearance checks removed, the e2e tap grid alone still catches the wrong omission.\n\n**Checks, all exit 0 on the final tree:**\n- the full `form-controls.spec.ts` (8/8, retries 0) and the affected responsive tests (4/4);\n- the four focused unit test files (59/59);\n- focused coverage of `JsonSchemaForm.tsx`: 100 % lines, 96.61 % branches, with every uncovered branch in older code;\n- Prettier, ESLint, typecheck, web lint and the final `pnpm.cmd build`.\n\nAll browser checks ran on the same build as the final one (dist `379a285e…`, byte-identical). The only later edit was one code comment. Final source `JsonSchemaForm.tsx` is `a216a032…`.\n\n**Corrections, within the two-batch limit:** batch 1 built the touch layout; measuring it exposed the long-title rewrap on mouse pointers, and batch 2 fixed that with the held place. I also sped up the touch e2e test by checking for omission once per column of taps (same tap points), and fixed some mistakes in my own measurement scripts before relying on them.\n\n**Things to weigh:**\n- **Timing:** the touch e2e test takes 22.5 s of its 60 s timeout locally, so slower CI runners could get close.\n- **Coarse e2e grid:** on the 6 px broken build it caught the JSON field but missed the text field, where my 1 px grid found wrong taps. The fixed ≥ 12 / ≥ 16 px spacing assertions fail first on any spacing regression.\n- **Taller touch forms:** about 26 px per optional row, +187 px on the 7-optional-row test form. On mouse pointers, long optional titles wrap about 50 px earlier because Omit's spot is held.\n- **Not tested:** touch was emulated in desktop Edge only; no real phones or zoom-out. Forced colours were not re-checked, so phase2's limitation stands.\n\nNo browser, test server or test process of mine is left running. The untracked `docs/qa/2026-11-14-i08-u22-baseline` is unchanged (31 files), and phase2's folder was only read.\n\nEverything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-235-claude-phase3/`; `handoff.md` has the hashes, the inspected screenshot paths, the failure record, every command with its exit code and the remaining gates.",
+  "ttft_ms": 697,
+  "type": "result",
+  "duration_ms": 3422954,
+  "uuid": "fa124018-f1e5-4f60-9397-8e0f248a790a",
+  "ttft_stream_ms": 504,
+  "time_to_request_ms": 62,
+  "first_content_frame_ms": 504,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 256,
+      "outputTokens": 159697,
+      "cacheReadInputTokens": 23549721,
+      "cacheCreationInputTokens": 318159,
+      "webSearchRequests": 0,
+      "costUSD": 10.450180200000005,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 77140,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 318159,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

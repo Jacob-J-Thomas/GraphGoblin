@@ -1,4 +1,4 @@
-# Use MCP and the Codex plugin
+# Use MCP with Codex and Claude Code
 
 ## Start the MCP server
 
@@ -63,7 +63,7 @@ HTTP accepts POST only and is stateless, with a fresh transport per request; GET
 | `provide_input`   | Supply the observed `waiting.waitId` and schema-valid input to an input wait.                   |
 | `send_signal`     | Send the observed `waiting.waitId` and a named signal with an optional payload; inspect `woke`. |
 
-`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for an unpublished loop; a draft run keeps a snapshot of the draft as it was at start. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
+`describe_loop` and `start_run` accept a loop ID or an exact, case-insensitive name. Use IDs when names are duplicated. `start_run` accepts `input`, optional `triggerNodeId`, and `allowDraft` for a loop with no published version; a draft run keeps a snapshot of the draft as it was at start. `allowDraft` cannot select a newer draft of a published loop. Its result includes `definition`, the pinned label (for example `Review draft v2`), and the full `pinned` object.
 
 `list_runs` returns `{ items, nextCursor }`. Pass a non-null `nextCursor` as `cursor` with the same filters, even when `items` is empty; stop when `nextCursor` is null.
 
@@ -103,6 +103,8 @@ pnpm.cmd --filter @graphgoblin/plugin-codex assemble
 codex plugin add graphgoblin@graphgoblin-local
 ```
 
+Rebuilding an existing output requires Windows PowerShell with `Add-Type` on Windows, `/usr/bin/xattr` on macOS, or `/usr/bin/python3` 3.8 or later on Linux. If the builder cannot verify the destination or detects an alternate data stream or extended attribute, keep that directory and assemble to an unused `--out` path. See the [plugin build instructions](../../apps/plugin-codex/README.md).
+
 Set `GG_API_URL` and, when required, `GG_API_KEY` before starting Codex. The plugin passes those variables to MCP. Its MCP tool timeout is 660 seconds to accommodate the longest wait call.
 
 Codex turns inside a loop inherit your enabled configured plugins, including this plugin's tools ([ADR-0067](../decisions/ADR-0067-codex-inherits-configured-plugins.md)). An inference node excludes all plugins from its sessions, including same-session output-schema repair, by adding `"features":{"plugins":false}` to its existing **Config overrides**. Separate LLM decision and coerce/output-transform repair calls have no node override and run in a fresh temporary directory; they inherit user/global configuration, not the caller's override or trusted-project layer. Exclude plugins from those calls in effective user/global Codex configuration, which also affects ordinary sessions. Node override keys cannot contain `@`, so they cannot target an individual plugin ID. An explicit inference feature enable can override a user feature disable; individually disabled plugins remain disabled.
@@ -137,5 +139,23 @@ If it asks for input, show me the prompt. Report the returned summary and run ID
 ```
 
 The run and inspection skills use MCP. The design skill uses REST for editing because the tool list covers run operations rather than graph editing. See [API, streaming, and MCP](../07-api-and-streaming.md) for design context.
+
+## Load the Claude Code plugin
+
+Build GraphGoblin with the supported Node 22 runtime and start the gateway. From the built checkout, validate and load the Claude artifact:
+
+```powershell
+$pluginPath = (Resolve-Path 'apps/plugin-claude/dist/plugin/graphgoblin').Path
+claude plugin validate --strict $pluginPath
+claude --plugin-dir $pluginPath
+```
+
+The plugin inherits `GG_API_URL` and, when needed, `GG_API_KEY`. In an authenticated configuration, authoring needs `loops:write`, starting a known loop needs `loops:read` and `runs:write`, and inspection by run ID needs `runs:read`.
+
+- Use `/graphgoblin:design-loop` to create or update an unpublished draft and see validation issues.
+- Use `/graphgoblin:run-loop` to start a loop. Explicitly request draft execution when the loop has no published version. For a published loop with a newer draft, explain that the draft cannot be selected and do not substitute a published run unless the user confirms it.
+- Use `/graphgoblin:inspect-run` with the run ID to read the outcome and events.
+
+Claude uses the existing stdio MCP server for all three commands, including its opt-in draft tools. See [local installation and refresh](../../apps/plugin-claude/README.md) for a persistent copy, alternate Node selection, and troubleshooting.
 
 Continue with [Settings and secrets](06-settings-and-secrets.md).

@@ -46,7 +46,7 @@ See [Install and make a first run](docs/guide/01-install-and-first-run.md) for e
 
 ```
 packages/   layers: contracts -> domain -> engine -> infrastructure, plus optional adapter-* packages
-apps/       hosts: api, mcp, web, plugin-codex
+apps/       hosts: api, mcp, web, plugin-codex, plugin-claude
 tooling/    shared configs and repository gate scripts
 scripts/    install scripts
 docs/       design, ADRs, research, user guide

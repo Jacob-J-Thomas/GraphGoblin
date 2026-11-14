@@ -1,0 +1,18 @@
+# #235 phase 3 drivers (repeatable)
+
+Plain Node ESM. Run with Node 22.23.4 on `PATH` after `pnpm build` in the worktree, by absolute path
+(`node C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-235-claude-phase3/drivers/<script>.mjs`), so the
+process is identifiable in `owned-processes.ps1`. Each starts the repository's own disposable e2e backend
+(`apps/web/e2e/server.ts`: real API, **in-memory** store, fake harness, **ephemeral loopback port**, serving
+`apps/web/dist`, or `GG_E2E_WEB_DIST`) and Edge (`channel: 'msedge'`, headless), and stops both in a
+`finally`. The server also exits when its parent's stdin pipe closes. No owner app or store, credentials,
+ports 4747/4748 or provider calls.
+
+| Script                | What it measures                                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `common.mjs`          | Phase 2's helpers (server, Edge, contexts, `publishLoop`, `VISUAL_SCHEMA`), output folder switched to phase 3.      |
+| `schemas.mjs`         | `LONG_SCHEMA`: an optional text field and an optional JSON field with long titles.                                 |
+| `omit-geometry.mjs`   | Revealed Omit size; the place held before it appears; label line height; Omit to its field, to the previous control and to the label; label lines; tag movement; field/label/form shift when Omit appears; `::after`. New run and Wait; coarse 390/1280; fine 1280/390; text, number, JSON, raw editor, long titles. |
+| `tap-grid.mjs`        | Real taps (`page.touchscreen.tap`, CDP touch events) on coarse pointers: the current field's top 14 px (every 1 px), the previous control's bottom 12 px (every 2 px), across Omit's x-range +-26 px (x step `GG_STEP`), the label's text-line boxes nearest Omit (every 3 px), and 9 taps inside the drawn button. A capture-phase click counter on Omit attributes every firing (late ones too). Wrong action = a tap inside a control that fires Omit. Four taps 1 px inside the corners lie outside the rounded corners and are recorded as information only. |
+| `screenshots.mjs`     | New run, Wait, long titles and raw editor; 390 coarse and 1280 fine in light and dark, 1280 coarse light; untouched, edited, row crops, keyboard focus on a text/JSON Omit, `-` number error. Device scale 2. No forced-colours captures (Playwright's emulation does not paint the forced palette). |
+| `owned-processes.ps1` | Lists e2e servers, Playwright/vitest and headless Edge processes, for the cleanup proof.                          |

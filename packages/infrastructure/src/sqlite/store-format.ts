@@ -7,6 +7,7 @@ import {
   LoopDefinitionSchema,
 } from '@graphgoblin/contracts';
 import { retiredEventDestinations, withoutRetiredEventDestinations } from '@graphgoblin/domain';
+import { loopNameKey } from './loop-names.js';
 import {
   currentStoreReadiness,
   normalizeStoreSql,
@@ -206,6 +207,30 @@ export async function guardCurrentStore(
     structureGap(structure, readiness.head, false) === undefined
   )
     throw damaged('the migration ledger is behind the store structure');
+  // The native driver truncates returned TEXT at NUL. Inspect the stored value through SQLite.
+  const [nulName] = await rows(
+    client,
+    'SELECT id FROM loops WHERE instr(name, char(0)) > 0 LIMIT 1',
+  );
+  if (nulName)
+    throw new UnsupportedStoreError(
+      `Loop ${String(nulName.id)} has a NUL in its name. Rename it in the previous build before upgrading.`,
+      CURRENT_DEFINITION_FORMAT,
+    );
+  const loopNames = new Map<string, string>();
+  for await (const batch of tableBatches(client, 'loops')) {
+    for (const row of batch) {
+      const key = JSON.stringify([row.owner_id, loopNameKey(String(row.name))]);
+      const id = String(row.id);
+      const prior = loopNames.get(key);
+      if (prior !== undefined)
+        throw new UnsupportedStoreError(
+          `Loops ${prior} and ${id} have equivalent names for owner ${JSON.stringify(row.owner_id)}. Rename one in the previous build before upgrading.`,
+          CURRENT_DEFINITION_FORMAT,
+        );
+      loopNames.set(key, id);
+    }
+  }
   // A test-selected migration catalogue can stop before the authentication columns exist. The
   // shipped baseline always requires them before this data-level validation is reached.
   if (

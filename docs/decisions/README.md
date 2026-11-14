@@ -82,4 +82,8 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 
 [ADR-0067: Codex loop turns inherit configured plugins](ADR-0067-codex-inherits-configured-plugins.md) supersedes ADR-0063's Codex plugin-off default, keeps standalone MCP discovery separate, and records the accepted familiar-default D2 policy and CLI diagnostics limit (#439, #442).
 
+[ADR-0072: Local Claude Code loop plugin](ADR-0072-claude-code-loop-plugin.md) records the Claude-native local artifact, stdio draft authoring and gateway authorization boundaries (#455).
+
+[ADR-0073: Transactional loop-name uniqueness](ADR-0073-transactional-loop-names.md) records owner-scoped comparison, copy suggestions, write serialization and explicit repair for existing duplicates (#209).
+
 [ADR-0075 — Repair references in the current loop's node state](ADR-0075-node-id-reference-repair.md) records the repair and publication boundaries for node-ID changes (#273).

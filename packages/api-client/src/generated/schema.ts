@@ -1863,7 +1863,10 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create a loop with an initial draft version */
+        /**
+         * Create a loop with an initial draft version
+         * @description An equivalent loop name for this owner returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -1918,12 +1921,14 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Create or update a loop from exported JSON
-         * @description Imports a current-format export or bare definition. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.
+         * Create a loop from exported JSON
+         * @description Imports a current-format export or bare definition. An equivalent loop name returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName. Retry with the original document and an optional name query parameter to create a distinct copy. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.
          */
         post: {
             parameters: {
-                query?: never;
+                query?: {
+                    name?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -2041,7 +2046,7 @@ export interface paths {
         get?: never;
         /**
          * Save the draft definition (validated, may be unpublishable)
-         * @description Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins).
+         * @description Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins). A name equivalent to another loop’s returns 409 `LOOP_NAME_CONFLICT`.
          */
         put: {
             parameters: {
@@ -3214,7 +3219,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create an editable manual loop draft from a template */
+        /**
+         * Create an editable manual loop draft from a template
+         * @description An equivalent loop name returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName. Retry with an explicit name to create a distinct copy.
+         */
         post: operations["createTemplateDraft"];
         delete?: never;
         options?: never;

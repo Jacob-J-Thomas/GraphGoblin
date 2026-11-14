@@ -72,10 +72,11 @@ apps/
   mcp/                MCP server over the generated API client.
   web/                React PWA.
   plugin-codex/       Codex plugin: MCP server registration plus skills.
+  plugin-claude/      Claude Code plugin: local stdio MCP registration plus skills.
 tooling/              Shared tsconfig, eslint config, dependency-cruiser rules, licence allowlist.
 ```
 
-Post-1.0 packages: `adapter-claude`, `adapter-litellm`, `adapter-postgres`, `apps/runner`, `apps/plugin-claude`.
+Post-1.0 packages: `adapter-claude`, `adapter-litellm`, `adapter-postgres`, `apps/runner`.
 
 ## Ports owned by the engine (Draft)
 

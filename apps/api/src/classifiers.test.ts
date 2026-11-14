@@ -458,7 +458,7 @@ describe('classifier publish validation agreement', () => {
       });
       const imported = await t.app.inject({
         method: 'POST',
-        url: '/loops/import',
+        url: '/loops/import?name=Jev%20Copy',
         payload: {
           format: 'graphgoblin-loop',
           formatVersion: CURRENT_DEFINITION_FORMAT,
@@ -559,7 +559,7 @@ describe('classifier publish validation agreement', () => {
     });
     const imported = await t.app.inject({
       method: 'POST',
-      url: '/loops/import',
+      url: '/loops/import?name=Classifier%20Copy',
       payload: {
         format: 'graphgoblin-loop',
         formatVersion: CURRENT_DEFINITION_FORMAT,
@@ -568,6 +568,7 @@ describe('classifier publish validation agreement', () => {
       },
     });
     expect(saved.json().issues).toEqual(initial.issues);
+    expect(imported.statusCode, imported.body).toBe(201);
     expect(imported.json().issues).toEqual(initial.issues);
     expect(validated.issues).toEqual(initial.issues);
     const expected =
@@ -627,9 +628,10 @@ describe('classifier publish validation agreement', () => {
     expect(exported).not.toHaveProperty('classifierModels');
     const imported = await t.app.inject({
       method: 'POST',
-      url: '/loops/import',
+      url: '/loops/import?name=Expression%20Copy',
       payload: exported,
     });
+    expect(imported.statusCode, imported.body).toBe(201);
     expect(imported.json().draft.definition.nodes[1].config).toMatchObject({
       kind: 'expression',
       jsonata: '"yes"',

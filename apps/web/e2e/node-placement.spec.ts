@@ -1,6 +1,14 @@
 import { DecisionConfigSchema } from '@graphgoblin/contracts';
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
-import { approvalLoop, closeNode, expect, openAdvanced, openNode, test } from './fixtures.js';
+import {
+  approvalLoop,
+  closeNode,
+  expect,
+  openAdvanced,
+  openNode,
+  test,
+  uniqueLoopName,
+} from './fixtures.js';
 
 const choice = {
   type: 'choice' as const,
@@ -21,7 +29,8 @@ const score = {
 };
 
 async function create(request: APIRequestContext, kind: string, config: unknown) {
-  const loop = approvalLoop(`Placement ${kind}`);
+  // Tests repeat this on the shared gateway, where one owner cannot repeat a name (#209).
+  const loop = approvalLoop(uniqueLoopName(`Placement ${kind}`));
   const response = await request.post('/loops', {
     data: {
       definition: {
@@ -346,7 +355,7 @@ for (const theme of ['dark', 'light']) {
     await page
       .locator('tr')
       .filter({ has: page.locator(`a[href="/app/loops/${inferId}/edit"]`) })
-      .getByRole('button', { name: /^Delete Placement inference$/ })
+      .getByRole('button', { name: /^Delete Placement inference \[/ })
       .click();
     expect((await page.getByRole('alertdialog').boundingBox())!.width).toBe(520);
   });

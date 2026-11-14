@@ -25023,6 +25023,7 @@
         "tags": [
           "loops"
         ],
+        "description": "An equivalent loop name for this owner returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName.",
         "requestBody": {
           "required": true,
           "content": {
@@ -25107,11 +25108,11 @@
     },
     "/loops/import": {
       "post": {
-        "summary": "Create or update a loop from exported JSON",
+        "summary": "Create a loop from exported JSON",
         "tags": [
           "loops"
         ],
-        "description": "Imports a current-format export or bare definition. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.",
+        "description": "Imports a current-format export or bare definition. An equivalent loop name returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName. Retry with the original document and an optional name query parameter to create a distinct copy. A document in another format is refused with `400 LOOP_FORMAT_UNSUPPORTED` (`errors.foundFormat`, `errors.requiredFormat`); it is never converted.",
         "requestBody": {
           "required": true,
           "content": {
@@ -25126,6 +25127,18 @@
             }
           }
         },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "in": "query",
+            "name": "name",
+            "required": false
+          }
+        ],
         "responses": {
           "201": {
             "description": "Default Response",
@@ -25268,7 +25281,7 @@
         "tags": [
           "loops"
         ],
-        "description": "Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins).",
+        "description": "Send `If-Match` with the `draftToken` (or `ETag`) of the copy the edit is based on; a stale token answers 409 `DRAFT_CONFLICT` with the server’s `draftToken`. Without `If-Match` the save is unconditional (last write wins). A name equivalent to another loop’s returns 409 `LOOP_NAME_CONFLICT`.",
         "requestBody": {
           "required": true,
           "content": {
@@ -26980,6 +26993,7 @@
         "tags": [
           "templates"
         ],
+        "description": "An equivalent loop name returns 409 LOOP_NAME_CONFLICT with an advisory suggestedName. Retry with an explicit name to create a distinct copy.",
         "requestBody": {
           "required": true,
           "content": {

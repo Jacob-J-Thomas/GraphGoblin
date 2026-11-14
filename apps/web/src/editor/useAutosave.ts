@@ -10,6 +10,7 @@ import {
   saveLocalDraft,
   subscribeDeviceStorage,
 } from '../drafts/local-drafts.js';
+import { loopNameConflict, sameLoopName } from '../lib/loop-names.js';
 import { markApiUnreachable, subscribeApiRecovery } from '../lib/reachability.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
 import { validateDraft } from './model.js';
@@ -136,8 +137,9 @@ export function useAutosave(
   // The last rendered token and conflict, for the unmount save: the store may be reset by then.
   const baseToken = useEditorStore((s) => s.baseToken);
   const inConflict = useEditorStore((s) => s.conflict !== undefined);
-  const latest = useRef({ inConflict });
-  latest.current = { inConflict };
+  const nameConflict = useEditorStore((s) => s.nameConflict);
+  const latest = useRef({ inConflict, nameConflict });
+  latest.current = { inConflict, nameConflict };
   const enabledRef = useRef(enabled && serverReconciled);
   enabledRef.current = enabled && serverReconciled;
   const deviceReadyRef = useRef(enabled && deviceReady);
@@ -169,6 +171,13 @@ export function useAutosave(
           setSaveState('invalid', systemRef.current ? 'SYSTEM_CHAT_CONTRACT_INVALID' : undefined);
           return false;
         }
+        // Another loop holds this name (#209): keep every edit on the device and send nothing
+        // until the name changes or the user deliberately tries it again (`retrying`).
+        const held = state.nameConflict;
+        if (held && !held.retrying && sameLoopName(definition.name, held.name)) {
+          setSaveState('name-conflict');
+          return false;
+        }
         setSaveState('saving');
         let saved: Awaited<ReturnType<typeof loops.saveDraft>>;
         try {
@@ -179,7 +188,25 @@ export function useAutosave(
           const now = useEditorStore.getState();
           if (now.loopId !== loopId || now.generation !== generation) return false;
           const conflict = draftConflict(error);
-          if (conflict) {
+          const refused = conflict ? undefined : loopNameConflict(error, definition.name);
+          // A deliberate retry is used up by any answer; a name refusal replaces the guidance.
+          if (refused) {
+            now.setNameConflict({
+              name: definition.name,
+              suggestedName: refused.suggestedName,
+              retrying: false,
+              retried: held?.retrying === true && sameLoopName(held.name, definition.name),
+            });
+          } else if (conflict) {
+            // A stale base takes precedence on the server; its own notice asks Reload or
+            // Overwrite, and an overwrite that meets the name again is refused afresh.
+            now.setNameConflict(undefined);
+          } else if (now.nameConflict?.retrying) {
+            now.setNameConflict({ ...now.nameConflict, retrying: false });
+          }
+          if (refused) {
+            setSaveState('name-conflict');
+          } else if (conflict) {
             now.setConflict(conflict);
             setSaveState('conflict', CONFLICT_MESSAGE);
           } else if (
@@ -216,7 +243,11 @@ export function useAutosave(
           return now.loopId === loopId && now.generation === generation;
         };
         // Before the device write, so an edit mirrored from here on carries the new token.
-        if (isCurrent()) useEditorStore.getState().setBaseToken(saved.draftToken);
+        if (isCurrent()) {
+          useEditorStore.getState().setBaseToken(saved.draftToken);
+          // The server took this name, so an earlier refusal no longer applies.
+          useEditorStore.getState().setNameConflict(undefined);
+        }
         await recordSaved(loopId, definition, saved.draftToken, baseToken);
         if (!isCurrent()) return false;
         if (useEditorStore.getState().revision === rev) {
@@ -271,6 +302,9 @@ export function useAutosave(
       if (!validateDraft(last.definition, systemRef.current).schemaValid) return;
       // In conflict the user has not chosen yet: the unsynced local copy waits for the next visit.
       if (latest.current.inConflict) return;
+      // Still the refused name: the device copy keeps it, and the next visit's save asks again.
+      const refusedName = latest.current.nameConflict;
+      if (refusedName && sameLoopName(last.definition.name, refusedName.name)) return;
       void serializeSave(last.loopId, async () => {
         const token = latestTokens.get(last.loopId);
         const saved = await loops.saveDraft(client, last.loopId, last.definition, {

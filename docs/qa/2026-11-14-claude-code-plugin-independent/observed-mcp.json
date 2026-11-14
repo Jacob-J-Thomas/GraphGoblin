@@ -1,0 +1,171 @@
+{
+  "head": "55ca03b18deeb80a436943c3a8e39e8b5f4b7b0d",
+  "base": "b3b5e1874a8252cc01c065d18fef42cbfbe075b4",
+  "versions": {
+    "node": "v22.23.4"
+  },
+  "instruments": [
+    {
+      "purpose": "baseline default stdio",
+      "pid": 43260,
+      "inventory": [
+        "cancel_run",
+        "describe_loop",
+        "get_run",
+        "get_run_thread",
+        "list_loops",
+        "list_runs",
+        "pause_run",
+        "provide_input",
+        "read_run_events",
+        "replay_run",
+        "resume_run",
+        "send_signal",
+        "start_run",
+        "wait_for_run"
+      ],
+      "stderr": [
+        "graphgoblin-mcp: stdio (gateway http://127.0.0.1:1)\n"
+      ]
+    },
+    {
+      "purpose": "candidate default stdio",
+      "pid": 35200,
+      "inventory": [
+        "cancel_run",
+        "describe_loop",
+        "get_run",
+        "get_run_thread",
+        "list_loops",
+        "list_runs",
+        "pause_run",
+        "provide_input",
+        "read_run_events",
+        "replay_run",
+        "resume_run",
+        "send_signal",
+        "start_run",
+        "wait_for_run"
+      ],
+      "stderr": [
+        "graphgoblin-mcp: stdio (gateway http://127.0.0.1:1)\n"
+      ]
+    },
+    {
+      "purpose": "candidate opt-in stdio",
+      "pid": 47620,
+      "inventory": [
+        "cancel_run",
+        "create_loop_draft",
+        "describe_loop",
+        "get_loop_draft",
+        "get_run",
+        "get_run_thread",
+        "list_loops",
+        "list_runs",
+        "pause_run",
+        "provide_input",
+        "read_run_events",
+        "replay_run",
+        "resume_run",
+        "save_loop_draft",
+        "send_signal",
+        "start_run",
+        "validate_loop_definition",
+        "wait_for_run"
+      ],
+      "stderr": [
+        "graphgoblin-mcp: stdio (gateway http://127.0.0.1:1)\n"
+      ]
+    },
+    {
+      "purpose": "candidate default HTTP",
+      "inventory": [
+        "cancel_run",
+        "describe_loop",
+        "get_run",
+        "get_run_thread",
+        "list_loops",
+        "list_runs",
+        "pause_run",
+        "provide_input",
+        "read_run_events",
+        "replay_run",
+        "resume_run",
+        "send_signal",
+        "start_run",
+        "wait_for_run"
+      ],
+      "stderr": []
+    },
+    {
+      "purpose": "opt-in actual gateway wire",
+      "pid": 44840,
+      "inventory": [
+        "cancel_run",
+        "create_loop_draft",
+        "describe_loop",
+        "get_loop_draft",
+        "get_run",
+        "get_run_thread",
+        "list_loops",
+        "list_runs",
+        "pause_run",
+        "provide_input",
+        "read_run_events",
+        "replay_run",
+        "resume_run",
+        "save_loop_draft",
+        "send_signal",
+        "start_run",
+        "validate_loop_definition",
+        "wait_for_run"
+      ],
+      "stderr": [
+        "graphgoblin-mcp: stdio (gateway http://127.0.0.1:53113)\n"
+      ]
+    },
+    {
+      "purpose": "closed owned HTTP MCP",
+      "pid": 50100,
+      "exit": {
+        "code": null,
+        "signal": "SIGTERM"
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "case": "same default inventory and exactly four draft additions",
+      "defaultCount": 14,
+      "optInCount": 18
+    },
+    {
+      "case": "combined HTTP/draft-tool mode refused before listen",
+      "pid": 50132,
+      "exit": {
+        "code": 2,
+        "signal": null
+      },
+      "diagnostic": "graphgoblin-mcp: --draft-tools is supported only on stdio"
+    },
+    {
+      "case": "actual default HTTP tool contract equivalent to baseline stdio",
+      "endpoint": "http://127.0.0.1:53108/mcp",
+      "pid": 50100,
+      "tools": 14
+    },
+    {
+      "case": "native typed tool results, validator issues and invalid-token refusal",
+      "loop": "01M7CF2Z1PBV3VA5BJP65JST72",
+      "validationCodes": [
+        "PORT_UNCONNECTED",
+        "TRIGGER_NO_EXIT_PATH",
+        "NODE_UNREACHABLE"
+      ],
+      "published": false,
+      "runs": 0
+    }
+  ],
+  "apiOrigin": "http://127.0.0.1:53113"
+}
