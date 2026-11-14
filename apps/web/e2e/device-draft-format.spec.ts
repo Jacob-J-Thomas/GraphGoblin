@@ -120,7 +120,9 @@ for (const [kind, extra] of [
     page,
     request,
   }) => {
-    const { loop } = await create(request, 'server work');
+    // Each case owns its loop on the shared gateway, where one owner cannot repeat a name (#209).
+    const name = `server work with ${kind}`;
+    const { loop } = await create(request, name);
     await page.goto('/app/loops');
     const record = { loopId: loop.id, savedAt: 'long ago', synced: false, ...extra };
     await storeRecord(page, record);
@@ -133,7 +135,7 @@ for (const [kind, extra] of [
     if (!path) throw new Error('Expected local download');
     expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(record);
     await page.getByRole('button', { name: 'Discard this device draft' }).click();
-    await expect(page.getByRole('heading', { name: 'server work' })).toBeVisible();
+    await expect(page.getByRole('heading', { name })).toBeVisible();
     expect(await storedDraft(page, loop.id)).toBeUndefined();
   });
 }

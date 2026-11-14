@@ -1,5 +1,6 @@
 import { TemplateDraftResponseSchema, type LoopVersionRecord } from '@graphgoblin/contracts';
-import { expect, openNode, showLoopPanel, test } from './fixtures.js';
+import type { Page } from '@playwright/test';
+import { expect, openNode, showLoopPanel, test, uniqueLoopName } from './fixtures.js';
 
 test('opens the starter gallery with the keyboard and creates an editable draft directly', async ({
   page,
@@ -115,6 +116,9 @@ for (const width of [1440, 390, 320]) {
   });
 }
 
+// Each template's own name can be created once per owner (#209): this shared gateway's first
+// Starter assistant copy belongs to the first test, so the tests below that need an ordinary
+// first copy use the Review and Implementation templates, and the repeated-copy test asks for names.
 test('retains keyboard focus and guards all cards while a copy is pending', async ({ page }) => {
   let release!: () => void;
   const pending = new Promise<void>((resolve) => {
@@ -129,7 +133,7 @@ test('retains keyboard focus and guards all cards while a copy is pending', asyn
   await page.goto('/app/loops');
   await page.getByRole('button', { name: 'New from template' }).click();
   const create = page
-    .getByRole('region', { name: 'Starter assistant', exact: true })
+    .getByRole('region', { name: 'Review workflow', exact: true })
     .getByRole('button');
   await create.focus();
   await page.keyboard.press('Enter');
@@ -170,12 +174,12 @@ test('announces failed creation, keeps focus and retries only on a new activatio
   });
   await page.goto('/app/loops');
   await page.getByRole('button', { name: 'New from template' }).click();
-  const create = page.getByRole('button', { name: 'Use Starter assistant', exact: true });
+  const create = page.getByRole('button', { name: 'Use Implementation workflow', exact: true });
   await create.focus();
   await page.keyboard.press('Enter');
   const error = page
     .getByRole('alert')
-    .filter({ hasText: 'Could not create the Starter assistant draft' });
+    .filter({ hasText: 'Could not create the Implementation workflow draft' });
   await expect(error).toBeVisible();
   await expect(error).toContainText('check the loop list');
   await expect(create).toBeFocused();
@@ -186,21 +190,74 @@ test('announces failed creation, keeps focus and retries only on a new activatio
   expect(submissions).toBe(2);
 });
 
-test('creates independent copies and leaves other drafts and the catalog unchanged after editing', async ({
+/** A definition without its display name, so graphs compare apart from their distinct names. */
+function graphOf(definition: LoopVersionRecord['definition']) {
+  const { name: _name, ...graph } = definition;
+  return graph;
+}
+
+async function loopIds(page: Page): Promise<string[]> {
+  const listed = (await (await page.request.get('/loops')).json()) as { items: { id: string }[] };
+  return listed.items.map((loop) => loop.id).sort();
+}
+
+test('a repeated Use asks for a name, then creates independent copies of the same graph (#209)', async ({
   page,
 }) => {
   const catalogBefore = (await (await page.request.get('/templates/starter')).json()) as unknown;
+  // The template's own name is taken: by the first test's copy, or here when run alone.
+  const seeded = await page.request.post('/templates/starter/draft', { data: {} });
+  expect([201, 409]).toContain(seeded.status());
+  const listed = (await (await page.request.get('/loops')).json()) as {
+    items: { id: string; name: string }[];
+  };
+  const original = listed.items.find((loop) => loop.name === 'Starter assistant');
+  if (!original) throw new Error('No loop holds the Starter assistant name.');
+  const originalBefore = (await (await page.request.get(`/loops/${original.id}`)).json()) as {
+    loop: unknown;
+    draft: LoopVersionRecord;
+  };
+
   const copies = [];
-  for (let index = 0; index < 2; index += 1) {
+  for (const choice of ['typed', 'suggested'] as const) {
+    const idsBefore = await loopIds(page);
     await page.goto('/app/loops');
     await page.getByRole('button', { name: 'New from template' }).click();
-    const response = page.waitForResponse(
-      (item) =>
-        item.request().method() === 'POST' &&
-        new URL(item.url()).pathname === '/templates/starter/draft',
+    const card = page.getByRole('region', { name: 'Starter assistant', exact: true });
+    const isDraftRequest = (item: { request: () => { method: () => string }; url: () => string }) =>
+      item.request().method() === 'POST' &&
+      new URL(item.url()).pathname === '/templates/starter/draft';
+    const refused = page.waitForResponse(isDraftRequest);
+    await card.getByRole('button', { name: 'Use Starter assistant', exact: true }).click();
+    const refusal = await refused;
+    expect(refusal.status()).toBe(409);
+    const problem = (await refusal.json()) as { code: string; suggestedName: string };
+    expect(problem.code).toBe('LOOP_NAME_CONFLICT');
+    expect(typeof problem.suggestedName).toBe('string');
+
+    // The refusal created nothing and changed neither the catalog nor the original copy.
+    const field = card.getByRole('textbox', { name: 'Name for the new draft' });
+    await expect(field).toBeFocused();
+    await expect(field).toHaveValue(problem.suggestedName);
+    await expect(card).toContainText('Another loop already has the name this template uses.');
+    await expect(card.getByRole('button', { name: 'Use Starter assistant' })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/app\/loops$/);
+    expect(await loopIds(page)).toEqual(idsBefore);
+    expect(await (await page.request.get('/templates/starter')).json()).toEqual(catalogBefore);
+    expect(await (await page.request.get(`/loops/${original.id}`)).json()).toMatchObject(
+      originalBefore,
     );
-    await page.getByRole('button', { name: 'Use Starter assistant', exact: true }).click();
-    const result = TemplateDraftResponseSchema.parse(await (await response).json());
+
+    // A deliberate second attempt: a typed name, then the API's suggestion as offered.
+    const name = choice === 'typed' ? uniqueLoopName('Starter assistant') : problem.suggestedName;
+    if (choice === 'typed') await field.fill(name);
+    const response = page.waitForResponse(isDraftRequest);
+    await card.getByRole('button', { name: 'Create draft', exact: true }).click();
+    const created = await response;
+    expect(created.status()).toBe(201);
+    expect(created.request().postDataJSON()).toEqual({ name });
+    const result = TemplateDraftResponseSchema.parse(await created.json());
+    expect(result.loop.name).toBe(name);
     copies.push(result);
     await expect(page).toHaveURL(new RegExp(`/loops/${result.loop.id}/edit$`));
     const detail = (await (await page.request.get(`/loops/${result.loop.id}`)).json()) as {
@@ -209,9 +266,11 @@ test('creates independent copies and leaves other drafts and the catalog unchang
     expect(detail.templateInstanceId).toBeUndefined();
   }
   const [first, second] = copies;
-  expect(first!.loop.id).not.toBe(second!.loop.id);
+  expect(new Set([original.id, first!.loop.id, second!.loop.id]).size).toBe(3);
   expect(first!.draft.id).not.toBe(second!.draft.id);
-  expect(first!.draft.definition).toEqual(second!.draft.definition);
+  expect(first!.loop.name).not.toBe(second!.loop.name);
+  // The same starting graph under distinct display names.
+  expect(graphOf(first!.draft.definition)).toEqual(graphOf(second!.draft.definition));
   await page.goto(`/app/loops/${first!.loop.id}/edit`);
   await showLoopPanel(page);
   const saved = page.waitForResponse(
@@ -250,11 +309,56 @@ test('creates independent copies and leaves other drafts and the catalog unchang
   });
   expect(secondAfter.draft.definition).toEqual(second!.draft.definition);
   expect(await (await page.request.get('/templates/starter')).json()).toEqual(catalogBefore);
-  const freshResponse = await page.request.post('/templates/starter/draft', { data: {} });
-  expect(freshResponse.ok()).toBe(true);
+  // A fresh copy needs a name of its own too, and still starts from the unedited graph.
+  const freshName = uniqueLoopName('Starter assistant fresh');
+  const freshResponse = await page.request.post('/templates/starter/draft', {
+    data: { name: freshName },
+  });
+  expect(freshResponse.status()).toBe(201);
   const fresh = TemplateDraftResponseSchema.parse(await freshResponse.json());
-  expect(fresh.draft.definition).toEqual(first!.draft.definition);
+  expect(fresh.draft.definition.name).toBe(freshName);
+  expect(graphOf(fresh.draft.definition)).toEqual(graphOf(first!.draft.definition));
 });
+
+for (const width of [390, 320]) {
+  test(`the naming form after a refused Use fits at ${width}px and keeps keyboard order (#209)`, async ({
+    page,
+  }) => {
+    // Starter assistant is taken by now, so Use is refused and creates nothing.
+    const idsBefore = await loopIds(page);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/app/loops');
+    await page.getByRole('button', { name: 'New from template' }).click();
+    const card = page.getByRole('region', { name: 'Starter assistant', exact: true });
+    const use = card.getByRole('button', { name: 'Use Starter assistant', exact: true });
+    await use.focus();
+    await page.keyboard.press('Enter');
+    const field = card.getByRole('textbox', { name: 'Name for the new draft' });
+    await expect(field).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+    expect(await card.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+    const cardBox = (await card.boundingBox())!;
+    for (const control of [
+      field,
+      card.getByRole('button', { name: 'Create draft', exact: true }),
+      card.getByRole('button', { name: 'Cancel', exact: true }),
+    ]) {
+      const box = (await control.boundingBox())!;
+      expect(box.x).toBeGreaterThanOrEqual(cardBox.x);
+      expect(box.x + box.width).toBeLessThanOrEqual(cardBox.x + cardBox.width);
+    }
+    await page.keyboard.press('Tab');
+    await expect(card.getByRole('button', { name: 'Create draft', exact: true })).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(card.getByRole('button', { name: 'Cancel', exact: true })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(use).toBeFocused();
+    await expect(field).toHaveCount(0);
+    expect(await loopIds(page)).toEqual(idsBefore);
+  });
+}
 
 test('opens the QA starting point as an ordinary copy without configured-parent isolation warnings', async ({
   page,

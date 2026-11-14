@@ -17,7 +17,7 @@ import {
   sixReturnDecision,
   tightGap,
 } from '../src/__fixtures__/routing.js';
-import { expect, test } from './fixtures.js';
+import { expect, test, uniqueLoopName } from './fixtures.js';
 
 // Trace snapshots of 300 canvas elements distort the frame budget; these specs capture PNGs.
 test.use({ actionTimeout: 15_000, trace: 'off' });
@@ -51,7 +51,10 @@ async function openGraph(
     localStorage.setItem('graphgoblin-palette', 'collapsed');
     localStorage.setItem('graphgoblin-loop-panel', 'collapsed');
   }, theme);
-  const response = await request.post('/loops', { data: { definition } });
+  // The routing fixtures repeat their names across tests on the shared gateway (#209).
+  const response = await request.post('/loops', {
+    data: { definition: { ...definition, name: uniqueLoopName(definition.name) } },
+  });
   expect(response.status(), await response.text()).toBe(201);
   const { loop } = (await response.json()) as { loop: { id: string } };
   await page.goto(`/app/loops/${loop.id}/edit`);

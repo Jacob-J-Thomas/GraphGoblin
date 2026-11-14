@@ -36,6 +36,7 @@ const LABELS: Record<SaveState, string> = {
   offline: 'Offline: saved on this device',
   error: 'Save failed',
   conflict: 'Draft changed elsewhere',
+  'name-conflict': 'Not saved: name in use',
 };
 
 /**
@@ -79,6 +80,8 @@ export function saveNotice(
         : 'Offline: the draft is saved when the API is back.';
     case 'error':
       return message;
+    // A name refusal has its own notice with its answers (NameConflictNotice), like a draft
+    // conflict, rather than a dismissible save notice.
     default:
       return undefined;
   }

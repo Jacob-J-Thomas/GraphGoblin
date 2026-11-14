@@ -23,6 +23,26 @@ export const test = base.extend({
 
 export { expect };
 
+const fixtureNameCounts = new Map<string, number>();
+
+/**
+ * A loop name that no other fixture in the shared E2E gateway holds. One owner cannot keep two loop
+ * names that differ only in letter case or spacing (#209, ADR-0073), and every spec shares this
+ * gateway's store for the whole run, so a helper or a parameterized test that would repeat a literal
+ * name adds the running test's identity and a count within that test. The base stays readable at
+ * the start, so a `getByText(base)` substring match still finds it; a test that asserts the exact
+ * name uses the returned value.
+ */
+export function uniqueLoopName(base: string): string {
+  const info = test.info();
+  const key = `${info.testId}:${info.repeatEachIndex}:${info.retry}`;
+  const count = (fixtureNameCounts.get(key) ?? 0) + 1;
+  fixtureNameCounts.set(key, count);
+  const repeat = info.repeatEachIndex > 0 ? `x${info.repeatEachIndex}` : '';
+  const retry = info.retry > 0 ? `r${info.retry}` : '';
+  return `${base} [${info.testId.slice(-8)}${repeat}${retry}-${count}]`;
+}
+
 /**
  * Choose a native select's displayed option with actual keyboard typeahead. On the headless macOS
  * Chromium test host, ArrowDown/Home/End leave a closed select unchanged. Tab away and back clears the
@@ -166,7 +186,8 @@ export async function publishEventLoop(
     request,
     {
       schemaVersion: CURRENT_DEFINITION_FORMAT,
-      name: 'Browser Events',
+      // Several tests publish one of these on the shared gateway (#209).
+      name: uniqueLoopName('Browser Events'),
       nodes: [
         ...types.map((eventType, index) => ({
           id: `event-${index}`,

@@ -10,10 +10,12 @@ import {
   openNode,
   showLoopPanel,
   test,
+  uniqueLoopName,
 } from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, config: unknown, kind = 'script') {
-  const definition = approvalLoop(`forms ${kind}`);
+  // Many tests create one on the shared gateway, where one owner cannot repeat a name (#209).
+  const definition = approvalLoop(uniqueLoopName(`forms ${kind}`));
   const created = await request.post('/loops', {
     data: {
       definition: {
@@ -289,10 +291,20 @@ test('empty and whitespace templates survive editing, API validation, publishing
   });
   expect(await validated.json()).toMatchObject({ publishable: true, issues: [] });
   expect((await request.post(`/loops/${id}/publish`)).status()).toBe(200);
-  const exported = await request.get(`/loops/${id}/export`);
-  const imported = await request.post('/loops/import', { data: await exported.json() });
+  const exported = (await (await request.get(`/loops/${id}/export`)).json()) as {
+    loop: { name: string; nodes: unknown[] };
+  };
+  // The source loop still holds its name (#209): the unchanged export imports under an explicit one.
+  const copyName = uniqueLoopName('forms whitespace import');
+  const imported = await request.post(`/loops/import?name=${encodeURIComponent(copyName)}`, {
+    data: exported,
+  });
   expect(imported.status()).toBe(201);
-  expect(await imported.json()).toMatchObject({ issues: [] });
+  expect(await imported.json()).toMatchObject({
+    loop: { name: copyName },
+    draft: { definition: { name: copyName, nodes: exported.loop.nodes } },
+    issues: [],
+  });
 });
 
 test('required whitespace expressions are reported by the form and API validation, import, and publish', async ({

@@ -5,7 +5,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 ## Unreleased
 
 - Loop creation, rename, import and template copies refuse case- and whitespace-equivalent
-  names for the same owner and return a suggested alternative (#209, ADR-0073). **Upgrade:**
+  names for the same owner and return a suggested alternative (#209, ADR-0073). The app says
+  which name was refused and why, keeps what existed, and retries only when asked: Create offers
+  the suggestion in its field; a refused import keeps the chosen file and imports it unchanged
+  under the name entered; a repeated template **Use** asks for the new draft's name; and a
+  refused rename keeps the typed name and later edits on the device, sending nothing until the
+  name changes or **Try again**, apart from the stale-draft conflict notice. **Upgrade:**
   startup reports existing duplicate pairs or a stored loop name containing NUL without writing
   the store. Open the previous build, locate the NUL-bearing loop or one of a duplicate pair by
   ID at `/app/loops/<id>/edit`, change

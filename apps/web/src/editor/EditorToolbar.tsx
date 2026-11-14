@@ -118,7 +118,10 @@ export function EditorToolbar({
         {saveState === 'saved' ? (
           <Icon name="check-circle" className="size-[15px] text-status-good-fg" />
         ) : null}
-        {saveState === 'invalid' || saveState === 'offline' || saveState === 'error' ? (
+        {saveState === 'invalid' ||
+        saveState === 'offline' ||
+        saveState === 'error' ||
+        saveState === 'name-conflict' ? (
           <Icon
             name={saveState === 'error' ? 'failed' : 'alert'}
             className={cn(

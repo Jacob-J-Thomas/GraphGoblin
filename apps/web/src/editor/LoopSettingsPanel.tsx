@@ -13,7 +13,9 @@ import {
   RequiredNote,
   Textarea,
 } from '../components/ui/index.js';
+import { LoopNameTakenHelp } from '../components/loop-name-conflict.js';
 import { SchemaForm } from '../forms/SchemaForm.js';
+import { sameLoopName } from '../lib/loop-names.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { CatalogWarningsContext } from '../forms/fields/model.js';
 import { LOOP_FIELD_CONTROLS } from './field-controls.js';
@@ -41,6 +43,11 @@ export function LoopSettingsPanel({
   // The contract's own message for a name it refuses (a blank one, say).
   const nameError = LoopDefinitionSchema.shape.name.safeParse(definition.name).error?.issues[0]
     ?.message;
+  // The API's refusal of this name for another loop's (#209), while the field still holds it. The
+  // editor's notice announced it, so this only describes the field (no second announcement).
+  const nameConflict = useEditorStore((s) => s.nameConflict);
+  const nameTaken =
+    !nameError && nameConflict !== undefined && sameLoopName(definition.name, nameConflict.name);
   return (
     <section aria-label="Loop settings" className="grid gap-field">
       <RequiredNote />
@@ -51,8 +58,10 @@ export function LoopSettingsPanel({
         <Input
           id="loop-name"
           aria-required
-          aria-invalid={nameError ? true : undefined}
-          aria-describedby={nameError ? 'loop-name-error' : undefined}
+          aria-invalid={nameError || nameTaken ? true : undefined}
+          aria-describedby={
+            nameError ? 'loop-name-error' : nameTaken ? 'loop-name-taken' : undefined
+          }
           value={definition.name}
           onChange={(e) => updateMeta({ name: e.target.value })}
         />
@@ -60,6 +69,10 @@ export function LoopSettingsPanel({
           <HelpText id="loop-name-error" role="alert" tone="bad">
             {nameError}
           </HelpText>
+        ) : null}
+        {nameTaken ? (
+          // The suggestion and Try again stay in the editor's notice, so the page offers one of each.
+          <LoopNameTakenHelp id="loop-name-taken" live={false} conflict={nameConflict} />
         ) : null}
       </FieldGroup>
       <FieldGroup>

@@ -12,10 +12,12 @@ import {
   openNode,
   publishLoop,
   test,
+  uniqueLoopName,
 } from './fixtures.js';
 
 async function createLoop(request: APIRequestContext, kind: string, config: unknown) {
-  const definition = approvalLoop(`controls ${kind}`);
+  // Tests repeat this on the shared gateway, where one owner cannot repeat a name (#209).
+  const definition = approvalLoop(uniqueLoopName(`controls ${kind}`));
   const created = await request.post('/loops', {
     data: {
       definition: {

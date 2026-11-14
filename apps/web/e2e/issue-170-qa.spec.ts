@@ -23,6 +23,7 @@ import {
   openAdvanced,
   openNode,
   test,
+  uniqueLoopName,
 } from './fixtures.js';
 
 const baselineCommit = '6976aa90f9c04bdef04b75ba14d297f58cdee8ba';
@@ -133,7 +134,8 @@ function decision(kind = 'classifier', answer: unknown = choice) {
   );
 }
 async function create(request: APIRequestContext, kind: string, config: unknown, origin = '') {
-  const loop = approvalLoop(`QA170 ${kind}`);
+  // Tests repeat this on the shared gateway, where one owner cannot repeat a name (#209).
+  const loop = approvalLoop(uniqueLoopName(`QA170 ${kind}`));
   const res = await request.post(`${origin}/loops`, {
     data: {
       definition: {
