@@ -1,0 +1,1449 @@
+{
+  "origin": "http://127.0.0.1:55276",
+  "suite": "273-review-correction-native-candidate",
+  "phase": "corrected",
+  "scenario": "rows",
+  "rowCommit": "enter",
+  "bundles": [
+    200
+  ],
+  "outcome": {
+    "retained": true,
+    "openKept": true,
+    "exactFocus": true,
+    "undoView": {
+      "name": "_r_t_",
+      "rows": [
+        {
+          "id": "0",
+          "path": "operations.0",
+          "open": "false"
+        },
+        {
+          "id": "1",
+          "path": "operations.1",
+          "open": "true"
+        },
+        {
+          "id": "2",
+          "path": "operations.2",
+          "open": "true"
+        }
+      ],
+      "focused": {
+        "field": "operations",
+        "row": "operations.1",
+        "id": "1",
+        "label": null,
+        "type": "BUTTON",
+        "value": null,
+        "text": null,
+        "isToggle": true,
+        "displayed": true
+      }
+    },
+    "redoView": {
+      "name": "_r_t_",
+      "rows": [
+        {
+          "id": "0",
+          "path": "operations.0",
+          "open": "false"
+        },
+        {
+          "id": "1",
+          "path": "operations.1",
+          "open": "true"
+        },
+        {
+          "id": "2",
+          "path": "operations.2",
+          "open": "true"
+        }
+      ],
+      "focused": {
+        "field": "operations",
+        "row": "operations.1",
+        "id": "1",
+        "label": null,
+        "type": "BUTTON",
+        "value": null,
+        "text": null,
+        "isToggle": true,
+        "displayed": true
+      }
+    }
+  },
+  "writes": [
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rename row disclosure d8e8631",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "workNext",
+              "label": "Mutate self counters",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  },
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/workNext",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "workNext",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "workNext",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"27a9625a4367ec58\"",
+      "at": 1794686669552
+    },
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rename row disclosure d8e8631",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Mutate self counters",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  },
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/work",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"992fd2a4f4a768d6\"",
+      "at": 1794686670477
+    },
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rename row disclosure d8e8631",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "workNext",
+              "label": "Mutate self counters",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  },
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/workNext",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "workNext",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "workNext",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"27a9625a4367ec58\"",
+      "at": 1794686671207
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "before enter rename",
+      "view": {
+        "name": "_r_t_",
+        "rows": [
+          {
+            "id": "0",
+            "path": "operations.0",
+            "open": "false"
+          },
+          {
+            "id": "1",
+            "path": "operations.1",
+            "open": "true"
+          },
+          {
+            "id": "2",
+            "path": "operations.2",
+            "open": "true"
+          }
+        ],
+        "focused": {
+          "field": "operations",
+          "row": "operations.2",
+          "id": "2",
+          "label": null,
+          "type": "BUTTON",
+          "value": null,
+          "text": null,
+          "isToggle": true,
+          "displayed": true
+        }
+      },
+      "accepted": {
+        "loop": {
+          "id": "01M7DTJK3ZCCT040WY8WMC274G",
+          "ownerId": "local",
+          "name": "Rename row disclosure d8e8631",
+          "draftVersionId": "01M7DTJK3ZCCT040WY8WMC274H",
+          "createdAt": "2026-11-14T20:04:27.903Z",
+          "updatedAt": "2026-11-14T20:04:27.903Z"
+        },
+        "draft": {
+          "id": "01M7DTJK3ZCCT040WY8WMC274H",
+          "loopId": "01M7DTJK3ZCCT040WY8WMC274G",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rename row disclosure d8e8631",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "visits": {
+                "type": "integer"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Mutate self counters",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Identical neighbour marker"
+                    },
+                    {
+                      "op": "coerce",
+                      "source": "/counters/nodeVisits/work",
+                      "jsonSchema": {
+                        "type": "integer"
+                      },
+                      "repair": {
+                        "enabled": false,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      },
+                      "target": "/vars/visits"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Identical neighbour marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:27.903Z"
+        },
+        "draftToken": "27a9625a4367ec58"
+      }
+    },
+    {
+      "label": "enter commits one complete self rename",
+      "stored": {
+        "loop": {
+          "id": "01M7DTJK3ZCCT040WY8WMC274G",
+          "ownerId": "local",
+          "name": "Rename row disclosure d8e8631",
+          "draftVersionId": "01M7DTJK3ZCCT040WY8WMC274H",
+          "createdAt": "2026-11-14T20:04:27.903Z",
+          "updatedAt": "2026-11-14T20:04:29.561Z"
+        },
+        "draft": {
+          "id": "01M7DTJK3ZCCT040WY8WMC274H",
+          "loopId": "01M7DTJK3ZCCT040WY8WMC274G",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rename row disclosure d8e8631",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "visits": {
+                "type": "integer"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "workNext",
+                "label": "Mutate self counters",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Identical neighbour marker"
+                    },
+                    {
+                      "op": "coerce",
+                      "source": "/counters/nodeVisits/workNext",
+                      "jsonSchema": {
+                        "type": "integer"
+                      },
+                      "repair": {
+                        "enabled": false,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      },
+                      "target": "/vars/visits"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Identical neighbour marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "workNext",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "workNext",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:27.903Z"
+        },
+        "draftToken": "992fd2a4f4a768d6"
+      },
+      "local": {
+        "loopId": "01M7DTJK3ZCCT040WY8WMC274G",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rename row disclosure d8e8631",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "workNext",
+              "label": "Mutate self counters",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  },
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/workNext",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "workNext",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "workNext",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:04:29.593Z",
+        "synced": true,
+        "baseToken": "992fd2a4f4a768d6"
+      }
+    },
+    {
+      "label": "enter rename readback",
+      "view": {
+        "name": "_r_t_",
+        "rows": [
+          {
+            "id": "0",
+            "path": "operations.0",
+            "open": "false"
+          },
+          {
+            "id": "1",
+            "path": "operations.1",
+            "open": "true"
+          },
+          {
+            "id": "2",
+            "path": "operations.2",
+            "open": "true"
+          }
+        ],
+        "focused": {
+          "field": "id",
+          "row": null,
+          "id": null,
+          "label": null,
+          "type": "INPUT",
+          "value": "workNext",
+          "text": null,
+          "isToggle": false,
+          "displayed": true
+        }
+      },
+      "remounted": true
+    },
+    {
+      "label": "one graph undo",
+      "stored": {
+        "loop": {
+          "id": "01M7DTJK3ZCCT040WY8WMC274G",
+          "ownerId": "local",
+          "name": "Rename row disclosure d8e8631",
+          "draftVersionId": "01M7DTJK3ZCCT040WY8WMC274H",
+          "createdAt": "2026-11-14T20:04:27.903Z",
+          "updatedAt": "2026-11-14T20:04:30.479Z"
+        },
+        "draft": {
+          "id": "01M7DTJK3ZCCT040WY8WMC274H",
+          "loopId": "01M7DTJK3ZCCT040WY8WMC274G",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rename row disclosure d8e8631",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "visits": {
+                "type": "integer"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Mutate self counters",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Identical neighbour marker"
+                    },
+                    {
+                      "op": "coerce",
+                      "source": "/counters/nodeVisits/work",
+                      "jsonSchema": {
+                        "type": "integer"
+                      },
+                      "repair": {
+                        "enabled": false,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      },
+                      "target": "/vars/visits"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Identical neighbour marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:27.903Z"
+        },
+        "draftToken": "27a9625a4367ec58"
+      },
+      "local": {
+        "loopId": "01M7DTJK3ZCCT040WY8WMC274G",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rename row disclosure d8e8631",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Mutate self counters",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  },
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/work",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:04:30.505Z",
+        "synced": true,
+        "baseToken": "27a9625a4367ec58"
+      }
+    },
+    {
+      "label": "one graph redo",
+      "stored": {
+        "loop": {
+          "id": "01M7DTJK3ZCCT040WY8WMC274G",
+          "ownerId": "local",
+          "name": "Rename row disclosure d8e8631",
+          "draftVersionId": "01M7DTJK3ZCCT040WY8WMC274H",
+          "createdAt": "2026-11-14T20:04:27.903Z",
+          "updatedAt": "2026-11-14T20:04:31.210Z"
+        },
+        "draft": {
+          "id": "01M7DTJK3ZCCT040WY8WMC274H",
+          "loopId": "01M7DTJK3ZCCT040WY8WMC274G",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rename row disclosure d8e8631",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "visits": {
+                "type": "integer"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "workNext",
+                "label": "Mutate self counters",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Identical neighbour marker"
+                    },
+                    {
+                      "op": "coerce",
+                      "source": "/counters/nodeVisits/workNext",
+                      "jsonSchema": {
+                        "type": "integer"
+                      },
+                      "repair": {
+                        "enabled": false,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      },
+                      "target": "/vars/visits"
+                    },
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Identical neighbour marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "workNext",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "workNext",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:27.903Z"
+        },
+        "draftToken": "992fd2a4f4a768d6"
+      },
+      "local": {
+        "loopId": "01M7DTJK3ZCCT040WY8WMC274G",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rename row disclosure d8e8631",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "workNext",
+              "label": "Mutate self counters",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  },
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/workNext",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  },
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Identical neighbour marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "workNext",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "workNext",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:04:31.224Z",
+        "synced": true,
+        "baseToken": "992fd2a4f4a768d6"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": null
+}

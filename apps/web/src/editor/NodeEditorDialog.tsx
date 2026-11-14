@@ -23,7 +23,7 @@ import {
   createDisclosureIdentities,
   type DisclosureStates,
 } from '../forms/disclosures.js';
-import { SchemaForm } from '../forms/SchemaForm.js';
+import { SchemaForm, type SchemaFormHandle } from '../forms/SchemaForm.js';
 import { NodeOutputsContext } from '../forms/EarlierNodeOutputs.js';
 import { FieldLabelsContext } from '../forms/fields/shared.js';
 import { VariableSuggestionsContext } from '../forms/fields/suggestions.js';
@@ -190,8 +190,12 @@ export function NodeEditorDialog({
   const nodeFocus = useEditorStore((s) => s.nodeFocus);
   // Bumped by undo and redo: the config form remounts with the restored values.
   const historyEpoch = useEditorStore((s) => s.historyEpoch);
-  // Bumped when a rename repaired a reference in this node's own fields: the form remounts with it.
+  // Bumped when a rename repaired a reference in this node's own fields. The open form takes such a
+  // repair in place (`commitId`), keeping the control a pressed pointer is on; only a repair it
+  // could not take remounts it, so the key leaves out the ones taken in place.
   const formEpoch = useEditorStore((s) => s.formEpochs[`node:${node.id}`] ?? 0);
+  const [repairedInPlace, setRepairedInPlace] = useState(0);
+  const formRef = useRef<SchemaFormHandle>(null);
   const generation = useEditorStore((s) => s.generation);
   const bodyRef = useRef<HTMLElement>(null);
   const [epoch, setEpoch] = useState(0);
@@ -318,9 +322,12 @@ export function NodeEditorDialog({
 
   /**
    * Apply the id being typed, on Enter or as the field loses focus (`next` is where focus is going).
-   * The rename repairs references in one step; when it repaired one in this node's own fields, the
-   * config form remounts with the new source. The repair rewrites strings in place, so the form
-   * keeps its collection rows and their open state, and focus follows to the same control there.
+   * The rename repairs references in one step. When it repaired one in this node's own fields, the
+   * config form takes the new source in place before anything renders, so no field can write the
+   * old text back. Its elements stay: a pointer that pressed one of its buttons, which is what
+   * moved focus out of the id, releases and clicks that same button, and the click acts on the
+   * repaired values. A repair the form cannot take remounts it, focus following to the same control
+   * (`keepFocusThrough`); either way the repaired config keeps this config's collection row ids.
    */
   const commitId = (next?: Element | null) => {
     const problem = idProblem(id.value, node.id, definition);
@@ -330,13 +337,22 @@ export function NodeEditorDialog({
     }
     const nextId = id.value;
     const rename = () => {
+      const state = () => useEditorStore.getState();
       const configOf = (nodeId: string) =>
-        useEditorStore.getState().definition?.nodes.find((n) => n.id === nodeId)?.config;
+        state().definition?.nodes.find((n) => n.id === nodeId)?.config;
+      const epochOf = (nodeId: string) => state().formEpochs[`node:${nodeId}`] ?? 0;
       const previous = configOf(node.id);
+      const before = epochOf(node.id);
       const refused = renameNode(node.id, nextId);
-      // Before the remount renders: the repaired config takes this config's row ids.
-      if (!refused) carryCollectionIdentities(disclosureIdentities, previous, configOf(nextId));
-      return refused;
+      if (refused) return refused;
+      const repaired = configOf(nextId);
+      // Undo and redo remount with these configs: the repaired one takes this one's row ids.
+      carryCollectionIdentities(disclosureIdentities, previous, repaired);
+      if (formRef.current?.applyRepair(previous, repaired)) {
+        const bumped = epochOf(nextId) - before;
+        if (bumped !== 0) setRepairedInPlace((count) => count + bumped);
+      }
+      return undefined;
     };
     // A refusal stays with the typed text; after a rename the draft follows the new id.
     setIdState({ ...id, error: keepFocusThrough(rename, next) });
@@ -705,7 +721,8 @@ export function NodeEditorDialog({
                           >
                             <NodeOutputsContext value={nodeOutputs}>
                               <SchemaForm
-                                key={`${node.kind}:${epoch}:${historyEpoch}:${formEpoch}`}
+                                ref={formRef}
+                                key={`${node.kind}:${epoch}:${historyEpoch}:${formEpoch - repairedInPlace}`}
                                 schema={NodeConfigSchemas[node.kind]}
                                 fieldOrder={
                                   node.kind === 'decision'

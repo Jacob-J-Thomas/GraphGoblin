@@ -425,7 +425,7 @@ describe('renaming a node in the editor (#273)', () => {
     ).toEqual([]);
   });
 
-  it('remounts the open form with its repaired source and keeps focus where the user went', async () => {
+  it('takes the repaired source into the open form in place and keeps focus where the user went', async () => {
     const user = userEvent.setup();
     await openEditor(selfReading());
     const dialog = await editNode('gate', 'Edit decision gate');
@@ -438,13 +438,15 @@ describe('renaming a node in the editor (#273)', () => {
 
     expect(screen.getByRole('dialog', { name: 'Edit decision check' })).toBe(dialog);
     expect(getCode('Jsonata')).toBe('counters.nodeVisits.check > 2 ? "stop" : "again"');
-    const remounted = within(dialog).getByLabelText('Maximum passes', { exact: true });
-    expect(remounted).not.toBe(passes);
-    expect(remounted).toHaveFocus();
+    // The same field the pointer chose, not a remounted copy, holds focus.
+    const kept = within(dialog).getByLabelText('Maximum passes', { exact: true });
+    expect(kept).toBe(passes);
+    expect(kept).toHaveFocus();
+    expect(labels()).toEqual(['rename gate to check']);
 
-    // Editing the remounted form never writes the old source back.
-    await user.clear(remounted);
-    await user.type(remounted, '4');
+    // Editing the form never writes the old source back.
+    await user.clear(kept);
+    await user.type(kept, '4');
     expect(config('check')).toMatchObject({
       jsonata: 'counters.nodeVisits.check > 2 ? "stop" : "again"',
       maxPasses: 4,
@@ -635,8 +637,8 @@ describe('renaming a node in the editor (#273)', () => {
     ]);
     expect(labels()).toEqual(['rename work to draft']);
 
-    // The form remounted with the repaired source, on the same rows in the same open state.
-    expect(coerceSource(dialog)).not.toBe(source);
+    // The form took the repaired source in place: the same Source, rows and open state.
+    expect(coerceSource(dialog)).toBe(source);
     expect(coerceSource(dialog)).toHaveValue('/counters/nodeVisits/draft');
     expect(operationRows(dialog, 3)).toEqual(rows);
     expect(opened(dialog, 3)).toEqual(['true', 'false', 'true']);
@@ -657,7 +659,7 @@ describe('renaming a node in the editor (#273)', () => {
     expect(operation(dialog, 3)).toHaveFocus();
   });
 
-  it('moves focus to the remounted nested Source the pointer chose when leaving the id renames', async () => {
+  it('keeps focus on the nested Source the pointer chose when leaving the id renames', async () => {
     const user = userEvent.setup();
     await openEditor(selfCoercing());
     const dialog = await editNode('work', 'Edit mutate work');
@@ -669,23 +671,25 @@ describe('renaming a node in the editor (#273)', () => {
     await user.clear(id);
     await user.type(id, 'draft');
 
-    // Pressing the visible Source commits the id as it loses focus; the form remounts under it.
+    // Pressing the visible Source commits the id as it loses focus; the repair lands in place.
     const source = coerceSource(dialog);
     await user.click(source);
     expect(screen.getByRole('dialog', { name: 'Edit mutate draft' })).toBe(dialog);
-    // Focus is on the same row's remounted Source, not on a fallback for a vanished row.
+    // Focus is on the very Source the pointer chose, in the same row, showing the repair.
     const focused = document.activeElement;
     expect(focused?.closest('[data-field]')).toHaveAttribute('data-field', 'operations.2.source');
     expect(focused?.closest('[data-row-id]')).toHaveAttribute('data-row-id', rows[2]);
-    expect(focused).not.toBe(source);
+    expect(focused).toBe(source);
     expect(focused).toHaveValue('/counters/nodeVisits/draft');
     expect(coerceSource(dialog)).toBe(focused);
     expect(operationRows(dialog, 3)).toEqual(rows);
     expect(opened(dialog, 3)).toEqual(['false', 'true', 'true']);
     expect(labels()).toEqual(['rename work to draft']);
 
-    // Typing then edits the repaired source; the old one is never written back.
-    await user.keyboard('/x');
+    // Typing then edits the repaired source; the old one is never written back. user-event places
+    // the caret before it moves focus, so before the rename lengthened the text, where a browser
+    // places it at the pointer after; the form leaves the caret alone, so the test puts it at the end.
+    await user.keyboard('{End}/x');
     expect(config('draft')['operations']).toEqual([
       expect.anything(),
       expect.anything(),

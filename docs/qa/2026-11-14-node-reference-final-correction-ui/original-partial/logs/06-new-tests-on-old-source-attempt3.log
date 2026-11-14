@@ -1,0 +1,580 @@
+2026-11-14T21:28:29Z
+v22.23.4
+old-source probe (attempt 3, soft mid-gesture checks): product web source at HEAD 5a4fb439; only the new test file added
+08da8395999a601bc54194bf4d9a8ac4ffe875c9803fde75db1de7e863ac5ca2 *apps/web/src/editor/EditorPage.rename-activation.test.tsx
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx (5 tests | 3 failed) 9756ms
+   ❯ a pointer press that commits a self-reference rename (#273 A2) (5)
+     × adds exactly one operation on the repaired source, as one step after the rename 3199ms
+     × removes exactly the pressed row, keeping the repaired Coerce row and its held JSON 1837ms
+     × keeps a press released elsewhere canceled: the rename stays, nothing is added later 1817ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:143:34
+    141|     // ...while the pressed button, the rows and the focus stayed exac…
+    142|     // so a regression reports each lost guarantee and still reaches t…
+    143|     expect.soft(add.isConnected).toBe(true);
+       |                                  ^
+    144|     expect.soft(within(dialog).getByRole('button', { name: 'Add operat…
+    145|     expect.soft(add).toHaveFocus();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected <button type="button" …(1)>…(2)</button> to be <button type="button" …(1)>…(2)</button> // Object.is equality
+
+If it should pass with deep equality, replace "toBe" with "toStrictEqual"
+
+Expected: <button type="button" …(1)>…(2)</button>
+Received: serializes to the same string
+
+
+Compared values have no visual difference.
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:144:81
+    142|     // so a regression reports each lost guarantee and still reaches t…
+    143|     expect.soft(add.isConnected).toBe(true);
+    144|     expect.soft(within(dialog).getByRole('button', { name: 'Add operat…
+       |                                                                                 ^
+    145|     expect.soft(add).toHaveFocus();
+    146|     expect.soft(rowIds(dialog)).toEqual(rows);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+Error: expect(element).toHaveFocus()
+
+Expected element with focus:
+  <button
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-control text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0"
+    data-icon="plus"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M12 5v14M5 12h14"
+    />
+  </svg>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    Add operations
+  </span>
+</button>
+Received element with focus:
+  <button
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-control text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px]"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0"
+    data-icon="plus"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M12 5v14M5 12h14"
+    />
+  </svg>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    Add operations
+  </span>
+</button>
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:145:22
+    143|     expect.soft(add.isConnected).toBe(true);
+    144|     expect.soft(within(dialog).getByRole('button', { name: 'Add operat…
+    145|     expect.soft(add).toHaveFocus();
+       |                      ^
+    146|     expect.soft(rowIds(dialog)).toEqual(rows);
+    147|     expect.soft(within(dialog).getByLabelText('Source')).toBe(source);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected <input …(5)></input> to be <input …(5)></input> // Object.is equality
+
+- Expected
++ Received
+
+  <input
+    aria-required="true"
+    class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken disabled:text-subtle h-9 pointer-coarse:h-11"
+-   id="_r_14_"
+-   list="_r_14_-suggestions"
+-   value="/counters/nodeVisits/work"
++   id="_r_24_"
++   list="_r_24_-suggestions"
++   value="/counters/nodeVisits/worker"
+  />
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:147:58
+    145|     expect.soft(add).toHaveFocus();
+    146|     expect.soft(rowIds(dialog)).toEqual(rows);
+    147|     expect.soft(within(dialog).getByLabelText('Source')).toBe(source);
+       |                                                          ^
+    148|     // Nothing new renders above the held button until the press ends.
+    149|     expect.soft(renamedNotice(dialog)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected <div role="status" …(1)>…(4)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="grid gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3 grid-cols-[auto_minmax(0,1fr)_auto] min-w-0 text-sm leading-snug text-default wrap-anywhere bg-status-info-bg border-status-info-border"
+  role="status"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0 row-span-2 mt-px size-[18px] text-status-info-fg"
+    data-icon="info"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+    />
+    <path
+      d="M12 11v5.5M12 7.8h.01"
+    />
+  </svg>
+  <p
+    class="col-start-2 font-semibold text-status-info-fg"
+  >
+    Renamed work to worker
+  </p>
+  <div
+    class="col-start-2 min-w-0 [&_a]:text-link"
+  >
+    <div
+      class="grid gap-1.5"
+    >
+      <p>
+        Updated 1 reference in expressions, templates and mutation paths, and 2 connections. 
+        Plain text, JSON values and scripts are not changed.
+      </p>
+      <p>
+        Undo reverses the whole rename.
+      </p>
+    </div>
+  </div>
+  <button
+    aria-label="Dismiss notice"
+    class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px] -my-1.5 col-start-3 row-start-1 row-span-2 self-start"
+    data-alert-dismiss=""
+    type="button"
+  >
+    <svg
+      aria-hidden="true"
+      class="size-4 shrink-0"
+      data-icon="close"
+      fill="none"
+      focusable="false"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M6 6l12 12M18 6 6 18"
+      />
+    </svg>
+  </button>
+</div>
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:149:40
+    147|     expect.soft(within(dialog).getByLabelText('Source')).toBe(source);
+    148|     // Nothing new renders above the held button until the press ends.
+    149|     expect.soft(renamedNotice(dialog)).toBeNull();
+       |                                        ^
+    150|
+    151|     await release(user, add);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected [ { op: 'coerce', …(4) }, …(1) ] to deeply equal [ { op: 'coerce', …(4) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -15,14 +15,6 @@
+    {
+      "content": "Ordinary removable row versus repaired Coerce row",
+      "op": "append-message",
+      "role": "note",
+    },
+-   {
+-     "op": "set",
+-     "path": "",
+-     "value": {
+-       "kind": "literal",
+-       "value": null,
+-     },
+-   },
+  ]
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:152:34
+    150|
+    151|     await release(user, add);
+    152|     expect(operations('worker')).toEqual([REPAIRED, NOTE, ADDED]);
+       |                                  ^
+    153|     expect(labels()).toEqual(['rename work to worker', 'edit config of…
+    154|     expect(renamedNotice(dialog)).toHaveTextContent(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > removes exactly the pressed row, keeping the repaired Coerce row and its held JSON
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:227:37
+    225|     expect(getCode('Json schema')).toBe('{"type":');
+    226|     expect(store().fieldErrors['node:worker']?.['operations.0.jsonSche…
+    227|     expect.soft(remove.isConnected).toBe(true);
+       |                                     ^
+    228|     expect.soft(remove).toHaveFocus();
+    229|     expect.soft(rowIds(dialog)).toEqual(rows);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > removes exactly the pressed row, keeping the repaired Coerce row and its held JSON
+Error: expect(element).toHaveFocus()
+
+Expected element with focus:
+  <button
+  aria-label="Remove operations 2"
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px]"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0"
+    data-icon="close"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M6 6l12 12M18 6 6 18"
+    />
+  </svg>
+</button>
+Received element with focus:
+  <button
+  aria-label="Remove operations 2"
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px]"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0"
+    data-icon="close"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <path
+      d="M6 6l12 12M18 6 6 18"
+    />
+  </svg>
+</button>
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:228:25
+    226|     expect(store().fieldErrors['node:worker']?.['operations.0.jsonSche…
+    227|     expect.soft(remove.isConnected).toBe(true);
+    228|     expect.soft(remove).toHaveFocus();
+       |                         ^
+    229|     expect.soft(rowIds(dialog)).toEqual(rows);
+    230|     expect.soft(renamedNotice(dialog)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > removes exactly the pressed row, keeping the repaired Coerce row and its held JSON
+AssertionError: expected <div role="status" …(1)>…(4)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="grid gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3 grid-cols-[auto_minmax(0,1fr)_auto] min-w-0 text-sm leading-snug text-default wrap-anywhere bg-status-info-bg border-status-info-border"
+  role="status"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0 row-span-2 mt-px size-[18px] text-status-info-fg"
+    data-icon="info"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+    />
+    <path
+      d="M12 11v5.5M12 7.8h.01"
+    />
+  </svg>
+  <p
+    class="col-start-2 font-semibold text-status-info-fg"
+  >
+    Renamed work to worker
+  </p>
+  <div
+    class="col-start-2 min-w-0 [&_a]:text-link"
+  >
+    <div
+      class="grid gap-1.5"
+    >
+      <p>
+        Updated 1 reference in expressions, templates and mutation paths, and 2 connections. 
+        Plain text, JSON values and scripts are not changed.
+      </p>
+      <p>
+        Undo reverses the whole rename.
+      </p>
+    </div>
+  </div>
+  <button
+    aria-label="Dismiss notice"
+    class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px] -my-1.5 col-start-3 row-start-1 row-span-2 self-start"
+    data-alert-dismiss=""
+    type="button"
+  >
+    <svg
+      aria-hidden="true"
+      class="size-4 shrink-0"
+      data-icon="close"
+      fill="none"
+      focusable="false"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M6 6l12 12M18 6 6 18"
+      />
+    </svg>
+  </button>
+</div>
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:230:40
+    228|     expect.soft(remove).toHaveFocus();
+    229|     expect.soft(rowIds(dialog)).toEqual(rows);
+    230|     expect.soft(renamedNotice(dialog)).toBeNull();
+       |                                        ^
+    231|
+    232|     await release(user, remove);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > removes exactly the pressed row, keeping the repaired Coerce row and its held JSON
+AssertionError: expected [ { op: 'coerce', …(4) }, …(1) ] to deeply equal [ { op: 'coerce', …(4) } ]
+
+- Expected
++ Received
+
+@@ -10,6 +10,11 @@
+        "onFailure": "fail-run",
+      },
+      "source": "/counters/nodeVisits/worker",
+      "target": "/vars/visits",
+    },
++   {
++     "content": "Ordinary removable row versus repaired Coerce row",
++     "op": "append-message",
++     "role": "note",
++   },
+  ]
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:233:34
+    231|
+    232|     await release(user, remove);
+    233|     expect(operations('worker')).toEqual([REPAIRED]);
+       |                                  ^
+    234|     expect(labels().slice(-2)).toEqual(['rename work to worker', 'edit…
+    235|     expect(rowIds(dialog)).toEqual(rows.slice(0, 1));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > keeps a press released elsewhere canceled: the rename stays, nothing is added later
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:263:34
+    261|
+    262|     await press(user, add);
+    263|     expect.soft(add.isConnected).toBe(true);
+       |                                  ^
+    264|     expect.soft(renamedNotice(dialog)).toBeNull();
+    265|     // The pointer leaves the button before it is released: no click r…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > keeps a press released elsewhere canceled: the rename stays, nothing is added later
+AssertionError: expected <div role="status" …(1)>…(4)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="grid gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3 grid-cols-[auto_minmax(0,1fr)_auto] min-w-0 text-sm leading-snug text-default wrap-anywhere bg-status-info-bg border-status-info-border"
+  role="status"
+>
+  <svg
+    aria-hidden="true"
+    class="size-4 shrink-0 row-span-2 mt-px size-[18px] text-status-info-fg"
+    data-icon="info"
+    fill="none"
+    focusable="false"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="2"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+    />
+    <path
+      d="M12 11v5.5M12 7.8h.01"
+    />
+  </svg>
+  <p
+    class="col-start-2 font-semibold text-status-info-fg"
+  >
+    Renamed work to worker
+  </p>
+  <div
+    class="col-start-2 min-w-0 [&_a]:text-link"
+  >
+    <div
+      class="grid gap-1.5"
+    >
+      <p>
+        Updated 1 reference in expressions, templates and mutation paths, and 2 connections. 
+        Plain text, JSON values and scripts are not changed.
+      </p>
+      <p>
+        Undo reverses the whole rename.
+      </p>
+    </div>
+  </div>
+  <button
+    aria-label="Dismiss notice"
+    class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px] -my-1.5 col-start-3 row-start-1 row-span-2 self-start"
+    data-alert-dismiss=""
+    type="button"
+  >
+    <svg
+      aria-hidden="true"
+      class="size-4 shrink-0"
+      data-icon="close"
+      fill="none"
+      focusable="false"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="M6 6l12 12M18 6 6 18"
+      />
+    </svg>
+  </button>
+</div>
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:264:40
+    262|     await press(user, add);
+    263|     expect.soft(add.isConnected).toBe(true);
+    264|     expect.soft(renamedNotice(dialog)).toBeNull();
+       |                                        ^
+    265|     // The pointer leaves the button before it is released: no click r…
+    266|     await user.pointer([{ target: rule }, { keys: '[/MouseLeft]', targ…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed (5)
+   Start at  15:28:30
+   Duration  17.75s (tests 56%, transform 17%, environment 13%, import 9%, setup 5%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\apps\web
+
+exit=1

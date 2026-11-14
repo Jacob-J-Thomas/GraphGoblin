@@ -1,0 +1,1160 @@
+{
+  "origin": "http://127.0.0.1:55360",
+  "suite": "273-review-correction-native-candidate",
+  "phase": "corrected",
+  "scenario": "held-json",
+  "rowCommit": "pointer",
+  "bundles": [
+    200
+  ],
+  "outcome": {
+    "after": {
+      "pending": true,
+      "buffer": "[    {        \"op\": \"append-message\",        \"role\": \"note\",        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"    }]",
+      "apply": true,
+      "cancel": true,
+      "signifiers": "Use structured editor\nInput JSON\n1\n2\n3\n4\n5\n6\n7\n⌄\n⌄\n[\n    {\n        \"op\": \"append-message\",\n        \"role\": \"note\",\n        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"\n    }\n]\nApply JSON\nCancel JSON\n\nChoose Apply JSON or Cancel JSON to finish this edit.\n\nMutations applied to the thread view the template sees."
+    },
+    "afterUndo": {
+      "pending": true,
+      "buffer": "[    {        \"op\": \"append-message\",        \"role\": \"note\",        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"    }]",
+      "apply": true,
+      "cancel": true,
+      "signifiers": "Use structured editor\nInput JSON\n1\n2\n3\n4\n5\n6\n7\n⌄\n⌄\n[\n    {\n        \"op\": \"append-message\",\n        \"role\": \"note\",\n        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"\n    }\n]\nApply JSON\nCancel JSON\n\nChoose Apply JSON or Cancel JSON to finish this edit.\n\nMutations applied to the thread view the template sees."
+    },
+    "afterRedo": {
+      "pending": true,
+      "buffer": "[    {        \"op\": \"append-message\",        \"role\": \"note\",        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"    }]",
+      "apply": true,
+      "cancel": true,
+      "signifiers": "Use structured editor\nInput JSON\n1\n2\n3\n4\n5\n6\n7\n⌄\n⌄\n[\n    {\n        \"op\": \"append-message\",\n        \"role\": \"note\",\n        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"\n    }\n]\nApply JSON\nCancel JSON\n\nChoose Apply JSON or Cancel JSON to finish this edit.\n\nMutations applied to the thread view the template sees."
+    },
+    "sameBuffer": true,
+    "noApplyOrCancel": true,
+    "atomicUndoRedo": true
+  },
+  "writes": [
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Edit inference without running it",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture never runs"
+                },
+                "input": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Held visits {{ counters.nodeVisits.draft }}"
+                  }
+                ],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"4bf24e8b538eeb09\"",
+      "at": 1794686699288
+    },
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Edit inference without running it",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture never runs"
+                },
+                "input": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Held visits {{ counters.nodeVisits.work }}"
+                  }
+                ],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"1937695651e380e7\"",
+      "at": 1794686700243
+    },
+    {
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Edit inference without running it",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture never runs"
+                },
+                "input": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Held visits {{ counters.nodeVisits.draft }}"
+                  }
+                ],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"4bf24e8b538eeb09\"",
+      "at": 1794686701046
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "Rename applies only accepted reference repair",
+      "stored": {
+        "loop": {
+          "id": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+          "ownerId": "local",
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "draftVersionId": "01M7DTKEWY1K2TC0KMBYYDDCAZ",
+          "createdAt": "2026-11-14T20:04:56.350Z",
+          "updatedAt": "2026-11-14T20:04:59.293Z"
+        },
+        "draft": {
+          "id": "01M7DTKEWY1K2TC0KMBYYDDCAZ",
+          "loopId": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Coincident JSON and atomic history 23ba36e",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "draft",
+                "label": "Edit inference without running it",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Fixture never runs"
+                  },
+                  "input": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Held visits {{ counters.nodeVisits.draft }}"
+                    }
+                  ],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "draft",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "draft",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:56.350Z"
+        },
+        "draftToken": "1937695651e380e7"
+      },
+      "local": {
+        "loopId": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Edit inference without running it",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture never runs"
+                },
+                "input": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Held visits {{ counters.nodeVisits.draft }}"
+                  }
+                ],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:04:59.318Z",
+        "synced": true,
+        "baseToken": "1937695651e380e7"
+      }
+    },
+    {
+      "label": "After rename, before any explicit JSON action",
+      "after": {
+        "pending": true,
+        "buffer": "[    {        \"op\": \"append-message\",        \"role\": \"note\",        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"    }]",
+        "apply": true,
+        "cancel": true,
+        "signifiers": "Use structured editor\nInput JSON\n1\n2\n3\n4\n5\n6\n7\n⌄\n⌄\n[\n    {\n        \"op\": \"append-message\",\n        \"role\": \"note\",\n        \"content\": \"Held visits {{ counters.nodeVisits.draft }}\"\n    }\n]\nApply JSON\nCancel JSON\n\nChoose Apply JSON or Cancel JSON to finish this edit.\n\nMutations applied to the thread view the template sees."
+      },
+      "sameBuffer": true
+    },
+    {
+      "label": "One Undo is the whole rename",
+      "stored": {
+        "loop": {
+          "id": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+          "ownerId": "local",
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "draftVersionId": "01M7DTKEWY1K2TC0KMBYYDDCAZ",
+          "createdAt": "2026-11-14T20:04:56.350Z",
+          "updatedAt": "2026-11-14T20:05:00.244Z"
+        },
+        "draft": {
+          "id": "01M7DTKEWY1K2TC0KMBYYDDCAZ",
+          "loopId": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Coincident JSON and atomic history 23ba36e",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Edit inference without running it",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Fixture never runs"
+                  },
+                  "input": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Held visits {{ counters.nodeVisits.work }}"
+                    }
+                  ],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:56.350Z"
+        },
+        "draftToken": "4bf24e8b538eeb09"
+      },
+      "local": {
+        "loopId": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Edit inference without running it",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture never runs"
+                },
+                "input": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Held visits {{ counters.nodeVisits.work }}"
+                  }
+                ],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:05:00.268Z",
+        "synced": true,
+        "baseToken": "4bf24e8b538eeb09"
+      }
+    },
+    {
+      "label": "One Redo restores the whole rename",
+      "stored": {
+        "loop": {
+          "id": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+          "ownerId": "local",
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "draftVersionId": "01M7DTKEWY1K2TC0KMBYYDDCAZ",
+          "createdAt": "2026-11-14T20:04:56.350Z",
+          "updatedAt": "2026-11-14T20:05:01.047Z"
+        },
+        "draft": {
+          "id": "01M7DTKEWY1K2TC0KMBYYDDCAZ",
+          "loopId": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Coincident JSON and atomic history 23ba36e",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 120
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "draft",
+                "label": "Edit inference without running it",
+                "ui": {
+                  "x": 310,
+                  "y": 120
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Fixture never runs"
+                  },
+                  "input": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Held visits {{ counters.nodeVisits.draft }}"
+                    }
+                  ],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never"
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "end",
+                "label": "End",
+                "ui": {
+                  "x": 600,
+                  "y": 120
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "draft",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "out",
+                "from": {
+                  "node": "draft",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "end",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:04:56.350Z"
+        },
+        "draftToken": "1937695651e380e7"
+      },
+      "local": {
+        "loopId": "01M7DTKEWY1K2TC0KMBYYDDCAY",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Coincident JSON and atomic history 23ba36e",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 120
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "draft",
+              "label": "Edit inference without running it",
+              "ui": {
+                "x": 310,
+                "y": 120
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Fixture never runs"
+                },
+                "input": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Held visits {{ counters.nodeVisits.draft }}"
+                  }
+                ],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never"
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "end",
+              "label": "End",
+              "ui": {
+                "x": 600,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "draft",
+                "port": "in"
+              }
+            },
+            {
+              "id": "out",
+              "from": {
+                "node": "draft",
+                "port": "out"
+              },
+              "to": {
+                "node": "end",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:05:01.073Z",
+        "synced": true,
+        "baseToken": "1937695651e380e7"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": null
+}

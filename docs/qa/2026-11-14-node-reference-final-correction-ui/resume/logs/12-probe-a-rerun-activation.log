@@ -1,0 +1,76 @@
+2026-11-14T22:11:38Z
+v22.23.4
+probe A rerun (final activation test bytes): batch-1 pointer-press.ts; all else final
+3f4fc9089213151288175a0a60ef0f011689793a5a09f36644e2f3fc6ed7aa01 *apps/web/src/editor/pointer-press.ts
+156ffdd4dc57d5fbf4aa3e094ecfd77e15aa6efb677754dbcb000cfab6bfb85b *apps/web/src/editor/EditorPage.rename-activation.test.tsx
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx (8 tests | 2 failed) 12448ms
+   ❯ a pointer press that commits a self-reference rename (#273 A2) (8)
+     × adds exactly one operation on the repaired source, as one step after the rename 2407ms
+     × removes exactly the pressed row, keeping the repaired Coerce row and its held JSON 1505ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > adds exactly one operation on the repaired source, as one step after the rename
+AssertionError: expected [ { notice: true, focused: true } ] to deeply equal [ { notice: false, focused: true } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "focused": true,
+-     "notice": false,
++     "notice": true,
+    },
+  ]
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:192:20
+    190|     expect(labels()).toEqual(['rename work to worker', 'edit config of…
+    191|     // Exactly one click reached the pressed button, with nothing new …
+    192|     expect(clicks).toEqual([{ notice: false, focused: true }]);
+       |                    ^
+    193|     // The notice shows once that click has been delivered.
+    194|     expect(renamedNotice(dialog)).toHaveTextContent(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/editor/EditorPage.rename-activation.test.tsx > a pointer press that commits a self-reference rename (#273 A2) > removes exactly the pressed row, keeping the repaired Coerce row and its held JSON
+AssertionError: expected [ { notice: true, focused: true } ] to deeply equal [ { notice: false, focused: true } ]
+
+- Expected
++ Received
+
+  [
+    {
+      "focused": true,
+-     "notice": false,
++     "notice": true,
+    },
+  ]
+
+ ❯ src/editor/EditorPage.rename-activation.test.tsx:274:20
+    272|     expect(operations('worker')).toEqual([REPAIRED]);
+    273|     expect(labels().slice(-2)).toEqual(['rename work to worker', 'edit…
+    274|     expect(clicks).toEqual([{ notice: false, focused: true }]);
+       |                    ^
+    275|     expect(rowIds(dialog)).toEqual(rows.slice(0, 1));
+    276|     expect(header(dialog, 1)).toHaveAttribute('aria-expanded', 'true');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  16:11:39
+   Duration  20.61s (tests 61%, transform 14%, environment 12%, import 8%, setup 4%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\apps\web
+
+exit=1
+restored: 4a128a64d624fdbaec39e0feca204706fadfebe3382f0628a4090dd1d1489c53 -> 4a128a64d624fdbaec39e0feca204706fadfebe3382f0628a4090dd1d1489c53 match=yes

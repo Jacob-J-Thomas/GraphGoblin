@@ -1,0 +1,150 @@
+# PR #474 A2 UI correction: quota-recovery resume handoff
+
+Worker: Claude Opus 5.5 (`claude-opus-5-5`), launched at xhigh effort per `launch.json` (started 2026-11-14T21:50:38Z, after the 21:50:00Z gate). No subagents, commits, refs, index writes, GitHub, provider calls, owner service/store, 4747/4748, build, coverage, browser or native runs.
+
+Status: **source correction batch 2 of 2 complete and frozen for root inspection.** Not PR-ready and not issue-complete: native QA, current CI and root completion inspection remain (see the last section).
+
+## 1. Starting state (verified before any edit)
+
+- Checkout `C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin`, branch `codex/gg-20261114-node-references-native`, HEAD `5a4fb439c63755eeb2b5bef945319772623a9905`, tree `caf777a6…`. The index was empty and still is.
+- All 14 dirty files matched `quota-source-checkpoint/node-references/manifest.json` byte for byte (sha256), including the two A1 domain files owned by another worker.
+- Compiled 164c runtime: `logs/01-artifacts-resume-start.log`. 1227 artifacts, 0 mismatches, aggregate `ab44d59b…`, 11 tsbuildinfo. Byte-identical to the original `ui-273-final-correction/artifacts-before.json` (trees, aggregate, bundle, API entry and every tsbuildinfo hash).
+- Original artifacts under `ui-273-final-correction/` were only read; nothing there was written or moved.
+
+## 2. Diagnosis of the two batch-1 failures (`ui-273-final-correction/logs/08-batch1-second-run.log`)
+
+1. **Source typing put `/x` before the last character** (`/counters/nodeVisits/draf/xt`). This is a test artifact; the production code is not wrong.
+   - user-event's `mousedown` sets the caret (`startSelecting`, at the end of the *old* 25-character value) *before* it moves focus (`focusElement`).
+   - The focus move blurs Node id, which renames and repairs the value in place to 26 characters. user-event's tracked caret stays at 25.
+   - A browser instead moves focus first and then places the caret at the pointer.
+   - The batch-0 test only saw an end-of-input caret because the remount created a new input.
+   - Correction (test only): `await user.keyboard('{End}/x')`, with a comment. The repaired-source and no-stale-overwrite assertion is kept exactly (`source: '/counters/nodeVisits/draft/x'`). Production does not move the caret.
+2. **The pointer-press release loop.** I isolated each ending event with a temporary diagnostic, which is preserved and then deleted (`logs/02-…`, `logs/03-…attempt2.log`, `03-….test.tsx.txt`). Observed results:
+   - `pointercancel` `true->false`, `mouseup` `true->false`, `dragend` `true->false`, `window blur` **`true->true`**.
+   - Cause (inferred): `onWindowBlur` compared `event.target === window`. In vitest-jsdom the global `window` is not the jsdom window object that becomes `event.target`.
+   - Fix: `event.target === event.currentTarget`. This is correct in both environments, because the listener is non-capture and `blur` does not bubble.
+   - Separately, per the root note, batch 1 released the hold at `pointerup` capture, *before* `mouseup`/`click`. That gesture boundary was corrected (section 3).
+
+## 3. Correction batch 2: the gesture boundary (`apps/web/src/editor/pointer-press.ts`)
+
+The canonical rename and repair stay synchronous and atomic: one store write and one undo step. They are applied in place by `SchemaFormHandle.applyRepair` before anything renders. That batch-1 mechanism is unchanged; `SchemaForm.tsx`, `NodeEditorDialog.tsx` and `store.ts` are byte-identical to the checkpoint. Only the cosmetic notice hold changed.
+
+- **Press starts:** primary `pointerdown` or `mousedown`, seen by a window capture listener. Touch's compatibility `mousedown` also counts.
+- **Release:** primary `pointerup` or `mouseup` (capture) does **not** end the press. It records that a release happened and arms a fallback for the next task (`setTimeout(…, 0)`).
+- **Click after a release:** heard by a window **bubble** listener, so after every handler of that click, including React's root handler. The click ends the press and clears the fallback.
+  - This covers a release on the button and a release elsewhere, where the click goes to the common ancestor.
+  - A click without a prior release (a keyboard click) neither holds nor ends a press.
+- **No click follows, or the click is stopped before the window:** the press ends at the fallback task. This is the "may settle after native click dispatch" allowance, and only the notice's display waits. No click is synthesized, replayed, delayed, prevented or intercepted. Listeners only observe, never `preventDefault`/`stopPropagation`.
+- **Ends at once:** `pointercancel`, `dragend`, and the window's own `blur`, since no click follows them.
+- **Scope:** the only consumer is `RenameNotice` (`useHeldDuringPress`). There is no generic pointer framework. Listeners exist only while a subscriber exists; the last unsubscribe also clears the fallback and the state.
+- **Design assumption, not proven here:** the engine dispatches the click in the same task as its `mouseup`. For a touch tap, the compatibility `mousedown`/`mouseup`/`click` come together in a later task and re-arm the press. jsdom cannot prove geometry, hit-testing or engine task ordering, so this needs native verification.
+
+Docs:
+- `docs/09-frontend-and-pwa.md` "Renaming a node" now describes the in-place repair, the remount fallback (and that a press on a remounting form's control loses its click), and the notice's press boundary.
+- `CHANGELOG.md` #273 entry updated to match.
+- ADR-0075 has no UI form or notice statements and is unchanged.
+- `RenameNotice.tsx` doc comment updated to the click boundary.
+
+## 4. Files, hashes, patches
+
+All sha256. Final hashes are in `final-source-hashes.txt`, with copies in `final-source/`.
+
+| File | Final sha256 | Since checkpoint |
+| --- | --- | --- |
+| apps/web/src/editor/pointer-press.ts | `4a128a64d624fdbaec39e0feca204706fadfebe3382f0628a4090dd1d1489c53` | changed (boundary + blur fix) |
+| apps/web/src/editor/pointer-press.test.tsx | `5b5d70bca96295cc3789c59121fd737b313a54c6838f0ccb216acd649d66c573` | rewritten (one case per ending) |
+| apps/web/src/editor/RenameNotice.tsx | `a66b347ab0cb81c38fea4f5e2397e778e42be9478576967fc95c318a12d6ba0f` | doc comment |
+| apps/web/src/editor/RenameNotice.test.tsx | `947b4d3472e2b754d65bd63e3c25510104ab84ea69e57339e5b74cdef2e2784a` | boundary test rewritten; Prettier |
+| apps/web/src/editor/EditorPage.rename-activation.test.tsx | `156ffdd4dc57d5fbf4aa3e094ecfd77e15aa6efb677754dbcb000cfab6bfb85b` | click-time checks, pointercancel and keyboard cases, typed fixtures; Prettier |
+| apps/web/src/editor/EditorPage.rename.test.tsx | `9c41064ad02ce246b72bac26cf62a95670aa9878e3450fe8044f4f51b41be1a4` | explicit `{End}` caret |
+| apps/web/src/forms/repair.ts | `fc832851c03c11ca6648942d1a105a4482fbc7db725eb187500bc880295382e3` | lint fix (no `any` spread); Prettier |
+| apps/web/src/forms/repair.test.ts | `5ce0d9a8c2a9661b29ab97014447b68d5633dbc4201c6ece1a94151b5d97b4c0` | Prettier only |
+| apps/web/src/forms/SchemaForm.repair.test.tsx | `cab38f3c8e94d7fa9b329d64087ac3ce1bcbcdf315e19f9c73e34bf89e402974` | Prettier only |
+| apps/web/src/forms/SchemaForm.tsx | `ade2f3551ae5aeb25a56c24d8208042729febb2b2be8cbb82553e1f887ab692b` | unchanged (batch 1) |
+| apps/web/src/editor/NodeEditorDialog.tsx | `d4d95a6fbdbf3a66d4e2dbfce6931de2901757824a9e018da8216958d0cb947f` | unchanged (batch 1) |
+| apps/web/src/editor/store.ts | `3bc079d252185d9e1a28e9db0703cd634cb62e22d9f7582c1df6e7d837eefb75` | unchanged (batch 1, comments only) |
+| docs/09-frontend-and-pwa.md | `198723306c5e550559e01cc4eecc223605f4af32e0257a4e37e87e84f6d43ccf` | new tracked change |
+| CHANGELOG.md | `d970b5ed0d823a67a4e5887cff717a669d2936db58ec40c14dc835a962c591b5` | new tracked change |
+| packages/domain/src/expression-references.ts (A1, not mine) | `efa90fd869223fd576a135850acecc6727db846c24065ce8a51fba7ce125f026` | untouched = checkpoint |
+| packages/domain/src/node-references.test.ts (A1, not mine) | `bdfaebf2faad40cddeccdbde9f8445833bc70b80e01439a3f570982bfeda2255` | untouched = checkpoint |
+
+Patches (A2 scope only, no A1 paths):
+- `ui-a2-full.patch` `c5b3b08b…f6f32f`, which is tracked plus untracked:
+  - `ui-a2-tracked.patch` `b1325006…bf34`
+  - `ui-a2-untracked.patch` `5f4d2b8a…f43a`, made with `git diff --no-index /dev/null <file>`, with no index use
+- `resume-delta-from-checkpoint.patch` `c7530794…bd5` is this session's changes only; `resume-delta-summary.txt` lists them.
+
+## 5. Commands and results
+
+All runs used Git Bash with `export PATH="$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH"` (Node v22.23.4) and `pnpm.cmd`, from the checkout root. Test runs used `pnpm.cmd --filter @graphgoblin/web exec vitest run <files>` (the package's `test` script is `vitest run`). Logs are in `logs/`, each with time, Node version and the input hashes.
+
+| Log | What | Result |
+| --- | --- | --- |
+| 01 | artifact readback at start (original `artifact-readback.mjs`) | 1227/0 mismatches, = original before |
+| 02, 03 | temporary diagnostic of batch-1 loop (attempt 1 printed nothing because console output is not shown for passing tests; attempt 2 used a deliberately unequal assertion) | window blur `true->true`; file deleted, copies kept |
+| 04 | batch-2 first focused run (6 files) | 41/41 pass, exit 0 |
+| 05 | static first: typecheck, scoped ESLint, scoped Prettier | **fail**: TS2322 in activation fixture; `no-unsafe-assignment` in repair.ts:59; 5 files unformatted |
+| 06 | `prettier --write` on exactly those 5 web files (before/after hashes) | exit 0 |
+| 07 | static second | typecheck 0, ESLint 0, Prettier 0 (12 web files + docs/09 + CHANGELOG) |
+| 08 | **Probe A**: final boundary tests with the batch-1 `pointer-press.ts` from the checkpoint; restored byte-exact | 10 fail / 11 pass (below) |
+| 09 | **Probe B**: final tests against the exact HEAD web source (4 product files = HEAD blobs; new `pointer-press.ts`/`repair.ts` absent; A1 files left dirty as found); restored and `sha256sum -c` OK | 12 fail / 15 pass (below) |
+| 10 | FINAL focused corrected run (after reordering two activation assertions) | **41/41 pass**, exit 0, no act warnings |
+| 11 | FINAL static | typecheck 0, ESLint 0, Prettier web 0, Prettier docs 0 |
+| 12 | Probe A rerun, final activation bytes | 2 fail / 6 pass; restored byte-exact |
+| 13 | Probe B rerun, final activation bytes; restore `sha256sum -c` all OK | 5 fail / 3 pass |
+| 14 | artifact readback at end | 1227/0 mismatches, aggregate `ab44d59b…`, bundle `77bba77d…`, API `e011151e…`, all 11 tsbuildinfo identical to original before → **compiled 164c artifacts unchanged** |
+| 15 | related existing tests (SchemaForm, EditorPage.undo, store.rename, EditorPage) on final source | 87/87 pass, 0 act warnings |
+
+The web typecheck is `tsc -p tsconfig.json --noEmit`; the web tsconfig sets `incremental: false`, so no tsbuildinfo can be written.
+
+## 6. Original negatives versus corrected controls
+
+Original worker evidence (kept, not rerun; it ran an earlier test version, `probe-tests/…as-run-on-old`):
+- 04: 5/5 failed from a fixture-defaults mistake, not the product.
+- 05: 3 failed, 2 controls passed; first failure was `add.isConnected` false.
+- 06: 3 failed, with soft failures: button detached, notice during press, Add lost.
+- 07: batch 1, 3 old remount-identity assertions.
+- 08: the 2 failures diagnosed above.
+
+**Probe B: exact old HEAD source, final tests** (logs 09 and 13). First hard failures:
+- Activation "adds exactly one": soft failures show Add detached, not the same button, not focused, Source replaced, and the notice rendered during the press. Hard failure: `operations('worker')` is `[REPAIRED, NOTE]`, not `[REPAIRED, NOTE, ADDED]`, so **the Add was lost**.
+- Activation "removes exactly the pressed row": Remove detached and not focused, notice during the press. Hard failure: still two rows, so **the Remove was lost**.
+- "released elsewhere" and "browser cancels": only soft failures (detached button, notice during the press). The canceled outcomes, nothing added, also hold on old source. They are partial controls by design.
+- "keyboard": `add` not focused, because the original element was replaced by the remount. The keyboard Add itself is not shown as lost on old source; this is an identity and focus difference.
+- Controls passing on old source: invalid/duplicate id, remount when the form no longer shows the stored config, steady id.
+- EditorPage.rename: the 3 in-place identity tests fail (`toBe(source)` and similar); the other 11 pass.
+- RenameNotice boundary test fails: the notice appears during the press.
+- SchemaForm.repair: 3 fail, since `applyRepair` is absent and the ref is null.
+- `pointer-press.test.tsx` and `repair.test.ts` test the new modules, which have no HEAD counterpart, so they were not run on old source.
+
+**Probe A: batch-1 `pointer-press.ts`** (logs 08 and 12):
+- Activation Add and Remove: operations are correct, which shows the in-place repair works. The click that reached the pressed button saw `notice: true`: the batch-1 hold rendered the notice before the click.
+- pointer-press: 7 fail (mouse release, release elsewhere, no-click/stopped-click fallback, tap, window blur, unsubscribe, held value).
+- RenameNotice boundary test fails.
+- Passing controls: primary-only press start, new press before settling, pointercancel/dragend, keyboard click, and 6 activation cases.
+
+**Corrected final (log 10):** all 41 pass.
+- Add and Remove each act exactly once on the original, connected, focused button, as the step after the rename. The click arrives with the notice not yet rendered.
+- Rows, disclosures, held JSON field text and field errors are kept. One save from the original token, mirrored on device.
+- Undo reverses the action, then the rename; Redo restores both. No late write after timers and frames.
+- Release elsewhere and pointercancel stay canceled. Keyboard shows the notice at once and acts once.
+- Invalid and duplicate ids keep their messages and act once on the unchanged node. Steady-id control acts once. The remount fallback is covered.
+
+All of this is jsdom component evidence. It shows which elements persist and what renders before the click. It does **not** prove where a real pointer lands.
+
+## 7. Known boundaries (reported, not widened)
+
+- **Remount fallback loses the click.** In-place repair applies only when the open form shows exactly the stored config (ignoring cleared-field markers) and the repair changed nothing but strings, in the variant shown. Otherwise the form remounts as before (`formEpoch` key), and a press on a control of that form loses its click. This is documented in docs/09, and the existing test covers the remount.
+- **Page-level notice mounts at once.** `EditorPage` mounts its page-level `RenameNotice` conditionally (`hasRenameNotice(renameReport)`), so a rename during a press mounts it immediately with the new report. It sits on the page, which is inert behind the node dialog. The node dialog is a native `showModal()` top-layer dialog, so it cannot move dialog content. Not changed.
+- **Stale e2e wording.** The promoted e2e case `apps/web/e2e/rename-references.spec.ts` still says "remounted form" in its title and comments (lines 6, 597, 680). Its assertions are focus- and value-based and should hold on the in-place path. I did not rename the promoted case, because its name is referenced by retained evidence. It was not run (browser runs are not authorized).
+- **Caret is the browser's.** After an in-place repair of the focused field, production code does not position the caret.
+
+## 8. Remaining gates (not done by this worker)
+
+1. Root freeze and source inspection of this diff. A1 domain correction stays with its own worker; its files were not touched.
+2. A build of the frozen source, which root grants separately. The retained compiled 164c artifacts are unchanged and still represent the *old* behavior.
+3. Independent native QA with the prepared driver against that build.
+   - Note: the retained `verify-corrected.playwright.js` line 228 asserts `connectedAfterDown === (strategy === 'steady')`, i.e. it *expects* the pending-rename detachment. On corrected source the pending button should stay connected and activate once, so the positive run needs the externally prepared expectations, not that line.
+   - Also needed natively: Add/Remove exactly once, notice not shown before the trusted click, a press released elsewhere or canceled, keyboard, exact graph/device/token, and Undo/Redo.
+4. Broad web unit/coverage, browser e2e (including the 5 promoted rename cases) and current CI on the resulting head. None were run here.
+5. Root completion inspection. The PR is not ready and the issue is not complete.

@@ -1,0 +1,98 @@
+{
+  "at": "2026-11-14T20:56:49.972Z",
+  "node": "v22.23.4",
+  "head": "5a4fb439c63755eeb2b5bef945319772623a9905",
+  "tree": "caf777a63de7d9938b03dfa81b9ee60e9a1bf3e5",
+  "status": "",
+  "compiledBinding": {
+    "sourceHead": "164c01a2e3a52bf0ef69a409e1a428b45817b1b8",
+    "recordSha256": "55f94ab7e6c46e8418120b0364231be5180bf19351617c04807a3eb9f017b2d3",
+    "criticalFiles": 29,
+    "sourceFiles": 54,
+    "mismatches": [],
+    "afterMatches": true
+  },
+  "installedEvaluator": {
+    "version": "2.2.2",
+    "path": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261114-node-references-native\\GraphGoblin\\node_modules\\.pnpm\\jsonata@2.2.2_patch_hash=c9_b14ebcbd7c7780cd3044079919e84e97\\node_modules\\jsonata\\jsonata.js",
+    "sha256": "10965a9e3d86ccaf87f55294959637898e918c7ef5181af72d13279c8fc8e6de"
+  },
+  "domainModules": {
+    "packages/domain/dist/expression-references.js": "4bc1101aa067674148014850e175c57037d22be2f506b1b8e97797ef96556f88",
+    "packages/domain/dist/node-references.js": "5b65621f879f1fa01a53f068b2d20e165c14eec9aabb1bfc403ae8159ed16ee2"
+  },
+  "rename": {
+    "source": "$lookup(outputs, outputs.start.value).value",
+    "renamedSource": "$lookup(outputs, outputs.start.value).value",
+    "repairedReferences": 1,
+    "warnings": [
+      {
+        "nodeId": "done",
+        "path": "config.returns",
+        "severity": "warning",
+        "code": "NODE_REFERENCE_UNCERTAIN",
+        "message": "This field may depend on a dynamic, inherited, or authored node ID. Review it after renaming."
+      }
+    ],
+    "beforeView": {
+      "outputs": {
+        "start": {
+          "value": "choice"
+        },
+        "choice": {
+          "value": "chosen"
+        }
+      }
+    },
+    "afterView": {
+      "outputs": {
+        "renamed": {
+          "value": "choice"
+        },
+        "choice": {
+          "value": "chosen"
+        }
+      }
+    },
+    "beforeValue": {
+      "type": "string",
+      "value": "chosen"
+    },
+    "afterValue": {
+      "type": "undefined"
+    },
+    "manuallyRepairedControl": {
+      "source": "$lookup(outputs, outputs.renamed.value).value",
+      "value": {
+        "type": "string",
+        "value": "chosen"
+      }
+    }
+  },
+  "missing": {
+    "source": "$lookup(outputs, $string(counters.nodeVisits.missing))",
+    "issues": [
+      {
+        "nodeId": "done",
+        "path": "config.returns",
+        "severity": "warning",
+        "code": "NODE_REFERENCE_UNCERTAIN",
+        "message": "A dynamic or scoped expression may use a node ID. Review the reference manually."
+      }
+    ],
+    "publishable": true,
+    "directControl": {
+      "source": "$string(counters.nodeVisits.missing)",
+      "issues": [
+        {
+          "nodeId": "done",
+          "path": "config.returns",
+          "severity": "error",
+          "code": "NODE_REFERENCE_MISSING",
+          "message": "No node defines counters.nodeVisits.missing."
+        }
+      ],
+      "publishable": false
+    }
+  }
+}
