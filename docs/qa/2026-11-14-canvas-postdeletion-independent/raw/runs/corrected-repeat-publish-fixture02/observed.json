@@ -1,0 +1,3123 @@
+{
+  "suite": "207-final-canvas-independent",
+  "mode": "after",
+  "action": "repeat-publish",
+  "origin": "http://127.0.0.1:57244",
+  "loaded": [
+    200,
+    200,
+    200
+  ],
+  "checkpoints": [
+    {
+      "label": "postdeletion dialog",
+      "kind": "decision",
+      "id": "gate",
+      "repeat": true,
+      "configuration": "kind"
+    },
+    {
+      "label": "port inventory",
+      "subject": "gate",
+      "handles": [
+        {
+          "direction": "target",
+          "id": "in",
+          "label": "gate input"
+        },
+        {
+          "direction": "source",
+          "id": "again",
+          "label": "gate output Return for another pass (again)"
+        },
+        {
+          "direction": "source",
+          "id": "complete",
+          "label": "gate output Finish normally (complete)"
+        },
+        {
+          "direction": "source",
+          "id": "limit-reached",
+          "label": "gate output Limit reached (limit-reached)"
+        }
+      ]
+    },
+    {
+      "label": "draw gate.again → work",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY98AJT0AM05HV0T8GBB91",
+          "ownerId": "local",
+          "name": "Canvas witness repeat 0f999a43",
+          "draftVersionId": "01M7DY98AJT0AM05HV0T8GBB92",
+          "createdAt": "2026-11-14T21:09:16.242Z",
+          "updatedAt": "2026-11-14T21:09:18.002Z"
+        },
+        "draft": {
+          "id": "01M7DY98AJT0AM05HV0T8GBB92",
+          "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas witness repeat 0f999a43",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "work": {
+                "type": "number"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 170
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Count a pass",
+                "ui": {
+                  "x": 300,
+                  "y": 170
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/work",
+                      "value": {
+                        "kind": "expression",
+                        "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "gate",
+                "label": "Choose a route",
+                "ui": {
+                  "x": 575,
+                  "y": 170
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "again",
+                      "label": "Return for another pass",
+                      "repeat": true
+                    },
+                    {
+                      "id": "complete",
+                      "label": "Finish normally"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "finished",
+                "label": "Completed",
+                "ui": {
+                  "x": 850,
+                  "y": 65
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Budget spent",
+                "ui": {
+                  "x": 865,
+                  "y": 370
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "pass",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "gate",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "gate",
+                  "port": "again"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:09:16.242Z"
+        },
+        "draftToken": "587f139606afc487"
+      },
+      "local": {
+        "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:09:18.018Z",
+        "synced": true,
+        "baseToken": "587f139606afc487"
+      },
+      "ifMatch": "\"b2b1042dfe32f348\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e3",
+      "accessibleName": "gate Return for another pass (again) to work",
+      "d": "M 766 264 L 783 264 Q 791 264 791 256 L 791 146 Q 791 138 783 138 L 276 138 Q 268 138 268 146 L 268 219 Q 268 227 276 227 L 294 227"
+    },
+    {
+      "label": "draw gate.complete → finished",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY98AJT0AM05HV0T8GBB91",
+          "ownerId": "local",
+          "name": "Canvas witness repeat 0f999a43",
+          "draftVersionId": "01M7DY98AJT0AM05HV0T8GBB92",
+          "createdAt": "2026-11-14T21:09:16.242Z",
+          "updatedAt": "2026-11-14T21:09:20.010Z"
+        },
+        "draft": {
+          "id": "01M7DY98AJT0AM05HV0T8GBB92",
+          "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas witness repeat 0f999a43",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "work": {
+                "type": "number"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 170
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Count a pass",
+                "ui": {
+                  "x": 300,
+                  "y": 170
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/work",
+                      "value": {
+                        "kind": "expression",
+                        "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "gate",
+                "label": "Choose a route",
+                "ui": {
+                  "x": 575,
+                  "y": 170
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "again",
+                      "label": "Return for another pass",
+                      "repeat": true
+                    },
+                    {
+                      "id": "complete",
+                      "label": "Finish normally"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "finished",
+                "label": "Completed",
+                "ui": {
+                  "x": 850,
+                  "y": 65
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Budget spent",
+                "ui": {
+                  "x": 865,
+                  "y": 370
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "pass",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "gate",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "gate",
+                  "port": "again"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "gate",
+                  "port": "complete"
+                },
+                "to": {
+                  "node": "finished",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:09:16.242Z"
+        },
+        "draftToken": "306432a63ddf0299"
+      },
+      "local": {
+        "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "gate",
+                "port": "complete"
+              },
+              "to": {
+                "node": "finished",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:09:20.021Z",
+        "synced": true,
+        "baseToken": "306432a63ddf0299"
+      },
+      "ifMatch": "\"587f139606afc487\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e4",
+      "accessibleName": "gate Finish normally (complete) to finished",
+      "d": "M766 284L786 284L 795.5,284Q 805,284 805,274.5L 805,120.5Q 805,111 814.5,111L824 111L844 111"
+    },
+    {
+      "label": "draw gate.limit-reached → spent",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY98AJT0AM05HV0T8GBB91",
+          "ownerId": "local",
+          "name": "Canvas witness repeat 0f999a43",
+          "draftVersionId": "01M7DY98AJT0AM05HV0T8GBB92",
+          "createdAt": "2026-11-14T21:09:16.242Z",
+          "updatedAt": "2026-11-14T21:09:21.923Z"
+        },
+        "draft": {
+          "id": "01M7DY98AJT0AM05HV0T8GBB92",
+          "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas witness repeat 0f999a43",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "work": {
+                "type": "number"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 170
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Count a pass",
+                "ui": {
+                  "x": 300,
+                  "y": 170
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/work",
+                      "value": {
+                        "kind": "expression",
+                        "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "gate",
+                "label": "Choose a route",
+                "ui": {
+                  "x": 575,
+                  "y": 170
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "again",
+                      "label": "Return for another pass",
+                      "repeat": true
+                    },
+                    {
+                      "id": "complete",
+                      "label": "Finish normally"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "finished",
+                "label": "Completed",
+                "ui": {
+                  "x": 850,
+                  "y": 65
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Budget spent",
+                "ui": {
+                  "x": 865,
+                  "y": 370
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "pass",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "gate",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "gate",
+                  "port": "again"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "gate",
+                  "port": "complete"
+                },
+                "to": {
+                  "node": "finished",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e5",
+                "from": {
+                  "node": "gate",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:09:16.242Z"
+        },
+        "draftToken": "f91a6e12aae205df"
+      },
+      "local": {
+        "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "gate",
+                "port": "complete"
+              },
+              "to": {
+                "node": "finished",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "gate",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:09:21.939Z",
+        "synced": true,
+        "baseToken": "f91a6e12aae205df"
+      },
+      "ifMatch": "\"306432a63ddf0299\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e5",
+      "accessibleName": "gate Limit reached (limit-reached) to spent",
+      "d": "M766 304L786 304L 802.5,304Q 812.5,304 812.5,314L 812.5,406Q 812.5,416 822.5,416L839 416L859 416"
+    },
+    {
+      "label": "immutable publication",
+      "id": "01M7DY98AJT0AM05HV0T8GBB91",
+      "validation": {
+        "issues": [],
+        "publishable": true
+      },
+      "version": {
+        "id": "01M7DY98AJT0AM05HV0T8GBB92",
+        "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "gate",
+                "port": "complete"
+              },
+              "to": {
+                "node": "finished",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "gate",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-14T21:09:16.242Z",
+        "publishedAt": "2026-11-14T21:09:23.385Z"
+      }
+    },
+    {
+      "label": "Save a new draft after the published topology",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY98AJT0AM05HV0T8GBB91",
+          "ownerId": "local",
+          "name": "Canvas witness repeat 0f999a43",
+          "description": "Later draft only, after immutable release",
+          "currentVersionId": "01M7DY98AJT0AM05HV0T8GBB92",
+          "draftVersionId": "01M7DY9G15H48TJ061F50BTX3W",
+          "createdAt": "2026-11-14T21:09:16.242Z",
+          "updatedAt": "2026-11-14T21:09:24.133Z"
+        },
+        "current": {
+          "id": "01M7DY98AJT0AM05HV0T8GBB92",
+          "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas witness repeat 0f999a43",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "work": {
+                "type": "number"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 170
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Count a pass",
+                "ui": {
+                  "x": 300,
+                  "y": 170
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/work",
+                      "value": {
+                        "kind": "expression",
+                        "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "gate",
+                "label": "Choose a route",
+                "ui": {
+                  "x": 575,
+                  "y": 170
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "again",
+                      "label": "Return for another pass",
+                      "repeat": true
+                    },
+                    {
+                      "id": "complete",
+                      "label": "Finish normally"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "finished",
+                "label": "Completed",
+                "ui": {
+                  "x": 850,
+                  "y": 65
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Budget spent",
+                "ui": {
+                  "x": 865,
+                  "y": 370
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "pass",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "gate",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "gate",
+                  "port": "again"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "gate",
+                  "port": "complete"
+                },
+                "to": {
+                  "node": "finished",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e5",
+                "from": {
+                  "node": "gate",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:09:16.242Z",
+          "publishedAt": "2026-11-14T21:09:23.385Z"
+        },
+        "draft": {
+          "id": "01M7DY9G15H48TJ061F50BTX3W",
+          "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+          "version": 2,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas witness repeat 0f999a43",
+            "description": "Later draft only, after immutable release",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "work": {
+                "type": "number"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual start",
+                "ui": {
+                  "x": 0,
+                  "y": 170
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Count a pass",
+                "ui": {
+                  "x": 300,
+                  "y": 170
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "set",
+                      "path": "/vars/work",
+                      "value": {
+                        "kind": "expression",
+                        "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "gate",
+                "label": "Choose a route",
+                "ui": {
+                  "x": 575,
+                  "y": 170
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "again",
+                      "label": "Return for another pass",
+                      "repeat": true
+                    },
+                    {
+                      "id": "complete",
+                      "label": "Finish normally"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "finished",
+                "label": "Completed",
+                "ui": {
+                  "x": 850,
+                  "y": 65
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Budget spent",
+                "ui": {
+                  "x": 865,
+                  "y": 370
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "vars.work",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "pass",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "gate",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "gate",
+                  "port": "again"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "gate",
+                  "port": "complete"
+                },
+                "to": {
+                  "node": "finished",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e5",
+                "from": {
+                  "node": "gate",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:09:24.133Z"
+        },
+        "draftToken": "6355abc8fb89d363"
+      },
+      "local": {
+        "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "gate",
+                "port": "complete"
+              },
+              "to": {
+                "node": "finished",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "gate",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Later draft only, after immutable release"
+        },
+        "savedAt": "2026-11-14T21:09:24.148Z",
+        "synced": true,
+        "baseToken": "6355abc8fb89d363"
+      },
+      "ifMatch": "\"f91a6e12aae205df\""
+    },
+    {
+      "label": "provider-free pinned run",
+      "exhaust": false,
+      "state": {
+        "id": "01M7DY9GXFR35JBNQB8F3HZQTW",
+        "ownerId": "local",
+        "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+        "versionId": "01M7DY98AJT0AM05HV0T8GBB92",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Canvas witness repeat 0f999a43",
+          "label": "Canvas witness repeat 0f999a43 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7DY9GXFR35JBNQB8F3HZQTX",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "result": 3,
+        "createdAt": "2026-11-14T21:09:25.039Z",
+        "startedAt": "2026-11-14T21:09:25.075Z",
+        "finishedAt": "2026-11-14T21:09:25.290Z",
+        "finalizedAt": "2026-11-14T21:09:25.301Z",
+        "lastEventSeq": 24,
+        "recovery": {
+          "observedSeq": 24,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Manual start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finished",
+                  "label": "Completed",
+                  "kind": "delivery"
+                },
+                {
+                  "nodeId": "spent",
+                  "label": "Budget spent",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "Count a pass",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finished",
+                  "label": "Completed",
+                  "kind": "delivery"
+                },
+                {
+                  "nodeId": "spent",
+                  "label": "Budget spent",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Choose a route",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finished",
+                  "label": "Completed",
+                  "kind": "delivery"
+                },
+                {
+                  "nodeId": "spent",
+                  "label": "Budget spent",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "finished",
+              "label": "Completed",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finished",
+                  "label": "Completed",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "spent",
+              "label": "Budget spent",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": [
+                {
+                  "nodeId": "spent",
+                  "label": "Budget spent",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "decisions": [
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 1,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.101,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M7DY9GXFR35JBNQB8F3HZQTW",
+          "seq": 8,
+          "ts": "2026-11-14T21:09:25.181Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 2,
+            "passes": 3,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.146,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M7DY9GXFR35JBNQB8F3HZQTW",
+          "seq": 13,
+          "ts": "2026-11-14T21:09:25.224Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "complete",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "complete",
+          "gate": {
+            "previousPasses": 3,
+            "passes": 3,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.193,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M7DY9GXFR35JBNQB8F3HZQTW",
+          "seq": 18,
+          "ts": "2026-11-14T21:09:25.269Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        }
+      ]
+    },
+    {
+      "label": "provider-free pinned run",
+      "exhaust": true,
+      "state": {
+        "id": "01M7DY9H8QAVC4DKCWPWNK4KX0",
+        "ownerId": "local",
+        "loopId": "01M7DY98AJT0AM05HV0T8GBB91",
+        "versionId": "01M7DY98AJT0AM05HV0T8GBB92",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Canvas witness repeat 0f999a43",
+          "label": "Canvas witness repeat 0f999a43 v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "01M7DY9H8QAVC4DKCWPWNK4KX1",
+        "status": "exhausted",
+        "iteration": 1,
+        "outcome": "exhausted",
+        "result": 3,
+        "createdAt": "2026-11-14T21:09:25.399Z",
+        "startedAt": "2026-11-14T21:09:25.410Z",
+        "finishedAt": "2026-11-14T21:09:25.596Z",
+        "finalizedAt": "2026-11-14T21:09:25.605Z",
+        "lastEventSeq": 24,
+        "recovery": {
+          "observedSeq": 24,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Manual start",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finished",
+                  "label": "Completed",
+                  "kind": "delivery"
+                },
+                {
+                  "nodeId": "spent",
+                  "label": "Budget spent",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "work",
+              "label": "Count a pass",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finished",
+                  "label": "Completed",
+                  "kind": "delivery"
+                },
+                {
+                  "nodeId": "spent",
+                  "label": "Budget spent",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "gate",
+              "label": "Choose a route",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "finished",
+                  "label": "Completed",
+                  "kind": "delivery"
+                },
+                {
+                  "nodeId": "spent",
+                  "label": "Budget spent",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "finished",
+              "label": "Completed",
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              },
+              "effects": [
+                {
+                  "nodeId": "finished",
+                  "label": "Completed",
+                  "kind": "delivery"
+                }
+              ]
+            },
+            {
+              "nodeId": "spent",
+              "label": "Budget spent",
+              "action": {
+                "allowed": true
+              },
+              "effects": [
+                {
+                  "nodeId": "spent",
+                  "label": "Budget spent",
+                  "kind": "delivery"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "decisions": [
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 1,
+            "passes": 2,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.062,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M7DY9H8QAVC4DKCWPWNK4KX0",
+          "seq": 8,
+          "ts": "2026-11-14T21:09:25.474Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "again",
+          "gate": {
+            "previousPasses": 2,
+            "passes": 3,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.125,
+            "limit": null
+          },
+          "diagnostics": [],
+          "runId": "01M7DY9H8QAVC4DKCWPWNK4KX0",
+          "seq": 13,
+          "ts": "2026-11-14T21:09:25.536Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        },
+        {
+          "provenance": {
+            "kind": "expression",
+            "provider": null,
+            "classifierId": null,
+            "model": null,
+            "effort": null
+          },
+          "observation": {
+            "kind": "route",
+            "routeId": "again",
+            "confidence": null,
+            "reasoning": null
+          },
+          "portId": "limit-reached",
+          "gate": {
+            "previousPasses": 3,
+            "passes": 3,
+            "repeatRouteId": "again",
+            "maxPasses": 3,
+            "elapsedSeconds": 0.155,
+            "limit": "max-passes"
+          },
+          "diagnostics": [],
+          "runId": "01M7DY9H8QAVC4DKCWPWNK4KX0",
+          "seq": 18,
+          "ts": "2026-11-14T21:09:25.569Z",
+          "type": "decision.made",
+          "nodeId": "gate"
+        }
+      ]
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7DY98AJT0AM05HV0T8GBB91/draft",
+      "at": 1794690557993,
+      "ifMatch": "\"b2b1042dfe32f348\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY98AJT0AM05HV0T8GBB91/draft",
+      "at": 1794690560004,
+      "ifMatch": "\"587f139606afc487\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "gate",
+                "port": "complete"
+              },
+              "to": {
+                "node": "finished",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY98AJT0AM05HV0T8GBB91/draft",
+      "at": 1794690561916,
+      "ifMatch": "\"306432a63ddf0299\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "gate",
+                "port": "complete"
+              },
+              "to": {
+                "node": "finished",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "gate",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY98AJT0AM05HV0T8GBB91/draft",
+      "at": 1794690564129,
+      "ifMatch": "\"f91a6e12aae205df\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas witness repeat 0f999a43",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "work": {
+              "type": "number"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual start",
+              "ui": {
+                "x": 0,
+                "y": 170
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Count a pass",
+              "ui": {
+                "x": 300,
+                "y": 170
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "set",
+                    "path": "/vars/work",
+                    "value": {
+                      "kind": "expression",
+                      "jsonata": "($exists(vars.work) ? vars.work : 0) + 1"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "gate",
+              "label": "Choose a route",
+              "ui": {
+                "x": 575,
+                "y": 170
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "trigger.payload.exhaust ? \"again\" : (gates.gate.passes = 3 ? \"complete\" : \"again\")",
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "again",
+                    "label": "Return for another pass",
+                    "repeat": true
+                  },
+                  {
+                    "id": "complete",
+                    "label": "Finish normally"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "finished",
+              "label": "Completed",
+              "ui": {
+                "x": 850,
+                "y": 65
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Budget spent",
+              "ui": {
+                "x": 865,
+                "y": 370
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "vars.work",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "pass",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "gate",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "gate",
+                "port": "again"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "gate",
+                "port": "complete"
+              },
+              "to": {
+                "node": "finished",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "gate",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Later draft only, after immutable release"
+        }
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": null,
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+}

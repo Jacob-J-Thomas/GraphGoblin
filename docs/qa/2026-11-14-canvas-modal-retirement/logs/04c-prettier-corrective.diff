@@ -1,0 +1,43 @@
+--- /c/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase2/logs/prettier-before/EditorPage.test.tsx	2026-11-14 14:35:55.595450600 -0600
++++ apps/web/src/editor/EditorPage.test.tsx	2026-11-14 14:35:56.467410600 -0600
+@@ -1234,9 +1234,10 @@
+ 
+     // The renamed node's connection followed it, and the dialog offers no way to remove it: edges
+     // are removed on the canvas (#207), through the store operation its toolbar and keys call.
+-    expect(
+-      useEditorStore.getState().definition!.edges.find((e) => e.id === 'e5b'),
+-    ).toMatchObject({ from: { node: 'verify', port: 'retry' }, to: { node: 'infer' } });
++    expect(useEditorStore.getState().definition!.edges.find((e) => e.id === 'e5b')).toMatchObject({
++      from: { node: 'verify', port: 'retry' },
++      to: { node: 'infer' },
++    });
+     expect(within(dialog).queryByRole('button', { name: /^Remove edge/ })).toBeNull();
+     act(() => useEditorStore.getState().removeEdge('e5b'));
+     expect(useEditorStore.getState().definition!.edges.some((e) => e.id === 'e5b')).toBe(false);
+@@ -1247,9 +1248,9 @@
+     const nightly = await screen.findByRole('dialog', { name: 'Edit trigger nightly' });
+     expect(within(nightly).queryByRole('region', { name: 'Connections' })).toBeNull();
+     expect(within(nightly).queryByText('No outgoing edges.')).toBeNull();
+-    expect(
+-      useEditorStore.getState().definition!.edges.some((e) => e.from.node === 'nightly'),
+-    ).toBe(false);
++    expect(useEditorStore.getState().definition!.edges.some((e) => e.from.node === 'nightly')).toBe(
++      false,
++    );
+     act(() => useEditorStore.getState().closeNodeDialog());
+     expect(screen.queryByRole('dialog')).toBeNull();
+     expect(useEditorStore.getState().selectedNodeId).toBe('nightly');
+--- /c/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase2/logs/prettier-before/decision-routes.spec.ts	2026-11-14 14:35:55.631721600 -0600
++++ apps/web/e2e/decision-routes.spec.ts	2026-11-14 14:35:56.637843900 -0600
+@@ -363,7 +363,10 @@
+   );
+   expect(connected?.to.node).toBe('branch');
+   // The canvas names it by the numeric label and the stable ID.
+-  await expect(edge(page, connected!.id)).toHaveAttribute('aria-label', 'pick 8 (route-8) to branch');
++  await expect(edge(page, connected!.id)).toHaveAttribute(
++    'aria-label',
++    'pick 8 (route-8) to branch',
++  );
+   // The editor shows neither a Connections list nor a Connect form for the node.
+   const dialog = await openNode(page, 'pick');
+   await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);

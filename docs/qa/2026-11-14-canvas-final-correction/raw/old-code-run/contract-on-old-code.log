@@ -1,0 +1,65 @@
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+ ❯ src/editor/viewport-gesture.contract.test.tsx (5 tests | 4 failed) 20641ms
+   ❯ the pan gate on the installed xyflow and d3 (#207) (5)
+     × shows Remove unavailable while d3 cancels the next click, and delivers the first available click once 303ms
+     × settles a middle-button pan the same way 92ms
+     × lets a new pan invalidate an earlier release that has not settled 78ms
+     × is not stranded when a programmatic or wheel move replaces the pan’s end callback 20008ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > shows Remove unavailable while d3 cancels the next click, and delivers the first available click once
+Error: expect(element).toHaveAttribute("aria-disabled", "true") // element.getAttribute("aria-disabled") === "true"
+Expected the element to have attribute:
+  aria-disabled="true"
+Received:
+  null
+ ❯ src/editor/viewport-gesture.contract.test.tsx:262:22
+    260|       pane.dispatchEvent(mouse('mousemove', 710, 400, 0, 1));
+    261|       await microtasks();
+    262|       expect(button).toHaveAttribute('aria-disabled', 'true');
+       |                      ^
+    263|       expect(button).toHaveAttribute('data-gesture', 'panning');
+    264|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > settles a middle-button pan the same way
+Error: expect(element).toHaveAttribute("data-gesture", "panning") // element.getAttribute("data-gesture") === "panning"
+Expected the element to have attribute:
+  data-gesture="panning"
+Received:
+  null
+ ❯ src/editor/viewport-gesture.contract.test.tsx:352:22
+    350|       pane.dispatchEvent(mouse('mousemove', 600, 520, 0, BUTTONS[1]));
+    351|       await microtasks();
+    352|       expect(button).toHaveAttribute('data-gesture', 'panning');
+       |                      ^
+    353|       pane.dispatchEvent(mouse('mouseup', 600, 520, 1, 0));
+    354|       await microtasks();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > lets a new pan invalidate an earlier release that has not settled
+Error: expect(element).toHaveAttribute("data-gesture", "panning") // element.getAttribute("data-gesture") === "panning"
+Expected the element to have attribute:
+  data-gesture="panning"
+Received:
+  null
+ ❯ src/editor/viewport-gesture.contract.test.tsx:381:22
+    379|       pane.dispatchEvent(mouse('mousemove', 760, 420, 0, 1));
+    380|       await microtasks();
+    381|       expect(button).toHaveAttribute('data-gesture', 'panning');
+       |                      ^
+    382|       // Both of the first release's tasks have run by the second of t…
+    383|       await queuedTask(() => undefined);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > is not stranded when a programmatic or wheel move replaces the pan’s end callback
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/editor/viewport-gesture.contract.test.tsx:403:3
+    401|   });
+    402|
+    403|   it('is not stranded when a programmatic or wheel move replaces the p…
+       |   ^
+    404|     const { pane } = await selectedConnection();
+    405|     const button = remove();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  16:38:51
+   Duration  26.03s (tests 80%, environment 9%, transform 4%, setup 3%, import 3%)

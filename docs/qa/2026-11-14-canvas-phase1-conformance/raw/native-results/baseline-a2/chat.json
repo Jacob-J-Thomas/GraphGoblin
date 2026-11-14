@@ -1,0 +1,189 @@
+{
+  "scenario": "chat",
+  "mode": "before",
+  "startedAt": "2026-11-14T18:54:13.045Z",
+  "steps": [
+    {
+      "label": "keyboard Delete on protected chat-start",
+      "gesture": {
+        "method": "keyboard focus+Enter+Delete",
+        "id": "chat-start"
+      },
+      "inert": true,
+      "alert": null,
+      "undo": "Undo",
+      "edgesAfter": [
+        {
+          "id": "chat-start",
+          "from": {
+            "node": "chat-input",
+            "port": "out"
+          },
+          "to": {
+            "node": "chat-normalize",
+            "port": "in"
+          }
+        },
+        {
+          "id": "chat-package",
+          "from": {
+            "node": "respond",
+            "port": "out"
+          },
+          "to": {
+            "node": "chat-envelope",
+            "port": "in"
+          }
+        },
+        {
+          "id": "chat-finish",
+          "from": {
+            "node": "chat-envelope",
+            "port": "out"
+          },
+          "to": {
+            "node": "chat-return",
+            "port": "in"
+          }
+        },
+        {
+          "id": "chat-normalize-checked",
+          "from": {
+            "node": "chat-normalize",
+            "port": "out"
+          },
+          "to": {
+            "node": "chat-normalize-check",
+            "port": "in"
+          }
+        },
+        {
+          "id": "chat-normalize-valid",
+          "from": {
+            "node": "chat-normalize-check",
+            "port": "valid"
+          },
+          "to": {
+            "node": "respond",
+            "port": "in"
+          }
+        },
+        {
+          "id": "chat-normalize-rejected",
+          "from": {
+            "node": "chat-normalize-check",
+            "port": "invalid"
+          },
+          "to": {
+            "node": "chat-normalize-invalid",
+            "port": "in"
+          }
+        }
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "label": "chat before",
+      "value": {
+        "id": "01M7DPF3KVDF1Y8YWE997XQHTS",
+        "name": "Gateway chat",
+        "token": "500f95d109aeb211",
+        "publishedVersion": 1,
+        "edges": [
+          {
+            "id": "chat-start",
+            "from": {
+              "node": "chat-input",
+              "port": "out"
+            },
+            "to": {
+              "node": "chat-normalize",
+              "port": "in"
+            }
+          },
+          {
+            "id": "chat-package",
+            "from": {
+              "node": "respond",
+              "port": "out"
+            },
+            "to": {
+              "node": "chat-envelope",
+              "port": "in"
+            }
+          },
+          {
+            "id": "chat-finish",
+            "from": {
+              "node": "chat-envelope",
+              "port": "out"
+            },
+            "to": {
+              "node": "chat-return",
+              "port": "in"
+            }
+          },
+          {
+            "id": "chat-normalize-checked",
+            "from": {
+              "node": "chat-normalize",
+              "port": "out"
+            },
+            "to": {
+              "node": "chat-normalize-check",
+              "port": "in"
+            }
+          },
+          {
+            "id": "chat-normalize-valid",
+            "from": {
+              "node": "chat-normalize-check",
+              "port": "valid"
+            },
+            "to": {
+              "node": "respond",
+              "port": "in"
+            }
+          },
+          {
+            "id": "chat-normalize-rejected",
+            "from": {
+              "node": "chat-normalize-check",
+              "port": "invalid"
+            },
+            "to": {
+              "node": "chat-normalize-invalid",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "at": "2026-11-14T18:54:13.059Z"
+    },
+    {
+      "label": "protected chat-start alert",
+      "value": null,
+      "at": "2026-11-14T18:54:14.971Z"
+    }
+  ],
+  "writes": [],
+  "responses": [
+    {
+      "method": "POST",
+      "path": "/loops/01M7DPF3KVDF1Y8YWE997XQHTS/validate",
+      "at": 1794682453211
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "shots": [
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/baseline-a2/chat-chat-initial.png",
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/baseline-a2/chat-first-failure.png"
+  ],
+  "failure": {
+    "error": "Error: protected removal not explained: null",
+    "stack": "Error: protected removal not explained: null\n    at check (evalmachine.<anonymous>:23:18)\n    at evalmachine.<anonymous>:612:5\n    at async finish (evalmachine.<anonymous>:385:5)\n    at async evalmachine.<anonymous>:3:20\n    at async C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70181:13\n    at async waitForCompletion (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:66323:15)\n    at async _Tab._raceAgainstModalStates (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:67487:18)\n    at async _Tab.waitForCompletion (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:67494:9)\n    at async Object.handle (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70177:11)\n    at async BrowserBackend.callTool (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:68487:11)"
+  },
+  "finishedAt": "2026-11-14T18:54:15.025Z"
+}

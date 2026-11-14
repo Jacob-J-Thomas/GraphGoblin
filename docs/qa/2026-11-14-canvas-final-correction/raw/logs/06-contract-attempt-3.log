@@ -1,0 +1,91 @@
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+ ❯ src/editor/viewport-gesture.contract.test.tsx (5 tests | 4 failed) 840ms
+   ❯ the pan gate on the installed xyflow and d3 (#207) (5)
+     × shows Remove unavailable while d3 cancels the next click, and delivers the first available click once 361ms
+     × settles a middle-button pan the same way 115ms
+     × lets a new pan invalidate an earlier release that has not settled 117ms
+     × is not stranded when a programmatic or wheel move replaces the pan’s end callback 96ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > shows Remove unavailable while d3 cancels the next click, and delivers the first available click once
+AssertionError: expected { blocker: false, …(7) } to match object { blocker: false, …(4) }
+(3 matching properties omitted from actual)
+- Expected
++ Received
+@@ -1,8 +1,8 @@
+  {
+    "blocker": false,
+-   "bubbled": true,
++   "bubbled": false,
+    "delivered": true,
+    "gesture": "settling",
+    "stored": [
+      "e1",
+    ],
+ ❯ src/editor/viewport-gesture.contract.test.tsx:303:28
+    301|         stored: stored(),
+    302|       }));
+    303|       expect(afterCleanup).toMatchObject({
+       |                            ^
+    304|         blocker: false,
+    305|         gesture: 'settling',
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > settles a middle-button pan the same way
+AssertionError: expected { blocker: false, …(5) } to match object { blocker: false, …(2) }
+(3 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "blocker": false,
+-   "bubbled": true,
++   "bubbled": false,
+    "delivered": true,
+  }
+ ❯ src/editor/viewport-gesture.contract.test.tsx:344:21
+    342|         ...click(button, windowEvents.readings),
+    343|       }));
+    344|       expect(first).toMatchObject({ blocker: false, delivered: true, b…
+       |                     ^
+    345|       expect(stored()).toEqual([]);
+    346|       expect(store().past).toHaveLength(1);
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > lets a new pan invalidate an earlier release that has not settled
+AssertionError: expected { Object (delivered, type, ...) } to match object { delivered: true, bubbled: true }
+(3 matching properties omitted from actual)
+- Expected
++ Received
+  {
+-   "bubbled": true,
++   "bubbled": false,
+    "delivered": true,
+  }
+ ❯ src/editor/viewport-gesture.contract.test.tsx:371:23
+    369|       expect(button).toHaveAttribute('data-gesture', 'panning');
+    370|       const refused = click(button, windowEvents.readings);
+    371|       expect(refused).toMatchObject({ delivered: true, bubbled: true }…
+       |                       ^
+    372|       expect(stored()).toEqual(['e1']);
+    373|       // The second pan's release settles it.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > is not stranded when a programmatic or wheel move replaces the pan’s end callback
+AssertionError: expected { blocker: false, …(5) } to match object { blocker: false, …(2) }
+(3 matching properties omitted from actual)
+- Expected
++ Received
+  {
+    "blocker": false,
+-   "bubbled": true,
++   "bubbled": false,
+    "delivered": true,
+  }
+ ❯ src/editor/viewport-gesture.contract.test.tsx:430:21
+    428|       expect(ends).toContain(null);
+    429|       expect(ends).not.toContain('mouseup');
+    430|       expect(first).toMatchObject({ blocker: false, delivered: true, b…
+       |                     ^
+    431|       expect(stored()).toEqual([]);
+    432|     } finally {
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  16:36:04
+   Duration  5.91s (environment 40%, transform 18%, tests 15%, import 14%, setup 14%)

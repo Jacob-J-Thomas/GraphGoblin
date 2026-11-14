@@ -1,0 +1,118 @@
+# #207 phase 2: modal connection controls retired (source, focused tests, no-emit checks)
+
+Worker: Claude Sonnet 5.5 (`claude-sonnet-5-5`), requested effort `xhigh` (the applied effort is not observable to me). This is implementation of the admitted bounded step. It is not a review scan or independent QA.
+
+Checkout: `C:/Users/98jak/.codex/worktrees/gg-20261114-canvas/GraphGoblin`, branch `codex/gg-20261114-canvas`, HEAD `c524434dd1a563b0946dbb8793a351b9cbe9d35f`, tree `9f6733608ad19892578dea0856865c88b35e64d7`. Both were unchanged at the end. Nothing is staged, committed, pushed or written to GitHub. Node v22.23.4, `pnpm.cmd` 12.8.1, dependencies unchanged. Paths below are under `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase2/` unless they start with `apps/`, `docs/` or `packages/`.
+
+## 1. Outcome
+
+| Item | Result |
+| --- | --- |
+| `NodeConnections` (outgoing list, Remove edge buttons, Connect form) | Deleted. Its import and render are gone from `NodeEditorDialog.tsx`. Nothing else imported it. |
+| Obsolete exports | None to remove. `canvasPorts`, `canvasPortLabels`, `isProtectedVoiceEdge`, `VOICE_STEP_MESSAGE` and the store's `connect` and `removeEdge` are all still used by the canvas, the toolbar, the issue list or the store, so they stay. |
+| Declaration editing, removal confirmations, node deletion, Chat protection, held input, rename and focus restoration | Untouched in source. Their focused tests pass (section 3). |
+| The 14 phase-1 files and everything else of parent35bb | Untouched. `git diff --name-only` lists none of them. No reconnect mechanism, keyboard creation, connection form or layout was added. |
+| Unit tests | Retired-functionality tests moved to the absence contract. Remaining behaviour kept and its assertions kept (section 4). |
+| Browser-test source | Eight specs, the `LIVE=1` `live.spec.ts` and the shared fixtures were migrated to canvas drawing and keyboard removal. **None was executed**, by grant (section 5). |
+| Docs | `docs/09`, user guide 02, `docs/12`, CHANGELOG Unreleased, reserved **ADR-0076** with its index entry, and a one-line amendment note in ADR-0031. |
+| Compiled output | 13 trees, 1,227 files, no build. Before and after combined hash are both `65e1de442779bf55f6f45fc26c9c59dad9977ab6ca00c9857575cb66582adf9d`. Every file also equals the phase-1 candidate-build manifest. Logs: `logs/00-compiled-before.json`, `logs/13-compiled-after.json`, script `scripts/hash-compiled.mjs`. |
+
+**Evidence tier.** S (no-emit types, lint, format) and C (jsdom component tests). Nothing here is N (native browser) or P (public-API readback). The independently observed canvas creation, removal and recovery paths still need the later heavy-slot grant.
+
+## 2. Exact changed files (24 paths, 356 insertions and 320 deletions in the 23 tracked ones)
+
+Full patch of tracked files: `changes.patch` (sha256 `deae97cf09e00b2d062673a271f708f0063e6ea8b597d97eea9bc35e31c11a30`). The new ADR file is untracked, so it is not in the patch. Hashes after the change are in `logs/14-source-hashes-after.txt`; the pre-edit hashes of four files are in `logs/01-source-hashes-before.txt`.
+
+| Path | sha256 after | Change |
+| --- | --- | --- |
+| `apps/web/src/editor/NodeConnections.tsx` | deleted (was `b354cfb198cf9f4c7998a35ac8b6d8c60e827dd14083e7977f14069ed16f9105`) | Retired component |
+| `apps/web/e2e/decision-routes.spec.ts` | `97a21390144eb5327b348d7e33fbf2cf7fdcfc9fd3dfa0948bd5912ed3f7925b` | Migrated (section 5) |
+| `apps/web/e2e/exit-primitives.spec.ts` | `0b5ed600f98fe51bd536b3b27344a8d6fa9f4c77d347a8e061f427c4dbbbf9c6` | Migrated (section 5) |
+| `apps/web/e2e/fixtures.ts` | `37f9150c4ecc9726b79a692bb61ec516f784b0736d12af3562dd00d55fd9d73c` | New helpers `portHandle`, `connectOnCanvas`, `removeEdgeOnCanvas` (section 5) |
+| `apps/web/e2e/issue-170-qa.spec.ts` | `0bf2a57e226b48ee6aa7d5c461c72cfa43f874a849c526df31fd0cb82b2b5392` | Migrated (section 5) |
+| `apps/web/e2e/live.spec.ts` | `48b66ed637b8bcd9822a1aa8935d7f13a2a6b2e94febe566d4c1e58559ef777e` | Migrated (section 5) |
+| `apps/web/e2e/loop-back-topology.spec.ts` | `f100ec25032011dde55094ab5d8d1736aa5a1809f7b6d76ebabf17245e32ac9e` | Migrated (section 5) |
+| `apps/web/e2e/loop-lifecycle.spec.ts` | `c4f3d73f57ae0941e3b75a07d5b8fa7e35d42e3d14b0b57d223f2e4ddd7101c8` | Migrated (section 5) |
+| `apps/web/e2e/palette-placement.spec.ts` | `517ce59c6e12071bfebc2ebdfd426bdb18db471ed13f5e34352b0e01f4b51d65` | Migrated (section 5) |
+| `apps/web/e2e/qa.spec.ts` | `e63558ab7a44a3c67f3b349d300f751d6db45cebe57871cf6608064ee26dc8d6` | Migrated (section 5) |
+| `apps/web/e2e/responsive.spec.ts` | `7d34d8e564b62b93304a96b5d14643b33d03360d00c164a0c90f83e9e80ade4b` | Migrated (section 5) |
+| `apps/web/src/editor/chat-protection.test.ts` | `adad0a1d30e6a7ffb577300ea593f1d222fa374501be64f8527e2e66322ab834` | Test title only: "canvas/keyboard connection path" became "canvas connection path" |
+| `apps/web/src/editor/EditorPage.test.tsx` | `8227710237d140c9e601e36bd33833eb1eba9c15bd0ce92c3121498d231fca94` | Three tests migrated (section 4) |
+| `apps/web/src/editor/NodeEditorDialog.test.tsx` | `3799c57d6addb358c4223f3b951427c2ad0b6c63e1c019014ebd73cd68a0248d` | Absence contract and help-string expectation (section 4) |
+| `apps/web/src/editor/NodeEditorDialog.tsx` | `a54b21dbc3aab22d7fe6add8ef656e95580c39ab6fd059fd77190ac6e2dc181c` (was `ac7d74376a3da3a7a861296e6cba8256d47611de2140ad6c489dd280090d4353`) | Import and render removed; doc comment now says connections are authored on the canvas (#207, ADR-0076) |
+| `apps/web/src/styles/canvas.css` | `bdab0c149439e99f0789862034206e889ede4387ac51f5530185265cee188a2f` (was `2ba641aae1305468f89132329e3733bf3ec19a8018d5585ab9e28fa9b291c3bb`) | Comment only: the Connect form is no longer "the full-size alternative" |
+| `CHANGELOG.md` | `7d81deaf7d9ca9f40ef8e3c95ffb13a15c7420c54cffbee05de9c9b31c654166` | Unreleased entry; no upgrade note (no stored or exported data changes) |
+| `docs/09-frontend-and-pwa.md` | `41491e07d7130d96813c13630cdc993b146cb54275ce51e0fed959f1a57ce7d5` | New section "Connections are drawn on the canvas (Decided, #207, ADR-0076)"; every stale Connect form or Connections mention fixed; Prettier table realignment |
+| `docs/12-implementation-plan.md` | `16ec382cb281610c667866dd44fb1bdd697a92146af721e7f480c052fcdd9831` | Known-gaps line |
+| `docs/decisions/ADR-0031-mounted-context-tabs.md` | `214828cd9e183ce064df2030c002efb350400a76f1df90b0ef07ea5ecd2abf73` | "Amended by ADR-0076" in its status line |
+| `docs/decisions/ADR-0076-canvas-only-connection-authoring.md` | `3b1efe27354bb7a67e4772e8600029ba3bcb1a6f2da786f819426d66326fd2e2` | New |
+| `docs/decisions/README.md` | `edee3fdd9003adf7c8de0354c45a1e42bc435d45c6fd3ea1878457156f23f2fc` | Index entry |
+| `docs/guide/02-build-a-loop.md` | `762785afa10c974d1ab0dc1dd0cf7b5eb535793aa7065de3bd4082a9f652d347` | Steps 4 and 5, the decision-output sentence, two new paragraphs |
+| `packages/contracts/src/evaluation.ts` | `2d925d6ae6dfc743fd1810735ce804b164edcd347086824e8dd79be534a618a7` (was `3c17b683211043b4f4207042a5d41614aca4c457e14266c1cb16e6beb8c2fad5`) | One help string: "…shown on the canvas and in Connections." became "…shown on the canvas." Outside `apps/web`; see section 6 |
+
+(Pre-edit hashes of the other changed files are `git show HEAD:<path>`; the four that I recorded before editing are marked "was".)
+
+## 3. Commands and results (all through pnpm, no coverage flag, no threshold or include override)
+
+Each log has a `.meta` with cwd, command, versions, start, end and exit code.
+
+| # | Command (from the checkout) | Result |
+| --- | --- | --- |
+| 02 | `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/NodeEditorDialog.test.tsx src/editor/chat-protection.test.ts` | PASS: 2 files, 37 tests |
+| 03 | same, `src/editor/EditorPage.test.tsx src/editor/EditorPage.rename.test.tsx` | PASS: 2 files, 51 tests |
+| 04 | `pnpm.cmd exec prettier --check <16 changed files>` | **FIRST FAILURE, exit 1**: `EditorPage.test.tsx`, `e2e/decision-routes.spec.ts`. Corrected with `prettier --write`; the whole corrective diff (line wrapping only) is `logs/04c-prettier-corrective.diff`, the pre-write copies are in `logs/prettier-before/` |
+| 05 | same vitest, 30 files: the nine phase-1 files, all `EditorPage.*` variants, `NodeEditorDialog`, `DecisionAuthoring`, `ClassifierField.editor`, `SystemChatAudio`, `chat-protection`, `TriggerEditor`, `required-fields`, `UndoRedo`, `store`, `store.rename`, `store.decision-routes`, `forms/structure`, `forms/session-policy`, `forms/EarlierNodeOutputs` | PASS: 30 files, 486 tests, 237.55 s. These are the unit files that render the node dialog plus the canvas, history, rename and Chat files. It is not the whole editor directory |
+| 06 | `pnpm.cmd exec prettier --check <23 files, now with docs>` | **SECOND FAILURE, exit 1**: `docs/09-frontend-and-pwa.md`. Cause: removing "the node dialog's Connect form stacks" shortened one cell of the breakpoints table, so Prettier realigned the table. Corrected with `--write`; diff `logs/06c-prettier-docs09-corrective.diff` (21 lines, whitespace only) |
+| 07 | `pnpm.cmd --filter @graphgoblin/web exec tsc -p tsconfig.json --noEmit` | PASS, exit 0. The web tsconfig has `incremental: false`, `noEmit: true`, and includes `e2e`, so the migrated specs are type-checked |
+| 08 | `pnpm.cmd --filter @graphgoblin/web exec eslint <14 changed web files>` | PASS, exit 0, no output |
+| 09 | `pnpm.cmd --filter @graphgoblin/contracts exec eslint src/evaluation.ts` | PASS, exit 0 |
+| 10 | `pnpm.cmd exec prettier --check <all 23 non-deleted changed files>` | PASS |
+| 11 | Negative control (below) | 3 expected failures |
+| 12 | vitest on `NodeEditorDialog`, `EditorPage`, `EditorPage.rename`, `chat-protection` on the final tree | PASS: 4 files, 88 tests |
+| 15 | `pnpm.cmd exec prettier --check` on the same 23 files, after a last CHANGELOG sentence fix (an older Unreleased line still said the Connect form gave full-size connection controls) | PASS. Only that Markdown line changed after logs 07 to 12, so types, lint and tests were not rerun for it |
+
+No test, type or lint run failed on the changed source. The only first failures are the two Prettier ones, both whitespace.
+
+**Negative control (log 11).** To show the new absence tests detect the retired controls, I temporarily restored `NodeConnections.tsx` from `HEAD` with `git show` and re-added its import and render. The three absence tests failed: `NodeEditorDialog … shows no Connections list…` (expected the `Connections` section to be null), `EditorPage … opens a node from the keyboard without connection controls…` (same) and `EditorPage … edits loop settings, variables, node ids, and edges` (found multiple `Remove edge` buttons). I then restored my `NodeEditorDialog.tsx` byte for byte (hash before and after both `a54b21db…181c`, `logs/negative-control/`) and deleted the temporary file. Log 12 reran afterwards.
+
+## 4. Unit-test changes
+
+- **`NodeEditorDialog.test.tsx`.** New test: for every node of `kitchenSinkLoop()` (all nine kinds, all but Exit having outgoing edges), the open dialog has no `Connections` region or heading, no `Connect <id>` form, no `Connect` button, no `Remove edge` button and no "No outgoing edges."; it still has its config form and **Delete node**; the stored edges are unchanged. The Exit test's `Connect finish` form check became a `Connections` region check. The route-label help string follows the contract change.
+- **`EditorPage.test.tsx`.**
+  - "connects nodes from the keyboard…" is now "opens a node from the keyboard without connection controls, keeps its edges through Delete and Backspace, and customizes a default list". The connected graph is set up with the store's public `connect` (what a canvas drag calls). All remaining assertions are kept: Enter opens with focus on the heading, WP-D2 D19 Delete and Backspace in the dialog edit nothing (now also asserting the edge list is unchanged), Esc returns focus and selection, and the Exit default-destination customization. The old "only port used, form gone" assertion and the modal Remove step are replaced by the absence assertions.
+  - "says in the dialog why a connection was refused" is now "says on the page why a connection was refused; the node dialog carries no refusal of its own". The vanished-target scenario and the `unknown node` reason are kept; the reason now shows in the page's "Connection refused" notice.
+  - In "edits loop settings, variables, node ids, and edges", the modal `Remove edge e5b` click became the store `removeEdge`. I added an assertion that the renamed node's edge followed its id (`e5b` from `verify`, port `retry`) and that the dialog has no `Remove edge` button. The `No outgoing edges.` text became an absence check on the `Connections` region and that text, plus a check that no edge remains from `nightly`.
+
+## 5. Browser-test source changes (not executed)
+
+New helpers in `e2e/fixtures.ts`: `portHandle`, `connectOnCanvas` (click the Fit view control, then `dragTo` from the output handle to the target's `in` handle, the pattern `loop-lifecycle`, `responsive` and `editor-modal` already used) and `removeEdgeOnCanvas` (focus the edge, Enter, Delete, then assert it is gone, the pattern `loop-back-topology` already used).
+
+| Spec | What changed | Kept |
+| --- | --- | --- |
+| `loop-lifecycle` | Starter edge removed on the canvas; `Connections` region asserted absent in the opened dialog | Dialog name check, drags, publish, run, input, history |
+| `live` (`LIVE=1`) | Rewire by canvas removal and drags | Publish, run, messages |
+| `loop-back-topology` | Bypass drawn by drag instead of the form | Every loop-back, undo and reload assertion |
+| `exit-primitives` | Limit reached drawn after closing the dialog; absence of `Connect gate`; Exit has no `Connections` region | Repeat, limits, save poll including `limitTarget` |
+| `palette-placement` | Connections drawn by drag, loop kept per node | Layout, label and overlap assertions |
+| `issue-170-qa` (I5 Score) | Close, draw, reopen the Answer JSON editor (`reopenAnswerJson` handles either structured or JSON state) at both connect points | Both removal reviews, saved-edge polls, final `e2` assertion |
+| `decision-routes` (4 tests) | Connections drawn on the canvas and read from the edge's `aria-label` and the saved draft instead of the modal region. The "keyboard connection … eighth option" and "Score … by keyboard" tests became pointer tests and say so | Blank-ID ownership, ID repair, reload, label edit, publish and run; the new assertion that one connection survives with the same id |
+| `qa` (keyboard test) | Renamed. Keyboard add, dialog Tab order, Esc and focus return, Tab wrap, keyboard removal of the starter edge (focus, Enter, Delete), keyboard publish | Pointer draws the two new connections; Tab to the wait node has more room (`limit: 200`) |
+| `responsive` (768 px keyboard test) | Renamed. Keyboard palette traversal, open, label typing, Esc, geometry check, keyboard publish | Pointer draws the connections; edge count 2 |
+
+These specs are type-checked and linted only. Where I could not observe behaviour, the assertions follow strings and patterns already asserted elsewhere (for example `pick Reviewed (route-3) to branch` in the existing spec). The blank-ID step uses a loose `/\(route-3\)/` match because I could not confirm the canvas label while that field is blank.
+
+## 6. Things for root
+
+1. **Contract string.** `packages/contracts/src/evaluation.ts` is outside `apps/web`, but its help text is shown in the decision route label field and named the retired section, and its test expectation is in this change. `pnpm docs:generate` and `check:docs` build contracts, so I did not run them. A search of `docs/` found no generated page containing the string, so no generated doc should change; confirm at the build grant. `packages/contracts/dist/evaluation.js` still has the old text, as the whole compiled set is intentionally stale.
+2. **ADR-0076 approval links.** I linked the owner-approved revision on #207 (2026-10-18 body and its "Specific owner feedback") and the owner decision record #278. I did not have a comment-level URL for the approval and did not invent one. If one exists, add it. The older choice is WP-D2 D18, `5a4d0665`, which is recorded in `docs/qa/2026-10-03-wp-d2.md` and `docs/09`, not an ADR. `docs/qa/` is retained evidence, so I did not edit it.
+3. **Disclosure text.** ADR-0076, `docs/09`, the guide and the CHANGELOG all say explicitly that keyboard connection creation is gone, that the keyboard keeps selecting, removing, rerouting and Loop issues removal, that the visible coarse-input **Remove connection** remains, that this is not parity with creation, and that zoomed-out touch must zoom in. Remove then draw again is described as two undo steps, geometry editing as separate, and stranded edges as recoverable through Loop issues.
+4. **Tests I could not make natural.** jsdom cannot drag, so the unit tests set connections up through the store's `connect`; the pointer path is exactly what the migrated browser specs and the independent native pass must prove.
+5. **Process notes.** An early `find` over `/` while looking for `batch/` ran past its limit and was stopped by the harness. A later bounded `find` finished, and shows that only the files in section 2 are newer than my before-record and that no `*.tsbuildinfo` exists. One of my `grep` commands was denied by the shell permission mode, and I redid it with the search tool. I read `latest.md` and `launch.json` in this directory and never opened `events.jsonl`.
+
+## 7. Pending, not substituted by anything here
+
+- `pnpm build` of the assembled candidate, `docs:generate` or `check:docs`, `check:contrast`, and the repository `pnpm check`. Then the required coverage run (all thresholds and scope unchanged, at least 90 percent lines and branches per package).
+- Browser execution of the eight migrated specs and `live.spec.ts` (which also needs `LIVE=1`), plus the `edge-routes`, `undo`, `drafts`, `device-first` and `qa` families, on the fresh build.
+- Independent native QA of the assembled runtime: create, remove and redraw per node kind including Script, the stranded-edge recovery with an undo that restores its route, protected Chat, and the dialog having no Connections region for all nine kinds.
+- Integration with PR475, PR474 and actual main `a817`; current-target exact-head CI; opposite-family GPT-6.1 Sol xhigh review; fresh Astra max sign-off under the three-scan cap; separate owner acceptance. Any PR uses Part of #207.
+- No correction batches were used.
