@@ -1,6 +1,6 @@
 import { isStorableLoopName, MAX_LOOP_NAME_LENGTH } from '@graphgoblin/contracts';
 import { eq } from 'drizzle-orm';
-import type { SqliteTransaction } from './db.js';
+import type { SqliteTransaction } from './database-types.js';
 import { loops } from './schema.js';
 
 function collapseWhitespace(name: string): string {
