@@ -6,19 +6,17 @@ import {
   type LoopDefinitionInput,
   type NodeKind,
 } from '@graphgoblin/contracts';
-import { expressionReferences } from './expression-references.js';
-import { checkExpression } from './expression.js';
 import {
   nodeMap,
+  spellReference,
   type NodeMap,
   type ReferenceScope,
   type ReferenceSite,
   type SourceReferences,
 } from './node-reference-path.js';
 import { formatPointer, parsePointer, updateAtPointer } from './pointer.js';
-import { authoredFields } from './syntax.js';
-import { templateReferences } from './template-references.js';
-import { checkTemplate } from './template.js';
+import { sourceAnalysis } from './source-analysis.js';
+import { authoredFields, syntaxIssue } from './syntax.js';
 import type { ValidationIssue } from './validation-issue.js';
 
 type NodeInput = LoopDefinitionInput['nodes'][number];
@@ -28,7 +26,7 @@ type DefinitionIndex = {
 };
 type AuthoredField = ReturnType<typeof authoredFields>[number];
 type Location = Pick<ValidationIssue, 'nodeId' | 'path'>;
-type Field = AuthoredField & { scope: ReferenceScope; location: Location; nodeIndex?: number };
+type Field = AuthoredField & { scope?: ReferenceScope; location: Location; nodeIndex?: number };
 
 export type NodeRenameResult =
   | { kind: 'unchanged' | 'missing-node' | 'ambiguous-node' | 'invalid-id' | 'duplicate-id' }
@@ -66,13 +64,12 @@ function fields(definition: LoopDefinitionInput): Field[] {
   definition.nodes.forEach((node, nodeIndex) => {
     for (const field of authoredFields(NodeConfigSchemas[node.kind], node.config)) {
       const scope = referenceScope(node.kind, field.segments);
-      if (scope)
-        result.push({
-          ...field,
-          scope,
-          location: { nodeId: node.id, path: ['config', ...field.segments].join('.') },
-          nodeIndex,
-        });
+      result.push({
+        ...field,
+        ...(scope ? { scope } : {}),
+        location: { nodeId: node.id, path: ['config', ...field.segments].join('.') },
+        nodeIndex,
+      });
     }
   });
   return result;
@@ -96,7 +93,7 @@ function pointerReferences(field: Field): SourceReferences {
     id: parsed.data,
     map: map.map,
     optional: false,
-    span: { start, end: start + raw.length, replacement: (next) => next },
+    span: { start, end: start + raw.length, spelling: 'bare' },
   });
   return result;
 }
@@ -105,22 +102,11 @@ function pointerReferences(field: Field): SourceReferences {
 function authoredOutputKeys(sources: Field[]): Set<string> {
   const keys = new Set<string>();
   for (const field of sources) {
-    if (field.kind !== 'pointer' || field.segments.at(-1) === 'source') continue;
+    if (!field.scope || field.kind !== 'pointer' || field.segments.at(-1) === 'source') continue;
     const match = /^\/outputs(?:\/([A-Za-z][A-Za-z0-9_-]{0,63}))?$/.exec(field.source);
     if (match) keys.add(match[1] ?? '');
   }
   return keys;
-}
-
-function scan(field: Field): SourceReferences {
-  switch (field.kind) {
-    case 'pointer':
-      return pointerReferences(field);
-    case 'template':
-      return templateReferences(field.source);
-    case 'expression':
-      return expressionReferences(field.source, field.scope);
-  }
 }
 
 function canProduceGate(node: NodeInput | undefined): boolean {
@@ -157,15 +143,31 @@ function uncertainty(location: Location, message: string): ValidationIssue {
   return { ...location, severity: 'warning', code: 'NODE_REFERENCE_UNCERTAIN', message };
 }
 
-export function nodeReferenceIssues(definition: LoopDefinitionInput): ValidationIssue[] {
+export function authoredSourceIssues(definition: LoopDefinitionInput): ValidationIssue[] {
   const sourceFields = fields(definition);
   const index: DefinitionIndex = {
     nodes: new Map(definition.nodes.map((node) => [node.id, node])),
     customOutputs: authoredOutputKeys(sourceFields),
   };
+  const syntax: ValidationIssue[] = [];
   const issues: ValidationIssue[] = [];
   for (const field of sourceFields) {
-    const { sites, uncertain } = scan(field);
+    const { kind, source, scope } = field;
+    if (kind === 'pointer' && !scope) continue;
+    const analyzed =
+      kind === 'pointer' ? pointerReferences(field) : sourceAnalysis(kind, source, scope);
+    if (kind !== 'pointer' && 'problem' in analyzed && typeof analyzed.problem === 'string') {
+      syntax.push(
+        syntaxIssue(
+          { kind, path: field.segments.join('.') },
+          analyzed.problem,
+          field.location.nodeId,
+        ),
+      );
+      continue;
+    }
+    if (!scope) continue;
+    const { sites, uncertain } = analyzed;
     const seen = new Map<string, ValidationIssue>();
     for (const { id, map, optional } of sites) {
       if (mapEntryMayExist(index, map, id)) continue;
@@ -192,7 +194,7 @@ export function nodeReferenceIssues(definition: LoopDefinitionInput): Validation
       });
     }
     issues.push(...seen.values());
-    if (uncertain && !hasSyntaxError(field))
+    if (uncertain)
       issues.push(
         uncertainty(
           field.location,
@@ -200,24 +202,20 @@ export function nodeReferenceIssues(definition: LoopDefinitionInput): Validation
         ),
       );
   }
-  return issues;
-}
-
-function hasSyntaxError(field: Field): boolean {
-  if (field.kind === 'template') return checkTemplate(field.source) !== null;
-  return field.kind === 'expression' && checkExpression(field.source) !== null;
+  return [...syntax, ...issues];
 }
 
 function rewrite(field: Field, sites: ReferenceSite[], nextId: string): string | undefined {
   let text = field.source;
   let boundary = text.length;
   const spans = new Map(sites.map(({ span }) => [span.start, span]));
-  for (const { start, end, replacement } of [...spans.values()].sort((a, b) => b.start - a.start)) {
+  for (const { start, end, spelling } of [...spans.values()].sort((a, b) => b.start - a.start)) {
     if (end > boundary) return undefined;
-    text = text.slice(0, start) + replacement(nextId) + text.slice(end);
+    text = text.slice(0, start) + spellReference(nextId, spelling) + text.slice(end);
     boundary = start;
   }
-  if (hasSyntaxError({ ...field, source: text })) return undefined;
+  if (field.kind !== 'pointer' && sourceAnalysis(field.kind, text, field.scope).problem !== null)
+    return undefined;
   return text;
 }
 
@@ -247,7 +245,11 @@ export function renameLoopNode(
   let updated = definition;
   const warnings: ValidationIssue[] = [];
   for (const field of sourceFields) {
-    const { sites, uncertain } = scan(field);
+    if (!field.scope) continue;
+    const { sites, uncertain } =
+      field.kind === 'pointer'
+        ? pointerReferences(field)
+        : sourceAnalysis(field.kind, field.source, field.scope);
     const matching = sites.filter((site) => site.id === oldId);
     const patchable = matching.filter(
       ({ map }) => map !== 'outputs' || (canProduceOutput(matches[0]) && !outputMayBeCustom),

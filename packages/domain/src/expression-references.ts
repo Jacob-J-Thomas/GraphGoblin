@@ -1,7 +1,7 @@
 import { SlugSchema } from '@graphgoblin/contracts';
-import { expressionAst } from './expression.js';
 import {
   nodeMap,
+  referenceSpelling,
   threadOffset,
   type MapAccess,
   type ReferenceScope,
@@ -78,19 +78,10 @@ function keySpan(source: string, node: Ast, id: string): TextSpan | undefined {
               String.fromCharCode(Number.parseInt(hex, 16)),
             );
     if (decoded !== id) return undefined;
-    return { start: end - token.length, end, replacement: (next) => quote + next + quote };
+    return { start: end - token.length, end, spelling: referenceSpelling(quote) };
   }
   if (node.type !== 'name' || source.slice(end - id.length, end) !== id) return undefined;
-  // Quote punctuation and language literals/operators. Always parse the resulting field again.
-  return {
-    start: end - id.length,
-    end,
-    replacement: (next) =>
-      /^[A-Za-z][A-Za-z0-9_]*$/.test(next) &&
-      !['true', 'false', 'null', 'and', 'or', 'in'].includes(next)
-        ? next
-        : JSON.stringify(next),
-  };
+  return { start: end - id.length, end, spelling: 'jsonata-name' };
 }
 
 /** Collect only bindings that can hide a runtime-supplied root or a builtin we understand. */
@@ -110,14 +101,12 @@ function authoredBindings(value: unknown, names: Set<unknown>): void {
   }
 }
 
-export function expressionReferences(source: string, scope: ReferenceScope): SourceReferences {
+export function expressionReferences(
+  source: string,
+  scope: ReferenceScope,
+  ast: unknown,
+): SourceReferences {
   const result: SourceReferences = { sites: [], uncertain: false };
-  let ast: unknown;
-  try {
-    ast = expressionAst(source);
-  } catch {
-    return { ...result, uncertain: true };
-  }
   const bindings = new Set<unknown>();
 
   function scopedPath(steps: Ast[], localFocus: boolean) {

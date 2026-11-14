@@ -11,8 +11,7 @@ import {
   sameSchema,
   type NodeKind,
 } from '@graphgoblin/contracts';
-import { checkExpression } from './expression.js';
-import { checkTemplate } from './template.js';
+import { sourceAnalysis, type SourceKind } from './source-analysis.js';
 
 interface SyntaxIssue {
   code: 'TEMPLATE_INVALID' | 'EXPRESSION_INVALID';
@@ -29,7 +28,6 @@ interface SchemaLike {
   safeParse(value: unknown): { success: boolean };
 }
 
-type SourceKind = 'template' | 'expression';
 type Found = { kind: SourceKind; source: string; path: string };
 type AuthoredField = { kind: SourceKind | 'pointer'; source: string; segments: string[] };
 interface SourceSchemas {
@@ -126,6 +124,22 @@ export function authoredFields(
   return found;
 }
 
+/** Render the same diagnostics for standalone syntax checks and combined graph validation. */
+export function syntaxIssue(
+  { kind, path }: Pick<Found, 'kind' | 'path'>,
+  problem: string,
+  nodeId?: string,
+): SyntaxIssue {
+  const where = nodeId ? 'node "' + nodeId + '"' : 'loop settings';
+  return {
+    code: kind === 'template' ? 'TEMPLATE_INVALID' : 'EXPRESSION_INVALID',
+    severity: 'error',
+    message: kind + ' at ' + where + ' ' + path + ': ' + problem,
+    ...(nodeId ? { nodeId } : {}),
+    path: [nodeId ? 'config' : 'settings', path].filter(Boolean).join('.'),
+  };
+}
+
 /** One error per template that does not parse and per expression that does not compile. */
 export function syntaxIssues(
   def: { settings: unknown; nodes: readonly { id: string; kind: NodeKind; config: unknown }[] },
@@ -137,21 +151,8 @@ export function syntaxIssues(
 ): SyntaxIssue[] {
   const issues: SyntaxIssue[] = [];
   const report = (item: Found, nodeId?: string) => {
-    const problem =
-      item.kind === 'expression' && item.source.trim() === ''
-        ? 'expression is required; a blank expression is not valid'
-        : item.kind === 'template'
-          ? checkTemplate(item.source)
-          : checkExpression(item.source);
-    if (problem === null) return;
-    const where = nodeId ? 'node "' + nodeId + '"' : 'loop settings';
-    issues.push({
-      code: item.kind === 'template' ? 'TEMPLATE_INVALID' : 'EXPRESSION_INVALID',
-      severity: 'error',
-      message: item.kind + ' at ' + where + ' ' + item.path + ': ' + problem,
-      ...(nodeId ? { nodeId } : {}),
-      path: [nodeId ? 'config' : 'settings', item.path].filter(Boolean).join('.'),
-    });
+    const { problem } = sourceAnalysis(item.kind, item.source);
+    if (problem !== null) issues.push(syntaxIssue(item, problem, nodeId));
   };
   for (const item of findAuthoredSources(schemas.settings, def.settings, schemas)) report(item);
   for (const node of def.nodes) {

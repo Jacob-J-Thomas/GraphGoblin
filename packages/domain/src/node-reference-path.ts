@@ -1,16 +1,50 @@
 export type NodeMap = 'outputs' | 'gates' | 'counters.nodeVisits';
 
+type ReferenceSpelling = 'bare' | 'jsonata-name' | 'single-quoted' | 'double-quoted' | 'backtick';
+
 export interface TextSpan {
-  start: number;
-  end: number;
-  replacement: (id: string) => string;
+  readonly start: number;
+  readonly end: number;
+  readonly spelling: ReferenceSpelling;
 }
 
 export interface ReferenceSite {
-  map: NodeMap;
-  id: string;
-  optional: boolean;
-  span: TextSpan;
+  readonly map: NodeMap;
+  readonly id: string;
+  readonly optional: boolean;
+  readonly span: TextSpan;
+}
+
+export function referenceSpelling(quote: string | undefined): ReferenceSpelling {
+  switch (quote) {
+    case "'":
+      return 'single-quoted';
+    case '"':
+      return 'double-quoted';
+    case '`':
+      return 'backtick';
+    default:
+      return 'bare';
+  }
+}
+
+/** A slug contains no quote characters. Quote JSONata punctuation and reserved names. */
+export function spellReference(id: string, spelling: ReferenceSpelling): string {
+  switch (spelling) {
+    case 'bare':
+      return id;
+    case 'single-quoted':
+      return "'" + id + "'";
+    case 'double-quoted':
+      return '"' + id + '"';
+    case 'backtick':
+      return '`' + id + '`';
+    case 'jsonata-name':
+      return /^[A-Za-z][A-Za-z0-9_]*$/.test(id) &&
+        !['true', 'false', 'null', 'and', 'or', 'in'].includes(id)
+        ? id
+        : JSON.stringify(id);
+  }
 }
 
 export interface SourceReferences {

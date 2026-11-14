@@ -5,8 +5,7 @@ import {
   type Node,
   type NodeKind,
 } from '@graphgoblin/contracts';
-import { syntaxIssues } from './syntax.js';
-import { nodeReferenceIssues } from './node-references.js';
+import { authoredSourceIssues } from './node-references.js';
 import { decisionRouteDeclarations } from './answers.js';
 
 import type { ValidationIssue } from './validation-issue.js';
@@ -304,7 +303,7 @@ export function validateLoop(def: LoopDefinition): ValidationIssue[] {
     }
   }
 
-  issues.push(...syntaxIssues(def), ...nodeReferenceIssues(def));
+  issues.push(...authoredSourceIssues(def));
   return issues;
 }
 

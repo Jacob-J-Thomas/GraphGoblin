@@ -9,8 +9,8 @@ import {
   type QuotedToken,
   type Template,
 } from 'liquidjs';
-import { parseAuthoredTemplate } from './template.js';
-import { nodeMap, type SourceReferences } from './node-reference-path.js';
+import type { parseAuthoredTemplate } from './template.js';
+import { nodeMap, referenceSpelling, type SourceReferences } from './node-reference-path.js';
 
 /** Only a single property access in an if/elsif/unless condition is a deliberate presence probe. */
 function presenceProbes(
@@ -39,11 +39,13 @@ function presenceProbes(
   }
 }
 
-export function templateReferences(source: string): SourceReferences {
+export function templateReferences(
+  source: string,
+  { engine, templates }: ReturnType<typeof parseAuthoredTemplate>,
+): SourceReferences {
   const result: SourceReferences = { sites: [], uncertain: false };
   if (!source.includes('{{') && !source.includes('{%')) return result;
   try {
-    const { engine, templates } = parseAuthoredTemplate(source);
     const {
       globals,
       locals,
@@ -104,7 +106,7 @@ export function templateReferences(source: string): SourceReferences {
           result.uncertain = true;
           continue;
         }
-        const quote = quoted ? (source[property.begin] ?? '') : '';
+        const quote = quoted ? source[property.begin] : undefined;
         result.sites.push({
           id,
           map: map.map,
@@ -114,7 +116,7 @@ export function templateReferences(source: string): SourceReferences {
           span: {
             start: property.begin,
             end: property.end,
-            replacement: (next) => quote + next + quote,
+            spelling: referenceSpelling(quote),
           },
         });
       }
