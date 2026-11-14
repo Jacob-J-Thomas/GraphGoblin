@@ -80,6 +80,8 @@ Unavailable classifiers block publication at `config.model`. Registering an HTTP
 
 Prefer the smallest graph that does the job. Use decision gates for intentional repeats. `settings.maxNodeVisits` is an independent safety cap against unintended cycles; exceeding it fails with `MAX_NODE_VISITS`. It is not a pass limit.
 
+Webhook and Event triggers reject `filter`. Put payload checks in ordinary downstream decisions, classifiers or scripts. A quiet exit is Success with `returns: "none"` and no destinations. Poll `fireWhen` remains its probe condition.
+
 ## 3. Validate and save as a draft
 
 The MCP tools cover runs, not editing, so use the REST API with the same settings as the MCP server: base URL `GG_API_URL` (default `http://127.0.0.1:4747`) and, when `GG_API_KEY` is set, the header `Authorization: Bearer <key>`. Write the definition to a temporary JSON file and send it with `curl` or PowerShell `Invoke-RestMethod`.
@@ -92,5 +94,3 @@ The MCP tools cover runs, not editing, so use the REST API with the same setting
 ## 4. Publishing
 
 Only when the user explicitly asks: `POST /loops/{id}/publish`. Then they can run it with `$run-loop`. To try an unpublished draft, `$run-loop` can start it with `allowDraft: true` after the user agrees.
-
-Webhook and Event triggers reject `filter`. Put payload checks in ordinary downstream decisions, classifiers or scripts. A quiet exit is Success with `returns: "none"` and no destinations. Poll `fireWhen` remains its probe condition.

@@ -1,0 +1,9 @@
+Use the tools from Claude Code's `plugin:graphgoblin:graphgoblin` MCP server. You can create and update drafts through these tools. End the design workflow at the draft.
+
+1. For a new loop, call `create_loop_draft` with the definition. Its response includes the saved draft, the loop ID and validation issues. Correct schema errors before trying again. If the request timed out or the gateway disconnected during a write, check whether the loop exists before considering another create.
+2. For an existing loop, call `get_loop_draft` with the exact ID. Edit the returned draft or, if no draft exists, the published base. Keep the returned `draftToken` for this edit.
+3. Call `validate_loop_definition` with the loop ID and proposed definition. Act on the returned `issues` and `publishable` values. Fix errors and explain any remaining warnings. If a new loop's initial draft was already valid and no edits are needed, validation completes the task.
+4. Save changes with `save_loop_draft` using the token for the base you edited. If the gateway reports `DRAFT_CONFLICT`, load the latest draft and reconcile the changes with the user before retrying. Never substitute a token from a different base.
+5. Report the loop ID, the saved draft, and any validation issues that remain. The user can separately request an unpublished draft run with `/graphgoblin:run-loop` only when the loop has no published version. `allowDraft: true` cannot select a newer draft of a published loop. Explain this limitation and do not run the published version in its place unless the user explicitly confirms running it.
+
+On `NETWORK_ERROR`, ask the user to check the gateway and `GG_API_URL`. On `UNAUTHORIZED`, ask them to check `GG_API_KEY`. On `FORBIDDEN`, report the required scope from the error. Keep credential values out of the conversation and tool calls.

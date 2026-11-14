@@ -45,6 +45,14 @@ describe('loadConfig', () => {
     expect(loadConfig([], { GG_API_KEY: '' })).not.toHaveProperty('apiKey');
   });
 
+  it('enables draft tools only with the explicit stdio flag', () => {
+    expect(loadConfig(['--draft-tools'], {})).toMatchObject({
+      transport: 'stdio',
+      draftTools: true,
+    });
+    expect(() => loadConfig(['--http', '--draft-tools'], {})).toThrow(/only on stdio/);
+  });
+
   it('lets flags override the environment', () => {
     expect(
       loadConfig(
