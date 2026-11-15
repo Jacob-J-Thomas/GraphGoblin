@@ -1,0 +1,92 @@
+{
+  "schema": "history480-issue208-progress-readback/v1",
+  "recordedAt": "2026-11-15T06:38:06.473Z",
+  "verifiedExact": true,
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/208",
+    "title": "[I08/U24/B67] Keep Undo/Redo stationary and improve default spacing",
+    "issue_number": 208,
+    "body": "<!-- graphgoblin-engineering-progress:2026-11-15 -->\n**Engineering progress (2026-11-15):** The stationary Undo/Redo slice is merged through [PR #480](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/480) at `177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd`. Independent QA, current-head CI with the documented retarget/tree-equivalence qualification, and [fresh Astra final sign-off](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/480#issuecomment-6890398559) are complete for that slice. The owner's explicit, undoable **Space cards** action is implemented in its isolated branch and is entering final verification against this actual merge. Its native checks, independent reviews, CI and merge remain pending. The combined acceptance criterion stays unchecked, and owner product acceptance remains required before this issue closes.\n<!-- /graphgoblin-engineering-progress:2026-11-15 -->\n\n<!-- graphgoblin-routing:2026-11-14 -->\n**Owner routing update (2026-11-14):** Claude owns UI design and implementation; GPT independently adversarially reviews it. This issue routes to Claude Opus 5.5 xhigh implementation and GPT-6.1 Sol xhigh review, with separate behavior QA and the preserved fresh Astra max exact-head audit. Earlier GPT frontend proposals are unaccepted inputs for Claude to assess and own, not completed UI delivery. Model tier/effort stays proportional to each slice; smaller independent implementation work is delegated to faster agents. The older proposed routing below is historical.\n<!-- /graphgoblin-routing:2026-11-14 -->\n\nPart of #313\n\n<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for I08, the first lane, alongside the Claude plugin. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\n<!-- graphgoblin-approved-roadmap:2026-10-17:B67 -->\n\n**Owner-approved plan, 2026-10-17. Implementation is held.** The owner explicitly authorized publishing the agreed backlog and said not to start implementation. This issue has no pickup gate; release requires a later owner dispatch decision.\n\nAuthority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.\n\n## Bounded change\n\nKeep Undo/Redo stationary and improve default spacing\n\n## Acceptance criteria\n\n- [ ] Undo/Redo keep a stable header position during rapid use; newly laid-out/unpositioned graphs are readable without overwriting saved manual geometry.\n\n## Verification\n\nBrowser rapid undo/redo at supported desktop widths and default/manual-layout controls.\n\n## Dependencies\n\n- #281 — X-EDITOR\n- #279 — implementation dispatch remains held.\n\n## Scope limits\n\nThese are independent small UI changes; split into separate delivery patches if they touch different review surfaces. No broad layout redesign.\n\n## Delivery and closure\n\nApproved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.\n\n**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.\n\nNo implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.\n\n## Source requirements\n\n#124, #208\n\n## Specific owner feedback\n\n- Higher priority among visual improvements, after serious bugs. Keep node cards minimal. Default layout must not overwrite deliberately saved positions/routes.\n- Undo/Redo must retain the same hit-target position during rapid repeated clicks and status/enabled-state changes. Existing shortcuts and history behavior remain intact.\n\n## Evidence provenance (not a new test result)\n\nThe observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.\n\n### Source #124 — historical evidence\n\n**Backlog: explicitly deferred by the owner on 2026-10-08. Create this issue only; do not plan or implement it yet.** It is outside the current feature PR delivery. No implementation or product gate is active while parked. When unparked: GPT-6.1 Sol xhigh implementation; Claude Opus 5.5 xhigh review and QA; touched-systems verification and owner product acceptance.\n\n\n## Consolidated source reports\n\n- #124: Editor: readable default node spacing when a loop loads.\n\nThese reports are closed as duplicate tracking records. Their accepted requirements and owner-review conditions remain in this bolt. This bolt is the sole open delivery record; no implementation or acceptance is claimed by consolidation.\n",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "aidlc-ready",
+        "color": "0E8A16",
+        "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+      },
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:claude-opus-5.5",
+        "color": "0052CC",
+        "description": "Implementer: Claude Opus 5.5 (harder work), reasoning xhigh"
+      },
+      {
+        "name": "review:gpt-6.1-sol",
+        "color": "0E8A8A",
+        "description": "Cross-vendor reviewer: Codex gpt-6.1-sol"
+      },
+      {
+        "name": "type:ui-polish",
+        "color": "F9D0C4",
+        "description": "Visual or interaction polish"
+      },
+      {
+        "name": "area:web",
+        "color": "BFDADC",
+        "description": "Web app shell and screens"
+      },
+      {
+        "name": "area:editor",
+        "color": "BFDADC",
+        "description": "Loop editor canvas and node forms"
+      },
+      {
+        "name": "kind:bolt",
+        "color": "1d76db",
+        "description": "Bounded deliverable with dependencies and acceptance"
+      }
+    ],
+    "milestone": 3,
+    "state_reason": null,
+    "comments": 4,
+    "created_at": "2026-10-16T00:24:27Z",
+    "updated_at": "2026-11-15T06:37:48Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/208",
+    "display_title": "[I08/U24/B67] Keep Undo/Redo stationary and improve default spacing"
+  },
+  "comment": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/208#issuecomment-6890460532",
+    "body": "The stationary history-controls slice is merged in [PR #480](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/480), actual merge `177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd`, with tree `c247968a388b1c74e7727ec27d4fe465ebfde0d0` matching the independently approved head `5a31678f5a8611ae3a89a1f6aefe797d7106a08e`.\n\nQA covered the built Chromium editor, native API and file SQLite, fine/coarse targets, responsive widths, rapid pointer and keyboard activation, save progress/errors, history depth, lifecycle/error recovery and device-draft behavior. The final native run passed all 11 groups on their initial attempts: 88 phases, 77 qualified stationarity windows, 21 held clicks, 66 exact conditional writes and four deliberate real 404 responses. No observed target movement or missed action occurred in those qualified windows. DPR-2/touch injection is not physical-device or assistive-technology evidence.\n\nAll five CI jobs passed on attempt 1: browser 481 passed plus one declared live-provider skip; Windows launcher 14/14; four sandboxed template smokes; coverage across 13 packages (9,394 tests, 41 skips; web 2,738 tests); normal-mode routing performance. The CI events began before the PR retarget: they checked the old-base synthetic merge, whose complete tree exactly equals the current-main synthetic merge and approved head. Full workflow inspection and the independent final auditor established context equivalence; this is not represented as a main-targeted event.\n\nCross-vendor review and the fresh independent Astra MAX final audit are complete, using two of the three formal scans. The [full final report and root disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/480#issuecomment-6890398559) record no introduced blockers or new follow-ups.\n\n**Still pending:** the separately delivered explicit, undoable **Space cards** action must finish final native verification against this actual merge, independent reviews, CI and merge. This issue remains open, its combined criterion remains unchecked, and owner acceptance is separate from the engineering gates.\n\nAfter the combined build is installed, the owner checklist is to assess whether rapid Undo/Redo feels stable and clear at their usual window widths, and whether explicitly applying Space cards produces useful spacing while preserving intentionally saved geometry. Machine-verifiable geometry, persistence and interaction checks remain pipeline responsibilities.",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "id": 6890460532,
+    "pull_request_review_id": null,
+    "in_reply_to_id": null,
+    "created_at": null,
+    "updated_at": null,
+    "review": null,
+    "side": null,
+    "line": null,
+    "start_line": null,
+    "path": null,
+    "body_html": "<p dir=\"auto\">The stationary history-controls slice is merged in <a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/pull/480\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/pull/480/hovercard\">PR #480</a>, actual merge <code class=\"notranslate\">177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd</code>, with tree <code class=\"notranslate\">c247968a388b1c74e7727ec27d4fe465ebfde0d0</code> matching the independently approved head <code class=\"notranslate\">5a31678f5a8611ae3a89a1f6aefe797d7106a08e</code>.</p>\n<p dir=\"auto\">QA covered the built Chromium editor, native API and file SQLite, fine/coarse targets, responsive widths, rapid pointer and keyboard activation, save progress/errors, history depth, lifecycle/error recovery and device-draft behavior. The final native run passed all 11 groups on their initial attempts: 88 phases, 77 qualified stationarity windows, 21 held clicks, 66 exact conditional writes and four deliberate real 404 responses. No observed target movement or missed action occurred in those qualified windows. DPR-2/touch injection is not physical-device or assistive-technology evidence.</p>\n<p dir=\"auto\">All five CI jobs passed on attempt 1: browser 481 passed plus one declared live-provider skip; Windows launcher 14/14; four sandboxed template smokes; coverage across 13 packages (9,394 tests, 41 skips; web 2,738 tests); normal-mode routing performance. The CI events began before the PR retarget: they checked the old-base synthetic merge, whose complete tree exactly equals the current-main synthetic merge and approved head. Full workflow inspection and the independent final auditor established context equivalence; this is not represented as a main-targeted event.</p>\n<p dir=\"auto\">Cross-vendor review and the fresh independent Astra MAX final audit are complete, using two of the three formal scans. The <a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/pull/480#issuecomment-6890398559\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/pull/480/hovercard\">full final report and root disposition</a> record no introduced blockers or new follow-ups.</p>\n<p dir=\"auto\"><strong>Still pending:</strong> the separately delivered explicit, undoable <strong>Space cards</strong> action must finish final native verification against this actual merge, independent reviews, CI and merge. This issue remains open, its combined criterion remains unchecked, and owner acceptance is separate from the engineering gates.</p>\n<p dir=\"auto\">After the combined build is installed, the owner checklist is to assess whether rapid Undo/Redo feels stable and clear at their usual window widths, and whether explicitly applying Space cards produces useful spacing while preserving intentionally saved geometry. Machine-verifiable geometry, persistence and interaction checks remain pipeline responsibilities.</p>"
+  }
+}

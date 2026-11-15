@@ -1,0 +1,44 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx (8 tests | 1 failed) 2279ms
+   ❯ presses after a Space cards click, on the installed xyflow and d3 (#208) (5)
+     × control: a mouse pan that is the first press elsewhere ends the result and pans as ever 188ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > control: a mouse pan that is the first press elsewhere ends the result and pans as ever
+AssertionError: expected <section …(3)><p …(1)></p></section> to be null
+
+- Expected:
+null
+
++ Received:
+<section
+  class="pointer-events-auto grid max-w-md min-w-0 gap-2 rounded-lg border border-default bg-surface-raised px-4 py-3 text-sm text-default shadow-2 content-start overflow-hidden select-none"
+  data-testid="space-cards-result"
+  style="width: 392px; height: 129.5px;"
+>
+  <p
+    class="font-semibold"
+  >
+    Spaced 2 cards.
+  </p>
+</section>
+
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx:535:22
+    533|     const fitted = flow!.getViewport();
+    534|     pointerDown(pane);
+    535|     expect(result()).toBeNull();
+       |                      ^
+    536|     pane.dispatchEvent(mouse('mousedown', 600, 400, 0, 1));
+    537|     await microtasks();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  19:50:17
+   Duration  7.14s (tests 33%, environment 31%, transform 15%, import 12%, setup 10%)
+

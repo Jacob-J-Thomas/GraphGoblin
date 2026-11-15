@@ -1,0 +1,13 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\space-208-double-hit-supplement\\runs\\alternate-r512-initial\\space.playwright.js" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\space-208-double-hit-supplement\\drivers\\space.playwright.js"
+index 1b85e576..0130b919 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\space-208-double-hit-supplement\\runs\\alternate-r512-initial\\space.playwright.js"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\space-208-double-hit-supplement\\drivers\\space.playwright.js"
+@@ -868,7 +868,7 @@ async (page) => {
+           type,t,target,hit,detail,point,viewport,zoomOut,canceledAfterDispatch
+         }));
+       async function action(label,doubled){
+-        const prior=await newFixture(label);
++        const prior=await newFixture('double-r512');
+         const hit=await locate();
+         await checkpoint(label+'-coordinates',hit);
+         check(hit.ownsHit && hit.atPoint==='Space cards' && hit.point.join()==='93,290',

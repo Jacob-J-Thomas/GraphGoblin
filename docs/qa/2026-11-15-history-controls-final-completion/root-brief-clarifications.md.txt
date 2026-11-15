@@ -1,0 +1,7 @@
+# Preserved brief clarifications
+
+The original brief and its dispatch hash remain unchanged. These clarifications preserve source/evidence distinctions during the independent final audit; they authorize no product edits, native reruns, additional formal scan or altered oracles.
+
+- The brief's shorthand describing36px fine targets should read **32px fine targets within fixed36px slots**, with44px coarse targets. Use actual source, computed native measurements and ADR0078 for the geometry claim. This corrects the briefing description, not the implementation.
+- The native source binding was captured on6b0e. Publication5a316 changes the delivery register and QA metadata only. Exact native-source Git blobs remain the first reference for that source inventory; every product/build input must remain identical through publication. A whole non-QA inventory comparison must explicitly preserve the register-only metadata difference rather than assume all documentation bytes are unchanged.
+- Audit-only raw-evidence parser joins must identify the actual checkpoint/window occurrence, not use a phase label as a globally unique key. Labels can repeat within one run. Retain the initial parser scripts/results and any corrected parser delta; do not rewrite raw measurements or rerun the product to repair a parser assumption. Any actual criterion failure still blocks the normal gate.

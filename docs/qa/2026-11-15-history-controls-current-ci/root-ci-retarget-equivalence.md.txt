@@ -1,0 +1,17 @@
+# Current-head CI and the base retarget race
+
+Root independently fetched and inspected both Git merge objects on2026-11-15. The push triggered CI before the subsequent metadata-only PR retarget. Preserve this distinction in every final CI/audit claim.
+
+| Object | Tree | Ordered parents |
+| --- | --- | --- |
+| Actual CI checkout `b08bf0ea5f304bd1bfb83b58dd2588607fb943a8` | `c247968a388b1c74e7727ec27d4fe465ebfde0d0` | `48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6`, `5a31678f5a8611ae3a89a1f6aefe797d7106a08e` |
+| Current PR merge ref `6ae1eff7c27ca49e941b8bb5c4e18f32d34ef7d6` | `c247968a388b1c74e7727ec27d4fe465ebfde0d0` | `1cfca9bce3967c9d41950266c83aab636667e0ab`, `5a31678f5a8611ae3a89a1f6aefe797d7106a08e` |
+| Published PR head `5a31678f5a8611ae3a89a1f6aefe797d7106a08e` | `c247968a388b1c74e7727ec27d4fe465ebfde0d0` | `6b0eae62ea98ae73b22903c9922bba198e219608` |
+| Prior branch tip `48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6` | `10fa2793ec1c2ee63e45143a40af5d6ba1a93f0b` | `dbc55454b224e350f7005cdaf58b8655c4b9e71e` |
+| Actual main `1cfca9bce3967c9d41950266c83aab636667e0ab` | `10fa2793ec1c2ee63e45143a40af5d6ba1a93f0b` | `41bde22c80a796bf8c4bec8ab5dec8e755271f9e`, `48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6` |
+
+`git diff --quiet b08bf0ea5f304bd1bfb83b58dd2588607fb943a8 6ae1eff7c27ca49e941b8bb5c4e18f32d34ef7d6` exited0. Thus every tracked byte, including tests, workflows, lockfile, raw evidence and build inputs, is identical in the tested merge, current merge and published head. The old target tip and current main also have identical trees; main's extra commit records the already tested canvas merge. Actual main is already reachable through the tested head, so the Browser job's full-history checkout retains its fixed golden commits.
+
+Root read the complete current `.github/workflows/ci.yml` and `routing-perf.yml`. They execute the checked-out tree and have no base-ref/base-SHA/diff-dependent test selection or command. A search of apps, packages, tooling and workflows for GitHub base/head/event/ref/SHA dependencies and merge-base/git-diff found only product trigger-template text, unrelated to CI execution. Routing's path filter already admitted the same editor changes; its strict input remains absent in this pull-request event. No threshold, retry count or timeout was changed.
+
+The completed Template image, Windows launcher and routing logs first established the stale-parent checkout; the remaining two job logs still require the same identity check at completion. All five job outcomes remain required. These are current-**head and tree** checks with a pre-retarget event, not a claimed workflow event against main. The designated fresh Astra max audit must independently verify this exact-tree argument and the actual target context before sign-off. Root does not substitute this note for a green job, final audit, or owner acceptance. No redundant workflow rerun is planned solely to change the synthetic merge parent while all tested bytes and applicable execution conditions are equal.

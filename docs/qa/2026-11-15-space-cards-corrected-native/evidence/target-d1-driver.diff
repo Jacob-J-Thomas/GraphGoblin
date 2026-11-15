@@ -1,0 +1,393 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\drivers\\space.playwright.js" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1\\drivers\\space.playwright.js"
+index 098a741..b904714 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\drivers\\space.playwright.js"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1\\drivers\\space.playwright.js"
+@@ -227,6 +227,10 @@ async (page) => {
+     catch(error){
+       out.failures??=[];
+       out.failures.push({phase:label,kind:error.kind??'unclassified',error:String(error.stack??error)});
++      if(group==='queued-fit-d1'){
++        const first=await page.evaluate(()=>window.__queuedFitQA?.stop()).catch(()=>null);
++        if(first)await checkpoint('fit-first-failure-'+label,{error:String(error.stack??error),trace:first,writes:writes()});
++      }
+       await checkpoint('failure-'+label,{failure:out.failures.at(-1),snapshot:await snap().catch(()=>null)});
+       await trace('failure-'+label).catch(()=>{});
+       await page.screenshot({path:'failure-'+label+'.png'}).catch(()=>{});
+@@ -236,7 +240,7 @@ async (page) => {
+       putHold=undefined;
+     }
+   }
+-  async function localDraft(){
++  async function localDraft(forLoopId=loopId){
+     return page.evaluate((id)=>new Promise((resolve,reject)=>{
+       const open=indexedDB.open('graphgoblin');
+       open.onupgradeneeded=()=>open.transaction.abort();
+@@ -249,7 +253,7 @@ async (page) => {
+         tx.oncomplete=()=>{db.close();resolve(request.result===undefined ? null : structuredClone(request.result));};
+         tx.onerror=()=>{db.close();reject(tx.error);};
+       };
+-    }),loopId);
++    }),forLoopId);
+   }
+   async function ready(){
+     await canvas.waitFor(opts);
+@@ -1200,6 +1204,329 @@ async (page) => {
+     });
+   }
+ 
++  function installQueuedFitTrace() {
++    const ids=new WeakMap(), watched=new WeakSet();
++    const parser=document.createElement('div');
++    const viewport=()=>document.querySelector('.react-flow__viewport');
++    let id=0, active=false, rows=[], overflow=false, lastCommit='';
++    const identity=el=>{if(!ids.has(el))ids.set(el,++id);return ids.get(el);};
++    function transform(style) {
++      parser.style.cssText=style??'';
++      if(!parser.style.transform)return null;
++      const m=new DOMMatrixReadOnly(parser.style.transform);
++      return [m.e,m.f,m.a];
++    }
++    function sample() {
++      const view=viewport(), flow=document.querySelector('.react-flow');
++      const cards=[...(flow?.querySelectorAll('.react-flow__node')??[])].map(el=>{
++        const m=el.style.transform?new DOMMatrixReadOnly(el.style.transform):new DOMMatrixReadOnly();
++        return {id:el.dataset.id,position:[m.e,m.f],size:[el.offsetWidth,el.offsetHeight]};
++      });
++      return {viewportId:view?identity(view):null,viewport:transform(view?.getAttribute('style')),
++        pane:flow?[flow.clientWidth,flow.clientHeight]:null,cards,
++        route:location.pathname,focus:document.activeElement?.getAttribute('data-testid')??document.activeElement?.tagName,
++        offer:!!document.querySelector('[data-testid="space-cards-offer"]'),
++        result:document.querySelector('[data-testid="space-cards-result"]')?.textContent.trim()??null,
++        history:[...document.querySelectorAll('[data-history]')].map(el=>[el.dataset.history,el.title,el.disabled])};
++    }
++    function record(type,details={}) {
++      if(!active)return;
++      if(rows.length>=900){overflow=true;return;}
++      rows.push({type,t:performance.now(),...sample(),...details});
++    }
++    function watch() {
++      const view=viewport();
++      if(!view||watched.has(view))return;
++      watched.add(view);
++      new MutationObserver(changes=>{
++        for (const [i,change] of changes.entries()) {
++          const to=i+1<changes.length?changes[i+1].oldValue:view.getAttribute('style');
++          const from=transform(change.oldValue), next=transform(to);
++          if(JSON.stringify(from)!==JSON.stringify(next))
++            record('viewport-style',{styleViewportId:identity(view),connected:view.isConnected,from,to:next});
++        }
++      }).observe(view,{attributes:true,attributeFilter:['style'],attributeOldValue:true});
++    }
++    for(const type of ['pointerdown','click','keydown']) document.addEventListener(type,event=>{
++      const element=event.target instanceof Element?event.target:null;
++      const action=element?.closest('button,a,[data-editor-canvas]');
++      record(type,{trusted:event.isTrusted,key:event.key,ctrl:event.ctrlKey,detail:event.detail,
++        eventTime:event.timeStamp,action:action?.getAttribute('aria-label')??action?.textContent.trim().slice(0,80)??null,
++        href:action instanceof HTMLAnchorElement?new URL(action.href).pathname:null,targetCanvas:action?.hasAttribute('data-editor-canvas')??false});
++    },{capture:true,passive:true});
++    new MutationObserver(()=>{
++      watch();
++      if(!active)return;
++      const state=sample();
++      const key=JSON.stringify([state.viewportId,state.cards,state.offer,state.result,state.history]);
++      if(key!==lastCommit){lastCommit=key;record('dom-adopted');}
++    }).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['style','title','aria-disabled']});
++    function frame() {
++      if(active)record('frame');
++      requestAnimationFrame(frame);
++    }
++    requestAnimationFrame(frame);
++    window.__queuedFitQA={sample,
++      start(){watch();rows=[];overflow=false;lastCommit='';active=true;record('mark');},
++      stop(){const wasActive=active;record('end');active=false;return {rows,overflow,last:sample(),wasActive};}};
++  }
++  const fitSample=()=>page.evaluate(()=>window.__queuedFitQA.sample());
++  const fitStart=()=>page.evaluate(()=>window.__queuedFitQA.start());
++  const fitSettle=async label=>{await settled(label);return fitSample();};
++  async function fitTrace(label,extra={}) {
++    const evidence=await page.evaluate(()=>window.__queuedFitQA.stop());
++    await checkpoint('fit-trace-'+label,{...evidence,...extra});
++    check(!evidence.overflow,'Queued-fit trace overflow at '+label,'fixture');
++    return evidence;
++  }
++  function fitNear(a,b) {
++    return Array.isArray(a)&&Array.isArray(b)&&a.length===3&&b.length===3&&
++      a.every((x,i)=>Number.isFinite(x)&&Math.abs(x-b[i])<=(i===2?0.00002:0.02));
++  }
++  function fitHeld(evidence,input,id,expected,label) {
++    check(input?.trusted&&input.viewportId===id,'Missing trusted input on the retained canvas for '+label,'unwitnessed');
++    check(fitNear(input.viewport,expected),label+' viewport before input differs');
++    const after=evidence.rows.filter(row=>row.t>=input.t);
++    check(after.every(row=>row.viewportId!==id||fitNear(row.viewport,expected)),label+' viewport changed across authorized input');
++    check(!after.some(row=>row.type==='viewport-style'&&row.styleViewportId===id),
++      label+' retained viewport wrote a transient or late transform');
++  }
++  const fitCoords=sample=>sample.cards.map(card=>[card.id,card.position]);
++  const fitOpening=[246,279.5,2], fitZoomed=[276.667,298.5,1.66667], fitSpaced=[72,303.5,1.57895];
++  async function seedFit(suffix,wide=false) {
++    const name='Space probe '+suffix;
++    const payload={schemaVersion:4,name,nodes:[
++      {id:'start',kind:'trigger',label:'Manual entry',config:{type:'manual',exposeTo:['ui','api','mcp']}},
++      {id:'finish',kind:'exit',label:'Completion',config:{outcome:'success'},...(wide?{ui:{x:3600,y:0}}:{})},
++    ],edges:[{id:'entry',from:{node:'start',port:'out'},to:{node:'finish',port:'in'}}]};
++    const created=await api('POST','/loops',{definition:payload});
++    check(created.status===201&&created.body.loop?.id,'Rejected queued-fit fixture','fixture');
++    const id=created.body.loop.id;
++    const detail=await api('GET',path(id));
++    check(detail.status===200,'Missing queued-fit fixture GET','fixture');
++    return {id,name,prior:detail.body};
++  }
++  function fitGraph(prior) {
++    const graph=structuredClone(definition(prior));
++    graph.nodes.find(node=>node.id==='finish').ui={x:272,y:0};
++    return graph;
++  }
++  async function startFit(suffix) {
++    const {id,prior}=await seedFit(suffix);
++    loopId=id;
++    await load();
++    const opened=await fitSample(), device=await localDraft();
++    await checkpoint('fit-open-'+suffix,{id,opened,prior,device,writes:writes()});
++    check(opened.offer&&opened.viewportId&&opened.cards.length===2&&opened.cards.every(card=>card.position.every(v=>v===0)),'Expected eligible origin pile','fixture');
++    same(opened.pane,[860,787],'Original D1 reference pane size');
++    same(opened.cards.map(card=>[card.id,card.size]),[['start',[184,114]],['finish',[184,92]]],
++      'Original measured D1 two-card fixture');
++    check(fitNear(opened.viewport,fitOpening),'Ordinary opening fit differs from the baseline geometry');
++    const zoom=page.locator('.react-flow__controls-zoomout');
++    check(await zoom.isEnabled(),'Reference Zoom Out unavailable','fixture');
++    await zoom.click(opts);
++    const before=await fitSettle('fit-reference-'+suffix);
++    await checkpoint('fit-reference-'+suffix,{before,opened,writes:writes(),device:await localDraft(),server:await get()});
++    check(fitNear(before.viewport,fitZoomed),'Deliberate reference zoom differs from the established D1 fixture','fixture');
++    check(writes().length===0,'Opening/Zoom Out wrote a draft');
++    return {prior,before,expected:fitGraph(prior)};
++  }
++  async function clickFitSpace() {
++    const at=await point('Space cards');
++    await page.mouse.click(...at);
++  }
++  async function queuedFitGroup() {
++    let positive;
++    await stage('fit-uninterrupted-measured',async()=>{
++      const {prior,before,expected}=await startFit('aaaa');
++      const count=writes().length;
++      await fitStart();
++      await clickFitSpace();
++      const after=await fitSettle('fit-positive');
++      const trace=await fitTrace('positive',{before,after,expected,writes:writes(),device:await localDraft()});
++      check(trace.rows.some(row=>row.type==='click'&&row.trusted&&row.action==='Space cards'),
++        'Missing trusted Space button click','unwitnessed');
++      same(fitCoords(after),[['start',[0,0]],['finish',[272,0]]],'Exact measured card positions');
++      const mutations=trace.rows.filter(row=>row.type==='viewport-style'&&row.styleViewportId===before.viewportId);
++      check(after.viewportId===before.viewportId&&mutations.length===1&&fitNear(mutations[0].from,fitZoomed)&&fitNear(mutations[0].to,fitSpaced)&&
++        fitNear(after.viewport,fitSpaced),'Exactly one actual Space fit to the established measured viewport');
++      check(after.result==='Spaced 2 cards.'&&after.focus==='canvas'&&after.history.some(([dir,title,disabled])=>
++        dir==='undo'&&title==='Undo space cards'&&!disabled),'Space preserves result, canvas focus and one named history step');
++      const saved=await accepted('fit-positive-space',count,prior,expected);
++      positive={id:loopId,saved,after};
++    });
++    await stage('fit-trusted-edit',async()=>{
++      check(loopId===positive.id&&(await fitSample()).viewportId===positive.after.viewportId,
++        'Label edit must use the canvas which applied Space','fixture');
++      const zoom=page.getByRole('button',{name:'Zoom Out',exact:true});
++      const box=await zoom.boundingBox(opts);
++      check(box&&await zoom.isEnabled(),'Independent Zoom Out has no available native hit target','fixture');
++      const point=[box.x+box.width/2,box.y+box.height/2];
++      const zoomOrigin=await fitSample(), atZoom=await snap(point), count=writes().length, device=await localDraft();
++      await checkpoint('fit-first-outside-zoom-preinput',{zoomOrigin,atZoom,point,device,writes:writes()});
++      check(zoomOrigin.result&&atZoom.hit==='Zoom Out'&&!atZoom.zoomOut?.disabled&&atZoom.zoomOut?.ownsPoint,
++        'First outside input must reach the enabled native Zoom Out while the result is attached','fixture');
++      await fitStart();
++      await page.mouse.click(...point);
++      const before=await fitSettle('fit-edit-reference');
++      await quiet(positive.saved,count,device,'fit-first-outside-zoom');
++      const zoomTrace=await fitTrace('first-outside-zoom',{zoomOrigin,before,point,device,writes:writes()});
++      const zoomClick=zoomTrace.rows.find(row=>row.type==='click'&&row.trusted&&row.action==='Zoom Out');
++      const zoomDown=zoomTrace.rows.find(row=>row.type==='pointerdown'&&row.trusted&&row.action==='Zoom Out');
++      const moves=zoomTrace.rows.filter(row=>row.type==='viewport-style'&&row.styleViewportId===before.viewportId);
++      check(zoomDown?.result&&zoomClick&&moves.length===1&&fitNear(moves[0].from,zoomOrigin.viewport)&&
++        fitNear(moves[0].to,before.viewport)&&Math.abs(before.viewport[2]-zoomOrigin.viewport[2]/1.2)<=.00002&&!before.result,
++        'First outside Zoom Out must act exactly once and keep its transform');
++      const card=await fixtureCardPoint(), expected=structuredClone(definition(positive.saved));
++      const node=expected.nodes.find(item=>item.id===card.id);
++      node.label+=' revised';
++      await fitStart();
++      await page.mouse.click(card.x,card.y);
++      const dialog=page.getByRole('dialog');
++      await dialog.getByLabel('Label',{exact:true}).fill(node.label,opts);
++      await dialog.getByRole('button',{name:'Done',exact:true}).click(opts);
++      await dialog.waitFor({state:'detached',...opts});
++      const after=await fitSettle('fit-edit');
++      const saved=await accepted('fit-label-edit',count,positive.saved,expected);
++      const trace=await fitTrace('edit',{before,after,expected,saved,writes:writes(),device:await localDraft()});
++      const input=trace.rows.find(row=>row.type==='click'&&row.action==='Done'&&row.trusted);
++      fitHeld(trace,input,before.viewportId,before.viewport,'Ordinary label edit');
++      check(trace.rows.every(row=>row.viewportId!==before.viewportId||fitNear(row.viewport,before.viewport)),
++        'Opening or committing the label editor refit the viewport');
++      positive={id:loopId,saved,after};
++    });
++    await stage('fit-unmount-and-independent-fit-controls',async()=>{
++      const oldId=positive.id, old=await fitSample(), oldDevice=await localDraft(), count=writes().length;
++      const destination=await seedFit('dddd',true);
++      await fitStart();
++      const loops=page.getByRole('navigation',{name:'Main'}).getByRole('link',{name:'Loops',exact:true});
++      await loops.click(opts);
++      await page.waitForURL(origin+'/app/loops',opts);
++      await canvas.waitFor({state:'detached',...opts});
++      await page.getByRole('link',{name:'Edit '+destination.name,exact:true}).click(opts);
++      loopId=destination.id;
++      await page.waitForURL(origin+'/app'+path()+'/edit',opts);
++      await ready();
++      const mounted=await fitSample();
++      const trace=await fitTrace('unmount',{old,mounted,oldId,destination,requests,oldDevice});
++      const leave=trace.rows.find(row=>row.type==='click'&&row.trusted&&row.href==='/app/loops');
++      const enter=trace.rows.find(row=>row.type==='click'&&row.trusted&&row.href==='/app'+path()+'/edit');
++      check(leave?.viewportId===old.viewportId&&enter&&trace.rows.some(row=>row.viewportId===null)&&
++        mounted.viewportId!==old.viewportId,'Trusted navigation must detach the old viewport and mount a distinct one','unwitnessed');
++      fitHeld(trace,leave,old.viewportId,old.viewport,'Unmount');
++      check(!trace.rows.some(row=>row.type==='viewport-style'&&row.styleViewportId===old.viewportId),
++        'Detached prior Space viewport was mutated');
++      const left=await api('GET',path(oldId)), leftDevice=await localDraft(oldId);
++      same([definition(left.body),left.body.draftToken,leftDevice,requests.filter(row=>row.path===path(oldId)+'/draft').length],
++        [definition(positive.saved),positive.saved.draftToken,oldDevice,count],'Unmount leaves original saved graph, token and device');
++      check(!mounted.offer&&!mounted.result&&Math.abs(mounted.viewport[2]-.5)<=.00002,
++        'Wide positioned replacement has only the ordinary readable opening fit');
++      same(fitCoords(mounted),[['start',[0,0]],['finish',[3600,0]]],'Replacement coordinates were loaded unchanged');
++      const cold=await get(), device=await localDraft();
++      same([definition(cold),cold.draftToken],[definition(destination.prior),destination.prior.draftToken],
++        'Replacement opening is authoritative and quiet');
++      await quiet(cold,0,device,'fit-opening');
++      await load(true);
++      const cleanOpening=await fitSample();
++      await checkpoint('fit-independent-opening',{mounted,cleanOpening,device:await localDraft(),server:await get(),writes:writes()});
++      check(fitNear(cleanOpening.viewport,mounted.viewport),'Replacement opening equals the clean isolated opening of its same graph');
++      same(fitCoords(cleanOpening),fitCoords(mounted),'Independent opening preserves replacement geometry');
++      await fitStart();
++      await page.getByRole('button',{name:'Fit View',exact:true}).click(opts);
++      const fitted=await fitSettle('fit-manual');
++      const manual=await fitTrace('manual',{cleanOpening,fitted,device,writes:writes()});
++      const click=manual.rows.find(row=>row.type==='click'&&row.trusted&&row.action==='Fit View');
++      const dx=manual.rows.filter(row=>row.type==='viewport-style'&&row.styleViewportId===cleanOpening.viewportId);
++      const wide=fitted.cards.find(card=>card.id==='finish'), first=fitted.cards.find(card=>card.id==='start');
++      const [w,h]=fitted.pane, width=wide.position[0]+wide.size[0];
++      const height=Math.max(first.size[1],wide.size[1]);
++      const targetZoom=(w-72-Math.floor(w*.08))/width;
++      check(click?.viewportId===cleanOpening.viewportId&&targetZoom>.1&&targetZoom<.5,'Wide manual Fit control can distinguish zoom floors','fixture');
++      const expected=[72,(h-height*targetZoom)/2,targetZoom];
++      check(dx.length===1&&fitNear(dx[0].from,cleanOpening.viewport)&&fitNear(dx[0].to,expected)&&fitNear(fitted.viewport,expected),
++        'Trusted manual Fit preserves its measured lower zoom and exact padding');
++      await quiet(cold,0,device,'fit-manual');
++    });
++    await stage('fit-trusted-rapid-undo',async()=>{
++      const {prior,before,expected}=await startFit('bbbb');
++      await fitStart();
++      await clickFitSpace();
++      await page.getByRole('button',{name:'Undo space cards',exact:true}).waitFor(opts);
++      await page.keyboard.press('Control+z');
++      await page.getByRole('button',{name:'Redo space cards',exact:true}).waitFor(opts);
++      const after=await fitSettle('fit-undo');
++      await pause(autosaveMs+180);
++      const trace=await fitTrace('undo',{before,after,expected,writes:writes(),device:await localDraft()});
++      const input=trace.rows.find(row=>row.type==='keydown'&&row.key?.toLowerCase()==='z'&&row.ctrl&&row.trusted);
++      check(input?.targetCanvas&&input.history.some(([dir,title])=>dir==='undo'&&title==='Undo space cards'),
++        'Ctrl+Z must own the applied Space edit through the actual canvas','unwitnessed');
++      check(fitNear(input.viewport,fitZoomed)||fitNear(input.viewport,fitSpaced),'Undo landed at an unqualified viewport','unwitnessed');
++      fitHeld(trace,input,before.viewportId,input.viewport,'Undo');
++      same(fitCoords(after),[['start',[0,0]],['finish',[0,0]]],'Undo restores the original pile');
++      check(after.offer&&!after.result&&after.history.some(([d,t,disabled])=>d==='redo'&&t==='Redo space cards'&&!disabled),
++        'One Undo restores offer and named Redo');
++      check(after.history.some(([d,,disabled])=>d==='undo'&&disabled),'No remaining Undo step');
++      const wire=await until(()=>{
++        const rows=writes();
++        return rows.every(row=>row.responseText!==undefined)&&{rows};
++      },'rapid Undo browser PUT receipts');
++      const server=await get(), device=await localDraft();
++      await checkpoint('fit-undo-durable',{prior,server,device,writes:wire.rows,after});
++      same(definition(server),definition(prior),'Rapid Undo leaves original durable graph');
++      const payloads=wire.rows.map(row=>wireToCanonical(JSON.parse(row.requestText).definition));
++      if(payloads.length===2)same(payloads,[expected,definition(prior)],'Both rapid Undo revisions were preserved in order');
++      else if(payloads.length===1)same(payloads,[definition(prior)],'Coalesced rapid Undo writes only the restored graph');
++      else check(payloads.length===0,'Unexpected extra rapid Undo writes');
++      let token=prior.draftToken;
++      for(const row of wire.rows) {
++        check(row.status===200&&row.requestHeaders['if-match']===quote(token),'Rapid Undo uses an accepted conditional save');
++        const reply=JSON.parse(row.responseText);
++        same(reply.draft.definition,wireToCanonical(JSON.parse(row.requestText).definition),'Rapid Undo acknowledged graph');
++        token=reply.draftToken;
++      }
++      same(server.draftToken,token,'Rapid Undo exact terminal server token');
++      if(wire.rows.length||device)
++        same([device?.synced,device?.baseToken,wireToCanonical(device?.definition??{nodes:[]})],
++          [true,token,definition(prior)],'Rapid Undo device ownership and graph');
++    });
++    await stage('fit-authoritative-conflict-reload',async()=>{
++      const {prior,before,expected}=await startFit('eeee');
++      const newer={...definition(prior),description:'Other editor updated this disposable fit fixture'};
++      const intervening=await api('PUT',path()+'/draft',{definition:newer},prior.draftToken);
++      check(intervening.status===200&&intervening.body.draftToken!==prior.draftToken,'Real competing revision required','fixture');
++      await fitStart();
++      await clickFitSpace();
++      const reload=page.getByRole('button',{name:'Reload server draft',exact:true});
++      await reload.waitFor(opts);
++      const refusal=await until(()=>writes().find(row=>row.status===409&&row.responseText!==undefined),'actual draft conflict');
++      const conflict=await fitSettle('fit-before-reload'), pendingDraft=await localDraft(), server=await get();
++      const apply=await fitTrace('conflict-space',{prior,before,expected,intervening,refusal,conflict,pendingDraft,server,writes:writes()});
++      check(apply.rows.some(row=>row.type==='click'&&row.trusted&&row.action==='Space cards'),
++        'Missing trusted apply before server reload','unwitnessed');
++      check(fitNear(conflict.viewport,fitSpaced)&&conflict.viewportId===before.viewportId,'Conflict still owns the completed Space viewport');
++      const problem=JSON.parse(refusal.responseText);
++      same([writes().length,refusal.requestHeaders['if-match'],problem.code,problem.draftToken],
++        [1,quote(prior.draftToken),'DRAFT_CONFLICT',intervening.body.draftToken],'Exact one real conditional conflict');
++      same([pendingDraft?.synced,pendingDraft?.baseToken,wireToCanonical(pendingDraft?.definition??{nodes:[]})],
++        [false,prior.draftToken,expected],'Conflict retains exact unsynced Space geometry on this device');
++      same([definition(server),server.draftToken],[newer,intervening.body.draftToken],'Competing authoritative graph and token');
++      await fitStart();
++      await reload.click(opts);
++      await reload.waitFor({state:'detached',...opts});
++      await offer.waitFor(opts);
++      const after=await fitSettle('fit-in-place-reload'), device=await localDraft();
++      await quiet(server,1,device,'fit-in-place-reload');
++      const trace=await fitTrace('in-place-reload',{conflict,after,device,writes:writes()});
++      const input=trace.rows.find(row=>row.type==='click'&&row.action==='Reload server draft'&&row.trusted);
++      fitHeld(trace,input,conflict.viewportId,conflict.viewport,'Authoritative in-place reload');
++      check(after.viewportId===conflict.viewportId&&after.history.every(([,,disabled])=>disabled)&&!after.result,
++        'Actual in-place load retains viewport identity and retires abandoned history/result');
++      same(fitCoords(after),[['start',[0,0]],['finish',[0,0]]],'Authoritative reload restores server positions');
++      same([device?.synced,device?.baseToken,wireToCanonical(device?.definition??{nodes:[]})],
++        [true,server.draftToken,newer],'Authoritative reload preserves exact synced server device ownership');
++    });
++  }
++
+   page.on('pageerror',error=>out.pageErrors.push(String(error)));
+   page.on('console',msg=>{if(msg.type()==='error')out.consoleErrors.push(msg.text());});
+   page.on('request',request=>{
+@@ -1237,6 +1564,10 @@ async (page) => {
+     await checkpoint('gateway-health',{status:health.status(),headers:health.headers(),body:await health.text()});
+     check(health.ok()&&health.headers()['x-graphgoblin-pid']===param('pid'),'Browser is bound to isolated gateway PID','fixture');
+     await page.addInitScript(installProbe,theme);
++    if(group==='queued-fit-d1'){
++      await page.addInitScript(installQueuedFitTrace);
++      await page.route(url=>url.origin!==origin,route=>route.abort());
++    }
+     await page.route(url=>url.origin===origin && /^\/loops\/[^/]+\/draft$/.test(url.pathname),async route=>{
+       const request=route.request();
+       const hold=putHold;
+@@ -1248,7 +1579,8 @@ async (page) => {
+       }
+       return route.continue();
+     });
+-    if(group==='apply-d1'){await applyGroup();await resultLifecycle();}
++    if(group==='queued-fit-d1'){await queuedFitGroup();}
++    else if(group==='apply-d1'){await applyGroup();await resultLifecycle();}
+     else if(group==='gestures-d1'){
+       await keyGroup('Enter');
+       await keyGroup('Space');
+@@ -1274,6 +1606,8 @@ async (page) => {
+     else if(group==='outside-d1'){await outsideControls();}
+     else if(group==='device-d1'){await deviceGroup();}
+     else check(false,'Unexpected bounded matrix group','fixture');
++    if(group==='queued-fit-d1')
++      check(out.consoleErrors.every(line=>/server responded with a status of 409\b/i.test(line)),'Unexpected browser console error during corrected fit QA');
+   }catch(error){
+     out.failures??=[];
+     if(out.failures.length===0)out.failures.push({phase,kind:error.kind??'unclassified',error:String(error.stack??error)});

@@ -1,0 +1,973 @@
+### Result
+"{\"suite\":\"208-space-combined-native-v1\",\"group\":\"gestures-d1\",\"config\":\"d1-fine-light\",\"limits\":[{\"label\":\"d3-bookkeeping-not-observable-space\"},{\"label\":\"no-synthetic-unavailable-pointer-click-space\",\"activeUnavailableInput\":\"trusted Enter while real mouse button held\"},{\"label\":\"d3-bookkeeping-not-observable-dismiss\"},{\"label\":\"no-synthetic-unavailable-pointer-click-dismiss\",\"activeUnavailableInput\":\"trusted Enter while real mouse button held\"}],\"pageErrors\":[],\"consoleErrors\":[],\"failure\":null,\"summary\":{\"checks\":41,\"failed\":0,\"writes\":4,\"limits\":[{\"label\":\"d3-bookkeeping-not-observable-space\"},{\"label\":\"no-synthetic-unavailable-pointer-click-space\",\"activeUnavailableInput\":\"trusted Enter while real mouse button held\"},{\"label\":\"d3-bookkeeping-not-observable-dismiss\"},{\"label\":\"no-synthetic-unavailable-pointer-click-dismiss\",\"activeUnavailableInput\":\"trusted Enter while real mouse button held\"}],\"doubleSurface\":{\"secondHit\":\"pane\",\"secondTarget\":\"pane\",\"clicks\":[[\"click\",\"Space cards\",1],[\"click\",\"pane\",2],[\"dblclick\",\"pane\",2]],\"transforms\":[\"246,259.5,2\",\"72,286.22,0.72\"],\"failures\":[]}}}"
+### Ran Playwright code
+```js
+await (async (page) => {
+  const start = new URL(page.url());
+  const param = (key) => start.searchParams.get('qa-'+key);
+  const origin = start.origin;
+  const sink = param('sink');
+  const group = param('case');
+  const config = param('config');
+  const coarse = config.startsWith('d2-');
+  const theme = coarse ? 'dark' : 'light';
+  const check = (condition, message, kind = 'product') => {
+    if (!condition) throw Object.assign(new Error(message),{kind});
+  };
+  // begin pure fixture contract
+  function graph(name, {coordinates = 'omitted', single = false, routed = false, invalid = false} = {}) {
+    const card = (id, kind, label, config) => ({id, kind, label, config, ...(coordinates === 'zero' ? {ui:{x:0,y:0}} : {})});
+    const link = (id, from, to, port = 'out') => ({id, from:{node:from,port}, to:{node:to,port:'in'}});
+    const nodes = [
+      card('start','trigger','Manual entry',{type:'manual',exposeTo:['ui','api','mcp']}),
+      card('router','decision','Which branch?',{kind:'expression',jsonata:'"alpha"',routes:[{id:'alpha',label:'Alpha route'},{id:'beta',label:'Beta route'}]}),
+      card('tall','mutate','Record the chosen branch',{operations:[{op:'append-message',role:'note',content:'Retain this literal & authored template.'}]}),
+      card('peer','exit','Alternate completion',{outcome:'success',returns:'"alternate"'}),
+      card('done','exit','Final completion',{outcome:'success',returns:'"finished"'}),
+      card('island','script','Disconnected authored command',{command:'never-execute-disposable-space-probe',cwd:'workspace',stdin:'thread',stdout:'last-output'}),
+    ];
+    const edges = [link('entry','start','router'),link('route-alpha','router','tall','alpha'),
+      link('route-beta','router','peer','beta'),link('finish','tall','done')];
+    if (invalid) edges.push(link('bad-pair','router','missing','stale'),link('bad-pair','tall','peer','stale'));
+    if (routed) edges[0].ui = {route:[230,124,300]};
+    return {schemaVersion:4,name,description:'Explicit layout probe with authored content',nodes:single ? nodes.slice(0,1) : nodes,edges:single ? [] : edges};
+  }
+  function definition(record) {
+    const value = record?.draft?.definition ?? record?.current?.definition;
+    if (!value || typeof record.draftToken !== 'string') throw new Error('Missing public current/draft definition or token');
+    return value;
+  }
+  function wireToCanonical(value) {
+    return {...value,nodes:value.nodes.map(node => node.kind === 'script' ? {
+      ...node,config:{cwd:'workspace',stdin:'thread',stdout:'last-output',...node.config},
+    } : node)};
+  }
+  function exactShape(value) {
+    if (value === undefined) return ['undefined'];
+    if (typeof value === 'number' && Object.is(value,-0)) return ['negative-zero'];
+    if (Array.isArray(value)) return ['array',value.length,Object.keys(value).map(key => [key,exactShape(value[key])])];
+    if (value !== null && typeof value === 'object') return ['object',Object.keys(value).sort().map(key => [key,exactShape(value[key])])];
+    return ['value',value];
+  }
+  function expectedSpace(prior, heights) {
+    // Independent oracle for these six fixed cards. The invalid duplicate pair must not affect it.
+    const top = (id, ports) => Math.max(92 + (ports ? 2 + 46 * ports : 0), heights[id]);
+    const positions = {router:{x:272,y:0},tall:{x:544,y:0},peer:{x:544,y:top('tall',1)+44},
+      done:{x:816,y:0},island:{x:0,y:top('start',1)+44}};
+    return {...prior,nodes:prior.nodes.map((node,index) => index ? {...node,ui:positions[node.id]} : node)};
+  }
+  // end pure fixture contract
+
+  const same = (a,b,message) => check(JSON.stringify(exactShape(a)) === JSON.stringify(exactShape(b)),message);
+  const out = {suite:'208-space-combined-native-v1',group,config,checks:[],limits:[],pageErrors:[],consoleErrors:[],failure:null};
+  let loopId, serial=0, font=16, putHold, phase='setup';
+  const requests=[], pending=[], map=new Map();
+  const opts={timeout:9000};
+  const offer=page.getByTestId('space-cards-offer');
+  const canvas=page.getByTestId('canvas');
+  const save=page.getByTestId('save-state');
+  const control=(name)=>offer.getByRole('button',{name,exact:true});
+  const history=(dir)=>page.locator('[data-history="'+dir+'"]');
+  const path=(id=loopId)=>'/loops/'+id;
+  const writes=()=>requests.filter(record=>record.path===path()+'/draft' && record.method==='PUT');
+  const quote=(token)=>'"'+token+'"';
+  const pause=(ms)=>new Promise(resolve=>setTimeout(resolve,ms));
+
+  async function raw(name,data) {
+    const file=String(++serial).padStart(4,'0')+'-'+name+'.json';
+    const response=await fetch(sink+'/sink/'+file,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});
+    check(response.ok,'Evidence sink refused '+file,'fixture');
+    return file;
+  }
+  async function until(read, title, timeout=11000) {
+    const deadline=Date.now()+timeout;
+    while(Date.now()<deadline) {
+      const value=await read();
+      if(value) return value;
+      await pause(22);
+    }
+    throw Object.assign(new Error('Timed out waiting for '+title),{kind:'unwitnessed'});
+  }
+  async function api(method,route,data,token) {
+    const requestText=data===undefined ? null : JSON.stringify(data);
+    const requestHeaders={...(requestText===null ? {} : {'content-type':'application/json'}),...(token ? {'if-match':quote(token)} : {})};
+    const response=await page.request.fetch(origin+route,{method,timeout:10000,headers:requestHeaders,...(requestText===null ? {} : {data:requestText})});
+    const responseText=await response.text();
+    const result={method,route,requestText,requestHeaders,status:response.status(),headers:response.headers(),responseText};
+    const file=await raw('api',result);
+    return {...result,file,body:JSON.parse(responseText)};
+  }
+  async function get() {
+    const result=await api('GET',path());
+    check(result.status===200,'Public loop GET '+result.status,'fixture');
+    return result.body;
+  }
+  function installProbe(themeName) {
+    localStorage.setItem('graphgoblin-theme',themeName);
+    const root=()=>document.querySelector('[data-editor-canvas]');
+    const panel=()=>document.querySelector('[data-testid="space-cards-offer"]');
+    const buttons=()=>[...(panel()?.querySelectorAll('button')??[])];
+    const viewport=()=>document.querySelector('.react-flow__viewport');
+    const css=(el)=>el ? getComputedStyle(el) : null;
+    const box=(el)=>{if(!el)return null;const r=el.getBoundingClientRect();return [r.x,r.y,r.width,r.height];};
+    const center=(el)=>{const r=box(el);return r && [r[0]+r[2]/2,r[1]+r[3]/2];};
+    const ids=new WeakMap(),functions=new WeakMap();
+    let next=0,nextFn=0;
+    const identity=(el)=>{if(!ids.has(el)) ids.set(el,++next);return ids.get(el);};
+    const fn=(el)=>{if(!functions.has(el)) functions.set(el,++nextFn);return functions.get(el);};
+    const name=(el)=>{
+      if(!(el instanceof Element))return null;
+      const node=el.closest('.react-flow__node'),edge=el.closest('.react-flow__edge'),btn=el.closest('button');
+      if(node)return 'node:'+node.dataset.id;
+      if(edge)return 'edge:'+edge.dataset.id;
+      if(btn)return btn.getAttribute('aria-label')??btn.textContent.trim();
+      if(el===root())return 'canvas-root';
+      if(el.closest('.react-flow__pane'))return 'pane';
+      if(el.closest('dialog'))return 'dialog';
+      return el.getAttribute('aria-label')??el.tagName;
+    };
+    const hit=(point)=>point ? document.elementFromPoint(...point) : null;
+    const d3=()=>Array.isArray(window.__on) ? window.__on.filter(row=>row.type==='click' && row.name==='drag').map(row=>({
+      capture: typeof row.options==='boolean' ? row.options : Boolean(row.options?.capture),
+      value:typeof row.value==='function' ? fn(row.value) : null,
+      wrapper:typeof row.listener==='function' ? fn(row.listener) : null,
+    })) : [];
+    function sample(point) {
+      const view=viewport();
+      const matrix=view ? new DOMMatrixReadOnly(css(view).transform) : null;
+      const announcer=root()?.querySelector('[aria-live="polite"][aria-atomic="true"]');
+      return {t:performance.now(),epoch:performance.timeOrigin,viewport:matrix ? [matrix.e,matrix.f,matrix.a] : null,
+        viewportStyle:view?.getAttribute('style'),focus:name(document.activeElement),modal:Boolean(document.querySelector('dialog:modal')),
+        selected:[...document.querySelectorAll('.react-flow__node.selected,.react-flow__edge.selected')].map(name),
+        buttons:buttons().map(btn=>{
+          const pt=center(btn), h=hit(pt), computed=css(btn);
+          return {name:name(btn),id:identity(btn),box:box(btn),point:pt,hit:name(h),ownsHit:btn.contains(h),attached:btn.isConnected,
+            unavailable:btn.getAttribute('aria-disabled')==='true',gesture:btn.getAttribute('data-gesture'),disabled:btn.disabled,
+            pointerEvents:computed.pointerEvents,focusVisible:btn.matches(':focus-visible'),outline:computed.outlineStyle,outlineWidth:computed.outlineWidth,
+            shadow:computed.boxShadow};
+        }),
+        live:announcer ? {role:announcer.getAttribute('role'),mode:announcer.getAttribute('aria-live'),
+          atomic:announcer.getAttribute('aria-atomic'),text:announcer.textContent.trim()} : null,
+        hit:name(hit(point)),d3:d3(),d3Observable:Array.isArray(window.__on),
+        history:[...document.querySelectorAll('[data-history]')].map(el=>[el.dataset.history,el.getAttribute('aria-disabled'),el.disabled,el.title]),
+        affordance:{panel:box(panel()),canvas:box(root()),flow:box(document.querySelector('.react-flow')),toolbar:box(document.querySelector('[data-testid="history-actions"]')?.closest('header'))},
+      };
+    }
+    let rows=[],overflow=false,stage='start',tracking=false,fixed=null,lastKey='';
+    function store(type,event) {
+      if (!tracking) return;
+      if(rows.length>=3200){overflow=true;return;}
+      const point=event && event.clientX!==undefined ? [event.clientX,event.clientY] : fixed;
+      const entry={type,stage,...sample(point)};
+      if(event) Object.assign(entry,{type,point,target:name(event.target),trusted:event.isTrusted,detail:event.detail,
+        eventTime:event.timeStamp,key:event.key,repeat:event.repeat,pointerType:event.pointerType,mouseButtons:event.buttons,
+        path:event.composedPath().slice(0,10).map(name),canceledAtCapture:event.defaultPrevented});
+      rows.push(entry);
+      if(event) setTimeout(()=>{entry.canceledAfterDispatch=event.defaultPrevented;},0);
+    }
+    for(const type of ['pointerdown','mousedown','mouseup','pointerup','click','dblclick','keydown','keyup','focusin','wheel']) {
+      window.addEventListener(type,event=>store(type,event),{capture:true,passive:true});
+    }
+    new MutationObserver(()=>{
+      if(!tracking)return;
+      const stamp=JSON.stringify(buttons().map(btn=>[identity(btn),btn.getAttribute('aria-disabled'),btn.getAttribute('data-gesture')]));
+      if(stamp!==lastKey){lastKey=stamp;store('availability');}
+    }).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-disabled','data-gesture']});
+    function frame(){
+      if(tracking){
+        const stamp=JSON.stringify([viewport()?.getAttribute('style'),buttons().map(btn=>[identity(btn),btn.getAttribute('aria-disabled')])]);
+        if(stamp!==frame.last){frame.last=stamp;store('raf-change');}
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    window.__spaceQA={sample,name,box,hit,buttons,viewport,
+      mark(label,point=null){tracking=true;stage=label;fixed=point;store('mark');},
+      drain(){const value={rows,overflow};rows=[];overflow=false;tracking=false;return value;},
+    };
+  }
+  const snap=(point=null)=>page.evaluate(pt=>window.__spaceQA.sample(pt),point);
+  const mark=(label,point=null)=>page.evaluate(([label,point])=>window.__spaceQA.mark(label,point),[label,point]);
+  async function trace(label){
+    const data=await page.evaluate(()=>window.__spaceQA.drain());
+    const file=await raw('frames-'+label,data);
+    check(!data.overflow,'Frame trace exceeded capacity at '+label,'fixture');
+    out.checks.push({label,file,samples:data.rows.length});
+    return data.rows;
+  }
+  async function checkpoint(label,data){
+    const file=await raw(label,data);
+    out.checks.push({label,file});
+  }
+  async function stage(label,action) {
+    phase=label;
+    try{await action();}
+    catch(error){
+      out.failures??=[];
+      out.failures.push({phase:label,kind:error.kind??'unclassified',error:String(error.stack??error)});
+      await checkpoint('failure-'+label,{failure:out.failures.at(-1),snapshot:await snap().catch(()=>null)});
+      await trace('failure-'+label).catch(()=>{});
+    } finally {
+      putHold?.release?.();
+      putHold=undefined;
+    }
+  }
+  async function localDraft(){
+    return page.evaluate((id)=>new Promise((resolve,reject)=>{
+      const open=indexedDB.open('graphgoblin');
+      open.onupgradeneeded=()=>open.transaction.abort();
+      open.onerror=()=>resolve(null);
+      open.onsuccess=()=>{
+        const db=open.result;
+        if(!db.objectStoreNames.contains('drafts')){db.close();resolve(null);return;}
+        const tx=db.transaction('drafts','readonly');
+        const request=tx.objectStore('drafts').get(id);
+        tx.oncomplete=()=>{db.close();resolve(request.result===undefined ? null : structuredClone(request.result));};
+        tx.onerror=()=>{db.close();reject(tx.error);};
+      };
+    }),loopId);
+  }
+  async function ready(){
+    await canvas.waitFor(opts);
+    await page.waitForFunction(()=>document.querySelectorAll('.react-flow__node').length>0 &&
+      [...document.querySelectorAll('.react-flow__node')].every(node=>node.offsetHeight>0 && getComputedStyle(node).visibility==='visible'),undefined,opts);
+    await page.getByText('The editor is available. Checking the server and this device before saving changes.',{exact:true}).waitFor({state:'hidden',...opts});
+    await settled('opening-fit');
+    const settings=await page.evaluate(()=>({viewport:[innerWidth,innerHeight],dpr:devicePixelRatio,coarse:matchMedia('(pointer:coarse)').matches,
+      rootFont:parseFloat(getComputedStyle(document.documentElement).fontSize),theme:document.documentElement.dataset.theme,
+      bundle:[...document.scripts].filter(el=>el.src).map(el=>new URL(el.src).pathname)}));
+    await checkpoint('browser-settings',settings);
+    const sizes={'d1-fine-light':[1440,900,1],'d2-coarse-dark':[1440,900,1],'n768-fine-light':[768,900,1],'r512-reflow200':[512,384,2]};
+    same([...settings.viewport,settings.dpr],sizes[config],'Measured viewport/DPR');
+    check(settings.coarse===coarse && settings.theme===theme && settings.rootFont===font && settings.bundle.includes(param('bundle')),
+      'Browser effective font, pointer, theme or exact bundle mismatch','fixture');
+  }
+  async function settled(label){
+    return page.evaluate((label)=>new Promise((resolve,reject)=>{
+      let last=null, sameFrames=0, frames=0;
+      function read(){
+        const now=window.__spaceQA.viewport()?.getAttribute('style');
+        sameFrames=now && now===last ? sameFrames+1 : 0;
+        last=now;
+        if(sameFrames>=9)resolve(window.__spaceQA.sample());
+        else if(++frames>180)reject(new Error('Viewport never settled: '+label));
+        else requestAnimationFrame(read);
+      }
+      requestAnimationFrame(read);
+    }),label);
+  }
+  async function load(reload=false){
+    if(reload)await page.reload({waitUntil:'domcontentloaded'});
+    else await page.goto(origin+'/app'+path()+'/edit',{waitUntil:'domcontentloaded'});
+    if(font!==16)await page.addStyleTag({content:'html { font-size: 24px !important; }'});
+    await ready();
+  }
+  async function newFixture(label, flags={}){
+    const {published=false,invalid=false,...shape}=flags;
+    const name='QA space '+label+' '+crypto.randomUUID().slice(0,8);
+    const payload=graph(name,shape);
+    const created=await api('POST','/loops',{definition:payload});
+    check(created.status===201 && created.body.loop?.id,'Loop fixture creation rejected','fixture');
+    loopId=created.body.loop.id;
+    let prior=await get();
+    if(invalid){
+      const response=await api('PUT',path()+'/draft',{definition:graph(name,{...shape,invalid:true})},prior.draftToken);
+      if(response.status===200){
+        prior=await get();
+        same(definition(prior).edges.slice(-2),graph(name,{invalid:true}).edges.slice(-2),'Both invalid duplicate edge tuples persisted in order');
+      }else{
+        check(response.status>=400 && response.status<500,'Unexpected invalid-edge seed failure','fixture');
+        out.limits.push({label:'invalid-draft-REST-refused',status:response.status,file:response.file,fallback:'ordinary fixture'});
+      }
+    }
+    if(published){
+      // Retained save/publish fixture: a valid executable topology, then a successful public publish
+      // gives a current-only baseline for the next conditional browser edit.
+      const valid=definition(prior);
+      valid.nodes=valid.nodes.filter(node=>['start','tall','done'].includes(node.id));
+      valid.edges=[{id:'entry',from:{node:'start',port:'out'},to:{node:'tall',port:'in'}},valid.edges.find(edge=>edge.id==='finish')];
+      const seeded=await api('PUT',path()+'/draft',{definition:valid},prior.draftToken);
+      check(seeded.status===200,'Valid publication control seeding rejected','fixture');
+      const publication=await api('POST',path()+'/publish');
+      check(publication.status===200,'Public fixture publication rejected','fixture');
+      prior=await get();
+      check(!Object.hasOwn(prior,'draft') && prior.current?.definition,'Expected actual omitted draft and current fallback','fixture');
+    }
+    await load();
+    await checkpoint('loaded-baseline',{label,loopId,prior,device:exactShape(await localDraft()),snapshot:await snap()});
+    return prior;
+  }
+  async function measure(){
+    return page.evaluate(()=>{
+      const view=window.__spaceQA.sample().viewport;
+      return {zoom:view?.[2],...Object.fromEntries([...document.querySelectorAll('.react-flow__node')].map(el=>{
+        const card=el.querySelector('[data-testid^="node-"]');
+        const rect=window.__spaceQA.box(el);
+        return [el.dataset.id,{flow:el.offsetHeight,inner:card?.offsetHeight,screen:rect,flowFromScreen:rect[3]/view[2],
+          left:window.__spaceQA.box(card)?.[0],font:card ? getComputedStyle(card).fontSize : null}];
+      }))};
+    });
+  }
+  const heights=(measurements)=>Object.fromEntries(Object.entries(measurements).filter(([key])=>key!=='zoom').map(([key,row])=>[key,row.flow]));
+  async function point(name){
+    const controlState=(await snap()).buttons.find(row=>row.name===name);
+    check(controlState?.ownsHit && !controlState.disabled,'Cannot hit '+name,'product');
+    return controlState.point;
+  }
+  async function quiet(prior,count,device,label){
+    // Observation window exceeds the source-declared 600 ms debounce. Gesture delivery uses rAF/DOM observations.
+    await pause(780);
+    const server=await get();
+    const current=await localDraft();
+    await checkpoint('quiet-'+label,{count,writes:writes(),prior,server,device:exactShape(device),current:exactShape(current),snapshot:await snap()});
+    same(writes().length,count,label+' browser draft PUT count');
+    same([definition(server),server.draftToken],[definition(prior),prior.draftToken],label+' durable draft/token');
+    same(current,device,label+' complete device record');
+  }
+  async function accepted(label,count,prior,expected){
+    const put=await until(()=>writes().slice(count).find(row=>row.status===200 && row.responseText!==undefined),label+' acknowledged draft PUT',17000);
+    await save.filter({hasText:'All changes saved'}).waitFor(opts);
+    const server=await get();
+    const device=await until(async()=>{
+      const current=await localDraft();
+      return current?.synced===true && current.baseToken===server.draftToken && current;
+    },label+' synced real device row');
+    await pause(780);
+    await checkpoint('saved-'+label,{put,all:writes(),server,device,deviceShape:exactShape(device),snapshot:await snap()});
+    const response=JSON.parse(put.responseText);
+    const wire=JSON.parse(put.requestText).definition;
+    same(writes().slice(count).length,1,label+' exactly one browser PUT');
+    same(put.requestHeaders['if-match'],quote(prior.draftToken),label+' exact If-Match');
+    same(response.draftToken,server.draftToken,label+' acknowledgement/GET token');
+    check(server.draftToken!==prior.draftToken,label+' token advanced');
+    same(wire,device.definition,label+' exact device and wire');
+    same(wireToCanonical(wire),definition(server),label+' exact canonical GET and wire');
+    same(response.draft.definition,definition(server),label+' exact acknowledged/GET definition');
+    if(expected) same(definition(server),expected,label+' full expected graph');
+    return server;
+  }
+  async function verifyGeometry(label,expected,before){
+    const after=await measure();
+    await checkpoint('geometry-'+label,{before,after,expected:expected.nodes.map(node=>[node.id,node.ui])});
+    check(after.zoom>=0.4999 && after.zoom<=2.001,label+' valid fit viewport');
+    for(const node of expected.nodes){
+      const height=after[node.id];
+      check(height && Math.abs(height.flow-height.flowFromScreen)<=1.01,label+' flow/unzoomed height agreement '+node.id);
+      const anchor=after.start.screen;
+      check(Math.abs((height.screen[0]-anchor[0])/after.zoom-node.ui.x)<=0.05 &&
+        Math.abs((height.screen[1]-anchor[1])/after.zoom-node.ui.y)<=0.05,label+' stored/DOM position '+node.id);
+    }
+    const cards=Object.values(after).filter(row=>row?.screen);
+    for(let i=0;i<cards.length;i++)for(let j=i+1;j<cards.length;j++){
+      const [x,y,w,h]=cards[i].screen,[u,v,z,k]=cards[j].screen;
+      check(Math.min(x+w,u+z)-Math.max(x,u)<0.02 || Math.min(y+h,v+k)-Math.max(y,v)<0.02,label+' card overlap '+i+'/'+j);
+    }
+  }
+  async function geometryAction(label,prior,{input,requireQuietGesture=true}={}){
+    await control('Space cards').waitFor(opts);
+    const readings=await measure();
+    const expected=expectedSpace(definition(prior),heights(readings));
+    check(expected.nodes.every(node=>Number.isFinite(node.ui.x) && Number.isFinite(node.ui.y)),'Malformed fixture geometry oracle','fixture');
+    const count=writes().length;
+    const before=await snap();
+    await checkpoint('before-'+label,{readings,expected,before,count,loopId});
+    await mark(label);
+    if(input)await input();
+    else await page.mouse.click(...await point('Space cards'));
+    const after=await settled(label);
+    const rows=await trace(label);
+    const next=await accepted(label,count,prior,expected);
+    await verifyGeometry(label,expected,readings);
+    await offer.waitFor({state:'detached',...opts});
+    check(after.focus==='canvas-root' && !after.modal,label+' focus stays on the mounted canvas and no editor opens');
+    same(after.selected,before.selected,label+' selection ownership preserved');
+    check(!rows.some(row=>row.modal || JSON.stringify(row.selected)!==JSON.stringify(before.selected)),label+' no transient editor or selection side effect');
+    check(after.live?.mode==='polite' && after.live.atomic==='true' &&
+      after.live.text==='Spaced '+expected.nodes.length+' cards. Undo puts them back.',label+' exact polite Undo announcement');
+    check(after.history[0]?.[1]!=='true' && after.history[1]?.[1]==='true',label+' one new undoable edit');
+    if(requireQuietGesture){
+      const transforms=rows.filter(row=>row.viewport && (row.type==='raf-change' || row.type==='mark')).map(row=>row.viewport.join(','));
+      check(new Set(transforms).size===2,label+' stable before and one observed transform after action');
+    }
+    return {next,before,after,rows,readings,expected};
+  }
+  async function snapshot(label){
+    await checkpoint('accessibility-'+label,{offer:await offer.count() ? await offer.ariaSnapshot(opts) : null,canvas:await canvas.ariaSnapshot(),state:await snap()});
+    await page.screenshot({path:'space-'+group+'-'+String(serial).padStart(4,'0')+'-'+label+'.png'});
+  }
+  async function tabTo(name){
+    for(let i=0;i<85;i++){
+      if((await snap()).focus===name)return;
+      await page.keyboard.press('Tab');
+    }
+    check(false,'Keyboard traversal never reached '+name);
+  }
+  async function fixtureCardPoint(){
+    const candidate=await page.evaluate(()=>{
+      const probe=window.__spaceQA;
+      for(const node of document.querySelectorAll('.react-flow__node')){
+        const rect=node.getBoundingClientRect();
+        for(const dy of [17,49,65,28])for(const dx of [48,85,115,22]){
+          const x=rect.x+dx*rect.width/node.offsetWidth,y=rect.y+dy*rect.height/node.offsetHeight;
+          const hit=probe.hit([x,y]);
+          if(hit && node.contains(hit) && !hit.closest('button,.react-flow__handle'))return {id:node.dataset.id,x,y};
+        }
+      }
+      return null;
+    });
+    check(candidate,'No real node body hit is visible','unwitnessed');
+    return candidate;
+  }
+  async function panePoint(){
+    const candidate=await page.evaluate(()=>{
+      const probe=window.__spaceQA,pane=document.querySelector('.react-flow__pane');
+      const r=pane.getBoundingClientRect();
+      for(const dy of [.75,.6,.85,.5,.35])for(const dx of [.25,.65,.43,.1,.88]){
+        const point=[Math.round(r.x+r.width*dx),Math.round(r.y+r.height*dy)];
+        if(probe.hit(point)===pane)return point;
+      }
+      return null;
+    });
+    check(candidate,'No visible safe pane coordinate','unwitnessed');
+    return candidate;
+  }
+  async function editLabel(prior,label){
+    const card=await fixtureCardPoint();
+    const updated=structuredClone(definition(prior));
+    const node=updated.nodes.find(row=>row.id===card.id);
+    node.label+=' QA label edit';
+    const count=writes().length;
+    await page.mouse.click(card.x,card.y);
+    const dialog=page.getByRole('dialog');
+    await dialog.getByLabel('Label',{exact:true}).fill(node.label,opts);
+    await dialog.getByRole('button',{name:'Done',exact:true}).click(opts);
+    return accepted(label,count,prior,updated);
+  }
+  async function historyMove(direction,prior,expected,label){
+    const count=writes().length, before=await snap();
+    await history(direction).click(opts);
+    const next=await accepted(label,count,prior,expected);
+    same((await settled(label)).viewport,before.viewport,label+' no viewport fit');
+    return next;
+  }
+
+  async function applyGroup(){
+    await stage('open-dismiss-label',async()=>{
+      const prior=await newFixture('omitted');
+      const device=await localDraft(), originalCount=writes().length;
+      await offer.waitFor(opts);
+      const open=await snap();
+      check(definition(prior).nodes.every(node=>Object.hasOwn(node,'ui')&&node.ui.x===0&&node.ui.y===0),'API defaults omitted positions to origin','fixture');
+      await snapshot('eligible-pile');
+      await quiet(prior,originalCount,device,'plain-open');
+      await load(true);
+      await offer.waitFor(opts);
+      await quiet(prior,originalCount,device,'fresh-load');
+      await page.mouse.click(...await point('Dismiss suggestion'));
+      await offer.waitFor({state:'detached',...opts});
+      const dismissed=await snap();
+      for(const key of ['canvas','flow','toolbar'])same(dismissed.affordance[key],open.affordance[key],key+' stationary with overlay dismissed');
+      check(dismissed.focus==='canvas-root' && dismissed.live?.text==='Suggestion dismissed.','Dismiss claims canvas focus and announces');
+      same(dismissed.history,open.history,'Dismiss creates no history');
+      await quiet(prior,originalCount,device,'dismiss');
+      const edited=await editLabel(prior,'ordinary-label-on-pile');
+      check(!(await offer.count()),'Dismiss persists through ordinary changes for this editor load');
+      await load(true);
+      await offer.waitFor(opts);
+      const fresh=await localDraft();
+      await quiet(edited,originalCount+1,fresh,'edited-reload');
+      const twin=await newFixture('explicit',{coordinates:'zero'});
+      same({...definition(twin),name:definition(prior).name},definition(prior),'Omitted/explicit zero public GET twins');
+      const applied=await geometryAction('pointer-space',twin);
+      await snapshot('spaced');
+      const pan=await panePoint();
+      await page.mouse.move(...pan);
+      await page.mouse.down();
+      try{await page.mouse.move(pan[0]+31,pan[1]+41,{steps:5});}finally{await page.mouse.up();}
+      await page.locator('.react-flow__controls-zoomin').click(opts);
+      const deliberate=await settled('deliberate-reference');
+      await checkpoint('deliberate-reference',{before:applied.after,after:deliberate});
+      check(deliberate.viewport[2]!==applied.after.viewport[2] && deliberate.viewport[0]!==applied.after.viewport[0],'Deliberate pan/zoom established fresh reference');
+      const undone=await historyMove('undo',applied.next,definition(twin),'undo-exact-pile');
+      await offer.waitFor(opts);
+      same((await snap()).history[0][1],'true','One Undo exhausts the Space history');
+      const redone=await historyMove('redo',undone,applied.expected,'redo-exact-space');
+      await offer.waitFor({state:'detached',...opts});
+      const editedAfterSpacing=await editLabel(redone,'ordinary-label-after-space');
+      same((await settled('label-no-fit')).viewport,deliberate.viewport,'Ordinary label edit after spacing leaves deliberate viewport unchanged');
+      await load(true);
+      await offer.waitFor({state:'detached',...opts});
+      await quiet(editedAfterSpacing,4,await localDraft(),'spaced-reload');
+    });
+    await stage('durable-invalid-edge-fidelity',async()=>{
+      const prior=await newFixture('duplicate-stale',{invalid:true});
+      await geometryAction('invalid-fidelity-space',prior);
+    });
+    await stage('published-current-open',async()=>{
+      const prior=await newFixture('published',{published:true});
+      await offer.waitFor(opts);
+      await quiet(prior,0,await localDraft(),'published-current');
+    });
+  }
+  async function keyGroup(key){
+    const label=key==='Enter'?'enter':'space';
+    return stage('key-'+label,async()=>{
+      const prior=await newFixture('held-'+label);
+      await tabTo('Space cards');
+      const focused=await snap();
+      await snapshot('key-'+label+'-before');
+      const button=focused.buttons.find(row=>row.name==='Space cards');
+      check(focused.focus==='Space cards' && button.focusVisible &&
+        ((button.outline!=='none' && parseFloat(button.outlineWidth)>0)||button.shadow!=='none'),'Keyboard traversal and visible focus indicator');
+      const applied=await geometryAction('held-'+label,prior,{input:async()=>{
+        await page.keyboard.down(key);
+        try{for(let i=0;i<4;i++)await page.keyboard.down(key);}finally{await page.keyboard.up(key);}
+      }});
+      const events=applied.rows.filter(row=>row.trusted && row.key===(key==='Space'?' ':key));
+      await checkpoint('held-events-'+label,events);
+      check(events.some(row=>row.type==='keydown' && row.target==='Space cards' && !row.repeat) &&
+        events.some(row=>row.type==='keydown'&&row.repeat) && events.some(row=>row.type==='keyup'),'Native held-key down/repeat/up witness');
+      check(!events.some(row=>row.modal || row.history?.[1]?.[1]!=='true'),'Repeat never opens a node or reverses history');
+      check(new Set(applied.rows.filter(row=>row.type==='raf-change' && row.viewport).map(row=>row.viewport.join(','))).size<=2,'Held key does not cause extra pan or fit');
+    });
+  }
+  async function keysOnSelection(){
+    await stage('delete-backspace-on-offer',async()=>{
+      const prior=await newFixture('delete-selection');
+      const {id}=await fixtureCardPoint();
+      await page.locator('.react-flow__node[data-id="'+id+'"]').focus(opts);
+      await page.keyboard.press('Space');
+      const selection=(await snap()).selected;
+      check(selection.includes('node:'+id),'Selected real card through native Space','fixture');
+      const before=await localDraft();
+      for(const [name,key] of [['Space cards','Delete'],['Dismiss suggestion','Backspace']]){
+        await control(name).focus(opts);
+        await mark('selection-'+key.toLowerCase());
+        await page.keyboard.press(key);
+        const rows=await trace('selection-'+key.toLowerCase());
+        const now=await snap();
+        check(rows.some(row=>row.type==='keydown' && row.trusted && row.key===key && row.target===name),key+' reaches focused offer control');
+        same(now.selected,selection,key+' keeps card selection');
+        check(now.focus===name && !now.modal,key+' retains offer focus');
+      }
+      await quiet(prior,0,before,'keys-owned-by-offer');
+    });
+  }
+  let doubleSurface;
+  async function doubleCase(label,fraction=.5){
+    const prior=await newFixture('double-'+label);
+    const hits=await page.evaluate(fraction=>{
+      const probe=window.__spaceQA;
+      const btn=probe.buttons()[0];
+      const b=probe.box(btn);
+      const requested=[Math.round(b[0]+b[2]*fraction),Math.round(b[1]+b[3]/2)];
+      const candidates=[.16,.25,.5,.75,.84].map(f=>{
+        const pt=[Math.round(b[0]+b[2]*f),requested[1]];
+        return {fraction:f,point:pt,ownsHit:btn.contains(probe.hit(pt))};
+      });
+      return {requested,candidates,ownsHit:btn.contains(probe.hit(requested))};
+    },fraction);
+    await checkpoint('double-targets-'+label,hits);
+    check(hits.ownsHit,'Double-click starts on actual Space button');
+    const readings=await measure(), expected=expectedSpace(definition(prior),heights(readings));
+    const before=await snap(hits.requested);
+    await mark('double',hits.requested);
+    await page.mouse.dblclick(...hits.requested);
+    const immediate=await snap(hits.requested);
+    const after=await settled('double-'+label);
+    const recomputed=await page.evaluate(candidates=>candidates.map(row=>({...row,hit:window.__spaceQA.name(window.__spaceQA.hit(row.point))})),hits.candidates);
+    const rows=await trace('double-'+label);
+    const pointers=rows.filter(row=>row.type==='pointerdown' && row.trusted);
+    const clicks=rows.filter(row=>['click','dblclick'].includes(row.type) && row.trusted);
+    await checkpoint('double-hits-'+label,{firstPoint:hits.requested,before,immediate,after,recomputed,pointers,clicks});
+    // Read every resulting transport/body before classifying a UI gesture failure.
+    const next=await accepted('double-'+label,0,prior,expected);
+    await verifyGeometry('double-'+label,expected,readings);
+    const secondHit=pointers[1]?.hit;
+    const transforms=new Set(rows.filter(row=>row.viewport && (row.type==='raf-change'||row.type==='mark')).map(row=>row.viewport.join(',')));
+    const failures=[];
+    if(!(pointers.length===2 && pointers[0].target==='Space cards' && pointers[1].point.join()===pointers[0].point.join() && secondHit && secondHit!=='Space cards'))
+      failures.push('Missing two genuine same-position hits spanning offer unmount');
+    if(!clicks.some(row=>row.type==='click'&&row.target==='Space cards'&&row.detail===1))failures.push('Missing actual first click');
+    if(immediate.modal||after.modal||rows.some(row=>row.modal)||after.focus!=='canvas-root')failures.push('Second input changed focus or opened a node dialog');
+    if(rows.some(row=>JSON.stringify(row.selected)!==JSON.stringify(before.selected))||JSON.stringify(after.selected)!==JSON.stringify(before.selected))
+      failures.push('Second input selected or deselected a canvas element');
+    if(transforms.size!==2)failures.push('Unexpected observed viewport transform count '+transforms.size);
+    if(pointers[1]?.viewport && pointers[1].viewport.join(',')!==before.viewport.join(',') && pointers[1].viewport.join(',')!==after.viewport.join(',')) failures.push('Unexpected transform at second real hit');
+    const result={secondHit,secondTarget:pointers[1]?.target,clicks:clicks.map(row=>[row.type,row.target,row.detail]),transforms:[...transforms],failures};
+    await checkpoint('double-verdict-'+label,result);
+    return {result,recomputed,next};
+  }
+  async function doubleGroup(label){
+    await stage('double-'+label,async()=>{
+      const centre=await doubleCase(label);
+      doubleSurface=centre.result;
+      const extra=centre.recomputed.find(row=>row.fraction!==.5 && row.ownsHit && row.hit?.startsWith('node:'));
+      const follow=extra ? await doubleCase(label+'-edge-hit',extra.fraction) : null;
+      const failures=[...centre.result.failures,...(follow?.result.failures??[])];
+      check(!failures.length,failures.join(' | '));
+    });
+  }
+  async function panGroup(name){
+    const slug=name==='Space cards'?'space':'dismiss';
+    await stage('pan-'+slug,async()=>{
+      const prior=await newFixture('pan-'+slug);
+      const priorDevice=await localDraft();
+      const before=await snap(), readings=await measure(), press=await panePoint();
+      const expected=expectedSpace(definition(prior),heights(readings));
+      const originControl=before.buttons.find(row=>row.name===name);
+      await mark('pan-press',press);
+      await page.mouse.move(...press);
+      await page.mouse.down();
+      let whilePan, heldAfter;
+      try{
+        await page.mouse.move(press[0]+48,press[1]+35,{steps:7});
+        whilePan=await snap(originControl.point);
+        for(const button of whilePan.buttons){
+          const original=before.buttons.find(row=>row.name===button.name);
+          check(button.id===original.id && button.attached && button.unavailable && button.gesture==='panning' &&
+            button.ownsHit && !button.disabled && button.pointerEvents!=='none','Both same controls remain attached and absorb hit while panning');
+        }
+        check(whilePan.buttons.length===2 && whilePan.viewport.join()!==before.viewport.join(),'True nonzero pan with both unavailable controls');
+        await control(name).focus(opts);
+        await mark('held-key-at-unavailable',originControl.point);
+        await page.keyboard.down('Enter');
+        await page.keyboard.up('Enter');
+        heldAfter=await snap(originControl.point);
+        check(heldAfter.focus===name && heldAfter.buttons.some(row=>row.id===originControl.id && row.unavailable) &&
+          heldAfter.live?.text===before.live?.text && writes().length===0,'Active-pan key refused with focus and draft unchanged');
+        same(heldAfter.selected,before.selected,'Pan/blocked input preserves selection');
+        await mark('pan-release',originControl.point);
+      }finally{await page.mouse.up();}
+      const first=await page.evaluate(name=>new Promise((resolve,reject)=>{
+        let frames=0;
+        const probe=window.__spaceQA;
+        function read(){
+          const sample=probe.sample();
+          const button=sample.buttons.find(row=>row.name===name);
+          if(button?.attached && !button.unavailable && !button.disabled && button.ownsHit){
+            probe.mark('first-enabled-observed',button.point);
+            resolve({button,sample});
+          }else if(++frames>180)reject(new Error('First naturally enabled control never appeared: '+name));
+          else requestAnimationFrame(read);
+        }
+        read();
+      }),name);
+      await page.mouse.click(...first.button.point);
+      const after=await settled('first-action-'+slug);
+      const rows=await trace('first-action-'+slug);
+      await checkpoint('pan-states-'+slug,{before,whilePan,heldAfter,first,after});
+      const heldKey=rows.find(row=>row.stage==='held-key-at-unavailable'&&row.type==='keydown'&&row.trusted&&row.target===name);
+      check(heldKey && rows.some(row=>row.stage===heldKey.stage && row.type==='keyup'&&row.trusted&&row.target===name),'Trusted unavailable attempt reaches real control');
+      const firstEvents=rows.filter(row=>row.stage==='first-enabled-observed' && row.trusted);
+      const clicks=firstEvents.filter(row=>row.type==='click');
+      check(clicks.length===1 && clicks[0].path.includes(name) && clicks[0].target===name &&
+        firstEvents.some(row=>row.type==='pointerdown'&&row.target===name) && firstEvents.some(row=>row.type==='pointerup'&&row.target===name),
+        'Exactly one trusted first-enabled native down/up/click on '+name);
+      check(clicks[0].t>=first.sample.t && !clicks[0].buttons.find(row=>row.name===name)?.unavailable &&
+        clicks[0].canceledAfterDispatch===false,'First-enabled click reached action without cancellation');
+      if(clicks[0].d3Observable)check(!clicks[0].d3.some(row=>row.capture),'No stale D3 click.drag during first-enabled press');
+      else out.limits.push({label:'d3-bookkeeping-not-observable-'+slug});
+      check(after.focus==='canvas-root'&&!after.modal&&after.buttons.length===0,'First-enabled '+name+' acts and restores canvas focus');
+      same(after.selected,before.selected,'First-enabled '+name+' preserves selection');
+      if(slug==='space'){
+        await accepted('first-enabled-space',0,prior,expected);
+        await verifyGeometry('first-enabled-space',expected,readings);
+        check(after.live?.text==='Spaced '+expected.nodes.length+' cards. Undo puts them back.','First enabled Space announces edit');
+      }else{
+        same(after.viewport,heldAfter.viewport,'First enabled Dismiss does not move viewport after pan');
+        same(after.history,before.history,'First enabled Dismiss creates no history');
+        await quiet(prior,0,priorDevice,'first-enabled-dismiss');
+      }
+      if(!rows.some(row=>row.buttons?.some(btn=>btn.gesture==='settling')))out.limits.push({label:'between-release-settling-frame-too-short-'+slug});
+      out.limits.push({label:'no-synthetic-unavailable-pointer-click-'+slug,activeUnavailableInput:'trusted Enter while real mouse button held'});
+    });
+  }
+  async function panelRead(label){
+    const detail=await page.evaluate(()=>{
+      const probe=window.__spaceQA,panel=document.querySelector('[data-testid="space-cards-offer"]');
+      const pane=document.querySelector('.react-flow__pane');
+      const help=panel.querySelector('button[aria-describedby]');
+      const copy=document.getElementById(help.getAttribute('aria-describedby'));
+      const range=document.createRange();
+      range.selectNodeContents(copy);
+      const lines=[...range.getClientRects()].map(r=>[r.x,r.y,r.width,r.height]);
+      const [x,y,w,h]=probe.box(panel), [a,b,c,d]=probe.box(pane);
+      const points=[[x-2,y+h/2],[x+w+2,y+h/2],[x+w/2,y+h+2]]
+        .filter(([u,v])=>u>a&&u<a+c&&v>b&&v<b+d&&u<innerWidth&&v<innerHeight);
+      return {panel:probe.box(panel),canvas:probe.box(pane),viewport:[innerWidth,innerHeight],lines,
+        near:points.map(pt=>({pt,hit:probe.name(probe.hit(pt)),inFlow:!!probe.hit(pt)?.closest('.react-flow')})),
+        helpFont:getComputedStyle(copy).fontSize, buttons:probe.sample().buttons,
+        overflow:[copy.scrollWidth-copy.clientWidth,panel.scrollWidth-panel.clientWidth]};
+    });
+    await checkpoint('panel-'+label,detail);
+    check(detail.lines.length>=2 && detail.lines.every(([x,,w])=>x>=0 && x+w<=detail.viewport[0]+.2) &&
+      detail.overflow.every(delta=>delta<=1),'Readable wrapped panel without horizontal clipping');
+    check(detail.near.length>=2 && detail.near.every(row=>row.inFlow),'Overlay leaves nearby visible canvas targets hittable');
+    check(detail.buttons.every(row=>row.ownsHit),'Both panel buttons hittable');
+    return detail;
+  }
+  async function sizingGroup(){
+    await stage('same-dpr-root-pair',async()=>{
+      const prior16=await newFixture('font16');
+      const layout16=await panelRead('n768-16');
+      await snapshot('n768-16');
+      const normal=await geometryAction('font16-space',prior16);
+      font=24; 
+      const prior24=await newFixture('font24-controlled');
+      const layout24=await panelRead('n768-24');
+      await tabTo('Space cards');
+      const focus=await snap();
+      await checkpoint('controlled-root-focus',focus);
+      check(focus.buttons[0]?.focusVisible,'Larger-text real keyboard focus is visible');
+      await snapshot('n768-24-controlled-root');
+      const enlarged=await geometryAction('font24-space',prior24);
+      font=16;
+      const y=(result)=>result.expected.nodes.find(node=>node.id==='peer').ui.y;
+      await checkpoint('root-font-spacing-comparison',{normal:{layout:layout16,measurement:normal.readings,y:y(normal)},
+        enlarged:{layout:layout24,measurement:enlarged.readings,y:y(enlarged)},method:'controlled CSS root 16/24px in same Edge, viewport and DPR'});
+      check(enlarged.readings.tall.flow>normal.readings.tall.flow &&
+        enlarged.readings.tall.flow>140 && y(enlarged)>y(normal),'A larger measured card increases required same-column gap');
+      check(parseFloat(layout24.helpFont)>parseFloat(layout16.helpFont),'Controlled root override measurably enlarges panel text');
+      out.limits.push({label:'sizing-method',applied:'150% CSS root-font override; disposable Edge preference equivalence is unverified'});
+    });
+    font=16;
+  }
+  async function protection(){
+    await stage('one-card',async()=>{
+      const prior=await newFixture('single',{single:true});
+      check(!(await offer.count()),'A single origin card is ineligible');
+      await quiet(prior,0,await localDraft(),'one-card-load');
+    });
+    await stage('manual-drag',async()=>{
+      const prior=await newFixture('drag');
+      await offer.waitFor(opts);
+      const card=await fixtureCardPoint();
+      const old=await snap();
+      await mark('manual-node-drag',[card.x,card.y]);
+      await page.mouse.move(card.x,card.y);
+      await page.mouse.down();
+      try{await page.mouse.move(card.x+89,card.y+54,{steps:10});}finally{await page.mouse.up();}
+      const rows=await trace('manual-node-drag');
+      check(rows.some(row=>row.type==='pointerdown'&&row.trusted&&row.target==='node:'+card.id) &&
+        rows.some(row=>row.type==='pointerup'&&row.trusted),'Real native drag starts on exposed card and releases');
+      const moved=await accepted('drag-manual-card',0,prior);
+      const original=definition(prior), geometry=definition(moved);
+      const target=geometry.nodes.find(node=>node.id===card.id);
+      check(target.ui.x!==0||target.ui.y!==0,'Real card left origin');
+      same({...geometry,nodes:geometry.nodes.map(node=>node.id===card.id?{...node,ui:original.nodes.find(row=>row.id===card.id).ui}:node)},original,
+        'Only deliberate moved card position changes');
+      await offer.waitFor({state:'detached',...opts});
+      same((await snap()).viewport,old.viewport,'Node drag does not fit viewport');
+      const undone=await historyMove('undo',moved,original,'undo-manual-geometry');
+      await offer.waitFor(opts);
+      const redone=await historyMove('redo',undone,geometry,'redo-manual-geometry');
+      await offer.waitFor({state:'detached',...opts});
+      const edited=await editLabel(redone,'manual-geometry-ordinary-label');
+      const undoneLabel=await historyMove('undo',edited,geometry,'manual-label-undo');
+      await historyMove('redo',undoneLabel,definition(edited),'manual-label-redo');
+    });
+    await stage('stored-manual-route',async()=>{
+      const prior=await newFixture('routed',{routed:true});
+      check(definition(prior).edges[0].ui?.route?.length===3 && !(await offer.count()),'All-origin persisted manual route prevents offer');
+      const edited=await editLabel(prior,'routed-ordinary-label');
+      const undone=await historyMove('undo',edited,definition(prior),'routed-label-undo');
+      const redone=await historyMove('redo',undone,definition(edited),'routed-label-redo');
+      const count=writes().length;
+      await page.getByRole('button',{name:'Add Script node',exact:true}).first().click(opts);
+      const added=await accepted('routed-add',count,redone);
+      const original=definition(redone), actual=definition(added);
+      const additions=actual.nodes.filter(node=>!original.nodes.some(old=>old.id===node.id));
+      check(additions.length===1&&additions[0].kind==='script','Ordinary Add adds one script');
+      same({...actual,nodes:actual.nodes.filter(node=>node.id!==additions[0].id)},original,'Ordinary Add preserves all existing nodes, edges and stored route');
+      await load(true);
+      check(!(await offer.count()),'Fresh load preserves manual route ineligibility');
+      await quiet(added,count+1,await localDraft(),'route-reload');
+    });
+  }
+  async function deviceGroup(){
+    await stage('failed-put-reload-and-acknowledge',async()=>{
+      const prior=await newFixture('fault');
+      const readings=await measure(), expected=expectedSpace(definition(prior),heights(readings));
+      await mark('scoped-failed-put');
+      putHold={mode:'fail-once',id:loopId,used:false};
+      await page.mouse.click(...await point('Space cards'));
+      await save.filter({hasText:'Save failed'}).waitFor(opts);
+      const failed=await until(()=>writes().find(row=>row.status===500&&row.responseText!==undefined),'scoped failure with raw response');
+      const device=await until(async()=>{
+        const row=await localDraft();return row?.synced===false && row;
+      },'pending device mirror');
+      const server=await get();
+      await checkpoint('failed-draft-device',{failed,device,deviceShape:exactShape(device),server,expected});
+      same(writes().length,1,'One scoped failed browser save');
+      same(JSON.parse(failed.requestText).definition,device.definition,'Exact failed wire/device authored definition');
+      same(wireToCanonical(device.definition),expected,'Pending device geometry exact');
+      same(failed.requestHeaders['if-match'],quote(prior.draftToken),'Failed request conditions on original server');
+      same(device.baseToken,prior.draftToken,'Pending device owns original base');
+      same([definition(server),server.draftToken],[definition(prior),prior.draftToken],'Failed save leaves original durable server bytes/token');
+      await trace('failed-put');
+      let resume;
+      const blocked=new Promise(resolve=>{resume=resolve;});
+      putHold={mode:'hold-once',id:loopId,used:false,wait:blocked,release:resume};
+      await load(true);
+      const restored=page.getByText('Restored unsaved changes from this device.',{exact:true});
+      await restored.waitFor(opts);
+      await offer.waitFor({state:'detached',...opts});
+      const recovered=await localDraft();
+      await checkpoint('restored-before-acknowledgement',{device:recovered,shape:exactShape(recovered),view:await snap()});
+      same(recovered.definition,device.definition,'Reload restores exactly the authored pending device definition');
+      await verifyGeometry('restored-device-space',expected,readings);
+      resume();
+      await accepted('restored-acknowledgement',1,prior,expected);
+    });
+    await stage('real-conditional-conflict-owner-reload',async()=>{
+      const prior=await newFixture('conflict');
+      const readings=await measure(), expected=expectedSpace(definition(prior),heights(readings));
+      const newer={...definition(prior),description:'Other editor updated this disposable loop'};
+      const intervening=await api('PUT',path()+'/draft',{definition:newer},prior.draftToken);
+      check(intervening.status===200 && intervening.body.draftToken!==prior.draftToken,'Public competing draft advanced revision','fixture');
+      await page.mouse.click(...await point('Space cards'));
+      const reload=page.getByRole('button',{name:'Reload server draft',exact:true});
+      await reload.waitFor(opts);
+      const refusal=await until(()=>writes().find(row=>row.status===409&&row.responseText!==undefined),'actual 409 conflict with response');
+      const pending=await localDraft(), server=await get();
+      await checkpoint('conflict-ownership',{prior,intervening,refusal,pending,pendingShape:exactShape(pending),server});
+      same(writes().length,1,'One refused conditional browser PUT');
+      same(refusal.requestHeaders['if-match'],quote(prior.draftToken),'Browser submits stale original token');
+      const problem=JSON.parse(refusal.responseText);
+      same([problem.code,problem.draftToken],['DRAFT_CONFLICT',intervening.body.draftToken],'Server identifies actual competing owner token');
+      same([definition(server),server.draftToken],[newer,intervening.body.draftToken],'No unintended server write during conflict');
+      check(pending?.synced===false && pending.baseToken===prior.draftToken,'Unsent device copy retains original token ownership');
+      same(JSON.parse(refusal.requestText).definition,pending.definition,'Refused full wire/device definitions match');
+      same(wireToCanonical(pending.definition),expected,'Pending geometry remains exact through conflict');
+      await reload.click(opts);
+      await offer.waitFor(opts);
+      await reload.waitFor({state:'detached',...opts});
+      const loaded=await snap(), device=await localDraft();
+      await checkpoint('conflict-reload',{loaded,device,deviceShape:exactShape(device),server:await get()});
+      same([device?.synced,device?.baseToken,device?.definition],[true,server.draftToken,definition(server)],'Confirmed owner reload synchronizes exact authoritative device copy');
+      await quiet(server,1,device,'owner-server-reload');
+      check(!loaded.modal && loaded.history.every(row=>row[1]==='true'),'Reload server draft clears abandoned geometry history');
+    });
+  }
+
+  page.on('pageerror',error=>out.pageErrors.push(String(error)));
+  page.on('console',msg=>{if(msg.type()==='error')out.consoleErrors.push(msg.text());});
+  page.on('request',request=>{
+    const url=new URL(request.url());
+    if(url.origin!==origin || !/^\/loops\/[^/]+\/draft$/.test(url.pathname) || request.method()!=='PUT')return;
+    const row={method:request.method(),path:url.pathname,url:request.url(),phase,at:Date.now(),
+      requestText:request.postData(),requestHeaders:request.headers(),requestSequence:requests.length+1};
+    requests.push(row);
+    map.set(request,row);
+    pending.push(raw('browser-draft-request',row));
+  });
+  page.on('response',response=>{
+    const row=map.get(response.request());
+    if(!row)return;
+    row.status=response.status();
+    pending.push((async()=>{
+      try{row.responseText=await response.text();}catch(error){row.responseReadFailure=String(error);}
+      row.responseHeaders=response.headers();
+      row.responseAt=Date.now();
+      await raw('browser-draft-response',row);
+    })());
+  });
+  page.on('requestfailed',request=>{
+    const row=map.get(request);
+    if(row){
+      row.error=request.failure()?.errorText;
+      pending.push(raw('browser-draft-failure',row));
+    }
+  });
+  try{
+    const health=await page.request.get(origin+'/healthz');
+    await checkpoint('gateway-health',{status:health.status(),headers:health.headers(),body:await health.text()});
+    check(health.ok()&&health.headers()['x-graphgoblin-pid']===param('pid'),'Browser is bound to isolated gateway PID','fixture');
+    await page.addInitScript(installProbe,theme);
+    await page.route(url=>url.origin===origin && /^\/loops\/[^/]+\/draft$/.test(url.pathname),async route=>{
+      const request=route.request();
+      const hold=putHold;
+      if(hold && !hold.used && request.method()==='PUT' && new URL(request.url()).pathname===path(hold.id)+'/draft'){
+        hold.used=true;
+        if(hold.mode==='fail-once')return route.fulfill({status:500,contentType:'application/problem+json',
+          body:JSON.stringify({type:'about:blank',title:'Disposable test scope',status:500,code:'QA_SCOPED_PUT_FAILURE'})});
+        await hold.wait;
+      }
+      return route.continue();
+    });
+    if(group==='apply-d1')await applyGroup();
+    else if(group==='gestures-d1'){
+      await keyGroup('Enter');
+      await keyGroup('Space');
+      await keysOnSelection();
+      await doubleGroup('d1');
+      await panGroup('Space cards');
+      await panGroup('Dismiss suggestion');
+    }else if(group==='n768'){
+      await keyGroup('Enter');
+      await keyGroup('Space');
+      await keysOnSelection();
+      await sizingGroup();
+      await protection();
+    }else if(group==='double-r512'){
+      await stage('r512-reflow',async()=>{
+        await newFixture('r512-wrap');
+        const measured=await panelRead('r512-reflow');
+        const before=await snap();
+        await snapshot('r512-reflow');
+        await page.mouse.click(...await point('Dismiss suggestion'));
+        const after=await snap();
+        same([before.affordance.canvas,before.affordance.flow,before.affordance.toolbar],
+          [after.affordance.canvas,after.affordance.flow,after.affordance.toolbar],'Reflow overlay causes no flow or toolbar displacement');
+        check(measured.buttons.every(btn=>btn.box[2]>0 && btn.box[3]>0),'Reflow controls visible');
+      });
+      await doubleGroup('r512');
+    }else if(group==='touch-d2'){
+      await stage('coarse-touch-apply',async()=>{
+        const prior=await newFixture('coarse-touch');
+        const panel=await panelRead('d2-coarse');
+        await tabTo('Space cards');
+        await snapshot('coarse-focus');
+        check(panel.buttons.every(row=>row.box[2]>=44 && row.box[3]>=44),'Both coarse controls measure at least 44 CSS px');
+        const applied=await geometryAction('coarse-touch-space',prior,{input:async()=>page.touchscreen.tap(...await point('Space cards'))});
+        check(applied.rows.some(row=>row.type==='pointerdown'&&row.trusted&&row.pointerType==='touch'&&row.target==='Space cards'),'Trusted coarse touchscreen tap delivered');
+      });
+      await stage('coarse-touch-dismiss',async()=>{
+        const prior=await newFixture('coarse-dismiss');
+        const device=await localDraft();
+        await mark('coarse-touch-dismiss');
+        await page.touchscreen.tap(...await point('Dismiss suggestion'));
+        await offer.waitFor({state:'detached',...opts});
+        const rows=await trace('coarse-touch-dismiss');
+        check(rows.some(row=>row.type==='pointerdown' && row.trusted && row.pointerType==='touch' && row.target==='Dismiss suggestion'),
+          'Trusted coarse touchscreen tap dismisses');
+        await quiet(prior,0,device,'coarse-dismiss');
+      });
+    }else if(group==='device-d1')await deviceGroup();
+    else check(false,'Unexpected bounded matrix group','fixture');
+  }catch(error){
+    out.failures??=[];
+    out.failures.push({phase,kind:error.kind??'unclassified',error:String(error.stack??error)});
+  }finally{
+    putHold?.release?.();
+    const evidence=await Promise.allSettled(pending);
+    if(evidence.some(result=>result.status==='rejected')){
+      out.failures??=[];
+      out.failures.push({phase:'raw-transport',kind:'fixture',errors:evidence.filter(r=>r.status==='rejected').map(r=>String(r.reason))});
+    }
+    out.failure=out.failures?.[0]??null;
+    out.summary={checks:out.checks.length,failed:out.failures?.length??0,writes:requests.length,limits:out.limits,doubleSurface};
+    await raw('full-result',{...out,requests});
+  }
+  return JSON.stringify({...out,checks:undefined});
+}
+
+)(page);
+```
+### Page
+- Page URL: http://127.0.0.1:49216/app/loops/01M7EA7DFC3PHF5EFJCA98TWZS/edit
+- Page Title: GraphGoblin
+- Console: 0 errors, 2 warnings
+### Events
+- New console entries: .playwright-cli\console-2026-11-15T00-37-47-959Z.log#L4-L21

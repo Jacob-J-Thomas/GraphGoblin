@@ -1,0 +1,324 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.test.tsx (43 tests | 8 failed) 4397ms
+   ❯ Space cards on the canvas (#208) (23)
+     × waits while xyflow’s pane has no width, and fits once, at that size, when it is measured 69ms
+     × waits while xyflow’s pane has no height, and fits once, at that size, when it is measured 69ms
+     × waits while xyflow’s pane has no size at all, and fits once, at that size, when it is measured 46ms
+     × waits while xyflow’s pane has a negative width, and fits once, at that size, when it is measured 63ms
+     × waits while xyflow’s pane has a width that is not a number, and fits once, at that size, when it is measured 58ms
+     × waits while xyflow’s pane has an infinite height, and fits once, at that size, when it is measured 66ms
+     × keeps waiting through each readiness change, and an edit while it waits drops the fit for good 74ms
+     × drops a fit that waits when an Undo and a Redo bring the same draft back, because it is a newer revision 109ms
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx (8 tests | 4 failed) 4451ms
+   ❯ the one fit Space cards asks for, on the installed xyflow and d3 (#208) (8)
+     × waits while the pane is not measured, then fits once when it is, and nothing before then moves the view 335ms
+     × drops a fit that waits for the pane when Undo and Redo bring back the same draft object, because it is a newer revision 504ms
+     × drops a fit that waits for the pane when an edit or a load comes first 497ms
+     × drops a fit that waits for the pane when the draft is loaded again 513ms
+
+ Test Files  2 failed (2)
+      Tests  12 failed | 39 passed (51)
+   Start at  02:18:34
+   Duration  10.58s (tests 43%, environment 30%, import 9%, transform 9%, setup 9%)
+
+
+--- stderr ---
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > waits while the pane is not measured, then fits once when it is, and nothing before then moves the view
+AssertionError: expected { x: -42, y: -30, zoom: 0.5 } to deeply equal { x: 26, y: -30, zoom: 0.5 }
+
+- Expected
++ Received
+
+  {
+-   "x": 26,
++   "x": -42,
+    "y": -30,
+    "zoom": 0.5,
+  }
+
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:460:24
+    458|     expect(labels()).toEqual(['space cards']);
+    459|     // The fit is kept, not spent and not applied to a pane that has n…
+    460|     expect(viewport()).toEqual(idle);
+       |                        ^
+    461|     expect(transforms.count()).toBe(0);
+    462|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > drops a fit that waits for the pane when Undo and Redo bring back the same draft object, because it is a newer revision
+AssertionError: expected { x: -42, y: -30, zoom: 0.5 } to deeply equal { x: 26, y: -30, zoom: 0.5 }
+
+- Expected
++ Received
+
+  {
+-   "x": 26,
++   "x": -42,
+    "y": -30,
+    "zoom": 0.5,
+  }
+
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:494:24
+    492|     await showPane();
+    493|     await realFrames(3);
+    494|     expect(viewport()).toEqual(idle);
+       |                        ^
+    495|     expect(transforms.count()).toBe(0);
+    496|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > drops a fit that waits for the pane when an edit or a load comes first
+AssertionError: expected { x: -42, y: -30, zoom: 0.5 } to deeply equal { x: 26, y: -30, zoom: 0.5 }
+
+- Expected
++ Received
+
+  {
+-   "x": 26,
++   "x": -42,
+    "y": -30,
+    "zoom": 0.5,
+  }
+
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:510:24
+    508|     await showPane();
+    509|     await realFrames(3);
+    510|     expect(viewport()).toEqual(idle);
+       |                        ^
+    511|     expect(transforms.count()).toBe(0);
+    512|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > drops a fit that waits for the pane when the draft is loaded again
+AssertionError: expected { x: -42, y: -30, zoom: 0.5 } to deeply equal { x: 26, y: -30, zoom: 0.5 }
+
+- Expected
++ Received
+
+  {
+-   "x": 26,
++   "x": -42,
+    "y": -30,
+    "zoom": 0.5,
+  }
+
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:527:24
+    525|     await showPane();
+    526|     await realFrames(3);
+    527|     expect(viewport()).toEqual(idle);
+       |                        ^
+    528|     expect(transforms.count()).toBe(0);
+    529|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has no width, and fits once, at that size, when it is measured
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": -450,
+        "y": 300,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:355:31
+    353|       // Kept, not dropped and not spent: nothing is set, and a later …
+    354|       // nothing either while the pane has no size.
+    355|       expect(setViewport).not.toHaveBeenCalled();
+       |                               ^
+    356|       measure({ prep: 400 });
+    357|       expect(setViewport).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has no height, and fits once, at that size, when it is measured
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": 60,
+        "y": -100,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:355:31
+    353|       // Kept, not dropped and not spent: nothing is set, and a later …
+    354|       // nothing either while the pane has no size.
+    355|       expect(setViewport).not.toHaveBeenCalled();
+       |                               ^
+    356|       measure({ prep: 400 });
+    357|       expect(setViewport).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has no size at all, and fits once, at that size, when it is measured
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": -450,
+        "y": -100,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:355:31
+    353|       // Kept, not dropped and not spent: nothing is set, and a later …
+    354|       // nothing either while the pane has no size.
+    355|       expect(setViewport).not.toHaveBeenCalled();
+       |                               ^
+    356|       measure({ prep: 400 });
+    357|       expect(setViewport).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has a negative width, and fits once, at that size, when it is measured
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": -449.5,
+        "y": 300,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:355:31
+    353|       // Kept, not dropped and not spent: nothing is set, and a later …
+    354|       // nothing either while the pane has no size.
+    355|       expect(setViewport).not.toHaveBeenCalled();
+       |                               ^
+    356|       measure({ prep: 400 });
+    357|       expect(setViewport).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has a width that is not a number, and fits once, at that size, when it is measured
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has an infinite height, and fits once, at that size, when it is measured
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": NaN,
+        "y": NaN,
+        "zoom": NaN,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:355:31
+    353|       // Kept, not dropped and not spent: nothing is set, and a later …
+    354|       // nothing either while the pane has no size.
+    355|       expect(setViewport).not.toHaveBeenCalled();
+       |                               ^
+    356|       measure({ prep: 400 });
+    357|       expect(setViewport).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > keeps waiting through each readiness change, and an edit while it waits drops the fit for good
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": -450,
+        "y": -100,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:395:29
+    393|     expect(setViewport).not.toHaveBeenCalled();
+    394|     act(() => flow$.set({ viewportInitialized: true }));
+    395|     expect(setViewport).not.toHaveBeenCalled();
+       |                             ^
+    396|     // An ordinary edit while it waits: the fit is gone for good, what…
+    397|     act(() => store().moveNode('prep', { x: 5, y: 5 }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > drops a fit that waits when an Undo and a Redo bring the same draft back, because it is a newer revision
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": -450,
+        "y": 300,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:432:29
+    430|     expect(store().definition).toBe(again);
+    431|     act(() => flow$.set({ width: 1200 }));
+    432|     expect(setViewport).not.toHaveBeenCalled();
+       |                             ^
+    433|     expect(fitView).not.toHaveBeenCalled();
+    434|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\web
+

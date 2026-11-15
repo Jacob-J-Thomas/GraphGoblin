@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.test.tsx (44 tests | 1 failed) 4647ms
+   ❯ Space cards on the canvas (#208) (24)
+     × waits while xyflow has no viewport to move, and fits once when it has 52ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 51 passed (52)
+   Start at  02:21:29
+   Duration  10.23s (tests 46%, environment 23%, import 11%, transform 11%, setup 9%)
+
+
+--- stderr ---
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow has no viewport to move, and fits once when it has
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": 60,
+        "y": 300,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:378:29
+    376|     measure({ prep: 400 });
+    377|     await user.click(spaceButton());
+    378|     expect(setViewport).not.toHaveBeenCalled();
+       |                             ^
+    379|     measure({ prep: 400 });
+    380|     expect(setViewport).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\web
+

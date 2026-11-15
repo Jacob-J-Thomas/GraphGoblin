@@ -1,0 +1,182 @@
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/space-208-independent/build-frozen.ps1 b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/build-frozen.ps1
+index fd72dc8b..791946d5 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/space-208-independent/build-frozen.ps1
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/build-frozen.ps1
+@@ -3,7 +3,16 @@ $ErrorActionPreference = 'Stop'
+ $packet = $PSScriptRoot
+ $admissionPath = (Resolve-Path -LiteralPath $AdmissionFile).Path
+ $admission = Get-Content -Raw -LiteralPath $admissionPath | ConvertFrom-Json
+-if ($admission.status -ne 'authorized' -or -not $admission.buildGrant) { throw 'Requires exact root build authorization' }
++if ($admission.status -ne 'authorized' -or !$admission.buildGrant -or !$admission.exclusiveSlotGrant) { throw 'Requires exact root build authorization and exclusive slot' }
++if ($admission.schema -ne '208-space-corrected-native-admission/v1') { throw 'Unexpected admission schema' }
++if ($admission.driverManifest -ne 'driver-manifest.json') { throw 'Build requires the initial frozen driver manifest' }
++$driverManifest = Join-Path $packet $admission.driverManifest
++if ((Get-FileHash -LiteralPath $driverManifest).Hash.ToLowerInvariant() -cne $admission.driverManifestSha256) { throw 'Driver manifest mismatch' }
++$frozen = Get-Content -Raw -LiteralPath $driverManifest | ConvertFrom-Json
++foreach ($entry in $frozen.files.PSObject.Properties) {
++  $boundDriverPath = Join-Path $packet $entry.Name
++  if ((Get-FileHash -LiteralPath $boundDriverPath).Hash.ToLowerInvariant() -cne $entry.Value) { throw ("Frozen input changed: " + $entry.Name) }
++}
+ $env:GIT_OPTIONAL_LOCKS = '0'
+ $env:PATH = "$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+ $env:TURBO_TOKEN = ''
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/space-208-independent/verify-binding.mjs b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/verify-binding.mjs
+index d5abd6f5..1961c5f8 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/space-208-independent/verify-binding.mjs
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/verify-binding.mjs
+@@ -7,32 +7,41 @@ import { fileURLToPath } from 'node:url';
+ 
+ const evidence = dirname(fileURLToPath(import.meta.url));
+ const [admissionFile, mode] = process.argv.slice(2);
+-assert(['offline', 'source', 'before', 'after'].includes(mode), 'Use source, before or after');
++assert(['source', 'before', 'after'].includes(mode), 'Use source, before or after');
+ const admission = JSON.parse(await readFile(resolve(admissionFile), 'utf8'));
+-if (mode === 'offline') assert.equal(admission.status, 'prepared');
+-else {
+-  assert.equal(admission.status, 'authorized');
+-  assert(admission.buildGrant?.trim(), 'Requires root build authorization');
+-}
++assert.equal(admission.status, 'authorized');
++assert(admission.buildGrant?.trim(), 'Requires root build authorization');
+ assert.equal(process.version, 'v22.23.4');
+-const { head, tree, base, actualMain, historyParent, corrected207Integration } = admission;
+-for (const value of [head, tree, base, actualMain, historyParent, corrected207Integration]) assert.match(value, /^[a-f0-9]{40}$/);
+-assert.notEqual(head, historyParent);
+-assert.notEqual(head, corrected207Integration);
++const {head,tree,base,actualMain,spaceAnchor,mergedCanvas,mergedHistory,candidateScope}=admission;
++assert.equal(admission.schema,'208-space-corrected-native-admission/v1');
++assert(['corrected-stack','actual-main'].includes(candidateScope));
++for(const value of [head,tree,base,actualMain,spaceAnchor]) assert.match(value,/^[a-f0-9]{40}$/);
++if(candidateScope==='actual-main'){
++  assert.equal(base,actualMain);
++  for(const ancestor of [mergedCanvas,mergedHistory])assert.match(ancestor,/^[a-f0-9]{40}$/);
++}
++assert.notEqual(head,base);
+ const checkout = await realpath(admission.checkout);
+ assert(relative(checkout, evidence).startsWith('..'), 'Evidence must be outside the candidate');
++assert(relative(evidence, checkout).startsWith('..'), 'Candidate must be outside the evidence folder');
+ const opts = { cwd: checkout, env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' }, maxBuffer: 128 * 1024 * 1024 };
+ const rawGit = (...args) => execFileSync('git', args, opts);
+ const git = (...args) => rawGit(...args).toString('utf8').trim();
+ const identity = () => git('rev-parse', 'HEAD', 'HEAD^{tree}', 'origin/main').split(/\r?\n/);
+-assert.deepEqual(identity(), [head, tree, mode === 'after' ? (admission.observedMain ?? actualMain) : actualMain]);
++assert.deepEqual(identity(), [head, tree, actualMain]);
+ assert.equal(git('status', '--porcelain=v1', '--untracked-files=all'), '');
+-assert.equal(git('rev-parse','HEAD^2'), historyParent);
+-for (const ancestor of [base, actualMain, historyParent, corrected207Integration, admission.finalParent]) {
+-  rawGit('merge-base', '--is-ancestor', ancestor, head);
++assert.equal(git('merge-base', base, head), base, 'Target branch is not the effective comparison base');
++rawGit('merge-base','--is-ancestor',spaceAnchor,head);
++if(candidateScope==='actual-main'){
++  rawGit('merge-base','--is-ancestor',actualMain,head);
++  rawGit('merge-base','--is-ancestor',mergedCanvas,actualMain);
++  rawGit('merge-base','--is-ancestor',mergedHistory,actualMain);
+ }
+ 
+ const digest = (bytes) => createHash('sha256').update(bytes).digest('hex');
++const ownerCheckout=resolve(process.env.USERPROFILE,'source','repos','GraphGoblin');
++assert.notEqual(checkout.toLowerCase(),ownerCheckout.toLowerCase(),'Owner checkout is outside the QA scope');
++const indexSha256=digest(await readFile(resolve(checkout,git('rev-parse','--git-path','index'))));
+ const mapped = [
+   'app/App.tsx',
+   'components/layout/AppShell.tsx',
+@@ -64,18 +73,17 @@ const mapped = [
+   'lib/online.ts',
+   'lib/reachability.ts',
+   'api/queries.ts',
+-].map((path) => 'apps/web/src/' + path);
++].map(path=>'apps/web/src/'+path).concat(admission.additionalWebModules??[]);
++assert.equal(new Set(mapped).size,mapped.length);
+ const affected = git('diff', '--name-only', '--diff-filter=ACMRT', base, head).split(/\r?\n/).filter(Boolean);
+-const stackDelta = git('diff', '--name-only', '--diff-filter=ACMRT', '64a955887962f72287e532824be1b8cb32c5f055', head).split(/\r?\n/).filter(Boolean);
+ // Hash the complete effective runtime/build-source closure and its exact Git blobs.
+ // Historical docs/qa artifacts are bound by immutable HEAD/tree rather than reread per run.
+ const tracked = new Map(rawGit('ls-tree','-r','-z','HEAD').toString('utf8').split('\0').filter(Boolean).map(entry => {
+   const match = /^(\d+) blob ([0-9a-f]{40})\t(.+)$/.exec(entry);
+   assert(match,'Non-blob entry'); return [match[3],match[2]];
+ }));
+-const rootInputs=['package.json','pnpm-lock.yaml','pnpm-workspace.yaml','turbo.json','tsconfig.json','tsconfig.build.json','.npmrc','.nvmrc','eslint.config.js','vitest.config.ts'];
+-const files=[...new Set([...tracked.keys()].filter(path=>/^(apps|packages|tooling)\//.test(path)).concat(mapped,rootInputs.filter(path=>tracked.has(path)),
+-  stackDelta.filter(path=>!path.startsWith('docs/qa/') && !path.startsWith('docs/delivery/'))))].sort();
++const files=[...tracked.keys()].filter(path=>!path.startsWith('docs/qa/')).sort();
++for (const file of mapped) assert(files.includes(file), 'Missing tracked mapped source: '+file);
+ const sourceReadback={};
+ let cursor=0;
+ await Promise.all(Array.from({length:16},async()=>{
+@@ -89,14 +97,11 @@ await Promise.all(Array.from({length:16},async()=>{
+ const sorted=Object.fromEntries(Object.keys(sourceReadback).sort().map(path=>[path,sourceReadback[path]]));
+ for(const path of Object.keys(sourceReadback)) delete sourceReadback[path];
+ Object.assign(sourceReadback,sorted);
+-assert.equal(sourceReadback['apps/web/src/editor/space-cards.ts'], '8921ad9e67218fa788bb30e401f02702aa097932509d8413c02592d77e0fafd3');
+-const rootFreeze = JSON.parse(await readFile(join(evidence, '..','review-208-space','current-parent-freeze.json'), 'utf8'));
+-if (rootFreeze.head === head) {
+-  assert.equal(rootFreeze.tree,tree);
+-  for (const {path, sha256} of [...rootFreeze.source, ...rootFreeze.docs]) assert.equal(sourceReadback[path],sha256,path);
+-}
+ const emit = (path, content) => writeFile(join(evidence, path), JSON.stringify(content, null, 2) + '\n', { flag: 'wx' });
+-const source = { head, tree, base, actualMain, node: process.version, status: '', sourceReadback, affected };
++const autosave = await readFile(join(checkout, 'apps/web/src/editor/useAutosave.ts'), 'utf8');
++const autosaveMs = Number(/^export const AUTOSAVE_DELAY_MS = ([1-9]\d*);$/m.exec(autosave)?.[1]);
++assert(Number.isInteger(autosaveMs) && autosaveMs > 0, 'Unbound autosave debounce');
++const source = { head, tree, base, actualMain, spaceAnchor, mergedCanvas, mergedHistory, candidateScope, node: process.version, status: '', indexSha256, autosaveMs, sourceReadback, affected };
+   const dirs = [
+     'apps/web/dist', 'apps/web/dist-goblin', 'apps/api/dist', 'apps/mcp/dist',
+     'apps/plugin-codex/dist', 'apps/plugin-claude/dist', 'packages/contracts/dist',
+@@ -114,10 +119,7 @@ const source = { head, tree, base, actualMain, node: process.version, status: ''
+       }
+     }
+   }
+-if (mode === 'offline') {
+-  await emit('offline-source-binding.json', source);
+-  console.log(JSON.stringify({ head, tree, actualMain, boundSource: files.length, runtimeStarted: false }));
+-} else if (mode === 'source') {
++if (mode === 'source') {
+   const prebuild = {};
+   for (const directory of dirs) {
+     const hashes = {};
+@@ -138,6 +140,7 @@ if (mode === 'offline') {
+   const build = JSON.parse(await readFile(join(evidence, 'forced-build-exit.json'), 'utf8'));
+   assert.deepEqual([build.head, build.tree, build.actualMain, build.node, build.exitCode, build.cleanAfter],
+     [head, tree, actualMain, process.version, 0, true]);
++  assert.equal(resolve(build.cache),join(evidence,'isolated-turbo-cache'),'Unexpected build cache receipt');
+   const buildLog = await readFile(join(evidence, 'forced-build.log'));
+   assert.equal(digest(buildLog), build.logSha256);
+   const log = buildLog.toString('utf8');
+@@ -165,11 +168,12 @@ if (mode === 'offline') {
+   assert.equal(scripts.length, 1);
+   const bundle = scripts[0][1];
+   const bundlePath = 'apps/web/dist/' + bundle.slice('/app/'.length);
+-  assert(critical[bundlePath] && critical['apps/api/dist/main.js']);
++  const bundleMapPath = bundlePath + '.map';
++  assert(critical[bundlePath] && critical[bundleMapPath] && critical['apps/api/dist/main.js']);
++  const entry = await readFile(join(checkout,bundlePath));
++  assert.equal(critical[bundlePath],digest(entry));
++  assert(entry.toString('utf8').includes('sourceMappingURL='+bundleMapPath.split('/').at(-1)), 'Served entry does not point to the bound source map');
+   const sourceMap = {};
+-  assert.equal(critical[bundlePath], digest(await readFile(join(checkout,bundlePath))));
+-  const entry = await readFile(join(checkout, bundlePath), 'utf8');
+-  assert(entry.includes('sourceMappingURL=' + bundlePath.split('/').at(-1) + '.map'));
+   for (const path of Object.keys(critical).filter((file) => file.endsWith('.js.map')).sort()) {
+     const map = JSON.parse(await readFile(join(checkout, path), 'utf8'));
+     for (const [i, original] of map.sources.entries()) {
+@@ -185,17 +189,15 @@ if (mode === 'offline') {
+     assert.equal(sourceMap[file], sourceReadback[file], 'Missing mapped production source ' + file);
+     sourceHashes[file] = sourceReadback[file];
+   }
+-  const mapping = { id: '208-space-combined-native-v1', sourceHashes };
++  const mapping = { id: '208-space-corrected-native-v1', sourceHashes };
+   mapping.sha256 = digest(JSON.stringify(mapping));
+-  const report = { ...source, builtSource: head, buildLogSha256: build.logSha256, bundle, critical, trees, sourceMap, mapping,
++  const report = { ...source, builtSource: head, buildLogSha256: build.logSha256, buildCache: build.cache, bundle, bundleMapPath, critical, trees, sourceMap, mapping,
+     builtFiles: Object.values(trees).reduce((count, current) => count + current.files, 0) };
+-  assert.equal(report.builtFiles, 1227, 'Fresh output count changed');
+-  assert.equal(Object.keys(trees).length, 13);
+   if (mode === 'after') {
+     const before = JSON.parse(await readFile(join(evidence, 'binding', 'binding-before.json'), 'utf8'));
+     assert.deepEqual(report, before, 'Before and after bindings differ');
+   }
+-  assert.deepEqual(identity(), [head, tree, mode === 'after' ? (admission.observedMain ?? actualMain) : actualMain]);
++  assert.deepEqual(identity(), [head, tree, actualMain]);
+   assert.equal(git('status', '--porcelain=v1', '--untracked-files=all'), '');
+   await mkdir(join(evidence, 'binding'), { recursive: true });
+   await emit('binding/binding-' + mode + '.json', report);

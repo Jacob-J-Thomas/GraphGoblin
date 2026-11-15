@@ -1,0 +1,72 @@
+# ui-208 final integration handoff (Space cards onto history candidate 6b0eae6)
+
+Worker: Claude Sonnet 5.5. Scope: working-tree conflict resolution of four files; nothing staged or committed.
+
+**Not claimed:** native QA, build, browser evidence, a new formal review or merge acceptance. This is stacked source preparation only. Final Space build/native must wait for root to integrate the actual history merge.
+
+## Git state (read-only checks)
+
+- HEAD `608864748e84fd0a7d4ae9d04495da92d509f721`; MERGE_HEAD `6b0eae62ea98ae73b22903c9922bba198e219608` (full SHA, matches the brief). Unchanged before and after (`heads-baseline.txt`, `heads-final.txt`). Merge base `8991be35fd50c6ab9a1d5eee51b124b70f0eabc7`.
+- Index (`C:/Users/98jak/source/repos/GraphGoblin/.git/worktrees/GraphGoblin30/index`) sha256 `60115447fa12298889536021e14a7fd710f92cc25a150239047f8a535ff8b150` before and after (`index-baseline.sha256`, `index-final.sha256`): **unchanged**.
+- `git status --porcelain=v1` is byte-identical before and after (`status-baseline.txt`, `status-final.txt`). The four files remain `UU` (unstaged, as required). No `git add`, abort, continue, reset, commit, fetch or push was run.
+- `docs/qa/.gitattributes` is untouched (sha256 `87b0333a1b5ff9e55dc9cf81253a7190f77fea591aa21c9308cacb7957da71c9` before and after; its 2 markers remain for root).
+
+## Final working-file sha256 (the four allowlisted files)
+
+| file                                | baseline (conflicted)                                              | FINAL                                                              |
+| ----------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `apps/web/src/editor/Canvas.tsx`    | 09a623551c26fae3bf9d190f31389796c01b2f9d58762b91820c3bd1feca6cc5 | fbb3cb1c331c12b74212b2492b229540d534bfbb3b912da016124019566b0bf3 |
+| `apps/web/src/editor/store.ts`      | 992bc3c9aa084b66a4ae8455c05ba5c8609d0d8b04e23f43e41f601e761319bb | a228d1b51a68d3d9a63c7d4263b94c97aa9a4790fb5f5d101be3ee4d290ff596 |
+| `docs/09-frontend-and-pwa.md`       | 7b0f8bbf03c4fdaab03cfbd6ad27aef64e9ca1be3fca263ff47cce6accefb6dc | 147472b2fcd502be40227cb8639b64b0553a47439751ab979c31aad46ccfc01f |
+| `docs/guide/02-build-a-loop.md`     | b4ca474d2dd087bb4fe7b30809e5534bd632429988f193b37b1152ce16f68f4f | ad21a62db6e11dce2c99719d9f59900c94dc6ee17f4b1572facb2cb31a5b5dd2 |
+
+No conflict marker remains in these four (line-start `<<<<<<<`, `=======`, `>>>>>>>`: 0). Line endings are LF, as before. All verification below ran on exactly these bytes: there was no edit after the single post-failure fix described below.
+
+## What was resolved, and how each contract was retained
+
+1. **Canvas.tsx comment (the one conflict hunk).** Merged text: "A mouse pan's or mouse node drag's release leaves d3's click blocker in place for a task: the selected connection's toolbar is unavailable until it is gone (#207), and so are the Space cards offer's buttons (#208), which follow this same gate. The gate's window listener is added at mount, before any press adds d3's own; a layout effect adds it before the browser can deliver one." The canvas side's "or mouse node drag" is kept, and so is the Space side's "and so are the Space cards offer's buttons (#208), which follow this same gate". The hunk was only a comment above `const [gesture] = useState(createViewportGestureGate)`, which is unchanged and shared. All auto-merged code is untouched, including `onNodeDragStart` arming the gate, `nodeDragThreshold`, `<SpaceCardsOffer viewport={gesture}>` and `<SpaceCardsResult>`.
+2. **store.ts.** Both helpers are kept whole, in this order, each with its own doc block and closing brace: `heightsByIndex` (Space, private), then `edgeRemovalRefusal` (canvas, exported; duplicate-id check first, then protected voice step). The conflict had interleaved them, sharing one closing `}`. I restored a separate `}` for `heightsByIndex` and dropped the trailing `>>>>>>>` line. No helper text was altered. `removeEdge` still calls `edgeRemovalRefusal`; `spaceCards` still calls `heightsByIndex`; no shared action is weakened.
+3. **docs/09-frontend-and-pwa.md.** The conflict was the single long "**Remove.**" bullet. Space's only change relative to the merge base is one inserted sentence. The result is the canvas side's bullet verbatim (selection, click-count, Reset route, stale-action and gesture-gate text, card-drag arming, and "Clicks on xyflow's zoom controls meet the same d3 blocker and are not gated") plus exactly that sentence at the same place: after "...the store's refusal keeps its own disabled reason." comes "The Space cards offer's buttons (#208, "Space cards" above) follow this same gate." A word diff of the resolved line against the canvas side shows only those 13 words (`hunks/`). The accepted Space cards section (result hold, double-hit note, regression list) is auto-merged and untouched.
+4. **docs/guide/02-build-a-loop.md.** The canvas side's text is kept ("pan the canvas or move a card by dragging with the mouse ... until the drag has finished settling", plus its two new paragraphs on double and triple clicks and on selection and duplicate ids). The Space side's parenthetical "(and, while it shows, the stacked-cards panel's **Space cards** and **Dismiss suggestion**)" is inserted after "**Reset route**". Nothing else changed.
+
+## One edit beyond the stated hunks (flag for root; patch included so it can be dropped)
+
+Vitest could not load `Canvas.tsx`: `Identifier 'generation' has already been declared` (lines 535 and 564). Both sides had independently added the identical line `const generation = useEditorStore((s) => s.generation);` at different places in `Canvas()`. The Space side put it right after `selected`, for the offer. The canvas side put it before `const [selection, setSelection]`, for `selectionLive`. Git merged both without a textual conflict, which left a duplicate `const`.
+
+I removed the second (canvas-placed) copy. The first, after `selected`, serves both uses. It is an identical duplicate, so there is no behaviour change, and it is in an allowlisted file. I judged it syntactic merge resolution rather than a functional failure and continued. If root disagrees, restore the line or place the declaration where preferred.
+
+- Patch: `canvas-duplicate-generation-fix.patch` (1 line).
+- Pre-fix file: `Canvas.tsx.before-dup-generation-fix` (sha256 `2a4d9f1610104e7b5655661190f9e5726b443e26e991f332780f8f4c1ee3f0d2`).
+
+## Verification
+
+Node v22.23.4 (project runtime) was first on PATH for every command, and each used `pnpm.cmd`. Each log was precreated with a `PENDING` exit receipt (`logs/*.log` and `logs/*.exit`; log headers record cwd, node, command, start, end and exit). Not run: full suites, coverage, build, browser/native, providers, ports 4747/4748.
+
+1. **Focused Vitest, one command over 12 files.** File list: `logs/focused-vitest.files.txt`.
+   - Space: `space-cards.test.ts`, `store.space-cards.test.ts`, `Canvas.space-cards.test.tsx`, `Canvas.space-cards.gate.test.tsx`, `EditorPage.space-cards.test.tsx`.
+   - Gate contracts: `viewport-gesture.test.ts`, `viewport-gesture.contract.test.tsx`.
+   - Canvas and store removal: `Canvas.test.tsx`, `OrthogonalEdge.test.tsx`, `store.test.ts`, `chat-protection.test.ts`, `stranded-edges.test.ts`.
+   - Run 1: `pnpm.cmd --filter @graphgoblin/web exec vitest run <12 files>` gave **exit 1** (`logs/run1-focused-vitest-FIRST-FAILURE.log`). Seven files and 205 tests passed. Five files failed to load: Canvas.space-cards.gate, Canvas.space-cards, Canvas, EditorPage.space-cards and viewport-gesture.contract. The cause was the duplicate-`generation` parse error above; no test assertion failed.
+   - After the one-line fix: `pnpm.cmd --filter @graphgoblin/web exec vitest run` on those five files only gave **exit 0**, 5 files and 122 tests passed (`logs/focused-vitest-rerun-5-failed-files.log`). The seven files that passed first do not import `Canvas.tsx`, and nothing they load changed, so they were not rerun. Combined: 12 of 12 files, 327 tests passing.
+2. `pnpm.cmd --filter @graphgoblin/web typecheck` (`tsc -p tsconfig.json --noEmit`): **exit 0** (`logs/typecheck-web.log`).
+3. `pnpm.cmd --filter @graphgoblin/web exec eslint src/editor/Canvas.tsx src/editor/store.ts`: **exit 0**, no output (`logs/eslint-scoped.log`).
+4. `pnpm.cmd exec prettier --check apps/web/src/editor/Canvas.tsx apps/web/src/editor/store.ts docs/09-frontend-and-pwa.md docs/guide/02-build-a-loop.md`: **exit 0**, "All matched files use Prettier code style!" (`logs/prettier-check-scoped.log`).
+
+## Artifacts in this directory
+
+- `four-file-combined-working-diff.patch`: `git diff --cc`, the resolution against both parents.
+- `four-file-vs-HEAD-space-side.patch` and `four-file-vs-MERGE_HEAD-canvas-history-side.patch`: read-only `git diff`.
+- `canvas-duplicate-generation-fix.patch`.
+- `initial-conflicted/*.conflicted`: the four files as they were conflicted.
+- `hunks/`: word lists used for the docs/09 check.
+- `scripts/`: `resolve-docs.mjs` (reads and writes only the two docs) and `run-logged.sh`.
+- `working-hashes-baseline.txt`, `working-hashes-final.txt`, `SHA256SUMS.txt`: hash inventories.
+
+## Limitations and observations for root
+
+- These are jsdom tests only. Nothing here proves native first-input delivery, hit-testing, the browser's click counting, touch, real measurement, or the result hold's box at the documented viewports. The double-hit result hold and its tests are the accepted Space work. They are auto-merged and pass (`Canvas.space-cards.test.tsx`, `Canvas.space-cards.gate.test.tsx`); I did not alter them.
+- The history candidate is not the actual merged parent. History480 CI, final Astra review and the actual merge are pending, so root must rebind and rerun the full gates and native QA later.
+- The accepted Space prose (docs/09 "After a mouse pan" paragraph, ADR-0077 "After a mouse pan") describes the shared gate for a pan only. The gate now also arms on a mouse card drag (canvas478), and the merged user guide says so for all four buttons. I left the accepted Space prose alone to avoid new design claims. No test asserts the offer's buttons under a card-drag gate state. Practically, a card drag past the threshold leaves the pile, so the offer goes away, and it is already hidden while a card is dragged.
+- ESLint and Prettier were scoped to the four changed files. Repository-wide lint and Prettier, `docs:generate`, coverage and other packages were not run.
+- `docs/qa/.gitattributes` still has its markers; root resolves, stages and commits.
+- The harness-created files `events.jsonl`, `latest.md` and `launch.json` in this directory were not read and are excluded from `SHA256SUMS.txt`.

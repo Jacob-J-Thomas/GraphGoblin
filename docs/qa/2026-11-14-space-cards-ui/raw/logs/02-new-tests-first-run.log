@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.space-cards.test.tsx (1 test | 1 failed) 1989ms
+   ❯ Space cards in the editor (#208) (1)
+     × opens a pile without writing, saves Space cards as one ordinary edit, and saves its Undo as the original 1988ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.space-cards.test.tsx > Space cards in the editor (#208) > opens a pile without writing, saves Space cards as one ordinary edit, and saves its Undo as the original
+AssertionError: expected { id: 'start', label: 'Start', …(3) } to not have property "ui"
+
+- Expected:
+undefined
+
++ Received:
+{
+  "x": 0,
+  "y": 0,
+}
+
+ ❯ src/editor/EditorPage.space-cards.test.tsx:46:31
+     44|     const sent = (save!.body as { definition: LoopDefinitionInput }).d…
+     45|     expect(sameValue(withoutUi(sent), withoutUi(original))).toBe(true);
+     46|     expect(sent.nodes[0]).not.toHaveProperty('ui');
+       |                               ^
+     47|     expect(sent.nodes.slice(1).every((node) => node.ui && (node.ui.x |…
+     48|     await waitFor(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 116 passed (117)
+   Start at  16:13:21
+   Duration  17.82s (environment 41%, setup 17%, import 15%, transform 14%, tests 13%)
+

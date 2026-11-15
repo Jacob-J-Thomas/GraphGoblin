@@ -1,0 +1,48 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\drivers\\space.playwright.js" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\drivers-correction2\\space.playwright.js"
+index 098a741e..d7129b9b 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\drivers\\space.playwright.js"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\drivers-correction2\\space.playwright.js"
+@@ -616,21 +616,41 @@ async (page) => {
+     await page.mouse.up({clickCount:count});
+   }
+   async function selectForProbe(kind){
+-    const id=kind==='node'?(await fixtureCardPoint()).id:'entry';
+-    await page.locator('.react-flow__'+kind+'[data-id="'+id+'"]').focus(opts);
++    // Keyboard setup does not need a pointer hit through the offer covering the cards.
++    const id=kind==='node'?'router':'entry';
++    const selector='.react-flow__'+kind+'[data-id="'+id+'"]'+(kind==='node'?'[tabindex="0"]:visible':'');
++    const target=page.locator(selector);
++    if(kind==='node')await target.waitFor(opts);
++    await target.focus(opts);
++    if(kind==='node'){
++      check(await target.evaluate(el=>document.activeElement===el),'Actual focus on the visible fixture node','unwitnessed');
++      await mark('keyboard-select-fixture-node');
++    }
+     await page.keyboard.press(kind==='node'?'Space':'Enter');
+     const before=await snap();
+     check(before.selected.includes(kind+':'+id),'Real '+kind+' selected before probe','unwitnessed');
+     check(!before.modal,'Selection probe opened a dialog','unwitnessed');
++    if(kind==='node'){
++      const rows=await trace('keyboard-select-fixture-node');
++      check(rows.some(row=>row.type==='keydown'&&row.trusted&&row.key===' '&&row.target==='node:'+id),
++        'Trusted Space received on the focused fixture node','unwitnessed');
++    }
+   }
+   async function repeatedSpace(label,{mode='double',fixed=false,selected,shift=false}={}){
+     const prior=await newFixture(fixed?'double-r512':'repeat-'+label);
++    const beforeSelection=fixed&&selected==='node'?await snap([93,290]):null;
+     if(selected){await selectForProbe(selected);await settled('selected-fixture-stable');}
+     const readings=await measure(),expected=expectedSpace(definition(prior),heights(readings));
+     const coord=fixed?[93,290]:await point('Space cards');
+     const before=await snap(coord);
+     const live=before.buttons.find(button=>button.name==='Space cards');
+     check(before.hit==='Space cards' && live?.ownsHit,label+' real first Space target','unwitnessed');
++    if(beforeSelection){
++      const geometry=s=>[s.viewport,s.affordance.panel,s.buttons.find(row=>row.name==='Space cards')?.box,s.zoomOut?.box,s.zoomOut?.disabled];
++      check(JSON.stringify(geometry(before))===JSON.stringify(geometry(beforeSelection)),
++        label+' keyboard-only node setup must preserve the original viewport and offer/Zoom Out geometry','unwitnessed');
++      await checkpoint('fixed-geometry-after-keyboard-node-selection',{before:geometry(beforeSelection),after:geometry(before),selected:before.selected});
++    }
+     if(fixed){
+       const [x,y,w,h]=before.zoomOut?.box??[];
+       check(x<=coord[0]&&coord[0]<x+w&&y<=coord[1]&&coord[1]<y+h&&!before.zoomOut.disabled,

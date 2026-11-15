@@ -2,6 +2,7 @@ import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graph
 import {
   Background,
   getSmoothStepPath,
+  getViewportForBounds,
   Position,
   Controls,
   ReactFlow,
@@ -9,7 +10,9 @@ import {
   type FitViewOptions,
   useReactFlow,
   useStore,
+  useStoreApi,
   type ReactFlowState,
+  type Rect,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -26,6 +29,7 @@ import {
 } from '@xyflow/react';
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -73,6 +77,8 @@ import { ForwardEdge } from './ForwardEdge.js';
 import { edgeLabelText } from './edge-label-text.js';
 import { loopBackEdgeIds } from './loop-back-edges.js';
 import { removalFocusTarget } from './canvas-focus.js';
+import { spaceCardsEligible } from './space-cards.js';
+import { SpaceCardsOffer, SpaceCardsResult, type OfferBox } from './SpaceCardsOffer.js';
 import { createViewportGestureGate } from './viewport-gesture.js';
 
 const nodeTypes = { gg: NodeCard };
@@ -87,14 +93,17 @@ const MIN_CANVAS_ZOOM = 0.1;
 const MAX_CANVAS_ZOOM = 2;
 
 /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
-const FIT_VIEW_OPTIONS: FitViewOptions = {
-  padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
-};
+const FIT_PADDING = { top: '8%', right: '8%', bottom: '8%', left: '72px' } as const;
+const FIT_VIEW_OPTIONS: FitViewOptions = { padding: FIT_PADDING };
 /**
  * Opening the editor fits the graph but stays readable; Fit View shows a large graph whole. The fit
  * is queued from `onInit` because xyflow's `fitView` prop can fit again without its options.
  */
-const INITIAL_FIT_VIEW_OPTIONS: FitViewOptions<FlowNode> = { ...FIT_VIEW_OPTIONS, minZoom: 0.5 };
+const OPENING_MIN_ZOOM = 0.5;
+const INITIAL_FIT_VIEW_OPTIONS: FitViewOptions<FlowNode> = {
+  ...FIT_VIEW_OPTIONS,
+  minZoom: OPENING_MIN_ZOOM,
+};
 const fitOnOpen: OnInit<FlowNode, Edge> = (instance) =>
   void instance.fitView(INITIAL_FIT_VIEW_OPTIONS);
 
@@ -239,6 +248,37 @@ type Size = { width: number; height: number };
 const NO_ISSUES: readonly EditorIssue[] = [];
 
 const zoomOf = (state: ReactFlowState) => state.transform[2];
+
+const isLength = (length: number) => Number.isFinite(length) && length > 0;
+
+/** Whether xyflow has measured its pane, which starts at 0 × 0: a fit needs room to fit into. */
+const paneMeasured = (state: ReactFlowState) => isLength(state.width) && isLength(state.height);
+
+/**
+ * The rectangle the draft's cards fill: their positions in the draft and the sizes xyflow measured
+ * for them. It is undefined while any card has no size yet, or a size that is not positive and
+ * finite. Sizes are looked up as own properties, since a card can be called `constructor`. The
+ * draft is one Space cards spaced, so it has at least two cards.
+ */
+function cardBounds(
+  definition: LoopDefinitionInput,
+  measured: Record<string, Size>,
+): Rect | undefined {
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const node of definition.nodes) {
+    const size = Object.hasOwn(measured, node.id) ? measured[node.id] : undefined;
+    if (!size || !isLength(size.width) || !isLength(size.height)) return undefined;
+    const { x, y } = node.ui ?? { x: 0, y: 0 };
+    left = Math.min(left, x);
+    top = Math.min(top, y);
+    right = Math.max(right, x + size.width);
+    bottom = Math.max(bottom, y + size.height);
+  }
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
 
 /** Publish zoom without re-rendering the canvas or its cards on each viewport change. */
 function CanvasZoom({
@@ -529,6 +569,7 @@ export function Canvas({
   issues: readonly EditorIssue[];
 }) {
   const selected = useEditorStore((s) => s.selectedNodeId);
+  const generation = useEditorStore((s) => s.generation);
   const {
     select,
     openNode,
@@ -539,8 +580,13 @@ export function Canvas({
     addNode,
     closeStep,
     setEdgeRoute,
+    spaceCards,
   } = useEditorStore.getState();
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, setViewport, viewportInitialized } = useReactFlow();
+  const flowStore = useStoreApi();
+  // Renders again when xyflow measures its pane, so a fit waiting for one tries again; the size
+  // itself is read live where the fit uses it.
+  const paneReady = useStore(paneMeasured);
   // A segment drag in progress (#44): its route is routed as a preview until the pointer is up.
   const [routeDrag, setRouteDrag] = useState<{ edgeId: string; route: readonly number[] }>();
   const [announcement, setAnnouncement] = useState({ text: '', key: 0 });
@@ -556,7 +602,6 @@ export function Canvas({
   // Undo does not bring it back. Moves, route edits, label and config edits that keep the ports,
   // and issue refreshes keep it. Drawing parses the ports, so this runs when the draft changes,
   // not on drag frames.
-  const generation = useEditorStore((s) => s.generation);
   const [selection, setSelection] = useState<EdgeSelection>();
   const selectedEdge = useMemo(
     () =>
@@ -585,9 +630,10 @@ export function Canvas({
   // elsewhere (the toolbar's) stay, since nothing they hang from moved.
   const closeCanvasPopovers = useCallback(() => closePopovers(rootRef.current), []);
   // A mouse pan's or mouse node drag's release leaves d3's click blocker in place for a task: the
-  // selected connection's toolbar is unavailable until it is gone (#207). The gate's window
-  // listener is added at mount, before any press adds d3's own; a layout effect adds it before the
-  // browser can deliver one.
+  // selected connection's toolbar is unavailable until it is gone (#207), and so are the Space
+  // cards offer's buttons (#208), which follow this same gate. The gate's window listener is added
+  // at mount, before any press adds d3's own; a layout effect adds it before the browser can
+  // deliver one.
   const [gesture] = useState(createViewportGestureGate);
   useLayoutEffect(() => gesture.attach(window), [gesture]);
   const onMove: OnMove = useCallback(
@@ -1066,6 +1112,99 @@ export function Canvas({
     event.preventDefault();
   };
 
+  // Space cards (#208, ADR-0077): offered while every card is at the origin and no card or route
+  // is being dragged. Dismissing it lasts for this editor load; a load or a remount offers it again.
+  const pile = useMemo(() => spaceCardsEligible(definition), [definition]);
+  const [dismissedOffer, setDismissedOffer] = useState<number>();
+  const offered = pile && !moving && dismissedOffer !== generation;
+  // What a pointer press on the offer leaves in its box (#208): the result of the press, until the
+  // next press elsewhere, so a double click's second press lands on it and not on what the offer
+  // covered. Like a selected connection that is gone, it is dropped while rendering when the offer
+  // is back (undo) or the draft was loaded; a keyboard press leaves none.
+  const [offerResult, setOfferResult] = useState<{
+    message: string;
+    box: OfferBox;
+    generation: number;
+  }>();
+  if (offerResult && (offered || offerResult.generation !== generation)) setOfferResult(undefined);
+  const endOfferResult = useCallback(() => setOfferResult(undefined), []);
+  // The polite announcement says `spoken`, which defaults to what the result shows.
+  const report = (message: string, box: OfferBox | undefined, spoken = message) => {
+    announce(spoken);
+    if (box) setOfferResult({ message, box, generation: useEditorStore.getState().generation });
+  };
+  // The one view fit that Space cards asks for: the draft it produced (and its revision, which
+  // tells it from the same draft object back after an undo and a redo), kept until that draft has
+  // rendered with every card measured, the pane measured and the viewport ready. This is not
+  // `fitView`: xyflow queues that fit and spends it on whichever graph it adopts next (an undo that
+  // lands first fits the restored pile), and no public call cancels a queued fit. The view is set
+  // from the cards' own bounds with `setViewport` in the same synchronous turn as these checks, so
+  // nothing is left to run later. Any other edit, an undo, a redo or a load before then drops the
+  // fit for good, as the store's own draft is read again here; the effect runs again as
+  // measurements and readiness arrive. The padding and zoom limits are the opening fit's, and no
+  // edit, undo or redo fits the view by itself.
+  const spacedFitRef = useRef<{
+    definition: LoopDefinitionInput;
+    generation: number;
+    revision: number;
+  }>(undefined);
+  useEffect(() => {
+    const pending = spacedFitRef.current;
+    if (!pending) return;
+    const live = useEditorStore.getState();
+    if (
+      pending.definition !== definition ||
+      pending.generation !== generation ||
+      live.definition !== pending.definition ||
+      live.generation !== pending.generation ||
+      live.revision !== pending.revision
+    ) {
+      spacedFitRef.current = undefined;
+      return;
+    }
+    const bounds = cardBounds(definition, measured);
+    const pane = flowStore.getState();
+    if (!viewportInitialized || !bounds || !paneMeasured(pane)) return;
+    spacedFitRef.current = undefined;
+    void setViewport(
+      getViewportForBounds(
+        bounds,
+        pane.width,
+        pane.height,
+        OPENING_MIN_ZOOM,
+        MAX_CANVAS_ZOOM,
+        FIT_PADDING,
+      ),
+    );
+  }, [definition, generation, measured, viewportInitialized, paneReady, setViewport, flowStore]);
+  // The store checks its current draft again, so a second press, a repeated key or an offer left
+  // from an older render changes nothing.
+  const spaceAll = (box: OfferBox | undefined) => {
+    // xyflow measures each card's layout box, which zoom does not scale: flow pixels.
+    const heights = new Map(Object.entries(measured).map(([id, size]) => [id, size.height]));
+    const result = spaceCards(heights);
+    // The canvas, never Undo: a held or repeated Enter must not undo what it just did.
+    rootRef.current?.focus();
+    if (result === 'applied') {
+      const state = useEditorStore.getState();
+      const spaced = state.definition!;
+      spacedFitRef.current = {
+        definition: spaced,
+        generation: state.generation,
+        revision: state.revision,
+      };
+      const shown = `Spaced ${spaced.nodes.length} cards.`;
+      report(shown, box, `${shown} Undo puts them back.`);
+    } else {
+      report('Cards were not spaced: they are no longer all in one spot.', box);
+    }
+  };
+  const dismissOffer = (box: OfferBox | undefined) => {
+    setDismissedOffer(generation);
+    rootRef.current?.focus();
+    report('Suggestion dismissed.', box);
+  };
+
   // A geometry-only update publishes edge channels without rendering the whole canvas again.
   const flow = useMemo(
     () => (
@@ -1122,10 +1261,10 @@ export function Canvas({
   return (
     <div
       ref={rootRef}
-      className="h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+      className="relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
       data-testid="canvas"
       data-editor-canvas=""
-      // Focus lands here when the node editor closes on a deleted node.
+      // Focus lands here when the node editor closes on a deleted node, and after Space cards.
       tabIndex={-1}
       onKeyDown={onKeyDown}
       onDragOver={(event) => {
@@ -1134,6 +1273,22 @@ export function Canvas({
       }}
       onDrop={onDrop}
     >
+      {/* Before the flow: after the palette and before the first card in the Tab order. */}
+      {offered ? (
+        <SpaceCardsOffer
+          count={definition.nodes.length}
+          viewport={gesture}
+          onSpace={spaceAll}
+          onDismiss={dismissOffer}
+        />
+      ) : null}
+      {offerResult ? (
+        <SpaceCardsResult
+          message={offerResult.message}
+          box={offerResult.box}
+          onEnd={endOfferResult}
+        />
+      ) : null}
       {flow}
       <CanvasZoom canvasRef={rootRef} nodes={plan.nodes} />
       <span aria-live="polite" aria-atomic="true" className="sr-only">

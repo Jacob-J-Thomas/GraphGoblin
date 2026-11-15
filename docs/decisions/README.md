@@ -90,4 +90,6 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 
 [ADR-0076 — Canvas-only connection authoring](ADR-0076-canvas-only-connection-authoring.md) records the owner decision that connections are authored only on the canvas, that changing one means removing it and drawing it again, and the keyboard connection-creation path it removes (#207).
 
+[ADR-0077 — Explicit Space cards for loops stacked in one spot](ADR-0077-explicit-space-cards.md) records the owner decision that a loop whose cards all sit in one spot is spaced only by an explicit, undoable action that writes node positions alone, and the rejected implicit layout and preview (#208).
+
 [ADR-0078 — Stationary history controls and a one-owner connection banner](ADR-0078-stationary-history-controls.md) records the fixed leading Undo and Redo slot, their non-moving press, and the loaded editor owning the one connection banner under its toolbar, with the baseline causes and the shell fallback for every other state (#208).

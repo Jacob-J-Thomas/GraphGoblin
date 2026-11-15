@@ -1,0 +1,31 @@
+# Space cards double-click retargets to Zoom Out at R512
+
+Confirmed product failure on frozen combined candidate `5c80b06f6861b41e0177cd9def89334ab0c7858d`, tree `77d7b6472a1df9dfa967be1ffa1632aa7ca3fb6c`. In real isolated Edge at 512 × 384, DPR 2, the far-left portion of Space cards covers the live Zoom Out control at (93,290). One same-position native double-click applied Space cards and activated Zoom Out on its second click. The double-click produced exactly one conditional draft PUT, and the acknowledged definition, public GET and synced device definition matched the expected graph. The final fit hid the extra zoom in a settled-only viewport observation. [Direct comparison](runs/alternate-r512-correction1/raw/0029-alternate-comparison.json) · [Exact saved graph](runs/alternate-r512-correction1/raw/0026-saved-alternate-double.json)
+
+| Real action | Observed viewport zoom |
+| --- | --- |
+| Same-point single click on a fresh pile | 1.30597 → 0.5 |
+| Deliberate same-point click on Zoom Out after the single-click fit | 0.5 → 0.416667 |
+| Same-point native double-click on a separate fresh pile | 1.30597 → 1.08831 → 0.5 |
+
+The double trace records Space click detail 1 at 406.2 ms, Zoom Out pointerdown at 416.9 ms, and uncanceled Zoom Out click detail 2 at 417.9 ms. Both real pointer down/up pairs targeted their respective controls at the exact same (93,290) coordinate. Zoom Out was enabled and owned the point. The trusted Zoom Out dblclick at 421.3 ms witnessed the intervening scale of 1.08831 with translation (111.876,30.5833). The Space fit reached scale 0.5 with translation (1,29) at 425.9 ms. These are times from the document performance clock. The intermediate scaling factor matches the legitimate Zoom Out control response. [Trusted event and viewport trace](runs/alternate-r512-correction1/raw/0027-frames-alternate-double.json) · [Timestamp readback](runs/alternate-r512-correction1/raw/0028-alternate-double-readback.json) · [Single control](runs/alternate-r512-correction1/raw/0012-alternate-single-healthy-readback.json) · [Deliberate zoom control](runs/alternate-r512-correction1/raw/0015-healthy-deliberate-zoom-out.json)
+
+The graph/history availability readback passed. The driver stopped on the observed second viewport action before the plan's optional success-only Undo. Both original center double-clicks remain passes for their pane landing points. This probe adds a failure for the alternate point where a live control is exposed. Formal adversarial review and final integrated verification remain pending. [Original scoped handoff](../space-208-independent/handoff-native.md) · [Addendum](plan-addendum.md) · [Run result](runs/alternate-r512-correction1/observed.json)
+
+## Fixture correction and provenance
+
+The initial attempt stopped before input or a browser PUT. Its longer fixture title wrapped the narrow toolbar and put the 0.16 point at (93,319). Root authorized fixture correction batch 1 of 2 to use the original short `double-r512` name pattern in both fresh loops. The exact x=93, y=290 hit guard and behavior oracles were retained. The resulting attempt is the only actual supplemental double-click. No product fix was made. [First observation](runs/alternate-r512-initial/observed.json) · [Correction ledger](fixture-corrections.json) · [One-line patch](driver-correction1.patch)
+
+The same previously forced build was reused after exact rebind of 1,513 source files and 1,227 outputs over 13 trees. The corrected attempt used Node 22.23.4, the exact Playwright CLI cache, a fresh Edge session, a public ephemeral loopback gateway, and real disposable file SQLite. The working index was byte-identical through both attempts. Both gateways verified their served HTML, CSS and JS before and after. The cleanup audit found zero owned processes, listeners, temporary stores, lock/WAL/SHM sidecars or unresolved PID ownership. [Before binding](binding/rebound-before.json) · [After binding](binding/rebound-after-correction1.json) · [Domain link](domain-after-correction1.json) · [Git index evidence](git-after-correction1.json) · [Cleanup audit](cleanup-correction1.json) · [Evidence inventory](supplement-evidence-SHA256.txt)
+
+| Identity | SHA-256 |
+| --- | --- |
+| Before/after source and output binding | `60f01ae50d68c51372c3efdbd41240efcd242b7fb87f44cb326760ed1b054132` |
+| Before/after compiled domain map link | `ccbae6480d63083674866bd7f600b8fc2767f36f4eaddd14e26358a7d6b65bfa` |
+| Before/after worktree index | `acae1fd0fd3013f29c6fa3011052096465d9c83841d8a4a1d1c6a35b596b7bca` |
+| Corrected driver manifest | `5e0fc751ce1c221a3c61ec4f1dc5b92c6bc280086ba24c3905fd464ef656f847` |
+| Full double-click frame/event trace | `fd5718974be1878427cc7323007c5dda14c094cc03bbb1dab62e1c3b12ea04ca` |
+| Direct comparison | `62b1c4a043139ca8b1c824dd736885da94bb757bd2dc2e71040c7d322563e5d2` |
+| Exact double-click saved graph | `f098ae68631386175fe3d964a20db34b2ee85a16a7f6750b0fdf3f417d86a701` |
+| Cleanup audit | `6b9c192df90adf1d99134746a8df2d3a6c9abf8cf14201af2a17960655bd4594` |
+

@@ -1,0 +1,196 @@
+# Space cards result (#208 double hit): resumed implementation handoff
+
+Claude Sonnet 5.5 xhigh, resumed after the quota stop. Not a formal review and no sign-off. Nothing was
+committed, staged, built or run natively; no subagent, provider, network, owner store or port was used.
+Output directory: `ui-208-double-hit-implementation-resume-0250` (this one). The original output and the
+quota checkpoint were not modified; they are cited here by hash.
+
+## Outcome
+
+The seven unstaged files left by the first attempt are now a finished, verified candidate, ready for root's
+full review. Production (`Canvas.tsx`, `SpaceCardsOffer.tsx`) is byte-identical to the checkpoint and was not
+changed in this resume. This resume changed two test files, `docs/09` and `CHANGELOG.md`, ran every
+required check once on the final bytes, and produced old-production negative controls.
+
+- Final focused run: 7 files, **159 passed** (HEAD baseline for the same 7 files: 140; +12 unit, +7 gate).
+- Old-production control (HEAD `Canvas.tsx` + `SpaceCardsOffer.tsx`, retained new tests): **14 fail, 23 pass**.
+  The two double-hit reproductions fail with the real xyflow/d3 numbers (see below).
+- Static: prettier, eslint, `tsc --noEmit` and `git diff --check` all exit 0 on the final bytes.
+
+## Identity (read-only git with `GIT_OPTIONAL_LOCKS=0`: status, diff, ls-files, show, rev-parse; no add, add -N, reset, checkout or stash)
+
+| Item | Value |
+| --- | --- |
+| HEAD / tree | `5c80b06f6861b41e0177cd9def89334ab0c7858d` / `77d7b6472a1df9dfa967be1ffa1632aa7ca3fb6c` |
+| Branch | `codex/gg-20261114-space-cards` |
+| Staged / untracked | none / none |
+| Raw index sha256 | `acae1fd0fd3013f29c6fa3011052096465d9c83841d8a4a1d1c6a35b596b7bca` (equals checkpoint and original baseline; file size 2,932,718 and mtime Nov 14 19:40 unchanged) |
+| `git ls-files -s` sha256 | `dd5db086be32df9c4188739c912b58b88931754d30ac86b2bf70a9111cee4366` (equals original baseline) |
+| Status | ` M` on exactly the seven files below |
+| Node / pnpm | v22.23.4 (project runtime) / `pnpm.cmd` 12.8.1; vitest 5.0.3 |
+
+Start state matched the checkpoint on every hash before I changed anything (`start-state/start-state.txt`).
+
+Final source hashes (`final/final-identity.txt`, copies in `final/source/`, full diff `final/final.diff`,
+sha256 `a4e63d57c641437f675bc1d160fc0ac0e98d7a6618f4c31f369a2154be90c0cf`):
+
+| Path | Final sha256 | vs checkpoint |
+| --- | --- | --- |
+| `apps/web/src/editor/Canvas.tsx` | `8f533db4afd64c44dff4c20b6268d365c8e32161b7e6d521fe61dcdd1f4480bc` | same |
+| `apps/web/src/editor/SpaceCardsOffer.tsx` | `664824f4f05421571ee3c00457c070129f7bde889c259792ef26f01727734061` | same |
+| `apps/web/src/editor/Canvas.space-cards.test.tsx` | `f00316c9051daa27a4c56deb80179b7b1fae8c6b8f1d7c581869ca6494979238` | changed (lint fix) |
+| `apps/web/src/editor/Canvas.space-cards.gate.test.tsx` | `6ab15a2bcc4293a68f9a5f951a0a8d97f77ef5e9370504f693a3a7d2d6c00b13` | changed |
+| `docs/09-frontend-and-pwa.md` | `b7889c503a4119c438e24362de90f3ea74b5ceababe5789f1ac3dc4e7922356a` | changed (regression bullet) |
+| `CHANGELOG.md` | `264795d5453e3ae14d3f0b8dac04650e579cc83cae2565c83cd13651489d7a7e` | changed (one clause) |
+| `docs/decisions/ADR-0077-explicit-space-cards.md` | `bffe56f71d5573efdac8fdf64660a4977ae014ff73402dd0af5dca059471d96b` | same |
+
+`final/delta-from-checkpoint.diff` is exactly what this resume changed.
+
+## What the candidate does (root's accepted direction, unchanged)
+
+A pointer click (`detail >= 1`) that the existing viewport gate admits measures the offer section before
+acting and passes `{width, height}` to the canvas. The canvas then renders `SpaceCardsResult` in the same
+wrapper, same classes (background, border, shadow) and same box in the commit that removes the offer:
+**Spaced _n_ cards.**, the stale-draft refusal line, or **Suggestion dismissed.** The result has no control,
+`tabindex`, handler, live region, timer or hidden shield, and `select-none` text. Nothing is prevented,
+stopped, delayed or replayed. It ends at the next `pointerdown` outside it (document capture, passive,
+event untouched), when the live offer returns, on any load (generation change), and on unmount.
+`detail 0` (keyboard, scripted) leaves no result and retires the offer at once. The gate, store, layout
+helper, history, save and fit are unchanged (one step, one fit, one save). The announcement and the focus on
+the canvas root are unchanged.
+
+## Changes in this resume
+
+1. **Gate test: the old-production control now fails for the right reason.** The checkpoint's run test waited
+   for the result element, so at old production it merely timed out. A `landing(covered)` helper now states
+   the premise jsdom cannot test: the next press lands on the result while one exists, else on what the offer
+   covered (Zoom Out at 512 px, as the native failure showed). The installed xyflow/d3 then do whatever they
+   really do. Assertions were reordered so the viewport comparison comes first.
+2. **New gate cases:** a press dragged on the result (Shift off and on): no pan, no selection box, no d3
+   window listener, no `data-gesture`, selections kept, view still the one fit.
+3. **Gate test isolation:** `afterEach` now releases any in-flight mouse gesture and lets d3's click-blocker
+   task run (see first failure 3 below). Without it a failing test left d3 mid-gesture and swallowed the
+   next test's click.
+4. **Outside-pan assertion reconciled** (the checkpoint's first gate failure). The intended behavior is "the
+   result ends at that pointerdown and the press continues untouched". With a native `dispatchEvent`, the
+   document listener only schedules the end; React commits it in the microtask after the listeners return,
+   which is before the press's own `mousedown`. The test therefore awaits microtasks after the
+   `pointerdown`, then asserts the result is gone before the pan continues, and says so in a comment. The
+   production code was correct; the test's immediate assertion was wrong. (`fireEvent.pointerDown` in the unit
+   file wraps in `act` and is synchronous, so that file was unaffected.)
+5. **Unit test lint fix:** `act(() => vi.advanceTimersByTime(...))` resolved to the Promise overload; it now
+   uses a block body.
+6. **Docs:** `docs/09` regression bullet now describes the dragged-press cases, the stated hit premise and that
+   without the result the same presses zoom out twice or pan. `CHANGELOG.md` now says the double hit was
+   "found at 512 px, where it covers **Zoom Out**" instead of "at narrow widths" (that is the only evidence).
+
+## First failures (all retained)
+
+1. **Checkpoint, gate run 1** (`quota-checkpoint-0156/external/runs/gate-first-run.log`, original-output copy
+   `ui-208-double-hit-implementation/runs/gate-first-run.log`, sha256 `b29feedf…a4f37`): 7 passed, 1 failed:
+   the outside mouse pan control asserted the result was null immediately after `pointerDown(pane)`. Rerun
+   (`gate-second-run.log`) added `await microtasks()` and passed 8/8. Reconciled in change 4; not a source
+   defect.
+2. **Resume, eslint** (`runs/dev-eslint-1.log`): `@typescript-eslint/no-floating-promises` at
+   `Canvas.space-cards.test.tsx:481`. Fixed (change 5); `runs/dev-eslint-2.log` and `runs/final-eslint.log` exit 0.
+3. **Resume, first old-production gate control** (`controls/dev-old-gate-1.log`): the Shift drag case failed
+   with a waitFor timeout, a cascade from the previous failing test leaving d3 mid-gesture. Fixed (change 3);
+   `controls/dev-old-gate-2.log` and the final control show it failing for its own reason.
+
+Checkpoint logs are historical and not final-bound: 26 unit passes, 7+1 gate, 8 gate, and the 35-pass run
+(`new-tests-on-new-source-1.log`) predate the later file edits and are superseded by the final run below.
+Prior-evidence hashes are in `final/prior-evidence-sha256.txt`.
+
+## Final bound runs (commands from `apps/web` unless noted; Node v22.23.4)
+
+Bound to `final/pre-final-identity.txt` (all seven hashes as in the table above, except `CHANGELOG.md` was
+`951ceea5…0275`, see "Binding note").
+
+| Check | Command | Result | Log |
+| --- | --- | --- | --- |
+| Focused tests, once, 7 files | `pnpm.cmd exec vitest run src/editor/Canvas.space-cards.test.tsx src/editor/Canvas.space-cards.gate.test.tsx src/editor/viewport-gesture.contract.test.tsx src/editor/viewport-gesture.test.ts src/editor/EditorPage.space-cards.test.tsx src/editor/store.space-cards.test.ts src/editor/space-cards.test.ts` | 7 files, 159 passed, exit 0 | `runs/final-focused-7files.log` |
+| Typecheck | `pnpm.cmd exec tsc -p tsconfig.json --noEmit` | exit 0 | `runs/final-tsc.log` |
+| ESLint | `pnpm.cmd exec eslint src/editor/Canvas.tsx src/editor/SpaceCardsOffer.tsx src/editor/Canvas.space-cards.test.tsx src/editor/Canvas.space-cards.gate.test.tsx` | exit 0 | `runs/final-eslint.log` |
+| Prettier (repo root) | `pnpm.cmd exec prettier --check <the seven paths>` | all formatted | `runs/final-prettier.log`, `runs/final-prettier-after-changelog.log` |
+| Whitespace | `git diff --check` | exit 0 | `runs/final-diff-check.log`, `...-after-changelog.log` |
+
+Source hashes were compared before and after the focused run and after the final controls: unchanged. Each
+control's `.meta.txt` also records the restored hashes.
+
+**Binding note.** After those runs I changed one clause of `CHANGELOG.md` (docs only). No test, import or tool
+in the focused set reads it (`tooling/scripts/release-notes.test.mjs` only checks that no doc mentions a
+migration-ledger table name; grep of the three docs for it returns 0). Prettier and `git diff --check` were
+re-run on the final bytes and pass. No code or test file changed after the focused run, typecheck or lint.
+
+## Old-production negative controls and positive controls
+
+Method (`controls/old-production-control.sh`): back up the new `Canvas.tsx` and `SpaceCardsOffer.tsx` with
+hash check; write exactly the HEAD blobs (`git show HEAD:path`, checked against `b47c77b4…` and `248c7416…`);
+run the retained new tests; restore from the backup in an `EXIT/INT/TERM/HUP` trap with absolute paths and a
+hash check. No `git add`, `add -N`, checkout or stash. Every run's log shows `restored` with the final
+hashes, and the worktree status and seven hashes were re-verified after each. `controls/RESTORE.sh <label>`
+exists for an outright kill (not needed).
+
+Final controls: `controls/final-old-production-unit.log` (11 fail, 16 pass of 27),
+`controls/final-old-production-gate.log` (3 fail, 7 pass of 10),
+`controls/final-old-production-matrix-verbose.log` (both files: 14 fail, 23 pass of 37, by test name).
+
+**Fail at old production, as intended (14):**
+
+- Gate (installed xyflow/d3):
+  - The run test (press 2 with dblclick, press 3, Shift held): viewport `{x:144,y:280,zoom:2}` became
+    `{x:283.33,y:316.67,zoom:1.3889}`, i.e. two Zoom Out hits (2 / 1.2 / 1.2): the original double hit.
+  - Dragged press, Shift off: `x` 144 became 174, a 30 px pan.
+  - Dragged press, Shift on: viewport moved to `{x:129,y:265}` (pane selection path).
+- Unit (mocked xyflow), 11: result replaces the offer in one commit and box (a commit with neither); Dismiss
+  line; refusal line; presses on it; end at pointerdown outside only; drop on return/load but kept through
+  edits; no timer; document listener and cleanup; gate refusal then first press shows one; the offer reports its
+  measured box (`undefined` was passed); `SpaceCardsResult` on its own (the export does not exist).
+
+**Pass at old production, as controls (23):** all 15 pre-existing unit tests and 3 pre-existing gate tests, the new keyboard/
+scripted-click control in the unit file, and the four new gate controls that prove the outside gesture is the same with or
+without the result: the first press on the pane clears both selections (Shift off and on), a mouse pan as the
+first press elsewhere pans, and a Zoom Out press as the first press elsewhere zooms once.
+
+**Positive control:** the same gate controls pass on the new production in the final run (10/10 gate, 27/27 unit).
+
+## Coverage against the brief and root disposition
+
+| Requirement | Where |
+| --- | --- |
+| Box measured before the action, only for `detail >= 1` and an admitted click | unit: offer on its own (`OFFER_BOX` for detail 1 and 2, `undefined` for 0); gate-refused case |
+| Same wrapper, classes, measured box, same commit, ahead of the flow, no neither-commit | unit: Profiler states, class and style assertions |
+| No control, focus, live region; announcement and focus unchanged; one step, one fit | unit result test; gate run test (one `space cards` step, revision +1, announcement, canvas focus) |
+| Presses on it held, plain, Shift, dblclick, no event prevented | unit (`PRESSES` seen at window, none prevented); gate run test with a card and a connection selected |
+| Dragged press held | gate: two new cases |
+| Outside pointerdown ends it and is untouched | unit (every button, touch/pen types, uncancelled arrival); gate controls (pane, pan, Zoom Out) |
+| Load, offer return, unmount, same-generation edits | unit (undo returns offer, redo none, `moveNode` keeps, `load` drops, listener removed on unmount) |
+| Keyboard, refusal, disabled gate, first available click | unit (Enter, Space, `click()`), existing gate tests, new refusal-then-act test |
+| No timer, listener cleanup | unit: fake timers 1 h; add/remove spies |
+| One save / history / fit | unit labels and `fitView`; `EditorPage.space-cards.test.tsx` unchanged and passing |
+
+## Remaining limitations (also in docs/09 and the CHANGELOG)
+
+- jsdom has no hit-testing, layout, browser click counting or touch. The gate tests state where each press
+  lands; native QA must prove which element a real press hits, including at 512 px (93,290), touch and pen taps,
+  Shift runs, route-handle/node/connection drags after the result ends, geometry at the documented viewports and
+  text sizes, and that the result box equals the offer box. I did not emulate touch in jsdom (jsdom has no `Touch`
+  constructor), so "touch-emulated" presses remain a native check.
+- Not run, per instruction: the corrected seven-group native plan, builds, coverage, browser, provider,
+  owner store. The Space global fixture budget (1/2) was not touched; this was unit work only.
+- The cost is as root accepted: the covered area (up to 392 × 129.5 px at 512 px, which includes Zoom Out) and
+  any card the fit places there stay covered until a press elsewhere. Resize, panel toggle, text-size change or a
+  press elsewhere are lifecycle boundaries, not geometric protection.
+- `docs/guide/02-build-a-loop.md` (line 12) describes the panel and was not in the brief's doc list, so I left it.
+  It is still accurate, but a user-facing sentence about the result staying until the next press would be
+  consistent. Your call.
+- Canvas is the older #207 version, as briefed; the new Space block touches only the import (line 77), lines 934–949,
+  968–988 and the render at ~1067, away from #207's regions, for the later integration.
+
+## Artifact index
+
+`start-state/start-state.txt`; `runs/` (dev and final logs, with `dev-*` kept as history); `controls/`
+(script, `RESTORE.sh`, one `.log` and `.meta.txt` per control, backups of the new bytes per run);
+`final/` (`final-identity.txt`, `pre-final-identity.txt`, `post-focused-hashes.txt`, `final.diff`, `final.diff.sha256`,
+`delta-from-checkpoint.diff`, `prior-evidence-sha256.txt`, `release-notes-premise.txt`, `source/`);
+`env.sh`. `events.jsonl`, `latest.md` and `launch.json` belong to the launcher and were not edited.

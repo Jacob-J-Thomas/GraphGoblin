@@ -1,0 +1,92 @@
+[
+  {
+    "attempt": "correction1",
+    "groups": [
+      "alternate-r512"
+    ],
+    "scope": "Global #208 fixture correction batch 1 of 2",
+    "authorizedBy": "/root",
+    "authorization": "Explicit root dispatch after reviewing the initial failure and driver patch",
+    "firstEvidence": "runs/alternate-r512-initial/observed.json",
+    "firstEvidenceSha256": "45d7c15e5da3101b339e724b2627bc199a942326057ec8a2f6dfe0897f779af9",
+    "firstCoordinateEvidence": "runs/alternate-r512-initial/raw/0006-alternate-single-healthy-coordinates.json",
+    "firstCoordinateSha256": "05becdcdb5643a0331283eab6b90438c21e552353e5f8c0a94423d0a377c9eae",
+    "fixtureCause": "Long diagnostic fixture title wrapped the toolbar and displaced the original (93,290) target by 29 CSS px before any input.",
+    "fixtureChange": "Use newFixture('double-r512') in both fresh loops; leave coordinate, gesture, viewport, draft and history gates intact.",
+    "inputSent": false
+  },
+  {
+    "attempt": "correction2",
+    "groups": [
+      "double-r512"
+    ],
+    "scope": "Global #208 fixture correction batch 2 of 2, only when native execution launches",
+    "rootApproved": "Root explicitly approved fixture-only preparation. Native execution requires separate root grant.",
+    "firstEvidence": "runs/double-r512-initial/raw/0066-failure-r512-shift-repeat-drag.json",
+    "firstEvidenceSha256": "2d2b713e8265be436f45e7e8faa728ec86fa93150806a9cc7c87e5e9b5b41278",
+    "failedRun": "runs/double-r512-initial/run.json",
+    "firstScreenshot": "runs/double-r512-initial/failure-r512-shift-repeat-drag.png",
+    "firstScreenshotSha256": "e0c104758e7ab6499edeb5dcbf0c4ca434709228a0499ec399296fbdc3c4973a",
+    "fixtureCause": "The already stacked node upper-body sample points at R512 sit beneath the offer. The keyboard node setup used these pointer hits only to obtain an ID, then refused before sending native selection or gesture input.",
+    "fixtureChange": "Use the attached, visible, focusable Router node for the existing focus plus native Space selection. Prove actual focus and Selected and preserve original viewport, offer, Space and Zoom Out geometry. Keep every product input, real-pointer helper, timing window and assertion.",
+    "unchangedOracles": true,
+    "originalProductInputsSentInFailedStage": false
+  },
+  {
+    "attempt": "correction3",
+    "groups": [
+      "queued-fit-d1"
+    ],
+    "scope": "One fixture-only QA extension under D-035; the two original correction entries are already spent. This entry is preparation until the separate exact root grant and launch.",
+    "policy": {
+      "id": "D-035",
+      "path": "docs/delivery/2026-10-18-i01-i07-register.md",
+      "line": 135,
+      "blob": "edd79c3d2832b8770a8975b94c9249615669114b",
+      "sha256": "e477aaf727e0c204901c5bc9b320a12727c95a5f44380bad366200a20f88c456"
+    },
+    "preparationAuthorizedBy": "/root",
+    "runtimeAuthority": "Separate root-reviewed native admission required",
+    "beforeLedgerSha256": "60d4c7cd73d0e56049fe16f8bcc47e8535f2ed84028304973ac045e79b56b080",
+    "firstStopHead": "b043d3b8baafdff742803ae46750c8664067f3c7",
+    "firstStopTree": "c87fed2f00990e7ccb3728ab1935e3d75241f736",
+    "firstStopBindingSha256": "f3b0885f91fee52f1571da6896f293780763b97e7adbe738969337c37024e03b",
+    "firstStop": [
+      {
+        "path": "d1-first-stop-manifest.json",
+        "sha256": "4fc47dc5b992cc569295709242a9934c1a54db235eed1f1d22ca0921f59f5db6"
+      },
+      {
+        "path": "d1-first-stop-handoff.md",
+        "sha256": "d5f67a82c63fbeed5d4ac3ed9840d04fe99163c912c33ae1dffd8cf1d7e5619c"
+      },
+      {
+        "path": "admission-native.json",
+        "sha256": "8845590135203f8524a4369e1d6c493976edb23db20b1a461f536a0758fa7cb0"
+      },
+      {
+        "path": "exit-queued-fit-d1-initial.json",
+        "sha256": "a510cc656049164afcb1fcc4793e37e1c21def89622df751a29da0d14d36b514"
+      },
+      {
+        "path": "runs/queued-fit-d1-initial/run.json",
+        "sha256": "268a37dbfbe3dc58a66cc2b9dfc7d296cf06bc6f6aef203e0ac11b908a1894da"
+      },
+      {
+        "path": "cleanup-after-queued-fit-d1.json",
+        "sha256": "b78ad818dd084a7e592388fabb99433e6778ebc6a2819c67349ef397a4474fc0"
+      },
+      {
+        "path": "runs/queued-fit-d1-initial/raw/0046-failure-fit-trusted-rapid-undo.json",
+        "sha256": "1aaa347e92c7ddaf65f5c66cd712eda8f0d870cb3cb6ea31e4bb573221763821"
+      },
+      {
+        "path": "runs/queued-fit-d1-initial/raw/0044-fit-trace-undo.json",
+        "sha256": "5f45614db4619d693b520b92b6d2487afbea6b2375532eca673dfe2a51263485"
+      }
+    ],
+    "fixtureCause": "The targeted history sampler inspected the native disabled property; the actual Undo and Redo buttons expose availability through aria-disabled while remaining focusable. The unrun Reload case reused that sampler.",
+    "fixtureChange": "Capture aria-disabled as the history availability value; retain native disabled as diagnostic. Use aria-disabled in all four affected availability predicates.",
+    "unchangedOracles": true
+  }
+]

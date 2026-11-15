@@ -1,0 +1,55 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.test.tsx (42 tests | 1 failed) 4198ms
+   ❯ Space cards on the canvas (#208) (22)
+     × looks a card’s size up by its own id: a card called `constructor` is not measured by the object’s prototype 73ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > looks a card’s size up by its own id: a card called `constructor` is not measured by the object’s prototype
+AssertionError: expected "vi.fn()" to be called with arguments: [ { x: NaN, y: NaN, zoom: NaN } ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    {
+-     "x": NaN,
+-     "y": NaN,
+-     "zoom": NaN,
++     "x": 144,
++     "y": 300,
++     "zoom": 2,
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:330:25
+    328|     measureCards({ constructor: { width: 184, height: 100 } });
+    329|     expect(setViewport).toHaveBeenCalledTimes(1);
+    330|     expect(setViewport).toHaveBeenCalledWith(owedView());
+       |                         ^
+    331|   });
+    332|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 41 passed (42)
+   Start at  02:11:28
+   Duration  10.72s (tests 40%, environment 22%, import 20%, transform 11%, setup 7%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\web
+
+
+real	0m11.651s
+user	0m0.016s
+sys	0m0.015s

@@ -1,0 +1,69 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\verify-binding.mjs" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\verify-binding-final.mjs"
+index 1961c5f8..2df3e298 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\verify-binding.mjs"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\verify-binding-final.mjs"
+@@ -200,6 +200,6 @@ if (mode === 'source') {
+   assert.deepEqual(identity(), [head, tree, actualMain]);
+   assert.equal(git('status', '--porcelain=v1', '--untracked-files=all'), '');
+   await mkdir(join(evidence, 'binding'), { recursive: true });
+-  await emit('binding/binding-' + mode + '.json', report);
++  await emit('binding/binding-' + mode + (mode === 'after' ? '-correction2' : '') + '.json', report);
+   console.log(JSON.stringify({ mode, head, bundle, builds: report.builtFiles, map: sourceHashes }));
+ }
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\summarize.mjs" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\summarize-final.mjs"
+index 6dab722f..62c7fb3a 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\summarize.mjs"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\summarize-final.mjs"
+@@ -13,13 +13,13 @@ assert.equal(admission.status,'authorized');
+ assert.equal(admission.schema,'208-space-corrected-native-admission/v1');
+ assert(admission.nativeGrant&&admission.exclusiveSlotGrant);
+ const binding=await json(join(root,'binding/binding-before.json'));
+-assert.deepEqual(await json(join(root,'binding/binding-after.json')),binding);
++assert.deepEqual(await json(join(root,'binding/binding-after-correction2.json')),binding);
+ for(const key of ['head','tree','base','actualMain','candidateScope','spaceAnchor','mergedCanvas','mergedHistory']) {
+   assert.equal(binding[key],admission[key],key);
+ }
+-assert.deepEqual(await json(join(root,'binding/read-only-after.json')),await json(join(root,'binding/read-only-before.json')));
+-assert.deepEqual(await json(join(root,'binding/domain-map-after.json')),await json(join(root,'binding/domain-map-before.json')));
+-const cleanup=await json(join(root,'cleanup-final.json'));
++assert.deepEqual(await json(join(root,'binding/read-only-after-correction2.json')),await json(join(root,'binding/read-only-before.json')));
++assert.deepEqual(await json(join(root,'binding/domain-map-after-correction2.json')),await json(join(root,'binding/domain-map-before.json')));
++const cleanup=await json(join(root,'cleanup-after-correction2.json'));
+ const clean=['resourceFailures','ownedLive','listeners','leftoverStoresOrSqlite','unqualifiedPidMatches']
+   .every(field=>Array.isArray(cleanup[field])&&cleanup[field].length===0);
+ const {LoopDefinitionSchema}=await import(pathToFileURL(join(admission.checkout,'packages/contracts/dist/index.js')).href);
+@@ -80,6 +80,6 @@ const summary={schema:'208-space-corrected-native-results/v1',scope:admission.ca
+   head:admission.head,tree:admission.tree,base:admission.base,actualMain:admission.actualMain,
+   allGroupsPassed:missing.length===0&&clean,missingPassingGroups:missing,cleanupClean:clean,
+   globalFixtureCorrectionBatches:corrections.length,formalScans:0,reports};
+-await writeFile(join(root,'result-summary.json'),JSON.stringify(summary,null,2)+'\n',{flag:'wx'});
++await writeFile(join(root,'result-summary-after-correction2.json'),JSON.stringify(summary,null,2)+'\n',{flag:'wx'});
+ console.log(JSON.stringify({head:summary.head,scope:summary.scope,allGroupsPassed:summary.allGroupsPassed,missing,runCount:reports.length}));
+ if(!summary.allGroupsPassed)process.exitCode=2;
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\fixture-corrections.json" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\fixture-corrections-correction2.json"
+index f3e9883b..6d5134ce 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\fixture-corrections.json"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\fixture-corrections-correction2.json"
+@@ -14,5 +14,22 @@
+     "fixtureCause": "Long diagnostic fixture title wrapped the toolbar and displaced the original (93,290) target by 29 CSS px before any input.",
+     "fixtureChange": "Use newFixture('double-r512') in both fresh loops; leave coordinate, gesture, viewport, draft and history gates intact.",
+     "inputSent": false
++  },
++  {
++    "attempt": "correction2",
++    "groups": [
++      "double-r512"
++    ],
++    "scope": "Global #208 fixture correction batch 2 of 2, only when native execution launches",
++    "rootApproved": "Root explicitly approved fixture-only preparation. Native execution requires separate root grant.",
++    "firstEvidence": "runs/double-r512-initial/raw/0066-failure-r512-shift-repeat-drag.json",
++    "firstEvidenceSha256": "2d2b713e8265be436f45e7e8faa728ec86fa93150806a9cc7c87e5e9b5b41278",
++    "failedRun": "runs/double-r512-initial/run.json",
++    "firstScreenshot": "runs/double-r512-initial/failure-r512-shift-repeat-drag.png",
++    "firstScreenshotSha256": "e0c104758e7ab6499edeb5dcbf0c4ca434709228a0499ec399296fbdc3c4973a",
++    "fixtureCause": "The already stacked node upper-body sample points at R512 sit beneath the offer. The keyboard node setup used these pointer hits only to obtain an ID, then refused before sending native selection or gesture input.",
++    "fixtureChange": "Use the attached, visible, focusable Router node for the existing focus plus native Space selection. Prove actual focus and Selected and preserve original viewport, offer, Space and Zoom Out geometry. Keep every product input, real-pointer helper, timing window and assertion.",
++    "unchangedOracles": true,
++    "originalProductInputsSentInFailedStage": false
+   }
+ ]

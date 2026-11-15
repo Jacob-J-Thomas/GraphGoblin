@@ -1,0 +1,533 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ca66282..a8ec77a 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -11,8 +11,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   cards") that is saved like any edit. Focus stays on the canvas, and the view fits once after the
+   cards move. The panel shows only while every card is at the same spot and no connection has a
+   route you set; **Dismiss suggestion** hides it until the loop is opened or reloaded again.
+-  Opening a loop, other edits, Undo and Redo never move cards by themselves. No stored or exported
+-  data changes, so there is no upgrade note.
++  Right after a mouse pan, both buttons are briefly shown unavailable and do nothing, like
++  **Remove connection**, until the pan's own click blocker is gone. Opening a loop, other edits,
++  Undo and Redo never move cards by themselves. No stored or exported data changes, so there is
++  no upgrade note.
+ - Connections are drawn, selected and removed only on the canvas (#207, ADR-0076, the owner's
+   decision). The node dialog no longer has a **Connections** list, **Remove edge** buttons or the
+   **Connect** form, for any node kind. Everything else in it stays: id and label, configuration,
+diff --git a/apps/web/src/editor/Canvas.tsx b/apps/web/src/editor/Canvas.tsx
+index 6fc5925..1438a5c 100644
+--- a/apps/web/src/editor/Canvas.tsx
++++ b/apps/web/src/editor/Canvas.tsx
+@@ -73,12 +73,9 @@ import { ForwardEdge } from './ForwardEdge.js';
+ import { edgeLabelText } from './edge-label-text.js';
+ import { loopBackEdgeIds } from './loop-back-edges.js';
+ import { removalFocusTarget } from './canvas-focus.js';
+-<<<<<<< HEAD
+ import { spaceCardsEligible } from './space-cards.js';
+ import { SpaceCardsOffer } from './SpaceCardsOffer.js';
+-=======
+ import { createViewportGestureGate } from './viewport-gesture.js';
+->>>>>>> bc9094fd426fe1c1a4b81b0e490e3887f977dbc7
+ 
+ const nodeTypes = { gg: NodeCard };
+ const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
+@@ -496,8 +493,9 @@ export function Canvas({
+   // elsewhere (the toolbar's) stay, since nothing they hang from moved.
+   const closeCanvasPopovers = useCallback(() => closePopovers(rootRef.current), []);
+   // A mouse pan's release leaves d3's click blocker in place for a task: the selected connection's
+-  // toolbar is unavailable until it is gone (#207). The gate's window listener is added at mount,
+-  // before any press adds d3's own; a layout effect adds it before the browser can deliver one.
++  // toolbar is unavailable until it is gone (#207), and so are the Space cards offer's buttons
++  // (#208), which follow this same gate. The gate's window listener is added at mount, before any
++  // press adds d3's own; a layout effect adds it before the browser can deliver one.
+   const [gesture] = useState(createViewportGestureGate);
+   useLayoutEffect(() => gesture.attach(window), [gesture]);
+   const onMove: OnMove = useCallback(
+@@ -1044,6 +1042,7 @@ export function Canvas({
+       {offered ? (
+         <SpaceCardsOffer
+           count={definition.nodes.length}
++          viewport={gesture}
+           onSpace={spaceAll}
+           onDismiss={dismissOffer}
+         />
+diff --git a/apps/web/src/editor/Canvas.space-cards.test.tsx b/apps/web/src/editor/Canvas.space-cards.test.tsx
+index 802542b..4a17fc3 100644
+--- a/apps/web/src/editor/Canvas.space-cards.test.tsx
++++ b/apps/web/src/editor/Canvas.space-cards.test.tsx
+@@ -1,13 +1,15 @@
+ import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+-import { act, fireEvent, render, screen, within } from '@testing-library/react';
++import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import type { NodeChange, ReactFlowProps } from '@xyflow/react';
+ import { beforeEach, describe, expect, it, vi } from 'vitest';
+ import { Canvas } from './Canvas.js';
+ import type { FlowNode } from './NodeCard.js';
+ import { spacedPositions } from './space-cards.js';
++import { SpaceCardsOffer } from './SpaceCardsOffer.js';
+ import { useEditorStore } from './store.js';
+ import type { RoutingGeometry } from './useRouting.js';
++import { createViewportGestureGate } from './viewport-gesture.js';
+ 
+ let props: ReactFlowProps<FlowNode> | undefined;
+ const fitView = vi.fn(() => Promise.resolve(true));
+@@ -213,3 +215,289 @@ describe('Space cards on the canvas (#208)', () => {
+     expect(offer()).not.toBeNull();
+   });
+ });
++
++describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
++  const viewport = { x: 0, y: 0, zoom: 1 };
++  const dismissButton = () => screen.getByRole('button', { name: 'Dismiss suggestion' });
++  /** xyflow's `onMove` for the first move of a mouse pan: the gate is `panning` from here. */
++  const pan = () => act(() => flow().onMove!(new MouseEvent('mousemove'), viewport));
++  /** A mouse release on the page, seen first by the canvas's one window listener. */
++  const release = () =>
++    act(() => {
++      window.dispatchEvent(new MouseEvent('mouseup'));
++    });
++  const untilAvailable = () =>
++    waitFor(() => {
++      expect(spaceButton()).not.toHaveAttribute('aria-disabled');
++      expect(dismissButton()).not.toHaveAttribute('aria-disabled');
++    });
++  /** Both buttons say `gesture` (nothing when available) and are never disabled or click-through. */
++  const expectGesture = (gesture?: 'panning' | 'settling') => {
++    for (const button of [spaceButton(), dismissButton()]) {
++      if (gesture) {
++        expect(button).toHaveAttribute('aria-disabled', 'true');
++        expect(button).toHaveAttribute('data-gesture', gesture);
++      } else {
++        expect(button).not.toHaveAttribute('aria-disabled');
++        expect(button).not.toHaveAttribute('data-gesture');
++      }
++      expect(button).toBeEnabled();
++      expect(button.classList.contains('pointer-events-none')).toBe(false);
++    }
++  };
++
++  beforeEach(() => {
++    fitView.mockClear();
++    store().load('L1', kitchenSinkLoop());
++  });
++
++  it('keeps both buttons attached and focusable but unavailable, from a mouse pan’s first move until its release settles', async () => {
++    render(<Live />);
++    const space = spaceButton();
++    const dismiss = dismissButton();
++    // A new canvas is ready; a wheel, a touch pan and a programmatic move never change that.
++    act(() => {
++      flow().onMove!(new WheelEvent('wheel'), viewport);
++      flow().onMove!(new TouchEvent('touchmove'), viewport);
++      flow().onMove!(null, viewport);
++    });
++    expectGesture();
++    pan();
++    expectGesture('panning');
++    // The offer is not hidden, so a press cannot fall through to the canvas below it.
++    expect(offer()).not.toBeNull();
++    for (const button of [dismiss, space]) {
++      act(() => button.focus());
++      expect(button).toHaveFocus();
++      expect(button.isConnected).toBe(true);
++    }
++    release();
++    expectGesture('settling');
++    await untilAvailable();
++    expectGesture();
++    // The same elements throughout: nothing was replaced or remounted.
++    expect(spaceButton()).toBe(space);
++    expect(dismissButton()).toBe(dismiss);
++    expect(space).toHaveFocus();
++  });
++
++  it('refuses Space cards by click, Enter and Space while unavailable, then spaces once on the first press after release', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    const original = store().definition!;
++    measure({ prep: 400 });
++    const state = store();
++    const space = spaceButton();
++    act(() => space.focus());
++    const refused = () => {
++      expect(store()).toBe(state);
++      // Focus did not leave the button for the canvas, and nothing was announced or fitted.
++      expect(space).toHaveFocus();
++      expect(announced()).toBe('');
++      expect(fitView).not.toHaveBeenCalled();
++      expect(offer()).not.toBeNull();
++    };
++    pan();
++    fireEvent.click(space);
++    await user.keyboard('{Enter}');
++    await user.keyboard('[Space]');
++    refused();
++    // Released, and still settling: shown unavailable and refused the same way.
++    release();
++    expectGesture('settling');
++    fireEvent.click(space);
++    refused();
++
++    await untilAvailable();
++    await user.click(space);
++    expect(labels()).toEqual(['space cards']);
++    expect(positions()).toEqual(
++      spacedPositions(
++        original,
++        original.nodes.map((node) => (node.id === 'prep' ? 400 : 100)),
++      ),
++    );
++    expect(canvas()).toHaveFocus();
++    expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
++    expect(offer()).toBeNull();
++    expect(fitView).toHaveBeenCalledTimes(1);
++    expect(store().future).toEqual([]);
++  });
++
++  it('refuses Dismiss suggestion while unavailable, then dismisses once with no edit, save or history step', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    const state = store();
++    const changes = vi.fn();
++    const unsubscribe = useEditorStore.subscribe(changes);
++    try {
++      const dismiss = dismissButton();
++      act(() => dismiss.focus());
++      pan();
++      fireEvent.click(dismiss);
++      await user.keyboard('{Enter}');
++      await user.keyboard('[Space]');
++      release();
++      fireEvent.click(dismiss);
++      expectGesture('settling');
++      // Still offered, still focused on Dismiss, and nothing was announced.
++      expect(offer()).not.toBeNull();
++      expect(dismiss).toHaveFocus();
++      expect(announced()).toBe('');
++
++      await untilAvailable();
++      await user.click(dismiss);
++      expect(offer()).toBeNull();
++      expect(canvas()).toHaveFocus();
++      expect(announced()).toBe('Suggestion dismissed.');
++    } finally {
++      unsubscribe();
++    }
++    // Dismissal is local to the editor load: the store was never written, so there is no revision,
++    // no history step and nothing for autosave or the device copy to send.
++    expect(changes).not.toHaveBeenCalled();
++    expect(store()).toBe(state);
++    expect(store()).toMatchObject({ revision: 0, past: [], future: [] });
++  });
++
++  it('keeps the store’s own recheck behind the gate: a stale offer is refused unheard while unavailable, then by the store', async () => {
++    const user = userEvent.setup();
++    // Rendered with the pile; the store's draft then changes without this canvas rendering again.
++    render(<Canvas definition={store().definition!} issues={[]} />);
++    act(() => store().moveNode('prep', { x: 5, y: 5 }));
++    const state = store();
++    const space = spaceButton();
++    act(() => space.focus());
++    pan();
++    fireEvent.click(space);
++    // The gate refused first: the store was not asked, so no refusal text and no focus move.
++    expect(store()).toBe(state);
++    expect(space).toHaveFocus();
++    expect(announced()).toBe('');
++
++    release();
++    await untilAvailable();
++    await user.click(space);
++    expect(store()).toBe(state);
++    expect(canvas()).toHaveFocus();
++    expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
++    expect(fitView).not.toHaveBeenCalled();
++  });
++
++  it('uses the canvas’s one gate: no second window listener, detached with the canvas', () => {
++    const add = vi.spyOn(window, 'addEventListener');
++    const removeListener = vi.spyOn(window, 'removeEventListener');
++    try {
++      const view = render(<Live />);
++      // The offer is rendered, and the page still has the gate's single passive capture listener.
++      expect(offer()).not.toBeNull();
++      const releases = add.mock.calls.filter(([type]) => type === 'mouseup');
++      expect(releases).toHaveLength(1);
++      expect(releases[0]![2]).toEqual({ capture: true, passive: true });
++      pan();
++      expectGesture('panning');
++      view.unmount();
++      expect(removeListener).toHaveBeenCalledWith('mouseup', releases[0]![1], { capture: true });
++    } finally {
++      add.mockRestore();
++      removeListener.mockRestore();
++    }
++  });
++
++  it('reads the gate when the offer returns mid-pan, so it is never shown available while unavailable', async () => {
++    render(<Live />);
++    act(() => store().moveNode('prep', { x: 1, y: 1 }));
++    expect(offer()).toBeNull();
++    // A pan begins while the offer is away; undoing the move brings it back into that pan.
++    pan();
++    act(() => store().undo());
++    expect(offer()).not.toBeNull();
++    expectGesture('panning');
++    release();
++    await untilAvailable();
++    expectGesture();
++  });
++
++  describe('the offer on its own, with the shared gate', () => {
++    const offerOn = (
++      viewportOf: Parameters<typeof SpaceCardsOffer>[0]['viewport'],
++      onSpace = vi.fn(),
++      onDismiss = vi.fn(),
++    ) => ({
++      onSpace,
++      onDismiss,
++      view: render(
++        <SpaceCardsOffer count={3} viewport={viewportOf} onSpace={onSpace} onDismiss={onDismiss} />,
++      ),
++    });
++
++    it('subscribes once while shown, unsubscribes when it leaves, and reads the current state on return', async () => {
++      const gate = createViewportGestureGate();
++      const detach = gate.attach(window);
++      let subscribed = 0;
++      let subscribers = 0;
++      // One stable viewport, as the canvas passes its gate.
++      const viewportOf = {
++        state: gate.state,
++        subscribe: (listener: () => void) => {
++          subscribed += 1;
++          subscribers += 1;
++          const off = gate.subscribe(listener);
++          return () => {
++            subscribers -= 1;
++            off();
++          };
++        },
++      };
++      try {
++        const first = offerOn(viewportOf);
++        expect(subscribers).toBe(1);
++        act(() => gate.move(new MouseEvent('mousemove')));
++        expectGesture('panning');
++        release();
++        expectGesture('settling');
++        await untilAvailable();
++        // Every change was heard through that one subscription.
++        expect(subscribed).toBe(1);
++        first.view.unmount();
++        expect(subscribers).toBe(0);
++
++        // The gate moves on while the offer is away; its next appearance already says so.
++        act(() => gate.move(new MouseEvent('mousemove')));
++        const second = offerOn(viewportOf);
++        expect(subscribers).toBe(1);
++        expectGesture('panning');
++        fireEvent.click(spaceButton());
++        fireEvent.click(dismissButton());
++        expect(second.onSpace).not.toHaveBeenCalled();
++        expect(second.onDismiss).not.toHaveBeenCalled();
++        release();
++        await untilAvailable();
++        fireEvent.click(spaceButton());
++        fireEvent.click(dismissButton());
++        expect(second.onSpace).toHaveBeenCalledTimes(1);
++        expect(second.onDismiss).toHaveBeenCalledTimes(1);
++        second.view.unmount();
++        expect(subscribers).toBe(0);
++      } finally {
++        detach();
++      }
++    });
++
++    it('asks the gate again when pressed, so a rendered state that missed a pan still refuses', () => {
++      const gate = createViewportGestureGate();
++      // A subscription that never reports: the buttons stay rendered available whatever happens.
++      const { onSpace, onDismiss } = offerOn({
++        state: gate.state,
++        subscribe: () => () => undefined,
++      });
++      act(() => gate.move(new MouseEvent('mousemove')));
++      expect(gate.state()).toBe('panning');
++      expectGesture();
++      fireEvent.click(spaceButton());
++      fireEvent.click(dismissButton());
++      expect(onSpace).not.toHaveBeenCalled();
++      expect(onDismiss).not.toHaveBeenCalled();
++    });
++  });
++});
+diff --git a/apps/web/src/editor/EditorPage.space-cards.test.tsx b/apps/web/src/editor/EditorPage.space-cards.test.tsx
+index f0c8f4e..19d0632 100644
+--- a/apps/web/src/editor/EditorPage.space-cards.test.tsx
++++ b/apps/web/src/editor/EditorPage.space-cards.test.tsx
+@@ -59,4 +59,25 @@ describe('Space cards in the editor (#208)', () => {
+     expect(sameValue(restored, original)).toBe(true);
+     expect(screen.getByRole('button', { name: 'Space cards' })).toBeInTheDocument();
+   });
++
++  it('dismisses the offer without an edit: no history step, no save and no device write', async () => {
++    const user = userEvent.setup();
++    const api = new FakeApi();
++    const loop = api.addLoop(kitchenSinkLoop());
++    const saves = () => api.callsTo('PUT', `/loops/${loop.id}/draft`);
++    renderApp(`/loops/${loop.id}/edit`, api);
++    await screen.findByRole('heading', { name: 'kitchen-sink' });
++    const state = useEditorStore.getState();
++    const device = await loadLocalDraft(loop.id);
++
++    await user.click(screen.getByRole('button', { name: 'Dismiss suggestion' }));
++    expect(screen.queryByRole('button', { name: 'Space cards' })).toBeNull();
++    expect(screen.getByTestId('canvas')).toHaveFocus();
++    // Nothing for Undo to take back, and nothing for autosave to send, also once its delay passed.
++    expect(screen.getByRole('button', { name: 'Undo' })).toHaveAttribute('aria-disabled', 'true');
++    await new Promise((resolve) => setTimeout(resolve, AUTOSAVE_DELAY_MS + 200));
++    expect(useEditorStore.getState()).toBe(state);
++    expect(saves()).toHaveLength(0);
++    expect(await loadLocalDraft(loop.id)).toEqual(device);
++  });
+ });
+diff --git a/apps/web/src/editor/SpaceCardsOffer.tsx b/apps/web/src/editor/SpaceCardsOffer.tsx
+index 5ee9b82..dc114b1 100644
+--- a/apps/web/src/editor/SpaceCardsOffer.tsx
++++ b/apps/web/src/editor/SpaceCardsOffer.tsx
+@@ -1,6 +1,7 @@
+-import { useId } from 'react';
++import { useId, useSyncExternalStore } from 'react';
+ import { Icon } from '../components/icons/index.js';
+ import { Button } from '../components/ui/index.js';
++import type { ViewportGestureGate } from './viewport-gesture.js';
+ 
+ /**
+  * The Space cards offer (#208, ADR-0077): a small panel at the top centre of the canvas while
+@@ -9,18 +10,36 @@ import { Button } from '../components/ui/index.js';
+  * and goes. `nokey` keeps the canvas's Delete and Backspace and xyflow's Space-to-pan away from
+  * its buttons, so a key pressed on them never removes the selected card or pans. Its DOM order is
+  * its visual order: the text, then **Space cards**, then **Dismiss suggestion**.
++ *
++ * Its buttons sit outside the flow, but inside the page-wide capture path of d3-drag's click
++ * blocker, so after a mouse pan the next click on them can be swallowed while they look available
++ * (#207). They therefore follow the canvas's own viewport gate, the one that guards Reset route and
++ * Remove connection (`viewport`, never a second one): from a pan's first move until its release has
++ * settled they say they are unavailable (`aria-disabled` and `data-gesture`, not `disabled`, so
++ * they keep their place, hit target and focus), and a press then does nothing and says nothing.
++ * The offer is not hidden, so no press falls through to the canvas below it.
+  */
+ export function SpaceCardsOffer({
+   count,
++  viewport,
+   onSpace,
+   onDismiss,
+ }: {
+   count: number;
++  /** The canvas's gate: only `ready` lets the buttons act. */
++  viewport: Pick<ViewportGestureGate, 'state' | 'subscribe'>;
+   onSpace: () => void;
+   onDismiss: () => void;
+ }) {
+   const titleId = useId();
+   const helpId = useId();
++  const gesture = useSyncExternalStore(viewport.subscribe, viewport.state);
++  const settling = gesture === 'ready' ? undefined : gesture;
++  // A press acts only when the buttons are shown available and the gate agrees right now.
++  const guarded = (act: () => void) => () => {
++    if (settling || viewport.state() !== 'ready') return;
++    act();
++  };
+   return (
+     <div className="nokey pointer-events-none absolute inset-x-0 top-3 z-[5] flex justify-center px-4">
+       <section
+@@ -36,10 +55,24 @@ export function SpaceCardsOffer({
+           Undo puts them back.
+         </p>
+         <div className="flex items-center justify-between gap-2">
+-          <Button variant="outline" size="sm" aria-describedby={helpId} onClick={onSpace}>
++          <Button
++            variant="outline"
++            size="sm"
++            aria-describedby={helpId}
++            aria-disabled={settling ? true : undefined}
++            data-gesture={settling}
++            onClick={guarded(onSpace)}
++          >
+             Space cards
+           </Button>
+-          <Button variant="ghost" size="icon" aria-label="Dismiss suggestion" onClick={onDismiss}>
++          <Button
++            variant="ghost"
++            size="icon"
++            aria-label="Dismiss suggestion"
++            aria-disabled={settling ? true : undefined}
++            data-gesture={settling}
++            onClick={guarded(onDismiss)}
++          >
+             <Icon name="close" />
+           </Button>
+         </div>
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 01fec19..6950e69 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -272,18 +272,19 @@ The owner's decision, recorded in [ADR-0077](decisions/ADR-0077-explicit-space-c
+ - **When it is offered.** The draft has at least two nodes; every node's displayed position is the origin (`ui` absent or `{x: 0, y: 0}`, `-0` included; the stored format writes an absent `ui` as the explicit origin); and no edge has `ui`. No card or route drag is in progress, and the offer has not been dismissed in this editor load. `spaceCardsEligible` in `editor/space-cards.ts` decides this. Protected Chat loops are offered it too, since card positions are not protected there.
+ - **The offer.** A panel at the top centre of the canvas (`editor/SpaceCardsOffer.tsx`), absolutely placed inside the canvas root (now `relative`), so showing or hiding it moves neither the toolbar nor the canvas. It is a region named by its first line, **_n_ cards are stacked in one spot**, then "Space cards puts them in columns that follow the connections. Only card positions change; Undo puts them back.", then **Space cards** (outline, 32 px, 44 px under a coarse pointer, described by that sentence) and **Dismiss suggestion** (an × icon button, 32 px, 44 px coarse). DOM order is visual order, and the panel comes before the flow, so Tab reaches it after the palette and before the first card. The panel's wrapper is `nokey`, so Delete, Backspace and xyflow's Space-to-pan pressed on its buttons never reach the canvas or remove the selected card. While the voice draft stages or the node dialog is open the page is inert, and the panel with it.
+ - **Dismissing.** **Dismiss suggestion** hides the offer for this editor load (its `generation`); focus moves to the canvas and "Suggestion dismissed." is announced. A load (opening the loop, **Reload server draft**, restoring a set-aside copy) or a new canvas offers it again.
++- **After a mouse pan.** The offer's buttons sit outside the flow, but inside the same page-wide capture path as d3-drag's `click.drag` blocker (see "Remove" under "Connections are drawn on the canvas" below), so a click on them right after a mouse pan could be swallowed while they looked available. **Space cards** and **Dismiss suggestion** therefore follow the canvas's own viewport gate, the one that guards **Remove connection** and **Reset route**: the canvas hands it to the offer as `viewport`, the offer subscribes with `useSyncExternalStore`, and there is no second gate and no second window listener. From a pan's first move until its release has settled both buttons are `aria-disabled` with `data-gesture` set to `panning` or `settling`. They are not `disabled`, not `pointer-events: none` and not hidden, so they keep their place, hit target and focus, and a press cannot fall through to the canvas below the panel. A click, Enter or Space then does nothing and says nothing: no announcement, no focus move and no call to the store. A press acts only when the rendered state and the gate's own state at that moment are both ready, so the two cannot disagree. The first press once the buttons show as available acts once, as described below, and **Dismiss suggestion** never writes anything: no edit, no history step, no save. The offer is unavailable for as long as the gate is, also when it returns mid-pan (an Undo of a move). Wheel, touch, Fit View and other programmatic moves never touch the gate.
+ - **Pressing Space cards** (click, Enter or Space). The canvas passes xyflow's measured card heights by node id to the store's `spaceCards`. They are layout heights, which zoom does not scale, so they are in flow pixels. The store reads its current draft and checks eligibility again. If the draft no longer qualifies, nothing changes: no revision, no step, the same state object. Otherwise it maps the heights onto the current nodes by index, giving none to a node whose id another node shares, and computes `spacedPositions`. It writes them with `withSpacedPositions` in one `set`: one history step labelled "space cards" with no merge key, `revision + 1` and `saveState: 'pending'`. Autosave, the device mirror, `If-Match` and the conflict, name-refusal, offline and invalid states then apply as to any edit, with no special save path. It does not go through `edit`, whose decision-route pass can rewrite edges when a restored routes table disagrees with the draft. Only node `ui` changes: `nodes[0]` keeps its object (an absent `ui` stays absent), and the edges array, every non-node field, `decisionRoutes`, `fieldErrors`, the selection, the dialog, the rename report, `conflict`, `nameConflict` and `baseToken` keep their references.
+ - **Afterwards.** Focus moves to the canvas root, never to **Undo**, so a held or repeated Enter cannot undo the step it just made, and the polite region announces "Spaced _n_ cards. Undo puts them back." A refusal also focuses the canvas and announces "Cards were not spaced: they are no longer all in one spot." The offer leaves, since the draft no longer qualifies. Once the spaced draft has rendered with every card measured, the canvas fits the view once with the opening options (never below 50%). Another edit, an undo or a load before then drops that fit. Undo, Redo and ordinary edits never fit.
+ - **Layout.** Columns 272 px apart, cards in a column at least 44 px apart, each card the larger of its measured height and a conservative coarse-pointer footprint (92 px, plus 2 + 46 px per output). A card's column is its breadth-first depth from every trigger together, else from every card nothing leads to, else from the first card. Cards no entry reaches start their own search, in card order. The whole layout shifts so the first card stays at the origin. Connections the canvas cannot draw, or that are ambiguous (a repeated id, an end whose id is repeated or missing, a port the source lacks, a self-loop, an edge into a trigger) are ignored for placement and never changed. The work is linear in nodes, edges and ports. Not promised: crossing-free connections, or a long chain fitting in one view.
+ - **Undo and redo.** Undo restores the exact earlier draft, including absent `ui`, and the offer returns. Redo restores the spaced draft object itself, without computing it again. Both are ordinary edits that autosave sends.
+-- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original). Native browser checks for real measurement, pointer hit-testing after the panel leaves, larger text and coarse pointers are still to be recorded.
++- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit; and, with the canvas's real gate, both buttons staying attached, focusable and `aria-disabled` from a pan's first move until its release settles, refusal by click, Enter and Space, the first press after release acting once, Dismiss writing nothing, a stale offer refused first by the gate and then by the store, no second window listener, and the offer's subscription ending when it leaves and reading the gate again when it returns), `editor/Canvas.space-cards.gate.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: d3's `click.drag` cancels the click after a mouse pan before it reaches Space cards or Dismiss, the press that arrives while the gate still settles is refused, the first press once the buttons show as available acts once, and the offer shares each state with the selected connection's Remove) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original; Dismiss changing, saving and writing nothing). These are jsdom tests: native first-input delivery after a real pan, target geometry, a double click on Space cards, real measurement, pointer hit-testing after the panel leaves, larger text and coarse pointers are still to be recorded in a browser.
+ 
+ ### Connections are drawn on the canvas (Decided, #207, ADR-0076)
+ 
+ The owner's decision, recorded in [ADR-0076](decisions/ADR-0076-canvas-only-connection-authoring.md): connections are authored only on the canvas, for every node kind. The node dialog has no **Connections** section, no **Remove edge** buttons and no **Connect** form. Everything else in it stays: id and label, the config form, declaration editing (decision routes, Choice options, Noul sides, Score bands, Script exit-code rows and Repeat route settings) with its consequence reviews that name connections, **Delete node**, protected Chat voice steps and held input.
+ 
+ - **Create.** Drag from an output handle to an input handle, or click an output and then an input. A drag may start at either end. One edge per output; any number may enter one input; triggers have no input and exits no output. A drop on a port that refuses the connection shows the reason in the editor's "Connection refused: …" notice (`onConnectEnd` and the click-connect end in `editor/Canvas.tsx`, using `connectionProblem` in `editor/model.ts`); an occupied output says how to free it ("select its connection and choose Remove connection (or press Delete or Backspace), then draw it again"). A drop on the empty pane or on a port of the same type says nothing and leaves an earlier notice as it was, and a refusal never creates an edge. Protected Chat voice steps refuse as before ("Voice steps stay.").
+-- **Remove.** Click a connection, or focus it and press Enter or Space, to select it. Then press Delete or Backspace with focus on the canvas, or use **Remove connection** in the selected connection's toolbar beside **Reset route**: it is 32 px and 44 px under a coarse pointer, is disabled with the voice-step message on a protected edge, and moves focus to **Undo** afterwards. One connection is removed at a time; a selected node is never removed by an edge's removal. After a mouse pan the toolbar briefly refuses: d3-zoom ends a pan that moved by adding a window-capture `click.drag` listener (d3-drag's `yesdrag`) that cancels the next click anywhere on the page, and removes it in a zero-delay task, so a Remove connection click in between was swallowed while the button looked available. A per-canvas gate (`editor/viewport-gesture.ts`) is `panning` from the canvas's first `onMove` with a `mousemove` source event, `settling` from the next mouse release, and ready two tasks later. Its single passive window-capture `mouseup` listener is added when the canvas mounts, so it sees each release before d3-zoom's per-press listener stops it; it queues a zero-delay task that queues a second, and only the second, which runs after d3's cleanup, makes it ready, and only if no mouse move came since and the canvas is still mounted. Meanwhile **Remove connection** and **Reset route** are `aria-disabled` (dimmed, keeping focus, their hit target and `nopan`) with `data-gesture` set to the state, and their handlers refuse on that same rendered state: a click, Enter or Space then does nothing and says nothing, and the first click once they show as available acts once. The pan's own click is still cancelled and the selection kept. Wheel, touch, Fit View and other programmatic moves add no blocker and never touch the gate; they also cannot strand it, since it does not wait for xyflow's `onMoveEnd`, which a later wheel or programmatic end replaces. A release that never reaches the page leaves the gate unavailable until the next mouse release there, which also ends d3's gesture. Nothing is replayed, prevented or patched; a protected voice step keeps its own disabled reason. Clicks on xyflow's zoom controls and after a node drag meet the same d3 blocker and are not gated. The screen-reader description of a focused connection says "Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection. To connect its output elsewhere, remove the connection and draw from the output again."
++- **Remove.** Click a connection, or focus it and press Enter or Space, to select it. Then press Delete or Backspace with focus on the canvas, or use **Remove connection** in the selected connection's toolbar beside **Reset route**: it is 32 px and 44 px under a coarse pointer, is disabled with the voice-step message on a protected edge, and moves focus to **Undo** afterwards. One connection is removed at a time; a selected node is never removed by an edge's removal. After a mouse pan the toolbar briefly refuses: d3-zoom ends a pan that moved by adding a window-capture `click.drag` listener (d3-drag's `yesdrag`) that cancels the next click anywhere on the page, and removes it in a zero-delay task, so a Remove connection click in between was swallowed while the button looked available. A per-canvas gate (`editor/viewport-gesture.ts`) is `panning` from the canvas's first `onMove` with a `mousemove` source event, `settling` from the next mouse release, and ready two tasks later. Its single passive window-capture `mouseup` listener is added when the canvas mounts, so it sees each release before d3-zoom's per-press listener stops it; it queues a zero-delay task that queues a second, and only the second, which runs after d3's cleanup, makes it ready, and only if no mouse move came since and the canvas is still mounted. Meanwhile **Remove connection** and **Reset route** are `aria-disabled` (dimmed, keeping focus, their hit target and `nopan`) with `data-gesture` set to the state, and their handlers refuse on that same rendered state: a click, Enter or Space then does nothing and says nothing, and the first click once they show as available acts once. The pan's own click is still cancelled and the selection kept. Wheel, touch, Fit View and other programmatic moves add no blocker and never touch the gate; they also cannot strand it, since it does not wait for xyflow's `onMoveEnd`, which a later wheel or programmatic end replaces. A release that never reaches the page leaves the gate unavailable until the next mouse release there, which also ends d3's gesture. Nothing is replayed, prevented or patched; a protected voice step keeps its own disabled reason. The Space cards offer's buttons (#208, "Space cards" above) follow this same gate. Clicks on xyflow's zoom controls and after a node drag meet the same d3 blocker and are not gated. The screen-reader description of a focused connection says "Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection. To connect its output elsewhere, remove the connection and draw from the output again."
+ - **Change is remove, then draw again.** There is no reconnect handle and no single-step retarget. Remove the connection, then draw from the same output (a new target) or from another output (a new port). That is **two undo steps**: "remove edge a to b", then "connect a to c". The replacement is a new edge record. It may reuse the freed edge id, and it does not inherit the old edge's manual route: the canvas routes it automatically. Undoing both steps restores the old edge with its id, ends and `ui.route` unchanged; redoing both gives the new connection back. Every other edge is unchanged by either step.
+ - **Geometry is a separate edit.** Dragging or nudging a segment and **Reset route** (see "Manual edge routes" below) change only `ui.route` of the same edge, one undo step each, and never its ends. Renaming a decision route's ID in the dialog is declaration editing: the edge keeps its id, target and layout while its source port follows the row (see "Editing decision routes").
+ - **Stored edges the canvas cannot draw.** An edge whose source or target node is missing, whose output port is not a handle on its source card, or that leads into a trigger has no path to select. They come from imported or API-written drafts, and from ordinary editing: renaming or removing a Script exit-code label or applying section JSON leaves its stored edges, which stay stored and block publication (`EDGE_PORT_MISSING` and the other edge codes). **Loop issues**, the validation indicator beside Publish, lists them in its popover's own group, "Connections the canvas cannot draw", each once by its id and stored ends ("e5 from pick output route-3 to branch") with one **Remove edge eN**. The group reads the draft itself, not the issues' `edgeId`s, so it is there while the draft does not parse too: a Decision route whose ID is blank has no handle, so the connection its row owns is stored but not drawn, and validation then reports only the schema error on the node. The issue rows only inform, the counts are the issues' alone, and an id two edges share is not offered. Remove edge removes exactly that edge in one undo step, and Undo restores its id, ends and manual route, and a blank row's ownership of it. It acts only if the edge is still stored with those ends and still undrawable, so an action left over from before a repair, a removal or an id reuse removes nothing; it is disabled with the voice-step message for a protected Chat edge. The popover closes and focus returns to the indicator, or to the **Ready to publish** status when that was the last issue. Imported missing-node targets and a Script label renamed or removed are the cases it exists for. It is recovery for stranded topology, not an authoring form: Script labels are not followed automatically, and nothing is pruned silently. (`editor/stranded-edges.ts`, `editor/ValidationIndicator.tsx`.)
+diff --git a/docs/decisions/ADR-0077-explicit-space-cards.md b/docs/decisions/ADR-0077-explicit-space-cards.md
+index 49ff1e7..a27e9d4 100644
+--- a/docs/decisions/ADR-0077-explicit-space-cards.md
++++ b/docs/decisions/ADR-0077-explicit-space-cards.md
+@@ -19,6 +19,8 @@ The editor never moves cards by itself. When a draft has at least two nodes, eve
+ - It is one history step, one revision and one autosave like any edit, with no special save or permission path. Undo restores the exact earlier draft and Redo the exact spaced one.
+ - Focus stays on the canvas, the result is announced with Undo's availability, and the view fits once after the spaced cards render.
+ 
++The panel's two buttons, **Space cards** and **Dismiss suggestion**, follow the canvas's own viewport gate ([ADR-0076](ADR-0076-canvas-only-connection-authoring.md)), the same one that guards **Remove connection** and **Reset route**, not a second gate. After a mouse pan, d3's click blocker can swallow the next click anywhere on the page, including on these buttons, which sit outside the flow. From the pan's first move until its release has settled they are shown unavailable (`aria-disabled` and `data-gesture`, never `disabled` or `pointer-events: none`) and stay in place and focusable; a press then does nothing, so it cannot fall through to the canvas or be swallowed while they look available. Nothing is hidden, delayed or replayed. The store's recheck of eligibility is unchanged and still applies to the first press after the gate is ready.
++
+ Dismissing the offer lasts for the editor load. There is no general arrange command for loops that already have positions, and no change to the stored, export or API format.
+ 
+ ## Consequences
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index 0f21e18..b0b5dc7 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -9,7 +9,7 @@
+ 5. Drag from a labelled output handle to the next node's input handle. Connections are drawn only on the canvas, with a pointer: the node's dialog does not list or create them, and the keyboard cannot create one. **Delete node** in the dialog removes the node and its edges.
+ 6. Use the **Loop settings** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables. Its Show and Hide buttons collapse or expand it.
+ 
+-A loop made outside the editor, for example through the API, an import or a plugin, can open with all its cards stacked in one spot. The editor never moves them by itself. Instead, a small panel at the top of the canvas says **_n_ cards are stacked in one spot** and offers **Space cards**. It puts the cards in columns that follow the connections, left to right, keeping the first card where it is. Only card positions change, and it is one **Undo** step, named **Undo space cards**. The view then fits the spaced cards once; long loops may still reach past the edges, and connections may still cross. Focus stays on the canvas. The panel shows only while every card is at the same spot and no connection has a route you set. Moving one card is enough to hide it, and undoing that move brings it back. **Dismiss suggestion** hides it until the loop is opened again or you choose **Reload server draft**.
++A loop made outside the editor, for example through the API, an import or a plugin, can open with all its cards stacked in one spot. The editor never moves them by itself. Instead, a small panel at the top of the canvas says **_n_ cards are stacked in one spot** and offers **Space cards**. It puts the cards in columns that follow the connections, left to right, keeping the first card where it is. Only card positions change, and it is one **Undo** step, named **Undo space cards**. The view then fits the spaced cards once; long loops may still reach past the edges, and connections may still cross. Focus stays on the canvas. The panel shows only while every card is at the same spot and no connection has a route you set. Moving one card is enough to hide it, and undoing that move brings it back. **Dismiss suggestion** hides it until the loop is opened again or you choose **Reload server draft**. Right after you pan the canvas with the mouse, both buttons are dimmed for a moment, like the connection toolbar's (below), and do nothing until the pan has finished settling; press again once they are no longer dimmed.
+ 
+ Structured edits in the dialog save as you type; section JSON saves when applied, and unfinished text stays in this editing session when closing: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
+ 
+@@ -128,7 +128,7 @@ Connect exactly one edge per output port. Multiple inputs may converge on a node
+ 
+ To change where a connection goes, remove it and draw it again: select it and press **Delete** or **Backspace** (or click **Remove connection**), then drag from the same output, or from another one, to the new target. That is two steps in **Undo** and **Redo**, "remove edge …" and then "connect …". The new connection routes automatically; undoing both brings the old one back with the route you gave it. Moving or resetting a line's segments (below) is a separate edit that never changes where a connection starts or ends. When a drop lands on a port that cannot take the connection, the **Connection refused** notice says why (for example, that the output is already connected) and nothing is connected.
+ 
+-Right after you pan the canvas by dragging with the mouse, **Remove connection** and **Reset route** are dimmed for a moment and do nothing until the pan has finished settling; click again once they are no longer dimmed. Scrolling to zoom, touch and **Fit View** never dim them.
++Right after you pan the canvas by dragging with the mouse, **Remove connection** and **Reset route** (and, while it shows, the stacked-cards panel's **Space cards** and **Dismiss suggestion**) are dimmed for a moment and do nothing until the pan has finished settling; click again once they are no longer dimmed. Scrolling to zoom, touch and **Fit View** never dim them.
+ 
+ Some stored connections cannot be drawn, so there is nothing on the canvas to select: one from a node or output that no longer exists (including a Decision route whose ID you have left blank for the moment), an imported or API-written one into a trigger, or one left behind when you rename or remove a Script's exit-code label. They appear among the loop's issues beside **Publish**: open the count, find the edge under **Connections the canvas cannot draw**, which names its node, output and target, and click **Remove edge** _id_. That is one **Undo** step, and Undo brings the edge back. Nothing removes such an edge for you, and a renamed Script label keeps its old connection until you do. A Decision route's connection comes back on the canvas as soon as its ID is valid again.
+ 

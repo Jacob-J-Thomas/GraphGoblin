@@ -1,0 +1,98 @@
+# #208 Space cards pure helper: resume handoff
+
+Worker: Claude Sonnet 5.5 (`claude-sonnet-5-5`), effort `xhigh` as recorded in `launch.json`. Started 2026-11-14T21:50:48Z. A `date -u` check at 21:50:52Z was after the 21:50:00Z launch gate.
+This is implementation, not independent review. No subagents, Git/index writes, commits, GitHub, owner service or store were used.
+
+## Status in one paragraph
+
+The original attempt (`ui-208-space-helper-restart`) ended at the session limit, not by clean completion. It never wrote its own `handoff.md`, and its `report.md` only holds the quota message. This resume made the one requested architecture change: `withSpacedPositions` now throws on a positions/nodes count mismatch instead of silently keeping un-positioned nodes. It adjusted the one existing test that asserted the old short-array behaviour, and ran the narrow checks once. All of them passed on the first run. Nothing else in production behaviour changed, and no API was added.
+
+## Checkout and base
+
+- Worktree `C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin`, branch `codex/gg-20261114-space-cards`.
+- HEAD `64a955887962f72287e532824be1b8cb32c5f055` (tree `a6691516210eb25887cb92abdcbd8c7abe1a4bb3`). The index is empty.
+- `git status --short` shows exactly two untracked files. There is no tracked diff (`git diff --stat` is empty).
+- Before editing, the two files matched the checkpoint manifest `quota-source-checkpoint/space-cards/manifest.json` byte for byte (hashes below).
+
+## The two files (exact)
+
+| File | Before (checkpoint) | After (this resume) |
+|---|---|---|
+| `apps/web/src/editor/space-cards.ts` | 198 lines, 8127 B, sha256 `29c68018bac9f626dc20e9ee3b2107fd650ce96a0f17f6d63bf14916ba3d2e8a` | 205 lines, 8531 B, sha256 `8921ad9e67218fa788bb30e401f02702aa097932509d8413c02592d77e0fafd3` |
+| `apps/web/src/editor/space-cards.test.ts` | 1089 lines, 45062 B, sha256 `083f93ed7ce26f52d0036979f6cdd1f8b1a6e89214bb3413638956f904270c97` | 1106 lines, 45889 B, sha256 `cbcf2450425b53af7202af67ecd2af5043f95504807dc93d9b6f30ad28967384` |
+
+Artifacts in this directory:
+
+- `before/space-cards.ts`, `before/space-cards.test.ts`, `before/SHA256.txt`: exact pre-change copies.
+- `resume-delta.patch` (sha256 `1b6f11e09d817e7e733b8ca184a1b2e3aa13fdaa322f2a8f7cc93bd2cf3d3370`): before → after for this resume, +38/-14 lines by `git diff --numstat` (production +13/-6, tests +25/-8). Its `a/` header paths point at `before/` here.
+- `full-new-files.patch` (sha256 `fbf248bc12050e38c28df5dcbae77cb751c86200b79c72d6d0a1a1f1d675e037`): complete new-file patch of both files against the clean base. It was made with `git diff --no-index`, so the index was not touched.
+- `after-SHA256.txt`, `patch-SHA256.txt`, `logs/01..04-*.log`.
+
+## What changed (the whole delta)
+
+`space-cards.ts`, `withSpacedPositions` only:
+
+- First statement is now `if (positions.length !== definition.nodes.length) throw new Error(...)`. The message reads `Space cards needs one position for each of the N cards, but got M.`
+- The check runs before any node is mapped or any object is built, so nothing is returned or changed on mismatch. The input is never mutated either way.
+- The `!position` fallback (a node without a position kept as is) is removed. Index 0 stays exactly the original node object, with an absent `ui` still absent and `-0` preserved. All other nodes get `ui: {x, y}` copied from the position. Edges, settings and every other field keep their identity.
+- The doc comment now states the exact-count contract and that it is the last step of the all-card action, not a way to move some cards.
+- `spaceCardsEligible`, `spacedPositions`, `spacedCardHeight`, `SPACE_CARDS`, the layout algorithm and the exports are unchanged. The error type is plain `Error`, as elsewhere in `apps/web/src/editor`.
+
+`space-cards.test.ts`, `describe('withSpacedPositions')` only:
+
+- Replaced `leaves the input untouched and a card without a position as it was`. It had asserted `withSpacedPositions(definition, [])` returns the nodes untouched, which is the removed behaviour. The replacement, `leaves the input untouched`, keeps the immutability, anchor-identity and no-`ui`-written-on-the-input assertions with an exact-length positions array.
+- Added `refuses positions that are not one per card, before returning or changing anything`. For both `minimalLoop()` and `kitchenSinkLoop()`, deep-frozen, it passes `[]`, `n-1` positions and `n+1` positions. Each must throw with the message naming the expected and actual counts. The input must be unchanged against a `structuredClone` snapshot. The exact-length array is still accepted.
+- No other test was touched. All other call sites already pass full-length arrays from `spacedPositions`.
+
+## Commands and results (all run from this resume, Node v22.23.4 via the project runtime, pnpm 12.8.1)
+
+| # | Command | Result | Log |
+|---|---|---|---|
+| 1 | `pnpm exec vitest run src/editor/space-cards.test.ts` (cwd `apps/web`) | exit 0, 1 file, **105 passed** (was 104), 6.35 s | `logs/01-vitest-narrow.log` |
+| 2 | `pnpm exec tsc -p tsconfig.json --noEmit` (cwd `apps/web`) | exit 0, ~30 s | `logs/02-tsc-noemit.log` |
+| 3 | `pnpm exec eslint src/editor/space-cards.ts src/editor/space-cards.test.ts` | exit 0 | `logs/03-eslint.log` |
+| 4 | `pnpm exec prettier --check` on the two files | exit 0, "All matched files use Prettier code style!" | `logs/04-prettier-check.log` |
+
+- Each command ran once, all passed first time, and nothing was repeated. No `prettier --write` was needed this pass.
+- Item 2 is the web project's `--noEmit` typecheck, the only form of that check, so it covers the whole web project and not just these files. Test files are included in it.
+- Not run, by instruction: build, coverage, native/browser, emitting typecheck, broad suites, any further mutation run.
+- After the checks: no `*.tsbuildinfo` or `dist` under `apps/web`, no node/vitest process mentioning `space-cards`, nothing staged.
+- One process note: I ran `git status --short --ignored apps/web`, which walked into `node_modules` and printed many "Filename too long" warnings. It was read-only and changed nothing. I then redid the artifact and process checks narrowly, and those are the results above.
+
+Original-attempt evidence, preserved and untouched: `ui-208-space-helper-restart/logs/01..07` (the 104-pass focused run, noEmit pass, and the first lint/format failure and its correction), `logs/mutations/*`, `events.jsonl`, the quiescence audits and `result.json`. `ui-208-space-helper` (the first path-ambiguity attempt) and `quota-source-checkpoint/` were also not touched.
+
+## Original mutation sweep: qualified, not re-run
+
+The unrequested 35-variant sweep ran against the pre-resume source, SHA `29c68018…ab`, which was restored afterwards. Tally from `logs/mutations/summary.tsv`: 31 KILLED, 2 SURVIVED, 1 FAILED-OTHER, 1 BROKEN-BUILD.
+
+- `depth-not-shortest-dfs`: variant timed out (`status null`). It is **not** valid negative-assertion proof.
+- `with-ignores-short-positions`: BROKEN-BUILD, **not** valid proof. It targeted the tolerant behaviour this resume replaced, so it is superseded by the explicit contract and its new test. It was not run against the new source.
+- Survivors (`sources-only-first`, `no-fallback-entry`), both in `entryCards`' no-trigger branch. My reading of the code, not confirmed by any run:
+  - `no-fallback-entry` looks behaviourally equivalent. With no entries, the leftover pass starts at the first undiscovered card at depth 0, which is `nodes[0]`, the same as the fallback.
+  - `sources-only-first` looks like a real test gap. The existing no-trigger test (line 286) has two sources that lead to one card, which gives the same positions with one or two entries. A test would need a later source that reaches a shared card by a shorter path than the first source does (for example A→X→C and B→C). I did not add one, per the "no tests to chase a metric" instruction. It is flagged here as an optional follow-up for the Opus or review lane.
+- The sweep results say nothing about the new throw, other than the one new test.
+
+## Complexity (N nodes, E edges, P total output ports)
+
+- `spaceCardsEligible`: O(N + E), with early exit.
+- `spacedPositions`: O(N + E + P) time and space.
+  - Ports are listed once per node (`canvasPorts`) into a `Set`.
+  - ID resolution is one pass over nodes. Edge-ID counts are one pass over edges. Adjacency is one more pass over edges. Hash lookups are O(1) on average.
+  - Entry selection is O(N). Discovery enqueues each card once (mark on enqueue, queue cursor) and scans each counted adjacency once. The leftover scan is O(N). Stacking and the final shift are O(N).
+  - There is no sorting, no repeated full edge or port scans, and no dominator classifier.
+- `withSpacedPositions`: O(N). The count check is O(1) and runs first. Then one `map`, and edges are reused by reference.
+- The test file has an actual 500-node, 2,000-edge section with chain, star and dense-cycle shapes. Its read counter is a test-side Proxy, so there is no production instrumentation and no time thresholds.
+
+## What this does not claim
+
+- No UI, store, history, native, browser, PWA or accessibility behaviour was exercised. The helper has no DOM, store or network access, and no integration exists yet. Nothing imports these files.
+- No readiness, review or owner-acceptance claim. No independent review of the layout quality or of the tests.
+- Scaled-text correctness is only through the optional `heights` input, which stays untested against real measured DOM.
+- The error only fires on a count mismatch. A sparse array with a matching length is not representable in the `Point[]` type. By code reading, it would throw a `TypeError` at the first missing non-anchor entry before returning, but I did not test that.
+- Build, coverage, `pnpm check:*` gates, the current-main CI and a rebase onto current main were not run.
+
+## Remaining for Opus (stateful integration, later)
+
+- Wire the explicit action in the Canvas/store: re-check `spaceCardsEligible` against the live store definition at apply time, compute measured heights, call `spacedPositions` and then `withSpacedPositions` with exactly one position per current node, and record one history step.
+- Catch the count-mismatch `Error` as a programming-error path, not a user message. In normal use the count always matches, because positions come from the same `definition.nodes`.
+- UI affordance and copy, accessibility, native/scaled-text QA with real measurements, docs and ADR updates, the coverage gate, review, and CI on current main.

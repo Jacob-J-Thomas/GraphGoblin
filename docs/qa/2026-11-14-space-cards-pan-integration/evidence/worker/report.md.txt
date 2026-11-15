@@ -1,0 +1,56 @@
+The offer's two buttons now use the same Canvas-owned viewport gate as Remove and Reset. Tests, type check, lint and format all pass, but there is no native or browser evidence. The merge is still unresolved in the index and root's to stage.
+
+## The change
+- **Canvas.tsx:** I kept both Space cards imports and `createViewportGestureGate`, and no conflict markers remain. The only other change is passing the existing gate to the offer as `viewport={gesture}`, plus a comment. There is no second gate or window listener.
+- **SpaceCardsOffer.tsx:** The offer subscribes to the gate with `useSyncExternalStore`, as `OrthogonalEdge` does. Space cards and Dismiss suggestion show `aria-disabled` and `data-gesture` while the gate is panning or settling, and stay attached and focusable. They are never `disabled`, never `pointer-events:none`, and never hidden.
+- **Guarded action:** A press does nothing, silently, unless the rendered state and the gate's state at that moment are both ready.
+- **Docs:** I updated ADR-0077, docs/09, guide 02 and CHANGELOG. `space-cards.ts` still hashes to `8921ad9e…fafd3`, and `viewport-gesture.ts` and the store are unchanged.
+
+## Checks
+All ran on Node 22.23.4 with `pnpm.cmd`, from `apps/web`, through PowerShell.
+
+| Check | Result |
+|---|---|
+| Final focused `vitest run` (19 files) | 396 passed |
+| `tsc --noEmit` | exit 0 |
+| `eslint --max-warnings 0` on the changed TS/TSX files | exit 0 |
+| `prettier --check` on all changed files | exit 0 |
+
+- **First failures:**
+  - `prettier --check` first failed on `Canvas.space-cards.test.tsx`. The fix was one JSX line join, and the before-copy is kept.
+  - None of the new tests failed on their first run.
+- **Counterfactual probe:** With the offer temporarily ungated, all 11 new gate tests failed and the 7 existing ones passed. I restored the file and its hash matched before and after.
+- **What the tests cover:**
+  - Both controls stay attached and focusable while unavailable.
+  - A click, Enter or Space is refused, and the first press after release acts once.
+  - Dismiss makes no edit, save or history step.
+  - A stale offer is refused by the gate first and by the store afterwards.
+  - There is no second window listener, and the offer unsubscribes and re-subscribes correctly.
+  - A new real xyflow and d3 integration test (`Canvas.space-cards.gate.test.tsx`) shows d3 cancelling the click after a pan before it reaches either control.
+
+## Index and merge
+- **Merge state:** `Canvas.tsx` is still `UU` with stages 1/2/3, and I resolved only its working tree. I never staged, reset, committed or merged.
+- **Index evidence:** `git ls-files --stage` before and after is byte-identical (SHA-256 `331ca0d7…`), and the index file hash and mtime match my baseline.
+- **Disclosure:** My first command was a `git status` without `GIT_OPTIONAL_LOCKS=0`, which may have refreshed the index's stat data. So the baseline for the index file's bytes starts after that command. I also ran one `git write-tree`, which refused because of the unmerged entry and wrote nothing.
+
+## Not tested
+Nothing was run natively or in a browser, and I ran no coverage, build, e2e or `pnpm check`. That leaves unproven:
+- the first press after a real pan
+- double-click behaviour
+- target geometry
+- enlarged-font spacing
+
+Those stay in `layout-208-independent-preparation/space-cards.md`. Node-drag overlap is untouched and still goes to the formal reviewer.
+
+This is implementation with 0 formal reviews, and my checks are not an independent review. Final parent/main integration, native QA, GPT opposite-family review, fresh Astra/current-target CI and owner acceptance are all still required.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-space-predecessor`:
+- handoff.md
+- final-SHA256.txt
+- tracked-changes.patch
+- new-files.patch
+- patch-SHA256.txt
+- index-initial.txt
+- index-final.txt
+- final-index-check.txt
+- logs/

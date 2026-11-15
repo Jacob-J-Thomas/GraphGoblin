@@ -1,0 +1,756 @@
+diff --git a/apps/web/src/editor/Canvas.space-cards.test.tsx b/apps/web/src/editor/Canvas.space-cards.test.tsx
+index 3c5fd319..9976e71a 100644
+--- a/apps/web/src/editor/Canvas.space-cards.test.tsx
++++ b/apps/web/src/editor/Canvas.space-cards.test.tsx
+@@ -1,10 +1,12 @@
++import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+ import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+ import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+-import type { NodeChange, ReactFlowProps } from '@xyflow/react';
+-import { Profiler } from 'react';
++import { getViewportForBounds, type NodeChange, type ReactFlowProps } from '@xyflow/react';
++import { Profiler, useLayoutEffect, useSyncExternalStore } from 'react';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+ import { Canvas } from './Canvas.js';
++import { newLoopDefinition } from './model.js';
+ import type { FlowNode } from './NodeCard.js';
+ import { spacedPositions } from './space-cards.js';
+ import { SpaceCardsOffer, SpaceCardsResult } from './SpaceCardsOffer.js';
+@@ -14,8 +16,36 @@ import { createViewportGestureGate } from './viewport-gesture.js';
+ 
+ let props: ReactFlowProps<FlowNode> | undefined;
+ const fitView = vi.fn(() => Promise.resolve(true));
++const setViewport = vi.fn(() => Promise.resolve(true));
+ const geometry: RoutingGeometry = { nodes: [], preparationMs: 0, outputOrder: new Map() };
+ 
++/**
++ * What xyflow says about its pane and its viewport, as these tests control it: the pane size its
++ * store holds (a pane starts at 0 × 0 until measured) and whether the viewport can be moved. A
++ * change notifies the hooks that read it, as xyflow's store does. The Canvas's real selector runs
++ * on this state, and its live read of the pane size sees the same state.
++ */
++const FLOW_READY = { width: 1200, height: 800, viewportInitialized: true };
++const flow$ = (() => {
++  const listeners = new Set<() => void>();
++  let state = { ...FLOW_READY };
++  return {
++    state: () => state,
++    subscribe: (listener: () => void) => {
++      listeners.add(listener);
++      return () => void listeners.delete(listener);
++    },
++    set: (next: Partial<typeof FLOW_READY>) => {
++      state = { ...state, ...next };
++      for (const listener of listeners) listener();
++    },
++    reset: () => {
++      state = { ...FLOW_READY };
++    },
++  };
++})();
++const flowStoreStub = { getState: () => flow$.state() };
++
+ vi.mock('@xyflow/react', async (importOriginal) => {
+   const actual = await importOriginal<Record<string, unknown>>();
+   return {
+@@ -24,8 +54,26 @@ vi.mock('@xyflow/react', async (importOriginal) => {
+       props = p;
+       return <div data-testid="flow" />;
+     },
+-    useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p, fitView }),
+-    useStore: (selector?: { name?: string }) => (selector?.name === 'zoomOf' ? 1 : geometry),
++    useReactFlow: () => ({
++      screenToFlowPosition: (p: { x: number; y: number }) => p,
++      fitView,
++      setViewport,
++      viewportInitialized: useSyncExternalStore(
++        flow$.subscribe,
++        () => flow$.state().viewportInitialized,
++      ),
++    }),
++    useStoreApi: () => flowStoreStub,
++    useStore: (
++      selector?: ((state: ReturnType<typeof flow$.state>) => unknown) & { name?: string },
++    ) => {
++      // The Canvas's own selector of the pane runs on the state above; its other hooks read the
++      // routing geometry or the zoom, as before. Every call subscribes, so hooks run in order.
++      const pane = useSyncExternalStore(flow$.subscribe, () =>
++        selector?.name === 'paneMeasured' ? selector(flow$.state()) : undefined,
++      );
++      return selector?.name === 'zoomOf' ? 1 : selector?.name === 'paneMeasured' ? pane : geometry;
++    },
+   };
+ });
+ 
+@@ -54,10 +102,7 @@ function stubOfferBox() {
+       : measured.call(this);
+   });
+ }
+-const OPENING_FIT = {
+-  padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
+-  minZoom: 0.5,
+-};
++const FIT_PADDING = { top: '8%', right: '8%', bottom: '8%', left: '72px' } as const;
+ 
+ /** xyflow's measurement of every card in the current draft: `heights` by id, else 100. */
+ const measure = (heights: Record<string, number> = {}) =>
+@@ -71,6 +116,50 @@ const measure = (heights: Record<string, number> = {}) =>
+     ),
+   );
+ 
++/** xyflow's measurement of the cards named, at the sizes given, and of no other. */
++const measureCards = (sizes: Record<string, { width: number; height: number }>) =>
++  act(() =>
++    flow().onNodesChange!(
++      Object.entries(sizes).map(([id, dimensions]): NodeChange<FlowNode> => ({
++        type: 'dimensions',
++        id,
++        dimensions,
++      })),
++    ),
++  );
++
++/**
++ * The view the draft is owed, worked from where its cards are now and the sizes `measure` gave
++ * them, never from the Canvas's own bounds: the opening fit's padding, its 50 % floor and the
++ * canvas's own 200 % ceiling, in a pane of the size given (1200 × 800 unless said).
++ */
++function owedView(
++  heights: Record<string, number> = {},
++  pane: { width: number; height: number } = FLOW_READY,
++) {
++  const cards = store().definition!.nodes.map((node) => {
++    const { x, y } = node.ui ?? { x: 0, y: 0 };
++    // By own id, as the canvas does: a card called `constructor` has no entry of `heights`.
++    const height = Object.hasOwn(heights, node.id) ? heights[node.id]! : 100;
++    return { left: x, top: y, right: x + 184, bottom: y + height };
++  });
++  const left = Math.min(...cards.map((card) => card.left));
++  const top = Math.min(...cards.map((card) => card.top));
++  return getViewportForBounds(
++    {
++      x: left,
++      y: top,
++      width: Math.max(...cards.map((card) => card.right)) - left,
++      height: Math.max(...cards.map((card) => card.bottom)) - top,
++    },
++    pane.width,
++    pane.height,
++    0.5,
++    2,
++    FIT_PADDING,
++  );
++}
++
+ /** The canvas as the editor page renders it: on the store's current draft. */
+ function Live() {
+   const definition = useEditorStore((s) => s.definition)!;
+@@ -80,6 +169,8 @@ function Live() {
+ describe('Space cards on the canvas (#208)', () => {
+   beforeEach(() => {
+     fitView.mockClear();
++    setViewport.mockClear();
++    flow$.reset();
+     store().load('L1', kitchenSinkLoop());
+   });
+ 
+@@ -139,34 +230,320 @@ describe('Space cards on the canvas (#208)', () => {
+     expect(canvas()).toHaveFocus();
+     expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
+     expect(offer()).toBeNull();
+-    expect(fitView).toHaveBeenCalledTimes(1);
+-    expect(fitView).toHaveBeenCalledWith(OPENING_FIT);
++    // One view, set at once from the spaced cards' own bounds. xyflow's queued `fitView` is not used.
++    expect(setViewport).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
++    expect(fitView).not.toHaveBeenCalled();
+     // Undo, redo, an ordinary edit and later measurements never fit the view again.
+     act(() => store().undo());
+     act(() => store().redo());
+     act(() => store().moveNode('prep', { x: 1, y: 1 }));
+     measure({ prep: 410 });
+-    expect(fitView).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledTimes(1);
++    expect(fitView).not.toHaveBeenCalled();
++  });
++
++  it('sets the view as the press is handled, with nothing waiting behind a promise, a timer or a frame', () => {
++    render(<Live />);
++    measure({ prep: 400 });
++    fireEvent.click(spaceButton(), { detail: 1 });
++    // `fireEvent` returns once React has handled the press and run its effects, and no `await`
++    // came between: a fit behind a promise, timer or frame would not have set the view by now.
++    expect(setViewport).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
++    expect(fitView).not.toHaveBeenCalled();
+   });
+ 
+   it('fits only once the spaced cards are measured, and drops the fit when an undo or a load comes first', async () => {
+     const user = userEvent.setup();
+     let view = render(<Live />);
+     await user.click(spaceButton());
+-    expect(fitView).not.toHaveBeenCalled();
++    expect(setViewport).not.toHaveBeenCalled();
+     measure();
+-    expect(fitView).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledTimes(1);
+ 
+     for (const first of [() => store().undo(), () => store().load('L1', kitchenSinkLoop())]) {
+       // A new canvas, with nothing measured yet.
+       act(() => store().load('L1', kitchenSinkLoop()));
+       view.unmount();
+       view = render(<Live />);
+-      fitView.mockClear();
++      setViewport.mockClear();
+       await user.click(spaceButton());
+       act(first);
+       measure();
++      expect(setViewport).not.toHaveBeenCalled();
++    }
++    expect(fitView).not.toHaveBeenCalled();
++  });
++
++  it('keeps waiting for every card to have a size that is positive and finite, and fits when the last one does', async () => {
++    const user = userEvent.setup();
++    const none = { width: 0, height: 0 };
++    for (const bad of [
++      none,
++      { width: 184, height: 0 },
++      { width: 0, height: 100 },
++      { width: -184, height: 100 },
++      { width: 184, height: Number.NaN },
++      { width: Number.POSITIVE_INFINITY, height: 100 },
++    ]) {
++      act(() => store().load('L1', kitchenSinkLoop()));
++      setViewport.mockClear();
++      const view = render(<Live />);
++      await user.click(spaceButton());
++      // Every card but `prep` has its size, and `prep` has none yet or has not got a usable one.
++      measureCards(
++        Object.fromEntries(
++          store()
++            .definition!.nodes.filter((node) => node.id !== 'prep')
++            .map((node) => [node.id, { width: 184, height: 100 }]),
++        ),
++      );
++      expect(setViewport).not.toHaveBeenCalled();
++      measureCards({ prep: bad });
++      expect(setViewport).not.toHaveBeenCalled();
++      measureCards({ prep: { width: 184, height: 400 } });
++      expect(setViewport).toHaveBeenCalledTimes(1);
++      expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
++      view.unmount();
++    }
++  });
++
++  it('looks a card’s size up by its own id: a card called `constructor` is not measured by the object’s prototype', async () => {
++    const user = userEvent.setup();
++    const base = newLoopDefinition('Pile');
++    const named = (id: string) => (id === 'start' ? 'constructor' : id);
++    act(() =>
++      store().load('L1', {
++        ...base,
++        nodes: base.nodes.map((node) => ({ ...node, id: named(node.id), ui: { x: 0, y: 0 } })),
++        edges: base.edges.map((edge) => ({
++          ...edge,
++          from: { ...edge.from, node: named(edge.from.node) },
++          to: { ...edge.to, node: named(edge.to.node) },
++        })),
++      }),
++    );
++    render(<Live />);
++    await user.click(spaceButton());
++    expect(store().past.map((step) => step.label)).toEqual(['space cards']);
++    measureCards({ done: { width: 184, height: 100 } });
++    expect(setViewport).not.toHaveBeenCalled();
++    measureCards({ constructor: { width: 184, height: 100 } });
++    expect(setViewport).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledWith(owedView());
++  });
++
++  it.each([
++    ['no width', { width: 0 }],
++    ['no height', { height: 0 }],
++    ['no size at all', { width: 0, height: 0 }],
++    ['a negative width', { width: -1 }],
++    ['a width that is not a number', { width: Number.NaN }],
++    ['an infinite height', { height: Number.POSITIVE_INFINITY }],
++  ])(
++    'waits while xyflow’s pane has %s, and fits once, at that size, when it is measured',
++    async (_, unmeasured) => {
++      const user = userEvent.setup();
++      flow$.set(unmeasured);
++      render(<Live />);
++      measure({ prep: 400 });
++      await user.click(spaceButton());
++      expect(labels()).toEqual(['space cards']);
++      // Kept, not dropped and not spent: nothing is set, and a later measurement of a card changes
++      // nothing either while the pane has no size.
++      expect(setViewport).not.toHaveBeenCalled();
++      measure({ prep: 400 });
++      expect(setViewport).not.toHaveBeenCalled();
++
++      act(() => flow$.set({ width: 900, height: 600 }));
++      expect(setViewport).toHaveBeenCalledTimes(1);
++      expect(setViewport).toHaveBeenCalledWith(
++        owedView({ prep: 400 }, { width: 900, height: 600 }),
++      );
++      // Spent: the pane changing again, or a card measured again, fits nothing more.
++      act(() => flow$.set({ width: 1200, height: 800 }));
++      measure({ prep: 410 });
++      expect(setViewport).toHaveBeenCalledTimes(1);
++      expect(fitView).not.toHaveBeenCalled();
++    },
++  );
++
++  it('waits while xyflow has no viewport to move, and fits once when it has', async () => {
++    const user = userEvent.setup();
++    flow$.set({ viewportInitialized: false });
++    render(<Live />);
++    measure({ prep: 400 });
++    await user.click(spaceButton());
++    expect(setViewport).not.toHaveBeenCalled();
++    measure({ prep: 400 });
++    expect(setViewport).not.toHaveBeenCalled();
++
++    act(() => flow$.set({ viewportInitialized: true }));
++    expect(setViewport).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
++  });
++
++  it('keeps waiting through each readiness change, and an edit while it waits drops the fit for good', async () => {
++    const user = userEvent.setup();
++    flow$.set({ width: 0, height: 0, viewportInitialized: false });
++    render(<Live />);
++    await user.click(spaceButton());
++    measure({ prep: 400 });
++    expect(setViewport).not.toHaveBeenCalled();
++    act(() => flow$.set({ viewportInitialized: true }));
++    expect(setViewport).not.toHaveBeenCalled();
++    // An ordinary edit while it waits: the fit is gone for good, whatever arrives after.
++    act(() => store().moveNode('prep', { x: 5, y: 5 }));
++    act(() => flow$.set({ width: 1200, height: 800 }));
++    measure({ prep: 400 });
++    act(() => store().undo());
++    measure({ prep: 400 });
++    expect(setViewport).not.toHaveBeenCalled();
++  });
++
++  it('drops a fit that waits when an Undo and a Redo bring the same draft back, because it is a newer revision', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    await user.click(spaceButton());
++    const spaced = store().definition!;
++    const revision = store().revision;
++    // Both in one update: the canvas renders the very draft it was given before, in the same load.
++    act(() => {
++      store().undo();
++      store().redo();
++    });
++    expect(store().definition).toBe(spaced);
++    expect(store().revision).toBe(revision + 2);
++    measure({ prep: 400 });
++    expect(setViewport).not.toHaveBeenCalled();
++    // And the same with the draft measured first, the pane the last thing to arrive.
++    act(() => store().load('L1', kitchenSinkLoop()));
++    act(() => flow$.set({ width: 0 }));
++    measure({ prep: 400 });
++    await user.click(spaceButton());
++    const again = store().definition!;
++    act(() => {
++      store().undo();
++      store().redo();
++    });
++    expect(store().definition).toBe(again);
++    act(() => flow$.set({ width: 1200 }));
++    expect(setViewport).not.toHaveBeenCalled();
++    expect(fitView).not.toHaveBeenCalled();
++  });
++
++  it('drops a fit when the store has moved past the draft this canvas still renders, and fits nothing when it catches up', async () => {
++    const user = userEvent.setup();
++    // A canvas whose rendering lags the store: it holds the draft it was told last, until released.
++    let held: LoopDefinitionInput | undefined;
++    const Lagging = () => {
++      const definition = useEditorStore((s) => s.definition)!;
++      return <Canvas definition={held ?? definition} issues={[]} />;
++    };
++    const view = render(<Lagging />);
++    await user.click(spaceButton());
++    held = store().definition!;
++    // The store goes back to the pile while the canvas still renders the spaced draft it asked for.
++    act(() => store().undo());
++    expect(setViewport).not.toHaveBeenCalled();
++    // Every card of that rendered draft is measured and the pane is ready: all but the store's word.
++    measure();
++    expect(setViewport).not.toHaveBeenCalled();
++    held = undefined;
++    view.rerender(<Lagging />);
++    measure();
++    expect(setViewport).not.toHaveBeenCalled();
++    expect(fitView).not.toHaveBeenCalled();
++  });
++
++  it('drops a fit when input reaches the store after the render that would fit it and before the effect that does, even a load that repeats its revision', async () => {
++    const user = userEvent.setup();
++    // A load of another draft from a layout effect: after the press's render commits, before its
++    // passive effects (the fit's) run. The load is dirty, so its revision is 1, the very revision
++    // Space cards gave the draft it spaced: only the load's own number and draft tell them apart.
++    let intrusion: (() => void) | undefined;
++    const Intruder = () => {
++      const definition = useEditorStore((s) => s.definition);
++      useLayoutEffect(() => {
++        const run = intrusion;
++        intrusion = undefined;
++        run?.();
++      }, [definition]);
++      return null;
++    };
++    render(
++      <>
++        <Live />
++        <Intruder />
++      </>,
++    );
++    measure();
++    intrusion = () => store().load('L2', kitchenSinkLoop(), { dirty: true });
++    await user.click(spaceButton());
++    expect(store()).toMatchObject({ loopId: 'L2', revision: 1 });
++    expect(intrusion).toBeUndefined();
++    // Every card was measured and the pane ready: nothing but the store's own word stopped it.
++    expect(setViewport).not.toHaveBeenCalled();
++    expect(fitView).not.toHaveBeenCalled();
++    // The load's own pile is offered, and its own press fits once.
++    await user.click(spaceButton());
++    expect(setViewport).toHaveBeenCalledTimes(1);
++  });
++
++  it('drops a fit when the canvas still renders an older draft than the one the store spaced, and fits nothing of the draft it renders', async () => {
++    const user = userEvent.setup();
++    // A canvas that lags the other way: it renders the pile it was given, while the store moves on.
++    const pileDraft = store().definition!;
++    const Behind = () => {
++      useEditorStore((s) => s.definition);
++      return <Canvas definition={pileDraft} issues={[]} />;
++    };
++    render(<Behind />);
++    await user.click(spaceButton());
++    expect(store().definition).not.toBe(pileDraft);
++    expect(labels()).toEqual(['space cards']);
++    // Every card is measured, the pane and viewport are ready, and the store still holds the spaced
++    // draft it asked for: the canvas is not rendering it, so what it would fit is the pile's bounds.
++    measure();
++    expect(setViewport).not.toHaveBeenCalled();
++    expect(fitView).not.toHaveBeenCalled();
++  });
++
++  it('drops a fit that waits when the draft is loaded again, even a draft of the same cards', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    await user.click(spaceButton());
++    act(() => store().load('L1', kitchenSinkLoop()));
++    measure();
++    expect(setViewport).not.toHaveBeenCalled();
++    expect(offer()).not.toBeNull();
++    // The new load can still be spaced, and fits once of its own.
++    await user.click(spaceButton());
++    expect(setViewport).toHaveBeenCalledTimes(1);
++  });
++
++  it('leaves nothing queued when the canvas unmounts while its fit waits, however the pane and cards change after', async () => {
++    const user = userEvent.setup();
++    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
++    try {
++      flow$.set({ width: 0, height: 0 });
++      const view = render(<Live />);
++      await user.click(spaceButton());
++      view.unmount();
++      act(() => flow$.set({ width: 1200, height: 800, viewportInitialized: false }));
++      act(() => flow$.set({ viewportInitialized: true }));
++      expect(setViewport).not.toHaveBeenCalled();
+       expect(fitView).not.toHaveBeenCalled();
++      expect(errors).not.toHaveBeenCalled();
++      // A canvas that mounts afterwards has no fit waiting for it.
++      act(() => store().undo());
++      const next = render(<Live />);
++      measure();
++      expect(setViewport).not.toHaveBeenCalled();
++      next.unmount();
++    } finally {
++      errors.mockRestore();
+     }
+   });
+ 
+@@ -180,6 +557,7 @@ describe('Space cards on the canvas (#208)', () => {
+     expect(store()).toBe(state);
+     expect(canvas()).toHaveFocus();
+     expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
++    expect(setViewport).not.toHaveBeenCalled();
+     expect(fitView).not.toHaveBeenCalled();
+   });
+ 
+@@ -245,6 +623,8 @@ describe('the result a pointer press leaves where the offer was (#208)', () => {
+ 
+   beforeEach(() => {
+     fitView.mockClear();
++    setViewport.mockClear();
++    flow$.reset();
+     store().load('L1', kitchenSinkLoop());
+     boxSpy = stubOfferBox();
+   });
+@@ -298,7 +678,8 @@ describe('the result a pointer press leaves where the offer was (#208)', () => {
+     expect(canvas()).toHaveFocus();
+     // One step and one fit, as without the result.
+     expect(labels()).toEqual(['space cards']);
+-    expect(fitView).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
+   });
+ 
+   it('shows Suggestion dismissed. in the box for Dismiss, with no edit, save or step', async () => {
+@@ -555,6 +936,8 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
+ 
+   beforeEach(() => {
+     fitView.mockClear();
++    setViewport.mockClear();
++    flow$.reset();
+     store().load('L1', kitchenSinkLoop());
+   });
+ 
+@@ -601,6 +984,7 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
+       // Focus did not leave the button for the canvas, and nothing was announced or fitted.
+       expect(space).toHaveFocus();
+       expect(announced()).toBe('');
++      expect(setViewport).not.toHaveBeenCalled();
+       expect(fitView).not.toHaveBeenCalled();
+       expect(offer()).not.toBeNull();
+     };
+@@ -627,7 +1011,9 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
+     expect(canvas()).toHaveFocus();
+     expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
+     expect(offer()).toBeNull();
+-    expect(fitView).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledTimes(1);
++    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
++    expect(fitView).not.toHaveBeenCalled();
+     expect(store().future).toEqual([]);
+   });
+ 
+@@ -688,6 +1074,7 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
+     expect(store()).toBe(state);
+     expect(canvas()).toHaveFocus();
+     expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
++    expect(setViewport).not.toHaveBeenCalled();
+     expect(fitView).not.toHaveBeenCalled();
+   });
+ 
+diff --git a/apps/web/src/editor/Canvas.test.tsx b/apps/web/src/editor/Canvas.test.tsx
+index c28a232f..92499a7e 100644
+--- a/apps/web/src/editor/Canvas.test.tsx
++++ b/apps/web/src/editor/Canvas.test.tsx
+@@ -35,6 +35,8 @@ const geometryOf = (nodes: readonly RoutingNode[]): RoutingGeometry => ({
+ let geometry: RoutingGeometry = geometryOf([]);
+ /** Render the orthogonal edges too (the real component, in a stand-in wrapper), for #44. */
+ let drawEdges = false;
++/** The pane xyflow has not measured: Space cards waits for a pane to fit into, and this never presses it. */
++const flowStoreStub = { getState: () => ({ width: 0, height: 0 }) };
+ 
+ vi.mock('@xyflow/react', async (importOriginal) => {
+   const actual = await importOriginal<Record<string, unknown>>();
+@@ -45,6 +47,7 @@ vi.mock('@xyflow/react', async (importOriginal) => {
+       return <div data-testid="flow">{drawEdges ? <EdgeLayer flow={p} /> : null}</div>;
+     },
+     useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p }),
++    useStoreApi: () => flowStoreStub,
+     // The edge's handles read the zoom; everything else here reads the routing geometry.
+     useStore: (selector?: { name?: string }) => (selector?.name === 'zoomOf' ? 1 : geometry),
+   };
+diff --git a/apps/web/src/editor/Canvas.tsx b/apps/web/src/editor/Canvas.tsx
+index 50b3624b..8dfe51d5 100644
+--- a/apps/web/src/editor/Canvas.tsx
++++ b/apps/web/src/editor/Canvas.tsx
+@@ -2,6 +2,7 @@ import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graph
+ import {
+   Background,
+   getSmoothStepPath,
++  getViewportForBounds,
+   Position,
+   Controls,
+   ReactFlow,
+@@ -9,7 +10,9 @@ import {
+   type FitViewOptions,
+   useReactFlow,
+   useStore,
++  useStoreApi,
+   type ReactFlowState,
++  type Rect,
+   type Connection,
+   type Edge,
+   type EdgeChange,
+@@ -90,14 +93,17 @@ const MIN_CANVAS_ZOOM = 0.1;
+ const MAX_CANVAS_ZOOM = 2;
+ 
+ /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
+-const FIT_VIEW_OPTIONS: FitViewOptions = {
+-  padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
+-};
++const FIT_PADDING = { top: '8%', right: '8%', bottom: '8%', left: '72px' } as const;
++const FIT_VIEW_OPTIONS: FitViewOptions = { padding: FIT_PADDING };
+ /**
+  * Opening the editor fits the graph but stays readable; Fit View shows a large graph whole. The fit
+  * is queued from `onInit` because xyflow's `fitView` prop can fit again without its options.
+  */
+-const INITIAL_FIT_VIEW_OPTIONS: FitViewOptions<FlowNode> = { ...FIT_VIEW_OPTIONS, minZoom: 0.5 };
++const OPENING_MIN_ZOOM = 0.5;
++const INITIAL_FIT_VIEW_OPTIONS: FitViewOptions<FlowNode> = {
++  ...FIT_VIEW_OPTIONS,
++  minZoom: OPENING_MIN_ZOOM,
++};
+ const fitOnOpen: OnInit<FlowNode, Edge> = (instance) =>
+   void instance.fitView(INITIAL_FIT_VIEW_OPTIONS);
+ 
+@@ -243,6 +249,37 @@ const NO_ISSUES: readonly EditorIssue[] = [];
+ 
+ const zoomOf = (state: ReactFlowState) => state.transform[2];
+ 
++const isLength = (length: number) => Number.isFinite(length) && length > 0;
++
++/** Whether xyflow has measured its pane, which starts at 0 × 0: a fit needs room to fit into. */
++const paneMeasured = (state: ReactFlowState) => isLength(state.width) && isLength(state.height);
++
++/**
++ * The rectangle the draft's cards fill: their positions in the draft and the sizes xyflow measured
++ * for them. It is undefined while any card has no size yet, or a size that is not positive and
++ * finite. Sizes are looked up as own properties, since a card can be called `constructor`. The
++ * draft is one Space cards spaced, so it has at least two cards.
++ */
++function cardBounds(
++  definition: LoopDefinitionInput,
++  measured: Record<string, Size>,
++): Rect | undefined {
++  let left = Infinity;
++  let top = Infinity;
++  let right = -Infinity;
++  let bottom = -Infinity;
++  for (const node of definition.nodes) {
++    const size = Object.hasOwn(measured, node.id) ? measured[node.id] : undefined;
++    if (!size || !isLength(size.width) || !isLength(size.height)) return undefined;
++    const { x, y } = node.ui ?? { x: 0, y: 0 };
++    left = Math.min(left, x);
++    top = Math.min(top, y);
++    right = Math.max(right, x + size.width);
++    bottom = Math.max(bottom, y + size.height);
++  }
++  return { x: left, y: top, width: right - left, height: bottom - top };
++}
++
+ /** Publish zoom without re-rendering the canvas or its cards on each viewport change. */
+ function CanvasZoom({
+   canvasRef,
+@@ -545,7 +582,11 @@ export function Canvas({
+     setEdgeRoute,
+     spaceCards,
+   } = useEditorStore.getState();
+-  const { screenToFlowPosition, fitView } = useReactFlow();
++  const { screenToFlowPosition, setViewport, viewportInitialized } = useReactFlow();
++  const flowStore = useStoreApi();
++  // Renders again when xyflow measures its pane, so a fit waiting for one tries again; the size
++  // itself is read live where the fit uses it.
++  const paneReady = useStore(paneMeasured);
+   // A segment drag in progress (#44): its route is routed as a preview until the pointer is up.
+   const [routeDrag, setRouteDrag] = useState<{ edgeId: string; route: readonly number[] }>();
+   const [announcement, setAnnouncement] = useState({ text: '', key: 0 });
+@@ -1092,22 +1133,50 @@ export function Canvas({
+     announce(spoken);
+     if (box) setOfferResult({ message, box, generation: useEditorStore.getState().generation });
+   };
+-  // The one view fit that Space cards asks for: the draft it produced, kept until that draft has
+-  // rendered with every card measured (this passive effect runs after xyflow's own, which hands it
+-  // the new positions). Another edit, an undo or a load first drops it; no edit, undo or redo
+-  // fits the view by itself.
+-  const spacedFitRef = useRef<{ definition: LoopDefinitionInput; generation: number }>(undefined);
++  // The one view fit that Space cards asks for: the draft it produced (and its revision, which
++  // tells it from the same draft object back after an undo and a redo), kept until that draft has
++  // rendered with every card measured, the pane measured and the viewport ready. This is not
++  // `fitView`: xyflow queues that fit and spends it on whichever graph it adopts next (an undo that
++  // lands first fits the restored pile), and no public call cancels a queued fit. The view is set
++  // from the cards' own bounds with `setViewport` in the same synchronous turn as these checks, so
++  // nothing is left to run later. Any other edit, an undo, a redo or a load before then drops the
++  // fit for good, as the store's own draft is read again here; the effect runs again as
++  // measurements and readiness arrive. The padding and zoom limits are the opening fit's, and no
++  // edit, undo or redo fits the view by itself.
++  const spacedFitRef = useRef<{
++    definition: LoopDefinitionInput;
++    generation: number;
++    revision: number;
++  }>(undefined);
+   useEffect(() => {
+     const pending = spacedFitRef.current;
+     if (!pending) return;
+-    if (pending.definition !== definition || pending.generation !== generation) {
++    const live = useEditorStore.getState();
++    if (
++      pending.definition !== definition ||
++      pending.generation !== generation ||
++      live.definition !== pending.definition ||
++      live.generation !== pending.generation ||
++      live.revision !== pending.revision
++    ) {
+       spacedFitRef.current = undefined;
+       return;
+     }
+-    if (!definition.nodes.every((node) => Object.hasOwn(measured, node.id))) return;
++    const bounds = cardBounds(definition, measured);
++    const pane = flowStore.getState();
++    if (!viewportInitialized || !bounds || !paneMeasured(pane)) return;
+     spacedFitRef.current = undefined;
+-    void fitView(INITIAL_FIT_VIEW_OPTIONS);
+-  }, [definition, generation, measured, fitView]);
++    void setViewport(
++      getViewportForBounds(
++        bounds,
++        pane.width,
++        pane.height,
++        OPENING_MIN_ZOOM,
++        MAX_CANVAS_ZOOM,
++        FIT_PADDING,
++      ),
++    );
++  }, [definition, generation, measured, viewportInitialized, paneReady, setViewport, flowStore]);
+   // The store checks its current draft again, so a second press, a repeated key or an offer left
+   // from an older render changes nothing.
+   const spaceAll = (box: OfferBox | undefined) => {
+@@ -1119,7 +1188,11 @@ export function Canvas({
+     if (result === 'applied') {
+       const state = useEditorStore.getState();
+       const spaced = state.definition!;
+-      spacedFitRef.current = { definition: spaced, generation: state.generation };
++      spacedFitRef.current = {
++        definition: spaced,
++        generation: state.generation,
++        revision: state.revision,
++      };
+       const shown = `Spaced ${spaced.nodes.length} cards.`;
+       report(shown, box, `${shown} Undo puts them back.`);
+     } else {
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index cd6dee92..02f28522 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -274,13 +274,13 @@ The owner's decision, recorded in [ADR-0077](decisions/ADR-0077-explicit-space-c
+ - **Dismissing.** **Dismiss suggestion** hides the offer for this editor load (its `generation`); focus moves to the canvas and "Suggestion dismissed." is announced. A pointer click also leaves the visible line **Suggestion dismissed.** in the panel's box (see "The result of a pointer press" below). A load (opening the loop, **Reload server draft**, restoring a set-aside copy) or a new canvas offers it again.
+ - **After a mouse pan.** The offer's buttons sit outside the flow, but inside the same page-wide capture path as d3-drag's `click.drag` blocker (see "Remove" under "Connections are drawn on the canvas" below), so a click on them right after a mouse pan could be swallowed while they looked available. **Space cards** and **Dismiss suggestion** therefore follow the canvas's own viewport gate, the one that guards **Remove connection** and **Reset route**: the canvas hands it to the offer as `viewport`, the offer subscribes with `useSyncExternalStore`, and there is no second gate and no second window listener. From a pan's first move until its release has settled both buttons are `aria-disabled` with `data-gesture` set to `panning` or `settling`. They are not `disabled`, not `pointer-events: none` and not hidden, so they keep their place, hit target and focus, and a press cannot fall through to the canvas below the panel. A click, Enter or Space then does nothing and says nothing: no announcement, no focus move and no call to the store. A press acts only when the rendered state and the gate's own state at that moment are both ready, so the two cannot disagree. The first press once the buttons show as available acts once, as described below, and **Dismiss suggestion** never writes anything: no edit, no history step, no save. The offer is unavailable for as long as the gate is, also when it returns mid-pan (an Undo of a move). Wheel, touch, Fit View and other programmatic moves never touch the gate.
+ - **Pressing Space cards** (click, Enter or Space). The canvas passes xyflow's measured card heights by node id to the store's `spaceCards`. They are layout heights, which zoom does not scale, so they are in flow pixels. The store reads its current draft and checks eligibility again. If the draft no longer qualifies, nothing changes: no revision, no step, the same state object. Otherwise it maps the heights onto the current nodes by index, giving none to a node whose id another node shares, and computes `spacedPositions`. It writes them with `withSpacedPositions` in one `set`: one history step labelled "space cards" with no merge key, `revision + 1` and `saveState: 'pending'`. Autosave, the device mirror, `If-Match` and the conflict, name-refusal, offline and invalid states then apply as to any edit, with no special save path. It does not go through `edit`, whose decision-route pass can rewrite edges when a restored routes table disagrees with the draft. Only node `ui` changes: `nodes[0]` keeps its object (an absent `ui` stays absent), and the edges array, every non-node field, `decisionRoutes`, `fieldErrors`, the selection, the dialog, the rename report, `conflict`, `nameConflict` and `baseToken` keep their references.
+-- **Afterwards.** Focus moves to the canvas root, never to **Undo**, so a held or repeated Enter cannot undo the step it just made, and the polite region announces "Spaced _n_ cards. Undo puts them back." A refusal also focuses the canvas and announces "Cards were not spaced: they are no longer all in one spot." The offer leaves, since the draft no longer qualifies; after a keyboard press it leaves at once, and after a pointer click a result takes its place (next bullet). Once the spaced draft has rendered with every card measured, the canvas fits the view once with the opening options (never below 50%). Another edit, an undo or a load before then drops that fit. Undo, Redo and ordinary edits never fit.
++- **Afterwards.** Focus moves to the canvas root, never to **Undo**, so a held or repeated Enter cannot undo the step it just made, and the polite region announces "Spaced _n_ cards. Undo puts them back." A refusal also focuses the canvas and announces "Cards were not spaced: they are no longer all in one spot." The offer leaves, since the draft no longer qualifies; after a keyboard press it leaves at once, and after a pointer click a result takes its place (next bullet). Once the spaced draft has rendered with every card measured at a positive, finite size, xyflow's pane measured and its viewport ready, the canvas sets the view once, from the spaced cards' own bounds (their positions in the draft and their measured sizes), with xyflow's `getViewportForBounds` and `setViewport` and the opening options: the same padding, never below 50%, never above 200%. It does not call `fitView`: xyflow queues that fit and spends it on whichever graph it adopts next, and no public call cancels it, so an Undo that came first would have fitted the restored pile. `setViewport` sets the view before it returns, so nothing is left queued for a frame, a timer or a promise to run later. Until then the fit is kept, and tried again when a measurement, the pane's size or the viewport's readiness arrives (`useStore` and `viewportInitialized`, with no polling). Another edit, an Undo, a Redo, a load or an unmount first drops it for good, and the store's own draft, load and revision are read again in the same synchronous turn as the view is set, so a canvas that still renders an older draft, or a Redo that brings back the very same draft object (which only its newer revision tells apart), fits nothing. The draft, its load (`generation`) and its revision are what is read. Undo, Redo and ordinary edits never fit. Opening the editor and **Fit View** stay on xyflow's queued `fitView`.
+ - **Layout.** Columns 272 px apart, cards in a column at least 44 px apart, each card the larger of its measured height and a conservative coarse-pointer footprint (92 px, plus 2 + 46 px per output). A card's column is its breadth-first depth from every trigger together, else from every card nothing leads to, else from the first card. Cards no entry reaches start their own search, in card order. The whole layout shifts so the first card stays at the origin. Connections the canvas cannot draw, or that are ambiguous (a repeated id, an end whose id is repeated or missing, a port the source lacks, a self-loop, an edge into a trigger) are ignored for placement and never changed. The work is linear in nodes, edges and ports. Not promised: crossing-free connections, or a long chain fitting in one view.
+ - **The result of a pointer press.** A click of **Space cards** or **Dismiss suggestion** whose `detail` is 1 or more (a mouse click, a tap or a pen press; Enter, Space and a scripted `click()` report 0) and that the viewport gate lets act first measures the panel's box (`getBoundingClientRect` width and height) and hands it to the canvas with the action. In the same React commit that removes the panel, the canvas then shows a **result** in its place: `SpaceCardsResult` in `editor/SpaceCardsOffer.tsx`, in the panel's own wrapper (so before the flow, `nokey`, the same absolute place and `z-[5]`), with the panel's own classes (background, border, shadow, rounding and padding) and exactly that width and height, saying **Spaced _n_ cards.**, **Cards were not spaced: they are no longer all in one spot.** or **Suggestion dismissed.** The visible line leaves out "Undo puts them back." because the result can outlive later edits; the announcement still says it. **Why.** A native check at 512 px found the panel's left part covering **Zoom Out** at (93, 290): the first press of a double click hit **Space cards**, the panel left, and the second press of the same run hit **Zoom Out**, which zoomed the view out (1.30597 to 1.08831) before the one fit took it to 0.5. A press cannot be sorted into "belongs to the same run" when it starts: its click count arrives with `mousedown` and `click`, after the pointer handlers, the Shift selection path, a route handle's own `pointerdown` and a touch press have already acted. So the panel's place stays occupied instead. The result has no button, no `tabindex`, no handler, no live region of its own (the canvas's polite region already announced it, once) and unselectable text (`select-none`); a press on it does nothing, and nothing about it is prevented, stopped, delayed, replayed or synthesized, so it reaches no pane, d3-zoom or d3-drag, route handle, port or zoom control. Focus stays on the canvas root; the one step, the one save and the one fit are as above. A keyboard or scripted press (`detail` 0) leaves no result, and a press the gate refuses leaves none and does nothing.
+ - **When the result goes.** At the next `pointerdown` outside it, of any pointer type and button, and at no other press: a passive listener on the `document` in the capture phase, added in the commit that shows the result and removed when it ends or the canvas unmounts, so the outside press then goes on untouched to what it hit, and a press on the result itself leaves it. It also goes when the panel returns (an Undo of the spacing), when a new draft is loaded (a new `generation`, whether or not it is a pile), and when the canvas unmounts. Other edits, an Undo or Redo that leaves the draft not a pile, keys, wheel, the fit and autosave leave it as it was. A Redo of the spacing shows none. There is no timer. This listener is not a second gate: it is on the document, exists only while the result shows and changes nothing; the canvas's one `mouseup` window listener stays the only one.
+ - **What it costs, and what it does not claim.** The area the panel covered stays covered, and the cards the fit places there stay hidden, until the next press elsewhere: at 512 px that is up to 392 × 129.5 px and includes **Zoom Out**. The owner's decision stands that Space cards is explicit and undoable; this keeps the panel's footprint, not an invisible one. The box is fixed at the size measured when the button was pressed. A resize, a panel or toolbar toggle or a change of text size while it shows may move or shrink it, and nothing here protects what lies under its old place then, after the press that ended it, or after a load; the presses of the same browser-counted run that follow a deliberate press elsewhere are not covered either. Which element a native press lands on is a browser fact that jsdom does not have.
+ - **Undo and redo.** Undo restores the exact earlier draft, including absent `ui`, and the offer returns, taking the result away (a Redo leaves none). Redo restores the spaced draft object itself, without computing it again. Both are ordinary edits that autosave sends.
+-- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit; and, with the canvas's real gate, both buttons staying attached, focusable and `aria-disabled` from a pan's first move until its release settles, refusal by click, Enter and Space, the first press after release acting once, Dismiss writing nothing, a stale offer refused first by the gate and then by the store, no second window listener, and the offer's subscription ending when it leaves and reading the gate again when it returns; and the result: the offer replaced in the same commit by a result in the same wrapper, classes and measured box, ahead of the flow, with no control, no live region and the unchanged announcement, one step and one fit; Dismiss and the refusal line; plain, Shift and double presses on it changing nothing and cancelling no event; none after Enter, Space or a scripted click, or while the gate refuses, and one for the first press that acts; its end at a `pointerdown` outside only (any button or pointer type, the event arriving uncancelled), and its drop on the offer's return, on a load and not on other edits; and its one passive capture `pointerdown` listener, removed on end and on unmount), `editor/Canvas.space-cards.gate.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: d3's `click.drag` cancels the click after a mouse pan before it reaches Space cards or Dismiss, the press that arrives while the gate still settles is refused, the first press once the buttons show as available acts once, and the offer shares each state with the selected connection's Remove; and, with a card and a connection selected, the second and third presses of a run on the result (Shift held, with the second press's double click) and a press dragged on it reaching neither xyflow nor d3, so the view stays at the one fit, both selections stay, and no pan, selection box or window listener begins, while the first press elsewhere ends it and acts as it always did: a pane press clearing both selections, a mouse pan, and a Zoom Out press zooming once. Each of these presses is dispatched at the element the test states a browser would hit, the result while it shows and otherwise what the panel covered; without the result the same test zooms out twice or pans, which is the double hit found at 512 px) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original; Dismiss changing, saving and writing nothing). These are jsdom tests: native first-input delivery after a real pan, target geometry, a double click on Space cards, real measurement, which element a real press lands on while the result shows and after it ends, the result's box at the documented viewports and text sizes, and coarse pointers are still to be recorded in a browser. They do not establish hit-testing, the browser's click counting or touch.
++- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit: the view the test works out from the cards' own positions and measured sizes, set once with `setViewport` as the press is handled and never through `fitView`, kept while a card has no positive, finite size, the pane is unmeasured or the viewport is not ready, and dropped by a load, an Undo, an edit, an Undo and Redo that bring back the same draft object, a canvas that renders an older draft than the store, or an unmount; and, with the canvas's real gate, both buttons staying attached, focusable and `aria-disabled` from a pan's first move until its release settles, refusal by click, Enter and Space, the first press after release acting once, Dismiss writing nothing, a stale offer refused first by the gate and then by the store, no second window listener, and the offer's subscription ending when it leaves and reading the gate again when it returns; and the result: the offer replaced in the same commit by a result in the same wrapper, classes and measured box, ahead of the flow, with no control, no live region and the unchanged announcement, one step and one fit; Dismiss and the refusal line; plain, Shift and double presses on it changing nothing and cancelling no event; none after Enter, Space or a scripted click, or while the gate refuses, and one for the first press that acts; its end at a `pointerdown` outside only (any button or pointer type, the event arriving uncancelled), and its drop on the offer's return, on a load and not on other edits; and its one passive capture `pointerdown` listener, removed on end and on unmount), `editor/Canvas.space-cards.gate.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: d3's `click.drag` cancels the click after a mouse pan before it reaches Space cards or Dismiss, the press that arrives while the gate still settles is refused, the first press once the buttons show as available acts once, and the offer shares each state with the selected connection's Remove; and, with a card and a connection selected, the second and third presses of a run on the result (Shift held, with the second press's double click) and a press dragged on it reaching neither xyflow nor d3, so the view stays at the one fit, both selections stay, and no pan, selection box or window listener begins, while the first press elsewhere ends it and acts as it always did: a pane press clearing both selections, a mouse pan, and a Zoom Out press zooming once. Each of these presses is dispatched at the element the test states a browser would hit, the result while it shows and otherwise what the panel covered; without the result the same test zooms out twice or pans, which is the double hit found at 512 px), `editor/Canvas.space-cards.fit.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom, in StrictMode and a provider, with one controlled intervention, that its animation frames can be held. Its oracle is the viewport itself and the count of changes of xyflow's transform. With a frame held, a manual **Fit View** waits for it, which shows the hold does intercept a queued fit; Space cards, pressed from a zoomed-out view with every frame held, has set the view to the spaced draft's fit and queued no xyflow fit, and an Undo, with every frame still held and after their release, leaves the view where it was, as does the Redo. Unheld, Space cards fits the spaced draft once and no Undo, Redo, edit or load fits again, while **Fit View** still does. A fit that waits for a pane xyflow has not measured is kept, lands once at the measured size, and is dropped by an Undo and Redo that bring back the same draft object, by an edit, by a load and by an unmount) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original; Dismiss changing, saving and writing nothing). These are jsdom tests, and holding the frames is a controlled fixture, not a native check: how often a browser opens the window the queued fit left, and native first-input delivery after a real pan, target geometry, a double click on Space cards, real measurement, which element a real press lands on while the result shows and after it ends, the result's box at the documented viewports and text sizes, and coarse pointers are still to be recorded in a browser. They do not establish hit-testing, the browser's click counting or touch.
+ 
+ ### Connections are drawn on the canvas (Decided, #207, ADR-0076)
+ 

@@ -1,0 +1,16 @@
+# Controlled queued-fit probe
+
+This is a targeted formal scan 1 investigation of PR 482 at daa43634c8a093f2cde8239a3501ae4b6b14c112. It does not rerun the native matrix. Use project Node 22.23.4, the exact already-built API and web assets, the installed Playwright 1.63.0, Windows Edge, and the installed and bundled xyflow 12.12.0. Confirm before/after HEAD, base, tree, clean status, index SHA-256, all 15 non-QA paths and critical output hashes against the publication/native binding. No source or index changes.
+
+Run once, from the external review directory:
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+node ./stale-fit-probe.mjs 'C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin' 1> stale-fit-probe.stdout.txt 2> stale-fit-probe.stderr.txt
+```
+
+The fixture is two origin nodes with a real connection, seeded by POST into a disposable file-backed gateway store. The two independent browser contexts use the same graph and viewport. Their fixture names differ by a four-letter suffix. Both zoom out once from the settled opening transform to ensure an unexpected refit of the restored pile is observable. Compare the same pre-Apply viewport and measured nodes between cases. Routes outside the owned loopback origin are blocked. No provider, account, owner store, or owner port is used.
+
+The first case calls the original callback at the original browser frame. The observation wrapper looks only for the exact minified callback from the bound build that reads fitViewQueued, nodes and setNodes together. The control must observe one matching callback and successful Space, actual measured geometry, named history step, visible result and a changed viewport. The intervention holds only that matching callback. Other callbacks run as usual and are counted. Require the same callback source as the control, one matching request, no execution before release, an applied graph still at the pre-fit transform, and trusted Ctrl+Z via the real public keyboard shortcut. After native Undo, observe restored node geometry, the returned offer and the named Redo step. Compare viewport during the hold and after release. A change in either interval violates the predeclared product oracle. Keep raw observations before asserting the product oracle; retain the first failure without retry or fixture edits. The existing R512 raw trace independently shows an unmodified browser event after graph/history commit and before the viewport fit.
+
+Close the context, Edge and gateway, verify the gateway listener is closed, and remove only the verified disposable child store. Capture exact assets, observers, command output and before/after source/index hashes.

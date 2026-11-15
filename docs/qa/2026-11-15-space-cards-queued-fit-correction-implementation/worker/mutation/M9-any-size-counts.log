@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.test.tsx (43 tests | 1 failed) 4095ms
+   ❯ Space cards on the canvas (#208) (23)
+     × keeps waiting for every card to have a size that is positive and finite, and fits when the last one does 82ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 50 passed (51)
+   Start at  02:19:13
+   Duration  10.32s (tests 45%, environment 26%, import 10%, transform 10%, setup 9%)
+
+
+--- stderr ---
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > keeps waiting for every card to have a size that is positive and finite, and fits when the last one does
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": 60,
+        "y": 329,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:304:31
+    302|       expect(setViewport).not.toHaveBeenCalled();
+    303|       measureCards({ prep: bad });
+    304|       expect(setViewport).not.toHaveBeenCalled();
+       |                               ^
+    305|       measureCards({ prep: { width: 184, height: 400 } });
+    306|       expect(setViewport).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\web
+

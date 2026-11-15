@@ -1,0 +1,153 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx (8 tests | 6 failed) 2886ms
+   ❯ the one fit Space cards asks for, on the installed xyflow and d3 (#208) (8)
+     × leaves the view where Space cards fit it when Undo comes while a frame is held, and nothing is left for the frame to fit 366ms
+     × waits while the pane is not measured, then fits once when it is, and nothing before then moves the view 217ms
+     × drops a fit that waits for the pane when Undo and Redo bring back the same draft object, because it is a newer revision 189ms
+     × drops a fit that waits for the pane when an edit or a load comes first 187ms
+     × drops a fit that waits for the pane when the draft is loaded again 202ms
+     × leaves nothing behind for a frame or the pane after the canvas unmounts, and raises no error 338ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > leaves the view where Space cards fit it when Undo comes while a frame is held, and nothing is left for the frame to fit
+AssertionError: expected { x: 416, y: 280, zoom: 2 } to deeply equal { x: 446.66666666666663, y: 300, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "x": 446.66666666666663,
+-   "y": 300,
+-   "zoom": 1.6666666666666667,
++   "x": 416,
++   "y": 280,
++   "zoom": 2,
+  }
+
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:383:24
+    381|     expect(offer()).not.toBeNull();
+    382|     // The oracle: no fit of the restored pile, whatever xyflow still …
+    383|     expect(viewport()).toEqual(afterSpace);
+       |                        ^
+    384|     expect(transforms.count()).toBe(changesAfterSpace);
+    385|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > waits while the pane is not measured, then fits once when it is, and nothing before then moves the view
+AssertionError: expected 1200 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1200
+
+ ❯ openedHiddenPile src/editor/Canvas.space-cards.fit.test.tsx:318:39
+    316|   await realFrames(3);
+    317|   await settle();
+    318|   expect(flowStore!.getState().width).toBe(0);
+       |                                       ^
+    319|   expect(flowStore!.getState().height).toBe(0);
+    320|   return rendered;
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:450:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > drops a fit that waits for the pane when Undo and Redo bring back the same draft object, because it is a newer revision
+AssertionError: expected 1200 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1200
+
+ ❯ openedHiddenPile src/editor/Canvas.space-cards.fit.test.tsx:318:39
+    316|   await realFrames(3);
+    317|   await settle();
+    318|   expect(flowStore!.getState().width).toBe(0);
+       |                                       ^
+    319|   expect(flowStore!.getState().height).toBe(0);
+    320|   return rendered;
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:476:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > drops a fit that waits for the pane when an edit or a load comes first
+AssertionError: expected 1200 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1200
+
+ ❯ openedHiddenPile src/editor/Canvas.space-cards.fit.test.tsx:318:39
+    316|   await realFrames(3);
+    317|   await settle();
+    318|   expect(flowStore!.getState().width).toBe(0);
+       |                                       ^
+    319|   expect(flowStore!.getState().height).toBe(0);
+    320|   return rendered;
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:499:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > drops a fit that waits for the pane when the draft is loaded again
+AssertionError: expected 1200 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1200
+
+ ❯ openedHiddenPile src/editor/Canvas.space-cards.fit.test.tsx:318:39
+    316|   await realFrames(3);
+    317|   await settle();
+    318|   expect(flowStore!.getState().width).toBe(0);
+       |                                       ^
+    319|   expect(flowStore!.getState().height).toBe(0);
+    320|   return rendered;
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:515:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > leaves nothing behind for a frame or the pane after the canvas unmounts, and raises no error
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:544:33
+    542|       await realFrames(2);
+    543|       await settle();
+    544|       expect(frames.matching()).toBe(0);
+       |                                 ^
+    545|
+    546|       // A fit still waiting for the pane.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  02:06:01
+   Duration  7.59s (tests 39%, environment 28%, transform 13%, import 10%, setup 10%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\web
+
+
+real	0m8.489s
+user	0m0.000s
+sys	0m0.046s

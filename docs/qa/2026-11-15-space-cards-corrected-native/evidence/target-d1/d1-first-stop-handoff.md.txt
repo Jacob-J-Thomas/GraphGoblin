@@ -1,0 +1,27 @@
+# Queued-fit D1 native QA first stop
+
+**D1 incomplete due to a fixture assertion.** The group stopped at the Undo availability check. The raw driver retains its original `product` label. Raw browser state and unchanged production source establish that the assertion read the wrong DOM property. No product viewport failure was observed in the completed stages. The in-place load and three dependent groups did not run.
+
+## Frozen execution
+
+- Candidate `b043d3b8baafdff742803ae46750c8664067f3c7` / tree `c87fed2f00990e7ccb3728ab1935e3d75241f736`, observed and effective base `177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd`. The source, index, build, 35 application maps and 13 complete output trees stayed byte-bound. The standalone after-binding, read-only and domain commands exited 0 and matched their before receipts. [Source proof](final-source-map-dependency-readback.json) · [Atomic dependency trace](atomic-viewport-chain.md) · [Final checks](d1-stop-verifier-exits.json)
+- D1 ran once with root admission `8845590135203f8524a4369e1d6c493976edb23db20b1a461f536a0758fa7cb0` and served `/app/assets/index-DHT0tKuN.js`. Source/build binding is `f3b0885f91fee52f1571da6896f293780763b97e7adbe738969337c37024e03b`. The browser runner returned its structured result with driver exit 0. The supervisor/shell exited 2 for the failed assertion. All 48 raw files match their sink listings, with 25 checkpoints, three browser PUTs (all 200) and no page or console errors. [Exact admission](admission-native.json) · [Shell exit](exit-queued-fit-d1-initial.json) · [Supervisor](runs/queued-fit-d1-initial/run.json) · [Structured raw result](runs/queued-fit-d1-initial/raw/0048-full-result.json)
+
+## Observed behavior
+
+| Witness | Exact browser and durable result |
+| --- | --- |
+| Measured Space | Trusted activation changed the two-card viewport once from `[276.667,298.5,1.66667]` to `[72,303.5,1.57895]`, with exact spaced geometry, focus, result and named Undo. The one accepted PUT, acknowledgement/GET and device graph/token passed. [Viewport trace](runs/queued-fit-d1-initial/raw/0008-fit-trace-positive.json) |
+| First outside Zoom Out | The enabled control owned the trusted outside press while the result was still attached. Its one transform moved to `[131.667,318.5,1.31579]` and stayed there through the debounce window, with zero additional writes. [Trace](runs/queued-fit-d1-initial/raw/0016-fit-trace-first-outside-zoom.json) |
+| Ordinary edit | Trusted Done committed the label on the same canvas. The edit and its one accepted save left the deliberate viewport unchanged, with exact server/device definition and acknowledgement. [Trace](runs/queued-fit-d1-initial/raw/0021-fit-trace-edit.json) |
+| Unmount, opening and manual Fit | Trusted Loops and destination Edit navigation detached the old viewport without writes to it. The fresh wide graph opened at `[-512,365,0.5]`, matching its own cold opening. Trusted Manual Fit then moved once to `[72,382.654,0.190275]`, with zero draft/history changes. [Unmount trace](runs/queued-fit-d1-initial/raw/0025-fit-trace-unmount.json) · [Cold comparison](runs/queued-fit-d1-initial/raw/0032-fit-independent-opening.json) · [Manual Fit trace](runs/queued-fit-d1-initial/raw/0033-fit-trace-manual.json) |
+| Rapid trusted Undo | Exact Space fit completed at 528.6 ms. Trusted canvas Ctrl+Z arrived at 541.3 ms, with actual restored pile, returned offer and named Redo by 552.7 ms. The viewport stayed `[72,303.5,1.57895]` through the trace end. One coalesced restore PUT and its acknowledgement carry the exact initial graph and token `ed0d363828077a20`, matched by the synced device. The driver stopped before its separate terminal GET check. This is native Undo after a completed fit. [Undo trace](runs/queued-fit-d1-initial/raw/0044-fit-trace-undo.json) |
+
+## Assertion failure and remaining coverage
+
+The added observer sampled `el.disabled` at `drivers/space.playwright.js:1230` and used it at line 1468 to prove Undo was unavailable. The unchanged `apps/web/src/editor/UndoRedo.tsx:18–20,40–45` intentionally uses `aria-disabled` to preserve keyboard focus order. The same first-failure snapshot from the established observer recorded `["undo","true",false,"Undo"]` and `["redo",null,false,"Redo space cards"]`. That establishes an exhausted Undo history and the available named Redo. The later, unrun in-place load check reads the same field. The raw first failure and its assertion stay immutable. [First failure with actual ARIA state](runs/queued-fit-d1-initial/raw/0046-failure-fit-trusted-rapid-undo.json) · [Screenshot](runs/queued-fit-d1-initial/failure-fit-trusted-rapid-undo.png)
+
+No in-place authoritative Reload witness was made on this build. The three remaining executables (`double-r512`, `apply-d1`, `n768`) remain unlaunched in these lanes. Their prior seven-group evidence applies to the earlier binding. Both global fixture correction batches remain spent. No native check was retried, and no fixture, product, index or build was modified after the stop.
+
+The browser and supervised gateway exited 0. Gateway startup/end served hashes matched, and the disposable file SQLite store was removed after gateway exit. Terminal audit found zero owned processes, listeners, leftover stores, SQLite/WAL/SHM/locks or PID ambiguities. [Terminal cleanup](cleanup-after-queued-fit-d1.json)
+

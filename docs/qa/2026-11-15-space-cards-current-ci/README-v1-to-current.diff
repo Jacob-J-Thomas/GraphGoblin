@@ -1,0 +1,20 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\current-ci\\README-v1.md" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\current-ci\\README.md"
+index 45f7e895..55b0d259 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\current-ci\\README-v1.md"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\current-ci\\README.md"
+@@ -28,13 +28,13 @@ The Gates job successfully completed build, focused acceptance, typecheck, lint,
+ 
+ The Browser workflow ran `playwright test --retries=0 --workers=1`: 481 passed and one `live.spec.ts` provider-backed test was intentionally skipped. Browser-failure evidence upload was skipped because the suite passed. The Windows job reported 14 passed and 0 skipped; its artifact upload found no `.tmp/windows-launcher-*/` files, so there is no Windows-evidence artifact. The template image job built the distributed image and loaded `starter` (4 draft nodes), `implementation` (11), `review` (10), and `qa` (11) under its offline/read-only validation.
+ 
+-Routing used the normal PR limits (median routing p95 below 8 ms; each drag below 16 ms). Strict manual mode was off (`GG_ROUTING_STRICT_PERF` empty); its stricter 4 ms routing and 17 ms frame targets were not enabled. Routing p95s were 5.7/5.3/4.7 ms at 100 nodes and 6.7/5.2/5.3 ms at 300 nodes (median 5.3 ms for both). Frame p95s were 33.4/33.4/33.4 ms and 50/33.4/33.4 ms, respectively. The 300-node run therefore exceeded the optional strict frame target on its first drag, while passing the active routing gate. This packet contains no controlled pre-change timing baseline and supports no claim about a performance regression or 60 Hz rendering.
++Routing used the normal PR limits (median routing p95 below 8 ms; each drag below 16 ms). Strict manual mode was off (`GG_ROUTING_STRICT_PERF` empty); its stricter 4 ms routing and 17 ms frame targets were not enabled. Routing p95s were 5.7/5.3/4.7 ms at 100 nodes and 6.7/5.2/5.3 ms at 300 nodes (median 5.3 ms for both). Frame p95s were 33.4/33.4/33.4 ms and 50/33.4/33.4 ms, respectively. All six recorded frame p95 values (33.4 to 50 ms) exceeded the optional strict 17 ms frame target; strict mode was off, and the active routing gate passed. This packet contains no controlled pre-change timing baseline and supports no claim about a performance regression or 60 Hz rendering.
+ 
+ The logs also retain runtime/action deprecation warnings (`url.parse`, `punycode`, and actions forced from Node 20 to Node 24). These are warnings, not failed gates.
+ 
+ ## Retained records
+ 
+-All captured raw logs and API snapshots are preserved as received in this directory. The SHA-256 inventory is in [log manifest](log-manifest.json) and [SHA256SUMS](SHA256SUMS). `* -text` in [.gitattributes](.gitattributes) disables line-ending conversion for retained evidence files.
++All captured raw logs and API snapshots are preserved as received in this directory. Root observed the Gates log at 263,999 bytes during collection, before packet sealing. No separate 263,999-byte copy is retained, and the observation does not establish whether the size difference came from writing or retrieval. A fresh completed-job log readback now matches the sealed 393,010-byte Gates log by UTF-8 byte count and SHA-256; see the [readback receipt](gates-log-readback.json). The SHA-256 inventory is in [log manifest](log-manifest.json) and [SHA256SUMS](SHA256SUMS). The initial wrapper version is retained as [README-v1.md](README-v1.md), with this correction recorded in [README-v1-to-current.diff](README-v1-to-current.diff). `* -text` in [.gitattributes](.gitattributes) disables line-ending conversion for retained evidence files.
+ 
+ - [Browser log](job-132738025652-browser.log) and [step metadata](job-132738025652-steps.json)
+ - [Windows launcher log](job-132738025800-windows-launcher.log) and [step metadata](job-132738025800-steps.json)

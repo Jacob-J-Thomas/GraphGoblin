@@ -1,0 +1,44 @@
+The Space cards fit now sets the view with `setViewport` from the cards' own measured bounds, and the focused checks pass. I did not run the full build, coverage, full lint or any browser/native check.
+
+The `.turbo` entries in the ignored list come from the pnpm and turbo runs I did here. I changed no repo or owner state and nothing is staged.
+
+## Production change (`Canvas.tsx`)
+- **Fit mechanism:** Space cards no longer uses `fitView`. It sets the view with `getViewportForBounds` and `setViewport`, using the opening padding, the 0.5 zoom floor and the 2 ceiling. Opening fit, manual Fit View and the Controls fit options are unchanged.
+- **Same-turn mutation:** the pending fit records the draft, `generation` and `revision`. The effect re-reads the live store and drops the fit on any mismatch with the rendered or live draft, then calls `setViewport` in the same synchronous turn. Nothing is queued, so no frame, timer or promise is involved.
+- **Readiness:** the fit waits until every card has a positive finite size, the pane is positive and finite, and `viewportInitialized` is true. It retries through `useStore(paneMeasured)`, `viewportInitialized` and `measured`, with no polling.
+- **Mocks:** `Canvas.test.tsx` gets one mock entry (`useStoreApi`). The mocked Space-cards suite gets a reactive fake pane and viewport.
+
+## Evidence against exact old production
+I ran the new real-dependency file once against old `Canvas.tsx` (hash `fbb3cb1c…`). It ended with 6 failed and 2 passed. Full log and the test file as run are in `negative-old-production/`.
+- **Controls:** both pass. Manual Fit View under held frames waits for its frame, and the unheld positive case fits once.
+- **Undo oracle:** fails at the viewport assertion. The view went from `{446.67, 300, 1.667}` to `{416, 280, 2}`, the restored pile's own fit. Everything before it passed.
+- **Unmount case:** old Space left one queued xyflow fit callback.
+- **Four hidden-pane tests:** stopped at my fixture setup. My `checkVisibility` stub hid the wrong element. I fixed the stub and did not re-run old production, so those four say nothing about the old source.
+- **Fixture stop:** the held-frame jsdom fixture is a controlled component test, not native verification.
+
+## Checks
+- Final scoped ESLint, `prettier --check` and `pnpm.cmd --filter @graphgoblin/web typecheck` all pass.
+- The affected set (21 files) passes with 409 tests, including real-dependency and gate suites. The mocked Space-cards suite has 44 tests (was 27). Repeat runs of the Space-cards files on the final source passed 3 of 3.
+- The first ESLint run failed on `react-hooks/rules-of-hooks`: my mock called a hook conditionally. I restructured the mock and relaxed no rule. Its log is kept.
+- I also ran ten temporary one-line mutations of the correction, with the source restored and hash-verified each time. Nine are caught by the intended tests. M8 (plain size lookup instead of `Object.hasOwn`) survives because `isLength` already rejects prototype values. I kept `Object.hasOwn` as the design asked.
+
+## Final state
+- **Changed paths:** `Canvas.tsx`, `Canvas.space-cards.test.tsx`, `Canvas.test.tsx`, `Canvas.space-cards.fit.test.tsx` (new), and `docs/09-frontend-and-pwa.md` at lines 277 and 283 only.
+- **Final hashes:** `Canvas.tsx` `710aad91…`, mocked test `72577442…`, `Canvas.test.tsx` `c1ac17fe…`, new fit test `8bdf91eb…`, docs `f2f9f0f9…`. Full values are in `final/source-sha256-final.txt`.
+- **Index:** the index file hash `8e3a655c…` is unchanged and `git diff --cached` is empty. HEAD is still `daa43634…`.
+- **Full diff:** `final/full.diff`, 1,331 lines, sha256 `2fb69648…`.
+- **Untouched:** history section, CHANGELOG, guide and `store.ts` comment.
+
+## Deviations
+- **Stricter readiness:** the design only waited for an unmeasured or zero-size card. Per the root disposition, the fit also waits for a measured pane and an initialized viewport, reactively.
+- **Extra hooks:** I added `useStore(paneMeasured)` as the retry trigger and the public `viewportInitialized`, alongside the design's `useStoreApi` live read.
+- **Dead guard:** I removed an unreachable empty-draft guard from `cardBounds`.
+- **Local `main`:** the local `main` branch ref is stale at `b3b5e18…`, but `origin/main` is `177f3a7…` and an ancestor of HEAD, so I treated it as no drift.
+
+## Still needed from root
+- `pnpm test:coverage`, `pnpm check`, build and full lint.
+- Native compiled-build QA: no queued matching callback after Space, the same fitted transform as the old uninterrupted control, and the view unchanged across Undo and Redo.
+
+The opening fit and the Fit View button still use xyflow's queued `fitView`, as the design noted.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-queued-fit-implementation/`; start with `report.md`.
