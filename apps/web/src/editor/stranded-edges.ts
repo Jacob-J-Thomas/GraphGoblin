@@ -1,15 +1,9 @@
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { isProtectedVoiceEdge } from './chat-protection.js';
-import { canvasDrawsEdge } from './model.js';
+import { canvasDrawsEdge, onlyEdge } from './model.js';
 import { useEditorStore } from './store.js';
 
 type Edge = LoopDefinitionInput['edges'][number];
-
-/** The one stored edge with `id`, or undefined when there is none or the id is not unique. */
-function onlyEdge(definition: LoopDefinitionInput, id: string): Edge | undefined {
-  const matches = definition.edges.filter((edge) => edge.id === id);
-  return matches.length === 1 ? matches[0] : undefined;
-}
 
 const sameEnds = (a: Edge, b: Edge) =>
   a.id === b.id &&

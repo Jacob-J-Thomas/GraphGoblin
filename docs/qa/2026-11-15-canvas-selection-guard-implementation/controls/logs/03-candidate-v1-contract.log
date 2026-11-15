@@ -1,0 +1,45 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx (11 tests | 1 failed) 1617ms
+   ❯ Remove connection after a click on its line, on the installed xyflow and d3 (#207) (2)
+     × keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click 87ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "transform": [
+-     0,
+-     0,
+-     1,
++     96,
++     120,
++     2,
+    ],
+-   "viewport": "translate(0px,0px) scale(1)",
++   "viewport": "translate(96px,120px) scale(2)",
+  }
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:948:86
+    946|       expect(wrapper).toHaveClass('selected');
+    947|       expect(wrapper).toHaveFocus();
+    948|       expect({ viewport: viewport(), transform: [...xyflow!.getState()…
+       |                                                                                      ^
+    949|         before,
+    950|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+   Start at  21:16:44
+   Duration  6.68s (environment 35%, tests 25%, transform 16%, import 12%, setup 11%)
+
+exit=1

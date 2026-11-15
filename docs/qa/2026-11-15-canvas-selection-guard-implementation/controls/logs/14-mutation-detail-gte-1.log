@@ -1,0 +1,526 @@
+control mutate detail-gte-1 started 2026-11-15T03:23:16Z
+node v22.23.4
+candidate backup sha256 df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7
+worktree sha256 before swap df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7
+wrote detail-gte-1 to C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web/src/editor/OrthogonalEdge.tsx
+worktree sha256 under test b83e2d3b3c379cdf68bc4481383f48fcedab4efc621d56d41a4b4834cb0abee0
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (36 tests | 7 failed) 2509ms
+   ❯ Reset route keeps its toolbar where it was clicked (#207) (11)
+     × keeps the toolbar and Reset route where they were on a loop-back, so no later click lands on Remove connection 424ms
+     × keeps the toolbar and Reset route where they were on a forward connection, so no later click lands on Remove connection 149ms
+   ❯ Remove connection ignores the later clicks of a double click (#207) (6)
+     × removes nothing on a click counted 2 or 3 on an automatic route, leaves the connection focused, and removes on one counted 1 13ms
+     × removes nothing on a click counted 2 or 3 on a manual route, leaves the connection focused, and removes on one counted 1 17ms
+     × ends a refused click on the button for every modifier, so Control or Meta cannot select the connection again 13ms
+     × still removes on Enter, on Space and on element.click(), which the browser counts 0 157ms
+     × keeps refusing a click counted 1 while a pan settles, and a later click counted 2 once it is ready 22ms
+ ❯ src/editor/Canvas.test.tsx (72 tests | 2 failed) 4248ms
+   ❯ the selected connection is the one the user selected (#207) (27)
+     ❯ Remove connection ignores the later clicks of a double click (#207) (2)
+       × keeps the draft, history, selection and announcement on a click counted 2 or 3 on an automatic forward connection, then removes once on one counted 1, in one Undo step 40ms
+       × keeps the draft, history, selection and announcement on a click counted 2 or 3 on a manual loop-back, then removes once on one counted 1, in one Undo step 22ms
+ ❯ src/editor/viewport-gesture.contract.test.tsx (11 tests | 8 failed) 1705ms
+   ❯ the pan gate on the installed xyflow and d3 (#207) (5)
+     × shows Remove unavailable while d3 cancels the next click, and delivers the first available click once 380ms
+     × settles a middle-button pan the same way 93ms
+     × lets a new pan invalidate an earlier release that has not settled 140ms
+     × is not stranded when a programmatic or wheel move replaces the pan’s end callback 108ms
+   ❯ the card-drag gate on the installed xyflow and d3 (#207) (2)
+     × shows Remove unavailable from a Control drag of a card while d3 cancels the next click, and delivers the first available click once 180ms
+   ❯ Reset route on the installed xyflow and d3 (#207) (2)
+     × keeps the first-clicked Reset route under the second press of a double click, so nothing removes until Remove connection is clicked on purpose 161ms
+   ❯ Remove connection after a click on its line, on the installed xyflow and d3 (#207) (2)
+     × keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click 102ms
+     × keeps the connection selected when the second click comes with the multi-selection key held 91ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Remove connection ignores the later clicks of a double click (#207) > keeps the draft, history, selection and announcement on a click counted 2 or 3 on an automatic forward connection, then removes once on one counted 1, in one Undo step
+AssertionError: expected [] to deeply equal [ 'remove edge start to work' ]
+
+- Expected
++ Received
+
+- [
+-   "remove edge start to work",
+- ]
++ []
+
+ ❯ src/editor/Canvas.test.tsx:2134:26
+    2132|         // A separate click, counted 1, removes once in a step of its …
+    2133|         fireEvent.click(remove, { detail: 1 });
+    2134|         expect(labels()).toEqual([label]);
+       |                          ^
+    2135|         expect(store().definition!.edges.some((e) => e.id === id)).toB…
+    2136|         expect(selected()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Remove connection ignores the later clicks of a double click (#207) > keeps the draft, history, selection and announcement on a click counted 2 or 3 on a manual loop-back, then removes once on one counted 1, in one Undo step
+AssertionError: expected [] to deeply equal [ 'remove edge done repeat to work' ]
+
+- Expected
++ Received
+
+- [
+-   "remove edge done repeat to work",
+- ]
++ []
+
+ ❯ src/editor/Canvas.test.tsx:2134:26
+    2132|         // A separate click, counted 1, removes once in a step of its …
+    2133|         fireEvent.click(remove, { detail: 1 });
+    2134|         expect(labels()).toEqual([label]);
+       |                          ^
+    2135|         expect(store().definition!.edges.some((e) => e.id === id)).toB…
+    2136|         expect(selected()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the toolbar and Reset route where they were on a loop-back, so no later click lands on Remove connection
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the toolbar and Reset route where they were on a forward connection, so no later click lands on Remove connection
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/editor/OrthogonalEdge.test.tsx:819:30
+    817|       // A deliberate click on Remove connection removes once.
+    818|       await user.click(remove);
+    819|       expect(editing.remove).toHaveBeenCalledTimes(1);
+       |                              ^
+    820|       expect(editing.remove).toHaveBeenCalledWith('return');
+    821|       expect(onClick).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > removes nothing on a click counted 2 or 3 on an automatic route, leaves the connection focused, and removes on one counted 1
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > removes nothing on a click counted 2 or 3 on a manual route, leaves the connection focused, and removes on one counted 1
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/editor/OrthogonalEdge.test.tsx:1091:30
+    1089|       // A separate click, counted 1, removes once.
+    1090|       fireEvent.click(remove, { detail: 1 });
+    1091|       expect(editing.remove).toHaveBeenCalledTimes(1);
+       |                              ^
+    1092|       expect(editing.remove).toHaveBeenCalledWith('return');
+    1093|       expect(editing.reset).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > ends a refused click on the button for every modifier, so Control or Meta cannot select the connection again
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/editor/OrthogonalEdge.test.tsx:1108:28
+    1106|     // An accepted click ends on the button the same way.
+    1107|     fireEvent.click(remove, { detail: 1, ctrlKey: true });
+    1108|     expect(editing.remove).toHaveBeenCalledTimes(1);
+       |                            ^
+    1109|     expect(onClick).not.toHaveBeenCalled();
+    1110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > still removes on Enter, on Space and on element.click(), which the browser counts 0
+AssertionError: expected "vi.fn()" to be called 4 times, but got 3 times
+ ❯ src/editor/OrthogonalEdge.test.tsx:1129:28
+    1127|     await user.click(remove);
+    1128|     expect(counts).toEqual([0, 0, 0, 1]);
+    1129|     expect(editing.remove).toHaveBeenCalledTimes(4);
+       |                            ^
+    1130|     expect(editing.remove).toHaveBeenLastCalledWith('return');
+    1131|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > keeps refusing a click counted 1 while a pan settles, and a later click counted 2 once it is ready
+Error: expect(element).toHaveFocus()
+
+Expected element with focus:
+  <button
+  aria-disabled="true"
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+  data-gesture="panning"
+  type="button"
+>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    Remove connection
+  </span>
+</button>
+Received element with focus:
+  <g
+  class="react-flow__edge"
+  data-testid="edge"
+  tabindex="0"
+>
+  <title>
+    loopBack
+  </title>
+  <path
+    class="react-flow__edge-path"
+    d="M 100 0 L 122 0 Q 130 0 130 8 L 130 172 Q 130 180 122 180 L -12 180 Q -20 180 -20 172 L -20 48 Q -20 40 -12 40 L 0 40"
+    fill="none"
+    id="return"
+  />
+  <path
+    class="react-flow__edge-interaction"
+    d="M 100 0 L 122 0 Q 130 0 130 8 L 130 172 Q 130 180 122 180 L -12 180 Q -20 180 -20 172 L -20 48 Q -20 40 -12 40 L 0 40"
+    fill="none"
+    stroke-opacity="0"
+    stroke-width="20"
+  />
+  <g
+    class="react-flow__edge-textwrapper"
+    transform="translate(27 174.5)"
+    visibility="visible"
+  >
+    <rect
+      class="react-flow__edge-textbg"
+      height="17"
+      rx="9"
+      ry="9"
+      width="72"
+      x="-8"
+      y="-3"
+    />
+    <text
+      class="react-flow__edge-text"
+      dy="0.3em"
+      y="5.5"
+    >
+      loopBack
+    </text>
+  </g>
+  <g
+    class="gg-route-handles"
+  >
+    <g
+      aria-description="Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowUp ArrowDown"
+      aria-label="Route segment 1 of 5, horizontal"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-y"
+      data-segment="1"
+      role="button"
+      tabindex="0"
+      transform="translate(115 0) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      aria-description="Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowLeft ArrowRight"
+      aria-label="Route segment 2 of 5, vertical"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-x"
+      data-segment="2"
+      role="button"
+      tabindex="0"
+      transform="translate(130 90) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      aria-description="Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowUp ArrowDown"
+      aria-label="Route segment 3 of 5, horizontal"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-y"
+      data-segment="3"
+      role="button"
+      tabindex="0"
+      transform="translate(55 180) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      aria-description="Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowLeft ArrowRight"
+      aria-label="Route segment 4 of 5, vertical"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-x"
+      data-segment="4"
+      role="button"
+      tabindex="0"
+      transform="translate(-20 110) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      aria-description="Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowUp ArrowDown"
+      aria-label="Route segment 5 of 5, horizontal"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-y"
+      data-segment="5"
+      role="button"
+      tabindex="0"
+      transform="translate(-10 40) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      transform="translate(55 162) scale(1)"
+    >
+      <foreignobject
+        class="gg-route-toolbar-frame"
+        height="48"
+        width="420"
+        x="-210"
+        y="-48"
+      >
+        <div
+          class="gg-route-toolbar flex h-full items-end justify-center gap-2"
+        >
+          <button
+            aria-disabled="true"
+            class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+            data-gesture="panning"
+            type="button"
+          >
+            <span
+              class="min-w-0 overflow-x-clip text-ellipsis"
+            >
+              Remove connection
+            </span>
+          </button>
+        </div>
+      </foreignobject>
+    </g>
+  </g>
+</g>
+ ❯ src/editor/OrthogonalEdge.test.tsx:1146:22
+    1144|       fireEvent.click(remove, { detail: 1 });
+    1145|       expect(editing.remove).not.toHaveBeenCalled();
+    1146|       expect(remove).toHaveFocus();
+       |                      ^
+    1147|       act(() => {
+    1148|         window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > shows Remove unavailable while d3 cancels the next click, and delivers the first available click once
+AssertionError: expected [ 'e1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "e1",
++ ]
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:363:24
+    361|       }));
+    362|       expect(first).toMatchObject({ blocker: false, delivered: true, r…
+    363|       expect(stored()).toEqual([]);
+       |                        ^
+    364|       expect(store().past.map((step) => step.label)).toEqual(['remove …
+    365|       store().undo();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > settles a middle-button pan the same way
+AssertionError: expected [ 'e1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "e1",
++ ]
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:391:24
+    389|       }));
+    390|       expect(first).toMatchObject({ blocker: false, delivered: true, r…
+    391|       expect(stored()).toEqual([]);
+       |                        ^
+    392|       expect(store().past).toHaveLength(1);
+    393|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > lets a new pan invalidate an earlier release that has not settled
+AssertionError: expected [ 'e1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "e1",
++ ]
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:426:24
+    424|       }));
+    425|       expect(first).toMatchObject({ blocker: false, delivered: true, r…
+    426|       expect(stored()).toEqual([]);
+       |                        ^
+    427|     } finally {
+    428|       windowEvents.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > is not stranded when a programmatic or wheel move replaces the pan’s end callback
+AssertionError: expected [ 'e1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "e1",
++ ]
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:473:24
+    471|       }));
+    472|       expect(first).toMatchObject({ blocker: false, delivered: true, r…
+    473|       expect(stored()).toEqual([]);
+       |                        ^
+    474|       // xyflow reported the programmatic end and never the mouse rele…
+    475|       // its own barrier.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the card-drag gate on the installed xyflow and d3 (#207) > shows Remove unavailable from a Control drag of a card while d3 cancels the next click, and delivers the first available click once
+AssertionError: expected [ 'e1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "e1",
++ ]
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:617:24
+    615|       }));
+    616|       expect(first).toMatchObject({ blocker: false, delivered: true, r…
+    617|       expect(stored()).toEqual([]);
+       |                        ^
+    618|       // Two edits, two steps: the move, then the removal. Undo takes …
+    619|       expect(store().past.map((step) => step.label)).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Reset route on the installed xyflow and d3 (#207) > keeps the first-clicked Reset route under the second press of a double click, so nothing removes until Remove connection is clicked on purpose
+AssertionError: expected [ 'e1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "e1",
++ ]
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:780:22
+    778|     expect(press(button, 1).delivered).toBe(true);
+    779|     await microtasks();
+    780|     expect(stored()).toEqual([]);
+       |                      ^
+    781|     expect(store().past.map((step) => step.label)).toEqual([
+    782|       'reset route of start to done',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click
+AssertionError: expected [ 'e1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "e1",
++ ]
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:958:24
+    956|       expect(browserPress(button, 1).delivered).toBe(true);
+    957|       await microtasks();
+    958|       expect(stored()).toEqual([]);
+       |                        ^
+    959|       expect(store().past.map((step) => step.label)).toEqual(['remove …
+    960|       store().undo();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps the connection selected when the second click comes with the multi-selection key held
+AssertionError: expected [ 'e1' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "e1",
++ ]
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:991:22
+    989|     browserPress(button, 1);
+    990|     await microtasks();
+    991|     expect(stored()).toEqual([]);
+       |                      ^
+    992|     expect(store().past).toHaveLength(1);
+    993|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  17 failed | 102 passed (119)
+   Start at  21:23:17
+   Duration  14.71s (tests 35%, environment 33%, import 12%, setup 11%, transform 9%)
+
+vitest exit=1
+restored worktree sha256 df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7 (candidate df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7)

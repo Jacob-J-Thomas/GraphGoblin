@@ -1,0 +1,599 @@
+control mutate propagation-after-guard started 2026-11-15T03:23:48Z
+node v22.23.4
+candidate backup sha256 df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7
+worktree sha256 before swap df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7
+wrote propagation-after-guard to C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web/src/editor/OrthogonalEdge.tsx
+worktree sha256 under test 47e30d1040e84ec9466bdb63f53b6d980787222a8b684f6ee60284bc0786fdd3
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (36 tests | 3 failed) 2729ms
+   ❯ Remove connection ignores the later clicks of a double click (#207) (6)
+     × removes nothing on a click counted 2 or 3 on an automatic route, leaves the connection focused, and removes on one counted 1 29ms
+     × removes nothing on a click counted 2 or 3 on a manual route, leaves the connection focused, and removes on one counted 1 19ms
+     × ends a refused click on the button for every modifier, so Control or Meta cannot select the connection again 16ms
+ ❯ src/editor/viewport-gesture.contract.test.tsx (11 tests | 1 failed) 1610ms
+   ❯ Remove connection after a click on its line, on the installed xyflow and d3 (#207) (2)
+     × keeps the connection selected when the second click comes with the multi-selection key held 158ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > removes nothing on a click counted 2 or 3 on an automatic route, leaves the connection focused, and removes on one counted 1
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038603,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:1076:29
+    1074|         expect(editing.reset).not.toHaveBeenCalled();
+    1075|         // The wrapper never sees the click, so it cannot select the c…
+    1076|         expect(onClick).not.toHaveBeenCalled();
+       |                             ^
+    1077|         // Focus returns to the connection, as after a click on its li…
+    1078|         expect(edge).toHaveFocus();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > removes nothing on a click counted 2 or 3 on a manual route, leaves the connection focused, and removes on one counted 1
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038633,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:1076:29
+    1074|         expect(editing.reset).not.toHaveBeenCalled();
+    1075|         // The wrapper never sees the click, so it cannot select the c…
+    1076|         expect(onClick).not.toHaveBeenCalled();
+       |                             ^
+    1077|         // Focus returns to the connection, as after a click on its li…
+    1078|         expect(edge).toHaveFocus();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > ends a refused click on the button for every modifier, so Control or Meta cannot select the connection again
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 8 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": true,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038647,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  2nd vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": true,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 3,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038647,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  3rd vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": true,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038648,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  4th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 3,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": true,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038648,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  5th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": true,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038648,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  6th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 3,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": true,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038648,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  7th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038648,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  8th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 3,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Remove connection
+          </span>
+        </button>,
+        "timeStamp": 1794713038648,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+
+Number of calls: 8
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:1104:25
+    1102|       for (const detail of [2, 3]) fireEvent.click(remove, { detail, .…
+    1103|     }
+    1104|     expect(onClick).not.toHaveBeenCalled();
+       |                         ^
+    1105|     expect(editing.remove).not.toHaveBeenCalled();
+    1106|     // An accepted click ends on the button the same way.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps the connection selected when the second click comes with the multi-selection key held
+Error: expect(element).toHaveClass("selected")
+
+Expected the element to have class:
+  selected
+Received:
+  react-flow__edge react-flow__edge-smoothstep nopan selectable
+ ❯ src/editor/viewport-gesture.contract.test.tsx:979:23
+    977|       for (const detail of [2, 3]) browserPress(button, detail, CONTRO…
+    978|       await microtasks();
+    979|       expect(wrapper).toHaveClass('selected');
+       |                       ^
+    980|       expect(remove()).toBe(button);
+    981|       expect(button.isConnected).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  4 failed | 115 passed (119)
+   Start at  21:23:49
+   Duration  14.87s (tests 35%, environment 32%, import 13%, setup 11%, transform 9%)
+
+vitest exit=1
+restored worktree sha256 df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7 (candidate df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7)

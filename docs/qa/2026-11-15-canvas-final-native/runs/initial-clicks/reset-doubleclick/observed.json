@@ -1,0 +1,5584 @@
+{
+  "suite": "207-corrected-review-focused",
+  "scenario": "reset-doubleclick",
+  "origin": "http://127.0.0.1:56205",
+  "gatewayPid": "52072",
+  "bundle": "/app/assets/index-CmDAeKtt.js",
+  "checkpoints": [
+    {
+      "label": "public fixture created",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "82af9e461472bd15"
+      }
+    },
+    {
+      "label": "manual-edge baseline",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "82af9e461472bd15"
+      },
+      "local": null
+    },
+    {
+      "label": "trusted pointer selected edge",
+      "id": "e1",
+      "point": {
+        "x": 777.92236328125,
+        "y": 357.70965576171875
+      },
+      "identity": "work out to done, manual route"
+    },
+    {
+      "label": "ordinary Reset only",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:36.279Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "747795145df6e606"
+      },
+      "local": {
+        "loopId": "01M7EM59A677FVY6QEGGTW7434",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:31:36.294Z",
+        "synced": true,
+        "baseToken": "747795145df6e606"
+      }
+    },
+    {
+      "label": "trusted pointer selected edge",
+      "id": "e1",
+      "point": {
+        "x": 777.4928588867188,
+        "y": 357.70965576171875
+      },
+      "identity": "work out to done"
+    },
+    {
+      "label": "one Undo of ordinary Reset",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:38.048Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "82af9e461472bd15"
+      },
+      "local": {
+        "loopId": "01M7EM59A677FVY6QEGGTW7434",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:31:38.058Z",
+        "synced": true,
+        "baseToken": "82af9e461472bd15"
+      }
+    },
+    {
+      "label": "manual, held and freshly reselected toolbar geometry before the burst",
+      "manual": {
+        "reset": {
+          "box": {
+            "x": 744.8299560546875,
+            "y": 258.6829528808594,
+            "width": 96.328125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 841.1580810546875,
+            "bottom": 290.6829528808594,
+            "left": 744.8299560546875
+          },
+          "disabled": false,
+          "ariaDisabled": null,
+          "tabIndex": 0,
+          "title": ""
+        },
+        "remove": {
+          "box": {
+            "x": 849.1580200195312,
+            "y": 258.6829528808594,
+            "width": 146.578125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 995.7361450195312,
+            "bottom": 290.6829528808594,
+            "left": 849.1580200195312
+          },
+          "disabled": false,
+          "ariaDisabled": null,
+          "tabIndex": 0,
+          "title": ""
+        },
+        "anchor": "translate(682 300.21268292682925) scale(0.8770731707317073)",
+        "viewport": "transform: translate(48.6969px, -164.606px) scale(1.14016);"
+      },
+      "singleHold": {
+        "reset": {
+          "box": {
+            "x": 744.8299560546875,
+            "y": 258.6829528808594,
+            "width": 96.328125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 841.1580810546875,
+            "bottom": 290.6829528808594,
+            "left": 744.8299560546875
+          },
+          "disabled": false,
+          "ariaDisabled": "true",
+          "tabIndex": 0,
+          "title": "The connection already routes automatically."
+        },
+        "remove": {
+          "box": {
+            "x": 849.1580200195312,
+            "y": 258.6829528808594,
+            "width": 146.578125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 995.7361450195312,
+            "bottom": 290.6829528808594,
+            "left": 849.1580200195312
+          },
+          "disabled": false,
+          "ariaDisabled": null,
+          "tabIndex": 0,
+          "title": ""
+        },
+        "anchor": "translate(682 300.21268292682925) scale(0.8770731707317073)",
+        "viewport": "transform: translate(48.6969px, -164.606px) scale(1.14016);"
+      },
+      "sameReset": true,
+      "fresh": {
+        "reset": null,
+        "remove": {
+          "box": {
+            "x": 746.249267578125,
+            "y": 283.1962890625,
+            "width": 146.578125,
+            "height": 32,
+            "top": 283.1962890625,
+            "right": 892.827392578125,
+            "bottom": 315.1962890625,
+            "left": 746.249267578125
+          },
+          "disabled": false,
+          "ariaDisabled": null,
+          "tabIndex": 0,
+          "title": ""
+        },
+        "anchor": "translate(637.5 321.71268292682925) scale(0.8770731707317073)",
+        "viewport": "transform: translate(48.6969px, -164.606px) scale(1.14016);"
+      },
+      "before": {
+        "reset": {
+          "box": {
+            "x": 744.8299560546875,
+            "y": 258.6829528808594,
+            "width": 96.328125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 841.1580810546875,
+            "bottom": 290.6829528808594,
+            "left": 744.8299560546875
+          },
+          "disabled": false,
+          "ariaDisabled": null,
+          "tabIndex": 0,
+          "title": ""
+        },
+        "remove": {
+          "box": {
+            "x": 849.1580200195312,
+            "y": 258.6829528808594,
+            "width": 146.578125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 995.7361450195312,
+            "bottom": 290.6829528808594,
+            "left": 849.1580200195312
+          },
+          "disabled": false,
+          "ariaDisabled": null,
+          "tabIndex": 0,
+          "title": ""
+        },
+        "anchor": "translate(682 300.21268292682925) scale(0.8770731707317073)",
+        "viewport": "transform: translate(48.6969px, -164.606px) scale(1.14016);"
+      },
+      "candidates": [
+        {
+          "kind": "historical",
+          "point": {
+            "x": 793.704,
+            "y": 286.94
+          },
+          "hit": {
+            "hits": true,
+            "label": "Reset route",
+            "target": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+            "edge": "e1"
+          }
+        },
+        {
+          "kind": "candidate-overlap",
+          "point": {
+            "x": 793.7036743164062,
+            "y": 286.9396209716797
+          },
+          "hit": {
+            "hits": true,
+            "label": "Reset route",
+            "target": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+            "edge": "e1"
+          }
+        },
+        {
+          "kind": "current-Reset-right",
+          "point": {
+            "x": 812.2596435546875,
+            "y": 274.6829528808594
+          },
+          "hit": {
+            "hits": true,
+            "label": "Reset route",
+            "target": "min-w-0 overflow-x-clip text-ellipsis",
+            "edge": "e1"
+          }
+        }
+      ],
+      "chosen": {
+        "kind": "historical",
+        "point": {
+          "x": 793.704,
+          "y": 286.94
+        },
+        "hit": {
+          "hits": true,
+          "label": "Reset route",
+          "target": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+          "edge": "e1"
+        }
+      }
+    },
+    {
+      "label": "final readback after Reset double-click",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:39.752Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "747795145df6e606"
+      },
+      "local": {
+        "loopId": "01M7EM59A677FVY6QEGGTW7434",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:31:39.770Z",
+        "synced": true,
+        "baseToken": "747795145df6e606"
+      }
+    },
+    {
+      "label": "Reset burst actual targets, toolbar and edit state",
+      "events": [
+        {
+          "type": "pointerdown",
+          "trusted": true,
+          "x": 793.7039794921875,
+          "y": 286.94000244140625,
+          "buttons": 1,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 4243.200000047684,
+          "eventTime": 4241.600000023842,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mousedown",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 1,
+          "button": 0,
+          "detail": 1,
+          "at": 4243.5,
+          "eventTime": 4241.600000023842,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "pointerup",
+          "trusted": true,
+          "x": 793.7039794921875,
+          "y": 286.94000244140625,
+          "buttons": 0,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 4244.800000011921,
+          "eventTime": 4241.700000047684,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mouseup",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "at": 4244.900000035763,
+          "eventTime": 4241.700000047684,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "pointerId": 1,
+          "at": 4244.900000035763,
+          "eventTime": 4241.700000047684,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "pointerdown",
+          "trusted": true,
+          "x": 793.7039794921875,
+          "y": 286.94000244140625,
+          "buttons": 1,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 4250.900000035763,
+          "eventTime": 4241.800000011921,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mousedown",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 1,
+          "button": 0,
+          "detail": 2,
+          "at": 4250.900000035763,
+          "eventTime": 4241.800000011921,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "pointerup",
+          "trusted": true,
+          "x": 793.7039794921875,
+          "y": 286.94000244140625,
+          "buttons": 0,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 4251.900000035763,
+          "eventTime": 4241.800000011921,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mouseup",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 0,
+          "button": 0,
+          "detail": 2,
+          "at": 4252,
+          "eventTime": 4241.800000011921,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 0,
+          "button": 0,
+          "detail": 2,
+          "pointerId": 1,
+          "at": 4252.100000023842,
+          "eventTime": 4241.800000011921,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "dblclick",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 0,
+          "button": 0,
+          "detail": 2,
+          "at": 4252.200000047684,
+          "eventTime": 4252.200000047684,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        }
+      ],
+      "clicks": [
+        {
+          "type": "click",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "pointerId": 1,
+          "at": 4244.900000035763,
+          "eventTime": 4241.700000047684,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "x": 793,
+          "y": 286,
+          "buttons": 0,
+          "button": 0,
+          "detail": 2,
+          "pointerId": 1,
+          "at": 4252.100000023842,
+          "eventTime": 4241.800000011921,
+          "control": false,
+          "target": 1,
+          "buttonTarget": 1,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": true,
+          "after": false
+        }
+      ],
+      "after": {
+        "reset": {
+          "box": {
+            "x": 744.8299560546875,
+            "y": 258.6829528808594,
+            "width": 96.328125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 841.1580810546875,
+            "bottom": 290.6829528808594,
+            "left": 744.8299560546875
+          },
+          "disabled": false,
+          "ariaDisabled": "true",
+          "tabIndex": 0,
+          "title": "The connection already routes automatically."
+        },
+        "remove": {
+          "box": {
+            "x": 849.1580200195312,
+            "y": 258.6829528808594,
+            "width": 146.578125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 995.7361450195312,
+            "bottom": 290.6829528808594,
+            "left": 849.1580200195312
+          },
+          "disabled": false,
+          "ariaDisabled": null,
+          "tabIndex": 0,
+          "title": ""
+        },
+        "anchor": "translate(682 300.21268292682925) scale(0.8770731707317073)",
+        "viewport": "transform: translate(48.6969px, -164.606px) scale(1.14016);"
+      },
+      "sameBurstReset": true,
+      "writes": [
+        {
+          "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+          "body": {
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Reset toolbar double-click concern",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Fixture start",
+                  "ui": {
+                    "x": 20,
+                    "y": 285
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "work",
+                  "label": "Do work",
+                  "ui": {
+                    "x": 355,
+                    "y": 265
+                  },
+                  "kind": "mutate",
+                  "config": {
+                    "operations": [
+                      {
+                        "op": "append-message",
+                        "role": "note",
+                        "content": "Fixture work"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Fixture success",
+                  "ui": {
+                    "x": 735,
+                    "y": 270
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "other",
+                  "label": "Other terminal",
+                  "ui": {
+                    "x": 730,
+                    "y": 590
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "failure",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "spare",
+                  "label": "Unaffected source",
+                  "ui": {
+                    "x": 90,
+                    "y": 600
+                  },
+                  "kind": "mutate",
+                  "config": {
+                    "operations": [
+                      {
+                        "op": "append-message",
+                        "role": "note",
+                        "content": "Control edge"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "entry",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "work",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e1",
+                  "from": {
+                    "node": "work",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "control",
+                  "from": {
+                    "node": "spare",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "other",
+                    "port": "in"
+                  }
+                }
+              ]
+            }
+          },
+          "ifMatch": "\"82af9e461472bd15\"",
+          "at": 1794713499745,
+          "status": 200
+        }
+      ],
+      "history": {
+        "public": {
+          "loop": {
+            "id": "01M7EM59A677FVY6QEGGTW7434",
+            "ownerId": "local",
+            "name": "Reset toolbar double-click concern",
+            "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+            "createdAt": "2026-11-15T03:31:34.854Z",
+            "updatedAt": "2026-11-15T03:31:39.752Z"
+          },
+          "draft": {
+            "id": "01M7EM59A677FVY6QEGGTW7435",
+            "loopId": "01M7EM59A677FVY6QEGGTW7434",
+            "version": 1,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Reset toolbar double-click concern",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {},
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Fixture start",
+                  "ui": {
+                    "x": 20,
+                    "y": 285
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "work",
+                  "label": "Do work",
+                  "ui": {
+                    "x": 355,
+                    "y": 265
+                  },
+                  "kind": "mutate",
+                  "config": {
+                    "operations": [
+                      {
+                        "op": "append-message",
+                        "role": "note",
+                        "content": "Fixture work"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Fixture success",
+                  "ui": {
+                    "x": 735,
+                    "y": 270
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "other",
+                  "label": "Other terminal",
+                  "ui": {
+                    "x": 730,
+                    "y": 590
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "failure",
+                    "returns": "none",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "spare",
+                  "label": "Unaffected source",
+                  "ui": {
+                    "x": 90,
+                    "y": 600
+                  },
+                  "kind": "mutate",
+                  "config": {
+                    "operations": [
+                      {
+                        "op": "append-message",
+                        "role": "note",
+                        "content": "Control edge"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "entry",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "work",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "e1",
+                  "from": {
+                    "node": "work",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "control",
+                  "from": {
+                    "node": "spare",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "other",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-15T03:31:34.854Z"
+          },
+          "draftToken": "747795145df6e606"
+        },
+        "local": {
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "savedAt": "2026-11-15T03:31:39.770Z",
+          "synced": true,
+          "baseToken": "747795145df6e606"
+        },
+        "history": [
+          [
+            "undo",
+            "Undo reset route of work to done",
+            null
+          ],
+          [
+            "redo",
+            "Redo",
+            "true"
+          ]
+        ],
+        "save": "All changes saved"
+      },
+      "active": "Reset route",
+      "modal": 0
+    },
+    {
+      "label": "deliberate unique Remove from held automatic toolbar",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:41.676Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "54e62065a1c1f28c"
+      },
+      "local": {
+        "loopId": "01M7EM59A677FVY6QEGGTW7434",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:31:41.690Z",
+        "synced": true,
+        "baseToken": "54e62065a1c1f28c"
+      }
+    },
+    {
+      "label": "first Undo restores only deliberate automatic edge removal",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:43.360Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "747795145df6e606"
+      },
+      "local": {
+        "loopId": "01M7EM59A677FVY6QEGGTW7434",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:31:43.373Z",
+        "synced": true,
+        "baseToken": "747795145df6e606"
+      }
+    },
+    {
+      "label": "second Undo restores the exact original manual route",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:45.044Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "82af9e461472bd15"
+      },
+      "local": {
+        "loopId": "01M7EM59A677FVY6QEGGTW7434",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:31:45.054Z",
+        "synced": true,
+        "baseToken": "82af9e461472bd15"
+      }
+    },
+    {
+      "label": "trusted pointer selected edge",
+      "id": "e1",
+      "point": {
+        "x": 777.92236328125,
+        "y": 357.70965576171875
+      },
+      "identity": "work out to done, manual route"
+    },
+    {
+      "label": "genuine Control-Reset",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:46.790Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "747795145df6e606"
+      },
+      "local": {
+        "loopId": "01M7EM59A677FVY6QEGGTW7434",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:31:46.802Z",
+        "synced": true,
+        "baseToken": "747795145df6e606"
+      }
+    },
+    {
+      "label": "modified Reset retained the deliberate edge selection and hold",
+      "modifierEvents": [
+        {
+          "type": "pointerdown",
+          "trusted": true,
+          "x": 792.989990234375,
+          "y": 274.67999267578125,
+          "buttons": 1,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 11270.800000011921,
+          "eventTime": 11269.300000011921,
+          "control": true,
+          "target": 28,
+          "buttonTarget": 29,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            22,
+            23,
+            8
+          ],
+          "selected": true,
+          "actualRemove": 34,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mousedown",
+          "trusted": true,
+          "x": 792,
+          "y": 274,
+          "buttons": 1,
+          "button": 0,
+          "detail": 1,
+          "at": 11270.900000035763,
+          "eventTime": 11269.300000011921,
+          "control": true,
+          "target": 28,
+          "buttonTarget": 29,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            22,
+            23,
+            8
+          ],
+          "selected": true,
+          "actualRemove": 34,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "pointerup",
+          "trusted": true,
+          "x": 792.989990234375,
+          "y": 274.67999267578125,
+          "buttons": 0,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 11271.400000035763,
+          "eventTime": 11269.400000035763,
+          "control": true,
+          "target": 28,
+          "buttonTarget": 29,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            22,
+            23,
+            8
+          ],
+          "selected": true,
+          "actualRemove": 34,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mouseup",
+          "trusted": true,
+          "x": 792,
+          "y": 274,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "at": 11271.400000035763,
+          "eventTime": 11269.400000035763,
+          "control": true,
+          "target": 28,
+          "buttonTarget": 29,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            22,
+            23,
+            8
+          ],
+          "selected": true,
+          "actualRemove": 34,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "x": 792,
+          "y": 274,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "pointerId": 1,
+          "at": 11271.5,
+          "eventTime": 11269.400000035763,
+          "control": true,
+          "target": 28,
+          "buttonTarget": 29,
+          "buttonText": "Reset route",
+          "edgeTarget": "e1",
+          "nodeTarget": null,
+          "paneTarget": true,
+          "path": [
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            22,
+            23,
+            8
+          ],
+          "selected": true,
+          "actualRemove": 34,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": true,
+          "after": false
+        }
+      ],
+      "modifierHold": {
+        "reset": {
+          "box": {
+            "x": 744.8299560546875,
+            "y": 258.6829528808594,
+            "width": 96.328125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 841.1580810546875,
+            "bottom": 290.6829528808594,
+            "left": 744.8299560546875
+          },
+          "disabled": false,
+          "ariaDisabled": "true",
+          "tabIndex": 0,
+          "title": "The connection already routes automatically."
+        },
+        "remove": {
+          "box": {
+            "x": 849.1580200195312,
+            "y": 258.6829528808594,
+            "width": 146.578125,
+            "height": 32,
+            "top": 258.6829528808594,
+            "right": 995.7361450195312,
+            "bottom": 290.6829528808594,
+            "left": 849.1580200195312
+          },
+          "disabled": false,
+          "ariaDisabled": null,
+          "tabIndex": 0,
+          "title": ""
+        },
+        "anchor": "translate(682 300.21268292682925) scale(0.8770731707317073)",
+        "viewport": "transform: translate(48.6969px, -164.606px) scale(1.14016);"
+      }
+    },
+    {
+      "label": "Undo genuine Control-Reset",
+      "id": "01M7EM59A677FVY6QEGGTW7434",
+      "public": {
+        "loop": {
+          "id": "01M7EM59A677FVY6QEGGTW7434",
+          "ownerId": "local",
+          "name": "Reset toolbar double-click concern",
+          "draftVersionId": "01M7EM59A677FVY6QEGGTW7435",
+          "createdAt": "2026-11-15T03:31:34.854Z",
+          "updatedAt": "2026-11-15T03:31:48.484Z"
+        },
+        "draft": {
+          "id": "01M7EM59A677FVY6QEGGTW7435",
+          "loopId": "01M7EM59A677FVY6QEGGTW7434",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Reset toolbar double-click concern",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:31:34.854Z"
+        },
+        "draftToken": "82af9e461472bd15"
+      },
+      "local": {
+        "loopId": "01M7EM59A677FVY6QEGGTW7434",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:31:48.497Z",
+        "synced": true,
+        "baseToken": "82af9e461472bd15"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "puts": [
+    {
+      "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"82af9e461472bd15\"",
+      "at": 1794713496271,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"747795145df6e606\"",
+      "at": 1794713498042,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"82af9e461472bd15\"",
+      "at": 1794713499745,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"747795145df6e606\"",
+      "at": 1794713501669,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"54e62065a1c1f28c\"",
+      "at": 1794713503354,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"747795145df6e606\"",
+      "at": 1794713505037,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"82af9e461472bd15\"",
+      "at": 1794713506779,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:56205/loops/01M7EM59A677FVY6QEGGTW7434/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Reset toolbar double-click concern",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"747795145df6e606\"",
+      "at": 1794713508477,
+      "status": 200
+    }
+  ],
+  "bundleResponses": [
+    {
+      "status": 200,
+      "pid": null
+    }
+  ],
+  "outcome": "PASS_RESET_BURST_HELD_WITH_DELIBERATE_REMOVE_AND_UNDO"
+}

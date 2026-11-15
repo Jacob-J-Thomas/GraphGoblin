@@ -1,0 +1,484 @@
+control old  started 2026-11-15T03:22:52Z
+node v22.23.4
+candidate backup sha256 df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7
+worktree sha256 before swap df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7
+worktree sha256 under test 78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (36 tests | 4 failed) 2697ms
+   ❯ Remove connection ignores the later clicks of a double click (#207) (6)
+     × removes nothing on a click counted 2 or 3 on an automatic route, leaves the connection focused, and removes on one counted 1 24ms
+     × removes nothing on a click counted 2 or 3 on a manual route, leaves the connection focused, and removes on one counted 1 18ms
+     × ends a refused click on the button for every modifier, so Control or Meta cannot select the connection again 18ms
+     × keeps refusing a click counted 1 while a pan settles, and a later click counted 2 once it is ready 45ms
+ ❯ src/editor/Canvas.test.tsx (72 tests | 2 failed) 4261ms
+   ❯ the selected connection is the one the user selected (#207) (27)
+     ❯ Remove connection ignores the later clicks of a double click (#207) (2)
+       × keeps the draft, history, selection and announcement on a click counted 2 or 3 on an automatic forward connection, then removes once on one counted 1, in one Undo step 36ms
+       × keeps the draft, history, selection and announcement on a click counted 2 or 3 on a manual loop-back, then removes once on one counted 1, in one Undo step 26ms
+ ❯ src/editor/viewport-gesture.contract.test.tsx (11 tests | 2 failed) 2000ms
+   ❯ Remove connection after a click on its line, on the installed xyflow and d3 (#207) (2)
+     × keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click 106ms
+     × keeps the connection selected when the second click comes with the multi-selection key held 328ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Remove connection ignores the later clicks of a double click (#207) > keeps the draft, history, selection and announcement on a click counted 2 or 3 on an automatic forward connection, then removes once on one counted 1, in one Undo step
+AssertionError: expected { schemaVersion: 4, …(3) } to be { schemaVersion: 4, …(3) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -1,19 +1,9 @@
+  {
+    "edges": [
+      {
+        "from": {
+-         "node": "start",
+-         "port": "out",
+-       },
+-       "id": "start-work",
+-       "to": {
+-         "node": "work",
+-       },
+-     },
+-     {
+-       "from": {
+          "node": "work",
+          "port": "out",
+        },
+        "id": "work-check",
+        "to": {
+
+ ❯ untouched src/editor/Canvas.test.tsx:1518:32
+    1516|   /** The draft is exactly `definition` as loaded: no edit, no undo st…
+    1517|   const untouched = (definition: LoopDefinitionInput) => {
+    1518|     expect(store().definition).toBe(definition);
+       |                                ^
+    1519|     expect(store()).toMatchObject({ revision: 0, saveState: 'saved', p…
+    1520|   };
+ ❯ src/editor/Canvas.test.tsx:2121:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Remove connection ignores the later clicks of a double click (#207) > keeps the draft, history, selection and announcement on a click counted 2 or 3 on a manual loop-back, then removes once on one counted 1, in one Undo step
+AssertionError: expected { schemaVersion: 4, …(3) } to be { schemaVersion: 4, …(3) } // Object.is equality
+
+- Expected
++ Received
+
+@@ -28,27 +28,10 @@
+        "id": "check-done",
+        "to": {
+          "node": "done",
+        },
+      },
+-     {
+-       "from": {
+-         "node": "done",
+-         "port": "repeat",
+-       },
+-       "id": "return",
+-       "to": {
+-         "node": "work",
+-       },
+-       "ui": {
+-         "route": [
+-           1116,
+-           290,
+-           268,
+-         ],
+-       },
+-     },
+    ],
+    "name": "Simple loop",
+    "nodes": [
+      {
+        "config": {
+
+ ❯ untouched src/editor/Canvas.test.tsx:1518:32
+    1516|   /** The draft is exactly `definition` as loaded: no edit, no undo st…
+    1517|   const untouched = (definition: LoopDefinitionInput) => {
+    1518|     expect(store().definition).toBe(definition);
+       |                                ^
+    1519|     expect(store()).toMatchObject({ revision: 0, saveState: 'saved', p…
+    1520|   };
+ ❯ src/editor/Canvas.test.tsx:2121:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > removes nothing on a click counted 2 or 3 on an automatic route, leaves the connection focused, and removes on one counted 1
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > removes nothing on a click counted 2 or 3 on a manual route, leaves the connection focused, and removes on one counted 1
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:1073:36
+    1071|         fireEvent.click(remove, { detail });
+    1072|         expect(counts.at(-1)).toBe(detail);
+    1073|         expect(editing.remove).not.toHaveBeenCalled();
+       |                                    ^
+    1074|         expect(editing.reset).not.toHaveBeenCalled();
+    1075|         // The wrapper never sees the click, so it cannot select the c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > ends a refused click on the button for every modifier, so Control or Meta cannot select the connection again
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 8 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+  2nd vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+  3rd vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+  4th vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+  5th vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+  6th vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+  7th vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+  8th vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+
+Number of calls: 8
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:1105:32
+    1103|     }
+    1104|     expect(onClick).not.toHaveBeenCalled();
+    1105|     expect(editing.remove).not.toHaveBeenCalled();
+       |                                ^
+    1106|     // An accepted click ends on the button the same way.
+    1107|     fireEvent.click(remove, { detail: 1, ctrlKey: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > keeps refusing a click counted 1 while a pan settles, and a later click counted 2 once it is ready
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "return",
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:1155:34
+    1153|       remove.focus();
+    1154|       fireEvent.click(remove, { detail: 2 });
+    1155|       expect(editing.remove).not.toHaveBeenCalled();
+       |                                  ^
+    1156|       expect(edge).toHaveFocus();
+    1157|       fireEvent.click(remove, { detail: 1 });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click
+AssertionError: expected [] to deeply equal [ 'e1' ]
+
+- Expected
++ Received
+
+- [
+-   "e1",
+- ]
++ []
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:939:24
+    937|         expect(reading.d3, reading.type).not.toContain('click.drag');
+    938|       }
+    939|       expect(stored()).toEqual(['e1']);
+       |                        ^
+    940|       expect(store().past).toEqual([]);
+    941|       expect(store().future).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps the connection selected when the second click comes with the multi-selection key held
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Remove connection"
+
+Here are the accessible roles:
+
+  application:
+
+  Name "":
+  [36m<div[39m
+    [33mclass[39m=[32m"react-flow light"[39m
+    [33mdata-testid[39m=[32m"rf__wrapper"[39m
+    [33mrole[39m=[32m"application"[39m
+    [33mstyle[39m=[32m"width: 100%; height: 100%; overflow: hidden; position: relative; z-index: 0;"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  group:
+
+  Name "Trigger Start (start)":
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"react-flow__node-desc-1"[39m
+    [33maria-label[39m=[32m"Trigger Start (start)"[39m
+    [33maria-roledescription[39m=[32m"node"[39m
+    [33mclass[39m=[32m"react-flow__node react-flow__node-gg nopan selectable draggable"[39m
+    [33mdata-id[39m=[32m"start"[39m
+    [33mdata-testid[39m=[32m"rf__node-start"[39m
+    [33mrole[39m=[32m"group"[39m
+    [33mstyle[39m=[32m"z-index: 0; transform: translate(0px,80px); pointer-events: all; visibility: visible; touch-action: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  Name "Exit Done (done)":
+  [36m<div[39m
+    [33maria-describedby[39m=[32m"react-flow__node-desc-1"[39m
+    [33maria-label[39m=[32m"Exit Done (done)"[39m
+    [33maria-roledescription[39m=[32m"node"[39m
+    [33mclass[39m=[32m"react-flow__node react-flow__node-gg nopan selectable draggable"[39m
+    [33mdata-id[39m=[32m"done"[39m
+    [33mdata-testid[39m=[32m"rf__node-done"[39m
+    [33mrole[39m=[32m"group"[39m
+    [33mstyle[39m=[32m"z-index: 0; transform: translate(320px,80px); pointer-events: all; visibility: visible; touch-action: none;"[39m
+    [33mtabindex[39m=[32m"0"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Zoom In":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Zoom In"[39m
+    [33mclass[39m=[32m"react-flow__controls-button react-flow__controls-zoomin"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Zoom In"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Zoom Out":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Zoom Out"[39m
+    [33mclass[39m=[32m"react-flow__controls-button react-flow__controls-zoomout"[39m
+    [33mtitle[39m=[32m"Zoom Out"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Fit View":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Fit View"[39m
+    [33mclass[39m=[32m"react-flow__controls-button react-flow__controls-fitview"[39m
+    [33mtitle[39m=[32m"Fit View"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Toggle Interactivity":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Toggle Interactivity"[39m
+    [33mclass[39m=[32m"react-flow__controls-button react-flow__controls-interactive"[39m
+    [33mtitle[39m=[32m"Toggle Interactivity"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  link:
+
+  Name "React Flow attribution":
+  [36m<a[39m
+    [33maria-label[39m=[32m"React Flow attribution"[39m
+    [33mhref[39m=[32m"https://reactflow.dev/attribution"[39m
+    [33mrel[39m=[32m"noopener noreferrer"[39m
+    [33mtarget[39m=[32m"_blank"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"[39m
+      [33mdata-editor-canvas[39m=[32m""[39m
+      [33mdata-testid[39m=[32m"canvas"[39m
+      [33mstyle[39m=[32m"--gg-canvas-zoom: 2;"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"react-flow light"[39m
+        [33mdata-testid[39m=[32m"rf__wrapper"[39m
+        [33mrole[39m=[32m"application"[39m
+        [33mstyle[39m=[32m"width: 100%; height: 100%; overflow: hidden; position: relative; z-index: 0;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"react-flow__renderer"[39m
+          [33mstyle[39m=[32m"position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"react-flow__pane draggable"[39m
+            [33mstyle[39m=[32m"position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"react-flow__viewport xyflow__viewport react-flow__container"[39m
+              [33mstyle[39m=[32m"transform: translate(96px,120px) scale(2);"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"react-flow__edges"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"react-flow__edgelabel-renderer"[39m
+              [36m/>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"react-flow__nodes"[39m
+                [33mstyle[39m=[32m"position: absolute; width: 100%; height: 100%; top: 0px; left: 0px;"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33maria-describedby[39m=[32m"react-flow__node-desc-1"[39m
+                  [33maria-label[39m=[32m"Trigger Start (start)"[39m
+                  [33maria-roledescription[39m=[32m"node"[39m
+                  [33mclass[39m=[32m"react-flow__node react-flow__node-gg nopan selectable draggable"[39m
+                  [33mdata-id[39m=[32m"start"[39m
+                  [33mdata-testid[39m=[32m"rf__node-start"[39m
+                  [33mrole[39m=[32m"group"[39m
+                  [33mstyle[39m=[32m"z-index: 0; transform: translate(0px,80px); pointer-events: all; visibility: visible; touch-action: none;"[39m
+                  [33mtabindex[39m=[32m"0"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"rounded-lg border bg-surface-raised text-xs text-default border-default shadow-2"[39m
+                    [33mdata-testid[39m=[32m"node-start"[39m
+                    [33mstyle[39m=[32m"--k: var(--kind-trigger); --k-subtle: var(--kind-trigger-subtle); width: 184px;"[39m
+                  [36m>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"flex h-9 items-center gap-2 rounded-t-[11px] border-b border-default bg-kind-subtle pr-2 pl-[7px]"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33maria-hidden[39m=[32m"true"[39m
+                        [33mclass[39m=[32m"inline-grid shrink-0 place-items-center bg-kind text-kind-on size-[22px] rounded-[6px] [&_svg]:size-[13px] [&_svg]:stroke-[2.2]"[39m
+                        [33mdata-kind[39m=[32m"trigger"[39m
+                        [33mstyle[39m=[32m"--k: var(--kind-trigger); --k-subtle: var(--kind-trigger-subtle);"[39m
+                      [36m>[39m
+                        [36m<svg[39m
+                          [33maria-hidden[39m=[32m"true"[39m
+                          [33mclass[39m=[32m"size-4 shrink-0"[39m
+                          [33mdata-icon[39m=[32m"trigger"[39m
+                          [33mfill[39m=[32m"none"[39m
+                          [33mfocusable[39m=[32m"false"[39m
+                          [33mstroke[39m=[32m"currentColor"[39m
+                          [33mstroke-linecap[39m=[32m"round"[39m
+                          [33mstroke-linejoin[39m=[32m"round"[39m
+                          [33mstroke-width[39m=[32m"2"[39m
+                          [33mviewBox[39m=[32m"0 0 24 24"[39m
+                        [36m>[39m
+                          [36m<path[39m
+                            [33md[39m=[32m"M13 2.5 4.5 13.5H11l-1 8 8.5-11H12l1-8Z"[39m
+                          [36m/>[39m
+                        [36m</svg>[39m
+                      [36m</span>[39m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"text-2xs font-bold tracking-[0.08em] text-muted uppercase"[39m
+                      [36m>[39m
+                        [0mTrigger[0m
+                      [36m</span>[39m
+                    [36m</div>[39m
+                    [36m<div[39m
+                      [33mclass[39m=[32m"px-3 pt-2 pb-2.5"[39m
+                    [36m>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"truncate text-md leading-5 font-semibold"[39m
+                      [36m>[39m
+                        [0mStart[0m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"truncate font-mono text-[11.5px] leading-4 text-muted"[39m
+                      [36m>[39m
+                        [0mstart[0m
+                      [36m</div>[39m
+                      [36m<div[39m
+                        [33mclass[39m=[32m"gg-node-ports mt-1 flex flex-col items-end gap-0.5"[39m
+                      [36m>[39m
+                        [36m<div[39m
+                          [33mclass[39m=[32m"gg-node-port relative h-[18px] pr-2 font-mono text-2xs leading-[18px] font-medium text-muted"[39m
+                        [36m>[39m
+                          [0mout[0m
+                          [36m<div[39m
+                            [33maria-label[39m=[32m"start output out (out)"[39m
+                            [33mclass[39m=[32m"react-flow__handle react-flow__handle-right nodrag nopan source connectable connectablestart connectableend connectionindicator"[39m
+                            [33mdata-handleid[39m=[32m"out"[39m
+                            [33mdata-handlepos[39m=[32m"right"[39m
+                            [33mdata-id[39m=[32m"1-start-out-source"[39m
+                            [33mdata-nodeid[39m=[32m"start"[39m
+                            [33mstyle[39m=[32m"right: -14px;"[39m
+                          [36m/>[39m
+                        [36m</div>[39m
+                      [36m</div>[39m
+                    [36m</div>[39m
+                  [36m</div>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33maria...
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ remove src/editor/viewport-gesture.contract.test.tsx:210:29
+    208|
+    209| const store = () => useEditorStore.getState();
+    210| const remove = () => screen.getByRole('button', { name: 'Remove connec…
+       |                             ^
+    211| const stored = () => store().definition!.edges.map((edge) => edge.id);
+    212|
+ ❯ src/editor/viewport-gesture.contract.test.tsx:980:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  8 failed | 111 passed (119)
+   Start at  21:22:53
+   Duration  15.19s (tests 36%, environment 31%, import 12%, setup 11%, transform 9%)
+
+vitest exit=1
+restored worktree sha256 df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7 (candidate df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7)

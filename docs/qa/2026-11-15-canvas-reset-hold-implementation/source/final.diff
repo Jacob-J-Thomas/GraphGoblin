@@ -1,0 +1,926 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index de33e706..58065fa1 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -24,7 +24,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   issues beside **Publish**, and removed there with **Remove edge**, one **Undo** step each.
+   Right after a mouse pan or a mouse drag of a card, **Remove connection** and **Reset route**
+   are briefly shown unavailable and do nothing, until the drag's own click blocker is gone;
+-  before, they looked available while a click on them was silently swallowed. Removing a
++  before, they looked available while a click on them was silently swallowed. After **Reset
++  route**, the toolbar stays where it was clicked and the button stays in its place, dimmed, so the
++  second click of a double click no longer lands on **Remove connection**; both go when the
++  connection is deselected, and the toolbar follows its label again once the route is moved by hand
++  or the reset is undone. Removing a
+   connection takes exactly one stored record: an ID that more than one stored connection holds is
+   refused with its reason, on the button and from the keyboard, instead of removing them all. A
+   connection stays selected only while it is the one selected in the loaded draft: **Reload
+diff --git a/apps/web/e2e/edge-routes.spec.ts b/apps/web/e2e/edge-routes.spec.ts
+index 577bf165..7eeefbdd 100644
+--- a/apps/web/e2e/edge-routes.spec.ts
++++ b/apps/web/e2e/edge-routes.spec.ts
+@@ -334,7 +334,14 @@ test('keyboard: Tab reaches the handles, arrows nudge by grid steps, Escape retu
+   await save();
+   expect(await y()).toBeUndefined();
+   await expect(edge(page, 'return')).toBeFocused();
+-  await expect(page.getByRole('button', { name: 'Reset route', exact: true })).toHaveCount(0);
++  // Reset route stays where it was clicked, unavailable (#207): the second press of a double click
++  // lands on it, not on Remove connection. It goes with the selection.
++  const held = page.getByRole('button', { name: 'Reset route', exact: true });
++  await expect(held).toHaveAttribute('aria-disabled', 'true');
++  await expect(held).toHaveAttribute('title', 'The connection already routes automatically.');
++  await page.keyboard.press('Escape');
++  await expect(edge(page, 'return')).not.toHaveClass(/selected/);
++  await expect(held).toHaveCount(0);
+ });
+ 
+ test('moving a card onto a manual route takes it back to automatic, in the move’s undo step', async ({
+diff --git a/apps/web/src/editor/Canvas.test.tsx b/apps/web/src/editor/Canvas.test.tsx
+index fb71dcd1..7973a797 100644
+--- a/apps/web/src/editor/Canvas.test.tsx
++++ b/apps/web/src/editor/Canvas.test.tsx
+@@ -1897,4 +1897,205 @@ describe('the selected connection is the one the user selected (#207)', () => {
+     fireEvent.click(remove);
+     expect(labels()).toEqual(['move check', 'remove edge start to work']);
+   });
++
++  describe('Reset route holds the selected connection’s toolbar where it was clicked (#207)', () => {
++    /** A manual route on a loop-back (`return`), and on a forward connection (`start-work`). */
++    const MANUAL = {
++      return: { route: [1116, 290, 268], reset: 'reset route of done repeat to work' },
++      'start-work': { route: [200], reset: 'reset route of start to work' },
++    } as const;
++    const REMOVE = {
++      return: 'remove edge done repeat to work',
++      'start-work': 'remove edge start to work',
++    } as const;
++    type Connection = keyof typeof MANUAL;
++    const CONNECTIONS = [
++      ['a loop-back', 'return'],
++      ['a forward connection', 'start-work'],
++    ] as const;
++    const withRoute = (id: Connection) => {
++      const definition = simpleLoop();
++      definition.edges.find((e) => e.id === id)!.ui = { route: [...MANUAL[id].route] };
++      return definition;
++    };
++    const deselect = (id: string) =>
++      act(() => flow().onEdgesChange!([{ type: 'select', id, selected: false }]));
++    const resetButton = () => screen.getByRole('button', { name: 'Reset route' });
++    const removeButton = () => screen.getByRole('button', { name: 'Remove connection' });
++    /** Where the selected connection's toolbar is: the transform of the group that holds it. */
++    const toolbarAt = () =>
++      removeButton().closest('foreignObject')!.parentElement!.getAttribute('transform');
++    const toolbar = () =>
++      [...document.querySelector('.gg-route-toolbar')!.children].map((child) => child.textContent);
++    /** Where the toolbar goes over the route as drawn now, at zoom 1. */
++    const overLabel = (id: string) => {
++      const { label } = (edge(id).data as OrthogonalEdgeData).channel.getSnapshot()!;
++      return `translate(${label.x} ${label.y - 18}) scale(1)`;
++    };
++
++    it.each(CONNECTIONS)(
++      'keeps the same two buttons through one Reset route on %s, then removes once on purpose: one step each, two Undos',
++      (_, id) => {
++        const definition = load(withRoute(id));
++        render(<Live />);
++        select(id);
++        const reset = resetButton();
++        const remove = removeButton();
++        const at = toolbarAt();
++        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
++        expect(reset).not.toHaveAttribute('aria-disabled');
++
++        // The first click of a double click: one reset, one step, announced as before.
++        fireEvent.click(reset);
++        expect(labels()).toEqual([MANUAL[id].reset]);
++        expect(store().definition!.edges.find((e) => e.id === id)!.ui).toBeUndefined();
++        expect(said()).toBe('Route reset: the connection routes automatically.');
++        const reseted = store().definition;
++        expect(selected()).toEqual([id]);
++        // The route is automatic now; the toolbar, and the very buttons in it, are where they were.
++        expect(edge(id).ariaLabel).not.toMatch(/manual route/);
++        expect(resetButton()).toBe(reset);
++        expect(removeButton()).toBe(remove);
++        expect(reset.isConnected && remove.isConnected).toBe(true);
++        expect(toolbarAt()).toBe(at);
++        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
++        expect(reset).toHaveAttribute('aria-disabled', 'true');
++        expect(reset).toHaveAttribute('title', 'The connection already routes automatically.');
++        expect(remove).toBeEnabled();
++        expect(remove).not.toHaveAttribute('aria-disabled');
++
++        // The rest of a double click, a triple click and modifiers: nothing is written or removed.
++        fireEvent.click(reset, { detail: 2 });
++        fireEvent.doubleClick(reset);
++        fireEvent.click(reset, { detail: 3 });
++        fireEvent.click(reset, { ctrlKey: true });
++        fireEvent.click(reset, { metaKey: true });
++        fireEvent.click(reset, { shiftKey: true });
++        expect(labels()).toEqual([MANUAL[id].reset]);
++        expect(store().definition).toBe(reseted);
++        expect(selected()).toEqual([id]);
++        expect(toolbarAt()).toBe(at);
++
++        // A deliberate click on Remove connection removes once, in a step of its own.
++        fireEvent.click(remove);
++        expect(labels()).toEqual([MANUAL[id].reset, REMOVE[id]]);
++        expect(store().definition!.edges.some((e) => e.id === id)).toBe(false);
++        expect(selected()).toEqual([]);
++        expect(undo).toHaveFocus();
++        act(() => store().undo());
++        expect(store().definition!.edges.find((e) => e.id === id)!.ui).toBeUndefined();
++        act(() => store().undo());
++        expect(store().definition).toEqual(definition);
++      },
++    );
++
++    it.each(CONNECTIONS)(
++      'follows the label again once Undo brings the manual route back on %s, and holds again at the next Reset',
++      (_, id) => {
++        const definition = load(withRoute(id));
++        render(<Live />);
++        select(id);
++        const reset = resetButton();
++        const at = toolbarAt();
++        fireEvent.click(reset);
++        expect(reset).toHaveAttribute('aria-disabled', 'true');
++        act(() => store().undo());
++        expect(store().definition).toEqual(definition);
++        expect(edge(id).ariaLabel).toMatch(/manual route/);
++        // The selection survives Undo: the very same buttons, and Reset route available again.
++        expect(resetButton()).toBe(reset);
++        expect(reset).not.toHaveAttribute('aria-disabled');
++        expect(reset).not.toHaveAttribute('title');
++        expect(toolbarAt()).toBe(at);
++
++        // The hold ended with the route Undo brought back: when it goes automatic some other way
++        // (a card moved onto it resets it; here an edit does), the toolbar follows its label and
++        // there is no Reset route to hold.
++        act(() => store().setEdgeRoute(id, undefined));
++        expect(toolbar()).toEqual(['Remove connection']);
++        const followed = toolbarAt();
++        expect(followed).not.toBe(at);
++        deselect(id);
++        select(id);
++        expect(toolbarAt()).toBe(followed);
++
++        // Undo again, and Reset route holds again where it is clicked.
++        act(() => store().undo());
++        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
++        expect(resetButton()).not.toHaveAttribute('aria-disabled');
++        fireEvent.click(resetButton());
++        expect(toolbarAt()).toBe(at);
++        expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
++        expect(labels()).toEqual([MANUAL[id].reset]);
++      },
++    );
++
++    it.each(CONNECTIONS)(
++      'follows the label again at a keyboard nudge, a drag and a later Undo of the route a held Reset route reset on %s',
++      (_, id) => {
++        const lane =
++          id === 'return'
++            ? { name: 'Route segment 3 of 5, horizontal', key: 'ArrowDown', drag: [0, 40] }
++            : { name: 'Route segment 2 of 3, vertical', key: 'ArrowRight', drag: [40, 0] };
++        load(withRoute(id));
++        render(<Live />);
++        select(id);
++        const at = toolbarAt();
++        for (const how of ['nudge', 'drag'] as const) {
++          fireEvent.click(resetButton());
++          expect(toolbarAt()).toBe(at);
++          expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
++          const handle = screen.getByRole('button', { name: lane.name });
++          if (how === 'nudge') fireEvent.keyDown(handle, { key: lane.key });
++          else {
++            fireEvent.pointerDown(handle, { button: 0, clientX: 0, clientY: 0 });
++            fireEvent.pointerMove(window, { clientX: lane.drag[0]!, clientY: lane.drag[1]! });
++            fireEvent.pointerUp(window);
++          }
++          // The connection is drawn by hand again: Reset route is available, and the toolbar is
++          // over the label of the route now drawn, not where the hold kept it.
++          expect(edge(id).ariaLabel).toMatch(/manual route/);
++          expect(resetButton()).not.toHaveAttribute('aria-disabled');
++          expect(resetButton()).not.toHaveAttribute('title');
++          expect(toolbarAt()).toBe(overLabel(id));
++          expect(toolbarAt()).not.toBe(at);
++          // Back to the route that was reset, for the next way of drawing it again.
++          act(() => store().setEdgeRoute(id, [...MANUAL[id].route]));
++          expect(toolbarAt()).toBe(at);
++        }
++      },
++    );
++
++    it.each(CONNECTIONS)(
++      'drops the hold on deselection and on a new load of the draft, so a fresh selection starts again on %s',
++      (_, id) => {
++        load(withRoute(id));
++        render(<Live />);
++        select(id);
++        const at = toolbarAt();
++        fireEvent.click(resetButton());
++        expect(toolbarAt()).toBe(at);
++        deselect(id);
++        expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
++        // Selected again: the ordinary toolbar of an automatic route, Remove connection alone.
++        select(id);
++        expect(toolbar()).toEqual(['Remove connection']);
++        expect(screen.queryByRole('button', { name: 'Reset route' })).toBeNull();
++        expect(toolbarAt()).not.toBe(at);
++
++        // Undo brings the manual route back; a Reset route held on it is forgotten with a load.
++        act(() => store().undo());
++        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
++        fireEvent.click(resetButton());
++        expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
++        act(() => store().load('L1', withRoute(id), { baseToken: 'server-2' }));
++        expect(selected()).toEqual([]);
++        expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
++        select(id);
++        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
++        expect(resetButton()).not.toHaveAttribute('aria-disabled');
++        expect(resetButton()).not.toHaveAttribute('title');
++      },
++    );
++  });
+ });
+diff --git a/apps/web/src/editor/OrthogonalEdge.test.tsx b/apps/web/src/editor/OrthogonalEdge.test.tsx
+index abc22a17..717cfd7f 100644
+--- a/apps/web/src/editor/OrthogonalEdge.test.tsx
++++ b/apps/web/src/editor/OrthogonalEdge.test.tsx
+@@ -1,7 +1,8 @@
+ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
+ import { getSmoothStepPath, Position, ReactFlowProvider, type EdgeProps } from '@xyflow/react';
+ import type { ReactNode } from 'react';
+-import { beforeAll, describe, expect, it, vi } from 'vitest';
++import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+ import { OrthogonalEdge, type OrthogonalFlowEdge } from './OrthogonalEdge.js';
+ import { RouteEditingContext, type RouteEditing } from './route-editing.js';
+ import type { RoutedEdge } from './routing.js';
+@@ -658,3 +659,371 @@ describe('OrthogonalEdge', () => {
+     useEditorStore.setState({ definition: undefined, systemChat: false });
+   });
+ });
++
++/**
++ * Reset route keeps the toolbar where it was clicked (#207). A double click's second press lands on
++ * the point of the first: were the toolbar recentred on the automatic label with Reset route gone,
++ * Remove connection would sit under that point. These tests drive the real component, its route
++ * channel and the browser's click and key sequences; they assert what is rendered, never where a
++ * browser would hit-test (jsdom has no layout).
++ */
++describe('Reset route keeps its toolbar where it was clicked (#207)', () => {
++  const MESSAGE = 'The connection already routes automatically.';
++  const manual: RoutedEdge = { ...route, manual: true };
++  /** The router's route for the same loop-back: its label, and so the centred toolbar, is elsewhere. */
++  const automatic: RoutedEdge = {
++    ...route,
++    points: [
++      { x: 100, y: 0 },
++      { x: 120, y: 0 },
++      { x: 120, y: 120 },
++      { x: -10, y: 120 },
++      { x: -10, y: 40 },
++      { x: 0, y: 40 },
++    ],
++    label: { x: 40, y: 120 },
++  };
++  /** Another manual route, as a nudge or a drag of a handle draws one. */
++  const nudged: RoutedEdge = {
++    ...manual,
++    points: [
++      { x: 100, y: 0 },
++      { x: 130, y: 0 },
++      { x: 130, y: 200 },
++      { x: -20, y: 200 },
++      { x: -20, y: 40 },
++      { x: 0, y: 40 },
++    ],
++    label: { x: 70, y: 200 },
++  };
++  type Label = { x: number; y: number };
++  /** Where the toolbar goes for a label at `at`, at zoom 1. */
++  const above = (at: Label) => `translate(${at.x} ${at.y - 18}) scale(1)`;
++  const placed = (container: HTMLElement) =>
++    container.querySelector('foreignObject')!.parentElement!.getAttribute('transform');
++  const toolbar = (container: HTMLElement) =>
++    [...container.querySelector('.gg-route-toolbar')!.children].map((child) => child.textContent);
++  const labelAt = (container: HTMLElement) =>
++    container.querySelector('.react-flow__edge-textwrapper')!.getAttribute('transform');
++
++  beforeEach(() => {
++    useEditorStore.setState({ definition: undefined, systemChat: false });
++  });
++
++  /** The route channel of one connection, published to as the canvas does after an edit. */
++  function channelOf(initial: RoutedEdge, forward = false) {
++    const channels = createRouteChannels();
++    return {
++      data: { channel: channels.edge('return', initial), forward, suspended: false },
++      publish: (next: RoutedEdge | undefined) =>
++        act(() => channels.publish(new Map(next ? [['return', next]] : []), new Set(['return']))),
++    };
++  }
++  /**
++   * The edge selected inside xyflow's edge wrapper, whose React click handler (an ancestor here)
++   * selects it again, or with Control or Meta held toggles it off.
++   */
++  function setup(
++    stand: ReturnType<typeof channelOf>,
++    geometry: Partial<EdgeProps<OrthogonalFlowEdge>> = {},
++    editing: ReturnType<typeof editor> = editor(),
++  ) {
++    const onClick = vi.fn();
++    const onKeyDown = vi.fn();
++    const tree = (selected: boolean) => (
++      <div onClick={onClick} onKeyDown={onKeyDown}>
++        {inFlow(
++          <OrthogonalEdge {...props} {...geometry} data={stand.data} selected={selected} />,
++          editing,
++        )}
++      </div>
++    );
++    const view = render(tree(true));
++    return {
++      view,
++      editing,
++      onClick,
++      onKeyDown,
++      select: (selected: boolean) => view.rerender(tree(selected)),
++    };
++  }
++  const resetButton = () => screen.getByRole('button', { name: 'Reset route' });
++  const removeButton = () => screen.getByRole('button', { name: 'Remove connection' });
++
++  it.each([
++    ['a loop-back', false, automatic, {}],
++    [
++      'a forward connection',
++      true,
++      undefined,
++      { sourceX: 0, sourceY: 0, targetX: 300, targetY: 120 },
++    ],
++  ] as const)(
++    'keeps the toolbar and Reset route where they were on %s, so no later click lands on Remove connection',
++    async (_, forward, after, geometry) => {
++      const stand = channelOf(manual, forward);
++      const { view, editing, onClick } = setup(stand, geometry);
++      const user = userEvent.setup();
++      const reset = resetButton();
++      const remove = removeButton();
++      const at = placed(view.container);
++      const label = labelAt(view.container);
++      expect(toolbar(view.container)).toEqual(['Reset route', 'Remove connection']);
++      expect(reset).not.toHaveAttribute('aria-disabled');
++      expect(reset).not.toHaveAttribute('title');
++
++      // The first click of a double click: the browser's own sequence, then the canvas publishes.
++      await user.click(reset);
++      expect(editing.reset).toHaveBeenCalledTimes(1);
++      expect(editing.reset).toHaveBeenCalledWith('return');
++      expect(screen.getByTestId('edge')).toHaveFocus();
++      stand.publish(after);
++
++      // The route and its label moved on; the toolbar and its two controls did not.
++      expect(labelAt(view.container)).not.toBe(label);
++      expect(placed(view.container)).toBe(at);
++      expect(resetButton()).toBe(reset);
++      expect(removeButton()).toBe(remove);
++      expect(reset.isConnected).toBe(true);
++      expect(toolbar(view.container)).toEqual(['Reset route', 'Remove connection']);
++      expect(reset).toHaveTextContent('Reset route');
++      expect(reset).toHaveClass('nodrag', 'nopan', 'nokey', 'pointer-coarse:h-11');
++      // Unavailable because the route is automatic: a real hit target that keeps focus and `nopan`.
++      expect(reset).toBeEnabled();
++      expect(reset).toHaveAttribute('aria-disabled', 'true');
++      expect(reset).toHaveAttribute('title', MESSAGE);
++      expect(reset).not.toHaveAttribute('data-gesture');
++      expect(remove).toBeEnabled();
++      expect(remove).not.toHaveAttribute('aria-disabled');
++
++      // The second press of the double click, and any later click count, modifier or key, do nothing.
++      await user.dblClick(reset);
++      await user.tripleClick(reset);
++      for (const detail of [2, 3, 4, 5]) fireEvent.click(reset, { detail });
++      for (const modifier of [{ shiftKey: true }, { ctrlKey: true }, { metaKey: true }])
++        fireEvent.click(reset, modifier);
++      reset.focus();
++      await user.keyboard('{Enter}');
++      await user.keyboard(' ');
++      expect(editing.reset).toHaveBeenCalledTimes(1);
++      expect(editing.remove).not.toHaveBeenCalled();
++      // Each click ends on the button, as Remove connection's does: the edge wrapper never selects
++      // the connection again, which with Control or Meta held would toggle it off.
++      expect(onClick).not.toHaveBeenCalled();
++      expect(reset).toHaveFocus();
++      expect(placed(view.container)).toBe(at);
++      expect(resetButton()).toBe(reset);
++
++      // A deliberate click on Remove connection removes once.
++      await user.click(remove);
++      expect(editing.remove).toHaveBeenCalledTimes(1);
++      expect(editing.remove).toHaveBeenCalledWith('return');
++      expect(onClick).not.toHaveBeenCalled();
++    },
++  );
++
++  it('has Remove connection alone in a fresh selection of an automatic route, and forgets the hold on deselection', async () => {
++    const stand = channelOf(automatic);
++    const { view, select } = setup(stand);
++    // A normal fresh selection: nothing to reset, nothing held, the toolbar over the label.
++    expect(toolbar(view.container)).toEqual(['Remove connection']);
++    expect(screen.queryByRole('button', { name: 'Reset route' })).toBeNull();
++    expect(placed(view.container)).toBe(above(automatic.label));
++
++    stand.publish(manual);
++    await userEvent.setup().click(resetButton());
++    stand.publish(automatic);
++    expect(toolbar(view.container)).toEqual(['Reset route', 'Remove connection']);
++    expect(placed(view.container)).toBe(above(manual.label));
++    // Deselected, the toolbar goes; selected again it is a fresh one, as at the start.
++    select(false);
++    expect(view.container.querySelector('.gg-route-toolbar')).toBeNull();
++    select(true);
++    expect(toolbar(view.container)).toEqual(['Remove connection']);
++    expect(placed(view.container)).toBe(above(automatic.label));
++  });
++
++  it.each([
++    [
++      'the same points array again, as an Undo might return it',
++      { ...manual, label: { x: 70, y: 150 } },
++    ],
++    ['another manual route, as a nudge or a drag draws', nudged],
++  ])('ends the hold when %s is drawn, and holds again at the next click', async (_, next) => {
++    expect(next.manual).toBe(true);
++    const stand = channelOf(manual);
++    const { view, editing } = setup(stand);
++    const user = userEvent.setup();
++    await user.click(resetButton());
++    stand.publish(automatic);
++    expect(placed(view.container)).toBe(above(manual.label));
++    expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
++
++    // The route is drawn by hand again: the toolbar follows its label and Reset route is available.
++    stand.publish(next);
++    expect(resetButton()).toBeEnabled();
++    expect(resetButton()).not.toHaveAttribute('aria-disabled');
++    expect(resetButton()).not.toHaveAttribute('title');
++    expect(placed(view.container)).toBe(above(next.label));
++
++    // It resets that route too, and holds where that was clicked.
++    await user.click(resetButton());
++    expect(editing.reset).toHaveBeenCalledTimes(2);
++    stand.publish(automatic);
++    expect(placed(view.container)).toBe(above(next.label));
++    expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
++  });
++
++  it('follows a different manual route that arrives before the automatic one', async () => {
++    // A reset that took no effect, then the route is redrawn: nothing is held.
++    const stand = channelOf(manual);
++    const { view } = setup(stand);
++    await userEvent.setup().click(resetButton());
++    expect(placed(view.container)).toBe(above(manual.label));
++    stand.publish(nudged);
++    expect(placed(view.container)).toBe(above(nudged.label));
++    expect(resetButton()).not.toHaveAttribute('aria-disabled');
++  });
++
++  it('keeps the width of Crosses a card as an inaccessible blank while held', async () => {
++    const stand = channelOf({ ...manual, crossing: true });
++    const { view, select } = setup(stand);
++    const chip = screen.getByText('Crosses a card');
++    const classes = chip.className.split(' ');
++    expect(chip).not.toHaveAttribute('aria-hidden');
++    expect(toolbar(view.container)).toEqual(['Crosses a card', 'Reset route', 'Remove connection']);
++
++    await userEvent.setup().click(resetButton());
++    stand.publish(automatic);
++    // The same element with the same text and classes, so the same width, now blank and hidden
++    // from assistive technology; the controls beside it do not move.
++    expect(toolbar(view.container)).toEqual(['Crosses a card', 'Reset route', 'Remove connection']);
++    const slot = view.container.querySelector('.gg-route-toolbar')!.children[0]!;
++    expect(slot).toBe(chip);
++    expect(slot).toHaveClass(...classes, 'invisible');
++    expect(slot).toHaveAttribute('aria-hidden', 'true');
++    expect(placed(view.container)).toBe(above(manual.label));
++    // A fresh selection of the automatic route, which crosses nothing, keeps no blank.
++    select(false);
++    select(true);
++    expect(toolbar(view.container)).toEqual(['Remove connection']);
++  });
++
++  it('shows the note again when a crossing manual route is drawn after the hold', async () => {
++    const stand = channelOf({ ...manual, crossing: true });
++    const { view } = setup(stand);
++    await userEvent.setup().click(resetButton());
++    stand.publish(automatic);
++    const slot = view.container.querySelector('.gg-route-toolbar')!.children[0]!;
++    expect(slot).toHaveAttribute('aria-hidden', 'true');
++    stand.publish({ ...nudged, crossing: true });
++    expect(view.container.querySelector('.gg-route-toolbar')!.children[0]).toBe(slot);
++    expect(slot).not.toHaveAttribute('aria-hidden');
++    expect(slot).not.toHaveClass('invisible');
++  });
++
++  it('keeps the toolbar keys on the held Reset route: Escape returns to the connection, the rest stay on the button', async () => {
++    const stand = channelOf(manual);
++    const { editing, onKeyDown } = setup(stand);
++    await userEvent.setup().click(resetButton());
++    stand.publish(automatic);
++    const reset = resetButton();
++    for (const key of ['Delete', 'Backspace', 'Enter', ' ']) fireEvent.keyDown(reset, { key });
++    expect(onKeyDown).not.toHaveBeenCalled();
++    reset.focus();
++    fireEvent.keyDown(reset, { key: 'Escape' });
++    expect(screen.getByTestId('edge')).toHaveFocus();
++    expect(editing.reset).toHaveBeenCalledTimes(1);
++    expect(editing.remove).not.toHaveBeenCalled();
++  });
++
++  it('refuses on the pan gate first, holding nothing, and keeps Reset route unavailable after a pan settles', async () => {
++    const gate = createViewportGestureGate();
++    const detach = gate.attach(window);
++    try {
++      const refused = channelOf(manual);
++      const first = setup(refused, {}, editor(gate));
++      act(() => gate.move(new MouseEvent('mousemove')));
++      expect(resetButton()).toHaveAttribute('data-gesture', 'panning');
++      fireEvent.click(resetButton());
++      expect(first.editing.reset).not.toHaveBeenCalled();
++      expect(first.onClick).not.toHaveBeenCalled();
++      // The refused click made no hold: when the route changes some other way, the toolbar follows it.
++      refused.publish(automatic);
++      expect(toolbar(first.view.container)).toEqual(['Remove connection']);
++      expect(placed(first.view.container)).toBe(above(automatic.label));
++      first.view.unmount();
++      act(() => {
++        window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
++      });
++      await waitFor(() => expect(gate.state()).toBe('ready'));
++
++      // Held, then a pan: both controls say so; once it settles Reset route stays unavailable.
++      const stand = channelOf(manual);
++      const { view, editing } = setup(stand, {}, editor(gate));
++      await userEvent.setup().click(resetButton());
++      expect(editing.reset).toHaveBeenCalledTimes(1);
++      stand.publish(automatic);
++      const reset = resetButton();
++      const remove = removeButton();
++      expect(placed(view.container)).toBe(above(manual.label));
++      act(() => gate.move(new MouseEvent('mousemove')));
++      for (const button of [reset, remove]) {
++        expect(button).toHaveAttribute('aria-disabled', 'true');
++        expect(button).toHaveAttribute('data-gesture', 'panning');
++      }
++      fireEvent.click(remove);
++      expect(editing.remove).not.toHaveBeenCalled();
++      act(() => {
++        window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
++      });
++      await waitFor(() => expect(remove).not.toHaveAttribute('aria-disabled'));
++      expect(reset).toHaveAttribute('aria-disabled', 'true');
++      expect(reset).toHaveAttribute('title', MESSAGE);
++      expect(reset).not.toHaveAttribute('data-gesture');
++      fireEvent.click(reset);
++      expect(editing.reset).toHaveBeenCalledTimes(1);
++      fireEvent.click(remove);
++      expect(editing.remove).toHaveBeenCalledTimes(1);
++      expect(editing.remove).toHaveBeenCalledWith('return');
++    } finally {
++      detach();
++    }
++  });
++
++  it('keeps the store’s reason on Remove connection beside the held Reset route', async () => {
++    const stand = channelOf(manual);
++    const { view, editing } = setup(stand);
++    await userEvent.setup().click(resetButton());
++    stand.publish(automatic);
++    act(() =>
++      useEditorStore.setState({
++        systemChat: true,
++        definition: {
++          schemaVersion: 4,
++          name: 'Chat',
++          nodes: [
++            { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
++            { id: 'chat-normalize', kind: 'mutate', label: 'Norm', config: { operations: [] } },
++          ],
++          edges: [
++            {
++              id: 'return',
++              from: { node: 'chat-input', port: 'out' },
++              to: { node: 'chat-normalize' },
++            },
++          ],
++        } as unknown as LoopDefinitionInput,
++      }),
++    );
++    expect(removeButton()).toBeDisabled();
++    expect(removeButton()).toHaveAttribute('title', VOICE_STEP_MESSAGE);
++    expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
++    expect(resetButton()).toHaveAttribute('title', MESSAGE);
++    fireEvent.click(removeButton());
++    fireEvent.click(resetButton());
++    expect(editing.remove).not.toHaveBeenCalled();
++    expect(editing.reset).toHaveBeenCalledTimes(1);
++    expect(placed(view.container)).toBe(above(manual.label));
++  });
++});
+diff --git a/apps/web/src/editor/OrthogonalEdge.tsx b/apps/web/src/editor/OrthogonalEdge.tsx
+index 17086bbd..eca82ae4 100644
+--- a/apps/web/src/editor/OrthogonalEdge.tsx
++++ b/apps/web/src/editor/OrthogonalEdge.tsx
+@@ -13,6 +13,7 @@ import {
+   useEffect,
+   useMemo,
+   useRef,
++  useState,
+   useSyncExternalStore,
+   type KeyboardEvent,
+ } from 'react';
+@@ -61,6 +62,29 @@ const HANDLE_REACH = 14;
+ const TOOLBAR_WIDTH = 420;
+ /** Keys a toolbar button keeps from the edge and the canvas: they act on the button alone. */
+ const TOOLBAR_KEYS = ['Enter', ' ', 'Delete', 'Backspace'];
++/** What a held Reset route says: it is unavailable because the route is automatic. */
++const ROUTES_AUTOMATICALLY = 'The connection already routes automatically.';
++
++/**
++ * The toolbar as it was when Reset route was clicked (#207). The second press of a double click
++ * lands where the first did; recentred on the automatic label, with Reset route gone, the toolbar
++ * would put Remove connection under it. So the toolbar stays at `at` and Reset route stays in its
++ * slot, unavailable, until the connection is drawn by hand again or deselected (the toolbar
++ * unmounts). Meanwhile it may sit apart from the automatic label, or from a card moved since.
++ */
++interface ToolbarHold {
++  /** The label the toolbar was centred on. */
++  at: Point;
++  /** Whether Crosses a card was showing: its slot stays as a blank, so nothing shifts. */
++  crossing: boolean;
++  /**
++   * The manual route that was reset, until the automatic one has been drawn. The click's own render
++   * still draws that route, and it must not end the hold. After the automatic route, any manual
++   * route ends it (an Undo, a nudge or a drag), whatever array it comes back as; before it, only a
++   * different array does (the reset took no effect and the route was drawn again).
++   */
++  reset: readonly Point[] | undefined;
++}
+ const ARROWS: Record<string, ['x' | 'y', -1 | 1]> = {
+   ArrowLeft: ['x', -1],
+   ArrowRight: ['x', 1],
+@@ -72,8 +96,9 @@ const ARROWS: Record<string, ['x' | 'y', -1 | 1]> = {
+  * One edge's path from ordered orthogonal points: a backward route from the router (#18), a manual
+  * route (#44), or, for a forward edge without one, xyflow's own smoothstep. Selected, it shows a
+  * handle on each segment and a toolbar: Remove connection (#207) and, for a manual route, Reset
+- * route. xyflow's wrapper keeps the hit target, keyboard selection, and edge change and delete
+- * events.
++ * route, which stays where it was clicked, unavailable, until the route is drawn by hand again or
++ * the connection is deselected. xyflow's wrapper keeps the hit target, keyboard selection, and edge
++ * change and delete events.
+  */
+ export const OrthogonalEdge = memo(function OrthogonalEdge({
+   id,
+@@ -230,6 +255,15 @@ function RouteHandles({
+ }) {
+   const zoom = useStore(zoomOf);
+   const groupRef = useRef<SVGGElement>(null);
++  const [hold, setHold] = useState<ToolbarHold>();
++  // Reset route holds the toolbar until the connection is drawn by hand again (#207). Settled while
++  // rendering, as the canvas settles its selection: the automatic route first, then any manual one.
++  if (hold) {
++    if (!manual) {
++      if (hold.reset) setHold({ ...hold, reset: undefined });
++    } else if (points !== hold.reset) setHold(undefined);
++  }
++  const anchor = hold?.at ?? labelAt;
+   const base = useMemo<RouteBase>(
+     () => ({ route: coordinatesOf(points), from: points[0]!, to: points.at(-1)! }),
+     [points],
+@@ -327,7 +361,7 @@ function RouteHandles({
+           </g>
+         );
+       })}
+-      <g transform={`translate(${labelAt.x} ${labelAt.y - 18 / zoom}) ${scale}`}>
++      <g transform={`translate(${anchor.x} ${anchor.y - 18 / zoom}) ${scale}`}>
+         <foreignObject
+           x={-TOOLBAR_WIDTH / 2}
+           y={-48}
+@@ -340,16 +374,32 @@ function RouteHandles({
+               <span className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted">
+                 Crosses a card
+               </span>
++            ) : hold?.crossing ? (
++              // The same span, blank and hidden from assistive technology: its width keeps the
++              // controls beside it where they were.
++              <span
++                className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted invisible"
++                aria-hidden="true"
++              >
++                Crosses a card
++              </span>
+             ) : null}
+-            {manual ? (
++            {manual || hold ? (
+               <Button
+                 size="sm"
+                 variant="outline"
+                 className="nodrag nopan nokey pointer-coarse:h-11"
+-                aria-disabled={settling ? true : undefined}
++                // Held on an automatic route: unavailable because there is nothing to reset, and
++                // still a hit target that keeps focus and `nopan`, so a second press lands here.
++                aria-disabled={settling || !manual ? true : undefined}
+                 data-gesture={settling}
+-                onClick={() => {
+-                  if (settling) return;
++                title={manual ? undefined : ROUTES_AUTOMATICALLY}
++                onClick={(event) => {
++                  // As Remove connection's: the edge wrapper would select this edge again, which
++                  // with Control or Meta held toggles it off and takes the hold with it.
++                  event.stopPropagation();
++                  if (settling || !manual) return;
++                  setHold({ at: labelAt, crossing, reset: points });
+                   // Focus first: a reset refused for a stale selection moves focus on to Undo.
+                   edgeElement()?.focus();
+                   editing.reset(edgeId);
+diff --git a/apps/web/src/editor/viewport-gesture.contract.test.tsx b/apps/web/src/editor/viewport-gesture.contract.test.tsx
+index d3851507..60d6e4c6 100644
+--- a/apps/web/src/editor/viewport-gesture.contract.test.tsx
++++ b/apps/web/src/editor/viewport-gesture.contract.test.tsx
+@@ -679,3 +679,137 @@ describe('the card-drag gate on the installed xyflow and d3 (#207)', () => {
+     }
+   });
+ });
++
++/** The contract draft with `e1` routed by hand: Done below Start, the route's trunk beside the middle. */
++function withManualRoute(): LoopDefinitionInput {
++  const definition = newLoopDefinition('Contract');
++  definition.nodes.find((node) => node.id === 'done')!.ui = { x: 320, y: 240 };
++  definition.edges[0]!.ui = { route: [270] };
++  return definition;
++}
++
++/** A press as a browser sends it: mousedown, mouseup, then the click, each with `detail`. */
++function press(target: Element, detail: number, init?: MouseEventInit) {
++  target.dispatchEvent(mouse('mousedown', 0, 0, 0, 1, { detail, ...init }));
++  target.dispatchEvent(mouse('mouseup', 0, 0, 0, 0, { detail, ...init }));
++  const event = mouse('click', 0, 0, 0, 0, { detail, ...init });
++  return { delivered: target.dispatchEvent(event), event };
++}
++
++describe('Reset route on the installed xyflow and d3 (#207)', () => {
++  beforeEach(() => {
++    ends.length = 0;
++    flow = undefined;
++    xyflow = undefined;
++  });
++
++  /** `e1` selected by a click on its own path, as a pointer selects it; Reset route is shown. */
++  async function selectedByPath() {
++    const definition = withManualRoute();
++    store().load('L1', definition);
++    const rendered = render(<Live />);
++    const wrapper = await waitFor(() => {
++      const found = rendered.container.querySelector<SVGGElement>(
++        '.react-flow__edge[data-id="e1"]',
++      );
++      expect(found).not.toBeNull();
++      return found!;
++    });
++    expect(wrapper).not.toHaveClass('selected');
++    press(wrapper.querySelector('.react-flow__edge-interaction')!, 1);
++    await waitFor(() => expect(screen.getByRole('button', { name: 'Reset route' })).toBeVisible());
++    expect(wrapper).toHaveClass('selected');
++    return { definition, rendered, wrapper };
++  }
++  const resetButton = () => screen.getByRole('button', { name: 'Reset route' });
++  const toolbarAt = () =>
++    remove().closest('foreignObject')!.parentElement!.getAttribute('transform');
++
++  it('keeps the first-clicked Reset route under the second press of a double click, so nothing removes until Remove connection is clicked on purpose', async () => {
++    const { definition, rendered, wrapper } = await selectedByPath();
++    const reset = resetButton();
++    const button = remove();
++    const at = toolbarAt();
++    const viewport = () =>
++      rendered.container.querySelector<HTMLElement>('.react-flow__viewport')!.style.transform;
++    const before = { viewport: viewport(), transform: [...xyflow!.getState().transform] };
++    expect(reset).not.toHaveAttribute('aria-disabled');
++
++    // The first press of the double click.
++    expect(press(reset, 1).delivered).toBe(true);
++    await microtasks();
++    expect(store().past.map((step) => step.label)).toEqual(['reset route of start to done']);
++    expect(store().definition!.edges[0]!.ui).toBeUndefined();
++    // The same attached buttons where they were: nothing was remounted, and e1 is still selected.
++    expect(resetButton()).toBe(reset);
++    expect(remove()).toBe(button);
++    expect(reset.isConnected && button.isConnected && wrapper.isConnected).toBe(true);
++    expect(wrapper).toHaveClass('selected');
++    expect(toolbarAt()).toBe(at);
++    expect(reset).toHaveAttribute('aria-disabled', 'true');
++    expect(button).not.toHaveAttribute('aria-disabled');
++
++    // The second press (detail 2, with its double click) lands on that same unavailable button.
++    expect(press(reset, 2).delivered).toBe(true);
++    reset.dispatchEvent(
++      new MouseEvent('dblclick', {
++        bubbles: true,
++        cancelable: true,
++        composed: true,
++        view,
++        detail: 2,
++      }),
++    );
++    await microtasks();
++    await queuedTask(() => undefined);
++    expect(stored()).toEqual(['e1']);
++    expect(store().past.map((step) => step.label)).toEqual(['reset route of start to done']);
++    expect(resetButton()).toBe(reset);
++    expect(remove()).toBe(button);
++    expect(wrapper).toHaveClass('selected');
++    expect(toolbarAt()).toBe(at);
++    // The viewport was not zoomed by the double click.
++    expect({ viewport: viewport(), transform: [...xyflow!.getState().transform] }).toEqual(before);
++
++    // The first legitimate click on Remove connection removes once; two Undos restore everything.
++    expect(press(button, 1).delivered).toBe(true);
++    await microtasks();
++    expect(stored()).toEqual([]);
++    expect(store().past.map((step) => step.label)).toEqual([
++      'reset route of start to done',
++      'remove edge start to done',
++    ]);
++    store().undo();
++    expect(stored()).toEqual(['e1']);
++    store().undo();
++    expect(store().definition).toEqual(definition);
++  });
++
++  it('keeps the connection selected, and the hold with it, when Reset route is clicked with the multi-selection key held', async () => {
++    const { wrapper } = await selectedByPath();
++    await holdControl();
++    try {
++      const reset = resetButton();
++      const button = remove();
++      const at = toolbarAt();
++      // xyflow would unselect a selected connection clicked under its multi-selection key: Reset
++      // route's click ends on the button, as Remove connection's does.
++      press(reset, 1, CONTROL);
++      await microtasks();
++      expect(store().past.map((step) => step.label)).toEqual(['reset route of start to done']);
++      expect(wrapper).toHaveClass('selected');
++      expect(resetButton()).toBe(reset);
++      expect(remove()).toBe(button);
++      expect(toolbarAt()).toBe(at);
++      press(reset, 2, CONTROL);
++      press(reset, 3, CONTROL);
++      await microtasks();
++      expect(wrapper).toHaveClass('selected');
++      expect(resetButton()).toBe(reset);
++      expect(stored()).toEqual(['e1']);
++      expect(store().past).toHaveLength(1);
++    } finally {
++      releaseControl();
++    }
++  });
++});
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 7af4c4c2..8631c8d3 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -275,7 +275,7 @@ The owner's decision, recorded in [ADR-0076](decisions/ADR-0076-canvas-only-conn
+ - **Geometry is a separate edit.** Dragging or nudging a segment and **Reset route** (see "Manual edge routes" below) change only `ui.route` of the same edge, one undo step each, and never its ends. Renaming a decision route's ID in the dialog is declaration editing: the edge keeps its id, target and layout while its source port follows the row (see "Editing decision routes").
+ - **Stored edges the canvas cannot draw.** An edge whose source or target node is missing, whose output port is not a handle on its source card, or that leads into a trigger has no path to select. They come from imported or API-written drafts, and from ordinary editing: renaming or removing a Script exit-code label or applying section JSON leaves its stored edges, which stay stored and block publication (`EDGE_PORT_MISSING` and the other edge codes). **Loop issues**, the validation indicator beside Publish, lists them in its popover's own group, "Connections the canvas cannot draw", each once by its id and stored ends ("e5 from pick output route-3 to branch") with one **Remove edge eN**. The group reads the draft itself, not the issues' `edgeId`s, so it is there while the draft does not parse too: a Decision route whose ID is blank has no handle, so the connection its row owns is stored but not drawn, and validation then reports only the schema error on the node. The issue rows only inform, the counts are the issues' alone, and an id two edges share is not offered. Remove edge removes exactly that edge in one undo step, and Undo restores its id, ends and manual route, and a blank row's ownership of it. It acts only if the edge is still stored with those ends and still undrawable, so an action left over from before a repair, a removal or an id reuse removes nothing; it is disabled with the voice-step message for a protected Chat edge. The popover closes and focus returns to the indicator, or to the **Ready to publish** status when that was the last issue. Imported missing-node targets and a Script label renamed or removed are the cases it exists for. It is recovery for stranded topology, not an authoring form: Script labels are not followed automatically, and nothing is pruned silently. (`editor/stranded-edges.ts`, `editor/ValidationIndicator.tsx`.)
+ - **What the keyboard can no longer do.** Keyboard connection creation is gone. The dialog's **Connect** form, which let a keyboard-only user pick one of a node's free outputs and a target and so build start → wait → done without a pointer (WP-D2 D18, `5a4d0665`), no longer exists, and no other keyboard path creates or retargets a connection. The keyboard keeps reaching and selecting a connection, removing it, moving its route segments and removing undrawable edges from Loop issues; a coarse pointer keeps the visible **Remove connection** button. This is not keyboard or touch parity with creation. On a zoomed-out touch canvas port targets shrink with zoom (see "Touch" under Breakpoints), and the dialog's form was the full-size alternative: zoom in to connect. Keyboard connection creation and broader accessibility or mobile changes remain deferred and are not a new proof-of-concept gate.
+-- **Regression.** `editor/NodeEditorDialog.test.tsx` (no Connections region, Connect form or Remove edge button on any of the nine node kinds, and no stored edge changes), `editor/EditorPage.test.tsx` (a dialog opened from the keyboard without those controls; Delete and Backspace in it edit nothing; the refusal in the page notice; a renamed node's edges), `editor/Canvas.test.tsx` and `editor/OrthogonalEdge.test.tsx` (refusal reasons, toolbar removal, undo, the gate's rendered state and a card drag's start; an id two connections hold from every Remove and the keyboard; a selection across a load with the same or other ends, a lost Script or Decision port, a renamed end, ordinary edits and Undo; stale Remove, Reset route, nudge, Delete and held route drags), `editor/store.test.ts` and `editor/chat-protection.test.ts` (the exact refusal of a shared id, with a protected holder in either order), `editor/viewport-gesture.test.ts` (the gate's two tasks, a newer move, repeated releases, detach) and `editor/viewport-gesture.contract.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: listener order, the cancelled click while unavailable, the first available click delivered once, left and middle button, a newer pan, a programmatic or wheel end, unmount, and a Control drag of a card with its exact click-distance boundary and two Undo steps), `editor/ValidationIndicator.test.tsx` and `editor/stranded-edges.test.ts` (recovery, including a blank route ID), `editor/model.test.ts`, and Edge `e2e/decision-routes.spec.ts` (the blank ID's device copy and ownership through reload, its repair, and its recovery with one Undo), `e2e/exit-primitives.spec.ts`, `e2e/issue-170-qa.spec.ts`, `e2e/loop-back-topology.spec.ts`, `e2e/loop-lifecycle.spec.ts`, `e2e/palette-placement.spec.ts`, `e2e/qa.spec.ts`, `e2e/responsive.spec.ts` and the `LIVE=1` `e2e/live.spec.ts`, which draw connections by pointer and remove them from the keyboard.
++- **Regression.** `editor/NodeEditorDialog.test.tsx` (no Connections region, Connect form or Remove edge button on any of the nine node kinds, and no stored edge changes), `editor/EditorPage.test.tsx` (a dialog opened from the keyboard without those controls; Delete and Backspace in it edit nothing; the refusal in the page notice; a renamed node's edges), `editor/Canvas.test.tsx` and `editor/OrthogonalEdge.test.tsx` (refusal reasons, toolbar removal, undo, the gate's rendered state and a card drag's start; an id two connections hold from every Remove and the keyboard; a selection across a load with the same or other ends, a lost Script or Decision port, a renamed end, ordinary edits and Undo; stale Remove, Reset route, nudge, Delete and held route drags; Reset route's held toolbar on a forward and a loop-back connection: the same two buttons and transform after one reset, one history step, the repeated clicks, modifiers and keys that change nothing, the deliberate Remove connection with two Undos, its end at Undo, nudge, drag, deselection and a new load, the width of Crosses a card, and the pan gate and the store's reason beside it), `editor/store.test.ts` and `editor/chat-protection.test.ts` (the exact refusal of a shared id, with a protected holder in either order), `editor/viewport-gesture.test.ts` (the gate's two tasks, a newer move, repeated releases, detach) and `editor/viewport-gesture.contract.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: listener order, the cancelled click while unavailable, the first available click delivered once, left and middle button, a newer pan, a programmatic or wheel end, unmount, and a Control drag of a card with its exact click-distance boundary and two Undo steps; the second press and `dblclick` of a double click on a held Reset route, which find the same attached button with the viewport unzoomed and the connection selected, a Control-click on it, and the first deliberate Remove connection click with two Undos), `editor/ValidationIndicator.test.tsx` and `editor/stranded-edges.test.ts` (recovery, including a blank route ID), `editor/model.test.ts`, and Edge `e2e/decision-routes.spec.ts` (the blank ID's device copy and ownership through reload, its repair, and its recovery with one Undo), `e2e/exit-primitives.spec.ts`, `e2e/issue-170-qa.spec.ts`, `e2e/loop-back-topology.spec.ts`, `e2e/loop-lifecycle.spec.ts`, `e2e/palette-placement.spec.ts`, `e2e/qa.spec.ts`, `e2e/responsive.spec.ts` and the `LIVE=1` `e2e/live.spec.ts`, which draw connections by pointer and remove them from the keyboard.
+ 
+ ### Renaming a node (#273)
+ 
+@@ -328,7 +328,7 @@ The owner's request: move the horizontal and vertical break points of a line to
+ - **Keyboard.** With an edge selected, Tab moves from the edge into its handles in segment order and on to **Reset route** (Shift+Tab goes back). The arrow keys along a handle's axis (Left and Right for a vertical segment, Up and Down for a horizontal one) move the segment to the next grid line (22 px, the background's dot spacing), Shift+arrow five lines; a run of nudges of one edge is one undo step, and focus stays on the moved segment even when moving a port stub split it. The other arrows, Enter, Space, Delete, and Backspace do nothing on a handle (it is `nokey`, so the canvas's Delete never removes the edge from there). Escape returns focus to the edge, which stays selected. Each handle is a `role="button"` named "Route segment 2 of 5, vertical" with a description of its keys and `aria-keyshortcuts`; a polite live region announces each change ("Segment at y 264.", "Route changed.", "Route reset: the connection routes automatically."). The edge's accessible name ends in "manual route" while it has one.
+ - **Crossing cards.** Where the author puts a segment is kept, even across a card: rerouting can take several moves whose in-between states still cross one. The route is dotted, its toolbar says **Crosses a card**, and its accessible name and announcement say so. At node-drag start, each manual route pins the specific cards it already crossed. In `createRoutingPlan`, a new intersection outside that set computes the automatic fallback first (including forward smoothstep geometry). The route is set aside **only if the fallback crosses no card**; otherwise the preview stays manual, dotted and flagged as crossing. At the drop position, the canvas removes only routes in that same plan's suspended set, in the move's undo step. Preview and release therefore agree. A final position change and arrow-key move also wait for the plan at the new position. One live announcement combines the counts of reset routes and routes kept because their replacements are obstructed. Undo restores the position and routes together. Existing intersections do not exempt a route from a newly crossed card; a move with no new intersection keeps the route and its stubs follow the ports. Adding or growing a card can also leave a dotted crossing until the author edits or resets the route.
+ 
+-- **Reset route.** A selected edge with a manual route shows a **Reset route** button (the outline button style, 32 px, 44 px for a coarse pointer) above its label, reachable with Tab after the handles. It removes the manual route in an undo step of its own and returns focus to the edge.
++- **Reset route.** A selected edge with a manual route shows a **Reset route** button (the outline button style, 32 px, 44 px for a coarse pointer) above its label, reachable with Tab after the handles. It removes the manual route in an undo step of its own and returns focus to the edge. The toolbar then stays where it was clicked, and the same **Reset route** button stays in its slot, dimmed, `aria-disabled` and titled "The connection already routes automatically." (#207). Without that, the toolbar would re-centre on the automatic route's label with **Reset route** gone, and the second press of a double click, landing on the point of the first, would hit **Remove connection**. Keeping the toolbar where it was is not enough alone, nor is keeping the button in its slot: each still leaves **Remove connection** under the point. A **Crosses a card** note that was showing stays as a blank of its width, hidden from assistive technology. The held button keeps its hit target, focus and `nopan`; its click, Enter and Space do nothing, and its click ends on the button as **Remove connection**'s does, so Control or Meta cannot select the connection again and toggle it off. **Remove connection** stays where it was and works as usual. The hold is `RouteHandles`' own state: no timer, no click-count guard, no event suppression and no change to the route editing interface, the shared gesture gate or the selection. It ends when the toolbar unmounts (the connection is deselected, or a load, a refused stale action or a removal drops the selection), or when a manual route is drawn again after the automatic one: an Undo, a nudge or a drag, whichever array the route arrives as. Fresh selection of an automatic route shows **Remove connection** alone, centred on its label. While held, the toolbar may sit apart from the automatic label or from a card moved since, and it can cover a handle or the label; nothing releases it on a pan or a card drag. A press just outside the button, in the 8 px gap, reaches whatever is under the toolbar, never **Remove connection**.
+ - **Look.** Handles are 12 px dots in the selected-edge stroke (`--canvas-edge-selected`, 3:1 on `--canvas-bg`, an existing registered pair) on the raised surface, filled on hover, with a 24 px target (44 px under a coarse pointer); keyboard focus draws the `--focus-ring` ring (3:1 on the canvas). They are scaled against the zoom, so they keep their screen size. Forced colours use `Canvas`, `CanvasText`, and `Highlight`; the toolbar takes system colours. Styles live in `styles/canvas-routes.css`.
+ - **Tests.** `editor/manual-route.test.ts` (the stored form, segments, moves and splits, normalisation, nudges, smoothstep equivalence), `editor/routing-manual.test.ts` (fixed routes in the plan, node moves, crossing and fallback, reservations, incremental equality and the replanning bound), `editor/OrthogonalEdge.test.tsx`, `editor/Canvas.test.tsx` (drag, nudge, reset, crossing, node moves, undo), `editor/store.test.ts`, `editor/useRouting.test.ts`, contracts and domain round-trips, the engine test above, and Edge E2E in `e2e/edge-routes.spec.ts`. The QA hand-off with screenshots is [docs/qa/2026-10-05-issue-44-waypoints](qa/2026-10-05-issue-44-waypoints/README.md).
+ 
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index 7b2ea8c6..dcdc7d55 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -142,7 +142,7 @@ Loop-backs and connections whose output tip is to the right of the input follow
+ 
+ A loop-back can also point to a card on its right. A clear Z or step path stays drawn even when it has no middle horizontal segment: its label uses another horizontal segment or a clear position above the path. Label placement never removes a valid connection.
+ 
+-To move a line out of the way, select it (click it, or move to it with **Tab** and press **Enter**). A round handle appears on each of its horizontal and vertical segments, the loop-back's return lane included. Drag a handle to move that segment: the line stays square and its ends stay on their ports. Dragging the short end piece next to a port keeps a stub on the port and bends the rest, which is how you take a straight line around a card. With the keyboard, press **Tab** from the selected line to reach its handles, then the arrow keys along the segment (Left and Right for an upright segment, Up and Down for a level one) to move it one grid step, or five with **Shift**; **Esc** returns to the line. Each drag, and each run of arrow presses, is one **Undo** step. The editor keeps where you put a segment, even across a card (the line is then dotted, so you can finish rerouting it); **Reset route** above the line's label returns it to automatic routing. If moving a card onto a manual route leaves its automatic replacement clear of every card, the route returns to automatic routing as part of the move, and **Undo** brings both back. If that replacement would cross a card, the manual route is kept and shown dotted with **Crosses a card**; use **Reset route** to drop it. Your routes are saved with the loop: they survive reloads, export and import, and publishing, and runs ignore them.
++To move a line out of the way, select it (click it, or move to it with **Tab** and press **Enter**). A round handle appears on each of its horizontal and vertical segments, the loop-back's return lane included. Drag a handle to move that segment: the line stays square and its ends stay on their ports. Dragging the short end piece next to a port keeps a stub on the port and bends the rest, which is how you take a straight line around a card. With the keyboard, press **Tab** from the selected line to reach its handles, then the arrow keys along the segment (Left and Right for an upright segment, Up and Down for a level one) to move it one grid step, or five with **Shift**; **Esc** returns to the line. Each drag, and each run of arrow presses, is one **Undo** step. The editor keeps where you put a segment, even across a card (the line is then dotted, so you can finish rerouting it); **Reset route** above the line's label returns it to automatic routing. After you use it, the toolbar stays where it was and **Reset route** stays in its place, dimmed, so a quick second click does nothing instead of landing on **Remove connection**; both go when you select something else, and the toolbar follows the line again once you move the line or **Undo** the reset. If moving a card onto a manual route leaves its automatic replacement clear of every card, the route returns to automatic routing as part of the move, and **Undo** brings both back. If that replacement would cross a card, the manual route is kept and shown dotted with **Crosses a card**; use **Reset route** to drop it. Your routes are saved with the loop: they survive reloads, export and import, and publishing, and runs ignore them.
+ 
+ Check validation after every change. A node with problems shows an issue badge in its header: a cross when any of them is an error, a warning triangle when they are all warnings, and the count when there are several. Hover the badge, move to it with **Tab**, or click it to list each issue with its severity, message, and field; the list stays open while the pointer is over it or focus is inside it, a click keeps it open, and **Esc** closes it. Choose an issue to open the node's dialog with that field focused; an issue without a field opens the dialog at its top. The same badge sits beside the dialog's title while you edit. Beside **Publish**, the toolbar shows the loop's error and warning counts; click them for the issues that belong to the whole loop or to an edge, then a row per node with issues, which opens that node. With nothing to list it shows **Ready to publish** once the server has checked the saved draft (cron expressions, subloop references), **Checking…** until then, and **Validation unavailable** when the server could not be asked (offline, say) or while a name refusal or draft conflict holds the current draft. During a refusal, the indicator's tooltip gives the same refusal reason as Publish. **Publish** runs the checks again either way. Text that does not parse in a JSON field is an issue too, with **Discard the unparsed text** in its row. An incomplete cron schedule uses **Discard the incomplete schedule**; valid section JSON waiting for Apply says it is **JSON not applied yet**, with **Discard the unapplied JSON** available in its issue row. These actions clear the held input and can be undone.
+ 

@@ -1,0 +1,3895 @@
+{
+  "suite": "207-corrected-canvas-delta-independent",
+  "mode": "after",
+  "action": "decisions",
+  "origin": "http://127.0.0.1:51033",
+  "loaded": [
+    200
+  ],
+  "checkpoints": [
+    {
+      "label": "draw subject.accept → done",
+      "persisted": {
+        "loop": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "ownerId": "local",
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "draftVersionId": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "createdAt": "2026-11-15T03:46:05.945Z",
+          "updatedAt": "2026-11-15T03:46:07.515Z"
+        },
+        "draft": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas Corrected pan repeat aae813ff",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "llm",
+                  "instructions": "Choose an available route.",
+                  "harness": "codex",
+                  "model": {
+                    "mode": "inherit"
+                  },
+                  "effort": {
+                    "mode": "inherit"
+                  },
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Take this route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback",
+                      "repeat": true
+                    }
+                  ],
+                  "context": {
+                    "messages": "last",
+                    "includeLastOutput": true
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Return to the gate",
+                "ui": {
+                  "x": 25,
+                  "y": 35
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work-more",
+                "label": "Alternate return",
+                "ui": {
+                  "x": 25,
+                  "y": 455
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent-more",
+                "label": "Alternate exhaustion",
+                "ui": {
+                  "x": 705,
+                  "y": 617
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"alt spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "reenter",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "reenter-more",
+                "from": {
+                  "node": "work-more",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:46:05.945Z"
+        },
+        "draftToken": "eee413646fa0dc15"
+      },
+      "local": {
+        "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:46:07.528Z",
+        "synced": true,
+        "baseToken": "eee413646fa0dc15"
+      },
+      "ifMatch": "\"c4ee34480add8173\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e4",
+      "accessibleName": "subject Take this route (accept) to done",
+      "d": "M536 164L556 164L 607.5,164Q 617.5,164 617.5,154L 617.5,91Q 617.5,81 627.5,81L679 81L699 81"
+    },
+    {
+      "label": "draw subject.decline → work",
+      "persisted": {
+        "loop": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "ownerId": "local",
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "draftVersionId": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "createdAt": "2026-11-15T03:46:05.945Z",
+          "updatedAt": "2026-11-15T03:46:09.297Z"
+        },
+        "draft": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas Corrected pan repeat aae813ff",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "llm",
+                  "instructions": "Choose an available route.",
+                  "harness": "codex",
+                  "model": {
+                    "mode": "inherit"
+                  },
+                  "effort": {
+                    "mode": "inherit"
+                  },
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Take this route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback",
+                      "repeat": true
+                    }
+                  ],
+                  "context": {
+                    "messages": "last",
+                    "includeLastOutput": true
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Return to the gate",
+                "ui": {
+                  "x": 25,
+                  "y": 35
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work-more",
+                "label": "Alternate return",
+                "ui": {
+                  "x": 25,
+                  "y": 455
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent-more",
+                "label": "Alternate exhaustion",
+                "ui": {
+                  "x": 705,
+                  "y": 617
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"alt spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "reenter",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "reenter-more",
+                "from": {
+                  "node": "work-more",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e5",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:46:05.945Z"
+        },
+        "draftToken": "f5440d0e8a8fad0b"
+      },
+      "local": {
+        "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:46:09.309Z",
+        "synced": true,
+        "baseToken": "f5440d0e8a8fad0b"
+      },
+      "ifMatch": "\"eee413646fa0dc15\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e5",
+      "accessibleName": "subject Use fallback (decline) to work",
+      "d": "M 536 184 L 553 184 Q 561 184 561 176 L 561 11 Q 561 3 553 3 L 1 3 Q -7 3 -7 11 L -7 84 Q -7 92 1 92 L 19 92"
+    },
+    {
+      "label": "draw subject.limit-reached → spent",
+      "persisted": {
+        "loop": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "ownerId": "local",
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "draftVersionId": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "createdAt": "2026-11-15T03:46:05.945Z",
+          "updatedAt": "2026-11-15T03:46:11.059Z"
+        },
+        "draft": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas Corrected pan repeat aae813ff",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "llm",
+                  "instructions": "Choose an available route.",
+                  "harness": "codex",
+                  "model": {
+                    "mode": "inherit"
+                  },
+                  "effort": {
+                    "mode": "inherit"
+                  },
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Take this route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback",
+                      "repeat": true
+                    }
+                  ],
+                  "context": {
+                    "messages": "last",
+                    "includeLastOutput": true
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Return to the gate",
+                "ui": {
+                  "x": 25,
+                  "y": 35
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work-more",
+                "label": "Alternate return",
+                "ui": {
+                  "x": 25,
+                  "y": 455
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent-more",
+                "label": "Alternate exhaustion",
+                "ui": {
+                  "x": 705,
+                  "y": 617
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"alt spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "reenter",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "reenter-more",
+                "from": {
+                  "node": "work-more",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e5",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e6",
+                "from": {
+                  "node": "subject",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:46:05.945Z"
+        },
+        "draftToken": "f1761ac2345ce749"
+      },
+      "local": {
+        "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "subject",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:46:11.070Z",
+        "synced": true,
+        "baseToken": "f1761ac2345ce749"
+      },
+      "ifMatch": "\"f5440d0e8a8fad0b\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e6",
+      "accessibleName": "subject Limit reached (limit-reached) to spent",
+      "d": "M536 204L556 204L 607.5,204Q 617.5,204 617.5,214L 617.5,461Q 617.5,471 627.5,471L679 471L699 471"
+    },
+    {
+      "label": "visible Remove connection gesture",
+      "id": "e4",
+      "selection": "pointer",
+      "point": {
+        "x": 776.9212646484375,
+        "y": 302.8946533203125
+      },
+      "click": {
+        "x": 825.9076232910156,
+        "y": 228.07196044921875,
+        "width": 146.57806396484375,
+        "height": 32
+      }
+    },
+    {
+      "label": "remove subject.accept",
+      "persisted": {
+        "loop": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "ownerId": "local",
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "draftVersionId": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "createdAt": "2026-11-15T03:46:05.945Z",
+          "updatedAt": "2026-11-15T03:46:12.618Z"
+        },
+        "draft": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas Corrected pan repeat aae813ff",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "llm",
+                  "instructions": "Choose an available route.",
+                  "harness": "codex",
+                  "model": {
+                    "mode": "inherit"
+                  },
+                  "effort": {
+                    "mode": "inherit"
+                  },
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Take this route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback",
+                      "repeat": true
+                    }
+                  ],
+                  "context": {
+                    "messages": "last",
+                    "includeLastOutput": true
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Return to the gate",
+                "ui": {
+                  "x": 25,
+                  "y": 35
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work-more",
+                "label": "Alternate return",
+                "ui": {
+                  "x": 25,
+                  "y": 455
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent-more",
+                "label": "Alternate exhaustion",
+                "ui": {
+                  "x": 705,
+                  "y": 617
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"alt spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "reenter",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "reenter-more",
+                "from": {
+                  "node": "work-more",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e5",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e6",
+                "from": {
+                  "node": "subject",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:46:05.945Z"
+        },
+        "draftToken": "91df120ab841951f"
+      },
+      "local": {
+        "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "subject",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:46:12.634Z",
+        "synced": true,
+        "baseToken": "91df120ab841951f"
+      },
+      "ifMatch": "\"f1761ac2345ce749\""
+    },
+    {
+      "label": "draw subject.accept → other",
+      "persisted": {
+        "loop": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "ownerId": "local",
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "draftVersionId": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "createdAt": "2026-11-15T03:46:05.945Z",
+          "updatedAt": "2026-11-15T03:46:14.404Z"
+        },
+        "draft": {
+          "id": "01M7EMZVZSF6NJMGV5R6XZKF3W",
+          "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas Corrected pan repeat aae813ff",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "llm",
+                  "instructions": "Choose an available route.",
+                  "harness": "codex",
+                  "model": {
+                    "mode": "inherit"
+                  },
+                  "effort": {
+                    "mode": "inherit"
+                  },
+                  "maxPasses": 3,
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Take this route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback",
+                      "repeat": true
+                    }
+                  ],
+                  "context": {
+                    "messages": "last",
+                    "includeLastOutput": true
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Return to the gate",
+                "ui": {
+                  "x": 25,
+                  "y": 35
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "work-more",
+                "label": "Alternate return",
+                "ui": {
+                  "x": 25,
+                  "y": 455
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "independent topology marker"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent-more",
+                "label": "Alternate exhaustion",
+                "ui": {
+                  "x": 705,
+                  "y": 617
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"alt spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "reenter",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "reenter-more",
+                "from": {
+                  "node": "work-more",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e5",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e6",
+                "from": {
+                  "node": "subject",
+                  "port": "limit-reached"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e7",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:46:05.945Z"
+        },
+        "draftToken": "088780a8e1dc11d6"
+      },
+      "local": {
+        "loopId": "01M7EMZVZSF6NJMGV5R6XZKF3V",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "subject",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e7",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:46:14.416Z",
+        "synced": true,
+        "baseToken": "088780a8e1dc11d6"
+      },
+      "ifMatch": "\"91df120ab841951f\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e7",
+      "accessibleName": "subject Take this route (accept) to other",
+      "d": "M536 164L556 164L 607.5,164Q 617.5,164 617.5,174L 617.5,269Q 617.5,279 627.5,279L679 279L699 279"
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7EMZVZSF6NJMGV5R6XZKF3V/draft",
+      "at": 1794714367507,
+      "ifMatch": "\"c4ee34480add8173\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7EMZVZSF6NJMGV5R6XZKF3V/draft",
+      "at": 1794714369290,
+      "ifMatch": "\"eee413646fa0dc15\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7EMZVZSF6NJMGV5R6XZKF3V/draft",
+      "at": 1794714371053,
+      "ifMatch": "\"f5440d0e8a8fad0b\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "subject",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7EMZVZSF6NJMGV5R6XZKF3V/draft",
+      "at": 1794714372611,
+      "ifMatch": "\"f1761ac2345ce749\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "subject",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7EMZVZSF6NJMGV5R6XZKF3V/draft",
+      "at": 1794714374395,
+      "ifMatch": "\"91df120ab841951f\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas Corrected pan repeat aae813ff",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "llm",
+                "instructions": "Choose an available route.",
+                "harness": "codex",
+                "model": {
+                  "mode": "inherit"
+                },
+                "effort": {
+                  "mode": "inherit"
+                },
+                "maxPasses": 3,
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback",
+                    "repeat": true
+                  }
+                ],
+                "context": {
+                  "messages": "last",
+                  "includeLastOutput": true
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Return to the gate",
+              "ui": {
+                "x": 25,
+                "y": 35
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "work-more",
+              "label": "Alternate return",
+              "ui": {
+                "x": 25,
+                "y": 455
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "independent topology marker"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent-more",
+              "label": "Alternate exhaustion",
+              "ui": {
+                "x": 705,
+                "y": 617
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"alt spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "reenter",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "reenter-more",
+              "from": {
+                "node": "work-more",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "subject",
+                "port": "limit-reached"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e7",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": {
+    "message": "Error: Pan release generated and suppressed its own trusted click",
+    "stack": "Error: Pan release generated and suppressed its own trusted click\n    at check (evalmachine.<anonymous>:21:52)\n    at correctedPan (evalmachine.<anonymous>:1284:5)\n    at async evalmachine.<anonymous>:1580:9\n    at async evalmachine.<anonymous>:3:20\n    at async C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70181:13\n    at async waitForCompletion (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:66323:15)\n    at async _Tab._raceAgainstModalStates (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:67487:18)\n    at async _Tab.waitForCompletion (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:67494:9)\n    at async Object.handle (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70177:11)\n    at async BrowserBackend.callTool (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:68487:11)"
+  }
+}

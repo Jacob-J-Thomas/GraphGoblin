@@ -1,0 +1,173 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-continuation\\corrected-native.mjs" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-pan-correction1\\corrected-native.mjs"
+index a06f8195..27650260 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-continuation\\corrected-native.mjs"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-pan-correction1\\corrected-native.mjs"
+@@ -18,10 +18,20 @@ const digest = (data) => createHash('sha256').update(data).digest('hex');
+ assert.equal(digest(rawAdmission), admissionSha, 'Admission changed');
+ const admission = JSON.parse(rawAdmission.toString('utf8'));
+ assert.equal(admission.status, 'ROOT_ADMITTED');
+-assert(['run', 'gateway'].includes(mode), 'This continuation cannot build, admit, or start another correction');
+-if (mode === 'run') assert(['initial-focused', 'initial-preservation'].includes(cases[0]));
++assert(['run', 'gateway'].includes(mode), 'This packet cannot build or admit');
++const correctedCases = ['pan-reset', 'blank-device', 'coarse', 'protected-chat'];
++if (mode === 'run') assert.deepEqual(cases, ['correction1', ...correctedCases], 'Only the exact correction1 batch is admitted');
++const { preparedManifestSha256: correctedManifest, previousContinuationAdmission, panCorrectionApproval,
++  panCorrectionReceipts, ...sameContinuation } = admission;
++const continuationAdmissionHash = '1a5c189451eaf74a611638885f5e05da5a05cbe9de84ccafcb97c999ff04ec29';
++assert.equal(previousContinuationAdmission?.sha256, continuationAdmissionHash);
++const previousContinuation = await readFile(resolve(previousContinuationAdmission.path));
++assert.equal(digest(previousContinuation), continuationAdmissionHash);
++const { preparedManifestSha256: continuationManifest, ...expectedContinuation } = JSON.parse(previousContinuation);
++assert.equal(continuationManifest, 'd4bbc290c80e6dab75479c36a1e039eb2fe9db01cf0c8870a233115579026bd1');
++assert.deepEqual(sameContinuation, expectedContinuation);
+ const originalAdmissionHash = '6e081ebbe9b710c99eb5bd26d37d6e24d0a693d6b369c5e5622865443b0894f3';
+-const { preparedManifestSha256, originalAdmission, administrativeClearance, ...unchangedAdmission } = admission;
++const { originalAdmission, administrativeClearance, ...unchangedAdmission } = sameContinuation;
+ assert.equal(originalAdmission?.sha256, originalAdmissionHash, 'Original root admission required');
+ const original = await readFile(resolve(originalAdmission.path));
+ assert.equal(digest(original), originalAdmissionHash);
+@@ -60,13 +70,13 @@ assert.equal(evidence, resolve(preparedRoot, '..', 'corrected-doubleclick-native
+ assert(relative(repo, evidence).startsWith('..'), 'Evidence must be external');
+ const json = async (path) => JSON.parse(await readFile(path, 'utf8'));
+ const archive = await readFile(join(preparedRoot, 'literal-manifest.json'));
+-assert.equal(digest(archive), preparedManifestSha256, 'Prepared manifest changed');
++assert.equal(digest(archive), correctedManifest, 'Prepared manifest changed');
+ for (const [name, expected] of Object.entries(JSON.parse(archive.toString('utf8')).files)) {
+   assert(/^[\w. -]+$/.test(name), 'Unsafe prepared source name');
+   assert.equal(digest(await readFile(join(preparedRoot, name))), expected.sha256, 'Prepared artifact changed ' + name);
+ }
+ const scenarios = await json(join(preparedRoot, 'scenarios.json'));
+-if (mode === 'gateway') assert(['focused', 'preservation'].includes(scenarios[cases[0]]?.phase), 'No prior-fixture rerun');
++if (mode === 'gateway') assert(correctedCases.includes(cases[0]), 'Never rerun an earlier passing fixture');
+ 
+ const record = (path, value) => writeFile(path, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+ const git = (...args) => execFileSync('git', args, { cwd: repo, maxBuffer: 24 * 1024 * 1024 });
+@@ -469,6 +479,65 @@ async function confirmOptionalMouseDisposition() {
+   return { scenario: 'selection-os-mouse', result: limitation, dispositionSha256: exact.disposition[1] };
+ }
+ 
++async function confirmPanCorrection() {
++  const pinned = {
++    focusedOverview: ['runs/initial-focused/overview.json', '5c924d1190b6156924f462063aa4b74df9af8e5c96891cff3aa0a07bbcc467f6'],
++    focusedCleanup: ['runs/initial-focused/terminal-cleanup.json', '87239884843492f33d32a5b1521cea4ed4290601f3d723a2dbac298edd1ace9f'],
++    preservationOverview: ['runs/initial-preservation/overview.json', '0637af1af39bc9742fd3146db7ea81868803e0cb01d26f8d8248ae1e355ef9b6'],
++    preservationCleanup: ['runs/initial-preservation/terminal-cleanup.json', 'e08108b67192c4c4f9887f8c5730a2523b880e508f300dc5d6acee86844951e8'],
++    panFailure: ['runs/initial-preservation/pan-reset/run.json', '3331a28b5c2bba593b172b1ed07b701c96d2ba908c00d2a7a7c75fcbc8f23381'],
++    finalCleanup: ['final-terminal-cleanup.json', '100a9c6a087a251d8eb624830fe50de9418e98b1f4c712332634886612406126'],
++  };
++  assert.deepEqual(Object.keys(panCorrectionReceipts).sort(), Object.keys(pinned).sort());
++  const receipts = {};
++  for (const [key, [name, sha256]] of Object.entries(pinned)) {
++    const path = resolve(evidence, name);
++    assert.equal(resolve(panCorrectionReceipts[key].path), path);
++    assert.equal(panCorrectionReceipts[key].sha256, sha256);
++    const bytes = await readFile(path);
++    assert.equal(digest(bytes), sha256, key + ' original evidence changed');
++    receipts[key] = JSON.parse(bytes);
++  }
++
++  const approvalPath = join(evidence, 'pan-correction1-root-approval.json');
++  assert.equal(resolve(panCorrectionApproval.path), approvalPath);
++  assert(/^[a-f0-9]{64}$/.test(panCorrectionApproval.sha256 ?? ''), 'Root correction approval still pending');
++  const rawApproval = await readFile(approvalPath);
++  assert.equal(digest(rawApproval), panCorrectionApproval.sha256);
++  assert.deepEqual(JSON.parse(rawApproval), {
++    status: 'ROOT_APPROVED_PAN_FIXTURE_CORRECTION1',
++    head: identity.head, tree: identity.tree, actualMain: identity.actualMain,
++    preparedManifestSha256: correctedManifest, previousContinuationAdmissionSha256: continuationAdmissionHash,
++    preservationOverviewSha256: pinned.preservationOverview[1], fixtureCorrectionBatch: 1, caseOrder: correctedCases,
++  });
++  assert.equal(alreadyUsed, 0);
++  const { focusedOverview, focusedCleanup, preservationOverview, preservationCleanup, panFailure, finalCleanup } = receipts;
++  for (const [overview, terminal, scenarios] of [
++    [focusedOverview, focusedCleanup, ['duplicate', 'reload', 'hidden', 'script-geometry', 'node-drag']],
++    [preservationOverview, preservationCleanup, ['shared', 'script', 'decisions', 'pan-reset']],
++  ]) {
++    assert.deepEqual([overview.head, overview.tree, overview.actualMain], [identity.head, identity.tree, identity.actualMain]);
++    assert.deepEqual(overview.outcomes.map((row) => row.scenario), scenarios);
++    assert.deepEqual(terminal.fixtures.map((row) => row.scenario), scenarios);
++    assert(terminal.allClosed);
++    assert.deepEqual([terminal.bindingBefore, terminal.bindingAfter],
++      ['30301a845a772e816da4bdfe4816766e81278fe58dcfd8b3ca4ee249925da81f',
++       '30301a845a772e816da4bdfe4816766e81278fe58dcfd8b3ca4ee249925da81f']);
++    for (const row of terminal.fixtures) {
++      assert.deepEqual([row.active, row.listeners, row.residual, row.browserClose, row.gatewayExit], [[], [], [], 0, 0]);
++    }
++  }
++  for (const row of [...focusedOverview.outcomes, ...preservationOverview.outcomes.slice(0, 3)]) {
++    assert(row.result.startsWith('PASS_') && !row.failure && !row.error && !row.cleanupError);
++  }
++  assert.deepEqual(preservationOverview.outcomes[3], panFailure);
++  assert.equal(panFailure.result, null);
++  assert.equal(panFailure.failure.message, 'Error: Pan release generated and suppressed its own trusted click');
++  assert(!panFailure.cleanupError && finalCleanup.allClosed);
++  return { approvalSha256: panCorrectionApproval.sha256, originalPreservationOverviewSha256: pinned.preservationOverview[1],
++    fixtureCorrectionBatch: 1, cases: correctedCases };
++}
++
+ async function run(cli, batch, requested) {
+   frozenCheckout();
+   assert(existsSync(cli));
+@@ -483,6 +552,7 @@ async function run(cli, batch, requested) {
+     'Use one first pass per phase or an unspent globally numbered correction batch');
+   const required = (phase) => Object.keys(scenarios).filter((name) => scenarios[name].phase === phase);
+   const administrativeRecord = await confirmOptionalMouseDisposition();
++  const panCorrection = await confirmPanCorrection();
+   const administrativelyCleared = new Set([administrativeRecord.scenario]);
+   const passed = new Set();
+   const casesPreviouslyTried = new Set();
+@@ -534,7 +604,7 @@ async function run(cli, batch, requested) {
+     const after = await inspectCurrent();
+     assert.deepEqual(after, binding, 'Fixture changed frozen source/build');
+     await record(join(output, 'binding-after.json'), after);
+-    await record(join(output, 'overview.json'), { ...identity, cases: requested, outcomes, administrativelyCleared: [administrativeRecord] });
++    await record(join(output, 'overview.json'), { ...identity, cases: requested, outcomes, administrativelyCleared: [administrativeRecord], panCorrection });
+   }
+   if (outcomes.length !== requested.length || outcomes.some((row) => row.error || row.failure || row.result?.startsWith('REPRODUCED_') ||
+       row.gatewayForced || !row.portClosed || row.gatewayExit?.code !== 0 || row.browserClose?.code !== 0 ||
+@@ -633,7 +703,7 @@ switch (mode) {
+   case 'before': await priorReadback(); break;
+   case 'admit': await admitted(); break;
+   case 'run': await run(resolve(argument), cases[0], cases.slice(1)); break;
+-  case 'gateway': await gateway(resolve(argument), cases[0]); break;
++  case 'gateway': await confirmPanCorrection(); await gateway(resolve(argument), cases[0]); break;
+   case 'settle-closed-store': {
+     const output = await realpath(resolve(argument));
+     assert(relative(join(evidence, 'runs'), output).split(/[\\/]/).length === 2 &&
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-continuation\\preservation.playwright.js" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-pan-correction1\\preservation.playwright.js"
+index 2ea3d98e..77a19e1d 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-continuation\\preservation.playwright.js"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-pan-correction1\\preservation.playwright.js"
+@@ -1278,11 +1278,15 @@ async (page) => {
+       same(await line(tracked.id).count(),1,'Unavailable focused Space did not remove the edge');
+     });
+     const afterRelease=await panTrace();
++    checkpoints.push({label:'first pan release before assertions',trace:afterRelease,before,deviceBefore,
++      putCountBefore:count,putCountAfter:writes.length});
+     const actual=afterRelease.find(e=>e.stage==='first pan release next'&&e.type==='mouseup'&&e.phase==='capture');
+     check(actual?.trusted&&actual.buttons===0,'Actual final mouse release completed');
+     const dragClick=afterRelease.find(e=>e.stage==='first pan release next'&&e.type==='click'&&e.phase==='capture');
+-    check(dragClick?.trusted&&listenerArmed(dragClick.state)&&dragClick.defaultAfterDispatch,
+-      'Pan release generated and suppressed its own trusted click');
++    check(dragClick,'Pan release click is missing from capture');
++    check(dragClick.trusted,'Pan release click was not trusted');
++    check(listenerArmed(dragClick.state),'Pan release click did not see the capturing D3 listener');
++    check(dragClick.defaultAfterDispatch,'Pan release click was not canceled after dispatch');
+     const armed=afterRelease.filter(e=>listenerArmed(e.state)&&e.state.button&&!e.state.button.disabled);
+     check(armed.length>0,'Observe the actual D3 suppression interval');
+     for(const event of armed){
+@@ -1660,6 +1664,14 @@ async (page) => {
+     check(loaded.includes(200),'Actual matching bundle loaded');
+   } catch (error) {
+     failure = { message:String(error),stack:error.stack };
++    if (group === 'pan-reset') {
++      try {
++        const trace = await page.evaluate(() => window.__qaCanvasPan?.trace ?? null);
++        if (trace) checkpoints.push({label:'available pan trace at failure',trace});
++      } catch (traceError) {
++        checkpoints.push({label:'pan trace readback failed',reason:String(traceError)});
++      }
++    }
+     if (['before','canvas-ready','after'].includes(mode) && /^[a-z-]+$/.test(action ?? '')) {
+       await page.screenshot({path:'first-canvas-' + mode + '-' + action + '.png',animations:'disabled'}).catch(()=>{});
+     }

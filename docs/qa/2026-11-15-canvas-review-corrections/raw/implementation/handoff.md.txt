@@ -1,0 +1,179 @@
+# PR478 review correction — implementation handoff (UI owner)
+
+Implementation and focused verification only. This is not a formal review, native QA, CI or a final gate, and none of those is claimed. Nothing was staged, committed or pushed. The working source is left in the assigned worktree for root review.
+
+## Identity and readback
+
+- Worktree `C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin`, branch `codex/gg-20261115-canvas-review-correction`.
+- HEAD `993d58a781ed2f0b4d13756c39e83162307b0ccd`, tree `77f0af8c8276fba6761f3bc63bfa12a2d706ffa4` (unchanged).
+- Index: 0 cached paths, 0 untracked; 16 modified tracked paths. Readback: [final-readback.txt](artifacts/final-readback.txt).
+- Runtime for the whole shell: Node `v22.23.4` (project runtime path), pnpm `12.8.1`.
+- Inputs read in full, SHA-256 verified:
+  - design `ui-207-review-correction-design/report.md` `c8007a66…f4da`
+  - scan-1 report `c05e2749…506585d`
+  - native known-negative report `8752f7bc…845d26c`
+- Also read: AGENTS.md, docs/README, docs/15, ADR-0076, docs/09 §268–278, guide 02, CHANGELOG, and the affected source and tests. Installed xyflow react 12.12.0 / system 0.0.83 (XYDrag, `getDragItems`, `addSelectedNodes/Edges`, `useKeyPress`, EdgeWrapper) and d3-drag 3.0.0 (`drag.js`, `nodrag.js`).
+- Not done: no build, no browser or native run, no full coverage, no providers or MCP, no owner checkout, store or service, no ports 4747/4748, no subagents. No compiled outputs or historical evidence were touched.
+
+## Changed paths (16)
+
+Final SHA-256 and blob IDs are in [final-changed-paths-detail.txt](artifacts/final-changed-paths-detail.txt). The full diff is [final.diff](artifacts/final.diff), SHA-256 `bae4e44faa9445ecf821d1969929e95428145e28ffc6f0c56e6c29ce785f916c`.
+
+| SHA-256 | Path | +/− |
+| --- | --- | --- |
+| `11be89b0bec5eefcc817bcc8bafe3c363f48ae18994c90879ef488197dad10c1` | apps/web/src/editor/Canvas.tsx | +177/−31 |
+| `d04ca84a5cc138e8c886e5a41b848fa2713f320d820606e2a8475686d8d95fe7` | apps/web/src/editor/OrthogonalEdge.tsx | +16/−15 |
+| `84f50d9d5e5ea679a0ac7bd846ae48d8f2fcaae55415366f3ffd05320bd00997` | apps/web/src/editor/store.ts | +30/−5 |
+| `037a8d53df8fdcbd23b9ba783528e109225a4cce72b8e7465858e0998f49a3fd` | apps/web/src/editor/model.ts | +13/−0 |
+| `c0d5f3a665e844c8ae8a587bb01061a1d58a710875fd2c8ad6341c081f0475a4` | apps/web/src/editor/stranded-edges.ts | +1/−7 |
+| `1fb2e612bdb7a355622a2a8bd3a902c52ce382f014334609c20372d1e177eccd` | apps/web/src/editor/route-editing.ts (doc comments) | +11/−5 |
+| `76c40130d1a05c14d5ef28116fd510becea3495f231086d89c441efa2aea3943` | apps/web/src/editor/viewport-gesture.ts (doc comments) | +22/−14 |
+| `7216f6515d5b071d4017d368f10ba6959bdfb96d78e650a22d23973e76c1e7e1` | apps/web/src/editor/Canvas.test.tsx | +447/−2 |
+| `09424db302eaeaed427f25fe9218573db9578914fa3256f4da810077e228a6d5` | apps/web/src/editor/OrthogonalEdge.test.tsx | +54/−0 |
+| `c860602d6e7a28044b53149b1e6b5dbe90b3b92307d85b9d2c3d93d46a300e3e` | apps/web/src/editor/store.test.ts | +106/−1 |
+| `215a3e75d635f4ca28e32a54df0aba371f3f25bad885c4facaf8b690b20e139e` | apps/web/src/editor/chat-protection.test.ts | +36/−1 |
+| `e397f054e10828e38c8e50990d69e639ff340e81f730ba14eab665cf3e2b7080` | apps/web/src/editor/viewport-gesture.contract.test.tsx | +193/−4 |
+| `7554acfc2fc4a435d2901d98e472c529bbd88806f682b458139caf80d0196f55` | docs/09-frontend-and-pwa.md | +2/−2 (long lines) |
+| `e20ff67b4346436607709d34a8701e3c68d2fba23824f3f309071760a8e97ff4` | docs/decisions/ADR-0076-canvas-only-connection-authoring.md | +1/−1 |
+| `c98eb722de0eb2a7e183fe58edb1fcc1543c70abe5938f672a509e55462df103` | docs/guide/02-build-a-loop.md | +3/−1 |
+| `511981090e839bd5f1520077a508b2faeac4b7078737ee4249b050162b376a8e` | CHANGELOG.md | +9/−4 |
+
+No changes to the schema, contracts, domain, API, draft admission, history, UndoRedo, NodeEditorDialog, ValidationIndicator, dependencies, Fit placement (#479), or any compatibility or migration code.
+
+## Production changes and rationale
+
+### F1: the shared removal boundary needs exactly one holder
+
+- **`model.ts`:** new pure `onlyEdge(definition, id)`, moved from `stranded-edges.ts`, which now imports it. Stranded recovery behaves as before.
+- **`store.ts`:** new exported `edgeRemovalRefusal(definition, system, edgeId)`.
+  - It checks for more than one holder **first** and returns `More than one connection uses the ID "<id>"; this action cannot choose just one.`
+  - Only then does it check the single holder for voice protection (`VOICE_STEP_MESSAGE`).
+  - Otherwise it returns `undefined`. An absent ID is also `undefined`.
+- **`removeEdge`:**
+  - On a refusal it sets only `connectionError`. Definition, decisionRoutes, past/future, revision, saveState and token stay identical.
+  - Otherwise it removes exactly the `onlyEdge` record (`e !== edge`), with the same label and one step.
+  - An absent ID is silent.
+- **`OrthogonalEdge.tsx`:** the selector returns the same refusal string. The button uses `disabled={!!refusal}` and `title={refusal}`, and `removeSettling = refusal ? undefined : settling`, so the stronger reason beats the gesture state.
+
+### F2: the selection belongs to its draft and drawn connection (`Canvas.tsx`)
+
+- **What a selection holds:** `EdgeSelection = { generation, id, ends }`. `ends` is a JSON tuple list, `[from.node, from.port, to.node, to.port ?? 'in']`, over every holder in stored order. It is Canvas-local and does not rely on renderer object identity.
+- **Two separate checks:**
+  - *Stored identity:* same generation and same `ends`.
+  - *Drawability:* `drawsAll`, which is `canvasDrawsEdge` for every holder. That matches xyflow's EdgeWrapper (both nodes and both handles).
+- **Capture:** `onEdgesChange` reads `useEditorStore.getState()` before any `remove` change in the batch. An ID with no stored holder selects nothing. A repeated `select` of the same ID with an equal generation and ends keeps the same selection object; xyflow re-emits `select` under its multi-selection key.
+- **Render cleanup:** `selectedEdge` is memoised on `[selection, definition, generation]`, so the port parse is skipped on drag frames. A selection that is not live is cleared during render. Undo cannot bring it back.
+- **Action-time guard:** `mayAct(current, expected, edgeId)` reads `selectionRef`, which is synced in a layout effect like `planRef`, and the store's current draft. It is used by:
+  - `remove` and `reset`;
+  - the shared `store()` path behind nudge and the drag commit;
+  - the keyboard.
+- **Route drags:** `begin` binds `selectionRef.current`. A pointer move after the binding stops being current ends the drag without a write. The commit requires the bound object, not just an equal ID, so a same-ID reselect before release cannot write.
+- **Stale path (`refuseStale`):** no edit, the selection is cleared, the polite live region says "That connection changed since it was selected; nothing changed.", and focus moves to Undo via `removalFocusTarget()`. Undo is `aria-disabled`, never `disabled`, so it stays focusable with an empty history.
+- **Refusals keep the selection:** a refused live removal (duplicate or voice) keeps it, on the toolbar and on the keyboard. This is root-accepted choice (b).
+- **Interface:** the `RouteEditing` interface and context value are unchanged. `editing` is not recreated when the selection changes.
+- **Bug found by T8 and fixed:** the Reset route `onClick` used to call `editing.reset()` and *then* focus the edge. On the stale path that moved focus back into the canvas, so Delete could reach the selected node. It now focuses the edge first and then resets. On the live path the outcome is identical: the store write renders after the handler.
+
+### F3: a card drag arms the gate (`Canvas.tsx`, typed `OnNodeDrag<FlowNode>`)
+
+- `onNodeDragStart` calls `gesture.move(event)` before its existing `closeCanvasPopovers()`, `closeStep()` and `setNodeDrag(...)`. Those three are unchanged.
+- Installed XYDrag starts a drag on the `mousemove` whose distance from the press, in client px, exceeds `nodeDragThreshold`. Canvas sets that to `CLICK_DISTANCE` (3), the same value it passes as d3-drag's `clickDistance`. d3-drag sets `mousemoving` on `dx²+dy² > 9` on that same event, so the gate is armed exactly for drags whose release adds `click.drag`.
+- Touch, keyboard and `{}` events are ignored by the existing type check.
+- **Unchanged:** the one mount-time listener, the two-task barrier and the `ViewportGestureGate` interface (kept for the later Space cards). There is no replay, patch, pointerdown replacement, delay or new framework.
+- **"Rendered state and action-time guard":** the button's `aria-disabled`/`data-gesture` and the handlers' refusal both read the same rendered gate snapshot, so they agree for card drags exactly as for pans.
+- I deliberately did not add a hidden *live* gate check inside `editing.remove`. A click that reaches React was not cancelled by d3, and a silent live refusal would recreate the "looks available but does nothing" defect.
+
+### Docs
+
+- **docs/09:** Remove bullet and gate paragraph, the node drag is now gated, and the regression list.
+- **ADR-0076:** Remove bullet.
+- **guide 02:** card drags are dimmed too, plus one short paragraph on selection lifetime and duplicate IDs.
+- **CHANGELOG #207:** same content.
+- **Code comments:** viewport-gesture.ts header and `move` doc, route-editing.ts, OrthogonalEdge and Canvas.
+- The delivery register (`docs/delivery/…`, historical) was not touched.
+
+## Keyboard contract distinctions (as tested)
+
+| Situation | Delete/Backspace outcome | Test |
+| --- | --- | --- |
+| Live unique edge selected | `remove edge …`, one step | existing tests; T9 tail |
+| Live duplicate-ID edge selected, node also selected | Store refusal, the notice says why, nothing changes, the selection stays, the node stays | T4 |
+| Stale edge selection still rendered, in the same dispatch (load and key in one batch), node selected in the new load | Consumed, with no fallback: no edit, STALE announced, selection cleared, focus Undo, node kept | T8 "Delete" |
+| The next Delete after render cleanup (explicit node key) | `delete work`, exact graph | T8, all 4 variants |
+| Control-click card, then dialog, then blank route ID or removed Script label, then close | Edge selection retired at the blank; Delete gives `delete done` / `delete check`; the hidden edge is never removed as an edge | T6 (2 cases) |
+| Loop issues `openNode('done')`, then blank route ID, then close | Same: `delete done`, exact graph | T6 (3rd case) |
+| Live edge plus a node opened from Loop issues | Unchanged pre-existing edge-first priority (not altered) | existing behaviour; noted in limits |
+
+## Tests (27 new: 24 defect tests and 3 controls) and the old-vs-new result
+
+"Old" means the seven production files restored to exact HEAD blobs with the new tests kept. First failures for all 24 are in [first-failures.txt](artifacts/negative-control/first-failures.txt).
+
+| # | File and test | Old | New |
+| --- | --- | --- | --- |
+| T1 | store: refuses an ID two stored edges hold, changing nothing but the notice (one Decision-row-owned: false/true). Schema-valid, `DUPLICATE_EDGE_ID` | FAIL ×2 (`remove edge start to via`, revision 1) | pass |
+| T1c | store: removes exactly one record of a unique ID; an absent ID is silent (state object identical) | pass (control) | pass |
+| T2 | chat-protection: protected voice step shares an ID with the valid continuation, voice first/second | FAIL ×2. Voice first gave the voice reason; voice second removed both (`remove edge chat-normalize-check valid to respond`, revision 1) | pass |
+| T3 | OrthogonalEdge: Remove disabled with the duplicate reason, outranks a pan (ordinary / voice first / voice second) | FAIL ×3 (enabled, or voice title) | pass |
+| T4 | Canvas: duplicate ID from every Remove plus Delete/Backspace; exact draft/ownership/revision/save; node and selection kept; unique control exact with one Undo | FAIL (`toBeDisabled`) | pass |
+| T5 | Canvas: load replacement with the same ends / other ends; no selection, keys inert, reselect then one step, exact Undo | FAIL ×2 (`['start-work']` still selected) | pass |
+| T6 | Canvas: Script label removed (Control-click) / Decision blank (Control-click) / Decision blank (Loop issues); Undo does not reselect; Delete gives `delete <card>`, exact graph | FAIL ×3 (selection kept) | pass |
+| T7 | Canvas: same generation, ends changed (source rename / Decision route ID rename); Undo does not reselect | FAIL ×2 | pass |
+| T8 | Canvas: Remove / Reset / nudge / Delete on the stale render inside one `act` with the load. STALE text (written only by the guard) proves the path was reached | FAIL ×4 (draft edited) | pass |
+| T8b | Canvas: route drag held across a load (pointer moves on / same ID reselected before release); no write | FAIL ×2 (route written) | pass |
+| C1 | Canvas: drag kept when xyflow re-selects the same edge under the multi-selection key | pass (control) | pass; **fails under mutation** (identity retention removed) |
+| T9 | Canvas: selection survives move, route, label, port-keeping config, issue refresh and 4 Undos; Remove acts once, exact Undo | pass (control) | pass |
+| F3u | Canvas: card-drag start with `mousemove` gates; touch and `{}` do not; closeStep preserved; first click after settle acts | FAIL (no `aria-disabled`) | pass |
+| T10 | contract (installed xyflow/d3, real timers, no act): Control drag of a card. Listener order (`mouseup.drag` present, no `click.drag` at the test capture listener; a later listener never runs); the drag's own click cancelled; immediate Remove click cancelled while shown `settling`; first available click acts once; labels `['move other','remove edge start to done']`; two exact Undos | FAIL (`duringDrag` not `panning`) | pass |
+| T10b | contract: threshold boundary. (3,0) px: no drag, no blocker, gate stays ready. (3,1) px: `panning`, then `settling` with blocker, then both clear | FAIL ((3,1) not gated) | pass |
+
+All existing pan, keyboard, protected, recovery and modal-retirement tests are kept and pass. The only edits to existing test code are additive helper parameters in the contract file (`mouse(..., init?)`, `selectedConnection(definition?)`, and a captured `xyflow` store handle).
+
+## Commands and counts (logs under `artifacts/logs/`)
+
+| Step | Command (in `apps/web` unless noted) | Result |
+| --- | --- | --- |
+| 01 Baseline at clean HEAD | `pnpm exec vitest run` on 15 focused files | 15 files, **309 passed**, 85.9 s |
+| 02 / 11 / 12 / 19 Types | `pnpm run typecheck` (`tsc --noEmit`) | 02 exit 0; 11 exit 2 (test fixture typing, first failure `store.test.ts(215,7)`, fixed with typed literals); 12 and 19 exit 0 |
+| 03 Existing tests on new production code | same 15 files | **309 passed** |
+| 04 First run of changed test files | 5 files | 6 failed (below) |
+| 05 / 06 / 14 Re-runs | 5 files | 1 failed, then 137 passed, then **138 passed** |
+| 07–09, 13, 17 Format | `pnpm exec prettier --check/--write` (repo root) on changed files only | first check: 4 files differed (all in my additions); `--write` on those; final check exit 0 |
+| 10 / 18 Lint | `pnpm exec eslint` on the 12 changed web files | exit 0, no output |
+| 16 Final focused | 15 baseline files plus every `EditorPage*.test.tsx`, UndoRedo, useUndoShortcuts | 27 files, **461 passed**, 196.85 s |
+| 20 Whitespace | `git diff --check` (repo root) | exit 0 |
+| Negative control | `bash artifacts/negative-control/run-negative-control.sh` | old production plus new tests: 5 files, **24 failed / 114 passed / 138** |
+| Mutation control | `bash artifacts/negative-control/run-identity-mutation.sh` | C1 fails as expected (`expected [] to deeply equal ['reroute done repeat to work']`); restore OK |
+
+**First failures in run 04, and what each changed:**
+1. A test fixture: `decisionRouteEdges` re-ports by ID. See limit 1.
+2. Duplicate-key stale toolbar in the stand-in edge layer: the query was scoped to the `return` edge.
+3. Mock geometry was stale after a port rename: it is now refreshed in the same `act`.
+4. A **real product bug**, the Reset focus order: production fix.
+5. and 6. XYDrag does not move the card on the threshold-crossing event: a second move was added, and the threshold test no longer asserts a move.
+
+The final source equals, byte for byte, the source used by the negative control, the mutation control and the final focused run (field comparison of `new-all-before.sha256` and `final-changed-paths.sha256`).
+
+### Process incident: the negative-control restore trap
+
+- **What went wrong:** the script's `trap restore` ran after `cd apps/web`, so its relative `cp` paths failed. [restore-verify.txt](artifacts/negative-control/restore-verify.txt) is preserved and shows the failure. Its "INDEX CHANGED" line came from a `git ls-files` readback with relative paths from the wrong directory (empty output). No index command ran.
+- **Recovery:** I restored the seven files at once from `negative-control/new-backup/` using absolute paths.
+  - [restore-verify-manual.txt](artifacts/negative-control/restore-verify-manual.txt): all 16 files OK against the pre-control SHA-256.
+  - `index-before.txt` equals `index-after-manual.txt`.
+  - 0 cached paths.
+- **Exposure:** the HEAD versions of the seven files were in the worktree only between that script's start and the manual restore, and nothing else used the worktree.
+- The mutation script uses absolute paths, and its restore verified OK.
+- During the run the old files were byte-exact HEAD blobs ([old-restored-blob-check.txt](artifacts/negative-control/old-restored-blob-check.txt): `git hash-object` equals `HEAD:<path>` for all 7).
+
+## Source limitations and unresolved items
+
+1. **`decisionRouteEdges` is keyed by edge ID (pre-existing; not changed).** With a Decision-owned duplicate ID, any successful edit that goes through `edit()` re-ports the *other* holder to the row's port. Observed: removing the unrelated `c1` turned `start→via e1` into port `yes`. The refusal itself is exact, and T1 asserts identical decisionRoutes. Fixing this would broaden store routing semantics and is out of scope.
+2. **Ambiguous route editing is unchanged.** `setEdgeRoute` writes every holder of a duplicate ID. A live duplicate selection can still Reset, nudge or drag a route, and that affects both holders (geometry only, undoable). The new guard checks only selection identity and liveness.
+3. **Duplicate IDs in xyflow and the harness.** xyflow keys wrappers by ID and resolves them to the last holder (stacked toolbars, per scan-1). The stand-in edge layer, keyed the same way, kept a stale toolbar after reselection, so tests use `getAllByRole` and scope queries. Routing `routes` is a `Map` by ID.
+4. **Public Chat admission.** The protected-holder order tests are local store and toolbar guard tests. Public Chat admission of duplicate IDs is not established here.
+5. **Unchanged edge priority.** A live, drawable selected edge still takes Delete before a node opened from Loop issues. No new rule was added.
+6. **Focus fallback.** Without an Undo control (a bare canvas), the stale path focuses the canvas root, which is the existing `removalFocusTarget` fallback. EditorPage always renders an `aria-disabled` Undo.
+7. **Stale clearing is literal.** In the "same ID reselected before release" case the deliberate second selection is also cleared, as the brief says.
+8. **F3 threshold equivalence.** It relies on `CLICK_DISTANCE` being used for both `nodeClickDistance` and `nodeDragThreshold`, and on both libraries measuring client px from the press. It is pinned at the integer boundary only; fractional-pixel rounding at exactly 3 px is untested. Any mouse drag start arms the gate, including non-Control drags, where the toolbar is gone anyway.
+9. **Existing tests not modified, but now weaker or trivial.**
+   - "deletes the selection with Delete or Backspace…": its edge step was already trivial at HEAD, because `e1` is removed along with `prep`.
+   - "keeps the replacement edge selected…": it uses `e11`, which `kitchenSinkLoop` does not hold, so its first `select` now captures no selection. It still passes.
+10. **Not done here:** jsdom evidence is not native. Corrected-head native QA (F1/F2/F3), CI, coverage gates, the build, the independent correction review and root freeze/integration are all still open. With duplicate IDs there is still no single-edge removal in the UI; the message says the action cannot choose one.

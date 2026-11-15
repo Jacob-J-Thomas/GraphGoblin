@@ -1,0 +1,2992 @@
+{
+  "suite": "207-known-negative-993",
+  "scenario": "node-drag",
+  "origin": "http://127.0.0.1:51473",
+  "gatewayPid": "46136",
+  "bundle": "/app/assets/index-fg2Y8CeI.js",
+  "checkpoints": [
+    {
+      "label": "public fixture created",
+      "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+      "public": {
+        "loop": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "ownerId": "local",
+          "name": "Rapid Control node drag",
+          "draftVersionId": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "createdAt": "2026-11-15T00:30:36.004Z",
+          "updatedAt": "2026-11-15T00:30:36.004Z"
+        },
+        "draft": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rapid Control node drag",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T00:30:36.004Z"
+        },
+        "draftToken": "de116450fd9cd506"
+      }
+    },
+    {
+      "label": "node drag baseline",
+      "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+      "public": {
+        "loop": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "ownerId": "local",
+          "name": "Rapid Control node drag",
+          "draftVersionId": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "createdAt": "2026-11-15T00:30:36.004Z",
+          "updatedAt": "2026-11-15T00:30:36.004Z"
+        },
+        "draft": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rapid Control node drag",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T00:30:36.004Z"
+        },
+        "draftToken": "de116450fd9cd506"
+      },
+      "local": null
+    },
+    {
+      "label": "trusted pointer selected edge",
+      "id": "e1",
+      "point": {
+        "x": 777.92236328125,
+        "y": 357.70965576171875
+      },
+      "identity": "work out to done, manual route"
+    },
+    {
+      "label": "rapid CDP frames",
+      "from": {
+        "x": 1029.9048767089844,
+        "y": 683.7941284179688
+      },
+      "to": {
+        "x": 993.9048767089844,
+        "y": 648.7941284179688
+      },
+      "point": {
+        "x": 922.4470825195312,
+        "y": 274.6829528808594,
+        "width": 146.578125,
+        "height": 32,
+        "disabled": false,
+        "ariaDisabled": null,
+        "label": "work out to done, manual route"
+      },
+      "batch": [
+        {
+          "type": "mouseReleased",
+          "x": 993.9048767089844,
+          "y": 648.7941284179688,
+          "modifiers": 2,
+          "button": "left",
+          "buttons": 0,
+          "clickCount": 1
+        },
+        {
+          "type": "mouseMoved",
+          "x": 922.4470825195312,
+          "y": 274.6829528808594,
+          "modifiers": 2,
+          "button": "none",
+          "buttons": 0
+        },
+        {
+          "type": "mousePressed",
+          "x": 922.4470825195312,
+          "y": 274.6829528808594,
+          "modifiers": 2,
+          "button": "left",
+          "buttons": 1,
+          "clickCount": 1
+        },
+        {
+          "type": "mouseReleased",
+          "x": 922.4470825195312,
+          "y": 274.6829528808594,
+          "modifiers": 2,
+          "button": "left",
+          "buttons": 0,
+          "clickCount": 1
+        }
+      ],
+      "dispatched": [
+        {
+          "status": "fulfilled",
+          "value": {}
+        },
+        {
+          "status": "fulfilled",
+          "value": {}
+        },
+        {
+          "status": "fulfilled",
+          "value": {}
+        },
+        {
+          "status": "fulfilled",
+          "value": {}
+        }
+      ]
+    },
+    {
+      "label": "rapid Control drag and click final state",
+      "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+      "public": {
+        "loop": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "ownerId": "local",
+          "name": "Rapid Control node drag",
+          "draftVersionId": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "createdAt": "2026-11-15T00:30:36.004Z",
+          "updatedAt": "2026-11-15T00:30:37.397Z"
+        },
+        "draft": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rapid Control node drag",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 703.6878048780488,
+                  "y": 564.5648780487804
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T00:30:36.004Z"
+        },
+        "draftToken": "0023b0545aa75488"
+      },
+      "local": {
+        "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rapid Control node drag",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 703.6878048780488,
+                "y": 564.5648780487804
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T00:30:37.410Z",
+        "synced": true,
+        "baseToken": "0023b0545aa75488"
+      }
+    },
+    {
+      "label": "trusted node-drag and Remove event timeline",
+      "events": [
+        {
+          "type": "pointerdown",
+          "trusted": true,
+          "x": 1029.9049072265625,
+          "y": 683.7941284179688,
+          "buttons": 1,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 681.3000000119209,
+          "eventTime": 680.6999999880791,
+          "control": true,
+          "target": 1,
+          "buttonTarget": null,
+          "edgeTarget": null,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mousedown",
+          "trusted": true,
+          "x": 1029,
+          "y": 683,
+          "buttons": 1,
+          "button": 0,
+          "detail": 1,
+          "at": 681.5,
+          "eventTime": 680.6999999880791,
+          "control": true,
+          "target": 1,
+          "buttonTarget": null,
+          "edgeTarget": null,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "pointerup",
+          "trusted": true,
+          "x": 993.9049072265625,
+          "y": 648.7941284179688,
+          "buttons": 0,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 740.8999999761581,
+          "eventTime": 740.5999999642372,
+          "control": true,
+          "target": 1,
+          "buttonTarget": null,
+          "edgeTarget": null,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [
+            {
+              "type": "mouseup",
+              "handler": 11,
+              "wrapper": 12,
+              "capture": true,
+              "passive": false
+            }
+          ],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mouseup",
+          "trusted": true,
+          "x": 993,
+          "y": 648,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "at": 741,
+          "eventTime": 740.5999999642372,
+          "control": true,
+          "target": 1,
+          "buttonTarget": null,
+          "edgeTarget": null,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [
+            {
+              "type": "mouseup",
+              "handler": 11,
+              "wrapper": 12,
+              "capture": true,
+              "passive": false
+            }
+          ],
+          "reachedDocument": false,
+          "after": true
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "x": 993,
+          "y": 648,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "pointerId": 1,
+          "at": 744.8999999761581,
+          "eventTime": 740.5999999642372,
+          "control": true,
+          "target": 1,
+          "buttonTarget": null,
+          "edgeTarget": null,
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [
+            {
+              "type": "click",
+              "handler": 13,
+              "wrapper": 14,
+              "capture": true,
+              "passive": false,
+              "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+            }
+          ],
+          "reachedDocument": false,
+          "after": true
+        },
+        {
+          "type": "pointerdown",
+          "trusted": true,
+          "x": 922.4470825195312,
+          "y": 274.6829528808594,
+          "buttons": 1,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 746.5999999642372,
+          "eventTime": 740.6999999880791,
+          "control": true,
+          "target": 15,
+          "buttonTarget": 10,
+          "edgeTarget": "e1",
+          "path": [
+            15,
+            10,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [
+            {
+              "type": "click",
+              "handler": 13,
+              "wrapper": 14,
+              "capture": true,
+              "passive": false,
+              "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+            }
+          ],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mousedown",
+          "trusted": true,
+          "x": 922,
+          "y": 274,
+          "buttons": 1,
+          "button": 0,
+          "detail": 1,
+          "at": 746.6999999880791,
+          "eventTime": 740.6999999880791,
+          "control": true,
+          "target": 15,
+          "buttonTarget": 10,
+          "edgeTarget": "e1",
+          "path": [
+            15,
+            10,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [
+            {
+              "type": "click",
+              "handler": 13,
+              "wrapper": 14,
+              "capture": true,
+              "passive": false,
+              "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+            }
+          ],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "pointerup",
+          "trusted": true,
+          "x": 922.4470825195312,
+          "y": 274.6829528808594,
+          "buttons": 0,
+          "button": 0,
+          "detail": 0,
+          "pointerId": 1,
+          "at": 747.5,
+          "eventTime": 740.6999999880791,
+          "control": true,
+          "target": 15,
+          "buttonTarget": 10,
+          "edgeTarget": "e1",
+          "path": [
+            15,
+            10,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [
+            {
+              "type": "click",
+              "handler": 13,
+              "wrapper": 14,
+              "capture": true,
+              "passive": false,
+              "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+            }
+          ],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "mouseup",
+          "trusted": true,
+          "x": 922,
+          "y": 274,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "at": 747.5,
+          "eventTime": 740.6999999880791,
+          "control": true,
+          "target": 15,
+          "buttonTarget": 10,
+          "edgeTarget": "e1",
+          "path": [
+            15,
+            10,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [
+            {
+              "type": "click",
+              "handler": 13,
+              "wrapper": 14,
+              "capture": true,
+              "passive": false,
+              "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+            }
+          ],
+          "reachedDocument": false,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "x": 922,
+          "y": 274,
+          "buttons": 0,
+          "button": 0,
+          "detail": 1,
+          "pointerId": 1,
+          "at": 747.6999999880791,
+          "eventTime": 740.6999999880791,
+          "control": true,
+          "target": 15,
+          "buttonTarget": 10,
+          "edgeTarget": "e1",
+          "path": [
+            15,
+            10,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22
+          ],
+          "selected": true,
+          "actualRemove": 10,
+          "disabled": false,
+          "ariaDisabled": null,
+          "gesture": null,
+          "before": false,
+          "cancelable": true,
+          "d3": [
+            {
+              "type": "click",
+              "handler": 13,
+              "wrapper": 14,
+              "capture": true,
+              "passive": false,
+              "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+            }
+          ],
+          "reachedDocument": false,
+          "after": true
+        }
+      ],
+      "remaining": []
+    },
+    {
+      "label": "separate click classifier",
+      "release": {
+        "type": "mouseup",
+        "trusted": true,
+        "x": 993,
+        "y": 648,
+        "buttons": 0,
+        "button": 0,
+        "detail": 1,
+        "at": 741,
+        "eventTime": 740.5999999642372,
+        "control": true,
+        "target": 1,
+        "buttonTarget": null,
+        "edgeTarget": null,
+        "path": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "selected": true,
+        "actualRemove": 10,
+        "disabled": false,
+        "ariaDisabled": null,
+        "gesture": null,
+        "before": false,
+        "cancelable": true,
+        "d3": [
+          {
+            "type": "mouseup",
+            "handler": 11,
+            "wrapper": 12,
+            "capture": true,
+            "passive": false
+          }
+        ],
+        "reachedDocument": false,
+        "after": true
+      },
+      "dragClick": {
+        "type": "click",
+        "trusted": true,
+        "x": 993,
+        "y": 648,
+        "buttons": 0,
+        "button": 0,
+        "detail": 1,
+        "pointerId": 1,
+        "at": 744.8999999761581,
+        "eventTime": 740.5999999642372,
+        "control": true,
+        "target": 1,
+        "buttonTarget": null,
+        "edgeTarget": null,
+        "path": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "selected": true,
+        "actualRemove": 10,
+        "disabled": false,
+        "ariaDisabled": null,
+        "gesture": null,
+        "before": false,
+        "cancelable": true,
+        "d3": [
+          {
+            "type": "click",
+            "handler": 13,
+            "wrapper": 14,
+            "capture": true,
+            "passive": false,
+            "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+          }
+        ],
+        "reachedDocument": false,
+        "after": true
+      },
+      "attempted": {
+        "type": "pointerdown",
+        "trusted": true,
+        "x": 922.4470825195312,
+        "y": 274.6829528808594,
+        "buttons": 1,
+        "button": 0,
+        "detail": 0,
+        "pointerId": 1,
+        "at": 746.5999999642372,
+        "eventTime": 740.6999999880791,
+        "control": true,
+        "target": 15,
+        "buttonTarget": 10,
+        "edgeTarget": "e1",
+        "path": [
+          15,
+          10,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ],
+        "selected": true,
+        "actualRemove": 10,
+        "disabled": false,
+        "ariaDisabled": null,
+        "gesture": null,
+        "before": false,
+        "cancelable": true,
+        "d3": [
+          {
+            "type": "click",
+            "handler": 13,
+            "wrapper": 14,
+            "capture": true,
+            "passive": false,
+            "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+          }
+        ],
+        "reachedDocument": false,
+        "after": false
+      },
+      "targetRelease": {
+        "type": "pointerup",
+        "trusted": true,
+        "x": 922.4470825195312,
+        "y": 274.6829528808594,
+        "buttons": 0,
+        "button": 0,
+        "detail": 0,
+        "pointerId": 1,
+        "at": 747.5,
+        "eventTime": 740.6999999880791,
+        "control": true,
+        "target": 15,
+        "buttonTarget": 10,
+        "edgeTarget": "e1",
+        "path": [
+          15,
+          10,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ],
+        "selected": true,
+        "actualRemove": 10,
+        "disabled": false,
+        "ariaDisabled": null,
+        "gesture": null,
+        "before": false,
+        "cancelable": true,
+        "d3": [
+          {
+            "type": "click",
+            "handler": 13,
+            "wrapper": 14,
+            "capture": true,
+            "passive": false,
+            "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+          }
+        ],
+        "reachedDocument": false,
+        "after": false
+      },
+      "next": {
+        "type": "click",
+        "trusted": true,
+        "x": 922,
+        "y": 274,
+        "buttons": 0,
+        "button": 0,
+        "detail": 1,
+        "pointerId": 1,
+        "at": 747.6999999880791,
+        "eventTime": 740.6999999880791,
+        "control": true,
+        "target": 15,
+        "buttonTarget": 10,
+        "edgeTarget": "e1",
+        "path": [
+          15,
+          10,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ],
+        "selected": true,
+        "actualRemove": 10,
+        "disabled": false,
+        "ariaDisabled": null,
+        "gesture": null,
+        "before": false,
+        "cancelable": true,
+        "d3": [
+          {
+            "type": "click",
+            "handler": 13,
+            "wrapper": 14,
+            "capture": true,
+            "passive": false,
+            "callback": "function MC(e){e.preventDefault(),e.stopImmediatePropagation()}"
+          }
+        ],
+        "reachedDocument": false,
+        "after": true
+      },
+      "hitOpening": true,
+      "blocked": true,
+      "kept": true
+    },
+    {
+      "label": "paired settled genuine Remove control",
+      "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+      "public": {
+        "loop": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "ownerId": "local",
+          "name": "Rapid Control node drag",
+          "draftVersionId": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "createdAt": "2026-11-15T00:30:36.004Z",
+          "updatedAt": "2026-11-15T00:30:39.285Z"
+        },
+        "draft": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rapid Control node drag",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 703.6878048780488,
+                  "y": 564.5648780487804
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T00:30:36.004Z"
+        },
+        "draftToken": "92f9f94bc9aaa9cf"
+      },
+      "local": {
+        "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rapid Control node drag",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 703.6878048780488,
+                "y": 564.5648780487804
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T00:30:39.296Z",
+        "synced": true,
+        "baseToken": "92f9f94bc9aaa9cf"
+      }
+    },
+    {
+      "label": "Undo only the Remove action",
+      "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+      "public": {
+        "loop": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "ownerId": "local",
+          "name": "Rapid Control node drag",
+          "draftVersionId": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "createdAt": "2026-11-15T00:30:36.004Z",
+          "updatedAt": "2026-11-15T00:30:40.973Z"
+        },
+        "draft": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rapid Control node drag",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 703.6878048780488,
+                  "y": 564.5648780487804
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T00:30:36.004Z"
+        },
+        "draftToken": "0023b0545aa75488"
+      },
+      "local": {
+        "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rapid Control node drag",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 703.6878048780488,
+                "y": 564.5648780487804
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T00:30:40.984Z",
+        "synced": true,
+        "baseToken": "0023b0545aa75488"
+      }
+    },
+    {
+      "label": "Undo only the node drag",
+      "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+      "public": {
+        "loop": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "ownerId": "local",
+          "name": "Rapid Control node drag",
+          "draftVersionId": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "createdAt": "2026-11-15T00:30:36.004Z",
+          "updatedAt": "2026-11-15T00:30:42.640Z"
+        },
+        "draft": {
+          "id": "01M7E9SWZ46KB88TM43ZSM9GY4",
+          "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Rapid Control node drag",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T00:30:36.004Z"
+        },
+        "draftToken": "de116450fd9cd506"
+      },
+      "local": {
+        "loopId": "01M7E9SWZ46KB88TM43ZSM9GY3",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rapid Control node drag",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T00:30:42.650Z",
+        "synced": true,
+        "baseToken": "de116450fd9cd506"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "puts": [
+    {
+      "url": "http://127.0.0.1:51473/loops/01M7E9SWZ46KB88TM43ZSM9GY3/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rapid Control node drag",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 703.6878048780488,
+                "y": 564.5648780487804
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"de116450fd9cd506\"",
+      "at": 1794702637388,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:51473/loops/01M7E9SWZ46KB88TM43ZSM9GY3/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rapid Control node drag",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 703.6878048780488,
+                "y": 564.5648780487804
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"0023b0545aa75488\"",
+      "at": 1794702639278,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:51473/loops/01M7E9SWZ46KB88TM43ZSM9GY3/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rapid Control node drag",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 703.6878048780488,
+                "y": 564.5648780487804
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"92f9f94bc9aaa9cf\"",
+      "at": 1794702640966,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:51473/loops/01M7E9SWZ46KB88TM43ZSM9GY3/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Rapid Control node drag",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"0023b0545aa75488\"",
+      "at": 1794702642632,
+      "status": 200
+    }
+  ],
+  "bundleResponses": [
+    {
+      "status": 200,
+      "pid": null
+    }
+  ],
+  "outcome": "REPRODUCED_TRUSTED_REMOVE_CANCELLED"
+}
