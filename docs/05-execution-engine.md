@@ -98,7 +98,9 @@ make this safe:
   already in the log is completed rather than recorded a second time (for example when a run's
   version is missing at recovery). At recovery a run whose log ends in such an event (not
   followed by `run.resumed` or `run.started`) gets its status from the event. Nothing is
-  executed again, so an exit is never re-evaluated.
+  executed again, so an exit is never re-evaluated. The terminal status write clears the current
+  wait in both live execution and recovery. The log retains park, wake and child events. A run
+  already marked failed by an older build can still show a stale wait.
 
 - **Failure diagnostics are projected before the terminal append.** Newly emitted `run.failed`
   events and their run rows share one failure. Unexpected faults use safe `INTERNAL_ERROR` messages,

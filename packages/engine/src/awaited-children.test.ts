@@ -666,6 +666,105 @@ describe('awaiting a child across failures and restarts (#242)', () => {
     expectOneContinuation(e, parent.id);
   });
 
+  it.each(['live execution', 'recovery'] as const)(
+    "clears the failed parent's current wait during %s (#410)",
+    async (completion) => {
+      const e = await createTestEngine({ maxConcurrentRuns: 2 });
+      try {
+        const leaf = e.publish(
+          singleNodeLoop('timeout-leaf', {
+            id: 'wait',
+            kind: 'wait',
+            label: 'Wait',
+            config: { mode: 'input', prompt: '?', timeoutSeconds: 1, onTimeout: 'fail-run' },
+          }),
+        );
+        const parent = await e.runToIdle(
+          e.publish(withAfter('timeout-parent', leaf.loopId)).loopId,
+        );
+        const [child] = await e.ports.runs.listChildren(parent.id);
+        expect(child).toMatchObject({
+          parentRunId: parent.id,
+          status: 'waiting',
+          waiting: { kind: 'input' },
+        });
+        expect(parent).toMatchObject({
+          status: 'waiting',
+          waiting: { kind: 'child', childRunId: child!.id },
+        });
+
+        const transition = e.ports.runs.transition.bind(e.ports.runs);
+        let interrupted = false;
+        const gate =
+          completion === 'recovery'
+            ? vi
+                .spyOn(e.ports.runs, 'transition')
+                .mockImplementation((id, from, changes, ...rest) => {
+                  if (id === parent.id && changes.status === 'failed') {
+                    interrupted = true;
+                    return hang();
+                  }
+                  return transition(id, from, changes, ...rest);
+                })
+            : undefined;
+
+        await e.ports.timers.fire(child!.id, 'timeout');
+        let reader = e.manager;
+        if (gate) {
+          // The failure append has committed, but the parent still has its original wait.
+          await vi.waitFor(() => expect(interrupted).toBe(true));
+          const stranded = await reader.getRun(parent.id);
+          expect(stranded).toMatchObject({ status: 'running', waiting: parent.waiting });
+          expect(stranded?.finalizedAt).toBeUndefined();
+          const before = e.events(parent.id);
+          expect(before.at(-1)?.type).toBe('run.failed');
+          gate.mockRestore();
+
+          reader = await recover(e);
+          expect(e.events(parent.id)).toEqual(before);
+        } else {
+          await reader.waitForIdle();
+        }
+
+        const failed = await reader.getRun(parent.id);
+        expect(failed).toMatchObject({
+          status: 'failed',
+          finalizedAt: expect.any(String),
+          failure: {
+            code: 'WAIT_TIMEOUT',
+            nodeId: 'sub',
+            resumable: true,
+            details: { childRunId: child!.id, childNodeId: 'wait' },
+          },
+        });
+        const history = e
+          .events(parent.id)
+          .filter(({ type }) =>
+            ['run.waiting', 'run.woken', 'child_run.finished', 'run.failed'].includes(type),
+          );
+        expect(history).toEqual([
+          expect.objectContaining({ type: 'run.waiting', wait: parent.waiting }),
+          expect.objectContaining({
+            type: 'run.woken',
+            reason: 'child',
+            payload: expect.objectContaining({ childRunId: child!.id }),
+          }),
+          expect.objectContaining({
+            type: 'child_run.finished',
+            childRunId: child!.id,
+            status: 'failed',
+          }),
+          expect.objectContaining({ type: 'run.failed', failure: failed?.failure }),
+        ]);
+        expect(count(e, parent.id, started('after'))).toBe(0);
+        expect(failed).not.toHaveProperty('waiting');
+      } finally {
+        e.manager.stop();
+        vi.restoreAllMocks();
+      }
+    },
+  );
+
   it('a parent that dies while finishing its subloop records the child completion once after recovery (#398)', async () => {
     const e = await createTestEngine({ maxConcurrentRuns: 3 });
     const leaf = e.publish(inputLoop('completion-leaf'));
