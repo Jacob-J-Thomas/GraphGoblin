@@ -1,0 +1,173 @@
+# Reset route toolbar hold: implementation handoff (resume 02:50 UTC)
+
+Claude Sonnet 5.5, xhigh, the same model as the quota-interrupted attempt. Implementation and focused verification only. This is not a formal review, and it is not native QA or sign-off. Ready for root integration of the Reset toolbar hold only. It does not say the whole PR is ready. The separate native selection-then-Remove blocker (report 64dbcc54) is untouched and unimplemented.
+
+## Identity
+
+- Worktree: `C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin`
+- Branch `codex/gg-20261115-canvas-review-correction`, HEAD `47b00a520a4b8787786102cac69d84f145f2ed1c`, tree `0ced356ea4dd474e0c8c31c47c650ddfde86a6a3`. Both are unchanged.
+- At start the worktree matched the checkpoint exactly: raw index `82a193ee…3da0`, `OrthogonalEdge.tsx` `06ad1148…8ab2`, `OrthogonalEdge.test.tsx` `3359e1e8…7a81`, and no other changes. The preserved partial work was continued, not reset or recreated.
+- Node `v22.23.4` (project runtime), `pnpm.cmd`. In `apps/web`, `pnpm.cmd exec node --version` printed `v22.23.4`.
+- Output: `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-reset-doubleclick-implementation-resume-0250`. The original output directory and `quota-checkpoint-0156` were not written to; their mtimes stay at or before 20:03 CST on Nov 14.
+
+## Changed files (8, all unstaged)
+
+The final files are copied under `final/files/<path>`. The full patch is `final/final.diff` (61,862 bytes, SHA-256 `9ea4f334e08bb2748ad4613f01e74729e18917de8092e87bfb203852bc91c065`). `final/final-manifest.json` holds the same data as this table.
+
+| Path | Final SHA-256 | Committed SHA-256 (blob) | +/- |
+| --- | --- | --- | --- |
+| `apps/web/src/editor/OrthogonalEdge.tsx` | `78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf` | `d04ca84a5cc138e8c886e5a41b848fa2713f320d820606e2a8475686d8d95fe7` (`17086bbd`) | +57/-7 |
+| `apps/web/src/editor/OrthogonalEdge.test.tsx` | `3359e1e8b56e0165a0f624a42b80d3ac7f4e6ceabe6fcff45e15c95000927a81` | `09424db302eaeaed427f25fe9218573db9578914fa3256f4da810077e228a6d5` (`abc22a17`) | +370/-1 |
+| `apps/web/src/editor/Canvas.test.tsx` | `93278710f23703cad88e00b73e20b3e3ad4563c2ddf9db9463f259b48854d077` | `7216f6515d5b071d4017d368f10ba6959bdfb96d78e650a22d23973e76c1e7e1` (`fb71dcd1`) | +201/-0 |
+| `apps/web/src/editor/viewport-gesture.contract.test.tsx` | `c5549718f0a1d43efd791cac92fc64d4fadd5b09ee40d8c1c6c8c1dc255d4a24` | `e397f054e10828e38c8e50990d69e639ff340e81f730ba14eab665cf3e2b7080` (`d3851507`) | +134/-0 |
+| `apps/web/e2e/edge-routes.spec.ts` | `366d68f9c2361f44d5907da6f4d593d89bfda98b541c43a977c50763266ff1df` | `feb28a259db1687b23145eccfa4d5cb94d7a701582bc2ef46efa4ab313934254` (`577bf165`) | +8/-1 |
+| `docs/09-frontend-and-pwa.md` | `e7120d08a4688b0a5d307fdbd0024e9ffe4bcfa6c473865fa684376ae12e7ca2` | `7554acfc2fc4a435d2901d98e472c529bbd88806f682b458139caf80d0196f55` (`7af4c4c2`) | +2/-2 |
+| `docs/guide/02-build-a-loop.md` | `726dfbad691c91ff659247f8b153d5aa3b089649bbcf0b5f16446d6c74861100` | `c98eb722de0eb2a7e183fe58edb1fcc1543c70abe5938f672a509e55462df103` (`7b2ea8c6`) | +1/-1 |
+| `CHANGELOG.md` | `c33d09588a024d8961c0c41e4106c8825cbeff6f4c5f6c31af52abbb1ac01ec3` | `511981090e839bd5f1520077a508b2faeac4b7078737ee4249b050162b376a8e` (`de33e706`) | +5/-1 |
+
+Every committed hash equals the checkpoint's baseline hash for that file. `Canvas.tsx`, `route-editing.ts`, `RouteEditing`, the viewport gate and the F1/F2/F3 guards are unchanged.
+
+`OrthogonalEdge.test.tsx` is byte-identical to the checkpoint's test file. The checkpoint's old-production log therefore ran against the same test bytes, and I still re-ran every control below on the final bytes.
+
+## What the production change does (`OrthogonalEdge.tsx`, `RouteHandles` only)
+
+- **State.** A local `hold` is `{ at, crossing, reset }`. `at` is the label the toolbar was centred on when Reset route was accepted. `crossing` records whether the Crosses a card note was showing. `reset` is the manual route's `points` array until the automatic route has been drawn.
+- **Click.** The Reset click runs `event.stopPropagation()` first, like Remove connection, so Control or Meta cannot reach xyflow's edge wrapper and toggle the selection off. It then refuses when the gesture gate is not ready or the route is not manual. Otherwise it sets the hold, focuses the edge, then calls `editing.reset`. The focus-before-reset order and the refusal priority are unchanged.
+- **Anchor.** The toolbar `<g>` uses `hold?.at ?? labelAt`.
+- **Slot.** Reset renders when `manual || hold`. It is `aria-disabled` when settling or when the route is not manual, with the title "The connection already routes automatically." It stays a real, focusable, `nopan` hit target. `data-gesture` and the 32/44 px classes are unchanged.
+- **Crossing chip.** It is the same `<span>` slot. While held it gets `invisible` and `aria-hidden="true"`, so the width is kept and nothing is announced.
+- **Lifetime** (settled while rendering, as the canvas does for its selection):
+  - While the route is not manual, the automatic route has been drawn: `reset` is cleared.
+  - When the route is manual and `points !== hold.reset`, the hold ends. After the automatic route `reset` is `undefined`, so any manual route ends it, whatever array it arrives as. Before the automatic route, only a different array does.
+  - The hold is also gone when `RouteHandles` unmounts (deselect, load, stale-refusal, removal).
+- **Not added.** No timer, click-count guard, event suppression, redispatch, global guard or new gate. No change to the route-editing interface, the canvas selection or xyflow. No new dependency (`@testing-library/user-event` was already a dev dependency).
+
+### Lifetime evidence against the real store and channel
+
+The root asked that the lifetime not rest on an assumed point-array identity. A throwaway probe was a copy of `Canvas.test.tsx` with one added test, run once and deleted. It was never tracked, and `git status` shows no untracked file. It recorded, for the real store, route channel and Undo (`scratch/probe-identity.jsonl`):
+
+| Connection | Route object after Undo the same as before Reset | `points` array the same |
+| --- | --- | --- |
+| loop-back `return` | no | no |
+| forward `start-work` | no | no |
+
+Today's Undo therefore does return new arrays. The design does not depend on that, and a unit test pins the case where Undo returns the same array. A mutation that implements only the point-reference comparison (`identity-only` below) fails exactly that unit test, and passes the real-Canvas tests, as this probe predicts.
+
+## Tests added
+
+All tests use the real component or Canvas. None asserts jsdom hit-testing.
+
+- `OrthogonalEdge.test.tsx` (11 new tests, carried over from the checkpoint and unchanged):
+  - Loop-back and forward, with the real route channel: the same Reset and Remove DOM elements and the same toolbar `transform` after one reset. Reset becomes `aria-disabled` with its title, and a Remove click acts once.
+  - Held Reset is a no-op for `user.dblClick`, `tripleClick`, `detail` 2–5, Shift/Ctrl/Meta clicks and Enter/Space. The wrapper's click handler is never reached, and focus stays on the button.
+  - Fresh automatic selection shows Remove alone, and deselect then reselect forgets the hold.
+  - Hold ends on the same points array again (an Undo) and on another manual route (nudge/drag), then holds again at the next click.
+  - A different manual route arriving before the automatic one follows the label.
+  - Crossing chip kept as an inaccessible blank, and shown again for a later crossing route.
+  - Keys on the held Reset: Escape returns to the edge, and Delete/Backspace/Enter/Space stay on the button.
+  - Pan gate refusal first (no hold made), and a held Reset stays unavailable after a pan settles while Remove acts once.
+  - The store's reason on Remove beside the held Reset.
+- `Canvas.test.tsx`, a nested `describe` with 8 cases (real store, channels and Canvas, each for a loop-back and a forward connection):
+  - One Reset gives exactly one history step (`reset route of done repeat to work` or `reset route of start to work`). The same two buttons and the same toolbar transform follow it. Repeated clicks, Ctrl/Meta/Shift and double clicks write nothing, so the definition object is identical. A deliberate Remove adds one step, and two Undos restore the definition exactly.
+  - After Undo restores the manual route, the same buttons are available again, and a later automatic route by another edit follows its label with Remove alone. Undo then Reset holds again.
+  - A keyboard nudge and a pointer drag of the automatic route that follows a held Reset move the toolbar over the new route's label, with Reset available.
+  - Deselection and a new load of the draft drop the hold, and a fresh selection starts again.
+- `viewport-gesture.contract.test.tsx`, 2 new tests on the installed xyflow 12.12.0 and d3 (jsdom, real timers, no act environment):
+  - The connection is selected by a browser-order mousedown/mouseup/click on its own path. The first press on Reset (detail 1) then leaves the same attached Reset and Remove nodes, the edge wrapper still `selected`, and the same toolbar `transform`.
+  - A detail-2 press and a `dblclick` on that held Reset change nothing: one history step, `e1` kept, `.react-flow__viewport` style and xyflow `transform` unchanged. The first deliberate Remove click removes once, and two Undos restore the draft.
+  - A Control-held (multi-selection) click on Reset, and two more, keep `e1` selected, with the same buttons and one history step.
+- `e2e/edge-routes.spec.ts`: after the keyboard Reset, Reset is expected to stay with `aria-disabled="true"` and the automatic-route title, and to be absent after Escape on the focused edge deselects it. This was not executed. Escape deselecting a focused edge is read from the installed xyflow source (`elementSelectionKeys`). It needs native confirmation.
+- Docs: `docs/09` Reset bullet (behavior, lifetime, tradeoffs) and the #207 regression list, `docs/guide/02` (one user-facing sentence), and one CHANGELOG sentence in the #207 entry. Historical QA evidence is not edited, and no ADR, schema, API or migration changes.
+
+## Commands and counts
+
+All run in `apps/web` with the Node and `pnpm.cmd` above. Logs are in `logs/`. SHA-256 values are in the log table below.
+
+| Log | Command | Result |
+| --- | --- | --- |
+| `02-candidate-v1-OrthogonalEdge.log` | `pnpm.cmd exec vitest run src/editor/OrthogonalEdge.test.tsx` | 30 passed |
+| `03-candidate-v1-Canvas-new-only.log` | `… src/editor/Canvas.test.tsx -t "Reset route holds"` | 8 passed, 62 skipped (70) |
+| `04-candidate-v1-contract.log` | `… src/editor/viewport-gesture.contract.test.tsx` | 9 passed |
+| `09-candidate-final-positive.log` | `… OrthogonalEdge.test.tsx Canvas.test.tsx viewport-gesture.contract.test.tsx viewport-gesture.test.ts` | 4 files, 115 passed (30 + 70 + 9 + 6), on the final production, test and `e2e` bytes |
+| `20-final-typecheck.log` | `pnpm.cmd run typecheck` (`tsc -p tsconfig.json --noEmit`, includes `src` and `e2e`) | exit 0 |
+| `21-final-eslint.log` | `pnpm.cmd exec eslint` on the 5 changed source and test files | exit 0 |
+| `22-final-prettier.log`, `24-closing-prettier.log` | `pnpm.cmd exec prettier --check` on all 8 changed files (24 after the last docs wording edit) | clean |
+| `23-final-diff-check.log`, `25-closing-diff-check.log` | `git diff --check` | exit 0 |
+
+The first prettier run (`07-candidate-v1-prettier.log`) exited 1 on `viewport-gesture.contract.test.tsx`. Two of my appended lines needed wrapping, and prettier's output changed only those lines. That log is kept. The earlier typecheck and eslint logs (`05`, `06`) ran before that formatting-only edit, and `20` and `21` reran on the final bytes.
+
+No build, full coverage, native/browser run, Playwright, provider, subagent, owner store or service, ports 4747/4748, publication or ticket action was run.
+
+## Old-production and mutation controls
+
+The controlled swaps used `scripts/control.sh` and `scripts/mutate.cjs`, with no index command. The final candidate is backed up at `backup/OrthogonalEdge.candidate-final.tsx` (SHA-256 `78abfe48…ddf`). Each run asserts the worktree file is the candidate before the swap and restores it in an exit trap. Each log ends with the restored SHA-256 equal to the candidate, and the final manifest shows `OrthogonalEdge.tsx` at `78abfe48…ddf`. The three focused files (109 tests) were run for each control.
+
+**Old production** (`10-control-old-production.log`): production under test is the committed HEAD bytes `d04ca84a…5fe7`. Result: 20 failed, 89 passed. The 20 failures are exactly the new tests: 10 in OrthogonalEdge, 8 in Canvas, 2 in the contract file. Every pre-existing test passes, and so does the new `follows a different manual route that arrives before the automatic one` test, as a positive control. First failures:
+
+- Toolbar moved: `expected 'translate(40 102) scale(1)' to be 'translate(55 162) scale(1)'` (loop-back unit). The forward unit shows `translate(150 42)`. The real-Canvas runs give `translate(692 236)` vs `translate(692 272)` for the loop-back and `translate(242 162.5)` vs `translate(250 143)` for the forward connection.
+- Reset slot gone: `Unable to find an accessible element with the role "button" and name "Reset route"` (the Canvas and contract double-click tests, keys, store-reason).
+- Fresh/held: `expected ['Remove connection'] to deeply equal ['Reset route', 'Remove connection']`, and `['Crosses a card', …(2)]` for the chip.
+- Chip: `toHaveAttribute("aria-hidden", "true")`.
+- Pan refusal: the old click reached `editing.reset` once (`expected "vi.fn()" to not be called at all, but actually been called 1 times`).
+- Control-click: `expect(element).toHaveClass("selected")` (the connection was toggled off).
+
+The original attempt's old-production log is preserved unchanged at `quota-checkpoint-0156/external/logs/01-old-production-OrthogonalEdge.log` and `ui-207-reset-doubleclick-implementation/logs/` (SHA-256 `f0eecfe32c65186c5a19ff1d07df404d8cce3f4e6a006ed3c587e16fb00354e7`). It shows 10 failed and 20 passed of 30 on the same test bytes, and agrees with the OrthogonalEdge part of this run.
+
+**Candidate mutations** (each of the final candidate with one change, 109 tests):
+
+| Mutation | Log | Failed |
+| --- | --- | --- |
+| `anchor-not-held` (toolbar always follows the label) | `11-…` | 18, including both loop-back and forward unit tests, the Canvas Undo, nudge, drag and deselection tests, and both contract tests |
+| `no-reset-slot` (Reset only for a manual route) | `12-…` | 19, the same main tests plus the keys test |
+| `hold-never-ends` | `13-…` | 7: the Undo/nudge/drag tests in Canvas (4) and the two end-of-hold unit tests plus `follows a different manual route…` |
+| `no-stop-propagation` (on Reset) | `14-…` | 4: two unit tests, the pan-refusal test and the Control-click contract test |
+| `identity-only` (end only on a different `points` array) | `15-…` | 1: the same-array Undo unit test. The real-Canvas tests pass, matching the probe above. |
+
+The anchor and the slot are independent causes: either mutation alone breaks the main hold tests.
+
+## Index and status readback (after all runs and swaps)
+
+- Raw index `C:/Users/98jak/source/repos/GraphGoblin/.git/worktrees/GraphGoblin31/index` SHA-256 `82a193ee12a6789004d09cb05f9e37aef2812e5393f25462ddea40d3934e3da0`, the same as at the start and in the checkpoint.
+- `git ls-files -s -z` SHA-256 `f8d6d943db58aaa9643a5109e70814e03a1efe7d90523f9dd6c57070790ec69c` (22,372 entries), equal to the checkpoint's `indexEntriesSha256`.
+- `git status --porcelain=v1 -uall`: the 8 ` M` paths above only. Staged files: none. Untracked: none. Git was only read, with `--no-optional-locks`. No add, add -N, restore, reset, stash, commit or push. The only writes to the worktree were file edits and the controlled `OrthogonalEdge.tsx` swaps, each restored and hash-proven.
+- `final/final-manifest.json` was regenerated after the last run and agrees.
+
+## Rationale and limits
+
+- A hold rather than a click-count guard: the second press then lands on the same unavailable Reset instead of Remove connection. A placeholder alone, or the held anchor alone, would still leave Remove under the point. This follows the Opus design and the root admission.
+- What this guarantees (and what the jsdom tests check): the same attached Reset element, the same toolbar transform, no write, no removal and an unzoomed viewport for any press that targets the held Reset. It does not prove native hit-testing or timing. The native double-click, the revised native checks in the design and the preservation matrix are for the root's independent QA.
+- Bounded tradeoffs, documented in `docs/09`:
+  - The held toolbar can sit apart from the automatic label, or from a card moved since. It can cover a handle or the label until the hold ends.
+  - There is no optional release on a pan or card drag.
+  - A stray press in the 8 px gap reaches whatever is under the toolbar, never Remove.
+- Not covered (separate work): selecting a connection then pressing Remove (report 64dbcc54), the Fit placement of #479, shared route ownership #481, and the effect of Remove's own unmount on a third press.
+- The `e2e` edit is typechecked, linted and formatted but not run.
+- `logs/08-candidate-v2-hashes.txt` is an intermediate hash list taken before the final docs sentence edit. Use `final/final-manifest.json` for the final hashes.
+
+## Artifacts
+
+`handoff.md`, `final/final.diff`, `final/final-diffstat.txt`, `final/final-numstat.txt`, `final/final-manifest.json`, `final/files/…`, `logs/*`, `backup/OrthogonalEdge.candidate-final.tsx`, `scripts/` (`control.sh`, `mutate.cjs`, `manifest.cjs`), `scratch/probe-identity.jsonl`, `scratch/probe-snippet.txt`, `scratch/make-probe.cjs`, `scratch/canvas-tests-2-4.txt`, `scratch/contract-before-prettier.tsx`, `scratch/contract-prettier.tsx`.
+
+## Log SHA-256
+
+```
+854d3f8822db272338c46d410636dafaa14982cd8553e4b3190816d805d45f47  logs/02-candidate-v1-OrthogonalEdge.log
+fef9940ea80478dc206777a75bb9720847e205f1cf2cc8384643408e1ca9043b  logs/03-candidate-v1-Canvas-new-only.log
+8dbce982ccb8e8438c0cfe8a93787d74ec085eb856735b60bb62c14114b9311f  logs/04-candidate-v1-contract.log
+8452fec3b87828bfb73fa3bd50c48b3085b1de54a04dc990340ee0ee3c56b94b  logs/05-candidate-v1-typecheck.log
+19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061  logs/06-candidate-v1-eslint.log
+9d58f152d38735b80e7d12395c598b5fd32c925a18e4d44078c70e28ad1e9613  logs/07-candidate-v1-prettier.log
+b38e858bd911c95fbb40654b0c641bb13d8e0eb1960c197997ef1659bc806452  logs/09-candidate-final-positive.log
+97fe3b81188ccce1bb4e044105bc0ffcea6ac8e86c31b59aa6aa7d5be1ca2769  logs/10-control-old-production.log
+272ae77c3f39fc165dd5d1ee4975ca24a02e19e751e1da674ce9f959286925b4  logs/11-mutation-anchor-not-held.log
+249f6eb4b585795522588f742f70e2e52edccbc9d59f9ab7605278aa731dee55  logs/12-mutation-no-reset-slot.log
+19cf8648839d5398e578ffeead4f21de1467df63caa2edfdd6b5406f72bc9396  logs/13-mutation-hold-never-ends.log
+2e9018f43a5f38ad8aaef5fea3ad02a62e1772e23ff8592ea7210f68a4d6c7fc  logs/14-mutation-no-stop-propagation.log
+948412a155cede4c1ad75f29fba00f1282a4f69bc50f4d9d8870c95fa31a09b5  logs/15-mutation-identity-only.log
+8452fec3b87828bfb73fa3bd50c48b3085b1de54a04dc990340ee0ee3c56b94b  logs/20-final-typecheck.log
+19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061  logs/21-final-eslint.log
+0836837fe0982de65d95dbba93ebd4d1d0276ffef6024401afb13170cc6a8afd  logs/22-final-prettier.log
+19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061  logs/23-final-diff-check.log
+0836837fe0982de65d95dbba93ebd4d1d0276ffef6024401afb13170cc6a8afd  logs/24-closing-prettier.log
+19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061  logs/25-closing-diff-check.log
+```

@@ -250,6 +250,19 @@ export function canvasDrawsEdge(
   return !!from && !!to && to.kind !== 'trigger' && canvasPorts(from).includes(edge.from.port);
 }
 
+/**
+ * The one stored edge with `id`, or undefined when there is none or the id is not unique. A draft
+ * from an import or the API can hold two edges with one id (`DUPLICATE_EDGE_ID`); an action by id
+ * then names no single connection.
+ */
+export function onlyEdge(
+  definition: LoopDefinitionInput,
+  id: string,
+): LoopDefinitionInput['edges'][number] | undefined {
+  const matches = definition.edges.filter((edge) => edge.id === id);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
 export type EditorIssue = ValidationIssue & {
   path?: string;
   /** For FIELD_INPUT_INVALID: where held input is kept, and its control's discard noun. */

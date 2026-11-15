@@ -1,0 +1,13 @@
+{
+  "status": "fixture-admission-failed-before-build",
+  "step": "verify-binding source",
+  "error": "spawnSync git ENOBUFS",
+  "syscall": "execFileSync git ls-tree -r -z HEAD",
+  "bufferBytes": 1052672,
+  "reason": "Default 1MiB child-process buffer cannot hold current tree listing with retained QA evidence",
+  "firstOutcomePreserved": true,
+  "buildStarted": false,
+  "nativeStarted": false,
+  "productFinding": false,
+  "correction": "batch1: explicit128MiB read-only Git output buffer; related argv/cwd/API shape/source-map/cleanup syntax audit before retry"
+}

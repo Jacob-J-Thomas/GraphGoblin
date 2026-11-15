@@ -1,0 +1,173 @@
+
+/**
+ * A mouse press as a browser sends it: pointerdown (counted 0), mousedown, pointerup (0), mouseup
+ * and click, the mouse events counted `detail`. A press's default action, the focus its mousedown
+ * gives the nearest focusable element, is not done by jsdom, so it is done here unless cancelled.
+ */
+function browserPress(target: Element, detail: number, init?: MouseEventInit) {
+  const pointer = (type: string, buttons: number) =>
+    new PointerEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      view,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: 'mouse',
+      button: 0,
+      buttons,
+      detail: 0,
+      ...init,
+    });
+  const events = {
+    pointerdown: pointer('pointerdown', 1),
+    mousedown: mouse('mousedown', 0, 0, 0, 1, { detail, ...init }),
+    pointerup: pointer('pointerup', 0),
+    mouseup: mouse('mouseup', 0, 0, 0, 0, { detail, ...init }),
+    click: mouse('click', 0, 0, 0, 0, { detail, ...init }),
+  };
+  target.dispatchEvent(events.pointerdown);
+  if (target.dispatchEvent(events.mousedown))
+    target.closest<HTMLElement | SVGElement>('button, [tabindex]')?.focus();
+  target.dispatchEvent(events.pointerup);
+  target.dispatchEvent(events.mouseup);
+  const delivered = target.dispatchEvent(events.click);
+  return { events, delivered };
+}
+
+describe('Remove connection after a click on its line, on the installed xyflow and d3 (#207)', () => {
+  beforeEach(() => {
+    ends.length = 0;
+    flow = undefined;
+    xyflow = undefined;
+  });
+
+  /** `e1` on an automatic route, not selected: Remove connection exists only once a click selects it. */
+  async function unselectedConnection() {
+    const definition = newLoopDefinition('Contract');
+    store().load('L1', definition);
+    const rendered = render(<Live />);
+    const wrapper = await waitFor(() => {
+      const found = rendered.container.querySelector<SVGGElement>(
+        '.react-flow__edge[data-id="e1"]',
+      );
+      expect(found).not.toBeNull();
+      return found!;
+    });
+    expect(wrapper).not.toHaveClass('selected');
+    expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
+    const line = wrapper.querySelector('.react-flow__edge-interaction')!;
+    const viewport = () =>
+      rendered.container.querySelector<HTMLElement>('.react-flow__viewport')!.style.transform;
+    return { definition, wrapper, line, viewport };
+  }
+  /** A `dblclick`, which the browser sends after a second click counted 2. */
+  const dblclick = (target: Element) =>
+    target.dispatchEvent(
+      new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        view,
+        detail: 2,
+      }),
+    );
+
+  it('keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click', async () => {
+    const { definition, wrapper, line, viewport } = await unselectedConnection();
+    const before = { viewport: viewport(), transform: [...xyflow!.getState().transform] };
+    const windowEvents = observeWindow(['mousedown', 'mouseup', 'click', 'dblclick']);
+    try {
+      // The first click of a double click, counted 1, on the line: it selects the connection, and
+      // the toolbar's Remove connection is drawn where the pointer is.
+      const first = browserPress(line, 1);
+      await waitFor(() => expect(remove()).toBeInTheDocument());
+      await microtasks();
+      expect(first.delivered).toBe(true);
+      expect(wrapper).toHaveClass('selected');
+      const button = remove();
+      expect(button).toBeEnabled();
+      expect(button).not.toHaveAttribute('aria-disabled');
+      expect(stored()).toEqual(['e1']);
+      expect(store().past).toEqual([]);
+
+      // The second click lands on that button: its mousedown focuses it, its click is counted 2
+      // and the browser's dblclick follows. Nothing is removed and nothing is cancelled.
+      const second = browserPress(button, 2);
+      const doubled = dblclick(button);
+      await microtasks();
+      await queuedTask(() => undefined);
+      expect(second.delivered).toBe(true);
+      expect(doubled).toBe(true);
+      // The window's capture listener saw all seven events, in browser order, uncancelled and with
+      // d3's click blocker never registered.
+      const seen = [...windowEvents.readings.values()];
+      expect(seen.map((reading) => reading.type)).toEqual([
+        'mousedown',
+        'mouseup',
+        'click',
+        'mousedown',
+        'mouseup',
+        'click',
+        'dblclick',
+      ]);
+      for (const reading of seen) {
+        expect(reading.cancelledAtCapture, reading.type).toBe(false);
+        expect(reading.d3, reading.type).not.toContain('click.drag');
+      }
+      expect(stored()).toEqual(['e1']);
+      expect(store().past).toEqual([]);
+      expect(store().future).toEqual([]);
+      expect(store().definition).toEqual(definition);
+      // The same attached, available button; the connection is still selected, and focused as
+      // after a click on its line. The viewport was not zoomed by the double click.
+      expect(remove()).toBe(button);
+      expect(button.isConnected).toBe(true);
+      expect(button).toBeEnabled();
+      expect(button).not.toHaveAttribute('aria-disabled');
+      expect(wrapper).toHaveClass('selected');
+      expect(wrapper).toHaveFocus();
+      expect({ viewport: viewport(), transform: [...xyflow!.getState().transform] }).toEqual(
+        before,
+      );
+
+      // The first deliberate click, counted 1, removes once; one Undo restores the draft.
+      expect(browserPress(button, 1).delivered).toBe(true);
+      await microtasks();
+      expect(stored()).toEqual([]);
+      expect(store().past.map((step) => step.label)).toEqual(['remove edge start to done']);
+      store().undo();
+      expect(store().definition).toEqual(definition);
+      expect(store().past).toEqual([]);
+    } finally {
+      windowEvents.stop();
+    }
+  });
+
+  it('keeps the connection selected when the second click comes with the multi-selection key held', async () => {
+    const { wrapper, line } = await unselectedConnection();
+    browserPress(line, 1);
+    await waitFor(() => expect(remove()).toBeInTheDocument());
+    const button = remove();
+    await holdControl();
+    try {
+      // xyflow's edge wrapper would unselect a selected connection clicked under its multi-selection
+      // key: the refused click ends on the button, as an accepted one does.
+      for (const detail of [2, 3]) browserPress(button, detail, CONTROL);
+      await microtasks();
+      expect(wrapper).toHaveClass('selected');
+      expect(remove()).toBe(button);
+      expect(button.isConnected).toBe(true);
+      expect(wrapper).toHaveFocus();
+      expect(stored()).toEqual(['e1']);
+      expect(store().past).toEqual([]);
+    } finally {
+      releaseControl();
+    }
+    // Without the key, a click counted 1 still removes once.
+    browserPress(button, 1);
+    await microtasks();
+    expect(stored()).toEqual([]);
+    expect(store().past).toHaveLength(1);
+  });
+});

@@ -1,0 +1,462 @@
+/**
+ * Pure editor model: node defaults, ports, connection rules, and live validation. The editor holds
+ * the draft as `LoopDefinitionInput` (what the user typed, defaults not yet applied) and validates
+ * it with the same `contracts` schemas and `domain` rules the API runs on publish.
+ */
+import {
+  ChoiceOptionIdSchema,
+  CURRENT_DEFINITION_FORMAT,
+  LoopDefinitionSchema,
+  NodeSchema,
+  type LoopDefinitionInput,
+  type NodeInput,
+  type NodeKind,
+} from '@graphgoblin/contracts';
+import {
+  outputPorts,
+  validateLoop,
+  systemChatIssues,
+  systemChatLockedIssues,
+  type ValidationIssue,
+} from '@graphgoblin/domain';
+import { hasRepeatRoute } from './decision-gates.js';
+import { setupInstruction } from '../forms/setup-instructions.js';
+
+/** The drag-and-drop data type that carries a node kind from the palette to the canvas. */
+export const KIND_MIME = 'application/x-graphgoblin-kind';
+
+export const NODE_KINDS: readonly NodeKind[] = [
+  'trigger',
+  'decision',
+  'inference',
+  'script',
+  'mutate',
+  'subloop',
+  'wait',
+  'heartbeat',
+  'exit',
+];
+
+/** The design token that colours a node kind (`--kind-trigger` and `--kind-trigger-subtle`). */
+export type KindToken = `kind-${NodeKind}`;
+
+/**
+ * Each kind's name, palette description, and colour token. The colour is a token name, never a
+ * palette class: editor/KindChip.tsx turns it into the `--k` variables the kind utilities read.
+ */
+export const KIND_INFO: Record<NodeKind, { label: string; description: string; color: KindToken }> =
+  {
+    trigger: { label: 'Trigger', description: 'Starts a run', color: 'kind-trigger' },
+    decision: {
+      label: 'Decision',
+      description: 'Chooses a route and can limit repeats',
+      color: 'kind-decision',
+    },
+    inference: {
+      label: 'Inference',
+      description: 'Hands work to a harness',
+      color: 'kind-inference',
+    },
+    script: { label: 'Script', description: 'Runs a program', color: 'kind-script' },
+    mutate: { label: 'Mutate', description: 'Changes the context thread', color: 'kind-mutate' },
+    subloop: { label: 'Subloop', description: 'Runs another loop', color: 'kind-subloop' },
+    wait: {
+      label: 'Wait',
+      description: 'Parks until input, time, or a signal',
+      color: 'kind-wait',
+    },
+    heartbeat: { label: 'Heartbeat', description: 'Polls on an interval', color: 'kind-heartbeat' },
+    exit: {
+      label: 'Exit',
+      description: 'Finishes with an outcome and return value',
+      color: 'kind-exit',
+    },
+  };
+
+/** A small, mostly valid starting config for each kind. */
+export function defaultConfig(kind: NodeKind): Record<string, unknown> {
+  switch (kind) {
+    case 'trigger':
+      return { type: 'manual' };
+    case 'decision':
+      return {
+        kind: 'expression',
+        jsonata: '"yes"',
+        routes: [
+          {
+            id: 'yes',
+            label: 'Yes',
+          },
+          {
+            id: 'no',
+            label: 'No',
+          },
+        ],
+      };
+    case 'inference':
+      return { prompt: { template: 'Summarise: {{ lastMessage.content }}' } };
+    case 'script':
+      return { command: 'node', args: ['script.js'] };
+    case 'mutate':
+      return { operations: [{ op: 'append-message', role: 'note', content: 'Note' }] };
+    case 'subloop':
+      return { loopRef: { loopId: '' } };
+    case 'wait':
+      return { mode: 'input', prompt: 'Approve?' };
+    case 'heartbeat':
+      return { intervalSeconds: 60, maxBeats: 3 };
+    case 'exit':
+      return {};
+  }
+}
+
+/** The next free id for a node of a kind: `decision`, `decision-2`, ... */
+export function nextNodeId(def: LoopDefinitionInput, kind: NodeKind): string {
+  const taken = new Set(def.nodes.map((n) => n.id));
+  if (!taken.has(kind)) return kind;
+  let n = 2;
+  while (taken.has(`${kind}-${n}`)) n += 1;
+  return `${kind}-${n}`;
+}
+
+export function nextEdgeId(def: LoopDefinitionInput): string {
+  const taken = new Set(def.edges.map((e) => e.id));
+  let n = def.edges.length + 1;
+  while (taken.has(`e${n}`)) n += 1;
+  return `e${n}`;
+}
+
+function record(value: unknown): Record<string, unknown> {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+}
+
+function decisionRows(config: unknown): unknown[] | undefined {
+  const raw = record(config);
+  if (raw['kind'] === 'expression' || raw['kind'] === 'llm')
+    return Array.isArray(raw['routes']) ? raw['routes'] : undefined;
+  const answer = record(record(config)['answer']);
+  if (answer['type'] === undefined && Array.isArray(answer['options']))
+    return answer['options'] as unknown[];
+  switch (answer['type']) {
+    case 'choice':
+      return Array.isArray(answer['options']) ? (answer['options'] as unknown[]) : undefined;
+    case 'noul':
+      return [answer['true'], answer['false']].filter(
+        (side) => typeof side === 'object' && side !== null,
+      );
+    case 'score':
+      return Array.isArray(answer['bands']) ? (answer['bands'] as unknown[]) : undefined;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Output ports of a node. Uses `domain`'s `outputPorts` when the node parses; otherwise derives
+ * them from the raw config so a half-edited node keeps its handles on the canvas.
+ */
+export function portsOf(node: NodeInput): string[] {
+  const parsed = NodeSchema.safeParse(node);
+  if (parsed.success) return outputPorts(parsed.data);
+  const config = record(node.config);
+  switch (node.kind) {
+    case 'decision': {
+      return [
+        ...new Set([
+          ...(decisionRows(node.config) ?? [])
+            .map((option) => record(option)['id'])
+            .filter((id): id is string => typeof id === 'string' && id !== ''),
+          ...(hasRepeatRoute(node.config) ? ['limit-reached'] : []),
+        ]),
+      ];
+    }
+    case 'script': {
+      const labels = Object.values(record(config['exitCodeRoutes'])).filter(
+        (label): label is string => typeof label === 'string' && label !== '' && label !== 'out',
+      );
+      return ['out', ...new Set(labels)];
+    }
+    case 'exit':
+      return [];
+    default:
+      return ['out'];
+  }
+}
+
+/** Half-authored gates keep their Limit reached handle; exits have no output. */
+export const canvasPorts = portsOf;
+
+/** Display labels for the handles; decision IDs remain the actual connection ports. */
+export function canvasPortLabels(node: NodeInput): Readonly<Record<string, string>> {
+  if (node.kind !== 'decision') return {};
+  const rows = decisionRows(node.config);
+  if (!rows) return {};
+  const gated = hasRepeatRoute(node.config);
+  const labels: Record<string, string> = gated ? { 'limit-reached': 'Limit reached' } : {};
+  for (const option of rows) {
+    const row = record(option);
+    if (
+      typeof row['id'] === 'string' &&
+      !(row['id'] === 'limit-reached' && gated) &&
+      typeof row['label'] === 'string' &&
+      rows.filter((other) => record(other)['id'] === row['id']).length === 1
+    )
+      labels[row['id']] = row['label'];
+  }
+  return labels;
+}
+
+export interface ConnectionRequest {
+  source: string;
+  sourceHandle: string | null;
+  target: string;
+}
+
+/** Why a connection is refused, or null when it is allowed. */
+export function connectionProblem(
+  def: LoopDefinitionInput,
+  conn: ConnectionRequest,
+): string | null {
+  const from = def.nodes.find((n) => n.id === conn.source);
+  const to = def.nodes.find((n) => n.id === conn.target);
+  if (!from || !to) return 'unknown node';
+  if (to.kind === 'trigger') return 'triggers have no input';
+  const port = conn.sourceHandle ?? 'out';
+  if (!canvasPorts(from).includes(port)) return `"${from.id}" has no output port "${port}"`;
+  if (
+    from.kind === 'decision' &&
+    !(port === 'limit-reached' && hasRepeatRoute(from.config)) &&
+    (!ChoiceOptionIdSchema.safeParse(port).success ||
+      (decisionRows(from.config) ?? []).filter((row) => record(row)['id'] === port).length !== 1)
+  )
+    return 'Finish a unique, valid route ID before connecting it';
+  if (def.edges.some((e) => e.from.node === from.id && e.from.port === port)) {
+    return `port "${port}" of "${from.id}" is already connected. To connect it elsewhere, select its connection and choose Remove connection (or press Delete or Backspace), then draw it again.`;
+  }
+  return null;
+}
+
+/**
+ * Whether the canvas can draw a stored edge: both ends exist, its output port is a handle on the
+ * source's card, and its target has an input (a trigger has none). Edges it cannot draw (from an
+ * imported or API-written draft, or a renamed Script exit label) have no canvas path to select.
+ */
+export function canvasDrawsEdge(
+  def: LoopDefinitionInput,
+  edge: LoopDefinitionInput['edges'][number],
+): boolean {
+  const from = def.nodes.find((n) => n.id === edge.from.node);
+  const to = def.nodes.find((n) => n.id === edge.to.node);
+  return !!from && !!to && to.kind !== 'trigger' && canvasPorts(from).includes(edge.from.port);
+}
+
+/**
+ * The one stored edge with `id`, or undefined when there is none or the id is not unique. A draft
+ * from an import or the API can hold two edges with one id (`DUPLICATE_EDGE_ID`); an action by id
+ * then names no single connection.
+ */
+export function onlyEdge(
+  definition: LoopDefinitionInput,
+  id: string,
+): LoopDefinitionInput['edges'][number] | undefined {
+  const matches = definition.edges.filter((edge) => edge.id === id);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+export type EditorIssue = ValidationIssue & {
+  path?: string;
+  /** For FIELD_INPUT_INVALID: where held input is kept, and its control's discard noun. */
+  discard?: {
+    scope: string;
+    path: string;
+    input?: 'unparsed text' | 'incomplete schedule' | 'unapplied JSON';
+  };
+};
+
+/** Schema issues first (they block saving), then the structural rules from `domain`. */
+export function validateDraft(
+  def: LoopDefinitionInput,
+  system = false,
+): {
+  issues: EditorIssue[];
+  schemaValid: boolean;
+} {
+  const parsed = LoopDefinitionSchema.safeParse(def);
+  if (!parsed.success) {
+    const issues = parsed.error.issues.map((issue): EditorIssue => {
+      const [first, index, ...rest] = issue.path;
+      const node = first === 'nodes' && typeof index === 'number' ? def.nodes[index] : undefined;
+      const edge = first === 'edges' && typeof index === 'number' ? def.edges[index] : undefined;
+      return {
+        code: 'SCHEMA',
+        severity: 'error',
+        message:
+          (node && rest[0] === 'config'
+            ? setupInstruction(node.config, rest.slice(1).map(String).join('.'))
+            : undefined) ?? issue.message,
+        path: (node || edge ? rest : issue.path).map(String).join('.'),
+        ...(node ? { nodeId: node.id } : {}),
+        ...(edge ? { edgeId: edge.id } : {}),
+      };
+    });
+    return { issues, schemaValid: false };
+  }
+  const contract = system ? systemChatIssues(parsed.data) : [];
+  return {
+    issues: [
+      ...validateLoop(parsed.data),
+      ...contract.map(({ nodeId, edgeId, path, ...issue }) => ({
+        ...issue,
+        ...(nodeId ? { nodeId } : {}),
+        ...(edgeId ? { edgeId } : {}),
+        ...(path ? { path } : {}),
+      })),
+    ],
+    schemaValid: !system || systemChatLockedIssues(parsed.data).length === 0,
+  };
+}
+
+/** Identity of an issue for de-duplication. */
+export function issueKey(issue: EditorIssue): string {
+  return `${issue.code}|${issue.nodeId ?? ''}|${issue.message}`;
+}
+
+/** Invalid input or valid JSON awaiting Apply, as blocking issues. */
+export function fieldErrorIssues(
+  fieldErrors: Record<
+    string,
+    Record<
+      string,
+      { message: string; input?: 'unparsed text' | 'incomplete schedule' | 'unapplied JSON' }
+    >
+  >,
+): EditorIssue[] {
+  return Object.entries(fieldErrors).flatMap(([scope, errors]) =>
+    Object.entries(errors).map(([path, { message, input }]): EditorIssue => {
+      const nodeId = scope.startsWith('node:') ? scope.slice('node:'.length) : undefined;
+      return {
+        code: 'FIELD_INPUT_INVALID',
+        severity: 'error',
+        message:
+          input === 'unapplied JSON'
+            ? `This field holds JSON not applied yet. ${message}`
+            : `This field holds input that is not a valid value yet. ${message}`,
+        path: nodeId ? `config.${path}` : `${scope}.${path}`,
+        ...(nodeId ? { nodeId } : {}),
+        discard: { scope, path, ...(input ? { input } : {}) },
+      };
+    }),
+  );
+}
+
+/**
+ * Local issues plus the server's (from `POST /loops/{id}/validate`), which add the checks only the
+ * API can run, such as cron syntax and subloop references. Issues already found locally are not
+ * repeated; server issues are ignored while the draft does not parse, because they describe an
+ * older revision.
+ */
+export function mergeIssues(
+  local: { issues: EditorIssue[]; schemaValid: boolean },
+  server: readonly EditorIssue[] | undefined,
+  fields: readonly EditorIssue[] = [],
+): EditorIssue[] {
+  const seen = new Set(local.issues.map(issueKey));
+  const extra = local.schemaValid ? (server ?? []).filter((i) => !seen.has(issueKey(i))) : [];
+  return [...fields, ...local.issues, ...extra];
+}
+
+/** How many errors and warnings a list holds. */
+export function issueCounts(issues: readonly EditorIssue[]): { errors: number; warnings: number } {
+  const errors = issues.filter((i) => i.severity === 'error').length;
+  return { errors, warnings: issues.length - errors };
+}
+
+function plural(count: number, noun: string): string {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+/** "1 issue", "3 issues". */
+export function issuesLabel(count: number): string {
+  return plural(count, 'issue');
+}
+
+/** "2 errors, 1 warning", "1 error", or "3 warnings": the parts that are not zero. */
+export function countsLabel(issues: readonly EditorIssue[]): string {
+  const { errors, warnings } = issueCounts(issues);
+  const parts = [
+    errors > 0 ? plural(errors, 'error') : '',
+    warnings > 0 ? plural(warnings, 'warning') : '',
+  ];
+  return parts.filter(Boolean).join(', ');
+}
+
+/** The issues about each node, by node id, in list order. */
+export function issuesByNode(issues: readonly EditorIssue[]): Map<string, EditorIssue[]> {
+  const byNode = new Map<string, EditorIssue[]>();
+  for (const issue of issues) {
+    if (issue.nodeId === undefined) continue;
+    const list = byNode.get(issue.nodeId);
+    if (list) list.push(issue);
+    else byNode.set(issue.nodeId, [issue]);
+  }
+  return byNode;
+}
+
+/**
+ * The issues as the editor shows them: those about a node of the definition (its card's badge
+ * lists them), per node in the definition's order, and the rest in list order: loop-level issues,
+ * edge issues, and issues about a node that is no longer there (a server check of an older
+ * revision, say). Every issue is in exactly one place, so the counts always add up.
+ */
+export function groupIssues(
+  issues: readonly EditorIssue[],
+  definition: LoopDefinitionInput,
+): { general: EditorIssue[]; nodes: { nodeId: string; issues: EditorIssue[] }[] } {
+  const byNode = issuesByNode(issues);
+  const ids = [...new Set(definition.nodes.map((n) => n.id))];
+  const nodes = ids.flatMap((nodeId) => {
+    const list = byNode.get(nodeId);
+    return list ? [{ nodeId, issues: list }] : [];
+  });
+  const present = new Set(ids);
+  const general = issues.filter((i) => i.nodeId === undefined || !present.has(i.nodeId));
+  return { general, nodes };
+}
+
+/** Whether two issue lists say the same thing, so a node card showing one need not re-render. */
+export function sameIssues(a: readonly EditorIssue[], b: readonly EditorIssue[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((issue, index) => {
+      const other = b[index]!;
+      return (
+        issueKey(issue) === issueKey(other) &&
+        issue.severity === other.severity &&
+        issue.edgeId === other.edgeId &&
+        issue.path === other.path &&
+        issue.discard?.scope === other.discard?.scope &&
+        issue.discard?.path === other.discard?.path &&
+        issue.discard?.input === other.discard?.input
+      );
+    })
+  );
+}
+
+/** A new loop: a manual trigger wired to an exit. */
+export function newLoopDefinition(name: string): LoopDefinitionInput {
+  return {
+    schemaVersion: CURRENT_DEFINITION_FORMAT,
+    name,
+    nodes: [
+      {
+        id: 'start',
+        kind: 'trigger',
+        label: 'Start',
+        config: { type: 'manual' },
+        ui: { x: 0, y: 80 },
+      },
+      { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 320, y: 80 } },
+    ],
+    edges: [{ id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'done' } }],
+  };
+}

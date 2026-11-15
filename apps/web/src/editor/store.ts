@@ -35,6 +35,7 @@ import {
   KIND_INFO,
   nextEdgeId,
   nextNodeId,
+  onlyEdge,
   validateDraft,
   type ConnectionRequest,
   type EditorIssue,
@@ -447,6 +448,25 @@ function heightsByIndex(
   const uses = new Map<string, number>();
   for (const node of nodes) uses.set(node.id, (uses.get(node.id) ?? 0) + 1);
   return nodes.map((node) => (uses.get(node.id) === 1 ? measured.get(node.id) : undefined));
+}
+
+/**
+ * Why the connection `edgeId` may not be removed from `definition` (#207), or undefined when it may,
+ * or when no edge holds the id. The store's `removeEdge` refuses with it, and the selected
+ * connection's **Remove connection** is disabled with it. An id more than one stored edge holds is
+ * checked first: it names no single connection, so it is refused the same way whichever of its
+ * holders is a protected Chat voice step, and in whichever order they are stored.
+ */
+export function edgeRemovalRefusal(
+  definition: LoopDefinitionInput,
+  system: boolean,
+  edgeId: string,
+): string | undefined {
+  const holders = definition.edges.filter((edge) => edge.id === edgeId);
+  if (holders.length > 1)
+    return `More than one connection uses the ID "${edgeId}"; this action cannot choose just one.`;
+  const [edge] = holders;
+  return edge && isProtectedVoiceEdge(definition, system, edge) ? VOICE_STEP_MESSAGE : undefined;
 }
 
 /** An edge in an undo label: "start to done", or "decide yes to infer" from a named port. */
@@ -921,17 +941,22 @@ export const useEditorStore = create<EditorState>((set, get) => {
     },
 
     removeEdge: (edgeId) => {
-      const edge = get().definition?.edges.find((e) => e.id === edgeId);
-      if (!edge) return;
       const state = get();
-      if (state.definition && isProtectedVoiceEdge(state.definition, state.systemChat, edge)) {
-        set({ connectionError: VOICE_STEP_MESSAGE });
+      const def = state.definition;
+      if (!def) return;
+      const refusal = edgeRemovalRefusal(def, state.systemChat, edgeId);
+      if (refusal) {
+        set({ connectionError: refusal });
         return;
       }
+      // Exactly one stored edge holds the id (an absent id changes nothing and says nothing):
+      // remove that record alone.
+      const edge = onlyEdge(def, edgeId);
+      if (!edge) return;
       edit(
         (d) => ({
           ...d,
-          edges: d.edges.filter((e) => e.id !== edgeId),
+          edges: d.edges.filter((e) => e !== edge),
         }),
         { label: `remove edge ${edgeName(edge)}` },
       );

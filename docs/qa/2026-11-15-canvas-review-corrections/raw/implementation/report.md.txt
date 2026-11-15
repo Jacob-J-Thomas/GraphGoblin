@@ -1,0 +1,60 @@
+I've implemented the three corrections (F1, F2, F3) in the assigned worktree and left the source unstaged for your review. Nothing was staged, committed or pushed. HEAD is still `993d58a`, tree `77f0af8`; the index has 0 staged and 0 untracked paths, with 16 files modified. Node v22.23.4 and pnpm 12.8.1 were used throughout. No build, browser, native run or full coverage was done, and I'm not claiming native or final gates passed.
+
+## What changed
+- **F1 (shared ID):** `removeEdge` now removes exactly one stored record.
+  - The new `edgeRemovalRefusal` in the store checks for a shared ID first, then voice protection. The shared-ID message is `More than one connection uses the ID "e1"; this action cannot choose just one.`, whichever order the protected holder is stored in.
+  - A refusal sets only `connectionError`: definition, history, revision, save state and route ownership stay exactly as they were. A missing ID changes nothing and shows nothing.
+  - The toolbar's Remove button is disabled with that same text, and it outranks the pan state. `onlyEdge` moved to `model.ts` and the stranded-edge recovery imports it.
+- **F2 (stale selection):** the canvas selection records the loaded draft, the ID and the stored ends of every edge holding that ID.
+  - It is cleared on any load (even the same ID and ends), a renamed end, or a missing port, and Undo doesn't bring it back. Moves, route, label and config edits, issue refreshes and their Undo keep it.
+  - Remove, Reset, nudge, Delete and route-drag release all re-check it when they act.
+  - A route drag is tied to the selection it started from, so a load mid-drag or a reselect before release writes nothing.
+  - A stale action changes nothing, announces "That connection changed since it was selected; nothing changed.", clears the selection and moves focus to Undo. A refused live removal keeps the selection.
+- **F3 (card drag):** `onNodeDragStart` now calls `gesture.move(event)`. Installed xyflow starts a drag on exactly the mouse move that also makes d3 block the next click, so the gate is armed only for drags that need it. Touch and keyboard moves are ignored. The gate's single mount-time listener, two-task settle and interface are unchanged.
+- **A real bug the new tests found:** Reset route refocused the edge *after* resetting. On a stale reset that pulled focus back into the canvas, so a following Delete could reach a selected node. It now focuses first, then resets.
+- **Keyboard behaviour:** a stale edge selection in the same key press swallows the key with nothing removed. After the canvas has cleared the selection, Delete removes the selected node as usual. That covers the Control-click, blank-route-ID, close sequence, and the Loop issues path; the hidden edge is never removed on its own. The handoff has the full table.
+- **Docs:** docs/09, ADR-0076, guide 02, the CHANGELOG #207 entry and code comments no longer say card drags aren't gated, and describe the new refusal and selection behaviour.
+
+## Verification
+- **Baseline at the clean head:** 15 files, 309 passed. The same 309 still pass on the new code.
+- **Final focused run:** 27 files (adds every `EditorPage*` suite plus UndoRedo and useUndoShortcuts), 461 passed.
+- **Static checks:** typecheck, ESLint on the changed files, Prettier and `git diff --check` are all clean. Prettier reformatted only my own additions.
+- **New tests:** 27. 24 cover the defects and 3 are controls that pass on both old and new code. Two of them run the real installed xyflow and d3: a Control-held card drag, and the exact 3 px boundary where a drag starts.
+- **Old-vs-new check:** with the seven production files put back to their exact HEAD versions, 24 tests failed and 114 passed. Every failure is behavioural; the first failure of each is listed in the handoff.
+- **Mutation check:** removing the code that keeps the same selection when xyflow re-selects an edge makes the multi-select drag control fail, as it should.
+
+**Process incident:** the old-vs-new script's restore step ran from the wrong directory and failed. I restored the seven files right away from a backup using absolute paths. All 16 files match their pre-check hashes and the index is unchanged; no index command ran. The failed log is kept alongside the successful re-check.
+
+## Changed paths (SHA-256)
+| SHA-256 | Path |
+|---|---|
+| `11be89b0…dad10c1` | apps/web/src/editor/Canvas.tsx |
+| `d04ca84a…d8d95fe7` | apps/web/src/editor/OrthogonalEdge.tsx |
+| `84f50d9d…bd00997` | apps/web/src/editor/store.ts |
+| `037a8d53…49a3fd` | apps/web/src/editor/model.ts |
+| `c0d5f3a6…f0475a4` | apps/web/src/editor/stranded-edges.ts |
+| `1fb2e612…e1177eccd` | apps/web/src/editor/route-editing.ts |
+| `76c40130…f2422e29d` | apps/web/src/editor/viewport-gesture.ts |
+| `7216f651…62b376a8e`… | apps/web/src/editor/Canvas.test.tsx |
+| `09424db3…e228a6d5` | apps/web/src/editor/OrthogonalEdge.test.tsx |
+| `c860602d…46a300e3e` | apps/web/src/editor/store.test.ts |
+| `215a3e75…0e139e` | apps/web/src/editor/chat-protection.test.ts |
+| `e397f054…2b7080` | apps/web/src/editor/viewport-gesture.contract.test.tsx |
+| `7554acfc…a0196f55` | docs/09-frontend-and-pwa.md |
+| `e20ff67b…8e97ff4` | docs/decisions/ADR-0076-canvas-only-connection-authoring.md |
+| `c98eb722…2df103` | docs/guide/02-build-a-loop.md |
+| `51198109…b376a8e` | CHANGELOG.md |
+
+Full hashes and blob IDs are in `artifacts/final-changed-paths-detail.txt`. The full diff is `artifacts/final.diff` (SHA-256 `bae4e44f…785f916c`).
+
+## Limits I left alone (out of scope)
+- **Decision routing with a shared ID:** the Decision route bookkeeping works by edge ID. If a Decision row owns one holder of a shared ID, any other successful edit rewrites the other holder's port; I saw it happen in a test fixture. The refusal itself is exact.
+- **Route edits with a shared ID:** setting a route writes every holder of that ID, so Reset, nudge and drag on such a selection still affect both.
+- **Chat drafts:** whether the public API accepts a shared ID in a Chat draft isn't established. The protected-holder tests check the local guard only.
+- **Still open:** fractional-pixel rounding at exactly 3 px is untested. Native QA on the corrected head, CI, coverage, the independent correction review and your freeze/integration are all still to do.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-review-correction-implementation/`:
+- handoff.md
+- artifacts/logs/
+- artifacts/negative-control/
+- artifacts/final.diff

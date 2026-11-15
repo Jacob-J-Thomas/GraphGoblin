@@ -1,0 +1,119 @@
+# #208 stationarity baseline — resume handoff (final)
+
+Measurement only. No source, build, index, commit, GitHub, owner-service or provider action. Stacked baseline on the frozen #207 phase2 source; **not** final-main acceptance (#474 not integrated), and it neither clears nor fixes the known post-pan Remove bug.
+
+Resume launched 2026-11-14T21:56:04Z (gate 21:50Z met), model claude-sonnet-5-5 xhigh, Node v22.23.4, first measurement run 22:11:21Z, last run finished 22:41:44Z. Output dir: `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-stationarity-baseline-resume`.
+
+## 0. Verdicts
+
+| Hypothesis | Verdict | Measured displacement (per fixed config) |
+|---|---|---|
+| **H1** variable-width validation/save/publish content moves the right-aligned history buttons | **Reproduced** (all 4 configs) | Undo/Redo x moves exactly ±36.484 px (load: "Checking…"→"Ready to publish"), ±32.703 px (validation "Ready to publish"↔"N errors"), ±29.829 px (Publish↔"Publishing…") at 1440/768; +110.468 px at 512 |
+| **H2** narrow wrapping moves them (rows/lines) | **Reproduced under constructed/boundary conditions; not observed with ordinary short names at 768/512** | 512×384, 120-char name, "Publishing…": group hits its 480 px max, wraps inside: Undo x +110.468 px, header 150→194 px. 1440 with name tuned to the wrap boundary (70–74 chars; coarse 68–72): whole toolbar flips 57↔89 px (coarse 65↔97) and Undo y 68↔100 (66↔98) on every label change, 4–6 flips in a 3-action sequence |
+| **H3** 1 px pressed movement | **Reproduced** (all configs, both buttons, enabled and `aria-disabled`, mouse and keyboard Space) | computed `translate: 0px 1px` while `:active`, box y +1.000 px; ≈0.52–0.75 px at 35–49 ms, 1.000 px by 157–181 ms. Functional consequence: press held ≥250 ms on the top pixel row loses the click (§5.3). Touch *hold* variant **unresolved** |
+| **H4** shell connection banner moves viewport coordinates | **Reproduced for `setOffline(true)` and for failed transport with `navigator.onLine` true; NOT reproduced for HTTP 500** | whole editor incl. Undo/Redo shifts down by the banner: +36.5 px (1440), +60 px (768), +79.5 px (512); document gains 37/60/80 px vertical overflow (no automatic scroll). PUT-only transport failure: a 1–2 frame (8–14 ms) flash per failed save revision |
+
+Every mouse/touch history click landed on the button it aimed at: the driver re-reads the live box immediately before each press, so the results show geometry movement and stale-position hit-test hazards, not a driver misclick. The one real lost click is the H3 top-row case.
+
+## 1. Identity and binding
+- Subject: head `64a955887962f72287e532824be1b8cb32c5f055`, tree `a6691516210eb25887cb92abdcbd8c7abe1a4bb3`, stack base `35bb3fbdc724a82064d0d9e65b551608542c6b22`, actual main `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`; bundle `/app/assets/index-D5MTM2Sa.js`; 77 source hashes and 1227 built files in 13 trees.
+- Rebind BEFORE and AFTER with the existing `canvas-207-final-independent/verify-final-binding.mjs`: `binding/rebind-before.json` and `binding/rebind-after.json` are **byte-identical** (sha256 `1bd7d02cea6d72f733d1bb075fd57413a14be8aa294316506de8a215091e3dcf`), also identical to the original `original-binding-before.json`. HEAD/tree/main unchanged, `git status --porcelain` empty. Every run's gateway asserted each served asset and `apps/api/dist/main.js` against that binding at start, and re-checked git identity and all 77 source hashes at close; the full 1227-artifact re-hash was repeated once after the last run (AFTER above).
+- Disposable fixtures only: each of the 46 runs had its own loopback gateway (ephemeral port, none 4747/4748), file-SQLite store, sink and isolated Edge (`msedge`, headless). No live provider.
+
+## 2. Inherited incomplete state (preserved)
+The original session `ui-208-stationarity-baseline/` ended at the session limit (exit 1, quota message in its `report.md`). It had prepared scripts/4 configs and four successful smoke probes, and **no** stationarity metrics. Its directory, scripts, 4 smoke runs, `binding/`, `events.jsonl` and root's quiescence audits are untouched; its scripts were copied here (byte-identical, sha256 verified) before anything was changed. The smoke selectors were reused (`[data-history=undo|redo]`, `Add <Kind> node`, `[data-testid=save-state]`); no smoke was repeated.
+
+## 3. Method and fixed conditions
+Drivers: `scripts/measure.playwright.js` (m1), `scripts/measure-m2.playwright.js` (m2, primary), `scripts/measure-h2tune*.playwright.js` (H2 boundary), orchestrated by the prepared `run-case.mjs`/`gateway.mjs`. A per-frame sampler (rAF, ~8.3 ms median cadence) runs in the page and records: both buttons' boxes, group/header/frame/Publish/validation boxes, viewport, `visualViewport`, scroll position/height, save/validation/Publish/banner/badge labels, hit-tests at the rest centre and current centre of both buttons, plus a full frame on every pointer/key/focus/scroll event and on every banner DOM mutation. Real input: `page.mouse` down/hold/up, `keyboard`, `touchscreen.tap` (coarse), palette clicks/taps. Counts and effects come from node count, history titles, `aria-disabled`, REST PUT bodies and final server/device readbacks.
+
+Configs (viewport CSS px; app theme set via `localStorage graphgoblin-theme`, because the app follows `data-theme`, **not** `prefers-color-scheme`):
+- **D1** 1440×900, DPR 1, fine pointer, app light (buttons 32×32). **D2** 1440×900, DPR 1, coarse pointer (hasTouch), app dark (44×44, touch taps). **N768** 768×900 fine, light. **R512** 512×384 at DPR 2 (effective 200% reflow of 1024×768), fine, light. Root font 16 px in all.
+- Pace: burst actions 150 ms apart; mouse press hold 60 ms; held PUT/validate 1000 ms, held publish 1500 ms; all holds/aborts/500s were applied only to this worker's own disposable requests via `page.route` (logged with times in each `raw/*.actions.json`).
+- Latency was not measured; geometry only. Each config is compared only with its own rest box; nothing is claimed stable across configs, and no zero-scroll claim is made at any height.
+
+Burst (12 actions): add Script, add Mutate, add Wait, Undo×3, Undo (aria-disabled no-op), Redo×3, Redo (aria-disabled no-op), Undo = 10 effective + 2 no-ops. Expected node deltas matched in **every** run (0 mismatches; no off-button click; disabled clicks had no effect and kept focus).
+
+Run inventory (46): m1 ×9 (D1 only, app-dark, retained), m2 ×34, h2tune ×3 (§4). m2: `h12` ×4, `h12held` ×4 (120-char name, held PUT/validate/publish), `h3` ×4, `control` ×4, `h4offline`/`h4transportall`/`h4transportput`/`h4http500` ×4 each, `dialog` ×2 (D1, R512). 433 recorded add/history actions in total. Raw per-run data: `runs/<label>/raw/*.frames.json|actions.json`; digests: `analysis/`.
+
+## 4. Correction ledger (budget: 2) — **2 of 2 used**
+1. **m1 → m2 (correction 1).** After the first-of-each-case runs I found finite fixture defects: (a) the "light" configs did not produce the app's light theme (`data-theme`/localStorage, not `prefers-color-scheme`); (b) banner finder also matched the editor's own save notice ("Offline: the draft is kept…"); (c) fractional 0.5 px hit probes are below the engine's hit-test snapping, so a 1 px press shift was invisible, and there was no edge-press test; (d) coarse palette adds used mouse clicks. m2 fixes all four without weakening any assertion. All 9 m1 runs are retained unchanged as fine-pointer/app-dark/emulated-light-scheme measurements and agree with m2 geometry.
+2. **h2tune → h2tune2 (correction 2).** `candidate-k70` in `h2tune-d1` failed (REST 409 `LOOP_NAME_CONFLICT`: the calibration probe had already created that exact name). The failed run is retained; h2tune2 reuses the probe's loop. Re-run clean at D1 and D2.
+- **Known uncorrected m2 defect (cosmetic, disclosed):** `noticesText()` in m2 has `/s+/g` instead of `/\s+/g`, so the auxiliary `notices` text field has "s" replaced by spaces ("Publi hed ver ion 1."). It does not affect geometry, jumps, banner detection (raw text) or the save/validation/Publish/banner label fields. Not worth 34 reruns; no budget left to correct it.
+- Rehearsal (not a product run): the sampler was rehearsed on a static synthetic toolbar on a loopback server (`scripts/rehearsal/`); run 1 failed on my own off-by-one assertion (retained), corrected in the rehearsal only; m1 and m2 samplers both passed, including integer-row hit semantics.
+
+## 5. Results
+
+### 5.1 H1 — content width (reproduced)
+Measured widths (px) and the resulting Undo x (Redo moves identically, +40/+52):
+
+| state | validation / publish label | group width | Undo x D1 | D2 | N768 | R512 |
+|---|---|---|---|---|---|---|
+| first paint | "Checking…" | 416.328 (D2 440.328) | 1007.672 | 983.672 | 335.672 | 79.672 |
+| settled valid | "Ready to publish" | 452.813 (476.813) | 971.188 | 947.188 | 299.188 | 43.188 |
+| any edit with issues | "2/4/6 errors" (91.141 wide) | 420.109 (444.109) | 1003.891 | 979.891 | 331.891 | 75.891 |
+| publishing | "Publishing…" (132.297 vs 102.469) | 482.641 (506.641) | 941.359 | 917.359 | 269.359 | 153.656 (wrapped, §5.2) |
+
+D1 natural burst sequence (`m2-h12-d1`, y constant 68): t=544.9 ms −36.484 (load); 1748.4 ms (action 0, add Script) +32.703; 3108.1 (action 5, third Undo returns the graph to valid) −32.703; 3667.7 (action 7, first Redo) +32.703; keyboard phase −32.703 / +32.703. Each of the 4 configs' `h12` runs has the same 6 jumps with the same magnitudes (`analysis/m2-h12-*.json`). The cause attribution is the label change in the same or previous frame (`jumps[].cause`). "N errors" with N=2,4,6 does not move anything (same width).
+- Load-time shift: on every editor open (all 34 m2 runs), Undo/Redo first paint at the "Checking…" position and move −36.484 px 189–277 ms later (page time 421–603 ms) when "Ready to publish" lands.
+- **Hit-target hazard:** the rest-position centre of Redo lands on Undo (and Undo's rest centre on the header) for 83.8–84.6 % of sampled frames in each natural run (D1 1012/1207 frames; D2 930/1099; N768 1009/1198; R512 992/1182), in spans of 1339 ms, 5770 ms and 1339 ms at D1. The current-centre hit test never failed (0 frames).
+- Held-transition press (`h12held`): with PUT and validate held 1500 ms, Undo was pressed and held ~1.8 s while the save label flipped "Saving…"→"All changes saved" 1496–1509 ms after pointer-down; the Undo box moved only by the 1 px press (e.g. D1 [1003.89,100]→[1003.89,101]) because the save label is in the left cluster, and the history effect still happened (node delta −1) in all 4 configs.
+- Publish held 1500 ms: Undo moves −29.829 px at D1/D2/N768 for ≈1.5 s ("Publishing…" seen 3–30 ms after the click) and returns when "published v1" lands; the badge change itself moves nothing.
+
+### 5.2 H2 — wrapping (reproduced when content is near a wrap boundary)
+- **512×384, 120-char name** (`m2-h12held-r512`): during "Publishing…" the group is exactly the 480 px max, wraps internally, Undo +110.468 px (43.188→153.656), header 150→194 px (+44), back after publish.
+- **Boundary-tuned name** (new fixture `h2tune2`): calibration by binary search over `n`×k names at fixed 1440 px. D1: k=69 (h1 635.1 px) fits on row 1, k=70 (644.3 px) wraps the group to row 2 in the initial state. For k=70/72/74 a single add→Undo→Redo with autosave flips the toolbar every time a label width changes: header 57↔89 px, Undo y 68↔100 (32 px vertical), x 1007.7/971.2/1003.9; 4 flips (k=70,72) and 6 (k=74, including a 34 ms "Saving…" row-1 interlude at ~2781 ms). D2: boundary k=68, header 65↔97, Undo y 66↔98, 4/6/6 flips for k=68/70/72. Tables: `analysis/h2tune-summary.md`; first failed run `h2tune-d1` retained.
+- **Not observed:** N768 (group always on its own row; y stable 100, or 129 with the long name, in every tested state) and R512 with ordinary short names (y stable 100). No boundary tuning was attempted at 768/512; "Validation unavailable" and offline-save label widths were not exercised in a valid-graph state (§7).
+
+### 5.3 H3 — pressed movement (reproduced)
+`m2-h3-*` (6 mouse holds + keyboard + 4 edge presses per config): `translate` is `none` at rest and `0px 1px` pressed (transform stays `none`, box y +1.000: D1 68→69, D2 66→67, N768/R512 100→101). Ramp: 0.52–0.75 px at 35–49 ms, 1.000 px by 157–181 ms (transition `translate 0.12s`); after release 0.13–0.35 px at +40 ms and `none` by +340 ms. Identical for Undo, Redo, enabled, `aria-disabled`, released outside the button, and keyboard Space-held (`focus-visible` true). Touch taps (D2) showed partial translate 0.48–0.94 px at event time; a CDP touch *hold* showed `:active` false and no translate → **unresolved**.
+
+Integer rows [top-in, bottom-in, above-out, below-out]: rest true/true/false/false → pressed false/true/false/true (fractional 0.5 px probes cannot show this; all configs identical).
+
+**Edge-click loss (all 4 configs, enabled Undo):** pointer on the top pixel row (y = box top), held 250 ms: `mousedown` on the button, the box moves to y+1, `mouseup` target is the header, `click` fires on the header, **history effect 0**. Held 60 ms (box at +0.87–0.94): click delivered, effect −1. Bottom pixel row and centre, 250 ms: delivered, effect −1.
+
+### 5.4 H4 — connection banner
+Banner heights 36.5 px (1440), 60 px (768), 79.5 px (512); the editor frame `h-[calc(100dvh-3.5rem)]` keeps its height, so the document overflows by 37/60/80 px (maxScrollY stayed 0; no auto-scroll). While displaced, the rest centres of Undo/Redo hit the banner. Per config (D1/D2/N768/R512 values identical in timing; shift as above):
+
+| mode | first shown | shown until | Undo y | notes |
+|---|---|---|---|---|
+| `setOffline(true)` | 4.7–9.2 ms after fault-on | still shown at restore; hidden 24–26 ms after restore | +36.5/+36.5/+60/+79.5 px | shown ≈4.4–5.0 s; history actions 6–11 were pressed and released while displaced; banner text first "You are offline", then "Cannot reach the GraphGoblin API" during reconnect; "saved" 107–113 ms after restore |
+| failed transport, online true (all API aborted `ERR_CONNECTION_REFUSED`) | 444–456 ms after fault-on (first failed PUT 600 ms debounce + refused refetch) | hidden 2.59–3.10 s after restore (reachability probe backoff); "saved" +~110 ms | same shifts | one continuous interval ≈7.0 s; actions 6–11 pressed during it |
+| failed transport, online true, **PUT only** | 439–458 ms | two flashes of 8–14 ms (20–25 ms total) once per failed save revision | same shifts for 1–2 frames | **no automatic recovery** within the 45 s deadline: "Offline: saved on this device" stayed until the next edit |
+| HTTP 500 (PUT + validate) | never | — | 0 | label "Save failed"; stays until next edit; no banner/frame shift in any config |
+
+The editor's own in-page save notice ("Offline: the draft is kept on this device and saved when the API is back.") sits below the toolbar and does not move it; it is not the shell banner. Evidence per run: `analysis/m2-h4*-*.json` (`shell.intervals`, `bannerEvents`, `network.failed/non2xx/held`), screenshots in `screens/`.
+
+### 5.5 Sampler validity (controls)
+`m2-control-*` (all 4 configs): injected `margin-inline-end:1px` on Undo → Undo dx −1 (Redo 0); `position:relative;top:1px` → dy +1; `translate:0 1px` → dy +1; a one-frame injection (two rAF) was seen in exactly one frame and its removal in the next. Removal restored the exact baseline box (equal arrays) in every case. These are controls, not product evidence.
+
+### 5.6 Retention, hit targets, focus, dialog
+- Names/titles ("Undo", "Redo", then "Undo add script" etc.), `data-history=undo|redo`, `aria-keyshortcuts` ("Control+Z"; "Control+Shift+Z Control+Y"), visually-hidden name text, DOM order (Undo, Redo first in the group), focus order idx 1,2 in the header, `aria-disabled="true"` (not `disabled`) when empty, 32×32 (fine) / 44×44 (coarse): unchanged and identical in all configs. Rest hit grid 29/33 per button (the 4 misses are the rounded corner probes).
+- Ctrl+Z, Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y gave −1, −1, +1, +1 (focus on the history button) in all 4 configs. Disabled-click no-ops: no effect, focus stays on the clicked button. Focus after effective clicks stays on the clicked history button.
+- **Dialog (D1, R512):** native `<dialog>` modal (`:modal`, `aria-modal`, name "Edit mutate work"); `elementFromPoint` at Undo/Redo returns the dialog; 24 Tab presses never reached a history button (all stops inside the dialog); a real click at Undo's position changes nothing (D1: also closes the dialog; R512: lands in dialog content); Ctrl+Z with focus on the dialog heading **is permitted** (−1) and the dialog stays open; Undo/Redo boxes keep moving behind the modal as labels change (D1 1003.891→971.188); after Escape focus returns to the node.
+
+### 5.7 REST / device / history effects
+`h12` natural: 2 PUTs (5 nodes) + 2 validates; held cases show each held request with `holdMs`/release time in `actions.json` (e.g. publish 1500→1509 ms, PUT 1000→1005, validate 1000→1002, PUT 1500→1510); H4 records every failed/aborted/500 request with times (e.g. D1 transportall: PUT@3618, GET loop@3627/4633, GET /healthz@6641, PUT@6935 all `ERR_CONNECTION_REFUSED`; http500: PUT 500 @3628/@6928; offline: PUT `ERR_INTERNET_DISCONNECTED` ×2 then PUT 200 after restore). Final UI = server draft = device (IndexedDB) node counts in 34 of the 43 m1/m2 runs; the other 9 are explained: `control-*` (5 runs) make no edits (no device copy; UI=server=3) and 4 H3 runs end right after their last action, before the 600 ms autosave debounce (device copy = UI, server one step behind, label "Unsaved changes"). Console errors are only the expected net failures/500.
+
+## 6. Observed outside A1/A2 scope (documented, not proposed fixes)
+1. Load-time −36.484 px shift on every open (part of H1, "Checking…" width).
+2. After a PUT-only transport failure or an HTTP 500, the save label and in-page notice persist after the fault is lifted until the next edit; no auto-retry within 45 s (non-geometry).
+3. The shell banner is a flow element above the editor frame; the 37/60/80 px overflow is the banner height. No scrollbar width change was measured (overlay scrollbars in this headless Edge).
+4. Storage/shutdown/auth shell notices did not appear (`/system/storage`, `/system/shutdown` returned 200); none was exercised.
+
+## 7. Unresolved / not exercised / limits
+- Touch-hold H3 (CDP): unresolved. Real touch hardware not available.
+- Text-size scaling beyond the viewport/DPR emulation (root font 16 px) was not varied.
+- "Validation unavailable" and offline save-label widths in a *valid-graph* state; boundary tuning at 768/512; auth/storage/shutdown notices: not exercised.
+- Sampler gaps up to ~250 ms (navigation/screenshot); transitions in those gaps are still captured by event and MutationObserver frames. One engine (Edge, headless). m2 `notices` text defect (§4).
+- Stacked baseline only; results at the integrated #474 successor need re-measurement.
+
+## 8. Cleanup and slot release
+- Final read-only audit `cleanup/quiescence-final.json` (script `scripts/audit-resume-quiescence.ps1`): 46 runs, 0 resource-invalid, 0 owned live processes, 0 listeners on any recorded port, 0 leftover `gateway-store-*`, 0 SQLite/WAL/SHM/lock/`master.key` files. Every run: driver exit 0, browser closed, gateway exit 0, `listening:false`, store removed. The first audit (`cleanup/quiescence-first-audit-flagged-reuse-and-runner.json`) is retained: it flagged the root runner `claude-review-runner.mjs` (PID 48672, already in `cleanup/processes-before-start.json`), three numeric PIDs that were reused by unrelated processes after the recording run ended (two `conhost.exe` and the audit's own host), and `h2tune-d1` (retained failed fixture whose resources closed cleanly). Owner port 4747 (PID 19500) was already listening before my start and was never touched; 4748 not used.
+- Source and artifacts re-hashed after the last run: unchanged (§1).
+- **Heavy slot released** at the time of this file's completion; no gateway, browser, sink, listener, store or process of this worker remains. Root may assign the successor-checkout implementation and independent correction QA; no code fix is authorized or proposed here.
+
+## 9. Artifact index
+- `handoff.md` (this), `analysis/matrix.md`, `analysis/report-tables.md`, `analysis/key-evidence.txt`, `analysis/h2tune-summary.md`, `analysis/<run>.json`.
+- `runs/<label>/` per run: `run.json`, `observed.json`, `gateway.json`/`gateway-closed.json`, `raw/*.frames.json` (per-frame), `raw/*.actions.json`, screenshots, the exact driver copy. `screens/` has 24 curated captures (rest, after burst, offline/transport/HTTP 500 fault, dialog, published).
+- `scripts/` (drivers, orchestrator copies, analyzers, rehearsal, queues, audit); `binding/`; `cleanup/`.
+- Runner-owned files (`report.md`, `result.json`, `events.jsonl`, `latest.md`, `launch.json`) were not written by me.

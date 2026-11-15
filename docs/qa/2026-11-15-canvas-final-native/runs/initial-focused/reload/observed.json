@@ -1,0 +1,2244 @@
+{
+  "suite": "207-corrected-review-focused",
+  "scenario": "reload",
+  "origin": "http://127.0.0.1:63326",
+  "gatewayPid": "50812",
+  "bundle": "/app/assets/index-CmDAeKtt.js",
+  "checkpoints": [
+    {
+      "label": "public fixture created",
+      "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+      "public": {
+        "loop": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "ownerId": "local",
+          "name": "Corrected same-ID reload",
+          "draftVersionId": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "createdAt": "2026-11-15T03:41:22.352Z",
+          "updatedAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draft": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected same-ID reload",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draftToken": "28eff14852b31c35"
+      }
+    },
+    {
+      "label": "reload baseline",
+      "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+      "public": {
+        "loop": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "ownerId": "local",
+          "name": "Corrected same-ID reload",
+          "draftVersionId": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "createdAt": "2026-11-15T03:41:22.352Z",
+          "updatedAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draft": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected same-ID reload",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draftToken": "28eff14852b31c35"
+      },
+      "local": null
+    },
+    {
+      "label": "trusted pointer selected edge",
+      "id": "e1",
+      "point": {
+        "x": 578.7262573242188,
+        "y": 402.56451416015625
+      },
+      "identity": "work out to done, manual route"
+    },
+    {
+      "label": "native edit caused actual stale-token conflict",
+      "conflict": {
+        "draftToken": "d96f8033ffafe9ee",
+        "type": "https://graphgoblin.dev/problems/draft-conflict",
+        "title": "draft conflict",
+        "status": 409,
+        "code": "DRAFT_CONFLICT",
+        "detail": "the draft changed on the server since this copy was loaded; reload it or overwrite it with the server draftToken"
+      },
+      "public": {
+        "loop": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "ownerId": "local",
+          "name": "Corrected same-ID reload",
+          "draftVersionId": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "createdAt": "2026-11-15T03:41:22.352Z",
+          "updatedAt": "2026-11-15T03:41:22.928Z"
+        },
+        "draft": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected same-ID reload",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draftToken": "d96f8033ffafe9ee"
+      }
+    },
+    {
+      "label": "explicit same-loop reload",
+      "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+      "public": {
+        "loop": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "ownerId": "local",
+          "name": "Corrected same-ID reload",
+          "draftVersionId": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "createdAt": "2026-11-15T03:41:22.352Z",
+          "updatedAt": "2026-11-15T03:41:22.928Z"
+        },
+        "draft": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected same-ID reload",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draftToken": "d96f8033ffafe9ee"
+      },
+      "local": {
+        "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected same-ID reload",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:41:23.617Z",
+        "synced": true,
+        "baseToken": "d96f8033ffafe9ee"
+      }
+    },
+    {
+      "label": "focused but unselected replacement is not deleted",
+      "public": {
+        "loop": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "ownerId": "local",
+          "name": "Corrected same-ID reload",
+          "draftVersionId": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "createdAt": "2026-11-15T03:41:22.352Z",
+          "updatedAt": "2026-11-15T03:41:22.928Z"
+        },
+        "draft": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected same-ID reload",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draftToken": "d96f8033ffafe9ee"
+      },
+      "local": {
+        "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected same-ID reload",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:41:23.617Z",
+        "synced": true,
+        "baseToken": "d96f8033ffafe9ee"
+      },
+      "history": [
+        [
+          "undo",
+          "Undo",
+          "true"
+        ],
+        [
+          "redo",
+          "Redo",
+          "true"
+        ]
+      ],
+      "save": "All changes saved"
+    },
+    {
+      "label": "trusted pointer selected edge",
+      "id": "e1",
+      "point": {
+        "x": 605.8109130859375,
+        "y": 423.7767639160156
+      },
+      "identity": "work out to other"
+    },
+    {
+      "label": "explicitly reselected replacement Remove",
+      "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+      "public": {
+        "loop": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "ownerId": "local",
+          "name": "Corrected same-ID reload",
+          "draftVersionId": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "createdAt": "2026-11-15T03:41:22.352Z",
+          "updatedAt": "2026-11-15T03:41:25.376Z"
+        },
+        "draft": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected same-ID reload",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draftToken": "db5db7ddcc3ff828"
+      },
+      "local": {
+        "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected same-ID reload",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:41:25.387Z",
+        "synced": true,
+        "baseToken": "db5db7ddcc3ff828"
+      }
+    },
+    {
+      "label": "one Undo restores exact replacement",
+      "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+      "public": {
+        "loop": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "ownerId": "local",
+          "name": "Corrected same-ID reload",
+          "draftVersionId": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "createdAt": "2026-11-15T03:41:22.352Z",
+          "updatedAt": "2026-11-15T03:41:27.068Z"
+        },
+        "draft": {
+          "id": "01M7EMQ71GP7E4ERFH1VTMN2VH",
+          "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected same-ID reload",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Do work",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture work"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T03:41:22.352Z"
+        },
+        "draftToken": "d96f8033ffafe9ee"
+      },
+      "local": {
+        "loopId": "01M7EMQ71GP7E4ERFH1VTMN2VG",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected same-ID reload",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T03:41:27.079Z",
+        "synced": true,
+        "baseToken": "d96f8033ffafe9ee"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "puts": [
+    {
+      "url": "http://127.0.0.1:63326/loops/01M7EMQ71GP7E4ERFH1VTMN2VG/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected same-ID reload",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Unsaved edit to prove real conditional conflict."
+        }
+      },
+      "ifMatch": "\"28eff14852b31c35\"",
+      "at": 1794714083568,
+      "status": 409
+    },
+    {
+      "url": "http://127.0.0.1:63326/loops/01M7EMQ71GP7E4ERFH1VTMN2VG/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected same-ID reload",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"d96f8033ffafe9ee\"",
+      "at": 1794714085371,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:63326/loops/01M7EMQ71GP7E4ERFH1VTMN2VG/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected same-ID reload",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Do work",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture work"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"db5db7ddcc3ff828\"",
+      "at": 1794714087064,
+      "status": 200
+    }
+  ],
+  "bundleResponses": [
+    {
+      "status": 200,
+      "pid": null
+    }
+  ],
+  "outcome": "PASS_RELOAD_CLEARS_SELECTION_AND_RESELECT_REMOVES_ONCE"
+}

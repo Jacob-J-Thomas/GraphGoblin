@@ -1,0 +1,783 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (30 tests | 10 failed) 1343ms
+   ❯ Reset route keeps its toolbar where it was clicked (#207) (11)
+     × keeps the toolbar and Reset route where they were on a loop-back, so no later click lands on Remove connection 81ms
+     × keeps the toolbar and Reset route where they were on a forward connection, so no later click lands on Remove connection 71ms
+     × has Remove connection alone in a fresh selection of an automatic route, and forgets the hold on deselection 79ms
+     × ends the hold when the same points array again, as an Undo might return it is drawn, and holds again at the next click 61ms
+     × ends the hold when another manual route, as a nudge or a drag draws is drawn, and holds again at the next click 79ms
+     × keeps the width of Crosses a card as an inaccessible blank while held 54ms
+     × shows the note again when a crossing manual route is drawn after the hold 78ms
+     × keeps the toolbar keys on the held Reset route: Escape returns to the connection, the rest stay on the button 100ms
+     × refuses on the pan gate first, holding nothing, and keeps Reset route unavailable after a pan settles 22ms
+     × keeps the store’s reason on Remove connection beside the held Reset route 118ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the toolbar and Reset route where they were on a loop-back, so no later click lands on Remove connection
+AssertionError: expected 'translate(40 102) scale(1)' to be 'translate(55 162) scale(1)' // Object.is equality
+
+Expected: "translate(55 162) scale(1)"
+Received: "translate(40 102) scale(1)"
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:784:38
+    782|       // The route and its label moved on; the toolbar and its two con…
+    783|       expect(labelAt(view.container)).not.toBe(label);
+    784|       expect(placed(view.container)).toBe(at);
+       |                                      ^
+    785|       expect(resetButton()).toBe(reset);
+    786|       expect(removeButton()).toBe(remove);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the toolbar and Reset route where they were on a forward connection, so no later click lands on Remove connection
+AssertionError: expected 'translate(150 42) scale(1)' to be 'translate(55 162) scale(1)' // Object.is equality
+
+Expected: "translate(55 162) scale(1)"
+Received: "translate(150 42) scale(1)"
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:784:38
+    782|       // The route and its label moved on; the toolbar and its two con…
+    783|       expect(labelAt(view.container)).not.toBe(label);
+    784|       expect(placed(view.container)).toBe(at);
+       |                                      ^
+    785|       expect(resetButton()).toBe(reset);
+    786|       expect(removeButton()).toBe(remove);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > has Remove connection alone in a fresh selection of an automatic route, and forgets the hold on deselection
+AssertionError: expected [ 'Remove connection' ] to deeply equal [ 'Reset route', 'Remove connection' ]
+
+- Expected
++ Received
+
+  [
+-   "Reset route",
+    "Remove connection",
+  ]
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:836:37
+    834|     await userEvent.setup().click(resetButton());
+    835|     stand.publish(automatic);
+    836|     expect(toolbar(view.container)).toEqual(['Reset route', 'Remove co…
+       |                                     ^
+    837|     expect(placed(view.container)).toBe(above(manual.label));
+    838|     // Deselected, the toolbar goes; selected again it is a fresh one,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > ends the hold when the same points array again, as an Undo might return it is drawn, and holds again at the next click
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > ends the hold when another manual route, as a nudge or a drag draws is drawn, and holds again at the next click
+AssertionError: expected 'translate(40 102) scale(1)' to be 'translate(55 162) scale(1)' // Object.is equality
+
+Expected: "translate(55 162) scale(1)"
+Received: "translate(40 102) scale(1)"
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:859:36
+    857|     await user.click(resetButton());
+    858|     stand.publish(automatic);
+    859|     expect(placed(view.container)).toBe(above(manual.label));
+       |                                    ^
+    860|     expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
+    861|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the width of Crosses a card as an inaccessible blank while held
+AssertionError: expected [ 'Remove connection' ] to deeply equal [ 'Crosses a card', …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "Crosses a card",
+-   "Reset route",
+    "Remove connection",
+  ]
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:900:37
+    898|     // The same element with the same text and classes, so the same wi…
+    899|     // from assistive technology; the controls beside it do not move.
+    900|     expect(toolbar(view.container)).toEqual(['Crosses a card', 'Reset …
+       |                                     ^
+    901|     const slot = view.container.querySelector('.gg-route-toolbar')!.ch…
+    902|     expect(slot).toBe(chip);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > shows the note again when a crossing manual route is drawn after the hold
+Error: expect(element).toHaveAttribute("aria-hidden", "true") // element.getAttribute("aria-hidden") === "true"
+
+Expected the element to have attribute:
+  aria-hidden="true"
+Received:
+  null
+ ❯ src/editor/OrthogonalEdge.test.tsx:918:18
+    916|     stand.publish(automatic);
+    917|     const slot = view.container.querySelector('.gg-route-toolbar')!.ch…
+    918|     expect(slot).toHaveAttribute('aria-hidden', 'true');
+       |                  ^
+    919|     stand.publish({ ...nudged, crossing: true });
+    920|     expect(view.container.querySelector('.gg-route-toolbar')!.children…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the toolbar keys on the held Reset route: Escape returns to the connection, the rest stay on the button
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Reset route"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Route segment 1 of 5, horizontal":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+    [33maria-label[39m=[32m"Route segment 1 of 5, horizontal"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+    [33mdata-segment[39m=[32m"1"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(110 0) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Route segment 2 of 5, vertical":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowLeft ArrowRight"[39m
+    [33maria-label[39m=[32m"Route segment 2 of 5, vertical"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-x"[39m
+    [33mdata-segment[39m=[32m"2"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(120 60) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Route segment 3 of 5, horizontal":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+    [33maria-label[39m=[32m"Route segment 3 of 5, horizontal"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+    [33mdata-segment[39m=[32m"3"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(105.5 120) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Route segment 4 of 5, vertical":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowLeft ArrowRight"[39m
+    [33maria-label[39m=[32m"Route segment 4 of 5, vertical"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-x"[39m
+    [33mdata-segment[39m=[32m"4"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(-10 80) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Route segment 5 of 5, horizontal":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+    [33maria-label[39m=[32m"Route segment 5 of 5, horizontal"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+    [33mdata-segment[39m=[32m"5"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(-5 40) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Remove connection":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<svg>[39m
+        [36m<g[39m
+          [33mclass[39m=[32m"react-flow__edge"[39m
+          [33mdata-testid[39m=[32m"edge"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m>[39m
+          [36m<title>[39m
+            [0mloopBack[0m
+          [36m</title>[39m
+          [36m<path[39m
+            [33mclass[39m=[32m"react-flow__edge-path"[39m
+            [33md[39m=[32m"M 100 0 L 112 0 Q 120 0 120 8 L 120 112 Q 120 120 112 120 L -2 120 Q -10 120 -10 112 L -10 45 Q -10 40 -5 40 L 0 40"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mid[39m=[32m"return"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33mclass[39m=[32m"react-flow__edge-interaction"[39m
+            [33md[39m=[32m"M 100 0 L 112 0 Q 120 0 120 8 L 120 112 Q 120 120 112 120 L -2 120 Q -10 120 -10 112 L -10 45 Q -10 40 -5 40 L 0 40"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mstroke-opacity[39m=[32m"0"[39m
+            [33mstroke-width[39m=[32m"20"[39m
+          [36m/>[39m
+          [36m<g[39m
+            [33mclass[39m=[32m"react-flow__edge-textwrapper"[39m
+            [33mtransform[39m=[32m"translate(12 114.5)"[39m
+            [33mvisibility[39m=[32m"visible"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"react-flow__edge-textbg"[39m
+              [33mheight[39m=[32m"17"[39m
+              [33mrx[39m=[32m"9"[39m
+              [33mry[39m=[32m"9"[39m
+              [33mwidth[39m=[32m"72"[39m
+              [33mx[39m=[32m"-8"[39m
+              [33my[39m=[32m"-3"[39m
+            [36m/>[39m
+            [36m<text[39m
+              [33mclass[39m=[32m"react-flow__edge-text"[39m
+              [33mdy[39m=[32m"0.3em"[39m
+              [33my[39m=[32m"5.5"[39m
+            [36m>[39m
+              [0mloopBack[0m
+            [36m</text>[39m
+          [36m</g>[39m
+          [36m<g[39m
+            [33mclass[39m=[32m"gg-route-handles"[39m
+          [36m>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+              [33maria-label[39m=[32m"Route segment 1 of 5, horizontal"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+              [33mdata-segment[39m=[32m"1"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(110 0) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowLeft ArrowRight"[39m
+              [33maria-label[39m=[32m"Route segment 2 of 5, vertical"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-x"[39m
+              [33mdata-segment[39m=[32m"2"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(120 60) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+              [33maria-label[39m=[32m"Route segment 3 of 5, horizontal"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+              [33mdata-segment[39m=[32m"3"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(105.5 120) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowLeft ArrowRight"[39m
+              [33maria-label[39m=[32m"Route segment 4 of 5, vertical"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-x"[39m
+              [33mdata-segment[39m=[32m"4"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(-10 80) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+              [33maria-label[39m=[32m"Route segment 5 of 5, horizontal"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+              [33mdata-segment[39m=[32m"5"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(-5 40) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33mtransform[39m=[32m"translate(40 102) scale(1)"[39m
+            [36m>[39m
+              [36m<foreignobject[39m
+                [33mclass[39m=[32m"gg-route-toolbar-frame"[39m
+                [33mheight[39m=[32m"48"[39m
+                [33mwidth[39m=[32m"420"[39m
+                [33mx[39m=[32m"-210"[39m
+                [33my[39m=[32m"-48"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"gg-route-toolbar flex h-full items-end justify-center gap-2"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                    [36m>[39m
+                      [0mRemove connection[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</foreignobject>[39m
+            [36m</g>[39m
+          [36m</g>[39m
+        [36m</g>[39m
+      [36m</svg>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ resetButton src/editor/OrthogonalEdge.test.tsx:750:36
+    748|     };
+    749|   }
+    750|   const resetButton = () => screen.getByRole('button', { name: 'Reset …
+       |                                    ^
+    751|   const removeButton = () => screen.getByRole('button', { name: 'Remov…
+    752|
+ ❯ src/editor/OrthogonalEdge.test.tsx:930:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > refuses on the pan gate first, holding nothing, and keeps Reset route unavailable after a pan settles
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          data-gesture="panning"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794707671234,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:950:33
+    948|       fireEvent.click(resetButton());
+    949|       expect(first.editing.reset).not.toHaveBeenCalled();
+    950|       expect(first.onClick).not.toHaveBeenCalled();
+       |                                 ^
+    951|       // The refused click made no hold: when the route changes some o…
+    952|       refused.publish(automatic);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the store’s reason on Remove connection beside the held Reset route
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Reset route"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Route segment 1 of 5, horizontal":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+    [33maria-label[39m=[32m"Route segment 1 of 5, horizontal"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+    [33mdata-segment[39m=[32m"1"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(110 0) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Route segment 2 of 5, vertical":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowLeft ArrowRight"[39m
+    [33maria-label[39m=[32m"Route segment 2 of 5, vertical"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-x"[39m
+    [33mdata-segment[39m=[32m"2"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(120 60) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Route segment 3 of 5, horizontal":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+    [33maria-label[39m=[32m"Route segment 3 of 5, horizontal"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+    [33mdata-segment[39m=[32m"3"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(105.5 120) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Route segment 4 of 5, vertical":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowLeft ArrowRight"[39m
+    [33maria-label[39m=[32m"Route segment 4 of 5, vertical"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-x"[39m
+    [33mdata-segment[39m=[32m"4"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(-10 80) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Route segment 5 of 5, horizontal":
+  [36m<g[39m
+    [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+    [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+    [33maria-label[39m=[32m"Route segment 5 of 5, horizontal"[39m
+    [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+    [33mdata-segment[39m=[32m"5"[39m
+    [33mrole[39m=[32m"button"[39m
+    [33mtabindex[39m=[32m"0"[39m
+    [33mtransform[39m=[32m"translate(-5 40) scale(1)"[39m
+  [36m/>[39m
+
+  Name "Remove connection":
+  [36m<button[39m
+    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"[39m
+    [33mdisabled[39m=[32m""[39m
+    [33mtitle[39m=[32m"Voice steps stay. Use Turn off voice messages."[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div>[39m
+      [36m<svg>[39m
+        [36m<g[39m
+          [33mclass[39m=[32m"react-flow__edge"[39m
+          [33mdata-testid[39m=[32m"edge"[39m
+          [33mtabindex[39m=[32m"0"[39m
+        [36m>[39m
+          [36m<title>[39m
+            [0mloopBack[0m
+          [36m</title>[39m
+          [36m<path[39m
+            [33mclass[39m=[32m"react-flow__edge-path"[39m
+            [33md[39m=[32m"M 100 0 L 112 0 Q 120 0 120 8 L 120 112 Q 120 120 112 120 L -2 120 Q -10 120 -10 112 L -10 45 Q -10 40 -5 40 L 0 40"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mid[39m=[32m"return"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33mclass[39m=[32m"react-flow__edge-interaction"[39m
+            [33md[39m=[32m"M 100 0 L 112 0 Q 120 0 120 8 L 120 112 Q 120 120 112 120 L -2 120 Q -10 120 -10 112 L -10 45 Q -10 40 -5 40 L 0 40"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mstroke-opacity[39m=[32m"0"[39m
+            [33mstroke-width[39m=[32m"20"[39m
+          [36m/>[39m
+          [36m<g[39m
+            [33mclass[39m=[32m"react-flow__edge-textwrapper"[39m
+            [33mtransform[39m=[32m"translate(12 114.5)"[39m
+            [33mvisibility[39m=[32m"visible"[39m
+          [36m>[39m
+            [36m<rect[39m
+              [33mclass[39m=[32m"react-flow__edge-textbg"[39m
+              [33mheight[39m=[32m"17"[39m
+              [33mrx[39m=[32m"9"[39m
+              [33mry[39m=[32m"9"[39m
+              [33mwidth[39m=[32m"72"[39m
+              [33mx[39m=[32m"-8"[39m
+              [33my[39m=[32m"-3"[39m
+            [36m/>[39m
+            [36m<text[39m
+              [33mclass[39m=[32m"react-flow__edge-text"[39m
+              [33mdy[39m=[32m"0.3em"[39m
+              [33my[39m=[32m"5.5"[39m
+            [36m>[39m
+              [0mloopBack[0m
+            [36m</text>[39m
+          [36m</g>[39m
+          [36m<g[39m
+            [33mclass[39m=[32m"gg-route-handles"[39m
+          [36m>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+              [33maria-label[39m=[32m"Route segment 1 of 5, horizontal"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+              [33mdata-segment[39m=[32m"1"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(110 0) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowLeft ArrowRight"[39m
+              [33maria-label[39m=[32m"Route segment 2 of 5, vertical"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-x"[39m
+              [33mdata-segment[39m=[32m"2"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(120 60) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+              [33maria-label[39m=[32m"Route segment 3 of 5, horizontal"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+              [33mdata-segment[39m=[32m"3"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(105.5 120) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowLeft ArrowRight"[39m
+              [33maria-label[39m=[32m"Route segment 4 of 5, vertical"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-x"[39m
+              [33mdata-segment[39m=[32m"4"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(-10 80) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33maria-description[39m=[32m"Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."[39m
+              [33maria-keyshortcuts[39m=[32m"ArrowUp ArrowDown"[39m
+              [33maria-label[39m=[32m"Route segment 5 of 5, horizontal"[39m
+              [33mclass[39m=[32m"gg-route-handle nodrag nopan nokey gg-route-handle-y"[39m
+              [33mdata-segment[39m=[32m"5"[39m
+              [33mrole[39m=[32m"button"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtransform[39m=[32m"translate(-5 40) scale(1)"[39m
+            [36m>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-hit"[39m
+                [33mr[39m=[32m"12"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-ring"[39m
+                [33mr[39m=[32m"10"[39m
+              [36m/>[39m
+              [36m<circle[39m
+                [33mclass[39m=[32m"gg-route-handle-dot"[39m
+                [33mr[39m=[32m"6"[39m
+              [36m/>[39m
+            [36m</g>[39m
+            [36m<g[39m
+              [33mtransform[39m=[32m"translate(40 102) scale(1)"[39m
+            [36m>[39m
+              [36m<foreignobject[39m
+                [33mclass[39m=[32m"gg-route-toolbar-frame"[39m
+                [33mheight[39m=[32m"48"[39m
+                [33mwidth[39m=[32m"420"[39m
+                [33mx[39m=[32m"-210"[39m
+                [33my[39m=[32m"-48"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"gg-route-toolbar flex h-full items-end justify-center gap-2"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"[39m
+                    [33mdisabled[39m=[32m""[39m
+                    [33mtitle[39m=[32m"Voice steps stay. Use Turn off voice messages."[39m
+                    [33mtype[39m=[32m"button"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"min-w-0 overflow-x-clip text-ellipsis"[39m
+                    [36m>[39m
+                      [0mRemove connection[0m
+                    [36m</span>[39m
+                  [36m</button>[39m
+                [36m</div>[39m
+              [36m</foreignobject>[39m
+            [36m</g>[39m
+          [36m</g>[39m
+        [36m</g>[39m
+      [36m</svg>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ resetButton src/editor/OrthogonalEdge.test.tsx:750:36
+    748|     };
+    749|   }
+    750|   const resetButton = () => screen.getByRole('button', { name: 'Reset …
+       |                                    ^
+    751|   const removeButton = () => screen.getByRole('button', { name: 'Remov…
+    752|
+ ❯ src/editor/OrthogonalEdge.test.tsx:1021:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 20 passed (30)
+   Start at  19:54:24
+   Duration  6.46s (environment 35%, tests 21%, import 16%, transform 16%, setup 12%)
+

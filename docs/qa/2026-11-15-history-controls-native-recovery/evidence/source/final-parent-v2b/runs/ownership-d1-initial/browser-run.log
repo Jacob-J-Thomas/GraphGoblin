@@ -1,0 +1,877 @@
+### Result
+"{\"suite\":\"208-history-escalation-v1\",\"group\":\"ownership-d1\",\"config\":\"d1-fine-light\",\"failure\":{\"kind\":\"fixture\",\"message\":\"Ownership config mismatch\",\"stack\":\"Error: Ownership config mismatch\\n    at check (evalmachine.<anonymous>:21:41)\\n    at ownership (evalmachine.<anonymous>:796:5)\\n    at async evalmachine.<anonymous>:856:46\\n    at async evalmachine.<anonymous>:3:20\\n    at async C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\npm-cache\\\\_npx\\\\31e32ef8478fbf80\\\\node_modules\\\\playwright-core\\\\lib\\\\coreBundle.js:70181:13\\n    at async waitForCompletion (C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\npm-cache\\\\_npx\\\\31e32ef8478fbf80\\\\node_modules\\\\playwright-core\\\\lib\\\\coreBundle.js:66323:15)\\n    at async _Tab._raceAgainstModalStates (C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\npm-cache\\\\_npx\\\\31e32ef8478fbf80\\\\node_modules\\\\playwright-core\\\\lib\\\\coreBundle.js:67487:18)\\n    at async _Tab.waitForCompletion (C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\npm-cache\\\\_npx\\\\31e32ef8478fbf80\\\\node_modules\\\\playwright-core\\\\lib\\\\coreBundle.js:67494:9)\\n    at async Object.handle (C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\npm-cache\\\\_npx\\\\31e32ef8478fbf80\\\\node_modules\\\\playwright-core\\\\lib\\\\coreBundle.js:70177:11)\\n    at async BrowserBackend.callTool (C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\npm-cache\\\\_npx\\\\31e32ef8478fbf80\\\\node_modules\\\\playwright-core\\\\lib\\\\coreBundle.js:68487:11)\"},\"pageErrors\":[],\"summary\":{\"geometry\":[],\"checkpoints\":[],\"limits\":[]}}"
+### Ran Playwright code
+```js
+await (async (page) => {
+  const initial = new URL(page.url());
+  const read = (key) => initial.searchParams.get(key);
+  const origin = initial.origin;
+  const sink = read('qa-sink');
+  const group = read('qa-case');
+  const config = read('qa-config');
+  const out = { suite: '208-history-escalation-v1', group, config, settings: null, failure: null,
+    checkpoints: [], geometry: [], pageErrors: [], consoleErrors: [], limits: [] };
+  const notes = [];
+  const requests = [];
+  const phases = [];
+  const responseReads = [];
+  let apiSerial = 0;
+  let frameSerial = 0;
+  const requestRecords = new Map();
+  const theme = config.startsWith('d2-') ? 'dark' : 'light';
+  const coarse = theme === 'dark';
+  const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+  const check = (condition, message, kind = 'product') => {
+    if (!condition) throw Object.assign(new Error(message), { kind });
+  };
+  const canonical = (value) => {
+    if (Array.isArray(value)) return value.map(canonical);
+    if (value === null || typeof value !== 'object') return value;
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])]));
+  };
+  const same = (a, b, message) => check(JSON.stringify(canonical(a)) === JSON.stringify(canonical(b)), message);
+  const button = (direction) => page.locator('[data-history="' + direction + '"]');
+  const historySlot = page.getByTestId('history-actions');
+  const saveBadge = page.getByTestId('save-state');
+  const readyLabel = page.getByText('Ready to publish', { exact: true });
+  const edit = (id) => '/app/loops/' + id + '/edit';
+  const path = (id) => '/loops/' + id;
+  const draftPath = () => path(loopId) + '/draft';
+  const faultText = /^(You are offline|Cannot reach the GraphGoblin API)/;
+  const status = () => page.getByRole('status').filter({ hasText: faultText });
+  let loopId;
+  let baseline;
+  let knownAdd;
+  let control = 'pass';
+  let loadGate;
+  let validationGate;
+  let putGate;
+  let publishGate;
+  function gate() {
+    let release;
+    const promise = new Promise((done) => { release = done; });
+    return { wait: promise, release, used: false };
+  }
+
+  function installProbe(themeName) {
+    if (window.__qa208) return;
+    localStorage.setItem('graphgoblin-theme', themeName);
+    const undo = () => document.querySelector('[data-history="undo"]');
+    const redo = () => document.querySelector('[data-history="redo"]');
+    const slot = () => document.querySelector('[data-testid="history-actions"]');
+    const toolbar = () => slot()?.closest('header');
+    const text = (node) => node?.textContent?.trim().replace(/\s+/g, ' ') ?? null;
+    const px = (value) => Math.round(value * 1000) / 1000;
+    const box = (element) => {
+      if (!element) return null;
+      const r = element.getBoundingClientRect();
+      return [r.x, r.y, r.width, r.height].map(px);
+    };
+    const identify = (element) => {
+      if (!(element instanceof Element)) return null;
+      return element.closest('[data-history]')?.getAttribute('data-history') ??
+        element.closest('.react-flow__node')?.getAttribute('data-id') ??
+        element.closest('dialog')?.tagName ??
+        element.closest('button,a,[role="link"]')?.textContent?.trim()?.slice(0, 100) ?? element.tagName;
+    };
+    const hit = (point) => point ? identify(document.elementFromPoint(...point)) : null;
+    const centre = (r) => [r[0] + r[2] / 2, r[1] + r[3] / 2];
+    const statuses = () => [...document.querySelectorAll('[role="status"]')]
+      .filter((node) => /^(You are offline|Cannot reach the GraphGoblin API)/.test(text(node)))
+      .map((node) => ({ text: text(node), bounds: box(node),
+        where: toolbar()?.nextElementSibling === node ? 'editor' :
+          node.previousElementSibling?.matches('header.hairline-accent') ? 'shell' : 'unknown',
+        visible: Boolean(node.getClientRects().length && getComputedStyle(node).visibility === 'visible'),
+        hidden: Boolean(node.closest('[inert],[aria-hidden="true"],[hidden]')), role: node.getAttribute('role'),
+        ariaLive: node.getAttribute('aria-live'), ariaAtomic: node.getAttribute('aria-atomic') }));
+    let fixed;
+    let trace = [];
+    let overflow = false;
+    let stage = 'initial-paint';
+    let lastMutation = '';
+    function sample(type = 'read', event) {
+      const u = undo(), r = redo(), header = toolbar();
+      const boxes = [box(u), box(r)];
+      if (!fixed && boxes.every(Boolean) && boxes.every((rect, i) => hit(centre(rect)) === ['undo', 'redo'][i])) {
+        fixed = boxes.map(centre);
+      }
+      const sibling = slot()?.nextElementSibling;
+      const pub = [...(sibling?.querySelectorAll('button') ?? [])].find((candidate) => /^(Publish|Publishing…)$/.test(text(candidate)));
+      const val = sibling?.querySelector('button[data-severity]') ??
+        [...(pub?.parentElement?.querySelectorAll(':scope > span') ?? [])].find((candidate) =>
+          /^(Checking…|Ready to publish|Validation unavailable)$/.test(text(candidate)));
+      const badges = [...(sibling?.children ?? [])].find((candidate) => /^(draft only|published v\d+)$/.test(text(candidate)));
+      const f = { type, stage, t: px(performance.now()), epoch: performance.timeOrigin, boxes,
+        coords: fixed, hits: fixed?.map(hit), toolbar: box(header), slot: box(slot()), title: box(sibling?.querySelector('h1')),
+        validation: text(val), validationBox: box(val), publish: text(pub), publishBox: box(pub),
+        save: text(document.querySelector('[data-testid="save-state"]')), badge: text(badges),
+        banners: statuses(), notices: [...document.querySelectorAll('[role="alert"],[role="status"]')]
+          .map(text).filter((label) => !/^(You are offline|Cannot reach the GraphGoblin API)/.test(label ?? '')),
+        viewport: [innerWidth, innerHeight, visualViewport?.width, visualViewport?.height, visualViewport?.scale],
+        scroll: [scrollX, scrollY, document.documentElement.scrollWidth, header?.scrollWidth],
+        canvas: box(document.querySelector('.react-flow')), focused: identify(document.activeElement),
+        modal: Boolean(document.querySelector('dialog:modal')), online: navigator.onLine,
+        nodes: [...document.querySelectorAll('.react-flow__node')].map((node) => node.dataset.id).sort(),
+        directions: [u, r].map((el) => el ? {
+          name: text(el), title: el.title, disabled: el.getAttribute('aria-disabled'), nativeDisabled: el.disabled,
+          shortcuts: el.getAttribute('aria-keyshortcuts'), tabIndex: el.tabIndex,
+          active: el.matches(':active'), focusVisible: el.matches(':focus-visible'),
+          translate: getComputedStyle(el).translate, transform: getComputedStyle(el).transform,
+          border: getComputedStyle(el).borderColor,
+        } : null),
+        input: event ? { x: event.clientX, y: event.clientY, target: identify(event.target),
+          key: event.key, repeat: event.repeat, pointer: event.pointerType, trusted: event.isTrusted } : null,
+      };
+      return f;
+    }
+    function collect(type, event) {
+      if (trace.length < 2600) trace.push(sample(type, event));
+      else overflow = true;
+    }
+    function frame() { collect('raf'); requestAnimationFrame(frame); }
+    for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'keydown', 'keyup', 'focusin', 'scroll']) {
+      window.addEventListener(type, (event) => collect(type, event), { capture: true, passive: true });
+    }
+    new MutationObserver(() => {
+      const stamp = JSON.stringify(statuses());
+      if (stamp !== lastMutation) { lastMutation = stamp; collect('banner-mutation'); }
+    }).observe(document, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['inert','hidden','aria-hidden'] });
+    window.__qa208 = {
+      sample,
+      mark(label) { stage = label; collect('mark'); },
+      drain() { const result = { trace, overflow }; trace = []; overflow = false; return result; },
+    };
+    requestAnimationFrame(frame);
+  }
+
+  const snapshot = () => page.evaluate(() => window.__qa208.sample());
+  const mark = (label) => page.evaluate((value) => window.__qa208.mark(value), label);
+  async function sinkPost(name, data) {
+    const response = await fetch(sink + '/sink/' + name, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data),
+    });
+    check(response.ok, 'Evidence sink refused ' + name, 'fixture');
+  }
+  async function trace(label, verify = true) {
+    const captured = await page.evaluate(() => window.__qa208.drain());
+    const rawFile = 'frames-' + String(++frameSerial).padStart(3, '0') + '-' + label + '.json';
+    await sinkPost(rawFile, captured);
+    phases.push({ label, rawFile, samples: captured.trace.length });
+    check(!captured.overflow, 'Frame buffer overflow at ' + label, 'fixture');
+    const frames = captured.trace.filter((f) => f.boxes.every(Boolean) && f.coords && !f.modal);
+    const reference = frames[0];
+    if (verify && reference) {
+      const comparable = frames.filter((f) =>
+        f.viewport.join() === reference.viewport.join() && f.scroll.slice(0, 2).join() === reference.scroll.slice(0, 2).join());
+      const max = [0, 0, 0, 0];
+      let misses = 0;
+      let layoutSamples = 0;
+      for (const f of comparable) {
+        f.boxes.forEach((rect, index) => rect.forEach((value, i) => {
+          max[i] = Math.max(max[i], Math.abs(value - reference.boxes[index][i]));
+        }));
+        if (f.hits?.join() !== 'undo,redo') misses++;
+        if (f.type === 'raf') layoutSamples++;
+      }
+      const gaps = comparable.slice(1).map((f, i) => f.t - comparable[i].t);
+      out.geometry.push({ label, start: reference.t, end: comparable.at(-1).t, epoch: reference.epoch,
+        comparable: comparable.length, excluded: frames.length - comparable.length, max, misses, layoutSamples,
+        maxSampleGapMs: Math.max(0, ...gaps),
+        headerHeights: [...new Set(comparable.map((f) => f.toolbar?.[3]))],
+        validationWidths: [...new Set(comparable.map((f) => f.validationBox?.[2]))],
+        validation: [...new Set(comparable.map((f) => f.validation))], publish: [...new Set(comparable.map((f) => f.publish))],
+      });
+      check(max.every((value) => value <= 0.02) && misses === 0,
+        'History lost fixed target at ' + label + ' max=' + max + ' misses=' + misses);
+    }
+    check(captured.trace.every((f) => f.banners.filter((banner) => banner.visible && !banner.hidden).length <= 1),
+      'Two visible connection statuses at ' + label);
+    return captured.trace;
+  }
+
+  async function until(predicate, description, timeout = 10000) {
+    const end = Date.now() + timeout;
+    while (Date.now() < end) {
+      const value = await predicate();
+      if (value) return value;
+      await wait(35);
+    }
+    throw Object.assign(new Error('Timed out waiting for ' + description), { kind: 'unwitnessed' });
+  }
+  async function api(method, route, expected, data) {
+    const response = await page.request.fetch(origin + route, { method, timeout: 10000, ...(data ? { data } : {}) });
+    const text = await response.text();
+    let body = null;
+    if (text) { try { body = JSON.parse(text); } catch { body = text; } }
+    const record = { method, route, at: Date.now(), expected, status: response.status(), headers: response.headers(), body };
+    await sinkPost('api-' + String(++apiSerial).padStart(3, '0') + '.json', record);
+    check(response.status() === expected, method + ' ' + route + ': ' + response.status() + ' ' + text.slice(0, 300), 'fixture');
+    return body;
+  }
+  const get = () => api('GET', path(loopId), 200);
+  function setupRequests() {
+    page.on('pageerror', (error) => out.pageErrors.push(String(error)));
+    page.on('console', (msg) => { if (msg.type() === 'error') out.consoleErrors.push(msg.text()); });
+    page.on('request', (req) => {
+      const url = new URL(req.url());
+      if (url.origin !== origin || url.pathname.startsWith('/app/')) return;
+      const entry = { method: req.method(), path: url.pathname, at: Date.now(), ifMatch: req.headers()['if-match'] ?? null };
+      if (req.method() === 'PUT' && url.pathname.endsWith('/draft')) entry.body = req.postDataJSON();
+      requests.push(entry);
+      requestRecords.set(req, entry);
+    });
+    page.on('response', (response) => {
+      const entry = requestRecords.get(response.request());
+      if (entry) {
+        entry.status = response.status(); entry.responseAt = Date.now();
+        if (entry.path.startsWith('/loops/')) responseReads.push(response.text().then((text) => {
+          try { entry.responseBody = JSON.parse(text); } catch { entry.responseText = text; }
+        }).catch((error) => { entry.responseReadError = String(error); }));
+      }
+    });
+    page.on('requestfailed', (req) => {
+      const entry = requestRecords.get(req);
+      if (entry) { entry.error = req.failure()?.errorText; entry.failedAt = Date.now(); }
+    });
+    return page.route((url) => url.origin === origin && !url.pathname.startsWith('/app/'), async (route) => {
+      const req = route.request();
+      const method = req.method();
+      const p = new URL(req.url()).pathname;
+      const target = loopId && p.startsWith(path(loopId));
+      const draft = target && method === 'PUT' && p.endsWith('/draft');
+      const validate = target && method === 'POST' && p.endsWith('/validate');
+      const publish = target && method === 'POST' && p.endsWith('/publish');
+      const record = requestRecords.get(req);
+      let selected = (draft && putGate) || (validate && validationGate) || (publish && publishGate);
+      if (selected && !selected.used) {
+        selected.used = true;
+        if (record) record.routeHeldAt = Date.now();
+        await selected.wait;
+        if (record) record.routeReleasedAt = Date.now();
+      }
+      if (loadGate && !loadGate.used && method === 'GET' && p === path(loadGate.id)) {
+        selected = loadGate;
+        selected.used = true;
+        const fetched = await route.fetch();
+        selected.fetched = fetched.status();
+        if (record) record.routeHeldAt = Date.now();
+        await selected.wait;
+        if (record) record.routeReleasedAt = Date.now();
+        return route.fulfill({ response: fetched });
+      }
+      if (control === 'abort-all' || (control === 'abort-put' && draft)) return route.abort('connectionrefused');
+      if (control === 'http500' && (draft || validate)) return route.fulfill({
+        status: 500, contentType: 'application/problem+json',
+        body: JSON.stringify({ type: 'about:blank', title: 'QA scoped HTTP failure', status: 500,
+          code: 'QA_INJECTED_HTTP_500', detail: 'Disposable stationarity fixture only' }),
+      });
+      return route.continue();
+    });
+  }
+
+  function graph(name) {
+    const node = (id, kind, label, x, config) => ({ id, kind, label, ui: { x, y: 120 }, config });
+    const edge = (id, from, to) => ({ id, from: { node: from, port: 'out' }, to: { node: to, port: 'in' } });
+    return {
+      schemaVersion: 4, name,
+      nodes: [node('start', 'trigger', 'Manual entry', 0, { type: 'manual' }),
+        node('work', 'mutate', 'Note', 300, { operations: [{ op: 'append-message', role: 'note', content: 'probe' }] }),
+        node('done', 'exit', 'Finished', 620, { outcome: 'success', returns: '"ok"' })],
+      edges: [edge('e1', 'start', 'work'), edge('e2', 'work', 'done')],
+    };
+  }
+  async function create(name) {
+    return (await api('POST', '/loops', 201, { definition: graph(name) })).loop.id;
+  }
+  async function open(held = false, expected = 'Ready to publish') {
+    const label = 'QA history ' + crypto.randomUUID().slice(0, 7);
+    const name = /^n[37]|^r512/.test(config) ? (label + ' Wide editor header content '.repeat(8)).slice(0, 120) : label;
+    loopId = await create(name);
+    baseline = await get();
+    if (held) validationGate = gate();
+    await page.goto(origin + edit(loopId));
+    await historySlot.waitFor({ timeout: 12000 });
+    await page.getByRole('heading', { name, exact: true }).waitFor({ timeout: 12000 });
+    if (held) {
+      await until(() => validationGate.used, 'held validation request');
+      check((await snapshot()).validation === 'Checking…', 'Held validation pending text not observed', 'fixture');
+      await mark('held-checking-visible');
+      validationGate.release();
+    }
+    await page.getByText(expected, { exact: true }).waitFor({ timeout: 12000 });
+    await mark('validation-visible');
+    const live = await page.evaluate(() => ({ cssViewport: [innerWidth, innerHeight], dpr: devicePixelRatio,
+      coarse: matchMedia('(pointer: coarse)').matches, theme: document.documentElement.dataset.theme,
+      rootFont: getComputedStyle(document.documentElement).fontSize,
+      bundle: [...document.scripts].map((script) => new URL(script.src, location.href).pathname) }));
+    out.settings = live;
+    const sizes = { 'd1-fine-light': [1440,900,1], 'd2-coarse-dark': [1440,900,1], 'n768-fine-light': [768,900,1],
+      'r512-reflow200': [512,384,2], 'n360-fine-light': [360,800,1] };
+    same([...live.cssViewport, live.dpr], sizes[config], 'Unexpected effective viewport/DPR');
+    check(live.coarse === coarse && live.theme === theme && live.rootFont === '16px', 'Effective browser config mismatch', 'fixture');
+    check(live.bundle.includes(read('qa-bundle')), 'Browser loaded different entry script', 'fixture');
+    out.checkpoints.push({ label: 'fixture-open', loopId, nameLength: name.length, baseline });
+    return await trace('open');
+  }
+
+  const writes = () => requests.filter((req) => req.method === 'PUT' && req.path === draftPath());
+  async function localDraft() {
+    return page.evaluate((id) => new Promise((resolve) => {
+      const open = indexedDB.open('graphgoblin');
+      open.onupgradeneeded = () => open.transaction.abort();
+      open.onerror = () => resolve(null);
+      open.onsuccess = () => {
+        const db = open.result;
+        try {
+          const query = db.transaction('drafts').objectStore('drafts').get(id);
+          query.onsuccess = () => { db.close(); resolve(query.result ?? null); };
+          query.onerror = () => { db.close(); resolve(null); };
+        } catch { db.close(); resolve(null); }
+      };
+    }), loopId);
+  }
+  function wireToCanonical(definition) {
+    return { ...definition, nodes: definition.nodes.map((node) => node.kind === 'script' ? {
+      ...node, config: { cwd: 'workspace', stdin: 'thread', stdout: 'last-output', ...node.config },
+    } : node) };
+  }
+  async function saved(label, count, prior, expected) {
+    const accepted = await until(() => writes().slice(count).find((request) => request.status === 200), label + ' acknowledged PUT', 16000);
+    await saveBadge.filter({ hasText: 'All changes saved' }).waitFor({ timeout: 12000 });
+    const server = await get();
+    check(server.draftToken && server.draftToken !== prior.draftToken, label + ' must advance the canonical token');
+    const device = await until(async () => {
+      const value = await localDraft();
+      return value?.synced === true && value.baseToken === server.draftToken && value;
+    }, label + ' synced device row');
+    await wait(780);
+    const acceptedWrites = writes().slice(count).filter((request) => request.status === 200);
+    check(acceptedWrites.length === 1, label + ' accepted PUT count ' + acceptedWrites.length);
+    same(accepted.ifMatch, '"' + prior.draftToken + '"', label + ' previous token precondition');
+    out.checkpoints.push({ label, server, device, request: accepted });
+    same(device.definition, accepted.body.definition, label + ' exact wire/device definition');
+    same(wireToCanonical(accepted.body.definition), server.draft.definition, label + ' exact canonical PUT/GET definition');
+    if (expected) same(server.draft.definition, expected, label + ' exact expected graph');
+    return server;
+  }
+  async function apply(label, action, prior, expected) {
+    const count = writes().length;
+    await mark(label);
+    await action();
+    return saved(label, count, prior, expected);
+  }
+  const def = (record) => {
+    const selected = record?.draft ?? record?.current;
+    check(selected?.definition && record.draftToken, 'GET lacks a current-or-draft definition/token', 'fixture');
+    return selected.definition;
+  };
+  const ids = (definition) => definition.nodes.map((node) => node.id).sort();
+  async function hitHistory(direction, options = {}) {
+    const point = await button(direction).evaluate((el, top) => {
+      const r = el.getBoundingClientRect();
+      const x = r.x + r.width / 2;
+      const hits = (y) => el.contains(document.elementFromPoint(x, y));
+      const y0 = Math.ceil(r.top);
+      const y = top ? [y0 - 1, y0, y0 + 1].find((row) => hits(row) && !hits(row - 1)) : r.y + r.height / 2;
+      return typeof y === 'number' && hits(y) ? { x, y } : null;
+    }, Boolean(options.top));
+    check(point, direction + ' target row inaccessible');
+    const position = options.point ?? point;
+    const before = await snapshot();
+    notes.push({ label: 'fixed-input-point', direction, options, position, before });
+    if (options.enabled) check(before.directions[direction === 'undo' ? 0 : 1].disabled !== 'true', direction + ' must be enabled before the first press', 'fixture');
+    if (options.tap) return page.touchscreen.tap(position.x, position.y);
+    await page.mouse.move(position.x, position.y);
+    await page.mouse.down();
+    try { await wait(options.hold ?? 40); } finally { await page.mouse.up(); }
+  }
+  async function addScript() {
+    const palette = page.getByRole('button', { name: 'Add Script node', exact: true }).first();
+    if (coarse) await palette.tap({ timeout: 10000 });
+    else await palette.click({ timeout: 10000 });
+  }
+  function recordAdd(previous, after) {
+    const current = def(after);
+    const prior = def(previous);
+    const added = current.nodes.filter((node) => !prior.nodes.some(({ id }) => id === node.id));
+    check(added.length === 1 && added[0].kind === 'script', 'Palette did not add exactly one Script');
+    same({ ...current, nodes: current.nodes.filter((node) => node.id !== added[0].id) }, prior,
+      'Palette edit changed earlier graph data');
+    knownAdd = current;
+  }
+  async function restored(expected, label) {
+    const present = await snapshot();
+    same(present.nodes, ids(expected), label + ' exact rendered node IDs');
+    return present;
+  }
+
+  async function focusOrder() {
+    const slot = await historySlot.evaluate((el) => {
+      return { leading: el.parentElement.firstElementChild === el,
+        order: [...el.children].map((child) => child.getAttribute('data-history')) };
+    });
+    same(slot, { leading: true, order: ['undo', 'redo'] }, 'Leading DOM history slot');
+    for (let i = 0; i < 22 && (await snapshot()).focused !== 'undo'; i++) await page.keyboard.press('Tab');
+    check((await snapshot()).focused === 'undo', 'Tab never reached Undo');
+    check((await snapshot()).directions[0].focusVisible, 'Keyboard focus indicator on Undo');
+    await page.keyboard.press('Tab');
+    check((await snapshot()).focused === 'redo', 'Redo must follow Undo in Tab order');
+    await page.keyboard.press('Tab');
+    check(await historySlot.evaluate((el) => {
+      const current = document.activeElement;
+      return el.parentElement.contains(current) && current.textContent.trim() === 'Loops';
+    }), 'Toolbar breadcrumb must follow the two history controls');
+    await page.keyboard.press('Shift+Tab');
+    check((await snapshot()).focused === 'redo', 'Reverse tab follows the same order');
+    await page.keyboard.press('Shift+Tab');
+    check((await snapshot()).focused === 'undo', 'Reverse tab returns to Undo');
+  }
+  async function historyAttributes(pristine) {
+    const f = await snapshot();
+    for (const [i, name] of ['Undo', 'Redo'].entries()) {
+      const attributes = f.directions[i];
+      check(attributes && attributes.title === attributes.name && attributes.name.startsWith(name)
+        && attributes.nativeDisabled === false && attributes.tabIndex === 0, name + ' name/title/focus invariants');
+      if (pristine) check(attributes.name === name && attributes.disabled === 'true', name + ' empty aria-disabled');
+      same(attributes.shortcuts, i === 0 ? 'Control+Z' : 'Control+Shift+Z Control+Y', name + ' shortcut metadata');
+      same(f.boxes[i].slice(2), coarse ? [44,44] : [32,32], name + ' CSS hit size');
+      check(await page.getByRole('button', {name: attributes.name, exact: true}).count() === 1, name + ' accessible name');
+    }
+    check(f.boxes[0][0] < f.boxes[1][0], 'Undo must be visually before Redo');
+    return f;
+  }
+  async function verifyPress(label, direction, minimumHold = 250) {
+    const frames = await trace(label);
+    const down = frames.find((f) => f.type === 'mousedown' && f.input.target === direction);
+    const up = frames.find((f) => f.type === 'mouseup' && down && f.t >= down.t);
+    const click = frames.find((f) => f.type === 'click' && up && f.t >= up.t);
+    check(down?.input.trusted && up?.input.trusted && click?.input.trusted, label + ' missing actual mouse events');
+    check(up.input.target === direction && click.input.target === direction, label + ' lost the click target');
+    check(up.input.x === down.input.x && up.input.y === down.input.y && up.t - down.t >= minimumHold - 5,
+      label + ' invalid pointer hold witness', 'fixture');
+    const index = direction === 'undo' ? 0 : 1;
+    const active = frames.filter((f) => f.t >= down.t && f.t <= up.t && f.directions[index]?.active);
+    check(active.length > 0, label + ' no sampled active CSS treatment', 'unwitnessed');
+    check(active.every((f) => f.directions[index].translate === 'none' && f.directions[index].transform === 'none'),
+      label + ' computed active history movement');
+    if (active[0].directions[index].disabled !== 'true') check(
+      active.some((f) => f.directions[index].border !== down.directions[index].border) ||
+        active.some((f) => f.directions[index].border !== frames.find((pre) => pre.t < down.t)?.directions[index]?.border),
+      label + ' enabled press has no sampled border treatment');
+    return frames;
+  }
+  async function samplerControl() {
+    const original = await snapshot();
+    await page.evaluate(() => new Promise((done) => {
+      requestAnimationFrame(() => {
+        const node = document.querySelector('[data-history="undo"]');
+        node.style.position = 'relative';
+        node.style.top = '1px';
+        requestAnimationFrame(() => {
+          node.style.removeProperty('position');
+          node.style.removeProperty('top');
+          done();
+        });
+      });
+    }));
+    const frames = await trace('sampler-control', false);
+    check(frames.some((f) => f.boxes[0]?.[1] === original.boxes[0][1] + 1 && f.boxes[1]?.join() === original.boxes[1].join()),
+      'Sampler missed one frame of known one-pixel motion', 'fixture');
+    same((await snapshot()).boxes, original.boxes, 'Sampler control restored the original geometry');
+  }
+  async function publish(held = true) {
+    publishGate = held ? gate() : undefined;
+    const publishButton = page.getByRole('button', { name: 'Publish', exact: true });
+    await mark('publish-held');
+    if (coarse) await publishButton.tap({ timeout: 10000 });
+    else await publishButton.click({ timeout: 10000 });
+    if (held) {
+      await until(() => publishGate.used, 'held POST publish');
+      await page.getByRole('button', { name: 'Publishing…', exact: true }).waitFor({ timeout: 10000 });
+      await wait(130);
+      publishGate.release();
+    }
+    await page.getByText('published v1', { exact: true }).waitFor({ timeout: 12000 });
+    await mark('published-current-only-visible');
+    const settled = await get();
+    out.checkpoints.push({ label: 'post-publish current-only readback', before: baseline, settled });
+    check(settled.current && !Object.hasOwn(settled, 'draft') && !Object.hasOwn(settled.loop, 'draftVersionId') && settled.loop.currentVersionId === settled.current.id, 'Publish must leave current and no draft');
+    same(settled.current.definition, def(baseline), 'Published definition exactly matches the fixture');
+    same(settled.draftToken, baseline.draftToken, 'Publishing unchanged content keeps its content token');
+    const frames = await trace('publish');
+    check((!held || frames.some((f) => f.publish === 'Publishing…')) && frames.some((f) => f.badge === 'published v1'),
+      'Sampler did not witness both publish states', 'fixture');
+    baseline = settled;
+  }
+  async function dialog(prior) {
+    const card = page.locator('.react-flow__node[data-id="work"]');
+    const modal = page.locator('dialog:modal');
+    await mark('dialog');
+    await card.click({ timeout: 10000 });
+    await modal.waitFor({ timeout: 10000 });
+    const before = await snapshot();
+    const count = writes().length;
+    for (let i = 0; i < 14; i++) {
+      await page.keyboard.press('Tab');
+      check(await modal.evaluate((dialog) => dialog.contains(document.activeElement)), 'Tab escaped modal');
+    }
+    await page.mouse.click(...before.coords[0]);
+    check(writes().length === count, 'Inert modal canvas history click wrote a draft');
+    await restored(knownAdd, 'Dialog background click inert');
+    await get().then((server) => same(def(server), def(prior), 'Inert modal kept graph'));
+    if (!await modal.isVisible()) await card.click({ timeout: 10000 });
+    const field = modal.getByRole('textbox', { name: 'Node id', exact: true });
+    // The node-id input stages text until blur. Exercise real native text undo before blur.
+    const textBefore = await field.inputValue();
+    const textWrites = writes().length;
+    await field.click({ timeout: 10000 });
+    await page.keyboard.press('End');
+    await page.keyboard.type('x');
+    same(await field.inputValue(), textBefore + 'x', 'Native text entry reached staged node-id');
+    await page.keyboard.press('Control+z');
+    same(await field.inputValue(), textBefore, 'Text field owns native Ctrl+Z');
+    await restored(knownAdd, 'Text field owns Ctrl+Z');
+    await wait(740);
+    check(writes().length === textWrites, 'Text-local undo must not write graph history');
+    same(def(await get()), def(prior), 'Text-local undo kept complete server graph');
+    const heading = modal.getByRole('heading').first();
+    await heading.focus();
+    const undo = await apply('dialog-Ctrl+Z', () => page.keyboard.press('Control+z'), prior, def(baseline));
+    check(await modal.isVisible(), 'Global history should not close the retained modal');
+    await page.keyboard.press('Escape');
+    await modal.waitFor({ state: 'hidden', timeout: 10000 });
+    check(await card.evaluate((el) => el === document.activeElement || el.contains(document.activeElement)),
+      'Modal Escape did not focus its surviving card');
+    await trace('dialog', false);
+    return undo;
+  }
+  async function normal() {
+    const resumeD1 = group === 'h-d1';
+    const first = await open(!resumeD1);
+    await historyAttributes(true);
+    if (!resumeD1) {
+      check(first.some((f) => f.validation === 'Checking…') && first.some((f) => f.validation === 'Ready to publish'),
+        'No first-paint checking/ready transition in trace', 'fixture');
+      await focusOrder();
+      await trace('focus-order');
+      await mark('disabled-top-row');
+      await hitHistory('undo', { top: true, hold: 250 });
+      await wait(740);
+      check(writes().length === 0 && (await snapshot()).focused === 'undo', 'Disabled control must keep focus without writer');
+      await restored(def(baseline), 'Disabled case');
+      await verifyPress('disabled-top-row', 'undo');
+    }
+    // D1's first paint, focus, disabled press, held Publish and 1px control already passed.
+    // Ordinary publication establishes the exact current-only baseline needed for the remaining actions.
+    await publish(!resumeD1);
+
+    let current = await apply('add Script', addScript, baseline);
+    recordAdd(baseline, current);
+    await historyAttributes(false);
+    check((await snapshot()).validation?.includes('error'), 'Valid-to-errors transition missing after adding disconnected Script');
+    await trace('validation-errors');
+
+    current = await apply('first top-row Undo', () => hitHistory('undo', { top: true, hold: 250, enabled: true }), current, def(baseline));
+    await restored(def(baseline), 'Top-row Undo');
+    await readyLabel.waitFor({ timeout: 10000 });
+    await verifyPress('top-undo', 'undo');
+    await historyAttributes(false);
+
+    current = await apply('first top-row Redo', () => hitHistory('redo', { top: true, hold: 250, enabled: true }), current, knownAdd);
+    await restored(knownAdd, 'Top-row Redo');
+    await verifyPress('top-redo', 'redo');
+
+    for (const [key, expected] of [
+      ['Control+z', def(baseline)], ['Control+Shift+z', knownAdd], ['Control+z', def(baseline)], ['Control+y', knownAdd],
+    ]) current = await apply(key, () => page.keyboard.press(key), current, expected);
+    await trace('shortcut-sequence');
+
+    await button('undo').focus();
+    current = await apply('held Space Undo', async () => {
+      await page.keyboard.down('Space');
+      try { await wait(250); } finally { await page.keyboard.up('Space'); }
+    }, current, def(baseline));
+    const keyboard = await trace('keyboard-space');
+    const spaceDown = keyboard.find((f) => f.type === 'keydown' && f.input.key === ' ' && f.input.trusted);
+    const spaceUp = keyboard.find((f) => f.type === 'keyup' && f.input.key === ' ' && f.input.trusted && spaceDown && f.t >= spaceDown.t);
+    check(spaceDown && spaceUp && spaceUp.t - spaceDown.t >= 245, 'No trusted 250ms Space hold');
+    check(keyboard.some((f) => f.directions[0]?.active) && keyboard.every((f) =>
+      !f.directions[0]?.active || (f.directions[0].translate === 'none' && f.directions[0].transform === 'none')), 'No stationary Space-held CSS witness');
+    await button('redo').focus();
+    current = await apply('Enter Redo', () => page.keyboard.press('Enter'), current, knownAdd);
+    await trace('keyboard-enter');
+
+    if (coarse) {
+      current = await apply('coarse tap Undo', () => hitHistory('undo', { tap: true }), current, def(baseline));
+      const tapped = await trace('coarse-tap');
+      check(tapped.some((f) => f.type === 'pointerdown' && f.input.pointer === 'touch' && f.input.trusted), 'No native touch tap event');
+      current = await apply('coarse tap Redo', () => hitHistory('redo', { tap: true }), current, knownAdd);
+      const redoTap = await trace('coarse-redo');
+      check(redoTap.some((f) => f.type === 'pointerdown' && f.input.pointer === 'touch' && f.input.trusted), 'No native Redo touch tap event');
+      out.limits.push('Edge coarse touch tap is measured. Physical touch hold remains unresolved');
+    }
+
+    const prior = current;
+    putGate = gate();
+    const count = writes().length;
+    await mark('held-save');
+    await addScript();
+    await until(() => putGate.used && writes().length > count, 'held PUT request');
+    check((await snapshot()).save === 'Saving…', 'Held PUT did not reach Saving…', 'fixture');
+    const point = (await snapshot()).coords[0];
+    await page.mouse.move(...point);
+    await page.mouse.down();
+    let changed;
+    let undoCount;
+    try {
+      await wait(250);
+      putGate.release();
+      changed = await saved('held add Script', count, prior);
+      undoCount = writes().length;
+    } finally {
+      await page.mouse.up();
+    }
+    current = await saved('held-transition Undo', undoCount, changed, knownAdd);
+    const held = await verifyPress('held-put-transition', 'undo');
+    const down = held.find((f) => f.type === 'mousedown' && f.input.target === 'undo');
+    const up = held.find((f) => f.type === 'mouseup' && f.t >= down.t);
+    check(held.some((f) => f.t > down.t && f.t < up.t && f.save === 'All changes saved'),
+      'Saving to Saved did not occur during the real hold', 'unwitnessed');
+    if (['h-d1','h-r512'].includes(group)) current = await dialog(current);
+    current = await heldValidation(current);
+    return current;
+  }
+
+  async function heldValidation(prior) {
+    // Return to the valid published graph, then make one distinct valid edit through the UI.
+    // A fresh label changes the validation key; undoing an old edit can hit a cached valid key.
+    if (JSON.stringify(canonical(def(prior))) !== JSON.stringify(canonical(def(baseline)))) {
+      prior = await apply('prepare valid validation fixture', () => hitHistory('undo', { enabled: true }), prior, def(baseline));
+    }
+    await readyLabel.waitFor({timeout:10000});
+    await trace('validation-fixture-ready');
+    const card = page.locator('.react-flow__node[data-id="work"]');
+    await card.click({timeout:10000});
+    const modal = page.locator('dialog:modal');
+    await modal.waitFor({timeout:10000});
+    const label = 'Validation hold ' + crypto.randomUUID().slice(0, 7);
+    const expected = {...def(baseline), nodes:def(baseline).nodes.map(node => node.id === 'work' ? {...node,label} : node)};
+    validationGate = gate();
+    const count = writes().length;
+    await modal.getByRole('textbox', {name:'Label',exact:true}).fill(label);
+    await page.keyboard.press('Escape');
+    await modal.waitFor({state:'hidden',timeout:10000});
+    const changed = await saved('valid label before held validation', count, prior, expected);
+    await until(() => validationGate.used, 'distinct valid revision held validation');
+    check((await snapshot()).validation === 'Checking…', 'Held fresh valid validation must be Checking', 'fixture');
+    // Exclude modal inertness from the fixed-hittarget interval; retain its raw frames separately.
+    await trace('validation-edit-dialog', false);
+    await mark('validation-held-enabled-undo');
+    const position = await button('undo').evaluate(el => {
+      const r = el.getBoundingClientRect(), x = r.x + r.width/2;
+      const hit = y => el.contains(document.elementFromPoint(x,y));
+      const y0 = Math.ceil(r.top);
+      const y = [y0-1,y0,y0+1].find(row => hit(row) && !hit(row-1));
+      return y === undefined ? null : {x,y};
+    });
+    check(position && (await snapshot()).directions[0].disabled !== 'true', 'Held validation needs enabled upper-row Undo', 'fixture');
+    notes.push({label:'held validation locked upper row', position, expected, prior:changed});
+    const undoCount = writes().length;
+    await page.mouse.move(position.x,position.y);
+    await page.mouse.down();
+    try {
+      await wait(250);
+      validationGate.release();
+      await readyLabel.waitFor({timeout:10000});
+      await mark('ready-during-enabled-hold');
+    } finally { await page.mouse.up(); }
+    const undone = await saved('held-validation Undo', undoCount, changed, def(baseline));
+    const frames = await verifyPress('held-validation-transition','undo');
+    const down = frames.find(f => f.type === 'mousedown' && f.input.target === 'undo');
+    const up = frames.find(f => f.type === 'mouseup' && f.t >= down.t);
+    check(frames.some(f => f.t <= down.t && f.validation === 'Checking…') &&
+      frames.some(f => f.t > down.t && f.t < up.t && f.validation === 'Ready to publish'),
+      'Checking to Ready must visibly resolve during the enabled native hold', 'unwitnessed');
+    await restored(def(baseline), 'Held validation restored complete graph');
+    return undone;
+  }
+
+  async function inPageBanner(prefix, where) {
+    const found = await until(async () => {
+      const f = await snapshot();
+      return f.banners.find((banner) => banner.text.startsWith(prefix) && banner.where === where && banner.visible && !banner.hidden);
+    }, where + ' ' + prefix);
+    const suffix = prefix === 'You are offline' ? 'when you reconnect.' : 'when the API is reachable again.';
+    same(found.text, prefix + 'The app keeps working with what it has; saving, running, and live updates resume ' + suffix,
+      'Exact connection banner copy');
+    check(await status().count() === 1, 'Exactly one connection status role');
+    const locator = status();
+    if (typeof locator.ariaSnapshot === 'function') notes.push({ state: where, aria: await locator.ariaSnapshot() });
+    if (where === 'editor') {
+      const f = await snapshot();
+      check(found.bounds[1] >= f.toolbar[1] + f.toolbar[3] - 0.02, 'Editor banner starts below toolbar');
+    }
+    return found;
+  }
+  async function connectivity() {
+    if (group === 'http500') {
+      control = 'http500';
+      const failedValidation = await open(false, 'Validation unavailable');
+      check(requests.some((req) => req.path.endsWith('/validate') && req.status === 500), 'Missing actual validate HTTP 500');
+      check(failedValidation.every((f) => f.banners.length === 0), 'Validation HTTP 500 showed a connection banner');
+      control = 'pass';
+    }
+    await open();
+    const fail = group;
+    const prior = await apply('before fault palette edit', addScript, baseline);
+    recordAdd(baseline, prior);
+    await trace('before-fault');
+    const fixed = (await snapshot()).coords[0];
+    const count = writes().length;
+
+    if (fail === 'offline') {
+      await page.context().setOffline(true);
+      await inPageBanner('You are offline', 'editor');
+    } else if (fail === 'unreachable') control = 'abort-all';
+    else if (fail === 'put-flash') control = 'abort-put';
+    else control = 'http500';
+    await mark('fault-' + fail);
+    await hitHistory('undo', { point: {x: fixed[0], y: fixed[1]} });
+    await restored(def(baseline), 'History when fault is active');
+
+    if (fail === 'unreachable') {
+      await inPageBanner('Cannot reach the GraphGoblin API', 'editor');
+      check((await snapshot()).online, 'Transport test must keep navigator online');
+    }
+    if (fail === 'http500') await until(async () => (await snapshot()).save === 'Save failed', 'Save failed label');
+    const device = await until(async () => {
+      const value = await localDraft();
+      return value?.synced === false && value.baseToken === prior.draftToken &&
+        JSON.stringify(canonical(value.definition)) === JSON.stringify(canonical(def(baseline))) && value;
+    }, 'exact device-only Undo');
+    const pending = await get();
+    same(def(pending), def(prior), 'Fault left canonical server definition exact');
+    same(pending.draftToken, prior.draftToken, 'Fault kept canonical server token');
+    if (fail !== 'offline') {
+      await until(() => writes().slice(count).find((req) => fail === 'http500' ? req.status === 500 : req.error),
+        'browser draft fault witness');
+    }
+    const frames = await trace('active-fault');
+    if (fail === 'http500') check(frames.every((f) => f.banners.length === 0), 'HTTP 500 incorrectly classified as connectivity');
+    if (fail === 'put-flash') {
+      const flash = frames.filter((f) => f.banners.length);
+      if (!flash.length) out.limits.push('PUT-only abort witnessed but no banner frame or mutation observed');
+      check(flash.every((f) => f.banners.every((banner) => banner.where === 'editor')), 'PUT-only flash painted above toolbar');
+    }
+    out.checkpoints.push({ label: 'fault still active', pending, device, faultWrites: writes().slice(count) });
+    const restoreCount = writes().length;
+    control = 'pass';
+    if (fail === 'offline') await page.context().setOffline(false);
+    if (fail === 'offline' || fail === 'unreachable') {
+      await saved('real reconnect acknowledgement', restoreCount, prior, def(baseline));
+      await until(async () => (await snapshot()).banners.length === 0, 'banner recovery');
+    } else {
+      const addMutate = () => {
+        const loc = page.getByRole('button', {name:'Add Mutate node', exact:true}).first();
+        return coarse ? loc.tap({timeout:10000}) : loc.click({timeout:10000});
+      };
+      const recovered = await apply('ordinary later edit saves', addMutate, prior);
+      const after = def(recovered);
+      const oldIds = ids(def(baseline));
+      const fresh = after.nodes.filter((node) => !oldIds.includes(node.id));
+      check(fresh.length === 1 && fresh[0].kind === 'mutate', 'Later recovery should add one Mutate node');
+      same({...after, nodes:after.nodes.filter((node) => node.id !== fresh[0].id)}, def(baseline), 'Later edit preserved device Undo');
+    }
+    await trace('recover');
+  }
+
+  async function nav(name) {
+    const compact = page.getByRole('button', {name:'Menu',exact:true});
+    if (await compact.isVisible()) await compact.click({timeout:10000});
+    await page.getByRole('navigation', {name:'Main'}).getByRole('link', {name,exact:true}).click({timeout:10000});
+  }
+  async function ownership() {
+    // Only the previously unreached native error subphase. Other ownership transitions passed.
+    out.settings = await page.evaluate(() => ({cssViewport:[innerWidth,innerHeight],dpr:devicePixelRatio,
+      coarse:matchMedia('(pointer: coarse)').matches,theme:document.documentElement.dataset.theme,
+      rootFont:getComputedStyle(document.documentElement).fontSize}));
+    same([...out.settings.cssViewport,out.settings.dpr], config === 'd1-fine-light' ? [1440,900,1] : [512,384,2],
+      'Ownership effective viewport/DPR');
+    check(!out.settings.coarse && out.settings.theme === 'light' && out.settings.rootFont === '16px',
+      'Ownership config mismatch','fixture');
+    const name = 'QA missing escalation ' + crypto.randomUUID().slice(0,7);
+    loopId = await create(name);
+    await page.reload();
+    const entry = page.getByRole('link',{name:'Edit '+name,exact:true});
+    await entry.waitFor({timeout:12000});
+    await api('DELETE',path(loopId),204);
+    await mark('load-error-online-retry');
+    await entry.click({timeout:10000});
+    await page.getByText('Could not load loop',{exact:true}).waitFor({timeout:10000});
+    const failed = requests.filter(req => req.method === 'GET' && req.path === path(loopId) && req.status === 404);
+    check(failed.length === 2, 'Expected first real GET404 and configured one online retry', 'fixture');
+    check((await snapshot()).online, '404 retries must complete while online', 'fixture');
+    await mark('native-error-established-online');
+    await page.context().setOffline(true);
+    const banner = await inPageBanner('You are offline','shell');
+    check(await historySlot.count() === 0, 'Unavailable editor rendered claimed history');
+    await page.getByText('Could not load loop',{exact:true}).waitFor({timeout:10000});
+    out.checkpoints.push({label:'native error owns one shell status after both 404s', failed, banner});
+    await trace('ownership-native-load-error',false);
+    await page.context().setOffline(false);
+    out.limits.push('Prior shell/loading/loaded/route/re-entry passes retained without rerun. Voice staging and unrelated notices remain source/component evidence only');
+  }
+
+  async function n360() {
+    await open(true);
+    await historyAttributes(true);
+    await focusOrder();
+    await publish();
+    const measurements = await historySlot.evaluate((slot) => {
+      const header = slot.closest('header');
+      const interactive = [...header.querySelectorAll('a[href],button,[role="link"]')];
+      return { viewport: innerWidth, pageWidth: document.documentElement.scrollWidth, headerWidth: header.clientWidth,
+        headerScrollable: header.scrollWidth, targets: interactive.map((node) => {
+          const rect = node.getBoundingClientRect();
+          const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+          return { text: node.textContent.trim(), x: rect.left, right: rect.right, width: rect.width,
+            centreHittable: node.contains(hit) };
+        }) };
+    });
+    out.checkpoints.push({label:'360 px clipping guard',measurements});
+    check(measurements.pageWidth <= measurements.viewport && measurements.headerScrollable <= measurements.headerWidth,
+      '360 px editor horizontally overflows ' + JSON.stringify(measurements));
+    check(measurements.targets.every((target) => target.x >= -0.02 && target.right <= measurements.viewport + 0.02 &&
+      target.centreHittable), '360 px toolbar clipped a real action ' + JSON.stringify(measurements.targets));
+    await trace('360px-guard');
+  }
+
+  try {
+    check(/^http:\/\/127\.0\.0\.1:\d+$/.test(origin) && /^http:\/\/127\.0\.0\.1:\d+$/.test(sink) &&
+      !/:474[78]$/.test(origin) && !/:474[78]$/.test(sink), 'Disposed gateway/sink only', 'fixture');
+    const health = await page.request.get(origin + '/healthz');
+    check(health.ok() && health.headers()['x-graphgoblin-pid'] === read('qa-pid'), 'Gateway identity mismatch', 'fixture');
+    const asset = await page.request.get(origin + read('qa-bundle'));
+    check(asset.ok(), 'Expected browser bundle unavailable', 'fixture');
+    await setupRequests();
+    await page.addInitScript(installProbe, theme);
+    await page.evaluate(installProbe, theme);
+    if (group.startsWith('h-')) await normal();
+    else if (group.startsWith('ownership-')) await ownership();
+    else if (group === 'n360') await n360();
+    else await connectivity();
+    await page.screenshot({path:'final.png'});
+  } catch (error) {
+    out.failure = { kind: error.kind ?? 'unclassified', message: String(error.message), stack: String(error.stack) };
+    try { await trace('first-failure', false); } catch { /* existing evidence files remain */ }
+    try { await page.screenshot({path:'first-failure.png'}); } catch { /* screenshot best effort only */ }
+  } finally {
+    for (const pending of [loadGate, putGate, validationGate, publishGate]) pending?.release();
+    await Promise.allSettled(responseReads);
+    await sinkPost('actions.json',{out,notes,phases,requests});
+  }
+  return JSON.stringify({ suite: out.suite, group, config, failure: out.failure, pageErrors: out.pageErrors,
+    summary: {geometry: out.geometry, checkpoints: out.checkpoints.map((point) => point.label), limits: out.limits } });
+}
+)(page);
+```
