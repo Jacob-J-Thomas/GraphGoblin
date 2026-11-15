@@ -1,0 +1,315 @@
+{
+  "run": {
+    "id": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+    "ownerId": "local",
+    "loopId": "01M7FTZCPPQZE1A8ES1RZGFMAR",
+    "versionId": "01M7FTZCPPQZE1A8ES1RZGFMAS",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a2-provider-template",
+      "label": "QA 381 a2-provider-template v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FTZCQNB9C1DCFR3DCQQZV4",
+    "status": "failed",
+    "currentNodeId": "mut",
+    "iteration": 1,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "qa-381-external-template",
+      "nodeId": "mut",
+      "resumable": true,
+      "details": {
+        "name": "TemplateError",
+        "stack": "TemplateError: qa-381-external-template\n    at Object.complete (file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-381-native-functional-preparation-v4/gateway.mjs:61:43)\n    at completeWithDeadline.runId (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:156:82)\n    at file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/completion-deadline.js:49:16\n    at async completeWithDeadline (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/completion-deadline.js:64:16)\n    at async repairValue (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:156:32)\n    at async runMutations (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:193:26)\n    at async Object.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/mutate.js:5:27)\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)"
+      }
+    },
+    "createdAt": "2026-11-15T14:49:56.213Z",
+    "startedAt": "2026-11-15T14:49:56.222Z",
+    "finishedAt": "2026-11-15T14:49:56.278Z",
+    "finalizedAt": "2026-11-15T14:49:56.283Z",
+    "lastEventSeq": 6,
+    "recovery": {
+      "observedSeq": 6,
+      "resume": {
+        "allowed": true
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+      "seq": 1,
+      "ts": "2026-11-15T14:49:56.213Z",
+      "type": "run.queued",
+      "versionId": "01M7FTZCPPQZE1A8ES1RZGFMAS",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a2-provider-template",
+        "label": "QA 381 a2-provider-template v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+          "loopId": "01M7FTZCPPQZE1A8ES1RZGFMAR",
+          "versionId": "01M7FTZCPPQZE1A8ES1RZGFMAS",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FTZCQNB9C1DCFR3DCQQZV4",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T14:49:56.213Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+      "seq": 2,
+      "ts": "2026-11-15T14:49:56.225Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+      "seq": 3,
+      "ts": "2026-11-15T14:49:56.235Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+      "seq": 4,
+      "ts": "2026-11-15T14:49:56.244Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:56.240Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:56.240Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 3
+    },
+    {
+      "runId": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+      "seq": 5,
+      "ts": "2026-11-15T14:49:56.267Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "22fc37c4585158a7"
+    },
+    {
+      "runId": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+      "seq": 6,
+      "ts": "2026-11-15T14:49:56.276Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "qa-381-external-template",
+        "nodeId": "mut",
+        "resumable": true,
+        "details": {
+          "name": "TemplateError",
+          "stack": "TemplateError: qa-381-external-template\n    at Object.complete (file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-381-native-functional-preparation-v4/gateway.mjs:61:43)\n    at completeWithDeadline.runId (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:156:82)\n    at file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/completion-deadline.js:49:16\n    at async completeWithDeadline (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/completion-deadline.js:64:16)\n    at async repairValue (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:156:32)\n    at async runMutations (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:193:26)\n    at async Object.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/mutate.js:5:27)\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)"
+        }
+      }
+    }
+  ],
+  "raw": {
+    "rows": [
+      {
+        "id": "01M7FTZCQNB9C1DCFR3DCQQZV3",
+        "status": "failed",
+        "current_node_id": "mut",
+        "version_id": "01M7FTZCPPQZE1A8ES1RZGFMAS",
+        "failure": "{\"code\":\"INTERNAL_ERROR\",\"message\":\"qa-381-external-template\",\"nodeId\":\"mut\",\"resumable\":true,\"details\":{\"name\":\"TemplateError\",\"stack\":\"TemplateError: qa-381-external-template\\n    at Object.complete (file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-381-native-functional-preparation-v4/gateway.mjs:61:43)\\n    at completeWithDeadline.runId (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:156:82)\\n    at file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/completion-deadline.js:49:16\\n    at async completeWithDeadline (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/completion-deadline.js:64:16)\\n    at async repairValue (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:156:32)\\n    at async runMutations (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:193:26)\\n    at async Object.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/mutate.js:5:27)\\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)\"}}",
+        "result": null,
+        "last_event_seq": 6,
+        "finalized_at": "2026-11-15T14:49:56.283Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T14:49:56.213Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FTZCPPQZE1A8ES1RZGFMAS\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a2-provider-template\",\"label\":\"QA 381 a2-provider-template v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FTZCQNB9C1DCFR3DCQQZV3\",\"loopId\":\"01M7FTZCPPQZE1A8ES1RZGFMAR\",\"versionId\":\"01M7FTZCPPQZE1A8ES1RZGFMAS\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FTZCQNB9C1DCFR3DCQQZV4\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T14:49:56.213Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T14:49:56.225Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T14:49:56.235Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T14:49:56.244Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:56.240Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:56.240Z\"}}],\"route\":\"out\",\"durationMs\":3}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T14:49:56.267Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"22fc37c4585158a7\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T14:49:56.276Z",
+        "type": "run.failed",
+        "node_id": null,
+        "payload": "{\"failure\":{\"code\":\"INTERNAL_ERROR\",\"message\":\"qa-381-external-template\",\"nodeId\":\"mut\",\"resumable\":true,\"details\":{\"name\":\"TemplateError\",\"stack\":\"TemplateError: qa-381-external-template\\n    at Object.complete (file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-381-native-functional-preparation-v4/gateway.mjs:61:43)\\n    at completeWithDeadline.runId (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:156:82)\\n    at file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/completion-deadline.js:49:16\\n    at async completeWithDeadline (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/completion-deadline.js:64:16)\\n    at async repairValue (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:156:32)\\n    at async runMutations (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:193:26)\\n    at async Object.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/mutate.js:5:27)\\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)\"}}}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FTZCQNB9C1DCFR3DCQQZV3"
+      }
+    ]
+  }
+}

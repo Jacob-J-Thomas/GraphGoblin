@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine
+      Coverage enabled with v8
+
+ ❯ src/handlers/claude.test.ts (38 tests | 2 failed) 2961ms
+   ❯ inference consumption keeps engine failures and cleans up both harness families (16)
+     × preserves codex session persistence errors as INTERNAL_ERROR and cancels 131ms
+     × preserves claude session persistence errors as INTERNAL_ERROR and cancels 34ms
+ ❯ src/adversarial.test.ts (42 tests | 1 failed) 3109ms
+   ❯ adversarial engine invariants (42)
+     × ADV-015: a child that failed before its parent parks wakes the parent 122ms
+ ❯ src/finalization.test.ts (44 tests | 1 failed) 4835ms
+   × terminal append survives crash before status: mutate-error 69ms
+ ❯ src/prompt-provenance.test.ts (19 tests | 1 failed) 2418ms
+   ❯ prompt provenance through RunManager and the fake harness (19)
+     × retains the task when session bookkeeping fails before invoking the harness 192ms
+ ❯ src/prompt-recovery.test.ts (11 tests | 2 failed) 2413ms
+   ❯ D-022 inherited-session recovery (11)
+     × does not authorize inherited resume-previous continuation when persisting acceptance fails 146ms
+     × does not authorize inherited resume-named continuation when persisting acceptance fails 72ms
+ ❯ src/handlers/inference-boundaries.test.ts (22 tests | 4 failed) 2336ms
+   × retains codex repair intent across append refusal afterCommit=false 129ms
+   × retains codex repair intent across append refusal afterCommit=true 36ms
+   × retains claude repair intent across append refusal afterCommit=false 29ms
+   × retains claude repair intent across append refusal afterCommit=true 65ms
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+
+ Test Files  6 failed | 60 passed (66)
+      Tests  11 failed | 1801 passed (1812)
+   Start at  09:42:17
+   Duration  52.75s (tests 52%, import 39%, transform 8%, worker 1%)
+
+    Isolate  66 workers spawned · ~663ms startup each (spawn + environment, per file)
+             at least ~3.31s faster with isolate: false — reuses workers across files instead of one per file
+

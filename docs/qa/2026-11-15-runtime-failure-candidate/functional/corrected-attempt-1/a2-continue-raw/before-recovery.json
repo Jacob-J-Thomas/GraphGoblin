@@ -1,0 +1,424 @@
+{
+  "run": {
+    "id": "01M7FYSYWPRP8KGGE16H75SH0D",
+    "ownerId": "local",
+    "loopId": "01M7FYSYVT2NZ5YB3MA9PT04SR",
+    "versionId": "01M7FYSYVT2NZ5YB3MA9PT04SS",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a2-continue-raw",
+      "label": "QA 381 a2-continue-raw v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FYSYWPRP8KGGE16H75SH0E",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": {
+      "qaBefore": true,
+      "qaRaw": {
+        "ok": "yes"
+      },
+      "qaClean": {
+        "ok": "yes"
+      },
+      "qaAfter": true
+    },
+    "createdAt": "2026-11-15T15:56:52.502Z",
+    "startedAt": "2026-11-15T15:56:52.512Z",
+    "finishedAt": "2026-11-15T15:56:52.587Z",
+    "finalizedAt": "2026-11-15T15:56:52.595Z",
+    "lastEventSeq": 11,
+    "recovery": {
+      "observedSeq": 11,
+      "resume": {
+        "allowed": false,
+        "code": "RUN_FINISHED",
+        "message": "This run has finished. Resume only continues paused runs or supported failures."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 1,
+      "ts": "2026-11-15T15:56:52.502Z",
+      "type": "run.queued",
+      "versionId": "01M7FYSYVT2NZ5YB3MA9PT04SS",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a2-continue-raw",
+        "label": "QA 381 a2-continue-raw v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FYSYWPRP8KGGE16H75SH0D",
+          "loopId": "01M7FYSYVT2NZ5YB3MA9PT04SR",
+          "versionId": "01M7FYSYVT2NZ5YB3MA9PT04SS",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FYSYWPRP8KGGE16H75SH0E",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T15:56:52.502Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 2,
+      "ts": "2026-11-15T15:56:52.516Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 3,
+      "ts": "2026-11-15T15:56:52.526Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 4,
+      "ts": "2026-11-15T15:56:52.532Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T15:56:52.531Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T15:56:52.531Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 5,
+      "ts": "2026-11-15T15:56:52.547Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "7b7796b3a30a8ab1"
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 6,
+      "ts": "2026-11-15T15:56:52.555Z",
+      "type": "node.finished",
+      "nodeId": "mut",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/vars/qaBefore",
+          "value": true
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaRaw",
+          "value": {
+            "ok": "yes"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaClean",
+          "value": {
+            "ok": "yes"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaAfter",
+          "value": true
+        }
+      ],
+      "route": "out",
+      "durationMs": 3
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 7,
+      "ts": "2026-11-15T15:56:52.577Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "1edff379ce4c418b"
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 8,
+      "ts": "2026-11-15T15:56:52.582Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 9,
+      "ts": "2026-11-15T15:56:52.582Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 10,
+      "ts": "2026-11-15T15:56:52.582Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": {
+        "qaBefore": true,
+        "qaRaw": {
+          "ok": "yes"
+        },
+        "qaClean": {
+          "ok": "yes"
+        },
+        "qaAfter": true
+      }
+    },
+    {
+      "runId": "01M7FYSYWPRP8KGGE16H75SH0D",
+      "seq": 11,
+      "ts": "2026-11-15T15:56:52.593Z",
+      "type": "return.delivered",
+      "channel": {
+        "kind": "caller"
+      },
+      "target": "run.result"
+    }
+  ],
+  "raw": {
+    "rows": [
+      {
+        "id": "01M7FYSYWPRP8KGGE16H75SH0D",
+        "status": "succeeded",
+        "current_node_id": null,
+        "version_id": "01M7FYSYVT2NZ5YB3MA9PT04SS",
+        "failure": null,
+        "result": "{\"qaBefore\":true,\"qaRaw\":{\"ok\":\"yes\"},\"qaClean\":{\"ok\":\"yes\"},\"qaAfter\":true}",
+        "last_event_seq": 11,
+        "finalized_at": "2026-11-15T15:56:52.595Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T15:56:52.502Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FYSYVT2NZ5YB3MA9PT04SS\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a2-continue-raw\",\"label\":\"QA 381 a2-continue-raw v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FYSYWPRP8KGGE16H75SH0D\",\"loopId\":\"01M7FYSYVT2NZ5YB3MA9PT04SR\",\"versionId\":\"01M7FYSYVT2NZ5YB3MA9PT04SS\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FYSYWPRP8KGGE16H75SH0E\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T15:56:52.502Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T15:56:52.516Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T15:56:52.526Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T15:56:52.532Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T15:56:52.531Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T15:56:52.531Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T15:56:52.547Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"7b7796b3a30a8ab1\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T15:56:52.555Z",
+        "type": "node.finished",
+        "node_id": "mut",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/vars/qaBefore\",\"value\":true},{\"op\":\"add\",\"path\":\"/vars/qaRaw\",\"value\":{\"ok\":\"yes\"}},{\"op\":\"add\",\"path\":\"/vars/qaClean\",\"value\":{\"ok\":\"yes\"}},{\"op\":\"add\",\"path\":\"/vars/qaAfter\",\"value\":true}],\"route\":\"out\",\"durationMs\":3}"
+      },
+      {
+        "seq": 7,
+        "ts": "2026-11-15T15:56:52.577Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"1edff379ce4c418b\"}"
+      },
+      {
+        "seq": 8,
+        "ts": "2026-11-15T15:56:52.582Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "seq": 9,
+        "ts": "2026-11-15T15:56:52.582Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":1}"
+      },
+      {
+        "seq": 10,
+        "ts": "2026-11-15T15:56:52.582Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":{\"qaBefore\":true,\"qaRaw\":{\"ok\":\"yes\"},\"qaClean\":{\"ok\":\"yes\"},\"qaAfter\":true}}"
+      },
+      {
+        "seq": 11,
+        "ts": "2026-11-15T15:56:52.593Z",
+        "type": "return.delivered",
+        "node_id": null,
+        "payload": "{\"channel\":{\"kind\":\"caller\"},\"target\":\"run.result\"}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FYSYWPRP8KGGE16H75SH0D"
+      }
+    ]
+  }
+}

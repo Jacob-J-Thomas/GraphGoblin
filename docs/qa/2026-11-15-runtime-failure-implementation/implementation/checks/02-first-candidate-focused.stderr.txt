@@ -1,0 +1,53 @@
+$ vitest run src/handlers/mutation-failures.test.ts src/handlers/exit.test.ts src/edge-cases.test.ts src/awaited-children.test.ts src/handlers/inference-evidence-matrix.test.ts src/handlers/flow.test.ts src/child-failure-parity.test.ts src/run-manager.test.ts src/repair-deadline.test.ts src/structured-deadline.test.ts src/script-recovery.test.ts src/script-stop.test.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/edge-cases.test.ts > run manager edge cases > turns unexpected handler failures into internal errors, including non-Error throws and invalid patches
+AssertionError: expected { code: 'INTERNAL_ERROR', …(3) } to match object { code: 'INTERNAL_ERROR', …(2) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "details": null,
+-   "message": "boom",
++   "message": "An unexpected error interrupted the run. See the server logs for this run.",
+  }
+
+ ❯ src/edge-cases.test.ts:419:51
+    417|     });
+    418|     await manager.waitForIdle();
+    419|     expect((await ports.runs.get(a.id))?.failure).toMatchObject({
+       |                                                   ^
+    420|       code: 'INTERNAL_ERROR',
+    421|       message: 'boom',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/run-manager.test.ts > failure and recovery > fails on a missing edge as an internal error and can be inspected
+AssertionError: expected 'node start selected a route without a…' to match /no edge/
+
+- Expected:
+/no edge/
+
++ Received:
+"node start selected a route without an outgoing edge"
+
+ ❯ src/run-manager.test.ts:446:34
+    444|     expect(run.status).toBe('failed');
+    445|     expect(run.failure?.code).toBe('INTERNAL_ERROR');
+    446|     expect(run.failure?.message).toMatch(/no edge/);
+       |                                  ^
+    447|   });
+    448|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261115-runtime\GraphGoblin\packages\engine
+

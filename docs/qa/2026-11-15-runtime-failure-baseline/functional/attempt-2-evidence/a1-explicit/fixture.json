@@ -1,0 +1,124 @@
+{
+  "test": {
+    "id": "a1-explicit",
+    "tier": "native",
+    "inspector": true,
+    "resume": "rest",
+    "ops": [
+      {
+        "op": "set",
+        "path": "/vars/qaBefore",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaAnswer",
+        "value": {
+          "kind": "expression",
+          "jsonata": "$error(\"author-QA-381\")"
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaAfter",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      }
+    ],
+    "expect": {
+      "status": "failed",
+      "index": 1,
+      "op": "set",
+      "kind": "expression",
+      "cause": "author-QA-381"
+    }
+  },
+  "definition": {
+    "schemaVersion": 4,
+    "name": "QA 381 a1-explicit",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "mut",
+        "kind": "mutate",
+        "label": "QA mutation",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/qaBefore",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaAnswer",
+              "value": {
+                "kind": "expression",
+                "jsonata": "$error(\"author-QA-381\")"
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaAfter",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "outcome": "success",
+          "returns": "vars",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "mut"
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "mut",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  }
+}

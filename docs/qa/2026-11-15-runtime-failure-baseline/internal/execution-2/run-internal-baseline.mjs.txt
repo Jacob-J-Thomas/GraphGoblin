@@ -1,0 +1,257 @@
+import assert from 'node:assert/strict';
+import { once } from 'node:events';
+import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { mkdir, open, readFile, realpath, stat } from 'node:fs/promises';
+import { dirname, isAbsolute, join, relative, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const expected = {
+  'cases.mjs': 'ca28bf290133dec3a3e8572815c6d5c010f85fa8a87cf134f11bfafffa5640ce',
+  'run.mjs': 'f9c2a36e098a1fc9d4c72a5b4b9cf88396a4991293916eecbbadf4418c2e1dae',
+  'README.md': '97b2c6751abe3deadb5523141cd72eae08dded69b819fd9903a61c15913ce58e',
+  'binding.mjs': '9c864554d2c38357369b4bd826063d49d4b2a27431bfb3d4082d7892628c41f6',
+};
+const expectedInputSha256 = 'aa43b38cbc04d77c96cf1ceeaf137102724d38eedbb0bbc6b10187695bd30c3a';
+const expectedBindingSha256 = 'aaffb09b4e656487d84a8eadafaaea0843df9eb2427c595f2c4aaa0972a6f9ad';
+const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const fileHash = async (path) => sha256(await readFile(path));
+const scriptDir = await realpath(dirname(fileURLToPath(import.meta.url)));
+const batch = await realpath(dirname(scriptDir));
+const internalDir = await realpath(join(batch, 'runtime-381-native-internal-preparation'));
+const functionalV3 = await realpath(join(batch, 'runtime-381-native-functional-preparation-v3'));
+const runnerPath = join(internalDir, 'run.mjs');
+const inputPath = join(batch, 'runtime-381-baseline-build-input.json');
+const bindingPath = join(batch, 'runtime-381-baseline-build-binding.json');
+const bindingModulePath = join(functionalV3, 'binding.mjs');
+const admissionPath = join(batch, 'runtime-381-internal-baseline-admission-2.json');
+const evidenceName = 'evidence-baseline-first';
+const evidencePath = join(internalDir, evidenceName);
+const artifactPaths = ['launch.json', 'stdout.log', 'stderr.log', 'execution.json', 'temp'];
+
+function contained(base, path) {
+  const tail = relative(base, path);
+  return tail !== '' && !isAbsolute(tail) && tail !== '..' && !tail.startsWith('..' + sep);
+}
+function parseJson(bytes, label) {
+  try { return JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/u, '')); }
+  catch (error) { throw new Error(label + ': ' + error.message); }
+}
+function fileHashBeforeImport(path) {
+  return readFile(path).then(sha256);
+}
+
+// Verify the exact frozen code before importing the capture helpers from binding.mjs.
+const preImportPaths = {
+  'cases.mjs': join(internalDir, 'cases.mjs'),
+  'run.mjs': runnerPath,
+  'README.md': join(internalDir, 'README.md'),
+  'binding.mjs': bindingModulePath,
+};
+const preImportHashes = {};
+for (const [name, path] of Object.entries(preImportPaths)) {
+  const actual = await fileHashBeforeImport(path);
+  assert.equal(actual, expected[name], 'Frozen harness SHA-256 mismatch: ' + name);
+  preImportHashes[name] = actual;
+}
+assert.equal(await fileHashBeforeImport(inputPath), expectedInputSha256, 'Baseline build input changed');
+assert.equal(await fileHashBeforeImport(bindingPath), expectedBindingSha256, 'Baseline build binding changed');
+
+const admissionSha256 = process.argv[2];
+assert.match(admissionSha256 ?? '', /^[a-f0-9]{64}$/u, 'Pass the root-admitted internal baseline admission SHA-256');
+assert.equal(await fileHashBeforeImport(admissionPath), admissionSha256, 'Root admission SHA-256 mismatch');
+const admissionRaw = await readFile(admissionPath);
+const admissionForGate = parseJson(admissionRaw, 'Internal baseline admission');
+assert.equal(admissionForGate.state, 'root-admitted');
+assert.equal(admissionForGate.phase, 'baseline');
+assert.equal(admissionForGate.attempt, 'baseline-attempt-1');
+assert.equal(admissionForGate.evidenceName, evidenceName);
+assert.equal(admissionForGate.bindingSha256, expectedBindingSha256);
+assert.equal(admissionForGate.buildInputSha256, expectedInputSha256);
+assert.deepEqual(admissionForGate.harness, expected);
+assert.equal(admissionForGate.retainOption ?? null, null, 'Do not retain the A5 repair store');
+assert.equal(admissionForGate.retryAllowed ?? false, false, 'This first attempt is not retried');
+
+const { capture, json, hash, save, batch: bindingBatch } = await import(pathToFileURL(bindingModulePath).href);
+assert.equal(await realpath(bindingBatch), batch);
+assert.equal(await hash(bindingModulePath), expected['binding.mjs']);
+const buildInput = await json(inputPath);
+const previousBinding = await json(bindingPath);
+assert.equal(buildInput.head, 'f91bd69b79dc417a2997ddb9c7670cb33df7597c');
+assert.equal(buildInput.main, buildInput.head);
+assert.equal(buildInput.tree, 'c5d6d7f505e52b5ccf07b4bcb791777761dc45df');
+assert.equal(await realpath(buildInput.checkout), await realpath(join(batch, '..', '..', '.codex', 'worktrees', 'gg-20261115-runtime', 'GraphGoblin')));
+assert.equal(previousBinding.schema, 'gg381-build-binding/v1');
+assert.equal(await hash(inputPath), expectedInputSha256);
+assert.equal(await hash(bindingPath), expectedBindingSha256);
+
+const preCapture = await capture(buildInput);
+assert.deepEqual(preCapture, previousBinding, 'Pre-run capture differs from the admitted baseline binding');
+const preSummary = {
+  capturedAt: new Date().toISOString(),
+  bindingSha256: expectedBindingSha256,
+  inputSha256: expectedInputSha256,
+  deepEqualToAdmittedBinding: true,
+  sourceFileCount: Object.keys(preCapture.source).length,
+  outputFileCount: Object.keys(preCapture.output).length,
+  outputTrees: preCapture.roots,
+};
+assert.equal(preSummary.sourceFileCount, 27595);
+assert.equal(preSummary.outputFileCount, 1227);
+for (const path of [evidencePath, ...artifactPaths.map((name) => join(scriptDir, name))]) {
+  await assert.rejects(stat(path), { code: 'ENOENT' }, 'Refuse a reused baseline output: ' + path);
+}
+assert(contained(batch, scriptDir) && contained(batch, evidencePath));
+
+const nodePath = await realpath(buildInput.nodePath);
+assert.equal(await realpath(process.execPath), nodePath);
+assert.equal(process.version, 'v22.23.4');
+const windowsRoot = process.env.SystemRoot ?? process.env.WINDIR;
+assert(windowsRoot && /^[A-Za-z]:\\/u.test(windowsRoot));
+const system32 = join(windowsRoot, 'System32');
+const tempDir = join(scriptDir, 'temp');
+const childEnv = {
+  SystemRoot: windowsRoot,
+  WINDIR: windowsRoot,
+  PATH: [dirname(nodePath), system32, windowsRoot].join(';'),
+  TEMP: tempDir,
+  TMP: tempDir,
+};
+assert.equal(Object.hasOwn(childEnv, 'NODE_OPTIONS'), false);
+
+const captureProcessIdentity = (pid) => {
+  const powershell = join(windowsRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const command = [
+    "$ErrorActionPreference = 'Stop'",
+    '$qaPid = [int][Console]::In.ReadLine()',
+    '$qaProcess = Get-CimInstance -ClassName Win32_Process -Filter ("ProcessId = $qaPid")',
+    'if ($null -eq $qaProcess) { [ordered]@{ found = $false; processId = $qaPid } | ConvertTo-Json -Compress; exit 0 }',
+    '[ordered]@{ found = $true; processId = $qaProcess.ProcessId; creationDate = $qaProcess.CreationDate; executablePath = $qaProcess.ExecutablePath; commandLine = $qaProcess.CommandLine } | ConvertTo-Json -Compress',
+  ].join('\n');
+  const encoded = Buffer.from(command, 'utf16le').toString('base64');
+  const result = spawnSync(powershell, ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', encoded], {
+    input: String(pid) + '\n', encoding: 'utf8', windowsHide: true, timeout: 5000, maxBuffer: 32768,
+    env: childEnv,
+  });
+  assert.equal(result.error, undefined, 'Process identity query failed');
+  assert.equal(result.status, 0, 'Process identity query exit');
+  return JSON.parse(result.stdout.trim());
+};
+await mkdir(tempDir);
+const supervisorIdentity = captureProcessIdentity(process.pid);
+assert.equal(supervisorIdentity.found, true);
+assert.equal(supervisorIdentity.processId, process.pid);
+assert.equal(await realpath(supervisorIdentity.executablePath), nodePath);
+
+const launch = {
+  schema: 'gg381-internal-baseline-launch/v1',
+  admittedAt: admissionForGate.at ?? null,
+  launchedAt: new Date().toISOString(),
+  admissionPath,
+  admissionSha256,
+  evidenceName,
+  harness: preImportHashes,
+  buildInputSha256: expectedInputSha256,
+  bindingSha256: expectedBindingSha256,
+  preCapture: preSummary,
+  supervisor: { pid: process.pid, creationDate: supervisorIdentity.creationDate, executablePath: supervisorIdentity.executablePath },
+  command: [nodePath, '--expose-gc', runnerPath, 'baseline', buildInput.checkout, evidenceName],
+  cwd: internalDir,
+  childEnvironment: childEnv,
+  nodeOptionsPresent: false,
+  optionalRetainArgument: null,
+  retriesAllowed: false,
+};
+const stdoutFile = await open(join(scriptDir, 'stdout.log'), 'wx');
+const stderrFile = await open(join(scriptDir, 'stderr.log'), 'wx');
+await save(join(scriptDir, 'launch.json'), launch);
+
+const childArgs = ['--expose-gc', runnerPath, 'baseline', buildInput.checkout, evidenceName];
+const child = spawn(nodePath, childArgs, {
+  cwd: internalDir, env: childEnv, stdio: ['ignore', stdoutFile.fd, stderrFile.fd], shell: false, windowsHide: true,
+});
+const childClosed = new Promise((resolveClose) => child.once('close', (code, signal) => resolveClose([code, signal])));
+let spawnError = null;
+let childIdentity = null;
+child.on('error', (error) => { spawnError ??= { message: error.message, stack: error.stack }; });
+try {
+  await once(child, 'spawn');
+  childIdentity = captureProcessIdentity(child.pid);
+  assert.equal(childIdentity.found, true);
+  assert.equal(childIdentity.processId, child.pid);
+  assert.equal(await realpath(childIdentity.executablePath), nodePath);
+} catch (error) {
+  spawnError ??= { message: error.message, stack: error.stack };
+  if (child.pid && child.exitCode === null && child.signalCode === null) child.kill();
+}
+const [exitCode, signal] = await childClosed;
+await Promise.all([stdoutFile.sync(), stderrFile.sync()]);
+await Promise.all([stdoutFile.close(), stderrFile.close()]);
+
+let postCapture = null;
+let postCaptureError = null;
+try {
+  postCapture = await capture(buildInput);
+  assert.deepEqual(postCapture, preCapture, 'Source/build binding changed during the baseline attempt');
+  assert.deepEqual(await json(bindingPath), preCapture, 'Baseline binding file changed during the attempt');
+} catch (error) {
+  postCaptureError = { message: error.message, stack: error.stack };
+}
+const postHarnessHashes = {};
+for (const [name, path] of Object.entries(preImportPaths)) postHarnessHashes[name] = await hash(path);
+assert.deepEqual(postHarnessHashes, preImportHashes, 'Frozen harness changed during the attempt');
+assert.equal(await hash(inputPath), expectedInputSha256, 'Build input changed during the attempt');
+assert.equal(await hash(bindingPath), expectedBindingSha256, 'Build binding changed during the attempt');
+
+let runner = null;
+let summary = null;
+let evidenceReadError = null;
+const summaryPath = join(evidencePath, 'summary.json');
+try {
+  runner = await json(join(evidencePath, 'runner.json'));
+  summary = await json(summaryPath);
+  assert.equal(runner.runner.pid, child.pid, 'Runner PID differs from the spawned process');
+  assert.equal(runner.runner.node, process.version);
+  assert.equal(await realpath(runner.runner.executable), nodePath);
+  assert.deepEqual(summary.runner, runner.runner, 'Runner identity differs between initial and final receipts');
+} catch (error) {
+  evidenceReadError = { message: error.message, stack: error.stack };
+}
+let afterIdentity = null;
+let afterIdentityError = null;
+try { afterIdentity = captureProcessIdentity(child.pid); }
+catch (error) { afterIdentityError = { message: error.message, stack: error.stack }; }
+const execution = {
+  schema: 'gg381-internal-baseline-execution/v1',
+  completedAt: new Date().toISOString(),
+  phase: 'baseline',
+  evidenceName,
+  command: launch.command,
+  admissionSha256,
+  child: {
+    pid: child.pid ?? null,
+    creationDate: childIdentity?.creationDate ?? null,
+    executablePath: childIdentity?.executablePath ?? null,
+    commandLine: childIdentity?.commandLine ?? null,
+    afterExitIdentity: afterIdentity,
+    sameCreationIdentityStillPresent: Boolean(afterIdentity?.found && afterIdentity.creationDate === childIdentity?.creationDate),
+    afterExitIdentityError,
+  },
+  spawnError,
+  exit: { code: exitCode, signal },
+  stdout: { path: 'stdout.log', bytes: (await stat(join(scriptDir, 'stdout.log'))).size, sha256: await hash(join(scriptDir, 'stdout.log')) },
+  stderr: { path: 'stderr.log', bytes: (await stat(join(scriptDir, 'stderr.log'))).size, sha256: await hash(join(scriptDir, 'stderr.log')) },
+  runner: runner ? runner.runner : null,
+  summaryPath: summary ? 'runtime-381-native-internal-preparation/' + evidenceName + '/summary.json' : null,
+  summarySha256: summary ? await hash(summaryPath) : null,
+  firstFailure: summary?.error ?? null,
+  runResults: summary?.results ?? null,
+  cleanupErrors: summary?.cleanupErrors ?? null,
+  prePostCaptureDeepEqual: postCapture !== null && postCaptureError === null,
+  postCaptureError,
+  evidenceReadError,
+  postHarnessHashes,
+  outcome: exitCode === 0 && !signal && !spawnError && !postCaptureError && !evidenceReadError ? 'completed' : 'failed-or-incomplete',
+};
+await save(join(scriptDir, 'execution.json'), execution);
+if (exitCode !== 0 || signal || spawnError || postCaptureError || evidenceReadError) process.exitCode = exitCode && exitCode > 0 ? exitCode : 1;

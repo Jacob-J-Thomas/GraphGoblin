@@ -1,0 +1,7 @@
+## Runtime failure lane — #381 incorporating #414
+
+Candidate source `615d50bc358d73bc55ad0591f4f625f1a46cb671` is frozen locally on parent `f91bd69b79dc417a2997ddb9c7670cb33df7597c`. Root accepted the bounded candidate functional packet (18 observations) and internal packet (13 observations); both one-shot harnesses and supervisors exited 0, and both owned fixtures were cleaned up. The build bound to this source completed 12 tasks with zero Turbo cache hits. The accepted observations cover the scoped native, controlled API, inspector, SQLite, internal-fault, recovery, script, inference, and historical-projection cases described in the evidence.
+
+The [candidate packet](../qa/2026-11-15-runtime-failure-candidate/README.md) links raw evidence, source/build binding, and root readbacks. The [implementation packet](../qa/2026-11-15-runtime-failure-implementation/README.md) preserves the source handoff, initial failures, and the partial full-check result. The [baseline packet](../qa/2026-11-15-runtime-failure-baseline/README.md) preserves the red-before observations and cleanup history.
+
+This is prepublication evidence. Current-head CI and independent formal reviews remain pending; no merge or intent completion is claimed. The full local `pnpm check` did not pass. #410 stale-parent and #419 disconnect work remain outside this lane. Issue #414 was consolidated into #381; this entry does not claim that issue closure substitutes for the required evidence or delivery gates.

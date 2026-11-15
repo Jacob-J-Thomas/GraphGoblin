@@ -1,0 +1,18 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine
+
+{"kind":"output-transform","failure":{"code":"STRUCTURED_COMPLETION_TIMEOUT","message":"Structured completion exceeded its configured deadline of 50 ms","nodeId":"infer","resumable":true,"details":{"timeoutMs":50,"provenance":{"kind":"llm","provider":"codex","classifierId":null,"model":"gpt-6-luna","effort":"high"}},"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000003","submission":"delivery-uncertain","promptKind":"authored","sessionId":"fake-session-1"}}}
+{"kind":"same-session-schema","bounded":false,"elapsedMs":2000,"status":"succeeded"}
+{"kind":"same-session-schema","bounded":true,"elapsedMs":1000,"status":"failed","failure":{"code":"INFERENCE_TIMEOUT","message":"inference exceeded 1s","nodeId":"infer","resumable":true,"inference":{"visitId":"00000000000000000000000001:5","turnId":"00000000000000000000000004","submission":"delivery-uncertain","promptKind":"repair","sessionId":"fake-session-1"}}}
+ ❯ src/edge-cases.test.ts (29 tests | 1 failed) 1352ms
+   ❯ run manager edge cases (8)
+     × turns unexpected handler failures into internal errors, including non-Error throws and invalid patches 28ms
+ ❯ src/run-manager.test.ts (27 tests | 1 failed) 2076ms
+   ❯ failure and recovery (6)
+     × fails on a missing edge as an internal error and can be inspected 23ms
+
+ Test Files  2 failed | 10 passed (12)
+      Tests  2 failed | 1065 passed (1067)
+   Start at  09:27:14
+   Duration  37.88s (tests 61%, import 24%, transform 15%)
+

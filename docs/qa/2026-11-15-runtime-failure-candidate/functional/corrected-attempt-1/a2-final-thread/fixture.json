@@ -1,0 +1,104 @@
+{
+  "test": {
+    "id": "a2-final-thread",
+    "tier": "native",
+    "ops": [
+      {
+        "op": "set",
+        "path": "/vars/qaBefore",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars",
+        "value": {
+          "kind": "literal",
+          "value": 7
+        }
+      }
+    ],
+    "expect": {
+      "status": "failed",
+      "code": "INTERNAL_ERROR",
+      "resumable": false
+    }
+  },
+  "definition": {
+    "schemaVersion": 4,
+    "name": "QA 381 a2-final-thread",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "mut",
+        "kind": "mutate",
+        "label": "QA mutation",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/qaBefore",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars",
+              "value": {
+                "kind": "literal",
+                "value": 7
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "outcome": "success",
+          "returns": "vars",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "mut"
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "mut",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  }
+}

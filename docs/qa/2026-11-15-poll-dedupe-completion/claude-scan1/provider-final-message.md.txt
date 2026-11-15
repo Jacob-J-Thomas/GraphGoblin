@@ -1,0 +1,45 @@
+**Verdict: READY.** PR #484 has no introduced blocker and no numbered findings, and the review is complete. This uses formal scan 1 of the 3-scan cap. The fresh Astra max audit is still required before merge.
+
+**Admission:** I checked the admission file first and it is valid. Head, tree, target and source match the checkout. CI run 43715831258 passed on attempt 1. All four raw CI logs and the synthetic-merge record match their recorded hashes. Every job checked out tested merge `98d2bc2c`, whose tree equals the head tree and whose parents are main then head. The live remote still showed the same main, head and merge refs during the review. Routing correctly did not trigger, because it only watches `apps/web/src/editor/**` and the routing spec.
+
+**Identities**
+- Head `08651317c485062eb90367e1df3f7632f8e1a6c7`, tree `c5d6d7f505e52b5ccf07b4bcb791777761dc45df`.
+- Target `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`.
+- Source commit `420240cad27d3865988dc7009dc9d80291e93c9c`.
+- The index and worktree were clean before and after my checks.
+
+**Source review against the contract:** the code does what the brief requires.
+- **Item mode:** the whole-batch checks for invalid JSON, wrong type, blank keys and keys over 512 code units still run first. Each malformed key then becomes its own rejection, before duplicate tracking or depth checks. It never reaches lookup, admission or the run cap.
+- **Duplicates:** well-formed duplicate keys still refuse the whole batch. Repeated malformed keys are refused one by one, so they can't block later valid work.
+- **Unchanged behavior:** seen-key skipping, depth refusal, cap counting and stopping the tail on an admission failure behave as before.
+- **Single mode:** the check runs on the actual 512-unit slice, before lookup or run start. Omitted, null, undefined and empty keys still start unkeyed runs.
+- **Warnings:** both warning shapes are fixed and carry no payload or key text.
+- **Scope:** there is no new dependency, migration, stored-format change or rewrite of old records.
+- **#483:** it adds exactly two `gc` calls before the existing `rm` in two test hooks. They take effect because the API test config already passes `--expose-gc`.
+
+**My own checks** (Node 22.23.4, pnpm 12.8.1)
+- **SQLite probe:** an in-memory test with the repo's libsql client showed that a lookup for a key with a lone surrogate matches a stored key containing a literal U+FFFD, and never its own stored row. The fix prevents both that false skip and the repeated admission described in the ADR. Keys containing U+0000 compare exactly, so they are not a related defect.
+- **Predicate check:** the new well-formedness check gave the same answer as the platform's `String.isWellFormed` on 267,410 test strings, with zero mismatches.
+- **Focused tests:** one run of the three changed spec files passed: domain 9/9 and API 26/26.
+- **Expected counts:** I worked out the corrected run's expected results from its declared inputs: 15 run IDs and 20 warnings. That matches the declared expectations.
+- **Raw results:** the stored rows show 15 distinct IDs, all with well-formed keys. The logs contain exactly 20 warnings with fixed fields and no payload text. The baseline on unchanged main shows 34 IDs, with each malformed key admitted again on every poll.
+- **Evidence integrity:** every one of the 329 QA files is covered by a checksum list, and all entries verify once Windows line endings are stripped. The total is 15,572,038 bytes, as the publication receipt says. All 12 source hashes match the frozen source list.
+- **CI on the tested merge:** API 1,937 passed with 20 skipped, at 95.78% lines and 90.61% branches. Domain 460 passed, at 98.73% lines and 96.09% branches. All four new or changed specs ran.
+
+**Evidence history is reported honestly:**
+- **Original failures:** the native supervisor's original exit 1 is kept. The first local coverage run's failures are kept too: four Windows file-lock (`EBUSY`) failures, one subloop timing failure and a Vitest worker crash with an access violation (`0xC0000005`) in `cron-preview.test.ts`.
+- **Cleanup fix:** #483 doesn't explain the worker crash, and the packets don't claim it does. That crash happened before #483 existed, in an unrelated file. It matches the libsql-on-Windows crash already documented in the repo.
+- **Concurrency:** the file-SQLite race was one process only. Nothing claims cross-process evidence.
+
+**Non-blocking observations** (nothing to do in this PR)
+1. **Duplicate check functions:** the API already has its own check for event keys, and the domain now has a second one for poll keys. They behave the same and could be merged later.
+2. **User guide:** the guide and the generated field description don't mention the new malformed-key refusals. `docs/08`, the doc the repo rules require, does.
+3. **Windows-only evidence for #483:** CI runs the API tests on Linux, so the Windows file-lock fix is proven only by the local runs.
+
+**Coverage limits:** I didn't rerun the native sequence, a build, lint, typecheck, full suites or the old pre-fix runs. I relied on the kept raw evidence and on CI.
+
+The detailed report, SHA-256 `8804954d…3b55`, includes every identity, artifact hash and coverage limit. My probe scripts and their first outputs are kept separately in the `scan1-probe` folder.
+
+Files are in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-484-opus-scan1/`:
+- full-report.md
+- scan1-probe/

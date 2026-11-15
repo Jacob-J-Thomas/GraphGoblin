@@ -1,0 +1,323 @@
+{
+  "run": {
+    "id": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+    "ownerId": "local",
+    "loopId": "01M7FTZD1J1ZSC2RV1H0SSN91A",
+    "versionId": "01M7FTZD1J1ZSC2RV1H0SSN91B",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a2-schema-mismatch",
+      "label": "QA 381 a2-schema-mismatch v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FTZD2DH1MM61SG5VJ4DJD5",
+    "status": "failed",
+    "currentNodeId": "mut",
+    "iteration": 1,
+    "failure": {
+      "code": "OUTPUT_SCHEMA_MISMATCH",
+      "message": "value does not match the required schema: /ok must be boolean",
+      "nodeId": "mut",
+      "resumable": true,
+      "details": {
+        "errors": [
+          "/ok must be boolean"
+        ],
+        "value": {
+          "ok": "yes"
+        }
+      }
+    },
+    "createdAt": "2026-11-15T14:49:56.557Z",
+    "startedAt": "2026-11-15T14:49:56.566Z",
+    "finishedAt": "2026-11-15T14:49:56.616Z",
+    "finalizedAt": "2026-11-15T14:49:56.622Z",
+    "lastEventSeq": 6,
+    "recovery": {
+      "observedSeq": 6,
+      "resume": {
+        "allowed": true
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+      "seq": 1,
+      "ts": "2026-11-15T14:49:56.557Z",
+      "type": "run.queued",
+      "versionId": "01M7FTZD1J1ZSC2RV1H0SSN91B",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a2-schema-mismatch",
+        "label": "QA 381 a2-schema-mismatch v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+          "loopId": "01M7FTZD1J1ZSC2RV1H0SSN91A",
+          "versionId": "01M7FTZD1J1ZSC2RV1H0SSN91B",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FTZD2DH1MM61SG5VJ4DJD5",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T14:49:56.557Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+      "seq": 2,
+      "ts": "2026-11-15T14:49:56.570Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+      "seq": 3,
+      "ts": "2026-11-15T14:49:56.580Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+      "seq": 4,
+      "ts": "2026-11-15T14:49:56.589Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:56.585Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:56.585Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 4
+    },
+    {
+      "runId": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+      "seq": 5,
+      "ts": "2026-11-15T14:49:56.606Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "22fc37c4585158a7"
+    },
+    {
+      "runId": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+      "seq": 6,
+      "ts": "2026-11-15T14:49:56.614Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "OUTPUT_SCHEMA_MISMATCH",
+        "message": "value does not match the required schema: /ok must be boolean",
+        "nodeId": "mut",
+        "resumable": true,
+        "details": {
+          "errors": [
+            "/ok must be boolean"
+          ],
+          "value": {
+            "ok": "yes"
+          }
+        }
+      }
+    }
+  ],
+  "raw": {
+    "rows": [
+      {
+        "id": "01M7FTZD2DH1MM61SG5VJ4DJD4",
+        "status": "failed",
+        "current_node_id": "mut",
+        "version_id": "01M7FTZD1J1ZSC2RV1H0SSN91B",
+        "failure": "{\"code\":\"OUTPUT_SCHEMA_MISMATCH\",\"message\":\"value does not match the required schema: /ok must be boolean\",\"nodeId\":\"mut\",\"resumable\":true,\"details\":{\"errors\":[\"/ok must be boolean\"],\"value\":{\"ok\":\"yes\"}}}",
+        "result": null,
+        "last_event_seq": 6,
+        "finalized_at": "2026-11-15T14:49:56.622Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T14:49:56.557Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FTZD1J1ZSC2RV1H0SSN91B\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a2-schema-mismatch\",\"label\":\"QA 381 a2-schema-mismatch v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FTZD2DH1MM61SG5VJ4DJD4\",\"loopId\":\"01M7FTZD1J1ZSC2RV1H0SSN91A\",\"versionId\":\"01M7FTZD1J1ZSC2RV1H0SSN91B\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FTZD2DH1MM61SG5VJ4DJD5\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T14:49:56.557Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T14:49:56.570Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T14:49:56.580Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T14:49:56.589Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:56.585Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:56.585Z\"}}],\"route\":\"out\",\"durationMs\":4}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T14:49:56.606Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"22fc37c4585158a7\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T14:49:56.614Z",
+        "type": "run.failed",
+        "node_id": null,
+        "payload": "{\"failure\":{\"code\":\"OUTPUT_SCHEMA_MISMATCH\",\"message\":\"value does not match the required schema: /ok must be boolean\",\"nodeId\":\"mut\",\"resumable\":true,\"details\":{\"errors\":[\"/ok must be boolean\"],\"value\":{\"ok\":\"yes\"}}}}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FTZD2DH1MM61SG5VJ4DJD4"
+      }
+    ]
+  }
+}

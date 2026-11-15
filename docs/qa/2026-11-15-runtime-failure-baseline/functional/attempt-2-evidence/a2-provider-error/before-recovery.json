@@ -1,0 +1,315 @@
+{
+  "run": {
+    "id": "01M7FTZAP8RMR2RV3X3BRQEF34",
+    "ownerId": "local",
+    "loopId": "01M7FTZANBV93CHC3J42V7JHGN",
+    "versionId": "01M7FTZANBV93CHC3J42V7JHGP",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a2-provider-error",
+      "label": "QA 381 a2-provider-error v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FTZAP8RMR2RV3X3BRQEF35",
+    "status": "failed",
+    "currentNodeId": "mut",
+    "iteration": 1,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "qa-381-external-provider C:/qa-381-private-message/synthetic-repair.js",
+      "nodeId": "mut",
+      "resumable": true,
+      "details": {
+        "name": "Error",
+        "stack": "Error: qa-381-external-provider\n    at repairFixture (D:/qa-381-private-stack/synthetic-repair.js:381:17)"
+      }
+    },
+    "createdAt": "2026-11-15T14:49:54.120Z",
+    "startedAt": "2026-11-15T14:49:54.130Z",
+    "finishedAt": "2026-11-15T14:49:54.179Z",
+    "finalizedAt": "2026-11-15T14:49:54.186Z",
+    "lastEventSeq": 6,
+    "recovery": {
+      "observedSeq": 6,
+      "resume": {
+        "allowed": true
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M7FTZAP8RMR2RV3X3BRQEF34",
+      "seq": 1,
+      "ts": "2026-11-15T14:49:54.120Z",
+      "type": "run.queued",
+      "versionId": "01M7FTZANBV93CHC3J42V7JHGP",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a2-provider-error",
+        "label": "QA 381 a2-provider-error v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FTZAP8RMR2RV3X3BRQEF34",
+          "loopId": "01M7FTZANBV93CHC3J42V7JHGN",
+          "versionId": "01M7FTZANBV93CHC3J42V7JHGP",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FTZAP8RMR2RV3X3BRQEF35",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T14:49:54.120Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FTZAP8RMR2RV3X3BRQEF34",
+      "seq": 2,
+      "ts": "2026-11-15T14:49:54.133Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FTZAP8RMR2RV3X3BRQEF34",
+      "seq": 3,
+      "ts": "2026-11-15T14:49:54.144Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FTZAP8RMR2RV3X3BRQEF34",
+      "seq": 4,
+      "ts": "2026-11-15T14:49:54.151Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:54.149Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:54.149Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M7FTZAP8RMR2RV3X3BRQEF34",
+      "seq": 5,
+      "ts": "2026-11-15T14:49:54.168Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "22fc37c4585158a7"
+    },
+    {
+      "runId": "01M7FTZAP8RMR2RV3X3BRQEF34",
+      "seq": 6,
+      "ts": "2026-11-15T14:49:54.177Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "qa-381-external-provider C:/qa-381-private-message/synthetic-repair.js",
+        "nodeId": "mut",
+        "resumable": true,
+        "details": {
+          "name": "Error",
+          "stack": "Error: qa-381-external-provider\n    at repairFixture (D:/qa-381-private-stack/synthetic-repair.js:381:17)"
+        }
+      }
+    }
+  ],
+  "raw": {
+    "rows": [
+      {
+        "id": "01M7FTZAP8RMR2RV3X3BRQEF34",
+        "status": "failed",
+        "current_node_id": "mut",
+        "version_id": "01M7FTZANBV93CHC3J42V7JHGP",
+        "failure": "{\"code\":\"INTERNAL_ERROR\",\"message\":\"qa-381-external-provider C:/qa-381-private-message/synthetic-repair.js\",\"nodeId\":\"mut\",\"resumable\":true,\"details\":{\"name\":\"Error\",\"stack\":\"Error: qa-381-external-provider\\n    at repairFixture (D:/qa-381-private-stack/synthetic-repair.js:381:17)\"}}",
+        "result": null,
+        "last_event_seq": 6,
+        "finalized_at": "2026-11-15T14:49:54.186Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T14:49:54.120Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FTZANBV93CHC3J42V7JHGP\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a2-provider-error\",\"label\":\"QA 381 a2-provider-error v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FTZAP8RMR2RV3X3BRQEF34\",\"loopId\":\"01M7FTZANBV93CHC3J42V7JHGN\",\"versionId\":\"01M7FTZANBV93CHC3J42V7JHGP\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FTZAP8RMR2RV3X3BRQEF35\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T14:49:54.120Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T14:49:54.133Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T14:49:54.144Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T14:49:54.151Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:54.149Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:54.149Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T14:49:54.168Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"22fc37c4585158a7\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T14:49:54.177Z",
+        "type": "run.failed",
+        "node_id": null,
+        "payload": "{\"failure\":{\"code\":\"INTERNAL_ERROR\",\"message\":\"qa-381-external-provider C:/qa-381-private-message/synthetic-repair.js\",\"nodeId\":\"mut\",\"resumable\":true,\"details\":{\"name\":\"Error\",\"stack\":\"Error: qa-381-external-provider\\n    at repairFixture (D:/qa-381-private-stack/synthetic-repair.js:381:17)\"}}}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FTZAP8RMR2RV3X3BRQEF34"
+      }
+    ]
+  }
+}

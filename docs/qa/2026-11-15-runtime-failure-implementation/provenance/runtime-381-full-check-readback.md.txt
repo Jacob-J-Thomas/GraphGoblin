@@ -1,0 +1,57 @@
+# #381 first full-check readback
+
+Read-only interpretation of the immutable `runtime-381-implementation/checks/08-full-check.*` files. Only read-only log, metadata, and Git queries were made; no tests, builds, source edits, or repository/index writes were made.
+
+## Run identity and streams
+
+`pnpm.cmd check` ran under Node `v22.23.4` from `C:\Users\98jak\.codex\worktrees\gg-20261115-runtime\GraphGoblin`, from `2026-11-15T15:35:51Z` to `15:40:05Z` (253.94 seconds), and exited 1. The metadata's stdout/stderr digests match the retained files.
+
+| File                                                                                     |  Bytes | SHA-256                                                            |
+| ---------------------------------------------------------------------------------------- | -----: | ------------------------------------------------------------------ |
+| [`08-full-check.json`](runtime-381-implementation/checks/08-full-check.json)             |    509 | `fc3c6b3fcd9c3357ebc77f44433d82209d912b7a122cbf0da15fea7961904002` |
+| [`08-full-check.stdout.txt`](runtime-381-implementation/checks/08-full-check.stdout.txt) | 88,039 | `a7b7dc3fd6eea3be92c23d087938ab0e6d723a1e01235fb934dfc08994576798` |
+| [`08-full-check.stderr.txt`](runtime-381-implementation/checks/08-full-check.stderr.txt) |    869 | `6ddb1642ed51425aa79978593293a665462d5c54326f858925e80ea226d1d298` |
+
+## Gate sequence
+
+The `pnpm check` shell chain completed these stages before stopping at coverage:
+
+- Typecheck: 21/21 Turbo tasks succeeded.
+- Lint: 13/13 tasks succeeded.
+- Layer check: `Layer rules: OK`.
+- Migration check: the command returned successfully; the chain continued.
+- Design tokens: passed, 238 files checked.
+- Dependency cruiser: completed 1,299 modules and 5,590 dependencies with 0 errors and 4 warnings.
+
+`test:coverage` began and failed. Because the top-level check uses `&&`, template, licence, documentation, and contrast checks did not run.
+
+## Coverage work observed
+
+Eleven package `test:coverage` tasks printed a start line. Only Contracts and adapter-jev emitted completed V8 coverage summaries:
+
+| Package                                                                                        | Evidence in this log                                                                                                                                   |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@graphgoblin/contracts`                                                                       | 27 files, 304 tests passed. Coverage summary: 99.40% lines, 94.73% branches.                                                                           |
+| `@graphgoblin/adapter-jev`                                                                     | 1 file passed and 2 skipped; 34 tests passed and 5 skipped. Coverage summary: 98.80% lines, 96.77% branches.                                           |
+| `@graphgoblin/domain`                                                                          | Full Vitest summary: 1 failed, 28 passed; 460 tests total. It is the only task named in Turbo's final `Failed:` line. No coverage summary was emitted. |
+| `@graphgoblin/plugin-claude`                                                                   | Full Vitest summary: 4 failed and 4 passed. All four failed tests timed out at 5,000 ms. No coverage summary was emitted.                              |
+| `@graphgoblin/adapter-codex`                                                                   | The `probe-directory.test.ts` file reported 2 failed and 2 passed; there is no package summary.                                                        |
+| `@graphgoblin/infrastructure`                                                                  | `voice.test.ts` reported 46 failures of 135; `chat-audio.test.ts` reported 4 failures of 39. There is no package summary.                              |
+| `@graphgoblin/engine`                                                                          | Five failed cases are visible across file output; no package summary.                                                                                  |
+| `@graphgoblin/api-client`, `@graphgoblin/mcp`, `@graphgoblin/web`, `@graphgoblin/plugin-codex` | Partial test output or coverage startup only; no package summary.                                                                                      |
+
+Turbo ended with `3 successful, 13 total`, `2 cached`, and `Failed: @graphgoblin/domain#test:coverage`. The streams contain no per-task cancellation list. Packages without final summaries are therefore inconclusive here; do not count them as passing or as completed coverage results. Only the two packages above have explicit completed coverage reports.
+
+## First visible failures
+
+- **Domain:** `ADV-007 review: 20 nested failing $evals stay small in a 128 MB process` failed at `src/adversarial.test.ts:239`: expected child-process `result.status` to be `0`, received `null`. The stream does not establish why the child had no exit status.
+- **Adapter-codex:** `runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe` failed after 5,022 ms; `preserves 1 existing collision directories and bounds retries` also failed (4,212 ms). The file showed 4 tests, 2 failed, 2 passed; assertion details are absent.
+- **Infrastructure:** first visible voice failure was `rejects unavailable or unsafe audio: symlink` (550 ms; 46/135 failures in that file). The first chat-audio failure was `refuses to replace existing files, directories, and symlinks` (566 ms; 4/39 failures in that file). The retained output gives names/counts but no assertion bodies.
+- **Engine:** first visible failure was `ADV-015: a child that failed before its parent parks wakes the parent`. Four other failing names were two Claude/Codex session-persistence error cases, `terminal append survives crash before status: mutate-error`, and `a stale child wake never answers a later input park of its parent`. No full package result or assertion bodies are present.
+- **Claude plugin:** four tests timed out at exactly 5,000 ms: rebuilding an owned output, checking the runtime floor, running the generated default Node command from PATH, and resolving the default package layout from another working directory. The stream does not establish whether process startup, machine contention, or the tested behavior caused the timeouts.
+
+## Comparison with f91 and limits
+
+Read-only `git diff` and `git status` comparisons against `f91bd69b79dc417a2997ddb9c7670cb33df7597c` found no changed or untracked paths in the relevant groups: 3 infrastructure voice files, 2 infrastructure chat-audio files, all 46 tracked adapter-codex files, and all 11 tracked `apps/plugin-claude` files. These test results came from the current full-check worktree and Windows run; unchanged test/source bytes do not establish that the old f91 runtime fails. The 5-second plugin timeouts and missing child exit status have no demonstrated cause in this capture.
+
+The specifically scoped `docs/qa/2026-11-13-launcher-timeouts` directory was absent from this checkout; no broad QA search was made. The only direct evidence for this readback is the three hashed run files and the bounded Git path comparison above.

@@ -1,0 +1,297 @@
+# PR #484 — opposite-family review, formal scan 1 of 3
+
+**Verdict: READY.** No introduced in-scope blocker. No numbered findings. Three non-blocking observations follow; none of them is required for this PR.
+
+- Reviewer: Claude Opus 5.5 (`claude-opus-5-5`), xhigh. The implementation is GPT work, so this is the opposite-family review.
+- Scan accounting: this is formal scan 1 of the three-scan cap shared with the final independent Astra audit.
+- Mode: read-only code review. There was no implementation, index change, commit, push, GitHub write, provider turn or owner-resource interaction.
+
+## 1. Identities reviewed
+
+| Item | Value |
+| --- | --- |
+| PR | https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484 (open, draft) |
+| Frozen head | `08651317c485062eb90367e1df3f7632f8e1a6c7` |
+| Head tree | `c5d6d7f505e52b5ccf07b4bcb791777761dc45df` |
+| Target main | `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`: tree `57541f0423de585307f5d7db27923ddac41d7181`, parents `177f3a7d…`, `e1237593…` |
+| Product/test/decision-doc source | `420240cad27d3865988dc7009dc9d80291e93c9c`: tree `75d6720f6cc7da85e04d9f17f8b96f40b94c4094`, sole parent `15ce9a1d…` |
+| Merge-base(head, target) | `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`, so the head is a direct two-commit descendant of the target |
+| CI tested merge | `98d2bc2c473d3167a39ae966f9dfb9e2f00904fe`: tree `c5d6d7f5…` (equal to the head tree), parents `[15ce9a1d…, 08651317…]` |
+| Live remote at review time (`git ls-remote`) | `refs/heads/main` = `15ce9a1d…`; `refs/pull/484/head` = `08651317…`; `refs/pull/484/merge` = `98d2bc2c…` |
+| Checkout state | `git status --porcelain`: 0 lines. Index: empty. It was clean before and after my bounded test run. |
+| Commit messages | `fix(api): reject malformed poll dedupe identities` / `docs: preserve poll dedupe verification and editor completion`. Neither carries assistant attribution (AGENTS.md rule satisfied). |
+
+## 2. Admission validation (performed first)
+
+I read and validated `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-484-opus-admission.json` (`state: root-admitted`, `scan: 1`, `totalScanCap: 3`, `model: claude-opus-5-5`, `effort: xhigh`). It is present and consistent:
+
+- The head, tree, target and source in the admission equal the checkout identities above, and the admission says `cleanIndexAndWorktree: true`. I confirmed that independently.
+- The run receipt `runtime-484-root-ci-run.json` records run `43715831258`, attempt 1, `pull_request`, `completed`/`success`, with head_sha `08651317…`.
+- The SHA-256 of all four raw logs in the proposed CI packet equals the admission values:
+  - `gates.log`: `e4a6e778…a9a9`
+  - `browser.log`: `d68192d1…15df`
+  - `windows-launcher.log`: `da1dc4d4…4a75`
+  - `template-image.log`: `a27f7457…efd`
+- `synthetic-merge-commit.json` hashes to `cbb8d0c1…20ef`, equal to the admission's `syntheticMetadataSha256`. It records merge `98d2bc2c`, tree `c5d6d7f5`, and parents in order: target, then head.
+- All four job logs fetch and check out `98d2bc2c473d3167a39ae966f9dfb9e2f00904fe` ("HEAD is now at 98d2bc2c Merge 0865… into 15ce…").
+- `run-final.json`, `jobs-final.json` and the per-job metadata record every job `completed`/`success` on attempt 1 with head_sha `08651317…`:
+  - Gates `132817046986`
+  - Browser `132817046990`
+  - Windows launcher `132817046977`
+  - Template image `132817046734`
+- Routing correctly did not trigger. `.github/workflows/routing-perf.yml` limits `pull_request` paths to `apps/web/src/editor/**` and `apps/web/e2e/routing.spec.ts`, and the patch touches neither. Both workflow definitions in the CI packet are byte-identical to `HEAD:.github/workflows/{ci,routing-perf}.yml`.
+
+The admission is valid, so a code verdict is permitted.
+
+## 3. Change inventory and source hashes
+
+`15ce9a1d..08651317` changes 343 paths.
+
+**Commit `420240ca`** changes 12 paths: 316 insertions and 16 deletions. Hashes are `git rev-parse HEAD:<path>` (first 12 characters) and SHA-256:
+
+| Blob | SHA-256 | Path |
+| --- | --- | --- |
+| `5d561e649b94` | `6bfbb020…b257` | `packages/domain/src/poll-items.ts` (+21/−4) |
+| `c057e912b5a2` | `afa30c18…7744` | `packages/domain/src/poll-items.test.ts` (+13) |
+| `f714f46878ea` | `54953e76…698e` | `apps/api/src/triggers/poll-items.ts` (+12/−10) |
+| `80e2bb79f07f` | `1ececa00…5dd5` | `apps/api/src/triggers/poll.ts` (+8) |
+| `ea0465c3e104` | `2a1a095b…e751` | `apps/api/src/triggers/poll-items.test.ts` (+65) |
+| `56eb2630a05e` | `ff987592…daac` | `apps/api/src/triggers/poll-dedupe.test.ts` (new, 167) |
+| `3589f9a615c8` | `04827339…4e0f` | `apps/api/src/ollama-container.test.ts` (+1, #483) |
+| `81f30d464424` | `b7fcdc4a…a30a` | `apps/api/src/preflight-ollama.test.ts` (+1, #483) |
+| `560e7cc888d3` | `9827f66a…477d` | `CHANGELOG.md` (+5) |
+| `805d7d2fe583` | `ab175aa8…9d98` | `docs/08-triggers-and-integrations.md` (+6/−2) |
+| `f1cf45ab2713` | `4ee5c6ad…be12` | `docs/decisions/ADR-0079-poll-dedupe-key-identities.md` (new) |
+| `4a12de02de39` | `9b215530…8f6c` | `docs/decisions/README.md` (+2) |
+
+All 12 SHA-256 values equal `docs/qa/2026-11-15-poll-dedupe-corrected/source-freeze/final-source-SHA256SUMS`. The three warning-source hashes bound in the offline diagnostic receipt (`poll.ts`, `poll-items.ts`, domain `poll-items.ts`) equal the committed and worktree bytes.
+
+**Commit `08651317`** changes 331 paths: 329 added QA files, plus append-only edits to `docs/delivery/2026-11-13-four-intents-register.md` (+14/−0) and `docs/qa/.gitattributes` (+10/−0).
+
+- There is no product, test, build, workflow, package or lockfile delta after `420240ca`. `git diff --name-only 420240ca HEAD -- . ':!docs/qa' ':!docs/delivery'` is empty.
+- The 329 added files total 15,572,038 bytes, matching `runtime-361-publication-committed.json` (`evidenceFiles: 329`, `evidenceBytes: 15572038`, `verifiedBlobCount: 331`).
+- Packet manifests were verified with CRLF stripped, because the manifests use CRLF line endings:
+
+| Packet | Files | Manifest entries OK | Unlisted files |
+| --- | ---: | ---: | ---: |
+| `2026-11-15-poll-dedupe-baseline` | 77 | 76/76 | 0 |
+| `2026-11-15-poll-dedupe-implementation` | 41 | 40/40 | 0 |
+| `2026-11-15-poll-dedupe-corrected` | 99 | 98/98 | 0 |
+| `2026-11-15-space-cards-completion` | 76 | 75/75 | 0 |
+| `2026-11-15-space-cards-corrected-ci` | 36 | 35/35 | 0 |
+
+Every packet file except each top-level `SHA256SUMS` is a verified manifest entry, and 77 + 41 + 99 + 76 + 36 = 329. The external `runtime-361-native/root-final-qa-acceptance.json` is byte-identical to the in-packet copy (`8af59fd2…dbc`).
+
+## 4. Governance read
+
+I read `AGENTS.md`, `docs/README.md`, `docs/15-issue-workflow.md` and the whole four-intent register. That includes the runtime refinement scope for #361 at lines 124–128 and the appended #361 candidate section at lines 294–302. I also read D-020 in the earlier I01–I07 register, issues #361 and #483, and the PR #484 body. All reads were read-only through `gh`.
+
+- **#361.** Labels: `aidlc-ready`, `qa:touched-systems`, `impl:gpt-6.1-sol`, `review:claude-opus-5.5`, `type:bug`, `area:api`, `area:engine`. There is no `human-in-the-loop`, so no owner-only acceptance gate applies.
+- **#483.** This is the separately recorded Windows cleanup prerequisite. Labels: `aidlc-ready`, `type:chore`, `impl:gpt-6-luna`, `review:claude-opus-5.5`. It is test-only.
+- **Scope boundaries.** #381/#414, #410, #419 and launcher work are not touched. The inherited #482 packets document an already-merged PR and change no product bytes. I independently confirmed that #482's merge identity matches its packet.
+
+## 5. Source review against the behavioral contract
+
+### Item mode (`packages/domain/src/poll-items.ts` and `apps/api/src/triggers/poll-items.ts`)
+
+**Check order per candidate in `preparePollItems`:**
+
+1. `isJsonValue`, which throws `ITEM_INVALID` for the whole batch.
+2. Key expression evaluation, which throws `KEY_FAILED`.
+3. Type, blank and over-512-code-unit checks, which throw `KEY_INVALID` for the whole batch.
+4. `isPollKeyWellFormed`. On failure the candidate becomes a rejection-only entry `{rejection: {code: 'POLL_ITEM_REJECTED', itemIndex, reason: 'MALFORMED_DEDUPE_KEY'}}` with no `dedupeKey`, and the loop continues.
+5. Duplicate check against `seen`, which throws `KEY_DUPLICATE` for the whole batch.
+6. Depth classification.
+
+This matches the contract: the whole-batch guards are retained, and malformed candidates are isolated before duplicate tracking and depth classification.
+
+- **Repeated malformed values.** These are never added to `seen`, so they cannot trigger a batch duplicate refusal and cannot starve later work. The native corrected P2 log shows rejections at indices `[0, 1, 2]` for H, H, L, followed by admission of RH and C.
+- **Malformed and too deep.** Only one diagnostic is emitted, because depth classification is skipped. The domain test asserts this. On the old source this test would throw `KEY_DUPLICATE` at index 2, so it is a genuine regression test.
+- **The whole set is prepared before any I/O.** `admitPollItems` awaits `preparePollItems` before `findSeen` or `start`.
+
+**`admitPollItems`:**
+
+- The lookup receives only well-formed keys, in index order. `findSeen` is skipped entirely when there are none (`keys.length === 0`). The empty-batch result `{runs: [], rejections: []}` is unchanged.
+- The seen filter is unchanged for keyed items. Rejection-only candidates are always "unseen", so their warning is always emitted. Previously, a malformed key bound as U+FFFD could be falsely "seen" against a literal-U+FFFD run and silently dropped; see §6.
+- Rejections are collected from all unseen candidates in index order, as before. The depth rule is retained: a depth-refused key that is already seen stays silent.
+- The admission loop skips rejection-only candidates and depth-refused items before the cap check, so neither consumes `maxRunsPerPoll`.
+- `start` returning `undefined` (an atomic reservation found) still does not count toward the cap.
+- A `start` throw still returns `failedItemIndex` and leaves the tail.
+- A `findSeen` throw still maps to `POLL_DEDUPE_LOOKUP_FAILED` with zero admissions.
+
+**Typing.** `PreparedPollCandidate = PreparedPollItem | { dedupeKey?: never; rejection }`, and `item.dedupeKey === undefined` narrows correctly before `start(item)`. `preparePollItems` has exactly one caller, `admitPollItems`, and `PollItemRejection` and its `reason` union have no other consumers (repository grep).
+
+### Single mode (`apps/api/src/triggers/poll.ts`)
+
+- **Derivation is unchanged.** `undefined`/`null` gives no key. Otherwise the key is the string, or `JSON.stringify(value)`, then `.slice(0, 512)`.
+- **The new check runs on the actual sliced key.** For a truthy key, `!isPollKeyWellFormed(dedupeKey)` logs `{loopId, nodeId, code: 'POLL_DEDUPE_KEY_INVALID', reason: 'MALFORMED_DEDUPE_KEY'}` with message `poll trigger failed` and returns `[]`. That happens before `hasDedupe` and before `startRun`, so there is no unkeyed fallback, normalization or shortening.
+- **Unkeyed behavior is preserved.** An empty string `''` stays unkeyed, as before. Omitted, null and undefined results also stay unkeyed.
+- **JSON-derived keys.** Since ES2019, `JSON.stringify` escapes lone surrogates as ASCII `\udxxx`, so JSON-derived keys can become malformed only when the 512-unit slice splits a valid pair. The post-slice check covers that case for both string and JSON derivations.
+- **Payload strings outside the identity are untouched.** The test's `marker: 'outside-identity\uD800'` payload is admitted.
+
+### Predicate
+
+`isPollKeyWellFormed(key) = !/[\uD800-\uDFFF]/u.test(key)` is pure and lives in the domain layer, with no I/O. In `u` mode, a complete pair is a single code point outside the class. I verified equivalence to `String.prototype.isWellFormed()` independently; see §7.
+
+### Warnings and security
+
+Both warning shapes are fixed, typed and carry no payload or key text. Item mode emits at most one diagnostic per candidate, so at most 200 per poll, which matches the existing depth bound. Single mode emits one per poll. A regex over at most 512 code units has no ReDoS concern.
+
+### Contract boundaries
+
+- No new dependency, package, provider behavior, migration, stored-format change or compatibility path.
+- `ThreadTriggerSchema.dedupeKey` (`z.string().max(512)`) is unchanged, so historical records stay readable and are not rewritten.
+- The webhook and event key paths already refuse ill-formed keys. They do so through the pre-existing API helper `eventKeyIsWellFormed` and the route schemas, and this patch does not change them.
+
+### #483 prerequisite
+
+The prerequisite adds exactly two `globalThis.gc?.()` lines:
+
+- In `ollama-container.test.ts`, after `container?.stop(); container = undefined;` and before `rm`.
+- In `preflight-ollama.test.ts`, after `vi.restoreAllMocks()` and before the existing `rm(..., maxRetries: 5, retryDelay: 50)`.
+
+The change is effective because `apps/api/vitest.config.ts` sets `pool: 'forks', execArgv: ['--expose-gc']`. The same pattern already exists in six other API test files, and the mechanism is documented in `docs/research/sqlite-libsql.md`. `rm` still throws on failure. No assertion, timeout, retry or threshold changed.
+
+## 6. Independent verification I ran
+
+All commands used Node `v22.23.4` (the project runtime) and pnpm `12.8.1`. Scratch scripts and their first outputs are under `review-484-opus-scan1/scan1-probe/`, outside the repository:
+
+| File | SHA-256 |
+| --- | --- |
+| `key-identity-probe.mjs` | `f245da20…214d` |
+| `key-identity-probe.out.txt` | `220a242b…d6d` |
+| `predicate-equivalence.mjs` | `225345f8…a756a3` |
+| `predicate-equivalence.out.txt` | `ae54e3ac…d50a` |
+| `focused-tests.first-run.log` | `8ff3e73d…e75` |
+| `inspect-durable.mjs` | `e912adbd…ff31f` |
+| `inspect-durable.out.txt` | `eea22f61…2dfb` |
+| `inspect-receipts.mjs` | `ac2145d5…298` |
+| `inspect-receipts.out.txt` | `873ff723…c8b` |
+| `inspect-fixtures.mjs` | `51d5ad21…583` |
+| `inspect-fixtures.out.txt` (labelled deterministic re-run of an earlier console-only read) | `da941fb5…346` |
+
+1. **libsql identity probe** (in-memory, using the repository-installed `@libsql/client`, SQLite 3.45.1). The probe uses the same `json_extract(...) = ?` comparison as `hasTriggerDedupe`, `findTriggerDedupeKeys` and `runKeyScope`.
+   - A stored `a\uD800` extracts as `61EDA080`, a CESU-style encoding.
+   - Binding the lookup `a\uD800` gives `61EFBFBD`, and the lookup **matches only the stored literal `a\uFFFD` row**, never its own row.
+   - This confirms both failure directions. Repeated admission is the one ADR-0079 describes. A false skip against a literal-U+FFFD identity is the second direction, which the patch also prevents.
+   - `a\uFFFD`, a complete pair, ASCII, `a\u0000b` and `a\u0000c` each match only themselves (exact).
+   - So U+0000 is **not** a sibling repeated-admission defect on the poll comparison path. The event and webhook paths refuse NUL for their own documented reasons. Poll keys need no change for it, and the brief forbids generic sanitation.
+2. **Predicate equivalence.** I compared the committed regex, extracted from source, with `String#isWellFormed` over 267,410 strings:
+   - all 65,536 single code units;
+   - all boundary pairs and triples from {0000, 0041, D7FF, D800, D83D, DBFF, DC00, DE00, DFFF, E000, FFFD, FFFF};
+   - 200,000 seeded random surrogate-heavy strings;
+   - both 512-slice cases (511 units + pair, and 510 units + pair).
+
+   Result: **0 mismatches**, exit 0.
+3. **Focused tests, first and only run** (no Turbo, no build, no coverage, `--maxWorkers=1` for the API files):
+   - `pnpm --filter @graphgoblin/domain test src/poll-items.test.ts`: 1 file, **9/9 passed**, exit 0.
+   - `pnpm --filter @graphgoblin/api test src/triggers/poll-items.test.ts src/triggers/poll-dedupe.test.ts --maxWorkers=1`: 2 files, **26/26 passed**, exit 0.
+   - All new cases executed. The worktree stayed clean.
+4. **Oracle derivation from the declared inputs.** I derived the corrected oracle from `wire-fixtures.json` (phase `corrected`) and the source logic, independently of the QA conclusion:
+   - items: 4 → 6 → 6 → 7, with 3 malformed warnings per poll (12 in total);
+   - lone single: 0 IDs and 4 warnings;
+   - split single: 0 IDs and 4 warnings at P1–P4, then PREFIX at P5;
+   - valid single: 1 → 2 → 3 → 3;
+   - unkeyed: 1 → 2 → 3 → 4.
+
+   That gives **15 IDs and 20 warnings**, matching the declared `expectedNew` lists and the reported results.
+5. **Raw durable and warning readback** (`inspect-durable`, over committed `post-drain-readback.json` and both gateway logs):
+   - 15 rows and 15 distinct IDs: items A, P, R, B, RH, C, D; split PREFIX (511 units); valid SR, SP (512 units with an intact pair), SA; four unkeyed rows with `hasKey=false`. There are 0 lone rows.
+   - Every keyed row is `keyWellFormed=true`, with no `ED A0`/`ED B0` extracted bytes.
+   - Exactly 20 `MALFORMED_DEDUPE_KEY` records:
+     - 12 item records with the fields `code, hostname, itemIndex, level, loopId, msg, nodeId, pid, reason, time`;
+     - 8 single records with the same fields minus `itemIndex`.
+   - Item indices are `[0,2,6]`, `[0,1,2]` and `[0,2,6]` initially, then `[0,2,6]` after restart.
+   - Records are 221–229 bytes. The case-insensitive string "canary" appears 0 times in both logs.
+6. **Baseline raw readback** on unchanged main: 34 distinct IDs. H, L and Ht were each admitted on all four polls; SH ×2, SL ×2, SPLIT512 ×4. There are 20 stored malformed rows whose extracted bytes are `EDA0`/`EDB0`. This confirms the defect independently of the narrative.
+7. **Receipts:**
+   - The ports `result.json` has `failure: null` and 20 traced cases. The P2 lookup is `[A, RH, C]` and the starts are `[RH, C]`. The tail-stop case has starts `[A, B]` and `failedItemIndex: 1`.
+   - The race result shows one admitted outcome, one duplicate outcome (`admitted: false`), one notification and one `run.queued` event. The stored key units are `…fffd 002d d83d de00`.
+   - The offline receipt reports 21 observations, 20 unique assignments, `allPerLoopWindowsNonoverlapping: true` and `warningCanaryMatches: 0`. It preserves the original `AssertionError` and lists both discrepancies with `fromDueMs` 30 and 31 and `fromProbeReceivedMs` −1.
+
+## 7. Evidence assessment by tier (kept distinct)
+
+- **Source reasoning.** Sections 5 and 6.1–6.2. This tier is sufficient to establish the contract at the method boundaries.
+- **Controlled-port tests.** These are the repository tests I re-ran, plus the QA's 20 public-method cases. They observe call arguments through fakes, not storage.
+- **Native gateway, timer, HTTP and SQLite observations.**
+  - One corrected native sequence on the frozen candidate: 21 observations, 15 durable IDs, a same-file restart and held-response overlap.
+  - During the held response (7,101.81 ms in flight, `maxInFlight: 1`, `requestsDuring: []`), the file still held exactly four P1 IDs. The later scheduled poll proceeded after release.
+  - The native runtime emitted `MALFORMED_DEDUPE_KEY` warnings, codes that exist only in the new source. That is behavioral proof the native build executed the candidate code. It stands even though the build ran at a dirty `15ce` worktree with normal TypeScript incremental compilation and was later rebound to identical bytes; no build rerun at `420240ca` is claimed, and none is needed for that conclusion.
+  - **The original supervisor exit 1 is retained.** It was a cross-process wall-clock correlation assertion at `corrected-lone-P3`, which ran after all observations and both drains. Both gateway children exited 0 and both drains returned 202.
+  - The offline reanalysis is a diagnostic readback of the unchanged logs. It is not a rerun and does not replace that exit.
+  - I accept the reanalysis as resolving the warning-correlation question. The two disputed warnings fall 30 and 31 ms after each gateway's own `armed.nextPollAt`, within disjoint per-loop windows. The −1 ms is a difference between two process clocks, not evidence of a warning before its poll.
+- **One-process file-SQLite race.** This is adapter evidence for the in-transaction key check with an exact well-formed key. It is **not** cross-process evidence, and the packet says so.
+- **Local gates and failure history** (raw logs read):
+  - The first post-change API coverage run had 1,935 passes, 14 skips and 5 failures: 4 `EBUSY` in the two Ollama specs, plus one `subloop-restart` case at 69,030 ms. It also had one unhandled Vitest worker exit, code `3221225477` (`0xC0000005`), in `cron-preview.test.ts`, and produced no API aggregate.
+  - The four-file one-worker isolation had 38 passes and 3 failures, all `EBUSY`. Subloop and cron passed there.
+  - Unchanged main reproduced 4 `EBUSY` failures with 21 passes.
+  - After #483, the targeted pair passed 25/25.
+  - Final API coverage passed 1,943 with 14 skips, at 95.95% lines and 90.88% branches.
+  - **Causality is not overreached.** The worker access violation happened before #483 existed, in a file unrelated to polls. It matches the documented libsql-on-Windows native crash class (`docs/12-implementation-plan.md` M3 notes; `docs/research/sqlite-libsql.md`). The subloop timing failure cleared under serial isolation. Neither is explained by the cleanup change, and the packets do not claim it is.
+- **CI on the tested merge** (`98d2bc2c`, raw `gates.log`):
+  - API: 1,937 passed and 20 skipped (123 files passed, 4 skipped). Lines 95.78% (3,837/4,006), branches 90.61% (2,994/3,304).
+  - Domain: 460 passed in 29 files. Lines 98.73%, branches 96.09%.
+  - Both new or changed poll specs ran: `poll-items.test.ts` (13 tests) and `poll-dedupe.test.ts` (13 tests). Both #483-touched specs ran too: `preflight-ollama.test.ts` (18) and `ollama-container.test.ts` (7).
+  - The other jobs passed: Browser 481 with one declared skip; Windows launcher 14; Template image.
+  - Thresholds are unchanged, and every package is at or above 90% lines and branches.
+- **Owner acceptance.** Not applicable to #361 or #483, which carry no `human-in-the-loop` label. No passing test is counted as human acceptance.
+
+## 8. Narrative and documentation fidelity
+
+- **ADR-0079.** Its decision text matches the code exactly: check order, per-candidate refusal, retained whole-batch guards, the depth and seen rule, lookup and stop-tail behavior, single-mode post-slice refusal, unkeyed behavior, fixed warnings and no stored-format change. Its Context section describes the repeated-admission direction. The false-skip direction from §6.1 is also covered by the decision ("Exact well-formed strings remain distinct, including literal U+FFFD").
+- **`docs/08`.** The single-mode paragraph and the items-mode rewrite are accurate. One indexed lookup covers only well-formed keys, and is skipped when there are none. "At most 200 candidate refusal diagnostics" holds because a candidate produces at most one.
+- **CHANGELOG.** The entry is accurate. No upgrade note is needed because no stored value becomes invalid.
+- **Decisions README.** The index entry is present. ADR number 0079 is unique in this tree.
+- **Register append (lines 290–302).** I checked every factual claim against the raw artifacts and git objects, and all match:
+  - merge `15ce` tree and parents;
+  - source freeze identity;
+  - the 25/25 #483 run;
+  - final coverage of 1,943/14 skips at 95.95%/90.88%;
+  - domain 460 at 98.73%/96.09%;
+  - the 7-task build with 0 cached tasks in 3.862 s;
+  - the red run of 5 failures and 20 passes;
+  - the first coverage attempt of 1,935/14/5 plus the worker error;
+  - the isolation run of 38/3;
+  - the unchanged-main run of 4 `EBUSY`/21;
+  - the native 21/15 results and the 30/31 ms versus −1 ms timings.
+- **Remaining-gate statements.** The register and packet READMEs say current-head CI and this review are still pending. Those statements describe the publication moment, and they remain historically accurate.
+- **Red evidence.** The retained red log has 25 tests. The current files have 26. The extra case, "a malformed unit outside the derived slice", was added later. It is a control that passes on both old and new code, so the "5 intended failures, 20 controls" characterization stays correct.
+- **PR body.** It uses `Closes #361. Closes #483.` That is consistent with `docs/15` because neither issue carries an owner-only QA obligation. The body's numbers match the evidence.
+
+## 9. Findings
+
+**None.** I found no introduced in-scope blocker, and no defect that would require a code, test or documentation change in this PR.
+
+### Non-blocking observations (no action required for this PR)
+
+- **O1 — two well-formedness predicates (maintainability; not introduced as a defect).**
+  - The pre-existing `apps/api/src/triggers/trigger-service.ts` `eventKeyIsWellFormed` uses a Buffer UTF-8 round-trip.
+  - The new `packages/domain/src/poll-items.ts` `isPollKeyWellFormed` uses a regex.
+  - Both have the same semantics; §6.2 covers the new one, and a lone surrogate also fails a Buffer round-trip.
+  - The new one is correctly placed in the pure domain layer. Consolidating on the domain helper or `String#isWellFormed` could reduce drift later. This is an optional owning-path cleanup, not a follow-up the patch needs.
+- **O2 — user-guide surface (documentation; optional).**
+  - `docs/guide/04-triggers.md` and the generated `items.dedupeKey` field description do not mention the per-candidate `MALFORMED_DEDUPE_KEY` refusal, or the single-result `POLL_DEDUPE_KEY_INVALID` warning that permanently refuses a poll whose 512-unit slice splits a pair.
+  - The numbered doc that AGENTS.md requires (`docs/08`) does document both, and the guide is still literally accurate for the rules it states.
+  - The earlier depth refusal (D-020) was likewise documented only in `docs/08`.
+- **O3 — Windows evidence boundary for #483 (evidence limit).**
+  - CI's API tests run on Linux, so the Windows `EBUSY` effect of #483 is established only by the retained local runs (the unchanged-main reproduction, the 25/25 pair and the full local coverage).
+  - The first-run worker access violation in `cron-preview.test.ts` and the subloop timing failure remain unexplained by #483. They are not attributable to this patch.
+  - No new issue is proposed because the crash class is already documented in-repo.
+
+## 10. Coverage limits of this review
+
+- I did not run the native gateway sequence, a build, lint, typecheck, full API, domain or web coverage, or the browser suites. I relied on the retained raw evidence and on CI for the tested merge, and avoided duplicating heavy suites as instructed. My only executions were 35 focused tests on source (via the `development` export condition, not `dist`), an in-memory libsql probe and pure-JS predicate checks.
+- I did not reproduce the pre-fix red run or the old native baseline myself. I read their retained raw logs and durable readbacks. For the domain regression test, I reasoned from the old source that it would fail with `KEY_DUPLICATE`; no retained domain red log exists.
+- There is no cross-process concurrent admission evidence, and none is claimed. The one-process race is adapter-level only.
+- I did not inspect browser, launcher or template job internals beyond their success status and checkout identity, because they are unrelated to this backend change.
+- The CI packet under `proposed/` is still being curated, as the admission notes. I verified only the four raw logs, the job, run and artifact metadata, the synthetic merge record and the workflow definitions that the admission binds.
+- My libsql probe ran on this Windows host with SQLite 3.45.1 through the installed client. It establishes the bind and extract semantics on the shipped dependency, not on other SQLite builds.
+
+## 11. Disposition summary
+
+**READY** for head `08651317c485062eb90367e1df3f7632f8e1a6c7` (tree `c5d6d7f505e52b5ccf07b4bcb791777761dc45df`) against target `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`.
+
+- Product, test and decision-doc source is `420240cad27d3865988dc7009dc9d80291e93c9c`.
+- Current-head CI run `43715831258`, attempt 1, passed on tested merge `98d2bc2c473d3167a39ae966f9dfb9e2f00904fe`.
+- Formal scans used: 1 of 3. The fresh independent Astra max audit remains required before merge, along with any root disposition.
+- Owner acceptance is not applicable to #361 or #483, and nothing here implies merge or closure.

@@ -1,0 +1,63 @@
+[
+  {
+    "level": "error",
+    "msg": "subloop child failure contained internal diagnostics",
+    "obj": {
+      "runId": "00000000000000000000000009",
+      "nodeId": "child",
+      "childRunId": "0000000000000000000000000B",
+      "childNodeId": "hold",
+      "diagnostics": [
+        {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/old-primary-private-message.ts"
+        },
+        {
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/old-primary-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/old-primary-private-stack.ts:13:7)"
+        }
+      ]
+    }
+  },
+  {
+    "level": "error",
+    "msg": "node failed",
+    "obj": {
+      "runId": "00000000000000000000000009",
+      "nodeId": "child",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "subloop child 0000000000000000000000000B failed: An unexpected error interrupted the run. See the server logs for this run.",
+        "resumable": true,
+        "nodeId": "child",
+        "details": {
+          "childRunId": "0000000000000000000000000B",
+          "childNodeId": "hold",
+          "childDetails": {}
+        }
+      }
+    }
+  },
+  {
+    "level": "error",
+    "msg": "node failed",
+    "obj": {
+      "runId": "00000000000000000000000007",
+      "nodeId": "child",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "subloop child 00000000000000000000000009 failed: subloop child 0000000000000000000000000B failed: An unexpected error interrupted the run. See the server logs for this run.",
+        "resumable": true,
+        "nodeId": "child",
+        "details": {
+          "childRunId": "00000000000000000000000009",
+          "childNodeId": "child",
+          "childDetails": {
+            "childRunId": "0000000000000000000000000B",
+            "childNodeId": "hold",
+            "childDetails": {}
+          }
+        }
+      }
+    }
+  }
+]

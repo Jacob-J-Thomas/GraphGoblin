@@ -1,0 +1,89 @@
+$ turbo run build --force
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+   • Running build in 13 packages
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache bypass, force executing 84e011bb42813d20
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache bypass, force executing 4eea2013eb1518d0
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache bypass, force executing 015e8236b4ccc9ea
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: cache bypass, force executing 7c14daa984313522
+@graphgoblin/infrastructure:build: cache bypass, force executing aa27be619799d4d7
+@graphgoblin/adapter-codex:build: cache bypass, force executing f8121499652fb30b
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:build: cache bypass, force executing 27ec7aec4f70781f
+@graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+@graphgoblin/api-client:build: cache bypass, force executing a204bd3155fb0381
+@graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+@graphgoblin/mcp:build: cache bypass, force executing 3f1730eb5c6ba9cb
+@graphgoblin/web:build: cache bypass, force executing 6e91ae8d19fbaf84
+@graphgoblin/mcp:build: $ tsc -b tsconfig.build.json
+@graphgoblin/web:build: $ vite build && vite build --config vite.goblin.config.ts
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/plugin-claude:build: cache bypass, force executing 0c6bf8ecd40fd479
+@graphgoblin/plugin-codex:build: cache bypass, force executing b139e0ec2f99b6ea
+@graphgoblin/plugin-claude:build: $ tsc -b tsconfig.build.json && node dist/cli.js
+@graphgoblin/plugin-codex:build: $ tsc -b tsconfig.build.json && node dist/cli.js
+@graphgoblin/web:build: ✓ 779 modules transformed.
+@graphgoblin/plugin-claude:build: Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "C:\Users\98jak\.codex\worktrees\gg-20261115-runtime\GraphGoblin\apps\plugin-claude\dist\plugin\graphgoblin"
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/plugin-codex:build: Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+@graphgoblin/plugin-codex:build: Install: codex plugin marketplace add "C:\Users\98jak\.codex\worktrees\gg-20261115-runtime\GraphGoblin\apps\plugin-codex\dist\marketplace"
+@graphgoblin/plugin-codex:build:          codex plugin add graphgoblin@graphgoblin-local
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist/manifest.webmanifest           0.47 kB
+@graphgoblin/web:build: dist/index.html                     2.40 kB │ gzip:   1.09 kB
+@graphgoblin/web:build: dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+@graphgoblin/web:build: dist/assets/index-DHT0tKuN.js   2,132.11 kB │ gzip: 665.09 kB │ map: 9,490.74 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 4.13s
+@graphgoblin/web:build: 
+@graphgoblin/web:build: PWA v1.3.0
+@graphgoblin/web:build: mode      generateSW
+@graphgoblin/web:build: precache  21 entries (2650.98 KiB)
+@graphgoblin/web:build: files generated
+@graphgoblin/web:build:   dist/sw.js.map
+@graphgoblin/web:build:   dist/sw.js
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js.map
+@graphgoblin/web:build:   dist/workbox-2fbc6a65.js
+@graphgoblin/web:build: [33m[PLUGIN_TIMINGS] [0mJavaScript callbacks ran for 20.4s. The build took 4.1s. Callbacks such as `closeBundle` run after the build ends, so callback time can be more than build time.
+@graphgoblin/web:build: The slowest callbacks, timed inside each callback (the wait before a callback starts is excluded, the time it awaits is included):
+@graphgoblin/web:build:   - plugin vite-plugin-pwa:build closeBundle (100%, 17.6s, 1 call)
+@graphgoblin/web:build: Additional callback time came from the callbacks below and from callbacks under 1s.
+@graphgoblin/web:build: 2 callbacks are listed without a time. Their calls overlapped, so the time inside one call includes work from other calls. To find their cost, profile the build with `node --cpu-prof`:
+@graphgoblin/web:build:   - plugin @tailwindcss/vite:generate:build transform (2 calls)
+@graphgoblin/web:build:   - plugin vite:css transform (2 calls)
+@graphgoblin/web:build: See https://rolldown.rs/reference/InputOptions.checks#bundlertimings for more details.
+@graphgoblin/web:build: 
+@graphgoblin/web:build: vite v8.3.4 building client environment for production...
+@graphgoblin/web:build: transforming...
+@graphgoblin/web:build: ✓ 284 modules transformed.
+@graphgoblin/web:build: rendering chunks...
+@graphgoblin/web:build: computing gzip size...
+@graphgoblin/web:build: dist-goblin/manifest.webmanifest         0.46 kB
+@graphgoblin/web:build: dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+@graphgoblin/web:build: dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+@graphgoblin/web:build: dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.34 kB
+@graphgoblin/web:build: 
+@graphgoblin/web:build: ✓ built in 588ms
+@graphgoblin/web:build: 
+@graphgoblin/web:build: PWA v1.3.0
+@graphgoblin/web:build: mode      generateSW
+@graphgoblin/web:build: precache  21 entries (989.31 KiB)
+@graphgoblin/web:build: files generated
+@graphgoblin/web:build:   ../dist-goblin/sw.js.map
+@graphgoblin/web:build:   ../dist-goblin/sw.js
+@graphgoblin/web:build:   ../dist-goblin/workbox-5f44db27.js.map
+@graphgoblin/web:build:   ../dist-goblin/workbox-5f44db27.js
+
+ Tasks:    12 successful, 12 total
+Cached:    0 cached, 12 total
+  Time:    37.911s 
+

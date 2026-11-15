@@ -1,0 +1,50 @@
+{
+  "schema": "gg381-functional-admission/v1",
+  "state": "preparation",
+  "phase": "corrected",
+  "attempt": "corrected-attempt-N",
+  "head": "EXACT_HEAD_SHA",
+  "main": "ROOT_VERIFIED_ACTUAL_MAIN_SHA",
+  "binding": "ABSOLUTE_EXTERNAL_BINDING_JSON",
+  "bindingSha256": "BINDING_SHA256",
+  "harness": {
+    "binding.mjs": "REVIEWED_FILE_SHA256",
+    "fixtures.mjs": "REVIEWED_FILE_SHA256",
+    "gateway.mjs": "REVIEWED_FILE_SHA256",
+    "native.mjs": "REVIEWED_FILE_SHA256",
+    "run.mjs": "REVIEWED_FILE_SHA256",
+    "README.md": "REVIEWED_FILE_SHA256"
+  },
+  "baselineResume": false,
+  "repairTargetCases": true,
+  "bounds": {
+    "request": 10000,
+    "startup": 30000,
+    "cleanup": 20000,
+    "case": 65000
+  },
+  "contract": {
+    "codes": {
+      "expression": "REVIEWED_CODE",
+      "patch": "REVIEWED_CODE",
+      "template": "REVIEWED_CODE",
+      "repair-template": "REVIEWED_CODE",
+      "repair-patch": "REVIEWED_CODE"
+    },
+    "indexPath": [
+      "details",
+      "REVIEWED_INDEX_FIELD"
+    ],
+    "indexBase": null,
+    "typePath": [
+      "details",
+      "REVIEWED_OPERATION_FIELD"
+    ],
+    "types": {
+      "set": "REVIEWED_SET_LITERAL",
+      "coerce": "REVIEWED_COERCE_LITERAL"
+    },
+    "visibleOperation": "REVIEWED_OPERATION_TEXT_PATTERN",
+    "unexpectedRepairMessage": "REVIEWED_LITERAL_INTERNAL_FAILURE_MESSAGE"
+  }
+}

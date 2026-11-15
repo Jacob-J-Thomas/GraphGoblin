@@ -1,0 +1,36 @@
+# #381 old-source regression log readback
+
+Read-only interpretation of `runtime-381-implementation/checks/01-old-source-regressions.json` and its stdout/stderr. No tests or builds were run for this readback.
+
+## Run and hashes
+
+The captured command was `pnpm.cmd --filter @graphgoblin/engine test src/handlers/mutation-failures.test.ts src/handlers/exit.test.ts src/edge-cases.test.ts src/awaited-children.test.ts src/handlers/inference-evidence-matrix.test.ts`. It used Node `v22.23.4`, ran for 30.54 seconds, and exited 1. The five files completed and Vitest reported **504 failed and 440 passed (944 total)**.
+
+| Captured file | Bytes | SHA-256 |
+| --- | ---: | --- |
+| [`01-old-source-regressions.json`](runtime-381-implementation/checks/01-old-source-regressions.json) | 768 | `34ae0333eb19f31f6ffa7e10329fbb619fdfd6ae53fc85f5e55599d97014e9e6` |
+| [`01-old-source-regressions.stdout.txt`](runtime-381-implementation/checks/01-old-source-regressions.stdout.txt) | 43,427 | `7da8b379079bf0a15a0d1c9aff905ab388a86239de94d01da77385daaf8eb844` |
+| [`01-old-source-regressions.stderr.txt`](runtime-381-implementation/checks/01-old-source-regressions.stderr.txt) | 1,825,869 | `95194052db7c78ff993ac429ee08242e3a4532c86edd127c644a90d15f62dd6c` |
+
+The stdout/stderr hashes match the run metadata. Stdout gives 6 tests with 1 failure in `exit.test.ts`, 11/11 failures in `mutation-failures.test.ts`, 2/29 in `edge-cases.test.ts`, 2/26 in `awaited-children.test.ts`, and 488/872 in `inference-evidence-matrix.test.ts`. These sum to 504 failures and 440 passes.
+
+## Failure counts and causes
+
+| Area | Failures | Readback |
+| --- | ---: | --- |
+| Inference failure matrix | 488 | 480 cases inject a before/after storage recording fault across launch, event, iterator, result, and cleanup phases. The 220 expanded matrix traces show the privacy assertion failing because `Classification recording fault` appears in serialized public failure/event data, including `details.recording` message and stack. Eight additional red cases are cancellation-phase `HARNESS_TERMINATION_UNCONFIRMED` cases; their expanded assertion bodies are absent from the captured stderr, so their specific assertion is unresolved here. |
+| Mutation and Exit classification | 9 | Eight mutation cases expected `MUTATION_ERROR` but received `INTERNAL_ERROR`; one Exit depth-guard case expected `EXPRESSION_ERROR` but received `INTERNAL_ERROR`. |
+| Other diagnostic exposure | 6 | Two nested-child cases received `Error` name/message/stack in public child details; two mutation completion/resolver cases exposed message/stack canaries; one edge-handler case exposed `boom`; one outer infrastructure case exposed outer message/stack canaries. |
+| Missing private diagnostic | 1 | The final `ContextThread` validation case expected “expected record” in captured private logger lines but received an empty array. |
+
+The matrix produced 488 failed headers but only 448 distinct displayed titles: 40 titles repeat twice. Read-only source context explains the collisions: `failureCases` contains two distinct `HARNESS_TRANSPORT_FAILED` rows (`definitely-not-submitted` and `delivery-uncertain`), while the `it.each` title includes the code but omits the state. Each of those rows repeats across two harness families, five non-cancel phases, two `retry` parameter values, and two fault timings, yielding the 40 repeated failed titles. This is duplicate display labeling for distinct parameter rows, not evidence of an accidental second runner pass.
+
+The `retry=true/false` values are application test parameters (`retriable`), not Vitest retry attempts. The captured command has no retry option; the package test script is `vitest run`, and the shared configuration sets no retry count. The matrix source creates 864 cases from 2 harness families × 12 case rows × 6 sources × 2 retriable values × 3 recording modes; the two other matrix-file tables add 8, matching the 872-test file summary.
+
+## Runner and evidence limits
+
+The test runner reached a normal Vitest summary for all 944 tests and returned nonzero because assertions failed. The terminal `ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL` is the package-script propagation of that failure; the retained files show no separate import, setup, or runner crash.
+
+The stderr contains 504 `FAIL` headers, 236 expanded assertion detail blocks (220 matrix plus 16 other), and ends at detail counter `[236/504]`. It contains no explicit truncation marker. The remaining 268 matrix cases therefore have summary titles but no per-case assertion body in this capture; their exact individual messages are not independently confirmed here.
+
+For the duplicate-label and matrix-size explanation, current source was read without modification. Read-time SHA-256 values were `ac88291e93daa62b0bf9928153eb14e5360291d680fa746f3d3d8106f9886bcd` for `packages/engine/src/handlers/inference-evidence-matrix.test.ts` and `af244d8fed7bfa200c51d16d9b34ae3840c4265b5e967dc1d8d513654dab2e85` for `packages/engine/src/testing/inference-failures.ts`. These live source hashes are contextual and are not bound by the run metadata.

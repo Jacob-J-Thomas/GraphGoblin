@@ -1,0 +1,180 @@
+# PR #484 — independent final AIDLC audit, formal scan 2 of 3
+
+**Verdict: SIGN-OFF for head `08651317c485062eb90367e1df3f7632f8e1a6c7` against target `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`. No actionable findings, required corrections, or new follow-up issues.**
+
+This is the fresh GPT-6 Astra MAX final audit. I had no implementation or earlier QA role. I independently reviewed the complete effective source and narrative change, traced surrounding admission/storage behavior, verified the evidence inventories and committed bytes, reconstructed the critical native acceptance observations from raw evidence, and checked the current CI logs and coverage archive. The qualifications below are part of this sign-off. The audit authorizes neither an owner-acceptance claim nor any change in unrelated scope. Publication and merge remain the root orchestrator's responsibility.
+
+## Admission, identity, and review chain
+
+I first read `runtime-484-astra-admission.json`, then `runtime-484-astra-brief.md`. The admission was complete: current CI, completed opposite-family review, root dispositions, and accepted native evidence were supplied before this audit began. I read `AGENTS.md`, `docs/README.md`, `docs/15-issue-workflow.md`, the four-intent delivery register, `runtime-contract.md`, and `runtime-484-opus-brief.md`. The fresh final-review requirement, model roles, finite scan budget, and protected owner-resource boundaries were applied.
+
+| Identity | Independently checked value |
+| --- | --- |
+| PR | https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484 |
+| Reviewed head | `08651317c485062eb90367e1df3f7632f8e1a6c7` |
+| Reviewed tree | `c5d6d7f505e52b5ccf07b4bcb791777761dc45df` |
+| Target main and merge base | `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd` |
+| Source/test/decision-doc commit | `420240cad27d3865988dc7009dc9d80291e93c9c` |
+| Source commit tree | `75d6720f6cc7da85e04d9f17f8b96f40b94c4094` |
+| CI synthetic merge | `98d2bc2c473d3167a39ae966f9dfb9e2f00904fe` |
+| Synthetic merge parents, in order | Target `15ce9a1d…`, then head `08651317…` |
+| Synthetic merge tree | Exactly the reviewed head tree |
+| Checkout | `C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin` |
+| Index SHA-256, unchanged | `6194765e02d4037c7468224c68dba0a9e0b4ee0bd42931c023f598372d97996b` |
+| Final local/live identity readback completed | `2026-11-15T14:07:46.687Z` |
+
+The worktree and index were clean before and after the audit. Final readback verified all 12 source-file digests again, empty porcelain status, unchanged index digest, and an empty `git diff --check` result outside byte-preserved QA artifacts. Fresh `git ls-remote` returned the exact target, PR head, and synthetic merge above. Fresh GitHub metadata agreed: open draft, unmerged, mergeable, two commits, 343 changed paths. A future head or target change is outside this verdict.
+
+The opposite-family review was Claude Opus 5.5 (`claude-opus-5-5`) at xhigh, formal scan 1: **READY**. I read its complete report and independently verified SHA-256 `8804954db1e294f68493fe0a16f40e7a9ac7f9f73afbebd5b7e8535c9ca53b55`. I fetched the published [review comment](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484#issuecomment-6895278204) and compared the entire text to that report. They match after CRLF normalization and trimming terminal LF characters; GitHub has one extra terminal blank line. Its optional helper consolidation and user-guide additions are not required corrections. Its Windows-evidence qualification is retained here.
+
+The source implementation is GPT work, with Claude providing the opposite-family review. The already-merged UI work carried in inherited evidence retains its recorded Claude implementation/GPT review routing. This audit is the required independent final Astra review, not a substitute for either role. This completes scan 2 of the shared cap of 3; it does not consume another implementation/review cycle.
+
+## Effective patch and source reasoning
+
+The effective diff changes exactly 343 paths. Commit `420240ca` changes 12 source, test, and decision-document files. Commit `08651317` adds 329 QA files and appends to the delivery register and `docs/qa/.gitattributes`. There is no subsequent product, test, build, workflow, dependency, or lockfile delta. I reviewed the complete 12-file diff and its tests, the narrative additions, and the relevant unchanged scheduler, run-manager, and SQLite admission code.
+
+| Source or decision file | SHA-256 of current bytes, also equal to source commit and published freeze |
+| --- | --- |
+| `packages/domain/src/poll-items.ts` | `6bfbb020e5800d53544701f15726543e9c54c6eda18c36bddcadce52e7adb257` |
+| `packages/domain/src/poll-items.test.ts` | `afa30c1882f974f1a8a827532fb9cb07cfac5cce9a0f0f44f8a39d0883ee7744` |
+| `apps/api/src/triggers/poll-items.ts` | `54953e76af98c3ccd80ab5abbd3751d515d17afc09ddb348836494554f3f698e` |
+| `apps/api/src/triggers/poll.ts` | `1ececa003e4013b3557e12ac883bad32c12fca64281adcebc28e407a598b5dd5` |
+| `apps/api/src/triggers/poll-items.test.ts` | `2a1a095baf87e1af88eec6c5cb97d5c0fb687decffe2d94faa27d157f67ee751` |
+| `apps/api/src/triggers/poll-dedupe.test.ts` | `ff987592e0a55945b28253f8cf1d37cd84b1a2f1c54f1e08bc6def7c1c01daac` |
+| `apps/api/src/ollama-container.test.ts` | `048273390a1714ced2bd434526a3810f0ef9cdee58d47375e95211467e214e0f` |
+| `apps/api/src/preflight-ollama.test.ts` | `b7fcdc4ac97a13e85827a290738054d31690dca4f7027902c98b6b1540fda30a` |
+| `CHANGELOG.md` | `9827f66aed51daf2b7dfe436cd9505b72200d3065f2ba6c0c9c587ad6aef477d` |
+| `docs/08-triggers-and-integrations.md` | `ab175aa8b8fdcb8debcb6074328e9cbc3a49e15f93185445e4718f435fd99d98` |
+| `docs/decisions/ADR-0079-poll-dedupe-key-identities.md` | `4ee5c6ad427f93fd6c2c8b5c70edd966a227d447a62121dafa4993923273be12` |
+| `docs/decisions/README.md` | `9b215530d6d9fd54264807990213f92e9e7892bca9b88d7cc7c9e08048943f8c` |
+
+**Item-mode identity validation.** The pure domain predicate uses a Unicode-aware surrogate-range regex. A valid surrogate pair is treated as its full code point, outside that range; an unpaired high or low surrogate is rejected. Existing item keys are bounded to 512 UTF-16 code units before this predicate, so this is a small linear check. It neither normalizes nor substitutes valid identities.
+
+`preparePollItems` retains its existing whole-batch ordering for invalid JSON values, key evaluation failures, non-string keys, blank keys, and overlength keys. A malformed key then becomes a rejection-only entry, without a key or payload, before duplicate tracking and depth classification. Consequently repeated malformed keys cannot raise a whole-batch duplicate error, reach SQLite, or starve later valid candidates. A malformed deep candidate gets the malformed rejection once. A well-formed duplicate still refuses the whole batch, including when its item is too deep. All preparation completes before lookup or admission begins.
+
+`admitPollItems` collects only actual keys for `findSeen` and skips the call when the list is empty. Seen filtering remains exact for keyed candidates, including the existing silent behavior for an already-seen depth-refused key. Rejection-only entries remain visible for diagnostics. Both malformed and depth-refused candidates are skipped before the run-cap check. Only successful admissions increment the cap; an atomic duplicate returning `undefined` does not. A lookup error prevents all starts. A start error retains already-admitted runs and stops the remaining tail. The changed union is narrowed without weakening types or adding `any`.
+
+**Single-mode identity validation.** The new check runs on the already-derived, already-sliced 512-unit identity immediately before the existing lookup/start path. This addresses the case where truncation itself splits a valid pair. It emits the fixed typed `POLL_DEDUPE_KEY_INVALID` diagnostic and returns on malformed identity, with no fallback to unkeyed admission. Existing absent/null/undefined/empty-key behavior and intentional unkeyed starts remain intact; whitespace behavior is unchanged. A valid pair and literal U+FFFD retain their exact identities. An invalid unit outside the effective slice does not alter the existing derived identity. Unrelated payload content is not sanitized or rewritten.
+
+**Admission and recovery boundaries.** I traced the unchanged `RunManager.startPollItem` path through `createPollItem`, the dedupe lookup, run-key scope, SQLite transaction, pending claims, and queued event creation. The patch preserves the transaction that resolves concurrent same-key admission and the scheduler's in-flight/busy behavior. It does not create an alternate reservation path or move the check after persistence. The warning fields are fixed and bounded; they contain neither the invalid key nor payload. Item batches are already bounded to 200. I found no new data disclosure, unbounded regex work, concurrency regression, or cross-package boundary violation in this change.
+
+**Windows cleanup prerequisite #483.** Each of two test hooks adds only `globalThis.gc?.()` before its unchanged recursive temporary-directory removal. The hooks already release the container or restore mocks, and the existing test fork configuration exposes GC. The existing SQLite implementation documentation explains that closed native statements may need collection before Windows file handles disappear. This is consistent with the reproduced cleanup failure and with the corrected pair's result. Assertions, timeouts, retries, coverage thresholds, and production behavior are unchanged. This is a narrowly supported test cleanup repair; it does not establish the cause of the separate subloop timing failure or native worker crash.
+
+The changelog, trigger documentation, and ADR-0079 describe these semantics accurately. There is no schema, stored format, dependency, provider, or compatibility change. Historical stored rows are not rewritten. The change rejects future malformed identities without making existing content invalid, so no data conversion or migration is required. Broader #381/#414, #410, #419, and launcher work remains outside this patch.
+
+## Evidence integrity and native acceptance
+
+I verified every file in the five committed evidence packets against its SHA-256 manifest and its committed Git blob, then verified the source-copy mappings with their actual schema. The manifest itself is the single deliberate manifest exclusion per packet. No extra or missing packet files were found.
+
+| Committed packet under `docs/qa/` | Files | Verified checksum rows | Bytes |
+| --- | ---: | ---: | ---: |
+| `2026-11-15-poll-dedupe-baseline` | 77 | 76 | 5,468,612 |
+| `2026-11-15-poll-dedupe-implementation` | 41 | 40 | 1,352,550 |
+| `2026-11-15-poll-dedupe-corrected` | 99 | 98 | 3,333,251 |
+| `2026-11-15-space-cards-completion` | 76 | 75 | 4,526,490 |
+| `2026-11-15-space-cards-corrected-ci` | 36 | 35 | 891,135 |
+| Total | 329 | 324 | 15,572,038 |
+
+The external current-CI packet `proposed/docs/qa/2026-11-15-poll-dedupe-current-ci` also passed: 34 files, 33 checksum rows, 905,866 bytes, and 31 mapped source payloads. The baseline has 75 mapped source records; implementation has 39, corrected 97, and inherited completion 109 across its CI/audit/receipt maps. Available original files match their copies. The implementation and corrected packet READMEs are explicitly authored wrappers, not copies of an absent original; their own hashes are verified. Current-CI map sources are remote response descriptions rather than local paths. `docs/qa/.gitattributes` preserves the five packets' raw bytes and does not weaken source checks.
+
+I read the driver and oracle code, retained initial failures, diagnostic analysis, cleanup records, and relevant raw observations. My independent native readback script derives expectations from the actual JSON wire values with Node's built-in UTF-16 well-formedness check; it does not reuse the production regex. It verifies all 21 observation groups against raw persisted JSON, SQLite hex, paginated REST identities, and queued event payloads. It checks 17 snapshot/thread/event sample groups with successful responses, the warning fields and timing windows, restart identity, held-response evidence, and cleanup receipts.
+
+| Corrected native target | Observed cumulative durable runs | Final result |
+| --- | --- | --- |
+| Items, P1–P4 | 4, 6, 6, 7 | Exact tags A, P, R, B, RH, C, D; malformed keys absent |
+| Lone surrogate, P1–P4 | 0, 0, 0, 0 | No admission |
+| Split pair at slice boundary, P1–P5 | 0, 0, 0, 0, 1 | Only the later valid PREFIX identity admitted |
+| Valid single keys, P1–P4 | 1, 2, 3, 3 | SR, SP, SA remain exact and deduplicated |
+| Intentional no key, P1–P4 | 1, 2, 3, 4 | Four independent runs, with no dedupe key |
+
+There are exactly 15 distinct corrected durable run IDs. REST sets, raw stored values, initial thread content, and sequence-1 queued payloads agree. The original baseline contains 34 IDs, of which 20 have malformed decoded identities; its per-target totals are 18/4/5/3/4. Baseline and corrected P2/P3/P4 item inputs intentionally differ. Therefore **34 versus 15 is not an identical-wire before/after subtraction**. The per-phase wire and durable-content checks establish the corrected behavior.
+
+The restarted gateway used the same SQLite file identity: path, device, inode, and birth time agree. Its first five observations occurred 4.733–4.809 seconds after readiness and 77–137 ms after their recorded due times. The held item response lasted 7,101.8096 ms. The raw fixture evidence shows only one in-flight request and no overlapping item request while held; the pre-release database retained only the four P1 item IDs despite an advanced due time. Scheduled progress resumed after release. The shutdown receipts show HTTP 202 drains, zero outstanding work, successful owned-process exits, removed disposable stores, and empty owned-process/listener inventories.
+
+The 20 controlled public-method cases are a separate evidence tier: they directly establish lookup/start call boundaries and error/cap behavior using controlled ports. The concurrent file-SQLite test is real storage but **one process**, with two candidate IDs racing for one key: one admitted run, one duplicate result, one queued event, and one notification. It is not a multi-process concurrency claim. The native scheduler uses real gateway processes, controlled HTTP responses, and file SQLite; it does not exercise live model providers.
+
+The source/build binding contains 1,694 tracked inputs. I compared it with the current checkout: 1,693 are exact, and the sole difference is the later append-only delivery register. All 1,056 built files across seven trees match the captured binding. The before/after binding files are themselves identical, SHA-256 `fb547ec5d2039ac902c9ae81b72a8cba1c26722a8a2b3779b9f388eeb32e99ec`. This connects the native run to the reviewed source without claiming a new build at the source commit.
+
+### Retained native diagnostic failure
+
+The original corrected native supervisor exited **1**, after all 21 behavior observations and drains. That failed result remains intact. Its initial diagnostic oracle compared gateway warning timestamps to the independent supervisor probe-receipt clock. Two warnings were 1 ms earlier than those receipt timestamps: corrected-lone-P3 at log line 164 and corrected-split-P3 at line 165.
+
+I independently checked the raw warning lines and timing records. They are respectively 30 ms and 31 ms after the gateway's recorded next-poll due time. The offline analysis uses that gateway due time and the subsequent inert boundary, with disjoint windows and unique warning assignment. All 20 expected warnings are assigned once, with 12 item warnings and eight single-mode warnings; their allowed fixed fields match, and the payload canary is absent from the complete logs. The two clock comparisons do not establish a product warning before the scheduled poll.
+
+This supports the separately documented offline diagnostic acceptance and the behavior evidence. It does **not** change the original exit status, claim the original diagnostic assertion passed, or constitute a native rerun. No native sequence was rerun for this audit. I accept the bounded reanalysis for this patch because its input logs, source identities, causal windows, and uniqueness checks are independently reproducible.
+
+## Test history and current CI
+
+The original local API coverage attempt is retained: 1,935 passed, 14 skipped, five failures, plus a native worker exit `0xC0000005`; no valid aggregate coverage result came from that attempt. Four reported failures were Windows EBUSY cleanup cases; the remaining failure involved subloop waiting/running timing and a hook timeout, while the worker crash was associated with the cron worker. Serial isolation passed 38 tests and retained three EBUSY failures; the subloop/cron tests passed there. Only the two Ollama cleanup specifications were reproduced on unchanged main, with 21 passing tests and four EBUSY failures. It would be incorrect to assign all initial failures to cleanup.
+
+After #483, the affected pair passed all 25 tests. Final local API coverage passed 1,943 tests with 14 documented skips and 95.95% lines/90.88% branches. Those skips retain the recorded platform, dynamic D-015, live-provider, and performance qualifications. Domain passed 460 tests at 98.73% lines/96.09% branches. Final affected typecheck, format, lint evidence, and seven forced API build tasks passed. The build used zero Turbo cache hits but ordinary TypeScript incremental compilation; it ran on the bound candidate inputs before commit publication, not as a newly executed build at commit `420240ca`.
+
+Current CI is [run 43715831258](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43715831258), attempt 1. I inspected the four raw logs, job/run metadata, artifact inventory, workflow copies, synthetic commit metadata, and coverage ZIP contents. Fresh GitHub job metadata confirmed all four applicable jobs completed successfully:
+
+| Job | Job ID | Result |
+| --- | ---: | --- |
+| Gates | 132817046986 | Success |
+| Browser | 132817046990 | Success |
+| Windows launcher | 132817046977 | Success |
+| Template image | 132817046734 | Success |
+
+Every raw job log fetches and checks out synthetic merge `98d2bc2c…`; the synthetic metadata has the exact target/head parents and the reviewed tree. Both stored workflow files match HEAD. None of the 343 changed paths matches the separate routing-performance workflow's path filter, so that workflow is correctly inapplicable. Ordinary routing tests within Browser are a different check.
+
+Gates passed build, typecheck, lint, layering, dependency boundaries, licenses, generated-document verification, and coverage. The raw coverage groups and all 13 archive summaries agree on four coverage metrics and totals. Coverage reports **9,588 passed and 41 skipped tests**, with 601 passing and eight skipped test files. Every workspace exceeds 90% lines and branches. The lowest line figure is 95.00%; the lowest branch figure is API's 90.61%.
+
+| Workspace | Passed / skipped | Lines | Branches |
+| --- | ---: | ---: | ---: |
+| contracts | 304 / 0 | 99.40% | 94.73% |
+| domain | 460 / 0 | 98.73% | 96.09% |
+| engine | 1,795 / 0 | 97.00% | 91.33% |
+| infrastructure | 1,149 / 8 | 97.80% | 93.18% |
+| adapter-codex | 641 / 5 | 99.23% | 95.41% |
+| adapter-jev | 34 / 5 | 98.80% | 96.77% |
+| api | 1,937 / 20 | 95.78% | 90.61% |
+| api-client | 103 / 0 | 100.00% | 97.30% |
+| tooling | 175 / 2 | 96.89% | 91.67% |
+| web | 2,911 / 0 | 98.60% | 94.30% |
+| mcp | 62 / 0 | 96.95% | 94.23% |
+| plugin-claude | 8 / 0 | 95.00% | 95.23% |
+| plugin-codex | 9 / 1 | 95.58% | 91.66% |
+
+The CI platform's API count and skips differ from the local Windows result; neither is presented as the other's execution. The raw API log includes both changed 13-test poll specifications and the 18-test/7-test cleanup pair. CI's first build has 12 successful tasks and no Turbo cache hits. The coverage command has 22 successful tasks and nine cached dependency builds; the 13 actual coverage groups executed, with ordinary cache misses and tooling's explicit forced bypass. This is not a claim that every build/typecheck operation used no incremental state.
+
+Browser passed 481 tests with one declared LIVE skip, one worker, and no retries. Optional strict routing mode, historical captures, and profiling remained off. Windows launcher passed 14 tests with no failures or skips. Its artifact upload step was green but logged: `No files were found with the provided path: .tmp/windows-launcher-*/. No artifacts will be uploaded.` The final inventory contains only the coverage artifact, ID `14163695356`, 21,946 bytes. No Windows launcher archive is claimed. Browser's failure-artifact step was skipped on success. Template image verification loaded four templates in its offline/read-only path; the legacy deploy warning is retained.
+
+The dependency audit passed the configured high-severity threshold while reporting **21 vulnerabilities: eight low and 13 moderate**. This is not a vulnerability-free result. The existing URL/punycode and action-runtime deprecation warnings remain warnings; the project jobs used Node 22.23.4. The Linux coverage job is not evidence that Windows SQLite cleanup was exercised there.
+
+Raw current-CI log SHA-256 values are:
+
+- Gates: `e4a6e778604b385a1325d07759bada2490d7e6eb3e7a4ccc355888f27a02a9a9`
+- Browser: `d68192d119134678df6427bf5c90620cb717f926bfd1966e5430721d266315df`
+- Windows launcher: `da1dc4d40dc3c70c2045dbdf99ff152c78f8363dcccdb9aee95e9487a64e4a75`
+- Template image: `a27f7457ca540df73e582da93176fbc1d9dcdf1e812d9ded26174079fe0f4efd`
+- Coverage ZIP: `f4b532ce0b6ac44ff3862b11a5cc1f9cc28b22edcec423d8c0d5c4ee83dbf981`
+
+## Inherited narrative, delivery, and transport
+
+The Space cards packets preserve already-merged PR #482's completion evidence. They add no new UI implementation in #484. I checked their manifests, available source copies, full prior audit, qualification-bearing raw/report material, and the appended register narrative. Original browser/native failures remain visible. The viewport correction and subsequent evidence do not establish physical-touch behavior, every browser text preference, or screen-reader acceptance. The corrected native Undo observation is after fit; pre-commit behavior has source/test evidence rather than that native observation. One reconstructed worker report lacks an independently retained original digest. The 32 definition-equivalent wires retain the recorded Add Script schema-default qualification. These limits are not silently upgraded by copying the packet.
+
+The owner-tracking repair records that a negated closing phrase nevertheless caused an automatic issue closure, followed by restoration. I independently fetched issue #208 and confirmed it is open; subjective owner acceptance remains pending. Its engineering checkboxes do not close that owner gate. The earlier PR #474 used the documented three-scan completion path; the carried narrative does not claim a renewed Astra verdict. Other batch intentions, including the owner-controlled #460 boundary, are not completed or reopened by this audit.
+
+Git publication retained three failed smart-HTTP attempts with HTTP 408, including misleading trailing `Everything up-to-date` text, and the large-body API failures. The later Git-data API recovery preserved the original source and evidence commits, tree identities, and blobs. I checked the retained commit responses against local Git objects and live refs; the source commit's sole parent is the target, and the evidence commit's sole parent is the source commit. The large audit-index payload remains byte-identical. This establishes publication identity. It is transport evidence, not a product test or a proven root cause for the network failures.
+
+## Work performed by this auditor and retained artifacts
+
+All audit-created files are outside the repository under `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/audit-484-astra-scan2`. I used the project Node 22.23.4 runtime for bounded readback scripts and read-only Git/GitHub operations. I ran no new product test suite, build, provider request, browser session, scheduler sequence, or storage mutation. I did not spawn another reviewer, stage, commit, push, write to GitHub, or touch owner resources.
+
+The independent artifacts include:
+
+- `independent-integrity.json` and `verify-integrity.mjs`: complete changed-path/source inventory, before/after checkout identity, every packet file digest and Git blob.
+- `independent-copy-maps.json` and `verify-copy-maps.mjs`: actual source-map schemas, mapped destination digests, and available original-file equality.
+- `independent-native-readback.json` and `verify-native.mjs`: per-phase expectations and durable results, warning assignments, restart/hold/cleanup checks, source/build binding, controlled ports and one-process race evidence.
+- `coverage-archive-readback.json` and `read-coverage-archive.ps1`: ZIP inventory and all 13 unextracted raw coverage summaries.
+- `independent-ci-readback.json` and `verify-ci.mjs`: raw log identities, checkout provenance, jobs, coverage totals, skips, cache distinctions, artifacts, and routing applicability.
+- `live-connector-readbacks.json` and `final-connector-readbacks.json`: full live PR/issues/jobs and final PR/comment readbacks.
+- `final-identity.json` and `final-identity.mjs`: final exact local/remote head/target/merge identity, clean index/worktree, all 12 source digests, and complete published-review text comparison.
+- `seal.json` and `SHA256SUMS`: final report identity and artifact inventory.
+
+Two auditor-only parser corrections are explicitly retained. The first CI parser incorrectly required the literal `cache miss, executing` in every coverage group; tooling legitimately says `cache bypass, force executing`. Its first script/result remain as `verify-ci-first.mjs` and `independent-ci-first.json`; the corrected parser accepts those two actual execution forms and still rejects a cached coverage group. The first final-identity comparison removed at most one terminal LF, exposing GitHub's extra terminal blank line. `final-identity-first.mjs` and `final-identity-first.json` preserve that assertion and exact length/tail diagnosis. The corrected comparison normalizes CRLF and terminal LF characters only. Neither correction changed repository files or acceptance evidence, and neither is represented as a product failure or a repeated product test.
+
+The independently checked evidence supports the bounded runtime correction and cleanup prerequisite on this exact candidate. No introduced in-scope defect or unsupported completion claim requires a source or narrative change. **Final verdict: SIGN-OFF for `08651317c485062eb90367e1df3f7632f8e1a6c7` against `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`, formal scan 2 of 3.**

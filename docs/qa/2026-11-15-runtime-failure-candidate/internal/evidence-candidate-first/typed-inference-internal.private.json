@@ -1,0 +1,83 @@
+[
+  {
+    "level": "error",
+    "msg": "inference recording failed",
+    "obj": {
+      "runId": "00000000000000000000000003",
+      "nodeId": "infer",
+      "turnId": "00000000000000000000000006",
+      "operation": "turn.intent.reconcile",
+      "error": {
+        "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/inference-reconcile-private-message.ts",
+        "name": "Error",
+        "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/inference-reconcile-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/inference-reconcile-private-stack.ts:13:7)"
+      }
+    }
+  },
+  {
+    "level": "error",
+    "msg": "inference execution failed",
+    "obj": {
+      "runId": "00000000000000000000000003",
+      "nodeId": "infer",
+      "turnId": "00000000000000000000000006",
+      "error": {
+        "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/inference-intent-private-message.ts",
+        "name": "Error",
+        "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/inference-intent-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/inference-intent-private-stack.ts:13:7)"
+      }
+    }
+  },
+  {
+    "level": "error",
+    "msg": "inference recording failed",
+    "obj": {
+      "runId": "00000000000000000000000003",
+      "nodeId": "infer",
+      "turnId": "00000000000000000000000006",
+      "operation": "harness.status",
+      "error": {
+        "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/inference-status-private-message.ts",
+        "name": "Error",
+        "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/inference-status-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/inference-status-private-stack.ts:13:7)"
+      }
+    }
+  },
+  {
+    "level": "error",
+    "msg": "node failed",
+    "obj": {
+      "runId": "00000000000000000000000003",
+      "nodeId": "infer",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "resumable": true,
+        "nodeId": "infer",
+        "inference": {
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000006",
+          "promptKind": "repair",
+          "submission": "definitely-not-submitted",
+          "sessionId": "fake-session-1",
+          "retry": {
+            "harness": "codex",
+            "prompt": "Repair exactly: \"invalid\"",
+            "resumeSessionId": "fake-session-1"
+          }
+        },
+        "details": {
+          "cause": null,
+          "recording": [
+            {
+              "operation": "turn.intent.reconcile"
+            },
+            {
+              "operation": "harness.status"
+            }
+          ]
+        }
+      }
+    }
+  }
+]
