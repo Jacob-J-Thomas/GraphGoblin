@@ -1,0 +1,685 @@
+{
+  "schema": "graphgoblin-361-offline-diagnostic-reanalysis/v1",
+  "at": "2026-11-15T11:37:30.339Z",
+  "candidate": {
+    "head": "420240cad27d3865988dc7009dc9d80291e93c9c",
+    "tree": "75d6720f6cc7da85e04d9f17f8b96f40b94c4094"
+  },
+  "scriptSha256": "d6a09429748d33ae013bb0266006794f7766c02f2aed77428bbda0b8b5fac96b",
+  "exactInputs": {
+    "admission": "27dd6040c1d605ff73de4da10c0e47c5a2a8fe7c86fd676413af21526edc3311",
+    "fixtureManifest": "957458526b7231c6dcf3f3103502dd9348e277cb4036dc53ea06db497ee6cfcc",
+    "freeze": "252145a9d2a5aec128c63719b40be62d4c62b7afff1b1de6a4533492fbd5d790",
+    "source": "fb547ec5d2039ac902c9ae81b72a8cba1c26722a8a2b3779b9f388eeb32e99ec",
+    "result": "03be248eb5b5c4328183544d31acb681f115bbb75d279be2877af53a861bf5f2",
+    "requests": "f1527c19330cb3dd52baf5f6252a203703022f9125156fee27dd78a6eb4ed759",
+    "firstLog": "8317656b6d21cf1dfdb1997e0d180434a1d3ce3a3dafe8cfc2cb76d734507de7",
+    "restartLog": "5f31a50a035484f7afe719a8ec4899ec9719986e21a300b37ba2fb5f91b89eb7",
+    "cleanup": "b261dca68ea05f41c84d784dc92c6fb125b69ef2ab38a5d538fa309143e763d4",
+    "binding.mjs": "e109906efe02d352407247c32fcb6d27985b5ef23aa9a537415f48354fac0efc",
+    "gateway.mjs": "025da17e4e76390885686e8bc797c40d030d9e45fcf6a1305a86d398e8a46b08",
+    "diagnostics.mjs": "f3e25300fa560308e58c0bd20a6a47d42e60e82c5e210da537a8cffa4af71dbd",
+    "run-corrected.mjs": "0a5e10d7221df59fb688fe2872eb2e53f8281f15b4308c3b7424b01a3da1e678",
+    "run-ports.mjs": "58bbe8f3cfa90379494e0ece6eef159403de3d2d032adf547dab300eaa28d81e",
+    "run-race.mjs": "2cccc730750b026946b4c6bcb8ef2b7a170dbf68ca701ee44651a9d15b190898",
+    "verify-cleanup.ps1": "9d9c9a5af8e7cdcd846957e03303b7478daf49b055fb05b013aa020a0cb02cd6",
+    "admission.template.json": "63065ace76371e8343ccd566ecceac7182c3b9a18729798cd6d5416d6b7d3cc8",
+    "handoff.md": "d1ce9f498abcf9e5a5214d66e66b11fbec05ec579515da0ac92bff756ee0d079",
+    "../wire-fixtures.json": "a73d3cad100e766799d44cf42fc14fd357e1a71d800ecb626a855b356882eef8"
+  },
+  "warningSourceHashes": {
+    "apps/api/src/triggers/poll.ts": "1ececa003e4013b3557e12ac883bad32c12fca64281adcebc28e407a598b5dd5",
+    "apps/api/src/triggers/poll-items.ts": "54953e76af98c3ccd80ab5abbd3751d515d17afc09ddb348836494554f3f698e",
+    "packages/domain/src/poll-items.ts": "6bfbb020e5800d53544701f15726543e9c54c6eda18c36bddcadce52e7adb257"
+  },
+  "observations": 21,
+  "uniqueAssignments": 20,
+  "limits": "Retained-log readback only. Original native result and checker failure stay unchanged.",
+  "originalFailure": {
+    "name": "AssertionError",
+    "message": "corrected-lone-P3\n\n0 !== 1\n",
+    "stack": "AssertionError [ERR_ASSERTION]: corrected-lone-P3\n\n0 !== 1\n\n    at checkDiagnostics (file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-361-native/corrected-preparation-v3/diagnostics.mjs:39:12)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-361-native/corrected-preparation-v3/run-corrected.mjs:544:23",
+    "at": {
+      "wall": "2026-11-15T11:31:29.372Z",
+      "monoMs": 64227.7407
+    }
+  },
+  "lowerBound": "armed.nextPollAt, the due time from the gateway that emitted the warning",
+  "upperBound": "later inert request reception, exclusive",
+  "identity": "gateway PID, exact loop ID and trigger node",
+  "allPerLoopWindowsNonoverlapping": true,
+  "warningCanaryMatches": 0,
+  "discrepancies": [
+    {
+      "label": "corrected-lone-P3",
+      "file": "initial-gateway.log",
+      "line": 164,
+      "fromDueMs": 30,
+      "fromProbeReceivedMs": -1
+    },
+    {
+      "label": "corrected-split-P3",
+      "file": "initial-gateway.log",
+      "line": 165,
+      "fromDueMs": 31,
+      "fromProbeReceivedMs": -1
+    }
+  ],
+  "assignments": [
+    {
+      "target": "items",
+      "label": "corrected-items-P1",
+      "pid": 34892,
+      "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+      "inclusiveDueMs": 1794742236826,
+      "exclusiveBarrierMs": 1794742242494,
+      "firstProbeMs": 1794742237472,
+      "expected": 3,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 47,
+          "entry": {
+            "level": 40,
+            "time": 1794742237554,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 0,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 728,
+          "fromProbeReceivedMs": 82
+        },
+        {
+          "file": "initial-gateway.log",
+          "line": 48,
+          "entry": {
+            "level": 40,
+            "time": 1794742237554,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 2,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 728,
+          "fromProbeReceivedMs": 82
+        },
+        {
+          "file": "initial-gateway.log",
+          "line": 49,
+          "entry": {
+            "level": 40,
+            "time": 1794742237554,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 6,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 728,
+          "fromProbeReceivedMs": 82
+        }
+      ]
+    },
+    {
+      "target": "lone",
+      "label": "corrected-lone-P1",
+      "pid": 34892,
+      "loopId": "01M7FFJ8S36K2F41YY4QPSKRPN",
+      "inclusiveDueMs": 1794742236870,
+      "exclusiveBarrierMs": 1794742242497,
+      "firstProbeMs": 1794742237571,
+      "expected": 1,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 50,
+          "entry": {
+            "level": 40,
+            "time": 1794742237581,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8S36K2F41YY4QPSKRPN",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll trigger failed"
+          },
+          "bytes": 221,
+          "fromDueMs": 711,
+          "fromProbeReceivedMs": 10
+        }
+      ]
+    },
+    {
+      "target": "split",
+      "label": "corrected-split-P1",
+      "pid": 34892,
+      "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+      "inclusiveDueMs": 1794742236900,
+      "exclusiveBarrierMs": 1794742242499,
+      "firstProbeMs": 1794742237598,
+      "expected": 1,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 51,
+          "entry": {
+            "level": 40,
+            "time": 1794742237609,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll trigger failed"
+          },
+          "bytes": 221,
+          "fromDueMs": 709,
+          "fromProbeReceivedMs": 11
+        }
+      ]
+    },
+    {
+      "target": "valid",
+      "label": "corrected-valid-P1",
+      "pid": 34892,
+      "loopId": "01M7FFJ8V628BWK605P25GGTAQ",
+      "inclusiveDueMs": 1794742236926,
+      "exclusiveBarrierMs": 1794742242501,
+      "firstProbeMs": 1794742237624,
+      "expected": 0,
+      "assigned": []
+    },
+    {
+      "target": "unkeyed",
+      "label": "corrected-unkeyed-P1",
+      "pid": 34892,
+      "loopId": "01M7FFJ8VZ492NBQQFJNA2RER3",
+      "inclusiveDueMs": 1794742236953,
+      "exclusiveBarrierMs": 1794742242504,
+      "firstProbeMs": 1794742237696,
+      "expected": 0,
+      "assigned": []
+    },
+    {
+      "target": "items",
+      "label": "corrected-items-P2",
+      "pid": 34892,
+      "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+      "inclusiveDueMs": 1794742247490,
+      "exclusiveBarrierMs": 1794742255582,
+      "firstProbeMs": 1794742247518,
+      "expected": 3,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 110,
+          "entry": {
+            "level": 40,
+            "time": 1794742254639,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 0,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 7149,
+          "fromProbeReceivedMs": 7121
+        },
+        {
+          "file": "initial-gateway.log",
+          "line": 111,
+          "entry": {
+            "level": 40,
+            "time": 1794742254639,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 1,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 7149,
+          "fromProbeReceivedMs": 7121
+        },
+        {
+          "file": "initial-gateway.log",
+          "line": 112,
+          "entry": {
+            "level": 40,
+            "time": 1794742254639,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 2,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 7149,
+          "fromProbeReceivedMs": 7121
+        }
+      ]
+    },
+    {
+      "target": "lone",
+      "label": "corrected-lone-P2",
+      "pid": 34892,
+      "loopId": "01M7FFJ8S36K2F41YY4QPSKRPN",
+      "inclusiveDueMs": 1794742247490,
+      "exclusiveBarrierMs": 1794742255583,
+      "firstProbeMs": 1794742254646,
+      "expected": 1,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 113,
+          "entry": {
+            "level": 40,
+            "time": 1794742254656,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8S36K2F41YY4QPSKRPN",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll trigger failed"
+          },
+          "bytes": 221,
+          "fromDueMs": 7166,
+          "fromProbeReceivedMs": 10
+        }
+      ]
+    },
+    {
+      "target": "split",
+      "label": "corrected-split-P2",
+      "pid": 34892,
+      "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+      "inclusiveDueMs": 1794742247490,
+      "exclusiveBarrierMs": 1794742255584,
+      "firstProbeMs": 1794742254669,
+      "expected": 1,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 114,
+          "entry": {
+            "level": 40,
+            "time": 1794742254681,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll trigger failed"
+          },
+          "bytes": 221,
+          "fromDueMs": 7191,
+          "fromProbeReceivedMs": 12
+        }
+      ]
+    },
+    {
+      "target": "valid",
+      "label": "corrected-valid-P2",
+      "pid": 34892,
+      "loopId": "01M7FFJ8V628BWK605P25GGTAQ",
+      "inclusiveDueMs": 1794742247490,
+      "exclusiveBarrierMs": 1794742255585,
+      "firstProbeMs": 1794742254695,
+      "expected": 0,
+      "assigned": []
+    },
+    {
+      "target": "unkeyed",
+      "label": "corrected-unkeyed-P2",
+      "pid": 34892,
+      "loopId": "01M7FFJ8VZ492NBQQFJNA2RER3",
+      "inclusiveDueMs": 1794742247490,
+      "exclusiveBarrierMs": 1794742255586,
+      "firstProbeMs": 1794742254729,
+      "expected": 0,
+      "assigned": []
+    },
+    {
+      "target": "items",
+      "label": "corrected-items-P3",
+      "pid": 34892,
+      "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+      "inclusiveDueMs": 1794742260580,
+      "exclusiveBarrierMs": 1794742265631,
+      "firstProbeMs": 1794742260608,
+      "expected": 3,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 161,
+          "entry": {
+            "level": 40,
+            "time": 1794742260609,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 0,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 29,
+          "fromProbeReceivedMs": 1
+        },
+        {
+          "file": "initial-gateway.log",
+          "line": 162,
+          "entry": {
+            "level": 40,
+            "time": 1794742260609,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 2,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 29,
+          "fromProbeReceivedMs": 1
+        },
+        {
+          "file": "initial-gateway.log",
+          "line": 163,
+          "entry": {
+            "level": 40,
+            "time": 1794742260609,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 6,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 29,
+          "fromProbeReceivedMs": 1
+        }
+      ]
+    },
+    {
+      "target": "lone",
+      "label": "corrected-lone-P3",
+      "pid": 34892,
+      "loopId": "01M7FFJ8S36K2F41YY4QPSKRPN",
+      "inclusiveDueMs": 1794742260580,
+      "exclusiveBarrierMs": 1794742265633,
+      "firstProbeMs": 1794742260611,
+      "expected": 1,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 164,
+          "entry": {
+            "level": 40,
+            "time": 1794742260610,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8S36K2F41YY4QPSKRPN",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll trigger failed"
+          },
+          "bytes": 221,
+          "fromDueMs": 30,
+          "fromProbeReceivedMs": -1
+        }
+      ]
+    },
+    {
+      "target": "split",
+      "label": "corrected-split-P3",
+      "pid": 34892,
+      "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+      "inclusiveDueMs": 1794742260580,
+      "exclusiveBarrierMs": 1794742265634,
+      "firstProbeMs": 1794742260612,
+      "expected": 1,
+      "assigned": [
+        {
+          "file": "initial-gateway.log",
+          "line": 165,
+          "entry": {
+            "level": 40,
+            "time": 1794742260611,
+            "pid": 34892,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll trigger failed"
+          },
+          "bytes": 221,
+          "fromDueMs": 31,
+          "fromProbeReceivedMs": -1
+        }
+      ]
+    },
+    {
+      "target": "valid",
+      "label": "corrected-valid-P3",
+      "pid": 34892,
+      "loopId": "01M7FFJ8V628BWK605P25GGTAQ",
+      "inclusiveDueMs": 1794742260580,
+      "exclusiveBarrierMs": 1794742265635,
+      "firstProbeMs": 1794742260613,
+      "expected": 0,
+      "assigned": []
+    },
+    {
+      "target": "unkeyed",
+      "label": "corrected-unkeyed-P3",
+      "pid": 34892,
+      "loopId": "01M7FFJ8VZ492NBQQFJNA2RER3",
+      "inclusiveDueMs": 1794742260580,
+      "exclusiveBarrierMs": 1794742265635,
+      "firstProbeMs": 1794742260619,
+      "expected": 0,
+      "assigned": []
+    },
+    {
+      "target": "items",
+      "label": "corrected-items-P4",
+      "pid": 49692,
+      "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+      "inclusiveDueMs": 1794742274047,
+      "exclusiveBarrierMs": 1794742279142,
+      "firstProbeMs": 1794742274124,
+      "expected": 3,
+      "assigned": [
+        {
+          "file": "restart-gateway.log",
+          "line": 27,
+          "entry": {
+            "level": 40,
+            "time": 1794742274145,
+            "pid": 49692,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 0,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 98,
+          "fromProbeReceivedMs": 21
+        },
+        {
+          "file": "restart-gateway.log",
+          "line": 28,
+          "entry": {
+            "level": 40,
+            "time": 1794742274145,
+            "pid": 49692,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 2,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 98,
+          "fromProbeReceivedMs": 21
+        },
+        {
+          "file": "restart-gateway.log",
+          "line": 29,
+          "entry": {
+            "level": 40,
+            "time": 1794742274145,
+            "pid": 49692,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8QQE5P1NN4JSYA8B60R",
+            "nodeId": "poll",
+            "code": "POLL_ITEM_REJECTED",
+            "itemIndex": 6,
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll item rejected"
+          },
+          "bytes": 229,
+          "fromDueMs": 98,
+          "fromProbeReceivedMs": 21
+        }
+      ]
+    },
+    {
+      "target": "lone",
+      "label": "corrected-lone-P4",
+      "pid": 49692,
+      "loopId": "01M7FFJ8S36K2F41YY4QPSKRPN",
+      "inclusiveDueMs": 1794742274051,
+      "exclusiveBarrierMs": 1794742279145,
+      "firstProbeMs": 1794742274157,
+      "expected": 1,
+      "assigned": [
+        {
+          "file": "restart-gateway.log",
+          "line": 30,
+          "entry": {
+            "level": 40,
+            "time": 1794742274159,
+            "pid": 49692,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8S36K2F41YY4QPSKRPN",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll trigger failed"
+          },
+          "bytes": 221,
+          "fromDueMs": 108,
+          "fromProbeReceivedMs": 2
+        }
+      ]
+    },
+    {
+      "target": "split",
+      "label": "corrected-split-P4",
+      "pid": 49692,
+      "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+      "inclusiveDueMs": 1794742274056,
+      "exclusiveBarrierMs": 1794742279146,
+      "firstProbeMs": 1794742274161,
+      "expected": 1,
+      "assigned": [
+        {
+          "file": "restart-gateway.log",
+          "line": 31,
+          "entry": {
+            "level": 40,
+            "time": 1794742274174,
+            "pid": 49692,
+            "hostname": "DESKTOP-RQPA3QI",
+            "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY",
+            "msg": "poll trigger failed"
+          },
+          "bytes": 221,
+          "fromDueMs": 118,
+          "fromProbeReceivedMs": 13
+        }
+      ]
+    },
+    {
+      "target": "valid",
+      "label": "corrected-valid-P4",
+      "pid": 49692,
+      "loopId": "01M7FFJ8V628BWK605P25GGTAQ",
+      "inclusiveDueMs": 1794742274059,
+      "exclusiveBarrierMs": 1794742279148,
+      "firstProbeMs": 1794742274182,
+      "expected": 0,
+      "assigned": []
+    },
+    {
+      "target": "unkeyed",
+      "label": "corrected-unkeyed-P4",
+      "pid": 49692,
+      "loopId": "01M7FFJ8VZ492NBQQFJNA2RER3",
+      "inclusiveDueMs": 1794742274063,
+      "exclusiveBarrierMs": 1794742279150,
+      "firstProbeMs": 1794742274200,
+      "expected": 0,
+      "assigned": []
+    },
+    {
+      "target": "split",
+      "label": "corrected-split-P5",
+      "pid": 49692,
+      "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+      "inclusiveDueMs": 1794742284140,
+      "exclusiveBarrierMs": 1794742289196,
+      "firstProbeMs": 1794742284173,
+      "expected": 0,
+      "assigned": []
+    }
+  ]
+}

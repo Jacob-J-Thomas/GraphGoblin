@@ -1,0 +1,224 @@
+{
+  "authored": {
+    "schemaVersion": 4,
+    "name": "QA 361 valid",
+    "nodes": [
+      {
+        "id": "poll",
+        "kind": "trigger",
+        "label": "Poll",
+        "config": {
+          "type": "poll",
+          "enabled": true,
+          "intervalSeconds": 5,
+          "probe": {
+            "kind": "http",
+            "url": "http://127.0.0.1:56331/qa361/valid",
+            "timeoutSeconds": 20
+          },
+          "fireWhen": "probe.json.fire = true",
+          "dedupeKey": "probe.json.key"
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "go",
+        "from": {
+          "node": "poll",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  },
+  "created": {
+    "loop": {
+      "id": "01M7FBZ8JK6CRHTREWJSA7ZHDY",
+      "ownerId": "local",
+      "name": "QA 361 valid",
+      "draftVersionId": "01M7FBZ8JK6CRHTREWJSA7ZHDZ",
+      "createdAt": "2026-11-15T10:27:43.315Z",
+      "updatedAt": "2026-11-15T10:27:43.315Z"
+    },
+    "draft": {
+      "id": "01M7FBZ8JK6CRHTREWJSA7ZHDZ",
+      "loopId": "01M7FBZ8JK6CRHTREWJSA7ZHDY",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "QA 361 valid",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "poll",
+            "label": "Poll",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "poll",
+              "intervalSeconds": 5,
+              "probe": {
+                "kind": "http",
+                "method": "GET",
+                "url": "http://127.0.0.1:56331/qa361/valid",
+                "timeoutSeconds": 20
+              },
+              "fireWhen": "probe.json.fire = true",
+              "dedupeKey": "probe.json.key",
+              "enabled": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "go",
+            "from": {
+              "node": "poll",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-11-15T10:27:43.315Z"
+    },
+    "issues": []
+  },
+  "published": {
+    "version": {
+      "id": "01M7FBZ8JK6CRHTREWJSA7ZHDZ",
+      "loopId": "01M7FBZ8JK6CRHTREWJSA7ZHDY",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "QA 361 valid",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "poll",
+            "label": "Poll",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "poll",
+              "intervalSeconds": 5,
+              "probe": {
+                "kind": "http",
+                "method": "GET",
+                "url": "http://127.0.0.1:56331/qa361/valid",
+                "timeoutSeconds": 20
+              },
+              "fireWhen": "probe.json.fire = true",
+              "dedupeKey": "probe.json.key",
+              "enabled": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "go",
+            "from": {
+              "node": "poll",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-11-15T10:27:43.315Z",
+      "publishedAt": "2026-11-15T10:27:43.328Z"
+    },
+    "issues": []
+  },
+  "armed": {
+    "ownerId": "local",
+    "loopId": "01M7FBZ8JK6CRHTREWJSA7ZHDY",
+    "versionId": "01M7FBZ8JK6CRHTREWJSA7ZHDZ",
+    "triggerNodeId": "poll",
+    "intervalSeconds": 5,
+    "nextPollAt": "2026-11-15T10:27:48.334Z"
+  }
+}

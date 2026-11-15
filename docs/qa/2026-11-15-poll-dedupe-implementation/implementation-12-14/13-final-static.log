@@ -1,0 +1,34 @@
+pnpm.cmd typecheck --filter=@graphgoblin/api --concurrency=1 --output-logs=full
+$ turbo run typecheck --filter=@graphgoblin/api --concurrency=1 --output-logs=full
+
+   • turbo 2.11.6
+   • Packages in scope: @graphgoblin/api
+   • Running typecheck in 1 package
+   • Remote caching disabled, using shared worktree cache
+
+@graphgoblin/contracts:build: cache hit, replaying logs 84e011bb42813d20
+@graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+@graphgoblin/domain:build: cache hit, replaying logs 4eea2013eb1518d0
+@graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+@graphgoblin/engine:build: cache hit, replaying logs 015e8236b4ccc9ea
+@graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+@graphgoblin/infrastructure:build: cache hit, replaying logs aa27be619799d4d7
+@graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-jev:build: cache hit, replaying logs 7c14daa984313522
+@graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+@graphgoblin/adapter-codex:build: cache hit, replaying logs f8121499652fb30b
+@graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+@graphgoblin/api:typecheck: cache miss, executing 7e7c01495a255c7c
+@graphgoblin/api:typecheck: $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+
+ Tasks:    7 successful, 7 total
+Cached:    6 cached, 7 total
+  Time:    15.276s 
+
+typecheck-exit=0
+pnpm.cmd exec prettier --check apps/api/src/ollama-container.test.ts apps/api/src/preflight-ollama.test.ts apps/api/src/triggers/poll-dedupe.test.ts apps/api/src/triggers/poll-items.test.ts apps/api/src/triggers/poll-items.ts apps/api/src/triggers/poll.ts CHANGELOG.md docs/08-triggers-and-integrations.md docs/decisions/ADR-0079-poll-dedupe-key-identities.md docs/decisions/README.md packages/domain/src/poll-items.test.ts packages/domain/src/poll-items.ts
+Checking formatting...
+All matched files use Prettier code style!
+format-exit=0
+git diff --check
+git-diff-check-exit=0

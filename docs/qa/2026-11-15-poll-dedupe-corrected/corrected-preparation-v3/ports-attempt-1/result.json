@@ -1,0 +1,309 @@
+{
+  "scope": "public methods with controlled collaborators",
+  "candidate": "420240cad27d3865988dc7009dc9d80291e93c9c",
+  "fixtureSha256": "a73d3cad100e766799d44cf42fc14fd357e1a71d800ecb626a855b356882eef8",
+  "cases": [
+    {
+      "label": "P2 lookup argument and admission trace",
+      "tier": "items ports",
+      "lookups": [
+        [
+          "item-A-ascii",
+          "item-H-key-canary-�-end",
+          "item-C-ascii"
+        ]
+      ],
+      "starts": [
+        "item-H-key-canary-�-end",
+        "item-C-ascii"
+      ],
+      "rejections": [
+        {
+          "code": "POLL_ITEM_REJECTED",
+          "itemIndex": 0,
+          "reason": "MALFORMED_DEDUPE_KEY"
+        },
+        {
+          "code": "POLL_ITEM_REJECTED",
+          "itemIndex": 1,
+          "reason": "MALFORMED_DEDUPE_KEY"
+        },
+        {
+          "code": "POLL_ITEM_REJECTED",
+          "itemIndex": 2,
+          "reason": "MALFORMED_DEDUPE_KEY"
+        }
+      ]
+    },
+    {
+      "label": "malformed-only incurs no lookup",
+      "tier": "items ports",
+      "lookups": [],
+      "starts": [],
+      "rejections": [
+        {
+          "code": "POLL_ITEM_REJECTED",
+          "itemIndex": 0,
+          "reason": "MALFORMED_DEDUPE_KEY"
+        },
+        {
+          "code": "POLL_ITEM_REJECTED",
+          "itemIndex": 1,
+          "reason": "MALFORMED_DEDUPE_KEY"
+        },
+        {
+          "code": "POLL_ITEM_REJECTED",
+          "itemIndex": 2,
+          "reason": "MALFORMED_DEDUPE_KEY"
+        }
+      ]
+    },
+    {
+      "label": "wrong type",
+      "tier": "items ports",
+      "lookups": [],
+      "starts": [],
+      "reason": "KEY_INVALID"
+    },
+    {
+      "label": "blank",
+      "tier": "items ports",
+      "lookups": [],
+      "starts": [],
+      "reason": "KEY_INVALID"
+    },
+    {
+      "label": "overlong",
+      "tier": "items ports",
+      "lookups": [],
+      "starts": [],
+      "reason": "KEY_INVALID"
+    },
+    {
+      "label": "valid duplicate",
+      "tier": "items ports",
+      "lookups": [],
+      "starts": [],
+      "reason": "KEY_DUPLICATE"
+    },
+    {
+      "label": "depth and seen state preserve the exact cap",
+      "tier": "items ports",
+      "lookups": [
+        [
+          "seen",
+          "deep",
+          "item-P-pair-😀-end",
+          "item-R-literal-�-end",
+          "after-cap"
+        ]
+      ],
+      "starts": [
+        "item-P-pair-😀-end",
+        "item-R-literal-�-end"
+      ],
+      "rejections": [
+        {
+          "code": "POLL_ITEM_REJECTED",
+          "itemIndex": 0,
+          "reason": "MALFORMED_DEDUPE_KEY"
+        },
+        {
+          "code": "POLL_ITEM_REJECTED",
+          "itemIndex": 2,
+          "reason": "NESTING_DEPTH_EXCEEDED"
+        }
+      ]
+    },
+    {
+      "label": "lookup failure stops all attempts",
+      "tier": "items ports",
+      "lookups": [
+        [
+          "item-A-ascii",
+          "item-B-ascii"
+        ]
+      ],
+      "starts": []
+    },
+    {
+      "label": "admission failure stops the remaining tail",
+      "tier": "items ports",
+      "lookups": [
+        [
+          "item-A-ascii",
+          "item-B-ascii",
+          "item-C-ascii"
+        ]
+      ],
+      "starts": [
+        "item-A-ascii",
+        "item-B-ascii"
+      ],
+      "failedItemIndex": 1
+    },
+    {
+      "label": "SH",
+      "tier": "single poll public ports",
+      "lookup": [],
+      "starts": [],
+      "warnings": [
+        {
+          "context": {
+            "loopId": "loop",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY"
+          },
+          "message": "poll trigger failed"
+        }
+      ]
+    },
+    {
+      "label": "SL",
+      "tier": "single poll public ports",
+      "lookup": [],
+      "starts": [],
+      "warnings": [
+        {
+          "context": {
+            "loopId": "loop",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY"
+          },
+          "message": "poll trigger failed"
+        }
+      ]
+    },
+    {
+      "label": "SPLIT",
+      "tier": "single poll public ports",
+      "lookup": [],
+      "starts": [],
+      "warnings": [
+        {
+          "context": {
+            "loopId": "loop",
+            "nodeId": "poll",
+            "code": "POLL_DEDUPE_KEY_INVALID",
+            "reason": "MALFORMED_DEDUPE_KEY"
+          },
+          "message": "poll trigger failed"
+        }
+      ]
+    },
+    {
+      "label": "PREFIX",
+      "tier": "single poll public ports",
+      "lookup": [
+        [
+          "loop",
+          "poll",
+          "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+        ]
+      ],
+      "starts": [
+        {
+          "hasKey": true,
+          "key": "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "SR",
+      "tier": "single poll public ports",
+      "lookup": [
+        [
+          "loop",
+          "poll",
+          "valid-single-R-literal-�-end"
+        ]
+      ],
+      "starts": [
+        {
+          "hasKey": true,
+          "key": "valid-single-R-literal-�-end"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "SP",
+      "tier": "single poll public ports",
+      "lookup": [
+        [
+          "loop",
+          "poll",
+          "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV😀"
+        ]
+      ],
+      "starts": [
+        {
+          "hasKey": true,
+          "key": "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV😀"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "seen pair",
+      "tier": "single poll public ports",
+      "lookup": [
+        [
+          "loop",
+          "poll",
+          "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV😀"
+        ]
+      ],
+      "starts": [],
+      "warnings": []
+    },
+    {
+      "label": "intentional absence",
+      "tier": "single poll public ports",
+      "lookup": [],
+      "starts": [
+        {
+          "hasKey": false
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "configured undefined",
+      "tier": "single poll public ports",
+      "lookup": [],
+      "starts": [
+        {
+          "hasKey": false
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "configured null",
+      "tier": "single poll public ports",
+      "lookup": [],
+      "starts": [
+        {
+          "hasKey": false
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "label": "configured empty",
+      "tier": "single poll public ports",
+      "lookup": [],
+      "starts": [
+        {
+          "hasKey": false
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "failure": null
+}

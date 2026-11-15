@@ -1,0 +1,77 @@
+{
+  "recordedAtUtc": "2026-11-15T11:09:18.9389726Z",
+  "issue": {
+    "number": 483,
+    "title": "Release closed SQLite fixture handles before Ollama test cleanup on Windows",
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/483",
+    "stateAtRead": "open",
+    "boundedCorrection": "Optional globalThis.gc call in the two accepted test cleanup hooks only, immediately before rm."
+  },
+  "checkout": {
+    "path": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin",
+    "branch": "codex/gg-20261115-poll-dedupe",
+    "head": "15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd",
+    "tree": "57541f0423de585307f5d7db27923ddac41d7181",
+    "node": "v22.23.4",
+    "pnpm": "12.8.1",
+    "statusBeforeTest": "## codex/gg-20261115-poll-dedupe\r\n M CHANGELOG.md\r\n M apps/api/src/ollama-container.test.ts\r\n M apps/api/src/preflight-ollama.test.ts\r\n M apps/api/src/triggers/poll-items.test.ts\r\n M apps/api/src/triggers/poll-items.ts\r\n M apps/api/src/triggers/poll.ts\r\n M docs/08-triggers-and-integrations.md\r\n M docs/decisions/README.md\r\n M packages/domain/src/poll-items.test.ts\r\n M packages/domain/src/poll-items.ts\r\n?? apps/api/src/triggers/poll-dedupe.test.ts\r\n?? docs/decisions/ADR-0079-poll-dedupe-key-identities.md"
+  },
+  "changedFiles": [
+    {
+      "path": "apps/api/src/ollama-container.test.ts",
+      "preEditFrozenSha256": "9c915211e55d504026ef73ead4672e2b7fd6782c6c3abf1d6567f62123756a32",
+      "preEditFrozenBlob": "5fcf3b8c3ecaf4f4851cf370a5e1dc51d1fdaba2",
+      "currentHashAfterNarrowEdit": "048273390a1714ced2bd434526a3810f0ef9cdee58d47375e95211467e214e0f"
+    },
+    {
+      "path": "apps/api/src/preflight-ollama.test.ts",
+      "preEditFrozenSha256": "1665d88a60cfb6bee21b477c91af4f1ac5e5b9433e4d03d0c901ad9d843faba8",
+      "preEditFrozenBlob": "41d732c30dff630533bd5e8994a7efb33193f797",
+      "currentHashAfterNarrowEdit": "b7fcdc4ac97a13e85827a290738054d31690dca4f7027902c98b6b1540fda30a"
+    }
+  ],
+  "earlierFailureSources": [
+    {
+      "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\05-affected-package-coverage.log",
+      "bytes": 191381,
+      "sha256": "09594a0d3ceca9262c6fae99f126d93e1be7d57bc13201eb0a64bb1c278c1e17",
+      "ebusyMatches": 4,
+      "note": "original affected-package API coverage run; raw log retained at source"
+    },
+    {
+      "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\09-api-four-file-isolation.log",
+      "bytes": 9936,
+      "sha256": "bd1a5a3847372988f3408ddfe85f2b051a6f0fbca9b2ff7ed15118e58d0ab924",
+      "ebusyMatches": 9,
+      "note": "four-file isolation failure; raw log retained at source"
+    },
+    {
+      "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\11-baseline-ollama-cleanup.log",
+      "bytes": 8041,
+      "sha256": "16bdd290a9a752880691c37c90a8a1cf1c5d676da34bb29654e345e327cc83cb",
+      "ebusyMatches": 12,
+      "note": "unchanged-main one-worker two-spec baseline; raw log retained at source"
+    },
+    {
+      "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\11-baseline-ollama-cleanup-state.json",
+      "bytes": 1424,
+      "sha256": "051332686df1e2721aa2329796386c8785610e13d4140a82b78197537ef43aac",
+      "ebusyMatches": 0,
+      "note": "post-run read-only failure-path state; no file was removed or rewritten"
+    },
+    {
+      "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\11-baseline-ollama-source-binding.json",
+      "bytes": 65787,
+      "sha256": "08b5ef78cc21dc591067547d8ea906c6a049af2aefaff82f8b3b307b791910cb",
+      "ebusyMatches": 0,
+      "note": "source/dependency binding for the unchanged baseline and candidate"
+    }
+  ],
+  "priorBaseline": {
+    "head": "e1237593babd4d03466b91685fc05dbe49223b2a",
+    "tree": "57541f0423de585307f5d7db27923ddac41d7181",
+    "issue483Summary": "Unchanged baseline reproduced four SQLite cleanup EBUSY failures with 21 passing tests; raw source logs above are retained unchanged."
+  },
+  "exactPlannedCommand": "pnpm.cmd --filter @graphgoblin/api test src/ollama-container.test.ts src/preflight-ollama.test.ts --maxWorkers=1 --reporter=verbose --no-color",
+  "attemptPolicy": "one exact invocation; no retry"
+}

@@ -1,0 +1,224 @@
+{
+  "authored": {
+    "schemaVersion": 4,
+    "name": "QA 361 split",
+    "nodes": [
+      {
+        "id": "poll",
+        "kind": "trigger",
+        "label": "Poll",
+        "config": {
+          "type": "poll",
+          "enabled": true,
+          "intervalSeconds": 5,
+          "probe": {
+            "kind": "http",
+            "url": "http://127.0.0.1:59234/qa361/split",
+            "timeoutSeconds": 20
+          },
+          "fireWhen": "probe.json.fire = true",
+          "dedupeKey": "probe.json.key"
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "go",
+        "from": {
+          "node": "poll",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  },
+  "created": {
+    "loop": {
+      "id": "01M7FFJ8TC5X7MCM90N92F4S68",
+      "ownerId": "local",
+      "name": "QA 361 split",
+      "draftVersionId": "01M7FFJ8TC5X7MCM90N92F4S69",
+      "createdAt": "2026-11-15T11:30:31.884Z",
+      "updatedAt": "2026-11-15T11:30:31.884Z"
+    },
+    "draft": {
+      "id": "01M7FFJ8TC5X7MCM90N92F4S69",
+      "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "QA 361 split",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "poll",
+            "label": "Poll",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "poll",
+              "intervalSeconds": 5,
+              "probe": {
+                "kind": "http",
+                "method": "GET",
+                "url": "http://127.0.0.1:59234/qa361/split",
+                "timeoutSeconds": 20
+              },
+              "fireWhen": "probe.json.fire = true",
+              "dedupeKey": "probe.json.key",
+              "enabled": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "go",
+            "from": {
+              "node": "poll",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-11-15T11:30:31.884Z"
+    },
+    "issues": []
+  },
+  "published": {
+    "version": {
+      "id": "01M7FFJ8TC5X7MCM90N92F4S69",
+      "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+      "version": 1,
+      "status": "published",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "QA 361 split",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "poll",
+            "label": "Poll",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "poll",
+              "intervalSeconds": 5,
+              "probe": {
+                "kind": "http",
+                "method": "GET",
+                "url": "http://127.0.0.1:59234/qa361/split",
+                "timeoutSeconds": 20
+              },
+              "fireWhen": "probe.json.fire = true",
+              "dedupeKey": "probe.json.key",
+              "enabled": true
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "go",
+            "from": {
+              "node": "poll",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-11-15T11:30:31.884Z",
+      "publishedAt": "2026-11-15T11:30:31.897Z"
+    },
+    "issues": []
+  },
+  "armed": {
+    "ownerId": "local",
+    "loopId": "01M7FFJ8TC5X7MCM90N92F4S68",
+    "versionId": "01M7FFJ8TC5X7MCM90N92F4S69",
+    "triggerNodeId": "poll",
+    "intervalSeconds": 5,
+    "nextPollAt": "2026-11-15T11:30:36.900Z"
+  }
+}

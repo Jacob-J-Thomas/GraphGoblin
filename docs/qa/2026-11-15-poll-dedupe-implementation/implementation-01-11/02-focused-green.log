@@ -1,0 +1,80 @@
+apps/api/src/triggers/poll-items.test.ts 139ms (unchanged)
+apps/api/src/triggers/poll-dedupe.test.ts 32ms (unchanged)
+apps/api/src/triggers/poll-items.ts 18ms (unchanged)
+apps/api/src/triggers/poll.ts 73ms (unchanged)
+packages/domain/src/poll-items.ts 16ms
+docs/08-triggers-and-integrations.md 823ms (unchanged)
+docs/decisions/ADR-0079-poll-dedupe-key-identities.md 6ms (unchanged)
+docs/decisions/README.md 37ms (unchanged)
+CHANGELOG.md 304ms (unchanged)
+pnpm.cmd --filter @graphgoblin/api test src/triggers/poll- --reporter=verbose --no-color
+$ vitest run src/triggers/poll- --reporter=verbose --no-color
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/apps/api
+
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > looks up depth-refused keys without admitting them or counting them toward the cap 14ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > validates every key before the single lookup and admits unseen candidates sequentially up to the default cap 5ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does not pass repeated malformed identities to lookup or admission, and keeps later valid work 2ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > skips lookup and admission for a malformed-only observation 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a wrong type key 2ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a blank key 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a overlong key 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a overlong and malformed key 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a duplicate well-formed key 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does no I/O for an empty set or any invalid key beyond the dispatch cap 2ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > stops at the first admission failure while preserving prior runs and leaves the tail for a later poll 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does not consume the dispatch cap for an atomic key reservation found after lookup 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > reports safe lookup failure without starting a run and skips fully seen sets 2ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > passes deeply nested valid probe JSON to candidate classification without a stack overflow 56ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts complete JSON without persisting process diagnostics 1ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > rejects failures, timeouts, overflows and invalid JSON with fixed codes 2ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts script stdout at the exact raw-byte cap 1ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > rejects 65,537 raw stdout bytes even when the overflow flag is false 0ms
+ ✓ src/triggers/poll-probe.test.ts > items-only strict probe admission > accepts provided or parsed HTTP JSON and rejects bad statuses or non-JSON responses 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a lone high surrogate before any lookup or admission 20ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a lone low surrogate before any lookup or admission 2ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a pair split by the 512-unit slice before any lookup or admission 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for literal replacement character 2ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for complete pair at the boundary 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for independently supplied short prefix 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for a malformed unit outside the derived sl… 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for JSON stringification 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > skips a previously seen exact key 2ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves unkeyed admission for no expression 2ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves unkeyed admission for an undefined result 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves unkeyed admission for a null result 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves unkeyed admission for an empty result 1ms
+ ✓ src/triggers/poll-http-bounds.test.ts > poll HTTP overflow diagnostics > refuses overflow without dispatch and exposes its typed code (items: false) 79ms
+ ✓ src/triggers/poll-http-bounds.test.ts > poll HTTP overflow diagnostics > refuses overflow without dispatch and exposes its typed code (items: true) 16ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates when the first has 1100 nested arrays 4124ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits both later candidates when the first has 3000 nested arrays 504ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > admits the SQLite boundary and refuses the next depth without blocking the tail 510ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > silently skips a consumed key even when its payload later exceeds the depth bound 468ms
+ ✓ src/triggers/poll-depth.test.ts > structurally refused poll candidates over HTTP and real SQLite > keeps middle refusals unconsumed and successful keys deduplicated across store reopen 739ms
+
+ Test Files  5 passed (5)
+      Tests  39 passed (39)
+   Start at  04:41:19
+   Duration  20.07s (import 52%, transform 25%, tests 23%)
+
+api-focused-exit=0
+pnpm.cmd --filter @graphgoblin/domain test src/poll-items.test.ts --reporter=verbose --no-color
+$ vitest run src/poll-items.test.ts --reporter=verbose --no-color
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain
+
+ ✓ src/poll-items.test.ts > complete poll-items preparation > classifies depth at the exact initial_thread SQLite boundary without dropping later items 8ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > keeps invalid or duplicate deep-item keys as whole-batch refusals 14ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > keeps every curated item and stable key in order without applying the dispatch cap early 8ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > evaluates selectors with now/probe and keys with the original item/index 2ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > refuses nonarrays and overlarge unpartitioned results, without silently selecting their first items 1ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > refuses every invalid key, including one past the default5 dispatch cap, before returning a partial plan 3ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > refuses repeated keys and replaces raw selector/key evaluator diagnostics with safe codes 7ms
+ ✓ src/poll-items.test.ts > complete poll-items preparation > refuses selected non-JSON functions instead of carrying executable values into trigger input 1ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  04:41:40
+   Duration  1.17s (import 54%, transform 40%, tests 5%, worker 1%)
+
+domain-focused-exit=0
