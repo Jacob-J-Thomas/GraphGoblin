@@ -1,0 +1,877 @@
+{
+  "origin": "http://127.0.0.1:63466",
+  "mapping": "237-review-correction-independent-v1",
+  "phase": "before",
+  "scenario": "f2",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "outcomes": [
+    {
+      "active": "F2 unknown A1 and different acknowledged A3, failed precheck without dispatch",
+      "notice": "Publish not confirmedChecking the server before publishing again failed: The GraphGoblin API cannot be reached. Nothing was sent, and it is still not known whether the earlier request published the draft saved for this publish.",
+      "a1": {
+        "loop": {
+          "id": "01M7DT2S2B08DR5NPTN0S2PC2Q",
+          "ownerId": "local",
+          "name": "Earlier request wording 74f05ccd",
+          "description": "A1 distinct original",
+          "draftVersionId": "01M7DT2S2B08DR5NPTN0S2PC2R",
+          "createdAt": "2026-11-14T19:55:49.707Z",
+          "updatedAt": "2026-11-14T19:55:49.707Z"
+        },
+        "draft": {
+          "id": "01M7DT2S2B08DR5NPTN0S2PC2R",
+          "loopId": "01M7DT2S2B08DR5NPTN0S2PC2Q",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Earlier request wording 74f05ccd",
+            "description": "A1 distinct original",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T19:55:49.707Z"
+        },
+        "draftToken": "ce1e1eb4eb46323c"
+      },
+      "durable": {
+        "loop": {
+          "id": "01M7DT2S2B08DR5NPTN0S2PC2Q",
+          "ownerId": "local",
+          "name": "Earlier request wording 74f05ccd",
+          "description": "A3 accepted during the same editor load",
+          "draftVersionId": "01M7DT2S2B08DR5NPTN0S2PC2R",
+          "createdAt": "2026-11-14T19:55:49.707Z",
+          "updatedAt": "2026-11-14T19:55:51.047Z"
+        },
+        "draft": {
+          "id": "01M7DT2S2B08DR5NPTN0S2PC2R",
+          "loopId": "01M7DT2S2B08DR5NPTN0S2PC2Q",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Earlier request wording 74f05ccd",
+            "description": "A3 accepted during the same editor load",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T19:55:49.707Z"
+        },
+        "draftToken": "93aaf48fd5325f67"
+      },
+      "stored": {
+        "loopId": "01M7DT2S2B08DR5NPTN0S2PC2Q",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Earlier request wording 74f05ccd",
+          "description": "A3 accepted during the same editor load",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:55:51.062Z",
+        "synced": true,
+        "baseToken": "93aaf48fd5325f67"
+      },
+      "finding": "UNKNOWN_NOTICE_ATTRIBUTED_TO_A3"
+    }
+  ],
+  "chronology": [
+    {
+      "seq": 1,
+      "type": "independent HTTP",
+      "wallMs": 1794686149734,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Earlier request wording 74f05ccd",
+          "description": "A1 distinct original",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"seed release\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "type": "independent HTTP",
+      "wallMs": 1794686149743,
+      "method": "GET",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "status": 200
+    },
+    {
+      "seq": 3,
+      "type": "bound browser entry",
+      "wallMs": 1794686149789,
+      "tag": "primary",
+      "path": "/app/assets/index-DhiNw4HL.js",
+      "status": 200
+    },
+    {
+      "seq": 4,
+      "type": "browser request",
+      "wallMs": 1794686149857,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 5,
+      "type": "browser response",
+      "wallMs": 1794686149863,
+      "requestSeq": 4,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET"
+    },
+    {
+      "seq": 6,
+      "type": "browser request",
+      "wallMs": 1794686150069,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Earlier request wording 74f05ccd",
+          "description": "A1 distinct original",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 7,
+      "type": "browser response",
+      "wallMs": 1794686150077,
+      "requestSeq": 6,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 8,
+      "type": "browser validation result",
+      "wallMs": 1794686150084,
+      "requestSeq": 6,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/validate",
+      "issues": []
+    },
+    {
+      "seq": 9,
+      "type": "browser request",
+      "wallMs": 1794686150294,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 10,
+      "type": "barrier intercepted",
+      "wallMs": 1794686150296,
+      "label": "The first browser POST never reaches the gateway",
+      "order": "before",
+      "method": "POST",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/publish",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 11,
+      "type": "barrier dispatched",
+      "wallMs": 1794686150303,
+      "label": "The first browser POST never reaches the gateway"
+    },
+    {
+      "seq": 12,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794686150308,
+      "requestSeq": 9,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/publish"
+    },
+    {
+      "seq": 13,
+      "type": "browser request",
+      "wallMs": 1794686150309,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 14,
+      "type": "deliberately failed browser detail read",
+      "wallMs": 1794686150309,
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q"
+    },
+    {
+      "seq": 15,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794686150311,
+      "requestSeq": 13,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q"
+    },
+    {
+      "seq": 16,
+      "type": "browser request",
+      "wallMs": 1794686150315,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 17,
+      "type": "deliberately failed browser detail read",
+      "wallMs": 1794686150315,
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q"
+    },
+    {
+      "seq": 18,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794686150318,
+      "requestSeq": 16,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q"
+    },
+    {
+      "seq": 19,
+      "type": "independent HTTP",
+      "wallMs": 1794686150397,
+      "method": "GET",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "status": 200
+    },
+    {
+      "seq": 20,
+      "type": "browser request",
+      "wallMs": 1794686151035,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/draft",
+      "method": "PUT",
+      "ifMatch": "\"ce1e1eb4eb46323c\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Earlier request wording 74f05ccd",
+          "description": "A3 accepted during the same editor load",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 21,
+      "type": "browser response",
+      "wallMs": 1794686151059,
+      "requestSeq": 20,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/draft",
+      "method": "PUT"
+    },
+    {
+      "seq": 22,
+      "type": "browser request",
+      "wallMs": 1794686151065,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 23,
+      "type": "browser request",
+      "wallMs": 1794686151070,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Earlier request wording 74f05ccd",
+          "description": "A3 accepted during the same editor load",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 24,
+      "type": "browser response",
+      "wallMs": 1794686151073,
+      "requestSeq": 22,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET"
+    },
+    {
+      "seq": 25,
+      "type": "browser response",
+      "wallMs": 1794686151082,
+      "requestSeq": 23,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 26,
+      "type": "browser validation result",
+      "wallMs": 1794686151086,
+      "requestSeq": 23,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/validate",
+      "issues": []
+    },
+    {
+      "seq": 27,
+      "type": "browser request",
+      "wallMs": 1794686151105,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 28,
+      "type": "barrier intercepted",
+      "wallMs": 1794686151106,
+      "label": "Failed A3 precheck before any second POST",
+      "order": "before",
+      "method": "GET",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 29,
+      "type": "barrier dispatched",
+      "wallMs": 1794686151110,
+      "label": "Failed A3 precheck before any second POST"
+    },
+    {
+      "seq": 30,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794686151116,
+      "requestSeq": 27,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q"
+    },
+    {
+      "seq": 31,
+      "type": "browser request",
+      "wallMs": 1794686151118,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 32,
+      "type": "browser response",
+      "wallMs": 1794686151134,
+      "requestSeq": 31,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "method": "GET"
+    },
+    {
+      "seq": 33,
+      "type": "independent HTTP",
+      "wallMs": 1794686151168,
+      "method": "GET",
+      "path": "/loops/01M7DT2S2B08DR5NPTN0S2PC2Q",
+      "status": 200
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "Notice after failed A3 readback",
+      "path": "/app/loops/01M7DT2S2B08DR5NPTN0S2PC2Q/edit",
+      "title": "Earlier request wording 74f05ccd",
+      "save": "All changes saved",
+      "description": "A3 accepted during the same editor load",
+      "notices": [
+        {
+          "role": "status",
+          "text": "Publish not confirmedChecking the server before publishing again failed: The GraphGoblin API cannot be reached. Nothing was sent, and it is still not known whether the earlier request published the draft saved for this publish.",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "failures": []
+}

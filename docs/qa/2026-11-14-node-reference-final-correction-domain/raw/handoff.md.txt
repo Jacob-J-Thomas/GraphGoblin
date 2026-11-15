@@ -1,0 +1,31 @@
+# PR #474 final correction A1 handoff
+
+The two-file A1 correction is ready for integration from the worktree. The admitted head was 5a4fb439c63755eeb2b5bef945319772623a9905, tree caf777a63de7d9938b03dfa81b9ee60e9a1bf3e5, and origin/main a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c. The checkout initially reported clean. The audit report SHA-256 matched a1ab8c53ec6e5481204e80e6726afdb90d839e07e531a21f2ceb89563d12e9bc. The retained native lookup observation matched 6476433cce648971a9bd4cdc2e09a9de5f7dfe7dfcd78e830d779514461b0ae7. [Final audit](../review-273/final-audit/report.md) and [native negative report](../node-reference-273-activation-supplement/lookup-old-report.md).
+
+## Correction
+
+When the recognized JSONata lookup reads a known thread map, it still handles an unadorned string key as an ordinary keyed reference. For a computed key, it reports uncertainty for the outer identity and visits the evaluated key in the caller's focus. Only a direct existence probe about the key's own read marks that nested reference optional. A presence check wrapped around the outer lookup still evaluates its key as required. A string AST node carrying a predicate receives the same computed-key treatment because the installed evaluator runs the predicate. The existing parser, evaluator, binding analysis, source caches and focused traversal rules were reused. [Evaluator AST probe and output](lookup-ast-probe.jsonl).
+
+The tests assert exact source bytes outside the replaced token, repaired-reference counts, preserved outer uncertainty and matching runtime values. They cover both a simple thread root and a row context with a local similarly named output, missing counters and gates including an outer presence probe, a filtered string key and an explicit inner presence probe. A variable-based computed key remains non-blocking and uncertain. Public domain isPublishable and validateLoop assertions cover the identified admission behavior.
+
+## Paired source tests
+
+The final test file SHA-256 was bdfaebf2faad40cddeccdbde9f8445833bc70b80e01439a3f570982bfeda2255 in both runs. The baseline scanner matched the audited Git version before the first run. Tests ran before changing production source, so no interim source replacement or restoration was required.
+
+- Original scanner exited 1 with six expected assertion failures and 92 passes. The dynamic key control passed. [Verbose log](focused-before.log) and [Vitest JSON](focused-before.json).
+- Corrected scanner exited 0 with 98 of 98 tests across four files. [Verbose log](focused-after.log) and [Vitest JSON](focused-after.json).
+- [Paired assertion inventory](paired-result.json) records failures for nested repair, publication decisions and the missing optional diagnostic.
+
+Commands ran on Node v22.23.4 and pnpm.cmd 12.8.1 from the admitted worktree. Set $evidence to this directory and $phase to before or after for the paired command.
+
+    pnpm.cmd --filter @graphgoblin/domain test src/node-references.test.ts src/source-analysis.test.ts src/syntax.test.ts src/graph.test.ts --maxWorkers=1 --no-cache --reporter=verbose --reporter=json "--outputFile.json=$evidence/focused-$phase.json"
+    pnpm.cmd --filter @graphgoblin/domain exec tsc -p tsconfig.json --noEmit --incremental false --composite false
+    pnpm.cmd --filter @graphgoblin/domain exec eslint src/expression-references.ts src/node-references.test.ts
+    pnpm.cmd exec prettier --check packages/domain/src/expression-references.ts packages/domain/src/node-references.test.ts
+    git diff --check HEAD -- packages/domain/src/expression-references.ts packages/domain/src/node-references.test.ts
+
+TypeScript no-emit, focused lint, format and whitespace checks all exited 0. The [scoped diff](a1-correction.diff) has 5,513 bytes and SHA-256 e773126f69c587c1ea4bb3fdb99d09d5c46f6a2da581b1087fe335b17cc90aab. [Identity](identity.json) records exact source blobs and SHA-256 hashes. The owned index diff was empty.
+
+## Runtime evidence and next step
+
+The [retained runtime readback](retained-runtime-readback.json) rehashed all 1,227 files in 13 artifact trees against the 164c01a2e3a52bf0ef69a409e1a428b45817b1b8 build binding and matched every path, hash and file count. It ran from the admitted checkout as node "$evidence/verify-retained-runtime.mjs". No build, emitting typecheck, coverage, API subprocess, native or browser run was performed. Parent integration, candidate rebuild, independent native paired verification, exact-head CI and parent completion inspection remain pending under D-035. The three formal audit slots have been consumed.

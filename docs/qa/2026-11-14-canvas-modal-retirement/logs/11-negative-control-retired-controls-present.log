@@ -1,0 +1,382 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas/GraphGoblin/apps/web
+
+ ❯ src/editor/NodeEditorDialog.test.tsx (33 tests | 1 failed | 32 skipped) 901ms
+   ❯ NodeEditorDialog leaves connections to the canvas (#207, ADR-0076) (1)
+     × shows no Connections list, Connect form or edge removal on any node kind, and keeps the stored connections 896ms
+stderr | src/editor/EditorPage.test.tsx > EditorPage > opens a node from the keyboard without connection controls, keeps its edges through Delete and Backspace, and customizes a default list
+Received NaN for the `cx` attribute. If this is expected, cast the value to a string.
+Received NaN for the `cy` attribute. If this is expected, cast the value to a string.
+Received NaN for the `r` attribute. If this is expected, cast the value to a string.
+Received NaN for the `x` attribute. If this is expected, cast the value to a string.
+Received NaN for the `y` attribute. If this is expected, cast the value to a string.
+
+ ❯ src/editor/EditorPage.test.tsx (37 tests | 2 failed | 35 skipped) 4626ms
+   ❯ EditorPage (37)
+     × opens a node from the keyboard without connection controls, keeps its edges through Delete and Backspace, and customizes a default list 1603ms
+     × edits loop settings, variables, node ids, and edges 3018ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > opens a node from the keyboard without connection controls, keeps its edges through Delete and Backspace, and customizes a default list
+AssertionError: expected <section …(2)>…(2)</section> to be null
+
+- Expected:
+null
+
++ Received:
+<section
+  aria-label="Connections"
+  class="grid gap-2"
+>
+  <h3
+    class="text-sm font-semibold"
+  >
+    Connections
+  </h3>
+  <ul
+    class="grid gap-1"
+  >
+    <li
+      class="flex items-center justify-between gap-2 rounded-md border border-default py-1 pr-1 pl-3 text-sm"
+    >
+      <span>
+        out
+         
+         
+        → 
+        <code>
+          done
+        </code>
+      </span>
+      <button
+        aria-label="Remove edge e2"
+        class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px]"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="size-4 shrink-0"
+          data-icon="close"
+          fill="none"
+          focusable="false"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M6 6l12 12M18 6 6 18"
+          />
+        </svg>
+      </button>
+    </li>
+  </ul>
+</section>
+
+ ❯ src/editor/EditorPage.test.tsx:936:75
+    934|     // The dialog lists no connections and has no Connect form or Remo…
+    935|     // node has an outgoing connection.
+    936|     expect(within(dialog).queryByRole('region', { name: 'Connections' …
+       |                                                                           ^
+    937|     expect(within(dialog).queryByRole('form', { name: 'Connect wait' }…
+    938|     expect(within(dialog).queryByRole('button', { name: 'Connect' })).…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/editor/EditorPage.test.tsx > EditorPage > edits loop settings, variables, node ids, and edges
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/^Remove edge/`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33maria-label[39m=[32m"Remove edge e5"[39m
+  [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px]"[39m
+  [33mtype[39m=[32m"button"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"size-4 shrink-0"[39m
+    [33mdata-icon[39m=[32m"close"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+[36m</button>[39m
+
+Ignored nodes: comments, script, style
+[36m<button[39m
+  [33maria-label[39m=[32m"Remove edge e5b"[39m
+  [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px]"[39m
+  [33mtype[39m=[32m"button"[39m
+[36m>[39m
+  [36m<svg[39m
+    [33maria-hidden[39m=[32m"true"[39m
+    [33mclass[39m=[32m"size-4 shrink-0"[39m
+    [33mdata-icon[39m=[32m"close"[39m
+    [33mfill[39m=[32m"none"[39m
+    [33mfocusable[39m=[32m"false"[39m
+    [33mstroke[39m=[32m"currentColor"[39m
+    [33mstroke-linecap[39m=[32m"round"[39m
+    [33mstroke-linejoin[39m=[32m"round"[39m
+    [33mstroke-width[39m=[32m"2"[39m
+    [33mviewBox[39m=[32m"0 0 24 24"[39m
+  [36m>[39m
+    [36m<path[39m
+      [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+    [36m/>[39m
+  [36m</svg>[39m
+[36m</button>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<dialog[39m
+  [33maria-labelledby[39m=[32m"_r_2p_"[39m
+  [33maria-modal[39m=[32m"true"[39m
+  [33mclass[39m=[32m"m-auto max-h-[calc(100dvh-4rem)] w-[min(40rem,calc(100vw-2rem))] max-w-none p-0 overflow-hidden rounded-lg border border-default bg-surface-raised text-default shadow-3 backdrop:bg-scrim open:flex open:flex-col max-md:mb-0 max-md:max-h-[92dvh] max-md:w-full max-md:rounded-b-none max-md:border-x-0 max-md:border-b-0 lg:w-[min(78rem,calc(100vw-2rem))] xl:w-[min(96rem,calc(100vw-2rem))]"[39m
+  [33mopen[39m=[32m""[39m
+[36m>[39m
+  [36m<header[39m
+    [33mclass[39m=[32m"flex shrink-0 items-start gap-3 border-b border-default bg-surface-head py-3.5 pr-3 pl-5"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"inline-grid shrink-0 place-items-center bg-kind text-kind-on size-7 rounded-md"[39m
+      [33mdata-kind[39m=[32m"script"[39m
+      [33mstyle[39m=[32m"--k: var(--kind-script); --k-subtle: var(--kind-script-subtle);"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"size-4 shrink-0"[39m
+        [33mdata-icon[39m=[32m"script"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m5 7.5 4.5 4.5L5 16.5M12.5 17H19"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"grid min-w-0 flex-1 gap-0.5 pt-0.5"[39m
+    [36m>[39m
+      [36m<h2[39m
+        [33mclass[39m=[32m"text-lg leading-tight font-semibold text-heading wrap-anywhere focus:outline-none"[39m
+        [33mid[39m=[32m"_r_2p_"[39m
+        [33mtabindex[39m=[32m"-1"[39m
+      [36m>[39m
+        [0mEdit [0m
+        [0mscript[0m
+        [0m [0m
+        [36m<span[39m
+          [33mclass[39m=[32m"block font-mono text-sm font-regular text-muted"[39m
+        [36m>[39m
+          [0mverify[0m
+        [36m</span>[39m
+      [36m</h2>[39m
+    [36m</div>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px]"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"size-4 shrink-0"[39m
+        [33mdata-icon[39m=[32m"close"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M6 6l12 12M18 6 6 18"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</header>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"min-h-0 flex-1 overflow-auto p-5"[39m
+  [36m>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Node properties"[39m
+      [33mclass[39m=[32m"grid gap-field"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid gap-x-3 gap-y-0.5 rounded-md border-l-4 px-4 py-3 grid-cols-[auto_minmax(0,1fr)_auto] min-w-0 text-sm leading-snug text-default wrap-anywhere bg-status-warn-bg border-status-warn-border"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"size-4 shrink-0 row-span-2 mt-px size-[18px] text-status-warn-fg"[39m
+          [33mdata-icon[39m=[32m"alert"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"2"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M10.3 4.2 2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 10v4M12 17.2h.01"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"col-start-2 font-semibold text-status-warn-fg"[39m
+        [36m>[39m
+          [0mRenamed check to verify[0m
+        [36m</p>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"col-start-2 min-w-0 [&_a]:text-link"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"grid gap-1.5"[39m
+          [36m>[39m
+            [36m<p>[39m
+              [0mUpdated 3 connections. [0m
+              [0mPlain text, JSON values and scripts are not changed.[0m
+            [36m</p>[39m
+            [36m<p>[39m
+              [0mReview [0m
+              [0mone place[0m
+              [0m where[0m
+              [0m [0m
+              [36m<code>[39m
+                [0mcheck[0m
+              [36m</code>[39m
+              [0m may remain:[0m
+            [36m</p>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"grid gap-1"[39m
+            [36m>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"grid justify-items-start gap-1"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"grid w-full gap-1 rounded-md px-2 py-1.5 text-left pointer-coarse:min-h-11"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"flex flex-wrap items-center gap-x-2 gap-y-1"[39m
+                  [36m>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"inline-flex max-w-full min-w-0 shrink-0 items-center rounded-full border border-transparent font-semibold leading-none whitespace-nowrap bg-status-warn-bg text-status-warn-fg h-5 gap-1 px-[7px]...
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/editor/EditorPage.test.tsx:1241:27
+    1239|       to: { node: 'infer' },
+    1240|     });
+    1241|     expect(within(dialog).queryByRole('button', { name: /^Remove edge/…
+       |                           ^
+    1242|     act(() => useEditorStore.getState().removeEdge('e5b'));
+    1243|     expect(useEditorStore.getState().definition!.edges.some((e) => e.i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/editor/NodeEditorDialog.test.tsx > NodeEditorDialog leaves connections to the canvas (#207, ADR-0076) > shows no Connections list, Connect form or edge removal on any node kind, and keeps the stored connections
+AssertionError: expected <section …(2)>…(2)</section> to be null
+
+- Expected:
+null
+
++ Received:
+<section
+  aria-label="Connections"
+  class="grid gap-2"
+>
+  <h3
+    class="text-sm font-semibold"
+  >
+    Connections
+  </h3>
+  <ul
+    class="grid gap-1"
+  >
+    <li
+      class="flex items-center justify-between gap-2 rounded-md border border-default py-1 pr-1 pl-3 text-sm"
+    >
+      <span>
+        out
+         
+         
+        → 
+        <code>
+          prep
+        </code>
+      </span>
+      <button
+        aria-label="Remove edge e1"
+        class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm pointer-coarse:size-11 [&_svg]:size-[15px]"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          class="size-4 shrink-0"
+          data-icon="close"
+          fill="none"
+          focusable="false"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+        >
+          <path
+            d="M6 6l12 12M18 6 6 18"
+          />
+        </svg>
+      </button>
+    </li>
+  </ul>
+</section>
+
+ ❯ src/editor/NodeEditorDialog.test.tsx:462:77
+    460|       const outgoing = edgesBefore.filter((edge) => edge.from.node ===…
+    461|       if (node.kind !== 'exit') expect(outgoing.length).toBeGreaterTha…
+    462|       expect(within(dialog).queryByRole('region', { name: 'Connections…
+       |                                                                             ^
+    463|       expect(within(dialog).queryByRole('heading', { name: 'Connection…
+    464|       expect(within(dialog).queryByRole('form', { name: `Connect ${nod…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 67 skipped (70)
+   Start at  14:42:04
+   Duration  14.96s (transform 26%, environment 25%, tests 22%, import 18%, setup 9%)
+
+  Transform  transforming modules took 6.66s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-canvas\GraphGoblin\apps\web
+

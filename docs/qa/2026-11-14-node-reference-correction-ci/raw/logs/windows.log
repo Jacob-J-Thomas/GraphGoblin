@@ -1,0 +1,579 @@
+﻿2026-11-14T19:31:23.4116247Z Current runner version: '2.338.2'
+2026-11-14T19:31:23.4169067Z ##[group]Runner Image Provisioner
+2026-11-14T19:31:23.4169871Z Hosted Compute Agent
+2026-11-14T19:31:23.4171035Z Version: 20261103.629
+2026-11-14T19:31:23.4171660Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-14T19:31:23.4172359Z Build Date: 2026-11-03T17:26:59Z
+2026-11-14T19:31:23.4172994Z Worker ID: {ecc409b9-79de-49e4-b406-c5dd7815ec53}
+2026-11-14T19:31:23.4173646Z Region: northcentralus
+2026-11-14T19:31:23.4174187Z Cloud: Azure
+2026-11-14T19:31:23.4174663Z ##[endgroup]
+2026-11-14T19:31:23.4176049Z ##[group]Operating System
+2026-11-14T19:31:23.4176723Z Microsoft Windows Server 2025
+2026-11-14T19:31:23.4177325Z 10.0.26100
+2026-11-14T19:31:23.4177832Z Datacenter
+2026-11-14T19:31:23.4178312Z ##[endgroup]
+2026-11-14T19:31:23.4178807Z ##[group]Runner Image
+2026-11-14T19:31:23.4179366Z Image: windows-2025-vs2026
+2026-11-14T19:31:23.4179904Z Version: 20261103.298.1
+2026-11-14T19:31:23.4181428Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261103.298/images/windows/Windows2025-VS2026-Readme.md
+2026-11-14T19:31:23.4183069Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261103.298
+2026-11-14T19:31:23.4184029Z ##[endgroup]
+2026-11-14T19:31:23.4185196Z ##[group]GITHUB_TOKEN Permissions
+2026-11-14T19:31:23.4187043Z Contents: read
+2026-11-14T19:31:23.4187616Z Metadata: read
+2026-11-14T19:31:23.4188259Z Packages: read
+2026-11-14T19:31:23.4188787Z ##[endgroup]
+2026-11-14T19:31:23.4191322Z Secret source: Actions
+2026-11-14T19:31:23.4192342Z Cache mode: write
+2026-11-14T19:31:23.4193007Z Prepare workflow directory
+2026-11-14T19:31:23.4698106Z Prepare all required actions
+2026-11-14T19:31:23.4754821Z Getting action download info
+2026-11-14T19:31:23.6967744Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-14T19:31:23.8282311Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-14T19:31:24.1729907Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-14T19:31:24.3377125Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-14T19:31:24.6947477Z Complete job name: Windows launcher
+2026-11-14T19:31:24.8614471Z ##[group]Run actions/checkout@v4
+2026-11-14T19:31:24.8615688Z with:
+2026-11-14T19:31:24.8616264Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-14T19:31:24.8620878Z   token: ***
+2026-11-14T19:31:24.8621431Z   ssh-strict: true
+2026-11-14T19:31:24.8621945Z   ssh-user: git
+2026-11-14T19:31:24.8622520Z   persist-credentials: true
+2026-11-14T19:31:24.8623110Z   clean: true
+2026-11-14T19:31:24.8623643Z   sparse-checkout-cone-mode: true
+2026-11-14T19:31:24.8624232Z   fetch-depth: 1
+2026-11-14T19:31:24.8624755Z   fetch-tags: false
+2026-11-14T19:31:24.8625266Z   show-progress: true
+2026-11-14T19:31:24.8625839Z   lfs: false
+2026-11-14T19:31:24.8626354Z   submodules: false
+2026-11-14T19:31:24.8626888Z   set-safe-directory: true
+2026-11-14T19:31:24.8627518Z   allow-unsafe-pr-checkout: false
+2026-11-14T19:31:24.8628447Z env:
+2026-11-14T19:31:24.8628941Z   LIVE: 0
+2026-11-14T19:31:24.8629444Z ##[endgroup]
+2026-11-14T19:31:25.0094159Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-14T19:31:25.0096152Z ##[group]Getting Git version info
+2026-11-14T19:31:25.0096975Z Working directory is 'D:\a\GraphGoblin\GraphGoblin'
+2026-11-14T19:31:25.1025921Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-11-14T19:31:25.4282303Z git version 2.56.0.windows.4
+2026-11-14T19:31:25.4335361Z ##[endgroup]
+2026-11-14T19:31:25.4357321Z Temporarily overriding HOME='D:\a\_temp\0b7e5544-d544-4674-b20c-b1e928743e96' before making global git config changes
+2026-11-14T19:31:25.4440435Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-14T19:31:25.4446587Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\GraphGoblin\GraphGoblin
+2026-11-14T19:31:25.5143627Z Deleting the contents of 'D:\a\GraphGoblin\GraphGoblin'
+2026-11-14T19:31:25.5150448Z ##[group]Initializing the repository
+2026-11-14T19:31:25.5159314Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\GraphGoblin\GraphGoblin
+2026-11-14T19:31:25.5982500Z Initialized empty Git repository in D:/a/GraphGoblin/GraphGoblin/.git/
+2026-11-14T19:31:25.6034867Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-14T19:31:25.6733607Z ##[endgroup]
+2026-11-14T19:31:25.6735916Z ##[group]Disabling automatic garbage collection
+2026-11-14T19:31:25.6745047Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-11-14T19:31:25.7147105Z ##[endgroup]
+2026-11-14T19:31:25.7148612Z ##[group]Setting up auth
+2026-11-14T19:31:25.7159457Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-11-14T19:31:25.7563636Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-11-14T19:31:27.2162271Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-14T19:31:27.2552850Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-11-14T19:31:27.8306198Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-14T19:31:27.8680562Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-11-14T19:31:28.4298893Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-11-14T19:31:28.4730019Z ##[endgroup]
+2026-11-14T19:31:28.4730563Z ##[group]Fetching the repository
+2026-11-14T19:31:28.4752589Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +b4984f3667d18e856233eb97b232f2ec87258380:refs/remotes/pull/474/merge
+2026-11-14T19:31:42.9209778Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-14T19:31:42.9210955Z  * [new ref]           b4984f3667d18e856233eb97b232f2ec87258380 -> pull/474/merge
+2026-11-14T19:31:42.9255406Z ##[endgroup]
+2026-11-14T19:31:42.9256669Z ##[group]Determining the checkout info
+2026-11-14T19:31:42.9259438Z ##[endgroup]
+2026-11-14T19:31:42.9275058Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-11-14T19:31:42.9862502Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-11-14T19:31:43.0255119Z ##[group]Checking out the ref
+2026-11-14T19:31:43.0268816Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/remotes/pull/474/merge
+2026-11-14T19:31:44.2778718Z Updating files:   9% (1879/20768)
+2026-11-14T19:31:44.4247422Z Updating files:  10% (2077/20768)
+2026-11-14T19:31:44.4958012Z Updating files:  11% (2285/20768)
+2026-11-14T19:31:44.5585722Z Updating files:  12% (2493/20768)
+2026-11-14T19:31:44.6211606Z Updating files:  13% (2700/20768)
+2026-11-14T19:31:44.6770119Z Updating files:  14% (2908/20768)
+2026-11-14T19:31:44.7400068Z Updating files:  15% (3116/20768)
+2026-11-14T19:31:44.7938428Z Updating files:  16% (3323/20768)
+2026-11-14T19:31:44.8524721Z Updating files:  17% (3531/20768)
+2026-11-14T19:31:44.9049120Z Updating files:  18% (3739/20768)
+2026-11-14T19:31:44.9640750Z Updating files:  19% (3946/20768)
+2026-11-14T19:31:45.0624952Z Updating files:  20% (4154/20768)
+2026-11-14T19:31:45.1213854Z Updating files:  21% (4362/20768)
+2026-11-14T19:31:45.1422032Z Updating files:  21% (4529/20768)
+2026-11-14T19:31:45.3697687Z Updating files:  22% (4569/20768)
+2026-11-14T19:31:45.4619512Z Updating files:  23% (4777/20768)
+2026-11-14T19:31:45.5491026Z Updating files:  24% (4985/20768)
+2026-11-14T19:31:45.6170210Z Updating files:  25% (5192/20768)
+2026-11-14T19:31:45.6896529Z Updating files:  26% (5400/20768)
+2026-11-14T19:31:45.7458855Z Updating files:  27% (5608/20768)
+2026-11-14T19:31:45.8035048Z Updating files:  28% (5816/20768)
+2026-11-14T19:31:45.8568701Z Updating files:  29% (6023/20768)
+2026-11-14T19:31:45.9167267Z Updating files:  30% (6231/20768)
+2026-11-14T19:31:45.9963457Z Updating files:  31% (6439/20768)
+2026-11-14T19:31:46.0735487Z Updating files:  32% (6646/20768)
+2026-11-14T19:31:46.1217441Z Updating files:  33% (6854/20768)
+2026-11-14T19:31:46.1388082Z Updating files:  33% (7010/20768)
+2026-11-14T19:31:46.1873382Z Updating files:  34% (7062/20768)
+2026-11-14T19:31:46.2384015Z Updating files:  35% (7269/20768)
+2026-11-14T19:31:46.3064863Z Updating files:  36% (7477/20768)
+2026-11-14T19:31:46.3861321Z Updating files:  37% (7685/20768)
+2026-11-14T19:31:46.4428044Z Updating files:  38% (7892/20768)
+2026-11-14T19:31:46.5059130Z Updating files:  39% (8100/20768)
+2026-11-14T19:31:46.7234310Z Updating files:  40% (8308/20768)
+2026-11-14T19:31:46.8030499Z Updating files:  41% (8515/20768)
+2026-11-14T19:31:46.8778204Z Updating files:  42% (8723/20768)
+2026-11-14T19:31:46.9390898Z Updating files:  43% (8931/20768)
+2026-11-14T19:31:46.9955880Z Updating files:  44% (9138/20768)
+2026-11-14T19:31:47.0577847Z Updating files:  45% (9346/20768)
+2026-11-14T19:31:47.1225261Z Updating files:  46% (9554/20768)
+2026-11-14T19:31:47.1425560Z Updating files:  46% (9728/20768)
+2026-11-14T19:31:47.2682251Z Updating files:  47% (9761/20768)
+2026-11-14T19:31:47.3371801Z Updating files:  48% (9969/20768)
+2026-11-14T19:31:47.4333761Z Updating files:  49% (10177/20768)
+2026-11-14T19:31:47.5126327Z Updating files:  50% (10384/20768)
+2026-11-14T19:31:47.5694952Z Updating files:  51% (10592/20768)
+2026-11-14T19:31:47.6258008Z Updating files:  52% (10800/20768)
+2026-11-14T19:31:47.6800944Z Updating files:  53% (11008/20768)
+2026-11-14T19:31:47.7498221Z Updating files:  54% (11215/20768)
+2026-11-14T19:31:47.8340385Z Updating files:  55% (11423/20768)
+2026-11-14T19:31:48.0515451Z Updating files:  56% (11631/20768)
+2026-11-14T19:31:48.1117467Z Updating files:  57% (11838/20768)
+2026-11-14T19:31:48.1361498Z Updating files:  58% (12046/20768)
+2026-11-14T19:31:48.1867216Z Updating files:  58% (12113/20768)
+2026-11-14T19:31:48.2530380Z Updating files:  59% (12254/20768)
+2026-11-14T19:31:48.3307779Z Updating files:  60% (12461/20768)
+2026-11-14T19:31:48.4284213Z Updating files:  61% (12669/20768)
+2026-11-14T19:31:48.5142344Z Updating files:  62% (12877/20768)
+2026-11-14T19:31:48.5828709Z Updating files:  63% (13084/20768)
+2026-11-14T19:31:48.6358745Z Updating files:  64% (13292/20768)
+2026-11-14T19:31:48.6872786Z Updating files:  65% (13500/20768)
+2026-11-14T19:31:48.7424734Z Updating files:  66% (13707/20768)
+2026-11-14T19:31:48.8085321Z Updating files:  67% (13915/20768)
+2026-11-14T19:31:48.8713721Z Updating files:  68% (14123/20768)
+2026-11-14T19:31:48.9458246Z Updating files:  69% (14330/20768)
+2026-11-14T19:31:49.0117495Z Updating files:  70% (14538/20768)
+2026-11-14T19:31:49.0728471Z Updating files:  71% (14746/20768)
+2026-11-14T19:31:49.1241731Z Updating files:  72% (14953/20768)
+2026-11-14T19:31:49.1378557Z Updating files:  73% (15161/20768)
+2026-11-14T19:31:49.1744620Z Updating files:  73% (15221/20768)
+2026-11-14T19:31:49.2479529Z Updating files:  74% (15369/20768)
+2026-11-14T19:31:49.4768278Z Updating files:  75% (15576/20768)
+2026-11-14T19:31:49.5468861Z Updating files:  76% (15784/20768)
+2026-11-14T19:31:49.6168588Z Updating files:  77% (15992/20768)
+2026-11-14T19:31:49.6841010Z Updating files:  78% (16200/20768)
+2026-11-14T19:31:49.7549510Z Updating files:  79% (16407/20768)
+2026-11-14T19:31:49.8298490Z Updating files:  80% (16615/20768)
+2026-11-14T19:31:49.8816373Z Updating files:  81% (16823/20768)
+2026-11-14T19:31:49.9554182Z Updating files:  82% (17030/20768)
+2026-11-14T19:31:50.0119798Z Updating files:  83% (17238/20768)
+2026-11-14T19:31:50.0723017Z Updating files:  84% (17446/20768)
+2026-11-14T19:31:50.1475075Z Updating files:  85% (17653/20768)
+2026-11-14T19:31:50.1605628Z Updating files:  85% (17842/20768)
+2026-11-14T19:31:50.2330831Z Updating files:  86% (17861/20768)
+2026-11-14T19:31:50.2909518Z Updating files:  87% (18069/20768)
+2026-11-14T19:31:50.3601310Z Updating files:  88% (18276/20768)
+2026-11-14T19:31:50.4469005Z Updating files:  89% (18484/20768)
+2026-11-14T19:31:50.5088771Z Updating files:  90% (18692/20768)
+2026-11-14T19:31:50.5846562Z Updating files:  91% (18899/20768)
+2026-11-14T19:31:50.8178700Z Updating files:  92% (19107/20768)
+2026-11-14T19:31:50.9022849Z Updating files:  93% (19315/20768)
+2026-11-14T19:31:50.9615544Z Updating files:  94% (19522/20768)
+2026-11-14T19:31:51.0131900Z Updating files:  95% (19730/20768)
+2026-11-14T19:31:51.0633037Z Updating files:  96% (19938/20768)
+2026-11-14T19:31:51.1186722Z Updating files:  97% (20145/20768)
+2026-11-14T19:31:51.1471766Z Updating files:  98% (20353/20768)
+2026-11-14T19:31:51.1926731Z Updating files:  98% (20459/20768)
+2026-11-14T19:31:51.2508968Z Updating files:  99% (20561/20768)
+2026-11-14T19:31:51.2509602Z Updating files: 100% (20768/20768)
+2026-11-14T19:31:51.2510036Z Updating files: 100% (20768/20768), done.
+2026-11-14T19:31:51.2830236Z Note: switching to 'refs/remotes/pull/474/merge'.
+2026-11-14T19:31:51.2830657Z 
+2026-11-14T19:31:51.2831029Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-14T19:31:51.2831862Z changes and commit them, and you can discard any commits you make in this
+2026-11-14T19:31:51.2832603Z state without impacting any branches by switching back to a branch.
+2026-11-14T19:31:51.2833061Z 
+2026-11-14T19:31:51.2833375Z If you want to create a new branch to retain commits you create, you may
+2026-11-14T19:31:51.2834403Z do so (now or later) by using -c with the switch command. Example:
+2026-11-14T19:31:51.2834835Z 
+2026-11-14T19:31:51.2834996Z   git switch -c <new-branch-name>
+2026-11-14T19:31:51.2835279Z 
+2026-11-14T19:31:51.2835451Z Or undo this operation with:
+2026-11-14T19:31:51.2835707Z 
+2026-11-14T19:31:51.2836077Z   git switch -
+2026-11-14T19:31:51.2836214Z 
+2026-11-14T19:31:51.2836442Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-14T19:31:51.2836774Z 
+2026-11-14T19:31:51.2837146Z HEAD is now at b4984f36 Merge 164c01a2e3a52bf0ef69a409e1a428b45817b1b8 into a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c
+2026-11-14T19:31:51.3265113Z ##[endgroup]
+2026-11-14T19:31:51.3668674Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-11-14T19:31:51.4011394Z b4984f3667d18e856233eb97b232f2ec87258380
+2026-11-14T19:31:51.4447799Z ##[group]Run pnpm/action-setup@v4
+2026-11-14T19:31:51.4448123Z with:
+2026-11-14T19:31:51.4448336Z   dest: ~/setup-pnpm
+2026-11-14T19:31:51.4448539Z   run_install: null
+2026-11-14T19:31:51.4448721Z   cache: false
+2026-11-14T19:31:51.4448923Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-14T19:31:51.4449191Z   package_json_file: package.json
+2026-11-14T19:31:51.4449426Z   standalone: false
+2026-11-14T19:31:51.4449601Z env:
+2026-11-14T19:31:51.4449748Z   LIVE: 0
+2026-11-14T19:31:51.4449904Z ##[endgroup]
+2026-11-14T19:31:51.6334176Z ##[group]Running self-installer...
+2026-11-14T19:31:52.1361010Z (node:7868) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-14T19:31:52.1362322Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-14T19:31:52.2671264Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-14T19:31:52.4074394Z Packages: +2
+2026-11-14T19:31:52.4074784Z ++
+2026-11-14T19:31:53.2721017Z Progress: resolved 15, reused 0, downloaded 0, added 0
+2026-11-14T19:31:54.1646213Z Progress: resolved 15, reused 0, downloaded 2, added 2, done
+2026-11-14T19:31:54.1944814Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-14T19:31:56.6295748Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-14T19:31:56.6303872Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-14T19:31:56.7087924Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-14T19:32:01.4916306Z 
+2026-11-14T19:32:01.4917047Z dependencies:
+2026-11-14T19:32:01.4917332Z + pnpm 12.8.1 (12.18.0 is available)
+2026-11-14T19:32:01.4917528Z 
+2026-11-14T19:32:01.4993030Z Done in 9.6s
+2026-11-14T19:32:01.5358542Z ##[endgroup]
+2026-11-14T19:32:01.5359047Z Installation Completed!
+2026-11-14T19:32:01.5722456Z ##[group]Run actions/setup-node@v4
+2026-11-14T19:32:01.5722806Z with:
+2026-11-14T19:32:01.5723001Z   node-version-file: .nvmrc
+2026-11-14T19:32:01.5723245Z   cache: pnpm
+2026-11-14T19:32:01.5723431Z   always-auth: false
+2026-11-14T19:32:01.5723633Z   check-latest: false
+2026-11-14T19:32:01.5725920Z   token: ***
+2026-11-14T19:32:01.5726100Z env:
+2026-11-14T19:32:01.5726265Z   LIVE: 0
+2026-11-14T19:32:01.5726550Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-11-14T19:32:01.5726872Z ##[endgroup]
+2026-11-14T19:32:01.7412852Z Resolved .nvmrc as 22
+2026-11-14T19:32:01.7558241Z Found in cache @ C:\hostedtoolcache\windows\node\22.23.4\x64
+2026-11-14T19:32:01.7566104Z (node:4148) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-14T19:32:01.7567370Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-14T19:32:01.7570350Z ##[group]Environment details
+2026-11-14T19:32:06.2172814Z node: v22.23.4
+2026-11-14T19:32:06.2173184Z npm: 10.9.9
+2026-11-14T19:32:06.2173460Z yarn: 1.22.22
+2026-11-14T19:32:06.2175288Z ##[endgroup]
+2026-11-14T19:32:06.3176430Z [command]C:\Windows\system32\cmd.exe /D /S /C "C:\Users\runneradmin\setup-pnpm\node_modules\.bin\pnpm.CMD store path --silent"
+2026-11-14T19:32:06.3675682Z D:\.pnpm-store\v11
+2026-11-14T19:32:06.6179230Z Cache hit for: node-cache-Windows-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-14T19:32:06.6297628Z (node:4148) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-14T19:32:07.8096568Z Received 134217728 of 260829805 (51.5%), 120.3 MBs/sec
+2026-11-14T19:32:08.4826226Z Received 260829805 of 260829805 (100.0%), 143.2 MBs/sec
+2026-11-14T19:32:08.4830055Z Cache Size: ~249 MB (260829805 B)
+2026-11-14T19:32:08.4932002Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/6a2c2766-d68d-4353-b9ed-420f0157ddda/cache.tzst -P -C D:/a/GraphGoblin/GraphGoblin --force-local --use-compress-program "zstd -d"
+2026-11-14T19:32:17.6379609Z Cache restored successfully
+2026-11-14T19:32:17.6547071Z Cache restored from key: node-cache-Windows-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-14T19:32:17.6886618Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-14T19:32:17.6887039Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-14T19:32:17.7571159Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-11-14T19:32:17.7571577Z env:
+2026-11-14T19:32:17.7571773Z   LIVE: 0
+2026-11-14T19:32:17.7572082Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-11-14T19:32:17.7572474Z ##[endgroup]
+2026-11-14T19:32:18.1584474Z Scope: all 14 workspace projects
+2026-11-14T19:32:18.2199681Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-14T19:32:18.8382899Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-11-14T19:32:18.8384733Z   Content-addressable store is at: D:\.pnpm-store\v11
+2026-11-14T19:32:18.8388735Z   Virtual store is at:             node_modules/.pnpm
+2026-11-14T19:32:19.9126620Z Progress: resolved 181, reused 181, downloaded 0, added 174
+2026-11-14T19:32:20.9734235Z Progress: resolved 326, reused 326, downloaded 0, added 319
+2026-11-14T19:32:21.9767910Z Progress: resolved 501, reused 501, downloaded 0, added 494
+2026-11-14T19:32:22.9886345Z Progress: resolved 668, reused 668, downloaded 0, added 661
+2026-11-14T19:32:23.9982878Z Progress: resolved 780, reused 780, downloaded 0, added 773
+2026-11-14T19:32:29.1897886Z ✓ Lockfile passes supply-chain policies (931 entries in 11s)
+2026-11-14T19:32:29.1898690Z Lockfile is up to date, resolution step is skipped
+2026-11-14T19:32:29.2030686Z Packages: +801
+2026-11-14T19:32:29.2031284Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-14T19:32:29.6371381Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-14T19:32:29.6505129Z .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-11-14T19:32:29.6508743Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-11-14T19:32:30.0910177Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-11-14T19:32:30.0926325Z .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-11-14T19:32:30.2786493Z 
+2026-11-14T19:32:30.2787309Z devDependencies:
+2026-11-14T19:32:30.2787673Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-14T19:32:30.2788133Z + @eslint/js 10.0.1
+2026-11-14T19:32:30.2788501Z + @vitest/coverage-v8 5.0.3
+2026-11-14T19:32:30.2788793Z + dependency-cruiser 18.5.0
+2026-11-14T19:32:30.2789024Z + eslint 10.11.0
+2026-11-14T19:32:30.2789626Z + eslint-config-prettier 10.1.8
+2026-11-14T19:32:30.2790259Z + eslint-plugin-react-hooks 7.1.1
+2026-11-14T19:32:30.2790638Z + prettier 3.9.9
+2026-11-14T19:32:30.2790907Z + turbo 2.11.6
+2026-11-14T19:32:30.2791209Z + typescript 6.0.3
+2026-11-14T19:32:30.2791541Z + typescript-eslint 8.71.0
+2026-11-14T19:32:30.2791991Z + vitest 5.0.3
+2026-11-14T19:32:30.2792170Z 
+2026-11-14T19:32:30.2815625Z Done in 12.1s using pnpm v12.8.1
+2026-11-14T19:32:30.4256932Z ##[group]Run pnpm build
+2026-11-14T19:32:30.4257332Z [36;1mpnpm build[0m
+2026-11-14T19:32:30.4328946Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-11-14T19:32:30.4329296Z env:
+2026-11-14T19:32:30.4329480Z   LIVE: 0
+2026-11-14T19:32:30.4329750Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-11-14T19:32:30.4330081Z ##[endgroup]
+2026-11-14T19:32:30.7745915Z $ turbo run build
+2026-11-14T19:32:30.8876446Z 
+2026-11-14T19:32:30.8877481Z Attention:
+2026-11-14T19:32:30.8878084Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-14T19:32:30.8878822Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-14T19:32:30.8880165Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-14T19:32:30.8881725Z https://turborepo.dev/docs/telemetry
+2026-11-14T19:32:30.8882088Z 
+2026-11-14T19:32:31.1248842Z 
+2026-11-14T19:32:31.1254688Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-14T19:32:31.1311991Z    • Running build in 13 packages
+2026-11-14T19:32:31.1339603Z    • Remote caching disabled
+2026-11-14T19:32:31.1339932Z 
+2026-11-14T19:32:34.0430970Z ##[group]@graphgoblin/contracts:build
+2026-11-14T19:32:34.0431753Z cache miss, executing e5f1e4fdfa62887d
+2026-11-14T19:32:34.0432316Z $ tsc -b tsconfig.build.json
+2026-11-14T19:32:34.0432961Z ##[endgroup]
+2026-11-14T19:32:37.4151021Z ##[group]@graphgoblin/domain:build
+2026-11-14T19:32:37.4151495Z cache miss, executing 1f37225f5154f694
+2026-11-14T19:32:37.4152111Z $ tsc -b tsconfig.build.json
+2026-11-14T19:32:37.4152493Z ##[endgroup]
+2026-11-14T19:32:42.2353002Z ##[group]@graphgoblin/engine:build
+2026-11-14T19:32:42.2353781Z cache miss, executing a0585c35ee59fad7
+2026-11-14T19:32:42.2354287Z $ tsc -b tsconfig.build.json
+2026-11-14T19:32:42.2355452Z ##[endgroup]
+2026-11-14T19:32:45.7501792Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-14T19:32:45.7525937Z cache miss, executing 477913fe5f28c018
+2026-11-14T19:32:45.7526673Z $ tsc -b tsconfig.build.json
+2026-11-14T19:32:45.7527549Z ##[endgroup]
+2026-11-14T19:32:46.4604573Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-14T19:32:46.4614160Z cache miss, executing 2d128ce9c2cdfb81
+2026-11-14T19:32:46.4615435Z $ tsc -b tsconfig.build.json
+2026-11-14T19:32:46.4617349Z ##[endgroup]
+2026-11-14T19:32:52.4177296Z ##[group]@graphgoblin/infrastructure:build
+2026-11-14T19:32:52.4177974Z cache miss, executing ac7753fada0e00e9
+2026-11-14T19:32:52.4178459Z $ tsc -b tsconfig.build.json
+2026-11-14T19:32:52.4178895Z ##[endgroup]
+2026-11-14T19:33:00.4202524Z ##[group]@graphgoblin/api:build
+2026-11-14T19:33:00.4204240Z cache miss, executing 0e0dcd9f9cd51ab2
+2026-11-14T19:33:00.4205427Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-14T19:33:00.4206259Z ##[endgroup]
+2026-11-14T19:33:03.9545042Z ##[group]@graphgoblin/api-client:build
+2026-11-14T19:33:03.9545871Z cache miss, executing 1d3c81600b4bc296
+2026-11-14T19:33:03.9546233Z $ tsc -b tsconfig.build.json
+2026-11-14T19:33:03.9546654Z ##[endgroup]
+2026-11-14T19:33:08.2541694Z ##[group]@graphgoblin/mcp:build
+2026-11-14T19:33:08.2542438Z cache miss, executing 7201be2da8b262fc
+2026-11-14T19:33:08.2542982Z $ tsc -b tsconfig.build.json
+2026-11-14T19:33:08.2543616Z ##[endgroup]
+2026-11-14T19:33:10.4803523Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-14T19:33:10.4804351Z cache bypass, force executing a6c8be980a495938
+2026-11-14T19:33:10.4806098Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-14T19:33:10.4810501Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "D:\a\GraphGoblin\GraphGoblin\apps\plugin-claude\dist\plugin\graphgoblin"
+2026-11-14T19:33:10.4812536Z ##[endgroup]
+2026-11-14T19:33:10.8098172Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-14T19:33:10.8098899Z cache bypass, force executing ea977c0f0724da49
+2026-11-14T19:33:10.8099938Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-14T19:33:10.8100965Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-14T19:33:10.8102405Z Install: codex plugin marketplace add "D:\a\GraphGoblin\GraphGoblin\apps\plugin-codex\dist\marketplace"
+2026-11-14T19:33:10.8104352Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-14T19:33:10.8105179Z ##[endgroup]
+2026-11-14T19:33:18.9084957Z ##[group]@graphgoblin/web:build
+2026-11-14T19:33:18.9085641Z cache miss, executing 97e65906aa72b4e7
+2026-11-14T19:33:18.9086310Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-14T19:33:18.9087556Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-14T19:33:18.9088217Z transforming...
+2026-11-14T19:33:18.9088730Z ✓ 771 modules transformed.
+2026-11-14T19:33:18.9089162Z rendering chunks...
+2026-11-14T19:33:18.9089547Z computing gzip size...
+2026-11-14T19:33:18.9090031Z dist/manifest.webmanifest           0.47 kB
+2026-11-14T19:33:18.9090846Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-14T19:33:18.9091721Z dist/assets/index-DSoHGgpa.css     92.92 kB │ gzip:  17.71 kB
+2026-11-14T19:33:18.9092692Z dist/assets/index-BSN6gKGW.js   2,112.59 kB │ gzip: 659.12 kB │ map: 9,368.49 kB
+2026-11-14T19:33:18.9093200Z 
+2026-11-14T19:33:18.9093470Z [32m✓ built in 3.00s[39m
+2026-11-14T19:33:18.9093720Z 
+2026-11-14T19:33:18.9093886Z [36mPWA v1.3.0[39m
+2026-11-14T19:33:18.9094181Z mode      [35mgenerateSW[39m
+2026-11-14T19:33:18.9094587Z precache  [32m21 entries[39m [2m(2631.68 KiB)[22m
+2026-11-14T19:33:18.9095247Z files generated
+2026-11-14T19:33:18.9095495Z   [2mdist/sw.js.map[22m
+2026-11-14T19:33:18.9096164Z   [2mdist/sw.js[22m
+2026-11-14T19:33:18.9096465Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-14T19:33:18.9096797Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-14T19:33:18.9097288Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-14T19:33:18.9097660Z transforming...
+2026-11-14T19:33:18.9097908Z ✓ 283 modules transformed.
+2026-11-14T19:33:18.9098137Z rendering chunks...
+2026-11-14T19:33:18.9098350Z computing gzip size...
+2026-11-14T19:33:18.9098640Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-14T19:33:18.9099127Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-14T19:33:18.9099652Z dist-goblin/assets/index-DXxuMaNo.css   77.54 kB │ gzip:  15.48 kB
+2026-11-14T19:33:18.9100276Z dist-goblin/assets/index-56X1VFOz.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.34 kB
+2026-11-14T19:33:18.9100623Z 
+2026-11-14T19:33:18.9100785Z [32m✓ built in 565ms[39m
+2026-11-14T19:33:18.9100933Z 
+2026-11-14T19:33:18.9101048Z [36mPWA v1.3.0[39m
+2026-11-14T19:33:18.9101341Z mode      [35mgenerateSW[39m
+2026-11-14T19:33:18.9102136Z precache  [32m21 entries[39m [2m(989.08 KiB)[22m
+2026-11-14T19:33:18.9102668Z files generated
+2026-11-14T19:33:18.9103136Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-14T19:33:18.9104243Z   [2m../dist-goblin/sw.js[22m
+2026-11-14T19:33:18.9104614Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-14T19:33:18.9105011Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-14T19:33:18.9105493Z ##[endgroup]
+2026-11-14T19:33:18.9124842Z 
+2026-11-14T19:33:18.9125392Z  Tasks:    12 successful, 12 total
+2026-11-14T19:33:18.9125861Z Cached:    0 cached, 12 total
+2026-11-14T19:33:18.9126233Z   Time:    48.023s 
+2026-11-14T19:33:18.9126434Z 
+2026-11-14T19:33:19.1636680Z ##[group]Run pnpm test:windows-launcher
+2026-11-14T19:33:19.1637093Z [36;1mpnpm test:windows-launcher[0m
+2026-11-14T19:33:19.1732835Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-11-14T19:33:19.1733432Z env:
+2026-11-14T19:33:19.1733708Z   LIVE: 0
+2026-11-14T19:33:19.1734144Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-11-14T19:33:19.1734722Z ##[endgroup]
+2026-11-14T19:33:19.5218942Z $ node --test tooling/scripts/windows-launcher.acceptance.mjs
+2026-11-14T19:33:19.5980140Z TAP version 13
+2026-11-14T19:33:34.0522975Z # Subtest: native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+2026-11-14T19:33:34.0524744Z     # Subtest: concurrent cold starts create one gateway and later clicks reuse its PID
+2026-11-14T19:33:34.0532766Z     ok 1 - concurrent cold starts create one gateway and later clicks reuse its PID
+2026-11-14T19:33:34.0535283Z       ---
+2026-11-14T19:33:34.0535912Z       duration_ms: 12653.721
+2026-11-14T19:33:34.0536457Z       type: 'test'
+2026-11-14T19:33:34.0536869Z       ...
+2026-11-14T19:33:37.7126428Z     # Subtest: wrong store and changed gateway settings are refused without stopping the live gateway
+2026-11-14T19:33:37.7133915Z     ok 2 - wrong store and changed gateway settings are refused without stopping the live gateway
+2026-11-14T19:33:37.7134784Z       ---
+2026-11-14T19:33:37.7135748Z       duration_ms: 3660.4616
+2026-11-14T19:33:37.7136352Z       type: 'test'
+2026-11-14T19:33:37.7136686Z       ...
+2026-11-14T19:33:41.7429008Z     # Subtest: same database under a different data directory cannot acquire a second gateway
+2026-11-14T19:33:41.7430832Z     ok 3 - same database under a different data directory cannot acquire a second gateway
+2026-11-14T19:33:41.7431995Z       ---
+2026-11-14T19:33:41.7432554Z       duration_ms: 4030.3182
+2026-11-14T19:33:41.7433132Z       type: 'test'
+2026-11-14T19:33:41.7434270Z       ...
+2026-11-14T19:33:47.0691027Z # {"evidence":"native-shell-shortcut-cold-route","beforePid":"1492","afterPid":"6256"}
+2026-11-14T19:33:47.0704139Z     # Subtest: normal drain releases ownership and a shell shortcut cold start runs the launcher
+2026-11-14T19:33:47.0707388Z     ok 4 - normal drain releases ownership and a shell shortcut cold start runs the launcher
+2026-11-14T19:33:47.0709159Z       ---
+2026-11-14T19:33:47.0709528Z       duration_ms: 5327.922
+2026-11-14T19:33:47.0709950Z       type: 'test'
+2026-11-14T19:33:47.0710332Z       ...
+2026-11-14T19:33:52.1317042Z     # Subtest: native HWND COM relaunch command preserves the cold launcher route
+2026-11-14T19:33:52.1318930Z     ok 5 - native HWND COM relaunch command preserves the cold launcher route
+2026-11-14T19:33:52.1319595Z       ---
+2026-11-14T19:33:52.1319924Z       duration_ms: 5060.586
+2026-11-14T19:33:52.1320327Z       type: 'test'
+2026-11-14T19:33:52.1321147Z       ...
+2026-11-14T19:33:56.9787298Z     # Subtest: cross-process HWND metadata survives stamper exit and relaunches
+2026-11-14T19:33:56.9789798Z     ok 6 - cross-process HWND metadata survives stamper exit and relaunches
+2026-11-14T19:33:56.9790521Z       ---
+2026-11-14T19:33:56.9790839Z       duration_ms: 4847.8041
+2026-11-14T19:33:56.9791231Z       type: 'test'
+2026-11-14T19:33:56.9791540Z       ...
+2026-11-14T19:33:58.2291304Z     # Subtest: plain-health HTTP listener is refused and kept alive
+2026-11-14T19:33:58.2294532Z     ok 7 - plain-health HTTP listener is refused and kept alive
+2026-11-14T19:33:58.2295668Z       ---
+2026-11-14T19:33:58.2296008Z       duration_ms: 1236.1425
+2026-11-14T19:33:58.2296421Z       type: 'test'
+2026-11-14T19:33:58.2296764Z       ...
+2026-11-14T19:34:19.9935663Z     # Subtest: a silent TCP listener never permits a gateway spawn across repeated clicks
+2026-11-14T19:34:19.9938528Z     ok 8 - a silent TCP listener never permits a gateway spawn across repeated clicks
+2026-11-14T19:34:19.9939570Z       ---
+2026-11-14T19:34:19.9939925Z       duration_ms: 21764.101
+2026-11-14T19:34:19.9943090Z       type: 'test'
+2026-11-14T19:34:19.9943533Z       ...
+2026-11-14T19:34:23.4484626Z     # Subtest: malformed store ownership is preserved and refused before starting a gateway
+2026-11-14T19:34:23.4489022Z     ok 9 - malformed store ownership is preserved and refused before starting a gateway
+2026-11-14T19:34:23.4490294Z       ---
+2026-11-14T19:34:23.4490528Z       duration_ms: 3454.4464
+2026-11-14T19:34:23.4490776Z       type: 'test'
+2026-11-14T19:34:23.4490978Z       ...
+2026-11-14T19:34:31.9407347Z     # Subtest: reused live PID in both locks and guards permits exactly one cold gateway
+2026-11-14T19:34:31.9408529Z     ok 10 - reused live PID in both locks and guards permits exactly one cold gateway
+2026-11-14T19:34:31.9416269Z       ---
+2026-11-14T19:34:31.9416644Z       duration_ms: 8487.8182
+2026-11-14T19:34:31.9417032Z       type: 'test'
+2026-11-14T19:34:31.9417351Z       ...
+2026-11-14T19:34:42.6859002Z # {"evidence":"protected-system-pid-reuse","selected":{"pid":740,"name":"csrss.exe","windowsCreationTime":"134391581262012680","deniedOperation":"Process.HasExited","errorCode":5},"gatewayPid":"9404"}
+2026-11-14T19:34:42.7025853Z     # Subtest: a protected system PID with a different verified identity is recovered without touching that process
+2026-11-14T19:34:42.7027685Z     ok 11 - a protected system PID with a different verified identity is recovered without touching that process
+2026-11-14T19:34:42.7030670Z       ---
+2026-11-14T19:34:42.7031187Z       duration_ms: 10762.98
+2026-11-14T19:34:42.7031679Z       type: 'test'
+2026-11-14T19:34:42.7032078Z       ...
+2026-11-14T19:34:58.4705171Z # {"evidence":"windows-launcher-native","artifacts":"D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-dV7NWs"}
+2026-11-14T19:34:58.4713665Z     # Subtest: matching and unknown identities preserve locks, guards and the live process
+2026-11-14T19:34:58.4717661Z     ok 12 - matching and unknown identities preserve locks, guards and the live process
+2026-11-14T19:34:58.4718687Z       ---
+2026-11-14T19:34:58.4719681Z       duration_ms: 15772.6606
+2026-11-14T19:34:58.4720866Z       type: 'test'
+2026-11-14T19:34:58.4723193Z       ...
+2026-11-14T19:34:58.4724135Z     1..12
+2026-11-14T19:34:58.4725151Z ok 1 - native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+2026-11-14T19:34:58.4726093Z   ---
+2026-11-14T19:34:58.4726518Z   duration_ms: 98788.7956
+2026-11-14T19:34:58.4739630Z   type: 'test'
+2026-11-14T19:34:58.4740010Z   ...
+2026-11-14T19:35:01.6786770Z # {"evidence":"independent-api-lock-contention","trial":1,"results":[{"status":"refused","pid":10048,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":7800},{"status":"refused","pid":1624,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":4520,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":8864,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-1"}
+2026-11-14T19:35:04.5222300Z # {"evidence":"independent-api-lock-contention","trial":2,"results":[{"status":"refused","pid":4960,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":3156},{"status":"refused","pid":2800,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":7928,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":2584,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-2"}
+2026-11-14T19:35:07.9670868Z # {"evidence":"independent-api-lock-contention","trial":3,"results":[{"status":"acquired","pid":1304},{"status":"refused","pid":1868,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":8080,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":6132,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":9580,"error":"another GraphGoblin process holds D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"D:\\\\a\\\\GraphGoblin\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-5WRQtl\\\\trial-3"}
+2026-11-14T19:35:07.9833926Z # Subtest: independent API processes never share ownership while reclaiming a reused PID
+2026-11-14T19:35:07.9835665Z ok 2 - independent API processes never share ownership while reclaiming a reused PID
+2026-11-14T19:35:07.9836965Z   ---
+2026-11-14T19:35:07.9837281Z   duration_ms: 9512.1805
+2026-11-14T19:35:07.9837557Z   type: 'test'
+2026-11-14T19:35:07.9837748Z   ...
+2026-11-14T19:35:12.9804316Z 1..2
+2026-11-14T19:35:12.9804577Z # tests 14
+2026-11-14T19:35:12.9805696Z # suites 0
+2026-11-14T19:35:12.9806069Z # pass 14
+2026-11-14T19:35:12.9806397Z # fail 0
+2026-11-14T19:35:12.9808603Z # cancelled 0
+2026-11-14T19:35:12.9809431Z # skipped 0
+2026-11-14T19:35:12.9810095Z # todo 0
+2026-11-14T19:35:12.9810996Z # duration_ms 113402.6788
+2026-11-14T19:35:13.1263413Z ##[group]Run actions/upload-artifact@v4
+2026-11-14T19:35:13.1263833Z with:
+2026-11-14T19:35:13.1264028Z   name: windows-launcher
+2026-11-14T19:35:13.1264279Z   path: .tmp/windows-launcher-*/
+2026-11-14T19:35:13.1264522Z   if-no-files-found: warn
+2026-11-14T19:35:13.1264740Z   compression-level: 6
+2026-11-14T19:35:13.1264950Z   overwrite: false
+2026-11-14T19:35:13.1265158Z   include-hidden-files: false
+2026-11-14T19:35:13.1265375Z env:
+2026-11-14T19:35:13.1265531Z   LIVE: 0
+2026-11-14T19:35:13.1265785Z   PNPM_HOME: C:\Users\runneradmin\setup-pnpm\node_modules\.bin
+2026-11-14T19:35:13.1266116Z ##[endgroup]
+2026-11-14T19:35:13.3336492Z (node:9604) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-14T19:35:13.3337289Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-14T19:35:13.3405448Z ##[warning]No files were found with the provided path: .tmp/windows-launcher-*/. No artifacts will be uploaded.
+2026-11-14T19:35:13.3730564Z Post job cleanup.
+2026-11-14T19:35:13.5254207Z (node:6136) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-14T19:35:13.5255662Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-14T19:35:13.5259073Z Cache hit occurred on the primary key node-cache-Windows-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83, not saving cache.
+2026-11-14T19:35:13.5677074Z Post job cleanup.
+2026-11-14T19:35:13.8037766Z Pruning is unnecessary.
+2026-11-14T19:35:13.8419926Z Post job cleanup.
+2026-11-14T19:35:14.0462564Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-11-14T19:35:14.0976275Z git version 2.56.0.windows.4
+2026-11-14T19:35:14.1067729Z Temporarily overriding HOME='D:\a\_temp\9e3ff4b9-8f0f-4613-8d0e-1a81a95825b7' before making global git config changes
+2026-11-14T19:35:14.1069149Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-14T19:35:14.1082877Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\GraphGoblin\GraphGoblin
+2026-11-14T19:35:14.1483233Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-11-14T19:35:14.1862745Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-11-14T19:35:14.7971110Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-14T19:35:14.8340528Z http.https://github.com/.extraheader
+2026-11-14T19:35:14.8389868Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-11-14T19:35:14.8767802Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-11-14T19:35:15.4805786Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-14T19:35:15.5191291Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-11-14T19:35:16.0842067Z Cleaning up orphan processes
+2026-11-14T19:35:16.1472456Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

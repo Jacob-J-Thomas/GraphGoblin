@@ -1,0 +1,80 @@
+
+ FAIL  src/editor/viewport-gesture.test.ts > viewport gesture gate (#207) > a new mouse move invalidates a pending release, in either phase
+AssertionError: expected 2 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 2
+
+ ❯ src/editor/viewport-gesture.test.ts:90:32
+     88|     gate.move(mousemove());
+     89|     expect(gate.state()).toBe('panning');
+     90|     expect(vi.getTimerCount()).toBe(0);
+       |                                ^
+     91|     // Between phase 1 and phase 2.
+     92|     release();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/editor/viewport-gesture.test.ts > viewport gesture gate (#207) > keeps one barrier for repeated releases, for any button, and ignores later wheel and programmatic ends
+AssertionError: expected 3 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 3
+
+ ❯ src/editor/viewport-gesture.test.ts:116:32
+    114|     release(1);
+    115|     release(2);
+    116|     expect(vi.getTimerCount()).toBe(1);
+       |                                ^
+    117|     // Moves that are not a mouse pan's (a wheel, a fit) do not cancel…
+    118|     gate.move(new WheelEvent('wheel'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/editor/viewport-gesture.test.ts > viewport gesture gate (#207) > leaves no listener or task behind once detached
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/editor/viewport-gesture.test.ts:140:32
+    138|     gate.move(mousemove());
+    139|     release();
+    140|     expect(vi.getTimerCount()).toBe(1);
+       |                                ^
+    141|     detach();
+    142|     expect(remove).toHaveBeenCalledWith('mouseup', listener, { capture…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/editor/viewport-gesture.test.ts > viewport gesture gate (#207) > orders the barrier around a d3-like cleanup on the real timer queue
+AssertionError: expected 'panning' to be 'settling' // Object.is equality
+
+Expected: "settling"
+Received: "panning"
+
+ ❯ src/editor/viewport-gesture.test.ts:169:31
+    167|       }),
+    168|     );
+    169|     expect(await queuedAfter).toBe('settling');
+       |                               ^
+    170|     expect(log).toEqual(['cleanup:settling']);
+    171|     await ready;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  5 failed | 75 passed (80)
+   Start at  16:30:08
+   Duration  16.18s (environment 47%, setup 17%, tests 16%, import 11%, transform 8%)
+

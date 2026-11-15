@@ -1,0 +1,1283 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f8f8f3ca..a72dc085 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,24 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Connections are drawn, selected and removed only on the canvas (#207, ADR-0076, the owner's
++  decision). The node dialog no longer has a **Connections** list, **Remove edge** buttons or the
++  **Connect** form, for any node kind. Everything else in it stays: id and label, configuration,
++  route, option, side, band and exit-code editing with its removal confirmations, **Delete
++  node**, and protected Chat voice steps. **Keyboard connection creation is removed.** The
++  Connect form was the only way to create a connection without a pointer (WP-D2 D18), so the
++  keyboard can no longer create or retarget one. It can still select a connection (Enter or
++  Space), remove it (Delete or Backspace), move its route segments, and remove edges the canvas
++  cannot draw from the loop's issues; a coarse pointer has the visible **Remove connection**
++  button. This is not parity with creation. On a zoomed-out touch canvas the form was also the
++  full-size way to connect: zoom in instead. Changing a connection means removing it and drawing
++  it again, which is two **Undo** steps; the new connection starts with an automatic route, and
++  undoing both restores the old one with its route. Editing a route's segments is a separate edit
++  that never changes its ends. A drop on a port that refuses it now says why in the **Connection
++  refused** notice. Stored edges the canvas cannot draw, for example after renaming or removing a
++  Script exit-code label or from an imported draft, are removed with **Remove edge** in the
++  loop's issues beside **Publish**, one **Undo** step each. No stored or exported data changes,
++  so there is no upgrade note.
+ - Publish reports the version the server actually stored (#237). The editor publishes from its
+   queue of saves, after rechecking held input and conflicts, and checks them again right before
+   the request when it first reads the server back. It then compares the returned immutable
+@@ -385,7 +403,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ - Decision and exit answer-type cards keep compact labels, with explanations available through hover, keyboard focus and tap help; screen readers retain each option's description. (#161)
+ - Inference progress shows a bounded command preview, exit code, and status while the node is running; failed tool calls and other harness-reported item failures are also visible without provider diagnostics. Codex capability slugs are recorded but not yet resolved; Codex-only raw harness config overrides remain available. Claude rejects nonempty custom capabilities and raw overrides under its launch policy.
+-- Every screen works from 360 px to wide desktop without sideways scrolling or clipped controls, including at 200% zoom. Loops, Runs, and Events show stacked rows below 1024 px (Settings' tables below 768 px), with values under their column names. Forms become one column below 640 px and the header links fold into Menu. In the editor, the toolbar wraps instead of hiding Publish, while loop settings and the palette float over the canvas on smaller screens. Touch controls are at least 44 px in both dimensions. Canvas ports counter-scale their absolute hit boxes with fixed 44 px rows on coarse pointers; row-pitch and neighbouring-card caps make targets smaller when zoomed out, while card layout stays fixed. The node dialog's Connect form provides full-size connection controls. Loop update times stay under loop names, and run patch diffs stack on narrow screens. (#41)
++- Every screen works from 360 px to wide desktop without sideways scrolling or clipped controls, including at 200% zoom. Loops, Runs, and Events show stacked rows below 1024 px (Settings' tables below 768 px), with values under their column names. Forms become one column below 640 px and the header links fold into Menu. In the editor, the toolbar wraps instead of hiding Publish, while loop settings and the palette float over the canvas on smaller screens. Touch controls are at least 44 px in both dimensions. Canvas ports counter-scale their absolute hit boxes with fixed 44 px rows on coarse pointers; row-pitch and neighbouring-card caps make targets smaller when zoomed out, while card layout stays fixed; zoom in to connect, because the node dialog no longer has a connection form (#207). Loop update times stay under loop names, and run patch diffs stack on narrow screens. (#41)
+ - The light theme keeps the page white and gives cards, panels, the editor toolbar, and dialogs warm brown fills, borders, and control edges. Titles and column headings use dark brown; the dark theme is unchanged. See Settings → Appearance. (#11)
+ - Forms share switches, segmented controls, file pickers, fieldsets, required-field markers, help text, and per-field errors. Structured rows keep parse errors with their rows, reject duplicate keys, and preserve focus and announcements when rows change. (#8, #53)
+ - The node palette can be collapsed. Loop settings stay in the panel titled **Loop settings**, and the toolbar's Loop settings button has been removed (#59).
+diff --git a/apps/web/e2e/decision-routes.spec.ts b/apps/web/e2e/decision-routes.spec.ts
+index 4ff0f357..1eb7b8d0 100644
+--- a/apps/web/e2e/decision-routes.spec.ts
++++ b/apps/web/e2e/decision-routes.spec.ts
+@@ -8,8 +8,8 @@ import {
+ } from '@graphgoblin/contracts';
+ import type { APIRequestContext, Page } from '@playwright/test';
+ import {
+-  chooseOptionByKeyboard,
+   closeNode,
++  connectOnCanvas,
+   control,
+   expect,
+   openNode,
+@@ -265,34 +265,46 @@ test('option IDs stay connected when numeric display labels change, save, and re
+   await dialog.locator('[data-field="routes.2.label"] input').fill('7');
+ 
+   await expect(handle(page, 'pick', 'route-3')).toBeVisible();
+-  const output = dialog.getByLabel('Output', { exact: true });
+-  await output.selectOption('route-3');
+-  await dialog.getByLabel('To', { exact: true }).selectOption('branch');
+-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+-  const connections = dialog.getByRole('region', { name: 'Connections' });
+-  await expect(connections).toContainText('7 (route-3)');
++  // The editor has no connection controls (#207): close it, draw the new route's output on the
++  // canvas, and read the connection from the canvas and the saved draft from here on.
++  await closeNode(page);
++  await connectOnCanvas(page, 'pick', 'route-3', 'branch');
++  const connected = (await savedDraft(page, request, loopId)).edges.find(
++    (item) => item.from.port === 'route-3',
++  )!;
++  expect(connected.to.node).toBe('branch');
++  await expect(edge(page, connected.id)).toHaveAttribute(
++    'aria-label',
++    'pick 7 (route-3) to branch',
++  );
++  await openNode(page, 'pick');
+ 
+   // A blank in-progress ID keeps ownership on the last valid port. Repairing the same row moves
+   // that edge with it, and restoring the ID does not create or transfer another connection.
+-  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+   const thirdId = dialog.locator('[data-field="routes.2.id"] input');
+   await thirdId.fill('');
+-  await expect(connections).toContainText('route-3');
++  await expect(edge(page, connected.id)).toHaveAttribute('aria-label', /\(route-3\)/);
+   await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+   await page.reload();
+   await openNode(page, 'pick');
+   await expect(thirdId).toHaveValue('');
+   await thirdId.fill('route-4');
+-  await expect(connections).toContainText('7 (route-4)');
++  await expect(edge(page, connected.id)).toHaveAttribute(
++    'aria-label',
++    'pick 7 (route-4) to branch',
++  );
+   await expect(handle(page, 'pick', 'route-4')).toBeVisible();
+   await thirdId.fill('route-3');
+-  await expect(connections).toContainText('7 (route-3)');
++  await expect(edge(page, connected.id)).toHaveAttribute(
++    'aria-label',
++    'pick 7 (route-3) to branch',
++  );
+   await closeNode(page);
+ 
+-  const connected = (await savedDraft(page, request, loopId)).edges.find(
++  const settled = (await savedDraft(page, request, loopId)).edges.filter(
+     (item) => item.from.port === 'route-3',
+-  )!;
+-  expect(connected.to.node).toBe('branch');
++  );
++  expect(settled.map((item) => [item.id, item.to.node])).toEqual([[connected.id, 'branch']]);
+   await page.reload();
+   await expect(handle(page, 'pick', 'route-3')).toBeVisible();
+   await expect(page.getByTestId('node-pick')).toContainText('7');
+@@ -334,7 +346,9 @@ test('option IDs stay connected when numeric display labels change, save, and re
+   });
+ });
+ 
+-test('keyboard connection reaches the eighth option by its ID while showing its numeric label', async ({
++// The keyboard cannot create a connection since #207 (ADR-0076): the node editor's Connect form,
++// which this test drove from the keyboard, was removed.
++test('pointer connection reaches the eighth option by its ID while showing its numeric label', async ({
+   page,
+   request,
+ }) => {
+@@ -342,25 +356,21 @@ test('keyboard connection reaches the eighth option by its ID while showing its
+   await expect(
+     page.locator('.react-flow__handle[data-nodeid="pick"]:not([data-handleid="in"])'),
+   ).toHaveCount(8);
++  await expect(handle(page, 'pick', 'route-8')).toBeVisible();
++  await connectOnCanvas(page, 'pick', 'route-8', 'branch');
++  const connected = (await savedDraft(page, request, loopId)).edges.find(
++    (item) => item.from.port === 'route-8',
++  );
++  expect(connected?.to.node).toBe('branch');
++  // The canvas names it by the numeric label and the stable ID.
++  await expect(edge(page, connected!.id)).toHaveAttribute(
++    'aria-label',
++    'pick 8 (route-8) to branch',
++  );
++  // The editor shows neither a Connections list nor a Connect form for the node.
+   const dialog = await openNode(page, 'pick');
+-  const output = dialog.getByLabel('Output', { exact: true });
+-  await output.focus();
+-  await chooseOptionByKeyboard(page, output, '8 (route-8)');
+-  await expect(output).toHaveValue('route-8');
+-  await expect(output.getByRole('option', { selected: true })).toHaveText('8 (route-8)');
+-  const target = dialog.getByLabel('To', { exact: true });
+-  await target.focus();
+-  await chooseOptionByKeyboard(page, target, 'Branch (branch)');
+-  await expect(target).toHaveValue('branch');
+-  const connect = dialog.getByRole('button', { name: 'Connect', exact: true });
+-  await connect.focus();
+-  await connect.press('Enter');
+-  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText('8 (route-8)');
+-  await closeNode(page);
+-  expect(
+-    (await savedDraft(page, request, loopId)).edges.find((item) => item.from.port === 'route-8')?.to
+-      .node,
+-  ).toBe('branch');
++  await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
++  await expect(dialog.getByRole('button', { name: 'Connect', exact: true })).toHaveCount(0);
+ });
+ 
+ test('expression true/false routes preserve edges, then save and run the edited route', async ({
+@@ -397,8 +407,10 @@ test('expression true/false routes preserve edges, then save and run the edited
+   await trueId.fill('affirm');
+   await dialog.locator('[data-field="routes.0.label"] input').fill('Affirmative');
+   await expect(handle(page, 'pick', 'affirm')).toBeVisible();
+-  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText(
+-    'Affirmative (affirm)',
++  // The existing connection follows the renamed ID and label; the canvas names it by both.
++  await expect(edge(page, 'true-edge')).toHaveAttribute(
++    'aria-label',
++    'pick Affirmative (affirm) to branch',
+   );
+   await closeNode(page);
+ 
+@@ -439,7 +451,7 @@ test('expression true/false routes preserve edges, then save and run the edited
+   ).toHaveText('affirm');
+ });
+ 
+-test('Score bands expose fractional boundaries, validate malformed coverage, and connect by keyboard', async ({
++test('Score bands expose fractional boundaries, validate malformed coverage, and connect on the canvas', async ({
+   page,
+   request,
+ }) => {
+@@ -482,15 +494,16 @@ test('Score bands expose fractional boundaries, validate malformed coverage, and
+   await middleMax.fill('1.5');
+   await expect(malformedBandsError).toHaveCount(0);
+ 
+-  const connections = dialog.getByRole('region', { name: 'Connections' });
+-  const output = dialog.getByLabel('Output', { exact: true });
+-  await output.focus();
+-  await expect(output.getByRole('option', { selected: true })).toHaveText('Middle (middle)');
+-  await chooseOptionByKeyboard(page, output, 'Top score (high)');
+-  await expect(output.getByRole('option', { selected: true })).toHaveText('Top score (high)');
+-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+-  await expect(connections).toContainText('Top score (high)');
++  // The editor has no connection controls (#207): close it and draw the band's output on the canvas.
+   await closeNode(page);
++  await connectOnCanvas(page, 'pick', 'high', 'branch');
++  const drawn = (await savedDraft(page, request, loopId)).edges.find(
++    (item) => item.from.port === 'high',
++  );
++  await expect(edge(page, drawn!.id)).toHaveAttribute(
++    'aria-label',
++    'pick Top score (high) to branch',
++  );
+   const saved = await savedDraft(page, request, loopId);
+   expect(saved.edges.find((item) => item.id === 'low-edge')).toMatchObject({
+     from: { node: 'pick', port: 'low' },
+diff --git a/apps/web/e2e/exit-primitives.spec.ts b/apps/web/e2e/exit-primitives.spec.ts
+index 7b7c80de..606cdc70 100644
+--- a/apps/web/e2e/exit-primitives.spec.ts
++++ b/apps/web/e2e/exit-primitives.spec.ts
+@@ -6,7 +6,15 @@ import {
+   RunSnapshotSchema,
+   type LoopDefinitionInput,
+ } from '@graphgoblin/contracts';
+-import { closeNode, control, expect, openNode, test } from './fixtures.js';
++import {
++  closeNode,
++  connectOnCanvas,
++  control,
++  expect,
++  openNode,
++  portHandle,
++  test,
++} from './fixtures.js';
+ 
+ for (const finalChoice of ['repeat', 'done'] as const) {
+   test(`authors a gate and terminal exits; last pass chooses ${finalChoice}`, async ({
+@@ -90,21 +98,18 @@ for (const finalChoice of ['repeat', 'done'] as const) {
+       .locator('[data-field="jsonata"] [role="textbox"]')
+       .fill(finalChoice === 'repeat' ? '"repeat"' : 'gates.gate.passes >= 3 ? "done" : "repeat"');
+     await expect(dialog.getByText(/Limit reached is taken/)).toBeVisible();
+-    const connect = dialog.getByRole('form', { name: 'Connect gate' });
+-    await connect.getByLabel('Output').selectOption('limit-reached');
+-    await connect.getByLabel('To').selectOption('exhausted');
+-    await connect.getByRole('button', { name: 'Connect', exact: true }).click();
++    // The editor offers no connection form (#207): close it, then draw Limit reached on the canvas.
++    await expect(dialog.getByRole('form', { name: 'Connect gate' })).toHaveCount(0);
+     await closeNode(page);
+-    await expect(
+-      page.locator('.react-flow__handle[data-nodeid="gate"][data-handleid="limit-reached"]'),
+-    ).toHaveCount(1);
++    await expect(portHandle(page, 'gate', 'limit-reached')).toHaveCount(1);
++    await connectOnCanvas(page, 'gate', 'limit-reached', 'exhausted');
+     dialog = await openNode(page, 'exhausted');
+     // The visible choice card covers its visually hidden radio, so choose it from the keyboard.
+     const exhausted = dialog.getByRole('radio', { name: 'Exhausted', exact: true });
+     await exhausted.focus();
+     await page.keyboard.press('Space');
+     await expect(exhausted).toBeChecked();
+-    await expect(dialog.getByRole('form', { name: 'Connect exhausted' })).toHaveCount(0);
++    await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
+     await closeNode(page);
+     await expect(page.getByText('Ready to publish')).toBeVisible();
+     await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+diff --git a/apps/web/e2e/fixtures.ts b/apps/web/e2e/fixtures.ts
+index 529fdb04..5f07eae9 100644
+--- a/apps/web/e2e/fixtures.ts
++++ b/apps/web/e2e/fixtures.ts
+@@ -162,6 +162,39 @@ export async function closeNode(page: Page): Promise<void> {
+   await expect(page.getByRole('dialog')).toHaveCount(0);
+ }
+ 
++/** A node's port handle on the canvas; the input handle's id is `in`. */
++export function portHandle(page: Page, nodeId: string, handleId: string): Locator {
++  return page.locator(`.react-flow__handle[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`);
++}
++
++/**
++ * Draw a connection as a pointer user does, by dragging from an output handle to the target's input
++ * handle after fitting the graph into view (#207). The node editor offers no connection controls
++ * and the keyboard cannot create a connection (ADR-0076), so close the node editor first.
++ */
++export async function connectOnCanvas(
++  page: Page,
++  source: string,
++  port: string,
++  target: string,
++): Promise<void> {
++  await page.locator('.react-flow__controls-fitview').click();
++  await portHandle(page, source, port).dragTo(portHandle(page, target, 'in'));
++}
++
++/**
++ * Remove a connection from the keyboard: focus it, Enter selects it, Delete removes it. This is
++ * the keyboard path that remains after #207; the selected connection's toolbar also has a visible
++ * Remove connection button.
++ */
++export async function removeEdgeOnCanvas(page: Page, edgeId: string): Promise<void> {
++  const edge = page.locator(`.react-flow__edge[data-id="${edgeId}"]`);
++  await edge.focus();
++  await page.keyboard.press('Enter');
++  await page.keyboard.press('Delete');
++  await expect(edge).toHaveCount(0);
++}
++
+ /** Create and publish a loop through the API; returns its id. */
+ export async function publishLoop(
+   request: APIRequestContext,
+diff --git a/apps/web/e2e/issue-170-qa.spec.ts b/apps/web/e2e/issue-170-qa.spec.ts
+index 7b5ca099..24a2161f 100644
+--- a/apps/web/e2e/issue-170-qa.spec.ts
++++ b/apps/web/e2e/issue-170-qa.spec.ts
+@@ -18,6 +18,7 @@ import { everyFieldLoop } from '@graphgoblin/contracts/testing';
+ import {
+   approvalLoop,
+   closeNode,
++  connectOnCanvas,
+   control,
+   expect,
+   openAdvanced,
+@@ -216,6 +217,19 @@ async function jsonEditor(dialog: Locator, label: string) {
+   await dialog.getByRole('button', { name: `Edit as JSON: ${label}`, exact: true }).click();
+   return dialog.getByRole('textbox', { name: `${label} JSON`, exact: true });
+ }
++/**
++ * Open a node editor again after drawing on the canvas and return its Answer JSON editor, whether
++ * the reopened editor shows the structured form (the toggle) or kept the JSON editor open.
++ */
++async function reopenAnswerJson(page: Page, nodeId: string) {
++  const dialog = await openNode(page, nodeId);
++  const toggle = dialog.getByRole('button', { name: 'Edit as JSON: Answer', exact: true });
++  const editor = dialog.getByRole('textbox', { name: 'Answer JSON', exact: true });
++  await expect(toggle.or(editor)).toBeVisible();
++  if (await toggle.isVisible()) await toggle.click();
++  await expect(editor).toBeVisible();
++  return editor;
++}
+ const sectionOf = (editor: Locator) => editor.locator('xpath=ancestor::*[@data-json-section][1]');
+ async function apply(editor: Locator) {
+   await sectionOf(editor).getByRole('button', { name: 'Apply JSON', exact: true }).click();
+@@ -1432,11 +1446,14 @@ test('I5 Score: 200 unicode rubric anchors roundtrip; split, connect, rename and
+   };
+   await replace(page, editor, JSON.stringify(split));
+   await apply(editor);
+-  await dialog.getByLabel('Output', { exact: true }).selectOption('high');
+-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
++  // The node editor has no connection controls (#207): close it, draw the new band's output on the
++  // canvas, and reopen the editor on the same declaration.
++  await closeNode(page);
++  await connectOnCanvas(page, 'approve', 'high', 'done');
+   await expect
+     .poll(async () => (await saved(request, id)).edges.some((e) => e.from.port === 'high'))
+     .toBe(true);
++  editor = await reopenAnswerJson(page, 'approve');
+   const renamed = { ...split, bands: [split.bands[0], { ...split.bands[1], id: 'top' }] };
+   await replace(page, editor, JSON.stringify(renamed));
+   await apply(editor);
+@@ -1449,12 +1466,14 @@ test('I5 Score: 200 unicode rubric anchors roundtrip; split, connect, rename and
+       (await saved(request, id)).edges.some((e) => e.from.port === 'high' || e.from.port === 'top'),
+     )
+     .toBe(false);
+-  // Reconnect explicitly: the following removal still exercises an applied connection on top.
+-  await dialog.getByLabel('Output', { exact: true }).selectOption('top');
+-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
++  // Reconnect explicitly on the canvas: the following removal still exercises an applied connection
++  // on top.
++  await closeNode(page);
++  await connectOnCanvas(page, 'approve', 'top', 'done');
+   await expect
+     .poll(async () => (await saved(request, id)).edges.some((e) => e.from.port === 'top'))
+     .toBe(true);
++  editor = await reopenAnswerJson(page, 'approve');
+   await replace(page, editor, JSON.stringify(large));
+   await apply(editor);
+   await expect(
+diff --git a/apps/web/e2e/live.spec.ts b/apps/web/e2e/live.spec.ts
+index f6f606ea..8214ec68 100644
+--- a/apps/web/e2e/live.spec.ts
++++ b/apps/web/e2e/live.spec.ts
+@@ -3,7 +3,14 @@
+  * with LIVE=1 (`LIVE=1 pnpm --filter @graphgoblin/web test:e2e -- e2e/live.spec.ts`); otherwise
+  * it is skipped. Model gpt-6-luna, effort low, read-only sandbox, a temporary working directory.
+  */
+-import { closeNode, expect, openNode, test } from './fixtures.js';
++import {
++  closeNode,
++  connectOnCanvas,
++  expect,
++  openNode,
++  removeEdgeOnCanvas,
++  test,
++} from './fixtures.js';
+ 
+ test.skip(process.env['LIVE'] !== '1', 'live Codex check: set LIVE=1');
+ 
+@@ -44,18 +51,10 @@ test('LIVE: build, publish, and run an inference loop against Codex from the UI'
+     .click();
+   await closeNode(page);
+ 
+-  // Rewire start -> inference -> done in the node editors.
+-  await openNode(page, 'start');
+-  await page.getByRole('button', { name: 'Remove edge e1' }).click();
+-  const fromStart = page.getByRole('form', { name: 'Connect start' });
+-  await fromStart.getByLabel('To').selectOption('inference');
+-  await fromStart.getByRole('button', { name: 'Connect' }).click();
+-  await closeNode(page);
+-  await openNode(page, 'inference');
+-  const fromInference = page.getByRole('form', { name: 'Connect inference' });
+-  await fromInference.getByLabel('To').selectOption('done');
+-  await fromInference.getByRole('button', { name: 'Connect' }).click();
+-  await closeNode(page);
++  // Rewire start -> inference -> done on the canvas: the node editor has no connection controls.
++  await removeEdgeOnCanvas(page, 'e1');
++  await connectOnCanvas(page, 'start', 'out', 'inference');
++  await connectOnCanvas(page, 'inference', 'out', 'done');
+   await expect(page.getByText('Ready to publish')).toBeVisible();
+ 
+   await page.getByRole('button', { name: 'Publish' }).click();
+diff --git a/apps/web/e2e/loop-back-topology.spec.ts b/apps/web/e2e/loop-back-topology.spec.ts
+index f31f9db8..009ebb5a 100644
+--- a/apps/web/e2e/loop-back-topology.spec.ts
++++ b/apps/web/e2e/loop-back-topology.spec.ts
+@@ -14,7 +14,7 @@ import {
+ } from '@graphgoblin/contracts';
+ import { forwardLoopBack } from '../src/__fixtures__/routing.js';
+ import { defaultConfig } from '../src/editor/model.js';
+-import { closeNode, expect, openNode, test, uniqueLoopName } from './fixtures.js';
++import { connectOnCanvas, expect, test, uniqueLoopName } from './fixtures.js';
+ 
+ const card = (id: string, kind: NodeInput['kind'], x: number, y = 100, config?: unknown) =>
+   ({ id, label: id, kind, config: config ?? defaultConfig(kind), ui: { x, y } }) as NodeInput;
+@@ -159,11 +159,8 @@ for (const theme of ['dark', 'light']) {
+     await screenshot(page, info, `returns-${theme}`);
+ 
+     // A bypass from the second trigger: `work` no longer precedes every path to `decide`.
+-    const dialog = await openNode(page, 'side');
+-    await dialog.getByLabel('Output', { exact: true }).selectOption('out');
+-    await dialog.getByLabel('To', { exact: true }).selectOption('decide');
+-    await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+-    await closeNode(page);
++    // Drawn on the canvas: the node editor has no connection controls (#207).
++    await connectOnCanvas(page, 'side', 'out', 'decide');
+     const bypass = page.locator('.react-flow__edge[aria-label^="side out to decide"]');
+     await expect(bypass).toHaveCount(1);
+     await expectOrdinary(page, 'retry');
+diff --git a/apps/web/e2e/loop-lifecycle.spec.ts b/apps/web/e2e/loop-lifecycle.spec.ts
+index b31013ba..3d47d546 100644
+--- a/apps/web/e2e/loop-lifecycle.spec.ts
++++ b/apps/web/e2e/loop-lifecycle.spec.ts
+@@ -1,5 +1,13 @@
+ import type { Page } from '@playwright/test';
+-import { approvalLoop, closeNode, expect, openNode, publishLoop, test } from './fixtures.js';
++import {
++  approvalLoop,
++  closeNode,
++  expect,
++  openNode,
++  publishLoop,
++  removeEdgeOnCanvas,
++  test,
++} from './fixtures.js';
+ 
+ function handle(page: Page, nodeId: string, handleId: string) {
+   return page.locator(`.react-flow__handle[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`);
+@@ -20,8 +28,10 @@ test('draw a loop in the editor, publish it, run it, watch events, and provide i
+   await expect(page.getByTestId('node-wait')).toBeVisible();
+   const start = await openNode(page, 'start');
+   await expect(start).toHaveAccessibleName('Edit trigger start');
+-  await start.getByRole('button', { name: 'Remove edge e1' }).click();
++  // The node editor no longer lists or removes connections (#207): the canvas does.
++  await expect(start.getByRole('region', { name: 'Connections' })).toHaveCount(0);
+   await closeNode(page);
++  await removeEdgeOnCanvas(page, 'e1');
+   await page.locator('.react-flow__controls-fitview').click();
+ 
+   await handle(page, 'start', 'out').dragTo(handle(page, 'wait', 'in'));
+diff --git a/apps/web/e2e/palette-placement.spec.ts b/apps/web/e2e/palette-placement.spec.ts
+index 74821220..251b7128 100644
+--- a/apps/web/e2e/palette-placement.spec.ts
++++ b/apps/web/e2e/palette-placement.spec.ts
+@@ -1,7 +1,7 @@
+ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+ import { resolve } from 'node:path';
+ import type { Locator, Page } from '@playwright/test';
+-import { closeNode, expect, openNode, test } from './fixtures.js';
++import { closeNode, connectOnCanvas, expect, openNode, test } from './fixtures.js';
+ 
+ async function fit(page: Page) {
+   await settleViewport(page);
+@@ -30,12 +30,6 @@ async function settleViewport(page: Page) {
+   });
+ }
+ 
+-async function connect(dialog: Locator, port: string, target: string) {
+-  await dialog.getByLabel('Output', { exact: true }).selectOption(port);
+-  await dialog.getByLabel('To', { exact: true }).selectOption(target);
+-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+-}
+-
+ async function intersections(elements: Locator) {
+   return elements.evaluateAll((items) => {
+     const boxes = items.map((item) => ({
+@@ -92,7 +86,7 @@ test('palette authoring clears a three-output Decision and keeps converging labe
+     await expect(page.getByTestId(`node-${kind.toLowerCase()}`)).toBeVisible();
+   }
+   await fit(page);
+-  let dialog = await openNode(page, 'decision');
++  const dialog = await openNode(page, 'decision');
+   await dialog.locator('[data-field="routes.0.id"] input').fill('again');
+   await dialog.locator('[data-field="routes.0.label"] input').fill('Again');
+   await dialog.locator('[data-field="routes.1.id"] input').fill('finish');
+@@ -140,9 +134,8 @@ test('palette authoring clears a three-output Decision and keeps converging labe
+     ['wait', [['out', 'inference']]],
+   ] as const) {
+     await fit(page);
+-    dialog = await openNode(page, node);
+-    for (const [port, target] of connections) await connect(dialog, port, target);
+-    await closeNode(page);
++    // Drawn on the canvas: the node editor has no connection controls (#207).
++    for (const [port, target] of connections) await connectOnCanvas(page, node, port, target);
+   }
+   for (const name of ['Hide palette', 'Hide loop settings']) {
+     const button = page.getByRole('button', { name, exact: true });
+diff --git a/apps/web/e2e/qa.spec.ts b/apps/web/e2e/qa.spec.ts
+index 737b2a5e..0b4539f2 100644
+--- a/apps/web/e2e/qa.spec.ts
++++ b/apps/web/e2e/qa.spec.ts
+@@ -7,12 +7,13 @@ import { CURRENT_DEFINITION_FORMAT, RunSnapshotSchema } from '@graphgoblin/contr
+ import type { APIRequestContext, Locator, Page } from '@playwright/test';
+ import {
+   approvalLoop,
+-  chooseOptionByKeyboard,
+   closeNode,
++  connectOnCanvas,
+   control,
+   expect,
+   openNode,
+   publishLoop,
++  removeEdgeOnCanvas,
+   showLoopPanel,
+   test,
+ } from './fixtures.js';
+@@ -311,18 +312,21 @@ async function tabTo(page: Page, target: Locator, { back = false, limit = 80 } =
+   await expect(target).toBeFocused();
+ }
+ 
+-test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
++// Keyboard connection creation (the node editor's Connect form) was removed in #207, ADR-0076. The
++// keyboard still adds a node, opens and leaves node editors, selects and removes a connection and
++// publishes; connections are drawn with the pointer.
++test('keyboard: add a node, walk the node editors, remove a connection and publish; the pointer connects', async ({
++  page,
++}) => {
+   await page.goto('/app/loops');
+   await page.getByLabel('New loop name').fill('qa keyboard');
+   await page.getByLabel('New loop name').press('Enter');
+   await expect(page.getByRole('heading', { name: 'qa keyboard' })).toBeVisible();
+ 
+-  // Every step from here is a key press: Tab moves, Enter acts, native typeahead chooses a select's
+-  // displayed option, and Esc closes. Closed-select arrow behavior differs across platforms.
++  // Except where noted, every step from here is a key press: Tab moves, Enter acts and Esc closes.
+   await tabTo(page, page.getByRole('button', { name: 'Add Wait node' }));
+   await page.keyboard.press('Enter');
+   await expect(page.getByTestId('node-wait')).toBeInViewport();
+-  // Rewire start -> wait -> done with the Connect forms.
+   // Canvas nodes are focusable; Enter opens the focused node's editor and Esc closes it.
+   const startNode = page.locator('.react-flow__node[data-id="start"]');
+   await tabTo(page, startNode);
+@@ -330,39 +334,34 @@ test('keyboard only: add a node, connect it, and publish', async ({ page }) => {
+   const startDialog = page.getByRole('dialog', { name: 'Edit trigger start' });
+   await expect(startDialog).toBeVisible();
+   await expect(startDialog.getByRole('heading', { name: 'Edit trigger start' })).toBeFocused();
+-  // Tab walks the dialog in visual order: close, id, label, the config form, connections.
++  // Tab walks the dialog in visual order: close, id, label, then the config form.
+   await page.keyboard.press('Tab');
+   await expect(startDialog.getByRole('button', { name: 'Close' })).toBeFocused();
+   await page.keyboard.press('Tab');
+   await expect(startDialog.getByLabel('Node id')).toBeFocused();
+   await page.keyboard.press('Tab');
+   await expect(startDialog.getByLabel('Label')).toBeFocused();
+-  await tabTo(page, startDialog.getByRole('button', { name: 'Remove edge e1' }));
+-  await page.keyboard.press('Enter');
+-  const startForm = page.getByRole('form', { name: 'Connect start' });
+-  await tabTo(page, startForm.getByLabel('To'));
+-  await expect(startForm.getByLabel('To')).toHaveValue('done');
+-  await chooseOptionByKeyboard(page, startForm.getByLabel('To'), 'Wait (wait)');
+-  await expect(startForm.getByLabel('To')).toHaveValue('wait');
+-  await tabTo(page, startForm.getByRole('button', { name: 'Connect' }));
+-  await page.keyboard.press('Enter');
++  // It lists no connections and has no Connect form or Remove edge button to reach.
++  await expect(startDialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
++  await expect(startDialog.getByRole('form', { name: 'Connect start' })).toHaveCount(0);
++  await expect(startDialog.getByRole('button', { name: /^Remove edge/ })).toHaveCount(0);
+   await page.keyboard.press('Escape');
+   await expect(startDialog).toHaveCount(0);
+   await expect(startNode).toBeFocused();
+ 
++  // Rewire start -> wait -> done. The keyboard removes the connection (focus it, Enter, Delete);
++  // the pointer draws the two new ones.
++  await removeEdgeOnCanvas(page, 'e1');
++  await connectOnCanvas(page, 'start', 'out', 'wait');
++  await connectOnCanvas(page, 'wait', 'out', 'done');
++
++  // The pointer drags moved focus off the canvas, so give Tab more room to reach the node.
+   const waitNode = page.locator('.react-flow__node[data-id="wait"]');
+-  await tabTo(page, waitNode);
++  await tabTo(page, waitNode, { limit: 200 });
+   await page.keyboard.press('Enter');
+   const waitDialog = page.getByRole('dialog', { name: 'Edit wait wait' });
+   await expect(waitDialog).toBeVisible();
+-  const waitForm = page.getByRole('form', { name: 'Connect wait' });
+-  await tabTo(page, waitForm.getByLabel('To'));
+-  await chooseOptionByKeyboard(page, waitForm.getByLabel('To'), 'Wait (wait)');
+-  await expect(waitForm.getByLabel('To')).toHaveValue('wait');
+-  await chooseOptionByKeyboard(page, waitForm.getByLabel('To'), 'Done (done)');
+-  await expect(waitForm.getByLabel('To')).toHaveValue('done');
+-  await tabTo(page, waitForm.getByRole('button', { name: 'Connect' }));
+-  await page.keyboard.press('Enter');
++  await expect(waitDialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
+   // Past the last control, Tab comes back round to the first: focus stays in the dialog.
+   await tabTo(page, waitDialog.getByRole('button', { name: 'Done' }));
+   await page.keyboard.press('Tab');
+diff --git a/apps/web/e2e/responsive.spec.ts b/apps/web/e2e/responsive.spec.ts
+index d0a2addb..0b11a429 100644
+--- a/apps/web/e2e/responsive.spec.ts
++++ b/apps/web/e2e/responsive.spec.ts
+@@ -13,8 +13,8 @@ import type { Locator, Page } from '@playwright/test';
+ import { denseGraph } from '../src/__fixtures__/routing.js';
+ import {
+   approvalLoop,
+-  chooseOptionByKeyboard,
+   closeNode,
++  connectOnCanvas,
+   control,
+   expect,
+   openAdvanced,
+@@ -627,7 +627,9 @@ for (const theme of ['dark', 'light'] as const) {
+       expect(await pageOverflows(page)).toBe(false);
+     });
+ 
+-    test('at 768 px keyboard authoring adds, edits, connects, validates, and publishes', async ({
++    // Keyboard connection creation (the node editor's Connect form) was removed in #207, ADR-0076:
++    // the keyboard still adds, opens, edits and publishes, and the pointer draws the connections.
++    test('at 768 px keyboard authoring adds, opens and edits nodes and publishes; the pointer connects them', async ({
+       page,
+       request,
+     }) => {
+@@ -667,23 +669,17 @@ for (const theme of ['dark', 'light'] as const) {
+       await dialog.getByLabel('Label', { exact: true }).focus();
+       await page.keyboard.press('ControlOrMeta+A');
+       await page.keyboard.type('Keyboard approval');
+-      await dialog.getByLabel('To', { exact: true }).focus();
+-      await chooseOptionByKeyboard(page, dialog.getByLabel('To', { exact: true }), 'Done (done)');
+-      await expect(dialog.getByLabel('To', { exact: true })).toHaveValue('done');
+-      await dialog.getByRole('button', { name: 'Connect', exact: true }).press('Enter');
+-      await expect(dialog.getByText('No outgoing edges.')).toHaveCount(0);
++      await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
++      await expect(dialog.getByRole('button', { name: 'Connect', exact: true })).toHaveCount(0);
+       await page.keyboard.press('Escape');
+       await expect(page.getByTestId('node-wait')).toContainText('Keyboard approval');
+       dialog = await open('start');
+-      await dialog.getByLabel('To', { exact: true }).focus();
+-      await chooseOptionByKeyboard(
+-        page,
+-        dialog.getByLabel('To', { exact: true }),
+-        'Keyboard approval (wait)',
+-      );
+-      await expect(dialog.getByLabel('To', { exact: true })).toHaveValue('wait');
+-      await dialog.getByRole('button', { name: 'Connect', exact: true }).press('Enter');
++      await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
+       await page.keyboard.press('Escape');
++      await expect(dialog).toHaveCount(0);
++      // Pointer drags draw start -> wait -> done between the output and input handles.
++      await connectOnCanvas(page, 'start', 'out', 'wait');
++      await connectOnCanvas(page, 'wait', 'out', 'done');
+       await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+       await expect(page.getByText('Ready to publish')).toBeVisible();
+       await geometry(page, 'keyboard editor');
+diff --git a/apps/web/src/editor/EditorPage.test.tsx b/apps/web/src/editor/EditorPage.test.tsx
+index 29222d4c..86f12447 100644
+--- a/apps/web/src/editor/EditorPage.test.tsx
++++ b/apps/web/src/editor/EditorPage.test.tsx
+@@ -902,40 +902,48 @@ describe('EditorPage', () => {
+     }
+   });
+ 
+-  // Adding nodes, entering the modal from the canvas, connecting/removing an edge and opening a
+-  // second full form are the integration behavior under test. With no setup strings to batch,
++  // Adding nodes, entering the modal from the canvas, a connection made on the canvas and opening
++  // a second full form are the integration behavior under test. With no setup strings to batch,
+   // keep these transitions and allow 60 s locally after a measured 20 s coverage/load timeout.
+-  it('connects nodes from the keyboard and customizes a default list', async () => {
++  // Keyboard connection creation (the dialog's Connect form) was removed in #207 (ADR-0076): the
++  // dialog no longer offers it, and a connection is drawn on the canvas.
++  it('opens a node from the keyboard without connection controls, keeps its edges through Delete and Backspace, and customizes a default list', async () => {
+     const user = userEvent.setup();
+     const api = new FakeApi();
+     const loop = api.addLoop(newLoopDefinition('keys'));
+     renderApp(`/loops/${loop.id}/edit`, api);
+     await screen.findByRole('heading', { name: 'keys' });
+     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
++    // The canvas's own operation, as a drag between handles performs it (jsdom cannot drag).
++    act(() => {
++      useEditorStore.getState().connect({ source: 'wait', sourceHandle: 'out', target: 'done' });
++    });
++    const edges = useEditorStore.getState().definition!.edges;
++    expect(edges).toContainEqual(
++      expect.objectContaining({
++        from: { node: 'wait', port: 'out' },
++        to: { node: 'done', port: 'in' },
++      }),
++    );
+     // Enter on the focused node opens its editor, with focus on the dialog's heading.
+     const card = screen.getByTestId('node-wait').closest<HTMLElement>('.react-flow__node')!;
+     act(() => card.focus());
+     await user.keyboard('{Enter}');
+     const dialog = screen.getByRole('dialog', { name: 'Edit wait wait' });
+     expect(within(dialog).getByRole('heading', { name: 'Edit wait wait' })).toHaveFocus();
+-    const form = within(dialog).getByRole('form', { name: 'Connect wait' });
+-    await user.selectOptions(within(form).getByLabelText('To'), 'done');
+-    await user.click(within(form).getByRole('button', { name: 'Connect' }));
+-    expect(useEditorStore.getState().definition?.edges).toContainEqual(
+-      expect.objectContaining({
+-        from: { node: 'wait', port: 'out' },
+-        to: { node: 'done', port: 'in' },
+-      }),
+-    );
+-    // Its only port is now used, so the form is gone.
+-    expect(screen.queryByRole('form', { name: 'Connect wait' })).toBeNull();
++    // The dialog lists no connections and has no Connect form or Remove edge button, although its
++    // node has an outgoing connection.
++    expect(within(dialog).queryByRole('region', { name: 'Connections' })).toBeNull();
++    expect(within(dialog).queryByRole('form', { name: 'Connect wait' })).toBeNull();
++    expect(within(dialog).queryByRole('button', { name: 'Connect' })).toBeNull();
++    expect(within(dialog).queryByRole('button', { name: /^Remove edge/ })).toBeNull();
+     // Delete or Backspace in the dialog edits nothing on the canvas (WP-D2 D19).
+-    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e2' }));
+     act(() => within(dialog).getByLabelText('Label').focus());
+     await user.keyboard('{Delete}{Backspace}');
+     act(() => within(dialog).getByRole('button', { name: 'Done' }).focus());
+     await user.keyboard('{Delete}{Backspace}');
+     expect(useEditorStore.getState().definition?.nodes.some((n) => n.id === 'wait')).toBe(true);
++    expect(useEditorStore.getState().definition?.edges).toEqual(edges);
+     // Esc closes it; focus returns to the node, which stays selected.
+     await user.keyboard('{Escape}');
+     expect(screen.queryByRole('dialog')).toBeNull();
+@@ -1011,7 +1019,7 @@ describe('EditorPage', () => {
+     expect(useEditorStore.getState().nodeFocus).toBeUndefined();
+   });
+ 
+-  it('says in the dialog why a connection was refused', async () => {
++  it('says on the page why a connection was refused; the node dialog carries no refusal of its own', async () => {
+     const user = userEvent.setup();
+     const api = new FakeApi();
+     const loop = api.addLoop(newLoopDefinition('refused'));
+@@ -1019,13 +1027,17 @@ describe('EditorPage', () => {
+     await screen.findByRole('heading', { name: 'refused' });
+     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+     act(() => useEditorStore.getState().openNode('wait'));
+-    const form = await screen.findByRole('form', { name: 'Connect wait' });
+-    await user.selectOptions(within(form).getByLabelText('To'), 'done');
+-    // The chosen target disappears before Connect is pressed (as another edit could do).
++    const dialog = await screen.findByRole('dialog', { name: 'Edit wait wait' });
++    // The other end disappears before the connection is made (as another edit could do).
+     act(() => useEditorStore.getState().removeNode('done'));
+-    act(() => useEditorStore.getState().openNode('wait'));
+-    await user.click(within(form).getByRole('button', { name: 'Connect' }));
+-    expect(within(form).getByRole('alert')).toHaveTextContent('Connection refused: unknown node');
++    act(() => {
++      useEditorStore.getState().connect({ source: 'wait', sourceHandle: 'out', target: 'done' });
++    });
++    expect(await screen.findByText('Connection refused: unknown node')).toBeInTheDocument();
++    expect(within(dialog).queryByText(/Connection refused/)).toBeNull();
++    expect(useEditorStore.getState().definition!.edges.some((e) => e.from.node === 'wait')).toBe(
++      false,
++    );
+   });
+ 
+   it('never lets an older save land after a newer one', async () => {
+@@ -1220,13 +1232,25 @@ describe('EditorPage', () => {
+     expect(screen.queryByText(/is already used/)).toBeNull();
+     fireEvent.blur(screen.getByLabelText('Node id'));
+ 
+-    await user.click(screen.getByRole('button', { name: /Remove edge e5b/ }));
++    // The renamed node's connection followed it, and the dialog offers no way to remove it: edges
++    // are removed on the canvas (#207), through the store operation its toolbar and keys call.
++    expect(useEditorStore.getState().definition!.edges.find((e) => e.id === 'e5b')).toMatchObject({
++      from: { node: 'verify', port: 'retry' },
++      to: { node: 'infer' },
++    });
++    expect(within(dialog).queryByRole('button', { name: /^Remove edge/ })).toBeNull();
++    act(() => useEditorStore.getState().removeEdge('e5b'));
+     expect(useEditorStore.getState().definition!.edges.some((e) => e.id === 'e5b')).toBe(false);
+ 
+     act(() => useEditorStore.getState().removeEdge('e2'));
+     act(() => useEditorStore.getState().openNode('nightly'));
+-    expect(await screen.findByText('No outgoing edges.')).toBeInTheDocument();
+-    expect(screen.getByRole('dialog', { name: 'Edit trigger nightly' })).toBeInTheDocument();
++    // Its last outgoing edge is gone, and the dialog says nothing about it.
++    const nightly = await screen.findByRole('dialog', { name: 'Edit trigger nightly' });
++    expect(within(nightly).queryByRole('region', { name: 'Connections' })).toBeNull();
++    expect(within(nightly).queryByText('No outgoing edges.')).toBeNull();
++    expect(useEditorStore.getState().definition!.edges.some((e) => e.from.node === 'nightly')).toBe(
++      false,
++    );
+     act(() => useEditorStore.getState().closeNodeDialog());
+     expect(screen.queryByRole('dialog')).toBeNull();
+     expect(useEditorStore.getState().selectedNodeId).toBe('nightly');
+diff --git a/apps/web/src/editor/NodeConnections.tsx b/apps/web/src/editor/NodeConnections.tsx
+deleted file mode 100644
+index f6a5510d..00000000
+--- a/apps/web/src/editor/NodeConnections.tsx
++++ /dev/null
+@@ -1,131 +0,0 @@
+-import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
+-import { useState } from 'react';
+-import { Icon } from '../components/icons/index.js';
+-import { Button, FieldGroup, FieldRow, HelpText, Label, Select } from '../components/ui/index.js';
+-import { canvasPortLabels, canvasPorts } from './model.js';
+-import { isProtectedVoiceEdge, VOICE_STEP_MESSAGE } from './chat-protection.js';
+-import { useEditorStore } from './store.js';
+-
+-/**
+- * The keyboard path for drawing an edge: pick one of this node's free output ports and a target.
+- * Applies the same rules as dragging on the canvas, and says why when it refuses.
+- */
+-function ConnectForm({ node, definition }: { node: NodeInput; definition: LoopDefinitionInput }) {
+-  const used = new Set(
+-    definition.edges.filter((e) => e.from.node === node.id).map((e) => e.from.port),
+-  );
+-  const ports = canvasPorts(node).filter((p) => !used.has(p));
+-  const portLabels = canvasPortLabels(node);
+-  const targets = definition.nodes.filter((n) => n.kind !== 'trigger');
+-  const [port, setPort] = useState(ports[0] ?? '');
+-  const [target, setTarget] = useState(targets.find((n) => n.id !== node.id)?.id ?? '');
+-  const [refused, setRefused] = useState<string | undefined>();
+-  const chosenPort = ports.includes(port) ? port : (ports[0] ?? '');
+-  if (ports.length === 0 || targets.length === 0) return null;
+-  return (
+-    <form
+-      aria-label={`Connect ${node.id}`}
+-      className="grid gap-1.5"
+-      onSubmit={(e) => {
+-        e.preventDefault();
+-        const problem = useEditorStore
+-          .getState()
+-          .connect({ source: node.id, sourceHandle: chosenPort, target });
+-        setRefused(problem ?? undefined);
+-      }}
+-    >
+-      <FieldRow>
+-        <FieldGroup className="min-w-28">
+-          <Label htmlFor="connect-port">Output</Label>
+-          <Select id="connect-port" value={chosenPort} onChange={(e) => setPort(e.target.value)}>
+-            {ports.map((p) => (
+-              <option key={p} value={p}>
+-                {portLabels[p] && portLabels[p] !== p
+-                  ? `${portLabels[p]} (${p})`
+-                  : (portLabels[p] ?? p)}
+-              </option>
+-            ))}
+-          </Select>
+-        </FieldGroup>
+-        <FieldGroup className="flex-1">
+-          <Label htmlFor="connect-target">To</Label>
+-          <Select
+-            id="connect-target"
+-            value={target}
+-            aria-describedby={refused ? 'connect-refused' : undefined}
+-            onChange={(e) => setTarget(e.target.value)}
+-          >
+-            {targets.map((n) => (
+-              <option key={n.id} value={n.id}>
+-                {n.label} ({n.id})
+-              </option>
+-            ))}
+-          </Select>
+-        </FieldGroup>
+-        <Button type="submit" variant="outline" disabled={!target}>
+-          Connect
+-        </Button>
+-      </FieldRow>
+-      {refused ? (
+-        <HelpText id="connect-refused" role="alert" tone="bad">
+-          Connection refused: {refused}
+-        </HelpText>
+-      ) : null}
+-    </form>
+-  );
+-}
+-
+-/**
+- * The node's outgoing edges, each with a Remove button, and the Connect form.
+- */
+-export function NodeConnections({
+-  node,
+-  definition,
+-}: {
+-  node: NodeInput;
+-  definition: LoopDefinitionInput;
+-}) {
+-  const system = useEditorStore((state) => state.systemChat);
+-  const outgoing = definition.edges.filter((e) => e.from.node === node.id);
+-  const portLabels = canvasPortLabels(node);
+-  return (
+-    <section aria-label="Connections" className="grid gap-2">
+-      <h3 className="text-sm font-semibold">Connections</h3>
+-      {outgoing.length === 0 ? (
+-        <p className="text-xs text-muted">No outgoing edges.</p>
+-      ) : (
+-        <ul className="grid gap-1">
+-          {outgoing.map((edge) => (
+-            <li
+-              key={edge.id}
+-              className="flex items-center justify-between gap-2 rounded-md border border-default py-1 pr-1 pl-3 text-sm"
+-            >
+-              <span>
+-                {portLabels[edge.from.port] ?? edge.from.port}{' '}
+-                {portLabels[edge.from.port] && portLabels[edge.from.port] !== edge.from.port ? (
+-                  <code>({edge.from.port})</code>
+-                ) : null}{' '}
+-                → <code>{edge.to.node}</code>
+-              </span>
+-              <Button
+-                size="icon"
+-                disabled={isProtectedVoiceEdge(definition, system, edge)}
+-                title={
+-                  isProtectedVoiceEdge(definition, system, edge) ? VOICE_STEP_MESSAGE : undefined
+-                }
+-                variant="ghost"
+-                aria-label={`Remove edge ${edge.id}`}
+-                onClick={() => {
+-                  useEditorStore.getState().removeEdge(edge.id);
+-                }}
+-              >
+-                <Icon name="close" />
+-              </Button>
+-            </li>
+-          ))}
+-        </ul>
+-      )}
+-      <ConnectForm key={`${node.id}:${outgoing.length}`} node={node} definition={definition} />
+-    </section>
+-  );
+-}
+diff --git a/apps/web/src/editor/NodeEditorDialog.test.tsx b/apps/web/src/editor/NodeEditorDialog.test.tsx
+index 1c8902eb..37beae27 100644
+--- a/apps/web/src/editor/NodeEditorDialog.test.tsx
++++ b/apps/web/src/editor/NodeEditorDialog.test.tsx
+@@ -3,6 +3,7 @@ import {
+   type LoopDefinitionInput,
+   type NodeInput,
+ } from '@graphgoblin/contracts';
++import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+ import { act, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { beforeEach, describe, expect, it } from 'vitest';
+@@ -99,7 +100,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
+         returns: 'outputs.work.value',
+       });
+       expect(dialog.querySelector('[data-field="criteria"]')).toBeNull();
+-      expect(within(dialog).queryByRole('form', { name: 'Connect finish' })).toBeNull();
++      expect(within(dialog).queryByRole('region', { name: 'Connections' })).toBeNull();
+       expect(dialog.querySelector('[data-field="destinations"]')).toBeInTheDocument();
+       await user.click(within(dialog).getByRole('radio', { name: 'None' }));
+       expect(store().definition!.nodes.find((n) => n.id === 'finish')!.config).toHaveProperty(
+@@ -181,9 +182,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
+     );
+     expect(
+       within(routes).getAllByRole('textbox', { name: 'Label' })[0],
+-    ).toHaveAccessibleDescription(
+-      'Unique readable route label, shown on the canvas and in Connections.',
+-    );
++    ).toHaveAccessibleDescription('Unique readable route label, shown on the canvas.');
+   });
+ 
+   it.each(['expression', 'llm', 'classifier'] as const)(
+@@ -443,6 +442,48 @@ describe('NodeEditorDialog webhook receiver', () => {
+   });
+ });
+ 
++describe('NodeEditorDialog leaves connections to the canvas (#207, ADR-0076)', () => {
++  it('shows no Connections list, Connect form or edge removal on any node kind, and keeps the stored connections', async () => {
++    const api = new FakeApi();
++    const definition = kitchenSinkLoop();
++    const loop = api.addLoop(definition);
++    renderNodeEditor(loop.id, definition, 'start', api);
++    const edgesBefore = store().definition!.edges;
++    const kinds = new Set<string>();
++    for (const node of definition.nodes) {
++      act(() => store().openNode(node.id));
++      const dialog = await screen.findByRole('dialog', { name: new RegExp(` ${node.id}$`) });
++      await within(dialog).findByRole('form', { name: `${node.id} config` });
++      kinds.add(node.kind);
++      // Every kind but Exit has outgoing connections: the retired section listed each one with a
++      // Remove button and offered a Connect form for its free outputs, so absence means something.
++      const outgoing = edgesBefore.filter((edge) => edge.from.node === node.id);
++      if (node.kind !== 'exit') expect(outgoing.length).toBeGreaterThan(0);
++      expect(within(dialog).queryByRole('region', { name: 'Connections' })).toBeNull();
++      expect(within(dialog).queryByRole('heading', { name: 'Connections' })).toBeNull();
++      expect(within(dialog).queryByRole('form', { name: `Connect ${node.id}` })).toBeNull();
++      expect(within(dialog).queryByRole('button', { name: 'Connect' })).toBeNull();
++      expect(within(dialog).queryByRole('button', { name: /^Remove edge/ })).toBeNull();
++      expect(within(dialog).queryByText('No outgoing edges.')).toBeNull();
++      // The rest of the editor stays: the node's own configuration and Delete node.
++      expect(within(dialog).getByRole('button', { name: 'Delete node' })).toBeInTheDocument();
++    }
++    expect([...kinds].sort()).toEqual([
++      'decision',
++      'exit',
++      'heartbeat',
++      'inference',
++      'mutate',
++      'script',
++      'subloop',
++      'trigger',
++      'wait',
++    ]);
++    // Looking at every dialog edited nothing.
++    expect(store().definition!.edges).toEqual(edgesBefore);
++  }, 60_000);
++});
++
+ describe('NodeEditorDialog GitHub trigger presets', () => {
+   it('applies an editable body-signed fragment as one undoable graph change', async () => {
+     const user = userEvent.setup();
+diff --git a/apps/web/src/editor/NodeEditorDialog.tsx b/apps/web/src/editor/NodeEditorDialog.tsx
+index 2a21a1d0..7fd21a6e 100644
+--- a/apps/web/src/editor/NodeEditorDialog.tsx
++++ b/apps/web/src/editor/NodeEditorDialog.tsx
+@@ -59,7 +59,6 @@ import { focusIssuePath, groupFocus } from './focus-field.js';
+ import { IssueBadge } from './IssueBadge.js';
+ import { KindChip } from './KindChip.js';
+ import { KIND_INFO, type EditorIssue } from './model.js';
+-import { NodeConnections } from './NodeConnections.js';
+ import { SubloopPicker } from './SubloopPicker.js';
+ import {
+   SYSTEM_CHAT_TRIGGER_FIELDS,
+@@ -157,8 +156,9 @@ interface IdDraft {
+ /**
+  * The editor of one node, in a modal dialog named "Edit <kind> <id>": the node's issue badge beside
+  * the title (choosing an issue focuses its field), id, label, the subloop picker, the config form
+- * generated from the kind's schema, its connections with the Connect form (the keyboard path for
+- * edges), and Delete node. Opened at an issue (`openNode(id, { field })`), it focuses that field. Every edit goes to the
++ * generated from the kind's schema, and Delete node. It does not list or author connections: those
++ * are drawn, selected and removed on the canvas (#207, ADR-0076). Opened at an issue
++ * (`openNode(id, { field })`), it focuses that field. Every edit goes to the
+  * store as it is made (and autosaves from there), so closing never discards anything, with one
+  * exception handled here: an id still being typed. A valid one is applied on close; an invalid one
+  * keeps the dialog open once, with the reason, and is dropped if the user closes again.
+@@ -793,7 +793,6 @@ export function NodeEditorDialog({
+         {node.kind === 'trigger' && node.config?.type === 'webhook' ? (
+           <WebhookReceiver loopId={loopId} nodeId={node.id} />
+         ) : null}
+-        <NodeConnections node={node} definition={definition} />
+       </section>
+     </Dialog>
+   );
+diff --git a/apps/web/src/editor/chat-protection.test.ts b/apps/web/src/editor/chat-protection.test.ts
+index b010b7a1..cf71f212 100644
+--- a/apps/web/src/editor/chat-protection.test.ts
++++ b/apps/web/src/editor/chat-protection.test.ts
+@@ -66,7 +66,7 @@ describe('voice protocol editor protection', () => {
+         .connect({ source: 'chat-normalize-check', sourceHandle: 'valid', target: 'respond' }),
+     ).toBeNull();
+   });
+-  it('prevents internal rewiring through every canvas/keyboard connection path', () => {
++  it('prevents internal rewiring through every canvas connection path', () => {
+     const definition = audio();
+     useEditorStore.getState().load('gateway', definition);
+     useEditorStore.setState({ systemChat: true });
+diff --git a/apps/web/src/styles/canvas.css b/apps/web/src/styles/canvas.css
+index f87f4323..da13ba76 100644
+--- a/apps/web/src/styles/canvas.css
++++ b/apps/web/src/styles/canvas.css
+@@ -153,7 +153,8 @@
+  * Touch (#41): on a coarse pointer the zoom, fit, and lock buttons are 44 px, and each port handle
+  * counter-scales its absolute hit box without changing card layout. Height stops at the fixed
+  * 46 px output pitch; width stops at half the gap to the next card. Zoomed-out targets can be
+- * smaller than 44 screen pixels. The node editor's Connect form is the full-size alternative.
++ * smaller than 44 screen pixels. Zooming in enlarges them; the node editor has no connection form
++ * (#207, ADR-0076).
+  */
+ @media (pointer: coarse) {
+   .react-flow__controls-button {
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index eceda3c8..41b3381f 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -250,7 +250,7 @@ for inference limits and [ADR-0066](decisions/ADR-0066-native-ollama-and-model-d
+ 
+ ## Editor (Draft)
+ 
+-- Canvas: `@xyflow/react` with custom node components per kind, labelled output handles for decision routes and exit loop-back, and edge validation that refuses connections into triggers or out of unknown ports.
++- Canvas: `@xyflow/react` with custom node components per kind, labelled output handles for decision routes and exit loop-back, and edge validation that refuses connections into triggers or out of unknown ports. The canvas is the only place connections are authored (see "Connections are drawn on the canvas" below).
+ - Palette: the nine node kinds, drag to add.
+ - Node editor: a modal dialog opened from the canvas, generated from the node kind's Zod schema with react-hook-form (see "Node editor, loop panel, and New run" below). Templates and expressions use CodeMirror with Liquid and JSONata modes and a preview that renders against a sample thread.
+ - Run-thread template and expression fields have a collapsed **Earlier node outputs (N)** list with syntax-specific copyable references and output notes. It follows draft paths, nearest first, includes a cyclic node's previous visit, and omits nodes without automatic outputs. Empty lists and fields with other evaluation roots show nothing. This is interim help, not validation; it does not populate the sample preview. Renaming a node repairs the references it understands (see "Renaming a node" below). (#341)
+@@ -265,6 +265,18 @@ for inference limits and [ADR-0066](decisions/ADR-0066-native-ollama-and-model-d
+ 
+ Pressing a palette entry places the new card at x = 40, below the lowest existing card bottom plus 22 px clearance, and pans to it. Placement takes the larger of the measured height and the current port count's card footprint, including a Decision's Limit reached row. An empty canvas starts at (40, 40). Existing nodes stay where authored; dragging from the palette still uses the drop point. Routed labels retain their reserved positions and shortening. A forward label leaves xyflow's default position only when its pill collides with a card, an earlier label or another edge's segment (4 px card/label clearance and a 2 px segment envelope). A short straight segment or a rounded corner alone never moves it. Only a label with a collision searches for the nearest free interval along its own horizontal or vertical segments, with 10 px corner allowance and stable edge-ID priority. A squeezed label searches for a local callout within 96 px of its edge, with a straight leader that never enters a card and a pill clear of other edge lanes. If no legal local candidate exists, it keeps its default position without a leader. Placements are solved after edits and drag release; displaced labels follow their own segment during a drag without rebuilding the obstacle index. These are view positions, not definition changes. Regression: `node-placement.test.ts`, `edge-label-placement.test.ts`, and `e2e/palette-placement.spec.ts` (#425).
+ 
++### Connections are drawn on the canvas (Decided, #207, ADR-0076)
++
++The owner's decision, recorded in [ADR-0076](decisions/ADR-0076-canvas-only-connection-authoring.md): connections are authored only on the canvas, for every node kind. The node dialog has no **Connections** section, no **Remove edge** buttons and no **Connect** form. Everything else in it stays: id and label, the config form, declaration editing (decision routes, Choice options, Noul sides, Score bands, Script exit-code rows and Repeat route settings) with its consequence reviews that name connections, **Delete node**, protected Chat voice steps and held input.
++
++- **Create.** Drag from an output handle to an input handle, or click an output and then an input. A drag may start at either end. One edge per output; any number may enter one input; triggers have no input and exits no output. A drop on a port that refuses the connection shows the reason in the editor's "Connection refused: …" notice (`onConnectEnd` and the click-connect end in `editor/Canvas.tsx`, using `connectionProblem` in `editor/model.ts`); an occupied output says how to free it ("select its connection and choose Remove connection (or press Delete or Backspace), then draw it again"). A drop on the empty pane or on a port of the same type says nothing and leaves an earlier notice as it was, and a refusal never creates an edge. Protected Chat voice steps refuse as before ("Voice steps stay.").
++- **Remove.** Click a connection, or focus it and press Enter or Space, to select it. Then press Delete or Backspace with focus on the canvas, or use **Remove connection** in the selected connection's toolbar beside **Reset route**: it is 32 px and 44 px under a coarse pointer, is disabled with the voice-step message on a protected edge, and moves focus to **Undo** afterwards. One connection is removed at a time; a selected node is never removed by an edge's removal. The screen-reader description of a focused connection says "Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection. To connect its output elsewhere, remove the connection and draw from the output again."
++- **Change is remove, then draw again.** There is no reconnect handle and no single-step retarget. Remove the connection, then draw from the same output (a new target) or from another output (a new port). That is **two undo steps**: "remove edge a to b", then "connect a to c". The replacement is a new edge record. It may reuse the freed edge id, and it does not inherit the old edge's manual route: the canvas routes it automatically. Undoing both steps restores the old edge with its id, ends and `ui.route` unchanged; redoing both gives the new connection back. Every other edge is unchanged by either step.
++- **Geometry is a separate edit.** Dragging or nudging a segment and **Reset route** (see "Manual edge routes" below) change only `ui.route` of the same edge, one undo step each, and never its ends. Renaming a decision route's ID in the dialog is declaration editing: the edge keeps its id, target and layout while its source port follows the row (see "Editing decision routes").
++- **Stored edges the canvas cannot draw.** An edge whose source or target node is missing, whose output port is not a handle on its source card, or that leads into a trigger has no path to select. They come from imported or API-written drafts, and from ordinary editing: renaming or removing a Script exit-code label or applying section JSON leaves its stored edges, which stay stored and block publication (`EDGE_PORT_MISSING` and the other edge codes). **Loop issues**, the validation indicator beside Publish and the "Loop and connections" group of its popover, list them and offer **Remove edge eN** on the first issue row of each such edge. It removes exactly that edge in one undo step, and Undo restores its id, ends and manual route. It acts only if the edge is still stored with those ends and still undrawable, so an action left over from before a repair, a removal or an id reuse removes nothing; it is disabled with the voice-step message for a protected Chat edge. The popover closes and focus returns to the indicator, or to the **Ready to publish** status when that was the last issue. Imported missing-node targets and a Script label renamed or removed are the cases it exists for. It is recovery for stranded topology, not an authoring form: Script labels are not followed automatically, and nothing is pruned silently. (`editor/stranded-edges.ts`, `editor/ValidationIndicator.tsx`.)
++- **What the keyboard can no longer do.** Keyboard connection creation is gone. The dialog's **Connect** form, which let a keyboard-only user pick one of a node's free outputs and a target and so build start → wait → done without a pointer (WP-D2 D18, `5a4d0665`), no longer exists, and no other keyboard path creates or retargets a connection. The keyboard keeps reaching and selecting a connection, removing it, moving its route segments and removing undrawable edges from Loop issues; a coarse pointer keeps the visible **Remove connection** button. This is not keyboard or touch parity with creation. On a zoomed-out touch canvas port targets shrink with zoom (see "Touch" under Breakpoints), and the dialog's form was the full-size alternative: zoom in to connect. Keyboard connection creation and broader accessibility or mobile changes remain deferred and are not a new proof-of-concept gate.
++- **Regression.** `editor/NodeEditorDialog.test.tsx` (no Connections region, Connect form or Remove edge button on any of the nine node kinds, and no stored edge changes), `editor/EditorPage.test.tsx` (a dialog opened from the keyboard without those controls; Delete and Backspace in it edit nothing; the refusal in the page notice; a renamed node's edges), `editor/Canvas.test.tsx` and `editor/OrthogonalEdge.test.tsx` (refusal reasons, toolbar removal, undo), `editor/ValidationIndicator.test.tsx` and `editor/stranded-edges.test.ts` (recovery), `editor/model.test.ts`, and Edge `e2e/decision-routes.spec.ts`, `e2e/exit-primitives.spec.ts`, `e2e/issue-170-qa.spec.ts`, `e2e/loop-back-topology.spec.ts`, `e2e/loop-lifecycle.spec.ts`, `e2e/palette-placement.spec.ts`, `e2e/qa.spec.ts`, `e2e/responsive.spec.ts` and the `LIVE=1` `e2e/live.spec.ts`, which draw connections by pointer and remove them from the keyboard.
++
+ ### Renaming a node (#273)
+ 
+ The node dialog's **Node id** applies on Enter, on leaving the field and when the dialog closes, as before. Invalid and duplicate ids keep their messages, and protected voice steps keep their read-only id and "Voice steps stay" refusal. An accepted id goes through the domain's `renameLoopNode` with the exact current draft. The node, its connection ends, and the references the domain understands (typed mutation pointers and static JSONata and Liquid reads of `outputs`, `gates` and `counters.nodeVisits`) change in one store write. Decision route ownership, the node's unfinished field input, the selection and a pending issue focus follow it in the same write. That write is one undo step and one revision. Autosave, the device mirror and the draft token handling see the complete renamed draft once. Undo and Redo restore every repaired field, edge end, held input and the selection together. Unfinished input in other forms is never touched. A refusal the dialog did not foresee (another node with the same id, say) shows under the field like the existing id messages and changes nothing.
+@@ -279,7 +291,7 @@ The persistent reference diagnostics come from the same local `domain` validatio
+ 
+ ### Editing decision routes
+ 
+-Adding, renaming, reordering, or removing a decision route refreshes the canvas's measured output handles after the new rows render, including changes that leave the card the same height. New and renamed outputs can be connected immediately by dragging or through the node dialog's Connections form, without reloading. A connected route's rename keeps its edge id, target, and manual layout while changing its source port; removing a route removes its outgoing edge, even while its label is temporarily invalid. The config and edge change are one undo step, and redo restores both. Reordering routes keeps connections with their labels. Blank, duplicate, and otherwise invalid labels still block publishing; temporarily invalid input stays visible in the draft without rewiring a connection to an invalid port. Each row owns its connections while being edited, so completing multiple incomplete rows in any order keeps each connection with its own row, including when another row remains blank.
++Adding, renaming, reordering, or removing a decision route refreshes the canvas's measured output handles after the new rows render, including changes that leave the card the same height. New and renamed outputs can be connected immediately by dragging on the canvas, without reloading. A connected route's rename keeps its edge id, target, and manual layout while changing its source port; removing a route removes its outgoing edge, even while its label is temporarily invalid. The config and edge change are one undo step, and redo restores both. Reordering routes keeps connections with their labels. Blank, duplicate, and otherwise invalid labels still block publishing; temporarily invalid input stays visible in the draft without rewiring a connection to an invalid port. Each row owns its connections while being edited, so completing multiple incomplete rows in any order keeps each connection with its own row, including when another row remains blank.
+ 
+ Options have persisted stable IDs independent of their display labels. Edges use those IDs, so label edits and reordering preserve connections and manual edge geometry. Invalid or incomplete IDs do not transfer an edge to another row; removal and undo/redo keep option ownership consistent. Numeric display labels are permitted and never become object/array indexes in route ownership.
+ 
+@@ -372,7 +384,7 @@ ended, so pending delivery cannot be finalized by JSON polling alone.
+ 
+ ## Accessibility and UX baseline (Draft)
+ 
+-Keyboard navigation for the palette, the node editor dialog, and both side panels, visible focus states, colour-blind-safe status colours, and reduced-motion support. The canvas gets keyboard shortcuts for add, delete, connect, and fit-to-view, and a selected edge's segment handles move with the arrow keys (#44). The editor's undo and redo have the platform's shortcuts and named toolbar buttons (#17). Every screen reflows from 360 px up and at 200% zoom, with 44 px targets on a coarse pointer (see "Breakpoints and layout primitives" below, #41).
++Keyboard navigation for the palette, the node editor dialog, and both side panels, visible focus states, colour-blind-safe status colours, and reduced-motion support. The canvas gets keyboard shortcuts for add, delete and fit-to-view; it has none for connecting, and a connection cannot be created from the keyboard ([ADR-0076](decisions/ADR-0076-canvas-only-connection-authoring.md)). A selected edge's segment handles move with the arrow keys (#44). The editor's undo and redo have the platform's shortcuts and named toolbar buttons (#17). Every screen reflows from 360 px up and at 200% zoom, with 44 px targets on a coarse pointer (see "Breakpoints and layout primitives" below, #41).
+ 
+ ## Design tokens (Decided, #7)
+ 
+@@ -449,8 +461,8 @@ Every form control comes from `components/ui/` and takes its look from the token
+ - **Fieldset and Legend** (`fieldset.tsx`). `Fieldset` is the quiet bordered group with a semibold `Legend` (a nested object, array, record, or union); `Legend variant="label"` names a borderless group of choices and looks like a field label; `Fieldset variant="section"` with `Legend variant="section"` is a borderless, ruled-off section with a quiet uppercase heading (a group under a form's Advanced options, #14).
+ - **Disclosure** (`disclosure.tsx`, #14). A button with `aria-expanded` and `aria-controls` that shows and hides a panel kept mounted while hidden: `variant="box"` is a bordered section whose full-width header is the toggle (a form's Advanced options), `variant="row"` a compact list item header with `actions` beside it. `summary` adds to the toggle's text, `defaultOpen` sets the first state, `open` with `onOpenChange` lets the caller keep the state instead (so it outlives a remount), and `revealDisclosures(element)` opens every collapsed one around an element at once (through `onOpenChange` when the caller keeps it).
+ - **Labels, help, required.** `Label required` puts the `RequiredMarker` (an asterisk in the bad tone, `aria-hidden`) after the label, outside the `<label>`, so the accessible name stays the field's name; a control carries `aria-required`. A group (an array, a record, a set of checkboxes) shows the marker after its legend instead, since a group takes no `aria-required`, and states its minimum as text that describes it ("Choose at least 1.", "At least 2 items."); its checkboxes are not each marked. A form with required fields starts with `RequiredNote` ("Required fields are marked \*", hidden from assistive technology, which hears "required" on each control instead). Help text (`HelpText`) is linked to its control with `aria-describedby`.
+-- **Errors.** Where a field shows its own error, the message sits under it, describes the control (`aria-describedby`, after any help), sets `aria-invalid`, and is announced (`role="alert"`; a JSON parse error, which changes as you type, is a polite live region instead). That covers every field of the schema-driven forms, including record values (which react-hook-form does not track: their messages come from SchemaForm's check of the whole value, by exact path) and collections (the group's error describes the fieldset, which takes no `aria-invalid`); each `JsonSchemaForm` property and its raw JSON editor; the node dialog's id (its own check) and label (the loop's validation), the loop panel's name (the contract's check, or the API's name refusal, described without a second announcement), Loops create (the API's refusal; a name refusal adds its suggestion, see "Loop names"), the import picker (the refusal describes it and marks it invalid until the next file), the secret name rule (it turns into an alert while the name breaks it), and the Connect form's refusal (it describes the To select). Not linked to a field: a nested object's own error (shown in its fieldset, announced), `JsonSchemaForm` problems with the value as a whole (a summary under the form, announced), the schema-driven forms' Config issues summary, and the API's refusals in Settings (secrets, API keys, defaults), shown under their form without an announcement. Catalog model-form and toggle refusals are announced with an alert, as are the classifier form's field checks (beside each field) and refusals (#43).
+-- **Where.** The schema-driven forms (below), `JsonSchemaForm` (New run and the waiting-for-input form), the node dialog's id and label and its Connect form, the loop panel, Loops create and import, Settings (model form and Enabled switch, the classifier form and its switches, defaults, secrets, API keys), and the API key panel. `JsonSchemaForm` marks the properties in the JSON Schema's `required` list and uses the same controls, with one difference: it starts empty and sends only what it shows, so a boolean is never a switch (always on or off) but **Yes** / **No** segments, after **Not set** unless required (a required one starts with neither chosen). An enum of two to four members is a segmented control (a required one starts with nothing chosen), and a longer one a select ("(choose)" when required, **Not set** otherwise); an enum's empty string reads `""`, apart from **Not set**. A default shows as a placeholder while the field is absent (strings, numbers) or as help ("Default: true"). Its ids are generated per field, so a property may have any name. Each problem shows beside its property under the property's title ("Approval is required", "Reason must NOT have fewer than 3 characters", "Labels: invalid JSON (…)", "Count: enter a number"), located through `validateJson`'s `issues` in `domain` (path segments, a missing property at itself); editing a field clears its problems. It sends what was entered (#235): a property nobody touched is absent; edited text is sent as typed, and cleared text as `""` (its placeholder then reads `""`), for the schema to accept or refuse; an edited number or JSON field must hold a number or JSON, so a blank one, or a number the browser holds as incomplete (`-`, `1e`), is a problem beside it, never left out. An edited optional text, number or JSON field shows **Omit** (named "Omit" and the field's title) at the end of its label's line, before any language tag. It puts the field back to absent and moves focus to the field; for a number it first empties the input itself, so incomplete text the browser holds (`-`, `1e`, which reads as an empty value) goes with the field instead of staying on screen, invalid, while the request leaves the field out. The label line of every optional field holds Omit's place while there is none (a hidden stand-in drawn as Omit), so Omit appearing moves neither the label, the tag nor the field. With a fine pointer Omit is a ghost button drawn 20 px high, which fits the label's line and its 6 px gap. With a coarse pointer it is a 44 by 44 px outline button with no larger invisible target: the label line is 44 px high, with the label at its foot and 12 px between the label and Omit; Omit ends 12 px above its field (the label's gap there) and starts at least 16 px below the field before, so a touch on either field stays with that field. Edge touch checks in `e2e/form-controls.spec.ts` measure Omit on New run and Wait, tap a grid over the top of the field and the bottom of the one before (none may omit), and tap inside the button (each omits). A further Edge check types `-` into an optional number on New run and Wait with real key presses, and shows that Omit (by keyboard and by click) leaves `validity.badInput` false with focus on the field, the neighbouring text, a valid `0` and a required number's own refusal unchanged, and the request without the field. Required properties have no Omit, and choices go back with **Not set**. The JSON editor keeps no input, edited blank text (refused), and `null`, `""`, `0` and `false` apart, and offers Omit only when its schema accepts no input (checked as `null`). New run sends no `input` for no input; the wait input endpoint takes an `input`, so no input is sent as `null`.
++- **Errors.** Where a field shows its own error, the message sits under it, describes the control (`aria-describedby`, after any help), sets `aria-invalid`, and is announced (`role="alert"`; a JSON parse error, which changes as you type, is a polite live region instead). That covers every field of the schema-driven forms, including record values (which react-hook-form does not track: their messages come from SchemaForm's check of the whole value, by exact path) and collections (the group's error describes the fieldset, which takes no `aria-invalid`); each `JsonSchemaForm` property and its raw JSON editor; the node dialog's id (its own check) and label (the loop's validation), the loop panel's name (the contract's check, or the API's name refusal, described without a second announcement), Loops create (the API's refusal; a name refusal adds its suggestion, see "Loop names"), the import picker (the refusal describes it and marks it invalid until the next file), and the secret name rule (it turns into an alert while the name breaks it). Not linked to a field: a nested object's own error (shown in its fieldset, announced), `JsonSchemaForm` problems with the value as a whole (a summary under the form, announced), the schema-driven forms' Config issues summary, and the API's refusals in Settings (secrets, API keys, defaults), shown under their form without an announcement. Catalog model-form and toggle refusals are announced with an alert, as are the classifier form's field checks (beside each field) and refusals (#43).
++- **Where.** The schema-driven forms (below), `JsonSchemaForm` (New run and the waiting-for-input form), the node dialog's id and label, the loop panel, Loops create and import, Settings (model form and Enabled switch, the classifier form and its switches, defaults, secrets, API keys), and the API key panel. `JsonSchemaForm` marks the properties in the JSON Schema's `required` list and uses the same controls, with one difference: it starts empty and sends only what it shows, so a boolean is never a switch (always on or off) but **Yes** / **No** segments, after **Not set** unless required (a required one starts with neither chosen). An enum of two to four members is a segmented control (a required one starts with nothing chosen), and a longer one a select ("(choose)" when required, **Not set** otherwise); an enum's empty string reads `""`, apart from **Not set**. A default shows as a placeholder while the field is absent (strings, numbers) or as help ("Default: true"). Its ids are generated per field, so a property may have any name. Each problem shows beside its property under the property's title ("Approval is required", "Reason must NOT have fewer than 3 characters", "Labels: invalid JSON (…)", "Count: enter a number"), located through `validateJson`'s `issues` in `domain` (path segments, a missing property at itself); editing a field clears its problems. It sends what was entered (#235): a property nobody touched is absent; edited text is sent as typed, and cleared text as `""` (its placeholder then reads `""`), for the schema to accept or refuse; an edited number or JSON field must hold a number or JSON, so a blank one, or a number the browser holds as incomplete (`-`, `1e`), is a problem beside it, never left out. An edited optional text, number or JSON field shows **Omit** (named "Omit" and the field's title) at the end of its label's line, before any language tag. It puts the field back to absent and moves focus to the field; for a number it first empties the input itself, so incomplete text the browser holds (`-`, `1e`, which reads as an empty value) goes with the field instead of staying on screen, invalid, while the request leaves the field out. The label line of every optional field holds Omit's place while there is none (a hidden stand-in drawn as Omit), so Omit appearing moves neither the label, the tag nor the field. With a fine pointer Omit is a ghost button drawn 20 px high, which fits the label's line and its 6 px gap. With a coarse pointer it is a 44 by 44 px outline button with no larger invisible target: the label line is 44 px high, with the label at its foot and 12 px between the label and Omit; Omit ends 12 px above its field (the label's gap there) and starts at least 16 px below the field before, so a touch on either field stays with that field. Edge touch checks in `e2e/form-controls.spec.ts` measure Omit on New run and Wait, tap a grid over the top of the field and the bottom of the one before (none may omit), and tap inside the button (each omits). A further Edge check types `-` into an optional number on New run and Wait with real key presses, and shows that Omit (by keyboard and by click) leaves `validity.badInput` false with focus on the field, the neighbouring text, a valid `0` and a required number's own refusal unchanged, and the request without the field. Required properties have no Omit, and choices go back with **Not set**. The JSON editor keeps no input, edited blank text (refused), and `null`, `""`, `0` and `false` apart, and offers Omit only when its schema accepts no input (checked as `null`). New run sends no `input` for no input; the wait input endpoint takes an `input`, so no input is sent as `null`.
+ - **Contrast.** The controls use token pairs already in the contrast table (field and track edges, the selected segment, the switch thumb on and off, the checkbox tick, the focus ring on every surface); #8 added the error text and marker, and the invalid edge, on the sunken surface (the model form).
+ 
+ ### Component structure
+@@ -467,21 +479,21 @@ Every screen works from 360 px to wide desktop without sideways page scrolling o
+ 
+ - **Breakpoints.** Tailwind's defaults, and only these: `sm` 640 px, `md` 768 px, `lg` 1024 px, `xl` 1280 px, written as `max-sm:` and friends for "below". What changes where:
+ 
+-  | Below          | What changes                                                                                                                                                                                                                                                               |
+-  | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+-  | 640 px (`sm`)  | The header's links fold into **Menu**; forms become one column (`FieldRow`); stacked table labels sit above their full-width values; page padding and the page title shrink (tokens); the run's patch diff stacks before over after; the node dialog's Connect form stacks |
+-  | 768 px (`md`)  | Settings tables (model catalog, classifier models) stack their rows; the node dialog becomes a bottom sheet; the editor's expanded palette floats over the canvas                                                                                                          |
+-  | 1024 px (`lg`) | Loops, Runs, and Events stack their rows; the editor's loop settings float over the canvas; the run inspector puts the thread under the timeline; the classifier table folds Provider and Capabilities into the Model cell; the palette starts collapsed                   |
+-  | 1280 px (`xl`) | The loop settings panel starts collapsed                                                                                                                                                                                                                                   |
++  | Below          | What changes                                                                                                                                                                                                                                             |
++  | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
++  | 640 px (`sm`)  | The header's links fold into **Menu**; forms become one column (`FieldRow`); stacked table labels sit above their full-width values; page padding and the page title shrink (tokens); the run's patch diff stacks before over after                      |
++  | 768 px (`md`)  | Settings tables (model catalog, classifier models) stack their rows; the node dialog becomes a bottom sheet; the editor's expanded palette floats over the canvas                                                                                        |
++  | 1024 px (`lg`) | Loops, Runs, and Events stack their rows; the editor's loop settings float over the canvas; the run inspector puts the thread under the timeline; the classifier table folds Provider and Capabilities into the Model cell; the palette starts collapsed |
++  | 1280 px (`xl`) | The loop settings panel starts collapsed                                                                                                                                                                                                                 |
+ 
+ - **Page.** `Page` is the content column (page padding from `--space-page`, 1240 px wide at most, `wide` for the run inspector); `PageHeader` wraps its actions under the title when they do not fit.
+ - **Tables** (`components/ui/table.tsx`, `styles/layout.css`). `Table stack="md"` or `stack="lg"` turns each row into a block below that breakpoint: each cell shows its column's label beside the value; below 640 px, the label sits above the full-width value. The label is given as `Td label` and drawn as decoration (CSS `content` with empty alternative text), while the header row stays in the document, visually hidden, so assistive technology keeps the table and its headers. A cell without a label (the row's name, its actions) takes the whole line, long words break instead of widening the page, and on a coarse pointer each line is 44 px tall, so links in neighbouring lines never overlap. Loops, Runs, and Events stack below `lg`, the model catalog and classifier models below `md`. A flush `Card`'s body still scrolls sideways when a table is wider than it (a 120-character name, say), with a shadow on each edge that has more (`scroll-shadow-x`). On Loops the update time sits under the loop's name rather than in a column of its own, so the name keeps its room at 1024 px.
+-- **Forms** (`FieldRow`, or `FIELD_ROW` on a form of its own, in `components/ui/field.tsx`). Fields side by side that wrap; below 640 px one column, every field and note the full width whatever width it asked for, a button at its own width at the start of its line. Used by the Runs filters, Loops create, the model form, Defaults, Secrets, API keys, the API key panel, and the node dialog's Connect form; the schema-driven config fields are one column already.
++- **Forms** (`FieldRow`, or `FIELD_ROW` on a form of its own, in `components/ui/field.tsx`). Fields side by side that wrap; below 640 px one column, every field and note the full width whatever width it asked for, a button at its own width at the start of its line. Used by the Runs filters, Loops create, the model form, Defaults, Secrets, API keys, and the API key panel; the schema-driven config fields are one column already.
+ - **Header navigation** (`MainNav`). Below 640 px the links fold into a **Menu** button (`aria-expanded`, `aria-controls`) that opens a full-width panel of 48 px rows; choosing a link or Escape closes it, Escape returning focus to Menu.
+ - **Split panes** (`SidePanel`'s `overlayBelow`). Below its breakpoint an expanded panel floats over the content (absolute, full height, an overlay shadow, at least a rail's width of the content left beside it) instead of taking its own column: the editor's loop settings below `lg` and its palette below `md`, so the canvas keeps its width and no panel pushes the page sideways. Collapsed, both stay rails. The editor's toolbar wraps its actions (Undo, Redo, Open in Runs, the validation indicator, Publish) onto further lines rather than cutting them off, and the editor fills the dynamic viewport height (`100dvh`), at least 320 px.
+-- **Touch.** Where the primary pointer is coarse (`pointer-coarse:`, `@media (pointer: coarse)`), controls are at least 44 px: buttons (`sm`, `md`, and icon sizes), inputs and selects, segment labels (at least 44 px wide and tall, including short Yes/No choices), disclosure toggles (including the inspector's Full thread JSON and Node progress, through the shared `Disclosure`), checkbox rows (`CHECKBOX_LABEL`, at least 44 px wide and tall), the Menu button, Open in Runs, the validation indicator and its rows, issue rows, timeline rows, palette buttons, the canvas's zoom controls, and the Omit of an edited New run or Wait input (drawn 44 by 44 px in a place its label line holds; see Form controls, "Where"). Controls that keep a small look take the touch with an invisible 44 px box around them (`touch-target`): the switch, the issue badge, and links in tables. Canvas ports counter-scale only their absolutely positioned `::after` hit box through `--gg-canvas-zoom`, clamped to the canvas's 0.1 to 2 range; a 1/32 CSS px allowance covers rounding. On coarse pointers output rows are always **44 CSS px**, with a **2 px gap (46 px pitch)**. Card dimensions, measured handles and the routing cache key never change with viewport zoom. Hit-box height is capped at the row pitch, and width at **half the gap to the next card** within the port's vertical strip, using geometry-only limits and a spatial index. With room horizontally, the on-screen target is about **44 by 44 px at zoom 1 and above**. Below about **0.96 zoom**, height is **46 times zoom**: **36.06 px at 0.784**, **23 px at 0.5** and **4.6 px at the 0.1 floor**, where the Connect form is the practical way to connect. Neighbouring cards can cap width below 44 px as well: at 260 px spacing (76 px card gap), the 38 CSS px cap gives **29.79 px at 0.784** and **19 px at 0.5**. These caps prevent neighbouring targets from overlapping without changing layout or rerouting edges on zoom. Fine-pointer rows remain 18 px with a 2 px gap. The node dialog's **Connect form** is the full-size way to connect on a zoomed-out touch canvas. Nothing needs hover: the issue popovers open on tap, the collapsed palette's tooltips repeat what the expanded palette shows, and the remaining tooltips (a truncated name, Publish's blocking count, Validation unavailable, the disabled Open in Runs link's reason) repeat what the accessible name or description already carries; on touch those few explanations are not shown on screen. Keyboard order and accessible names are unchanged.
++- **Touch.** Where the primary pointer is coarse (`pointer-coarse:`, `@media (pointer: coarse)`), controls are at least 44 px: buttons (`sm`, `md`, and icon sizes), inputs and selects, segment labels (at least 44 px wide and tall, including short Yes/No choices), disclosure toggles (including the inspector's Full thread JSON and Node progress, through the shared `Disclosure`), checkbox rows (`CHECKBOX_LABEL`, at least 44 px wide and tall), the Menu button, Open in Runs, the validation indicator and its rows, issue rows, timeline rows, palette buttons, the canvas's zoom controls, and the Omit of an edited New run or Wait input (drawn 44 by 44 px in a place its label line holds; see Form controls, "Where"). Controls that keep a small look take the touch with an invisible 44 px box around them (`touch-target`): the switch, the issue badge, and links in tables. Canvas ports counter-scale only their absolutely positioned `::after` hit box through `--gg-canvas-zoom`, clamped to the canvas's 0.1 to 2 range; a 1/32 CSS px allowance covers rounding. On coarse pointers output rows are always **44 CSS px**, with a **2 px gap (46 px pitch)**. Card dimensions, measured handles and the routing cache key never change with viewport zoom. Hit-box height is capped at the row pitch, and width at **half the gap to the next card** within the port's vertical strip, using geometry-only limits and a spatial index. With room horizontally, the on-screen target is about **44 by 44 px at zoom 1 and above**. Below about **0.96 zoom**, height is **46 times zoom**: **36.06 px at 0.784**, **23 px at 0.5** and **4.6 px at the 0.1 floor**, where zooming in is the way to connect, because the node dialog has no connection form (ADR-0076). Neighbouring cards can cap width below 44 px as well: at 260 px spacing (76 px card gap), the 38 CSS px cap gives **29.79 px at 0.784** and **19 px at 0.5**. These caps prevent neighbouring targets from overlapping without changing layout or rerouting edges on zoom. Fine-pointer rows remain 18 px with a 2 px gap. A selected connection's **Remove connection** button is 44 px on a coarse pointer. Nothing needs hover: the issue popovers open on tap, the collapsed palette's tooltips repeat what the expanded palette shows, and the remaining tooltips (a truncated name, Publish's blocking count, Validation unavailable, the disabled Open in Runs link's reason) repeat what the accessible name or description already carries; on touch those few explanations are not shown on screen. Keyboard order and accessible names are unchanged.
+ - **Zoom.** At 200% (a 1024 by 768 window lays out in 512 by 384 CSS pixels) Loops, the editor, the run inspector, and Settings reflow without sideways scrolling (WCAG 1.4.10); the editor keeps a usable canvas under its wrapped toolbar.
+-- **Regression.** `components/ui/ui.test.tsx` (stacking, `FieldRow`), `components/ui/side-panel.test.tsx` (overlay), `forms/cron/*.test.ts*`, and Edge `e2e/responsive.spec.ts`: both stored themes before load; no sideways page scroll or control clipped by its container on every screen and Settings section at the four widths, including the required API key panel, a forced API/healthz outage, the update toast, and the Events error-boundary test route; all nine node dialogs and their Advanced options at 360 and 768; the header Menu at 360 and the links at 768, the Runs table stacked at 360 and 768 with its headers kept, the secret form in one column at 360, the editor at 768 (pointer selection/edit/drag connection and keyboard rail addition/edit/Connect form, validation, publish, the floating loop panel), 44 px controls including native summaries, code editors, checkbox/radio labels, short choices, and the Omit of an edited New run and Wait input on a touch screen, on-screen port hit boxes capped by fixed row pitch and neighbouring-card gaps at fitted zoom at 768 and 360 px, identical three-route card heights at zoom 1, 0.784 and 0.5, and zero routing measurements across eight coarse-pointer zoom changes on 300 nodes, and 200% zoom. The grouped geometry tests attach `scroll-widths.json` with `document.scrollingElement.scrollWidth` and `innerWidth` for the QA evidence table.
++- **Regression.** `components/ui/ui.test.tsx` (stacking, `FieldRow`), `components/ui/side-panel.test.tsx` (overlay), `forms/cron/*.test.ts*`, and Edge `e2e/responsive.spec.ts`: both stored themes before load; no sideways page scroll or control clipped by its container on every screen and Settings section at the four widths, including the required API key panel, a forced API/healthz outage, the update toast, and the Events error-boundary test route; all nine node dialogs and their Advanced options at 360 and 768; the header Menu at 360 and the links at 768, the Runs table stacked at 360 and 768 with its headers kept, the secret form in one column at 360, the editor at 768 (pointer selection/edit/drag connection and keyboard rail addition/edit/open, with the pointer drawing its connections because the keyboard cannot since #207, validation, publish, the floating loop panel), 44 px controls including native summaries, code editors, checkbox/radio labels, short choices, and the Omit of an edited New run and Wait input on a touch screen, on-screen port hit boxes capped by fixed row pitch and neighbouring-card gaps at fitted zoom at 768 and 360 px, identical three-route card heights at zoom 1, 0.784 and 0.5, and zero routing measurements across eight coarse-pointer zoom changes on 300 nodes, and 200% zoom. The grouped geometry tests attach `scroll-widths.json` with `document.scrollingElement.scrollWidth` and `innerWidth` for the QA evidence table.
+ 
+ ### List actions and destructive confirmations (#6, #12)
+ 
+@@ -552,7 +564,7 @@ While a selection's thread is read, the thread on screen just before it stays wi
+ - **Settings.** The model catalog enables/disables every entry through PATCH using #8's Switch, named "Enable <display name>". The reusable Settings EnableSwitch marks its switch aria-disabled and aria-busy, ignores activation, and shows an hourglass with Enabling/Disabling while saving; a polite status announces Enabled/Disabled. Keyboard focus stays on the pending switch, including concurrent requests on different rows; a deliberate move to another control is preserved. A refusal restores the previous state and announces a plain sentence through MutationError with section-specific messages for MODEL_MANAGED_BY_HARNESS, LITELLM_NOT_CONFIGURED, or MODEL_NOT_FOUND. A 404 refreshes the catalog, preserves its reason in a section-level live region until the next toggle clears it, and focuses the heading when the switch had focus as it was activated and its row has since disappeared. The switch is recorded at activation (`ToggleFailure.opener`), so this also holds when another refresh removed the row while the PATCH was pending and focus had already fallen to the page body (`restoreVanishedToggleFocus` in `settings/shared.tsx`). Successful updates refresh the catalog so the Default model select removes disabled entries from new choices and restores enabled ones. A saved default remains selected as "<name> (disabled)" or "<id> (not in catalog)", with a diagnostic that the invalid or unavailable selection must be corrected before publication or execution. Harness rows have no Edit/Delete actions in the DOM. Add is hidden until a LiteLLM row exists. Row presence is a temporary proxy until #25 supplies a provider-configured signal. When Add is hidden, a short note explains that local models will appear once the LiteLLM adapter is configured and names the Settings guide section Choose a model and effort without a network link. The note waits until the catalog loads. With local entries, only LiteLLM rows offer Edit/Delete; editing metadata omits enabled so it cannot revert a concurrent toggle. Regression coverage is in SettingsPage.test.tsx, settings/shared.test.tsx, and Edge e2e/actions.spec.ts; both-theme screenshots are in docs/qa/2026-10-04-issue-24-catalog/. Settings also manages default model and effort (stored under owner `defaults.byHarness`, which the engine reads at run start ahead of the harness-keyed process `GG_DEFAULTS`), write-only secrets, API keys (the token is shown once), harness preflight, and an install hint.
+ - **PWA.** `vite-plugin-pwa` generates the worker (`registerType: 'prompt'`, `injectRegister: false`, scope `/app/`); the app registers it with `workbox-window` and checks for updates as described under "PWA behaviour". A waiting worker raises the "A new version is available" toast. Update requests the guarded `APPLY` protocol; generic `SKIP_WAITING` messages cannot bypass the shared/exclusive lock barrier. Each locally safe prepared page reloads once its actual controller becomes the committed worker. A legacy active worker requires closing all app windows before native activation. Only the app shell is precached, there is no runtime caching, and navigation fallback is limited to `/app/`. Browser update tests publish byte-different real workers and verify guarded activation, cross-tab draft vetoes and the legacy close-all path. The manifest has 192 and 512 px icons (generated by `scripts/generate-icons.mjs`). Screens that need the API show an explicit offline notice, and the banner distinguishes browser connectivity from API unreachability. Regression tests include `src/lib/reachability.test.ts`, `src/api/queries.reconnect.test.tsx`, `src/pwa/register.test.ts`, and Edge `e2e/pwa.spec.ts` (same-port listener restart and a byte-different worker).
+ 
+-Deviations: the canvas has no custom keyboard shortcuts beyond Delete or Backspace (which remove the selected edge or node only while focus is on the canvas) and xyflow's controls for fit-to-view; palette buttons add nodes from the keyboard and the node editor's Connect form draws edges. The editor's undo and redo shortcuts came later (see "Undo and redo" below). Templates use CodeMirror's Jinja2 stream mode for Liquid and its JavaScript mode for JSONata (stand-ins: no Liquid- or JSONata-aware highlighting or completion).
++Deviations: the canvas has no custom keyboard shortcuts beyond Delete or Backspace (which remove the selected edge or node only while focus is on the canvas) and xyflow's controls for fit-to-view; palette buttons add nodes from the keyboard. (The node editor's Connect form drew edges from the keyboard at the time of this pass; #207 removed it, ADR-0076.) The editor's undo and redo shortcuts came later (see "Undo and redo" below). Templates use CodeMirror's Jinja2 stream mode for Liquid and its JavaScript mode for JSONata (stand-ins: no Liquid- or JSONata-aware highlighting or completion).
+ 
+ ## After the WP-D2 QA pass (Draft, 2026-10-03)
+ 
+@@ -716,10 +728,10 @@ UI file import delegates to the API and requires the current definition shape. A
+ The owner's decisions of 2026-10-04: a node is edited in a modal dialog, the right panel keeps only the loop's own configuration and collapses, and runs start only from the Runs page. Screenshots: `docs/qa/2026-10-04-editor-modal-and-runs/`.
+ 
+ - **Opening a node.** A click on a node without a drag, or Enter on a focused node, opens its editor in a modal dialog named "Edit <kind> <id>" (`editor/NodeEditorDialog.tsx` on the `Dialog` primitive: the native `<dialog>` opened with `showModal()`). A press that moves more than 3 px is a drag (xyflow's `nodeClickDistance` and `nodeDragThreshold`): the node moves and nothing opens. A click on a port handle starts or ends a connection instead, and Space still only selects. Adding a node from the palette selects it without opening it. Choosing an issue in a node's badge opens its node at the issue's field (#15); a click on the badge itself opens only the badge's popover.
+-- **Content.** Everything the Node tab held: id rename with validation, label, the subloop picker, the config `SchemaForm`, the node's issues (since #15 as the issue badge beside the title), Connections with Remove, the Connect form (the keyboard path for edges, which now says why it refused a connection), and Delete node, which closes the dialog. Gate settings and output connections share the undo history.
++- **Content.** Everything the Node tab held: id rename with validation, label, the subloop picker, the config `SchemaForm`, the node's issues (since #15 as the issue badge beside the title), and Delete node, which closes the dialog. It lists no connections and offers no way to add or remove one: those are drawn, selected and removed on the canvas (#207, "Connections are drawn on the canvas"). Gate settings and connections share the undo history.
+ - **Selection.** `selectedNodeId` still selects (the magenta ring); `openNode` and `closeNodeDialog` in `editor/store.ts` open and close the editor. Closing keeps the selection; deleting the node or a load (reload, restore) closes it. Opening it on another node starts it afresh (`nodeDialogSession`), while a rename keeps it, with focus where it was.
+ - **Closing.** Done, the close button, Esc, and a click on the backdrop close it. Structured edits already went to the store; unfinished JSON stays held in the editing session, so closing discards nothing, with one exception handled in the dialog: an id still being typed applies on close, and an id that cannot apply stops the first close with the reason (a second close keeps the old id). When the browser itself closes the dialog (a repeated Esc), it closes. Focus returns to the node, or to the canvas when the node was deleted.
+-- **Focus and keys.** Focus lands on the dialog's heading when it opens, so the Enter that opened it presses nothing inside; Tab and Shift+Tab wrap inside it in visual order; the page behind is inert. The dialog renders outside the canvas, so Delete and Backspace in it never reach the canvas handlers (WP-D2 D19), which also ignore keys from any dialog. The keyboard-only build (WP-D2 D18) is Tab to a node, Enter, the Connect form, Esc.
++- **Focus and keys.** Focus lands on the dialog's heading when it opens, so the Enter that opened it presses nothing inside; Tab and Shift+Tab wrap inside it in visual order; the page behind is inert. The dialog renders outside the canvas, so Delete and Backspace in it never reach the canvas handlers (WP-D2 D19), which also ignore keys from any dialog. The keyboard-only build of WP-D2 D18 (Tab to a node, Enter, the Connect form, Esc) no longer exists: the Connect form was removed in #207 ([ADR-0076](decisions/ADR-0076-canvas-only-connection-authoring.md)). Tab to a node, Enter and Esc still open and close the dialog; a connection cannot be created from the keyboard.
+ - **Drafts.** Autosave (600 ms), the IndexedDB mirror, flush on leaving, and Publish's refusal of unparsed text work as before; Publish and the palette are reached by closing the dialog. The draft conflict notice also shows inside the dialog, so Reload and Overwrite stay reachable while the page is inert; Reload loads the server draft and closes the dialog.
+ - **Node dialog widths (#170).** Below 768 px the full-width bottom sheet remains, with a 92dvh maximum height. At 768?1023 px the node dialog is `min(40rem, 100vw - 2rem)`; at 1024?1279 px it is `min(78rem, 100vw - 2rem)`; at 1280 px and above it is `min(96rem, 100vw - 2rem)`. With a 16 px root font this gives 360, 640, 992, 1248, 1408 and 1536 px at viewports 360, 768, 1024, 1280, 1440 and 1920 px. Only `NodeEditorDialog` applies the width override; the shared primitive retains its 40rem maximum, and other dialogs keep their existing widths. The existing floating palette/loop-panel and toolbar breakpoints remain.
+ - **Loop settings panel.** `editor/LoopPanel.tsx` on the `SidePanel` primitive: the loop's name, description, settings, and variables. It has no node editing, no run launcher, and (since #15) no validation list: issues show on the nodes' badges and beside Publish, which stay in sight whatever the panel's state. It collapses to a 44 px rail with its Show button (the primitive's `rail` slot stays available for a summary). Its own Show and Hide buttons are named "Show loop settings" and "Hide loop settings", carry `aria-expanded` and `aria-controls="loop-panel"`, and open with the sliders glyph; opening moves focus to the heading and hiding moves focus to Show. The state is remembered per browser in `localStorage` under `graphgoblin-loop-panel` (`expanded` or `collapsed`; every access is guarded and falls back to the default); with nothing stored the panel starts expanded at 1280 px and wider and collapsed below. A load remounts the settings forms.
+@@ -984,7 +996,7 @@ The inspector reads `observation`: route observations show the declared route ID
+ 
+ ## Gate and terminal exit authoring (#164 E1)
+ 
+-Every route, Choice option, Noul side and Score band has a **Repeat route** switch. Selecting it clears the other marker in one undoable edit. **Maximum passes** is required; **Maximum run time (seconds)** is optional. The editor explains evaluation-first ordering and shows Limit reached in Connections and on the canvas even while the pass limit is incomplete. Missing limits and an unconnected Limit reached focus Maximum passes.
++Every route, Choice option, Noul side and Score band has a **Repeat route** switch. Selecting it clears the other marker in one undoable edit. **Maximum passes** is required; **Maximum run time (seconds)** is optional. The editor explains evaluation-first ordering and shows Limit reached on the canvas even while the pass limit is incomplete. Missing limits and an unconnected Limit reached focus Maximum passes.
+ 
+ Unmarking opens D2's loss preview before writing: it lists the configured limits and the Limit reached connection. Cancel changes nothing; Confirm removes marker, limits, held limit input and Limit reached edge in one undo step. Removing a repeat row or replacing its section JSON also reviews lost connections and removes obsolete limits. Kind/primitive conversions retain representable markers and limits along with stable IDs.
+ 
+diff --git a/docs/12-implementation-plan.md b/docs/12-implementation-plan.md
+index 172ad90b..cb847a42 100644
+--- a/docs/12-implementation-plan.md
++++ b/docs/12-implementation-plan.md
+@@ -233,7 +233,7 @@ Product gaps known at 1.0 (each marked "After 1.0" in the guide or recorded in a
+ - Secrets: no OS-keyring master-key source and no per-secret envelope keys.
+ - Settings has no scheduler status card, and the API no scheduler status endpoint (WP-D2 gap).
+ - The Events screen does not list webhook endpoints; they are on `GET /loops/{id}/triggers` (WP-D2 gap).
+-- Editor: CodeMirror modes for Liquid and JSONata are stand-ins with no completion against a sample thread; no keyboard shortcuts for add, connect, or fit beyond the palette buttons and the Connect form; variables are edited in the Loop tab, not a side sheet (WP-D2 gaps).
++- Editor: CodeMirror modes for Liquid and JSONata are stand-ins with no completion against a sample thread; no keyboard shortcuts for add, connect, or fit beyond the palette buttons, and since #207 (ADR-0076) a connection cannot be created from the keyboard at all, because the Connect form is gone; variables are edited in the Loop tab, not a side sheet (WP-D2 gaps).
+ - `run.queued.initialThread` has no size cap; offloading large seeds to the artifact store is the follow-up (05).
+ 
+ Open defects (WP-D2 report; D26 to D28 are fixed in WP-F2):
+diff --git a/docs/decisions/ADR-0031-mounted-context-tabs.md b/docs/decisions/ADR-0031-mounted-context-tabs.md
+index 82e3763d..fc2a4887 100644
+--- a/docs/decisions/ADR-0031-mounted-context-tabs.md
++++ b/docs/decisions/ADR-0031-mounted-context-tabs.md
+@@ -1,6 +1,6 @@
+ # ADR-0031: Mounted Context tabs in node forms
+ 
+-Status: Accepted for the #170 part-A implementation (2026-10-10); running-product review remains the issue's human gate.
++Status: Accepted for the #170 part-A implementation (2026-10-10); running-product review remains the issue's human gate. Amended by [ADR-0076](ADR-0076-canvas-only-connection-authoring.md): the node dialog no longer has a Connections section.
+ 
+ ## Context
+ 
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index 8502db2b..a505674b 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -87,3 +87,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
+ [ADR-0073: Transactional loop-name uniqueness](ADR-0073-transactional-loop-names.md) records owner-scoped comparison, copy suggestions, write serialization and explicit repair for existing duplicates (#209).
+ 
+ [ADR-0075 — Repair references in the current loop's node state](ADR-0075-node-id-reference-repair.md) records the repair and publication boundaries for node-ID changes (#273).
++
++[ADR-0076 — Canvas-only connection authoring](ADR-0076-canvas-only-connection-authoring.md) records the owner decision that connections are authored only on the canvas, that changing one means removing it and drawing it again, and the keyboard connection-creation path it removes (#207).
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index 8a2d1a68..c609e304 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -5,8 +5,8 @@
+ 1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on the starter graph. Click **Edit** to open an existing loop. Each of your loops needs its own name, and names that differ only in letter case or spacing count as the same (see [Loop names](#loop-names)).
+ 2. Drag a node from the left palette onto the canvas, or click its palette button to add it below the lowest card's bottom with clearance for all its output ports. The canvas pans to the selected new node; existing nodes keep their positions. Hide collapses the palette to a rail, and Show expands it; its icon buttons still add nodes by click or Enter and can be dragged.
+ 3. Click a node to edit it, or move to it with **Tab** and press **Enter**. Its editor opens in a dialog named **Edit _kind_ _id_**: set its ID, label, and config. IDs start with a letter and contain letters, digits, underscores, or hyphens; keep them unique. Dragging a node moves it without opening the dialog.
+-4. Remove the starter edge before inserting your own path. Use **Connections** in the node's dialog to remove an edge, or select the edge on the canvas and press **Delete** or **Backspace**.
+-5. Drag from a labelled output handle to the next node's input handle, or use the dialog's **Connect** form, which is the keyboard path: pick one of the node's free outputs and a target. **Delete node** in the dialog removes the node and its edges.
++4. Remove the starter edge before inserting your own path. Select the edge on the canvas (click it, or move to it with **Tab** and press **Enter**), then press **Delete** or **Backspace**, or click **Remove connection** in the toolbar that appears above it.
++5. Drag from a labelled output handle to the next node's input handle. Connections are drawn only on the canvas, with a pointer: the node's dialog does not list or create them, and the keyboard cannot create one. **Delete node** in the dialog removes the node and its edges.
+ 6. Use the **Loop settings** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables. Its Show and Hide buttons collapse or expand it.
+ 
+ Structured edits in the dialog save as you type; section JSON saves when applied, and unfinished text stays in this editing session when closing: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
+@@ -120,10 +120,16 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes
+ 
+ ## Connect and validate
+ 
+-Decision outputs connect by stable route **ID**, using the canvas handle or **Connections** in the dialog. Readable labels can be renamed and rows reordered without changing identity. Removing a connected route first lists its connections for confirmation, including when its ID is unfinished; confirmation removes the route and its owned connections in one undoable edit. **Undo** and **Redo** restore the route, unfinished input and connections together. Section JSON matches surviving IDs, so an ID replaced in JSON loses its connections after a separate removal review. Blank or duplicate IDs and labels block publication.
++Decision outputs connect by stable route **ID**, using the canvas handle. Readable labels can be renamed and rows reordered without changing identity. Removing a connected route first lists its connections for confirmation, including when its ID is unfinished; confirmation removes the route and its owned connections in one undoable edit. **Undo** and **Redo** restore the route, unfinished input and connections together. Section JSON matches surviving IDs, so an ID replaced in JSON loses its connections after a separate removal review. Blank or duplicate IDs and labels block publication.
+ 
+ Connect exactly one edge per output port. Multiple inputs may converge on a node, but each run follows one route at a time. Triggers have no input. Ordinary output ports are `out`, decision ports are route IDs, script ports include exit-code labels, and gates add `limit-reached` and exits have no outputs. Edge targets use `in`.
+ 
++To change where a connection goes, remove it and draw it again: select it and press **Delete** or **Backspace** (or click **Remove connection**), then drag from the same output, or from another one, to the new target. That is two steps in **Undo** and **Redo**, "remove edge …" and then "connect …". The new connection routes automatically; undoing both brings the old one back with the route you gave it. Moving or resetting a line's segments (below) is a separate edit that never changes where a connection starts or ends. When a drop lands on a port that cannot take the connection, the **Connection refused** notice says why (for example, that the output is already connected) and nothing is connected.
++
++Some stored connections cannot be drawn, so there is nothing on the canvas to select: one from a node or output that no longer exists, an imported or API-written one into a trigger, or one left behind when you rename or remove a Script's exit-code label. They appear among the loop's issues beside **Publish**: open the count, find the edge under **Loop and connections**, and click **Remove edge** _id_. That is one **Undo** step, and Undo brings the edge back. Nothing removes such an edge for you, and a renamed Script label keeps its old connection until you do.
++
++The keyboard can select, remove and reroute a connection but cannot create one: the node dialog's Connect form was removed so that connections have one place, the canvas. On a touch screen, zoom in until the handles are comfortably large; they shrink as the canvas zooms out.
++
+ Mark **Repeat route** on the decision route that leads back through work to the same gate. Set **Maximum passes** and optionally **Maximum run time (seconds)**; connect **Limit reached** to an Exhausted exit. A non-repeat choice on the last pass wins. Read `gates.<nodeId>.passes` in expressions. Unmarking previews removal of limits and the Limit reached edge, then applies them together with Undo support.
+ 
+ The canvas marks a connection as a loop-back, drawn brown with a moving dash, when it leads back to a card that every path from a trigger passes before reaching the connection's source. It does this by itself, from any kind of card, wherever the cards sit, and whether or not **Repeat route** is on; Repeat route and **Maximum passes** still decide how often a gate repeats. A connection that skips that card from another trigger, a branch joining another, and a connection drawn leftward that only moves forward through the loop are not loop-backs. Adding, deleting or rewiring connections, and Undo, update the marking straight away.
+diff --git a/packages/contracts/src/evaluation.ts b/packages/contracts/src/evaluation.ts
+index 29dead47..8b486ac6 100644
+--- a/packages/contracts/src/evaluation.ts
++++ b/packages/contracts/src/evaluation.ts
+@@ -245,7 +245,7 @@ export const RouteDeclarationSchema = z.strictObject({
+     .trim()
+     .min(1)
+     .max(120)
+-    .meta(field('Unique readable route label, shown on the canvas and in Connections.')),
++    .meta(field('Unique readable route label, shown on the canvas.')),
+   repeat: z.boolean().optional().meta(field('Mark the one route that repeats through this gate.')),
+ });
+ export type RouteDeclaration = z.infer<typeof RouteDeclarationSchema>;

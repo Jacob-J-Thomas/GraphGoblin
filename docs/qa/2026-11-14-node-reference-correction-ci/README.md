@@ -1,0 +1,21 @@
+# PR #474 correction CI
+
+This packet records the first green current CI and routing runs for PR #474 at head `164c01a2e3a52bf0ef69a409e1a428b45817b1b8`, tree `30af5edcf429af416a37833ea2bd21a17c752e66`, based on main `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`. CI's PR merge ref was `b4984f3667d18e856233eb97b232f2ec87258380`. The CI workflow [run 43632537429](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43632537429) and separate routing workflow [run 43632537340](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43632537340) completed successfully on their first attempt: four CI jobs plus the routing job, all green.
+
+The [log manifest](raw/metadata/log-manifest.json) marks the five decoded logs complete and binds all of them to head 164c. The log files are preserved byte-for-byte. Four are UTF-8 with LF endings (gates, browser, template, routing); Windows is UTF-8 with CRLF endings. No line-ending normalization was applied.
+
+| Log                                      |   Bytes | Result recorded in the log                                                                                                                                                                            |
+| ---------------------------------------- | ------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Gates](raw/logs/gates.log)              | 373,854 | CI gates passed. The configured dependency audit command is `pnpm audit --audit-level=high`; it reported 21 advisories (8 low, 13 moderate) and the gate passed.                                      |
+| [Browser](raw/logs/browser.log)          | 177,174 | 479 passed; one expected skip for `live.spec.ts`, the live Codex inference loop. The job states no other functional spec was skipped or gated on provider login/CLI. Browser tests used zero retries. |
+| [Windows launcher](raw/logs/windows.log) |  45,936 | 14 tests passed, zero skipped.                                                                                                                                                                        |
+| [Template image](raw/logs/template.log)  |  40,330 | Image job passed and loaded starter, implementation, review, and QA templates.                                                                                                                        |
+| [Routing](raw/logs/routing.log)          |  64,986 | Two performance tests passed: median routing p95 was 1.7 ms at 100 nodes and 3.1 ms at 300 nodes; the highest individual routing p95 was 3.4 ms.                                                      |
+
+The [workflow/job metadata](raw/metadata/workflows-complete.json) and [completed CI jobs](raw/metadata/jobs-complete.json) plus [routing job](raw/metadata/routing-jobs-complete.json) record all five successes. The Gates Turbo summary is 22/22 tasks; its coverage output includes 2,520 web tests across 203 files and 452 domain tests across 29 files. The [PR snapshot](raw/metadata/pr-snapshot.json) was fetched around 20:02Z, after the runs completed but before the PR body was updated green. Its `updated_at` field (19:32Z) is the last PR edit time, not the snapshot capture time. The preserved body still says the checks are running; use the completed run metadata and logs for final results.
+
+## Scope and limits
+
+This is CI evidence for the corrected PR head and its merge ref. It is not independent corrected-native QA, formal review, a physical-device run, or a strict manual interaction sweep. It does not establish owner acceptance or migration acceptance outside the automated CI steps. Independent corrected-native QA is tracked in separate evidence; it is not reproduced by this CI packet. Fresh Astra scan 3 remains a separate review gate. The PR snapshot records main at `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`; no later main merge or retarget is claimed here.
+
+See [manifest.json](manifest.json) for source-to-copy byte hashes, [link-checks.json](link-checks.json) for local and GitHub run links, and [SHA256SUMS.txt](SHA256SUMS.txt) for packet integrity. The transport JSON duplicates the decoded logs and is deliberately excluded.

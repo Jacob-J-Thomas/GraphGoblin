@@ -1,0 +1,122 @@
+# #207 final correction batch: worker handoff
+
+Implementing worker: model `claude-opus-5-5`, effort `xhigh`, as recorded by the runner in [launch.json](launch.json). This is source plus focused verification only. It is not a readiness claim. Native, CI, coverage, browser and review gates remain open.
+
+## Identity
+
+- Checkout `C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin`, branch `codex/gg-20261114-canvas-repair`.
+- HEAD `64a955887962f72287e532824be1b8cb32c5f055`, tree `a6691516210eb25887cb92abdcbd8c7abe1a4bb3`, unchanged. Edits are uncommitted working-tree changes. The index equals HEAD ([identity.txt](identity.txt)).
+- Node v22.23.4, pnpm 12.8.1.
+- [Changed files with sha256](changed-files.sha256) · [tracked patch](patches/tracked.patch) · [new-file patch](patches/new-files.patch) and [copies](patches/new-files/).
+
+## Cause 1: d3 `click.drag` cancels the first Remove after a pan
+
+This implements the root architecture (`ui-207-final-correction-architecture.md`). It replaces the plan's proposal to re-enable on `onMoveEnd` after a mouseup.
+
+- `apps/web/src/editor/viewport-gesture.ts` (new) holds one gate per canvas.
+  - States: `ready` → `panning` on `onMove` with a `mousemove` source event → `settling` on the next window mouse release → `ready` after a two-stage zero-delay task barrier.
+  - Only the second task enables, and only when no mouse move came since (generation check) and the canvas is still mounted (detach cancels the pending task and advances the generation).
+  - A later release restarts the barrier. Wheel, touch, null, dblclick and mousedown sources never change the gate.
+  - It does not prevent, stop or replay events, and it never force-enables.
+- `Canvas.tsx` creates the gate with `useState` and attaches it with `useLayoutEffect` at mount: one passive capture `mouseup` listener on `window`. `onMove` calls `gesture.move(event)` and then the existing `closeCanvasPopovers()`. The gate is exposed as `editing.viewport`.
+- `route-editing.ts` adds `viewport` as a required member, so missing wiring is a type error.
+- `OrthogonalEdge.tsx` (RouteHandles) reads the gate with `useSyncExternalStore`.
+  - While the gate is not ready, Reset route and Remove connection get `aria-disabled="true"` and `data-gesture="panning|settling"`. They keep their hit target, focus and `nopan`, and the existing `aria-disabled` styling dims them.
+  - Their handlers refuse on the same rendered value. Remove still stops propagation.
+  - On a protected Chat edge, Remove keeps its native `disabled` and `VOICE_STEP_MESSAGE` title and gets no gate attributes.
+  - Segment handles are unchanged.
+
+## Cause 2: a blank port has no direct recovery, and the migrated test asserted an edge that cannot render
+
+- `stranded-edges.ts`: `strandedEdgeRows(issues, definition)` is replaced by `strandedEdges(definition)`. It lists, in stored order, the edges whose id is unique and that `canvasDrawsEdge` rejects, independent of issue `edgeId` metadata. `removeStrandedEdge` is unchanged: exact-ends check, unique id, still undrawable, protected Chat refused.
+- `ValidationIndicator.tsx`: per-issue-row actions are removed. A new popover group, "Connections the canvas cannot draw", lists each edge once as `eN from <node> output <port> to <node>`, with exactly one **Remove edge eN** each.
+  - The list is computed only while the popover is open.
+  - Issue rows only inform. Counts and validation are unchanged.
+- `IssuePopover.tsx`: the `rowAction` prop is removed. #207 added it only for this, and the file is now byte-identical to stack base `35bb3fbd`.
+- No change to domain, schema, store, format or migration. A blank ID stays invalid and gets no handle.
+
+## Tests
+
+**`viewport-gesture.test.ts` (new, 6 tests)**
+- Only a mouse move arms the gate, with one notification per state change.
+- The gate's first task is queued before a d3-like cleanup. The stand-in records "d3 mouseup after 1 queued", the cleanup runs while the gate is `settling`, and only a later task makes it ready.
+- A newer move invalidates the pending barrier in either phase.
+- Repeated releases (buttons 0, 1, 2) leave one barrier, and wheel or null moves do not cancel it.
+- Detach removes the listener, which was added with `{capture: true, passive: true}`, and leaves no timers.
+- The barrier order is also checked on the real timer queue.
+
+**`viewport-gesture.contract.test.tsx` (new, 5 tests)**
+
+These run the real `Canvas` on the installed @xyflow/react 12.12.0, @xyflow/system 0.0.83, d3-zoom 3.0.0 and d3-drag 3.0.0 in jsdom, with real timers and no act environment. Nothing is mocked or patched. The fixture supplies only card and pane sizes and a ResizeObserver that reports them.
+
+Readings are passive: window capture and bubble listeners, target-arrival listeners, and d3-selection's own `__on` record on `jsdom.window`.
+
+1. **Left-button pan:**
+   - A capture listener added after mount sees the release with `mouseup.zoom` still registered and no `click.drag`. A listener added after the press never runs.
+   - The pan's own click is cancelled and never reaches its target.
+   - An immediate Remove click finds Remove showing `aria-disabled` with `settling` and `click.drag` present; the click is cancelled before reaching the button and `e1` stays.
+   - A task queued after the release sees `click.drag` gone and the gate still `settling`. A click then reaches the button and is refused, and `e1` stays.
+   - At the first moment Remove shows as available (MutationObserver), `click.drag` is absent. The click is delivered and removes `e1` exactly once, as one undo step; Undo restores the definition.
+2. **Middle-button pan:** the same settling.
+3. **Newer pan:** a second press and move before the first barrier keeps the gate `panning` after both of the first release's tasks. A click is refused, and the second release settles the gate.
+4. **Programmatic or wheel end:** a wheel alone never arms the gate. A `setViewport` right after the release replaces xyflow's pending end, so `onMoveEnd` reports `null` and never `mouseup`; the gate still settles and the first click acts.
+5. **Unmount mid-settle:** nothing is left behind, and a fresh canvas starts ready.
+
+**Changes to existing tests**
+- `OrthogonalEdge.test.tsx`: two new tests. One covers the rendered state, refusal and focus kept, the phase-1 refusal inside a task queued after the release, and ready after the barrier. The other covers protected Chat during a pan. The `editor()` helper now carries a real gate.
+- `Canvas.test.tsx` (mocked flow): one new test. It checks the gate wiring through `onMove` for wheel, touch, null and mousemove, refusal, release and settle, and listener removal on unmount; a mousemove also closes popovers.
+- `stranded-edges.test.ts`: the list comes from the definition (trigger target, missing node, two issues on one edge, duplicate id). In a parsing draft each listed edge has its own error. The blank Decision ID case covers schema-invalid issues with no `edgeId`, the edge still listed, exact removal, one undo restoring definition and `decisionRoutes`.
+- `ValidationIndicator.test.tsx`: the own-group action, informative-only issue rows, counts, and a blank-ID popover showing "1 error" plus the group, with Remove and Undo.
+
+**E2E (source only, not executed): `apps/web/e2e/decision-routes.spec.ts`**
+- Adds read-only helpers: an IndexedDB reader with a `readonly` transaction, a PUT recorder, and the server draft and token.
+- **Scenario 1** (the CI-failing test, corrected):
+  - While the ID is blank: "Saved on this device only", no `route-3` handle and no edge wrapper.
+  - The device copy has the saved topology and pick routes exactly, `baseToken` equal to the saved token, `synced: false`, and ownership rows `['yes','no','']` with only row 3 owning the edge.
+  - All of that is unchanged after a device reload, with zero PUTs and the server draft and token unchanged.
+  - Repairing to `route-4` gives the real handle and the same edge id, saved on `route-4`. Restoring `route-3` gives exactly the original saved topology. The existing save, reload, label and publish assertions are retained.
+- **Scenario 2** (new):
+  - While blank, the actual Loop issues group lists exactly one edge by its ends, with one Remove.
+  - Remove changes the device copy by exactly that edge, and the blank row then owns no edges.
+  - One Undo (the toolbar button named "Undo remove edge pick route-3 to branch") restores a device definition and `decisionRoutes` deep-equal to the blank state.
+  - Zero PUTs, and the server draft and token are unchanged.
+  - Repair redraws the same edge and saves the original topology.
+
+## Commands and results (logs in [logs/](logs/))
+
+| Step | Result |
+| --- | --- |
+| Baseline focused vitest on unmodified HEAD (5 files) | 82/82 passed ([00](logs/00-baseline-focused-vitest.log)) |
+| First focused run | 5 failed: unit-test design (vitest `advanceTimersToNextTimer` also flushes same-time timers; failed tests left listeners attached). Fixed in the test ([01](logs/01-first-focused-vitest.log)) |
+| Focused run after fix | 80/80 passed ([02](logs/02-focused-vitest-after-test-fix.log)) |
+| Contract attempt 1 | 5 failed: jsdom rejects the event `view`, and xyflow reads `contentRect`. Fixture correction 1 ([03](logs/03-contract-attempt-1.log)) |
+| Contract attempt 2 | 5 failed: in vitest's jsdom, `window` is `document.defaultView`, which is the test global; jsdom accepts only `jsdom.window` ([probe](logs/05-jsdom-view-probe.json)). Fixture correction 2 ([04](logs/04-contract-attempt-2.log)) |
+| Contract attempt 3 | 1 passed, 4 failed: my window-bubble reading was wrong, because Remove's own `stopPropagation` stops the bubble. Switched to target arrival ([06](logs/06-contract-attempt-3.log)) |
+| Contract attempt 4 | 5/5 passed ([07](logs/07-contract-attempt-4.log)); 5× sequential stability, all 5/5 ([10](logs/10-contract-stability-5x.log)) |
+| Contract against HEAD Canvas/OrthogonalEdge/route-editing (temporary restore, byte-identical restore verified) | 4 failed, 1 passed. Remove shows no `aria-disabled` during the pan and right after release while `click.drag` is registered; the click is cancelled, never reaches the button, and nothing is removed ([old-code-run/contract-on-old-code-2.log](old-code-run/contract-on-old-code-2.log), [-3](old-code-run/contract-on-old-code-3.log)) |
+| ValidationIndicator tests against HEAD recovery files | 2 failed: no recovery group in the blank state, and row-level actions ([old-code-run/recovery-indicator-on-old-code.log](old-code-run/recovery-indicator-on-old-code.log)) |
+| Final focused vitest (12 files, incl. EditorPage, NodeEditorDialog, store.decision-routes, model) | 203/203 passed. The only stderr is the "Received NaN" warning in two EditorPage tests, which is inherited: it reproduces on HEAD files ([21](logs/21-final-focused-vitest.log), [old-code-run/editorpage-nan-on-head.log](old-code-run/editorpage-nan-on-head.log)) |
+| `apps/web` `tsc -p tsconfig.json --noEmit` (includes e2e) | exit 0 ([22](logs/22-final-tsc.log)) |
+| ESLint on the 14 changed web files | exit 0 ([23](logs/23-final-eslint.log)) |
+| Prettier check on changed source and docs | clean ([24](logs/24-final-prettier.log)) |
+| `git diff --check`, plus `--no-index` for new files | clean, no CRLF ([26](logs/26-final-diff-check-noindex.log)) |
+
+## Process notes (exact)
+
+- **Index:** I briefly made the three new files intent-to-add (`git add -N`) for a diff check, which modified the index against the brief. I reverted it with `git reset -q -- <3 files>` and verified `git diff --cached --quiet` exits 0 and that the files are untracked. No commit, stash, push, GitHub, owner service or store access.
+- **Old-code runs:** HEAD production files were restored temporarily and backed up under `old-code-run/`. sha256 before and after match for every file.
+- **Scratch tests:** two scratch files (`src/zz-scratch-*.test.ts`) were created for the jsdom view and console probes, then deleted.
+
+## Remaining gates and boundaries
+
+- **Not executed:** browser e2e, native, build and coverage were not granted. The e2e corrections are reasoned from source and the retained CI trace. Its new assumptions need the first execution: ownership rows `['yes','no','']`, the counts-button name `^\d+ errors?`, the Undo name, and the device mirror timing (handled by `expect.poll`). Playwright treats `aria-disabled` as not enabled, so its clicks wait for the gate.
+- **jsdom contract boundary:** layout is a fixture. The dependency's listener order, timers and cancellation are real, but trusted-input timing (the +18 to +25 ms window) is not exercised. That needs native N1..N8.
+- **For native N1..N8:**
+  - Detect "first shown available" as the removal of `aria-disabled` on Remove, or read `data-gesture`.
+  - N2 should now record `aria-disabled="true"`, `data-gesture="settling"`, zero PUT and no notice. A click at +24 ms is a refusal while unavailable.
+  - N7 and N8 (touch, wheel, Controls fit) must never set `data-gesture`.
+  - N3 expects the selection kept.
+- **Supported semantics:** if a release never reaches the page, the toolbar stays unavailable until the next mouse release there, which also ends d3's gesture. This is not observed natively.
+- **Out of scope, unchanged:** clicks on xyflow Controls and after a node drag still meet d3's blocker. This is source-derived and documented in docs/09.
+- Docs updated: docs/09 (#207 Remove, recovery and regression lines), ADR-0076 (Remove and Recovery bullets), guide 02, and CHANGELOG #207 entry. No new dependency, schema, format or migration.
+- Pending for root: review against the known causes, freeze and transfer, exact-target CI and coverage, independent native verification, opposite-family review and the Astra gate. Not ready.

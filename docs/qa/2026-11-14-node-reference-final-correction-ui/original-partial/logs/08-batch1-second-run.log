@@ -1,0 +1,79 @@
+2026-11-14T21:35:15Z
+v22.23.4
+batch-1 corrected source, focused + unit tests
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web
+
+ ❯ src/editor/pointer-press.test.tsx (2 tests | 1 failed) 293ms
+   × tracks the primary press from the window, through every way a press ends 273ms
+ ❯ src/editor/EditorPage.rename.test.tsx (14 tests | 1 failed) 37945ms
+   ❯ renaming a node in the editor (#273) (14)
+     × keeps focus on the nested Source the pointer chose when leaving the id renames 2355ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.rename.test.tsx > renaming a node in the editor (#273) > keeps focus on the nested Source the pointer chose when leaving the id renames
+AssertionError: expected [ Array(3) ] to deeply equal [ Anything, Anything, …(1) ]
+
+- Expected
++ Received
+
+@@ -8,9 +8,18 @@
+      "content": "Same note",
+      "op": "append-message",
+      "role": "note",
+    },
+    {
++     "jsonSchema": {
++       "type": "integer",
++     },
+      "op": "coerce",
+-     "source": "/counters/nodeVisits/draft/x",
++     "repair": {
++       "enabled": false,
++       "maxAttempts": 1,
++       "onFailure": "fail-run",
++     },
++     "source": "/counters/nodeVisits/draf/xt",
++     "target": "/vars/visits",
+    },
+  ]
+
+ ❯ src/editor/EditorPage.rename.test.tsx:691:43
+    689|     // Typing then edits the repaired source; the old one is never wri…
+    690|     await user.keyboard('/x');
+    691|     expect(config('draft')['operations']).toEqual([
+       |                                           ^
+    692|       expect.anything(),
+    693|       expect.anything(),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/editor/pointer-press.test.tsx > tracks the primary press from the window, through every way a press ends
+AssertionError: expected 'true' to be 'false' // Object.is equality
+
+Expected: "false"
+Received: "true"
+
+ ❯ src/editor/pointer-press.test.tsx:45:23
+     43|     expect(pressed()).toBe('true');
+     44|     end();
+     45|     expect(pressed()).toBe('false');
+       |                       ^
+     46|   }
+     47|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 4 passed (6)
+      Tests  2 failed | 28 passed (30)
+   Start at  15:35:16
+   Duration  47.72s (tests 60%, environment 20%, transform 7%, setup 7%, import 7%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\apps\web
+
+exit=1

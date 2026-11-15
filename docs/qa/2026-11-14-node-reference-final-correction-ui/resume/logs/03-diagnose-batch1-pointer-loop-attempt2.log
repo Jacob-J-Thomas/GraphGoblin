@@ -1,0 +1,53 @@
+2026-11-14T21:56:45Z
+v22.23.4
+temporary diagnostic attempt 2: print observations via a deliberately unequal assertion (file deleted afterwards)
+3f4fc9089213151288175a0a60ef0f011689793a5a09f36644e2f3fc6ed7aa01 *apps/web/src/editor/pointer-press.ts
+4e63452e6c8ec39236eef5bbb92c1f08e9258bd6a45aac60ffe5a20f0c33553b *apps/web/src/editor/zz-pointer-press-diagnose.test.tsx
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/apps/web
+
+ ❯ src/editor/zz-pointer-press-diagnose.test.tsx (1 test | 1 failed) 211ms
+   × diagnoses each terminating event of the batch-1 loop in isolation 209ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/zz-pointer-press-diagnose.test.tsx > diagnoses each terminating event of the batch-1 loop in isolation
+AssertionError: expected { observed: { …(4) }, …(2) } to deeply equal { report: 'print' }
+
+- Expected
++ Received
+
+  {
+-   "report": "print",
++   "dragEvent": false,
++   "observed": {
++     "dragend": "true->false",
++     "mouseup": "true->false",
++     "pointercancel": "true->false",
++     "window blur": "true->true",
++   },
++   "pointerEvent": true,
+  }
+
+ ❯ src/editor/zz-pointer-press-diagnose.test.tsx:33:98
+     31|     observed[name] = `${String(down)}->${String(pressed())}`;
+     32|   }
+     33|   expect({ observed, pointerEvent: 'PointerEvent' in window, dragEvent…
+       |                                                                                                  ^
+     34|   expect(observed).toBeDefined();
+     35| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  15:56:46
+   Duration  4.17s (environment 70%, setup 22%, tests 5%, transform 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\apps\web
+
+exit=1

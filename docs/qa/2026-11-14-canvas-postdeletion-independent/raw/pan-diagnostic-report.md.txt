@@ -1,0 +1,36 @@
+# Canvas Remove activation immediately after pan
+
+## Disposition
+
+Confirmed on exact stacked #207 head `64a955887962f72287e532824be1b8cb32c5f055`. After an ordinary mouse drag pans the viewport and releases, a separate trusted click on the selected edge's enabled, attached Remove connection control is canceled. The edge remains selected and intact. This is a release blocker for the observed pointer path. The separate settled-zoom control establishes Decision port conformance.
+
+## Reproduction and trace
+
+Use the LLM Decision fixture with an actual repeat edge from `subject.decline` to `work.in`, ID `e5`. Draw accept, repeat and limit routes, then remove and redraw accept to the distinct ordinary Exit. This recreates the earlier layout and all five exact acknowledged topology PUTs. In desktop Edge at default fit, select the repeat edge. Its Remove control starts partly obscured by the top of the canvas. Pan from an explicitly empty point +110 CSS px down with a normal left-button drag and release. Immediately hit-test the now visible Remove and click once with the real browser mouse. The page has passive listeners. The script never dispatches synthetic click events or alters app state through instrumentation.
+
+| Event | Relative to pan mouseup | Observed |
+| --- | ---: | --- |
+| Pan mouseup | 0 ms | Trusted, buttons 0. The pane held the drag at capture. Mouseup became default-prevented. |
+| Generated pane click | +0.8 ms | Trusted, buttons 0, pan state cleared. Its final default state was prevented. |
+| Subsequent Remove down | After pan release | Trusted. Down and hit test agree on child key 22 of button key 15. Same attached and enabled control, selected edge, no dragging element. |
+| Subsequent Remove up | +23.7 ms | Trusted, buttons 0. Same child, same button, again hittable. Up reached window bubble and was not prevented. |
+| Subsequent Remove click | +24.0 ms | Trusted, same child in a path through button 15. Window capture sees defaultPrevented false. After dispatch it is true. No click reached window bubble. Active/selection and visible button persist. |
+| HTTP and IndexedDB readback | After 9-second response window | Zero draft PUTs for the action. Entire API GET and full synced IndexedDB record equal their pre-click values. Public and device token `5f8c98b0556bc8d0`. |
+
+The screenshot was inspected and shows the unobscured selected repeat edge, the still visible Remove button and All changes saved. The fixture mouseup really completed and the next independent pointer sequence reached the same button at both ends. This rules out the earlier clipped hit and a stuck or pressed pointer.
+
+The same-session separate zoom-control copy failed its setup assertion before interaction. A newly API-created, untouched loop did not have a device definition for the exact initial comparison. The first fixture failure is kept. The earlier independent settled-zoom run did perform the same LLM `e5` removal at button center x525.57/y221.13, advancing `7a7e89ca9b148e0d` to `e0824f713744a507`. The 42 Decision PUTs and all five families in that run stand. There was one targeted diagnostic attempt.
+
+## Source corroboration
+
+The exact lock selects React Flow 12.12.0, `@xyflow/system` 0.0.83, `d3-zoom` 3.0.0 and `d3-drag` 3.0.0.
+
+- GraphGoblin `Canvas.tsx:917–938` uses the standard React Flow pan path. In installed `@xyflow/system/dist/esm/index.js:2955–3020`, `XYPanZoom` creates and registers the D3 zoom instance and configures its pane click distance. Lines 2865–2887 clear the drag indicator at the end.
+- Installed `d3-zoom/src/zoom.js:288–299` detects movement and calls `dragEnable(event.view, g.moved)` from mouseup. Installed `d3-drag/src/nodrag.js:13–20` attaches `click.drag` to the window in capture and releases it through a zero-delay timer. Its `noevent.js:9–12` prevents default and stops immediate propagation. That capture window explains how the legitimate following click can still be suppressed after the pane shows no active drag. The diagnostic observed the cancellation signature. It did not instrument listener registration to prove identity.
+- GraphGoblin `OrthogonalEdge.tsx:351–367` gives Remove `nodrag nopan nokey`. Its own click stops propagation and calls `editing.remove(edgeId)`. The native cancellation occurs before this action can produce a graph change. Policy for a correction should preserve the pan-generated click suppression and existing focus, keyboard and coarse controls.
+
+## Binding and cleanup
+
+Clean head as above, tree `a6691516210eb25887cb92abdcbd8c7abe1a4bb3`, stack base `35bb3fbdc724a82064d0d9e65b551608542c6b22`, actual main `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`. Independently checked identical pre/post binding SHA-256 `1bd7d02cea6d72f733d1bb075fd57413a14be8aa294316506de8a215091e3dcf`, covering 77 source hashes, 17 embedded source hashes and all 1,227 artifacts in 13 trees. Real built API `main.js` on Node 22.23.4 with disposable file SQLite and ephemeral port 58948. Edge loaded the byte-bound `index-D5MTM2Sa.js` SHA-256 `a0f7c12f2752ba52fc80df0e6fc810c03dcd21e5ffa4d7cede3c05cfe6addb1a`.
+
+Diagnostic orchestrator 40616, gateway 41960 and Edge daemon 39864 all exited. Gateway and browser close exit codes 0. First cleanup intersected a historical numerical PID reused by a fresh `git.exe` during the parallel binding readback. No process was terminated. The terminal post-binding check found zero recorded live PIDs, fixture listeners or invalid records for all 20 fixtures, including zero residual fixture store locks/WAL/SHM. No further native work was performed.

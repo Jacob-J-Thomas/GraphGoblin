@@ -1,0 +1,1209 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a72dc085..077a17af 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -19,8 +19,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   undoing both restores the old one with its route. Editing a route's segments is a separate edit
+   that never changes its ends. A drop on a port that refuses it now says why in the **Connection
+   refused** notice. Stored edges the canvas cannot draw, for example after renaming or removing a
+-  Script exit-code label or from an imported draft, are removed with **Remove edge** in the
+-  loop's issues beside **Publish**, one **Undo** step each. No stored or exported data changes,
++  Script exit-code label, from an imported draft, or while a connected Decision route's ID is
++  blank, are listed by their ends under **Connections the canvas cannot draw** in the loop's
++  issues beside **Publish**, and removed there with **Remove edge**, one **Undo** step each.
++  Right after a mouse pan, **Remove connection** and **Reset route** are briefly shown
++  unavailable and do nothing, until the pan's own click blocker is gone; before, they looked
++  available while a click on them was silently swallowed. No stored or exported data changes,
+   so there is no upgrade note.
+ - Publish reports the version the server actually stored (#237). The editor publishes from its
+   queue of saves, after rechecking held input and conflicts, and checks them again right before
+diff --git a/apps/web/e2e/decision-routes.spec.ts b/apps/web/e2e/decision-routes.spec.ts
+index 1eb7b8d0..e8640fab 100644
+--- a/apps/web/e2e/decision-routes.spec.ts
++++ b/apps/web/e2e/decision-routes.spec.ts
+@@ -145,6 +145,108 @@ async function savedDraft(page: Page, request: APIRequestContext, loopId: string
+   return LoopDefinitionSchema.parse(body.draft.definition);
+ }
+ 
++/** The server's draft as stored and its token, without waiting for the editor. */
++async function serverDraft(request: APIRequestContext, loopId: string) {
++  const body = (await (await request.get(`/loops/${loopId}`)).json()) as {
++    draft: { definition: LoopDefinitionInput };
++    draftToken: string;
++  };
++  return { definition: body.draft.definition, token: body.draftToken };
++}
++
++/** Every draft save the page sends from now on, by its body. */
++function draftPuts(page: Page, loopId: string) {
++  const puts: LoopDefinitionInput[] = [];
++  page.on('request', (sent) => {
++    if (sent.method() !== 'PUT' || !sent.url().endsWith(`/loops/${loopId}/draft`)) return;
++    puts.push((sent.postDataJSON() as { definition: LoopDefinitionInput }).definition);
++  });
++  return puts;
++}
++
++interface DeviceCopy {
++  definition: LoopDefinitionInput;
++  /** The editor's device-only route ownership (rows in authored order, with their edges). */
++  decisionRoutes?: Record<string, { rows: { id?: string; edgeIds: string[] }[] }>;
++  synced: boolean;
++  baseToken?: string;
++}
++
++/** This device's IndexedDB copy of the loop, read only, without upgrading the editor's database. */
++async function deviceCopy(page: Page, loopId: string) {
++  return page.evaluate(async (id) => {
++    const db = await new Promise<IDBDatabase>((resolve, reject) => {
++      const opening = indexedDB.open('graphgoblin', 2);
++      opening.onsuccess = () => resolve(opening.result);
++      opening.onerror = () => reject(opening.error ?? new Error('IndexedDB open failed'));
++    });
++    try {
++      return await new Promise<unknown>((resolve, reject) => {
++        const read = db.transaction('drafts', 'readonly').objectStore('drafts').get(id);
++        read.onsuccess = () => resolve(read.result);
++        read.onerror = () => reject(read.error ?? new Error('IndexedDB read failed'));
++      });
++    } finally {
++      db.close();
++    }
++  }, loopId) as Promise<DeviceCopy | undefined>;
++}
++
++/** The device copy once `ready` holds for it (the mirror is written after each edit). */
++async function deviceCopyWhen(page: Page, loopId: string, ready: (copy: DeviceCopy) => boolean) {
++  await expect
++    .poll(async () => {
++      const copy = await deviceCopy(page, loopId);
++      return copy !== undefined && ready(copy);
++    })
++    .toBe(true);
++  return (await deviceCopy(page, loopId))!;
++}
++
++const pickRoutes = (definition: LoopDefinitionInput) =>
++  (
++    definition.nodes.find((node) => node.id === 'pick')!.config as {
++      routes: { id: string; label: string }[];
++    }
++  ).routes;
++
++/** Edges by their stored ends and layout, with the input port's default spelled out. */
++const topology = (edges: LoopDefinitionInput['edges']) =>
++  edges.map((item) => ({
++    id: item.id,
++    from: item.from,
++    to: { node: item.to.node, port: item.to.port ?? 'in' },
++    ui: item.ui ?? null,
++  }));
++
++/**
++ * The device copy while the third route's ID is blank: invalid, so it stays on this device with the
++ * saved token as its base. It keeps the saved topology exactly, `edgeId` included on its last valid
++ * port, and the blank third row still owns that edge.
++ */
++function expectHeldBlank(
++  copy: DeviceCopy,
++  saved: { definition: LoopDefinitionInput; token: string },
++  edgeId: string,
++) {
++  expect(copy.synced).toBe(false);
++  expect(copy.baseToken).toBe(saved.token);
++  expect(pickRoutes(copy.definition)).toEqual(
++    pickRoutes(saved.definition).map((route, index) =>
++      index === 2 ? { ...route, id: '' } : route,
++    ),
++  );
++  expect(topology(copy.definition.edges)).toEqual(topology(saved.definition.edges));
++  expect(copy.definition.edges.find((item) => item.id === edgeId)).toMatchObject({
++    from: { node: 'pick', port: 'route-3' },
++    to: { node: 'branch' },
++  });
++  const rows = copy.decisionRoutes?.['pick']?.rows ?? [];
++  expect(rows.map((row) => row.id)).toEqual(['yes', 'no', '']);
++  expect(rows.map((row) => row.edgeIds.includes(edgeId))).toEqual([false, false, true]);
++  expect(rows[2]!.edgeIds).toEqual([edgeId]);
++}
++
+ for (const hasTouch of [true, false]) {
+   test.describe(`decision answer help with ${hasTouch ? 'touch' : 'mouse'}`, () => {
+     test.use({ hasTouch });
+@@ -277,23 +379,58 @@ test('option IDs stay connected when numeric display labels change, save, and re
+     'aria-label',
+     'pick 7 (route-3) to branch',
+   );
++  const saved = await serverDraft(request, loopId);
++  const puts = draftPuts(page, loopId);
+   await openNode(page, 'pick');
+ 
+-  // A blank in-progress ID keeps ownership on the last valid port. Repairing the same row moves
+-  // that edge with it, and restoring the ID does not create or transfer another connection.
++  // A blank in-progress ID is invalid: no handle stands in for it, so the canvas draws neither the
++  // row's output nor its edge, and the draft stays on this device. There the blank row keeps
++  // ownership of the same edge on its last valid port, the saved topology is exact, and nothing
++  // invalid is sent; a reload of the device copy keeps all of it (#207).
+   const thirdId = dialog.locator('[data-field="routes.2.id"] input');
+   await thirdId.fill('');
+-  await expect(edge(page, connected.id)).toHaveAttribute('aria-label', /\(route-3\)/);
+   await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
++  await expect(handle(page, 'pick', 'route-3')).toHaveCount(0);
++  await expect(edge(page, connected.id)).toHaveCount(0);
++  const blank = await deviceCopyWhen(
++    page,
++    loopId,
++    (copy) => pickRoutes(copy.definition)[2]?.id === '',
++  );
++  expectHeldBlank(blank, saved, connected.id);
+   await page.reload();
+   await openNode(page, 'pick');
+   await expect(thirdId).toHaveValue('');
++  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
++  const reloaded = (await deviceCopy(page, loopId))!;
++  expectHeldBlank(reloaded, saved, connected.id);
++  expect(reloaded.definition).toEqual(blank.definition);
++  expect(reloaded.decisionRoutes).toEqual(blank.decisionRoutes);
++  expect(puts).toEqual([]);
++  expect(await serverDraft(request, loopId)).toEqual(saved);
++
++  // Repairing the same row moves that same edge to the new ID's real handle and saves it; restoring
++  // the old ID moves it back, without creating or transferring another connection.
+   await thirdId.fill('route-4');
++  await expect(handle(page, 'pick', 'route-4')).toBeVisible();
+   await expect(edge(page, connected.id)).toHaveAttribute(
+     'aria-label',
+     'pick 7 (route-4) to branch',
+   );
+-  await expect(handle(page, 'pick', 'route-4')).toBeVisible();
++  const repaired = await savedDraft(page, request, loopId);
++  expect(
++    repaired.edges
++      .filter((item) => item.from.node === 'pick' && item.to.node === 'branch')
++      .map((item) => [item.id, item.from.port]),
++  ).toEqual([[connected.id, 'route-4']]);
++  expect(topology(repaired.edges)).toEqual(
++    topology(saved.definition.edges).map((item) =>
++      item.id === connected.id ? { ...item, from: { node: 'pick', port: 'route-4' } } : item,
++    ),
++  );
++  // No save ever carried the blank ID.
++  expect(puts.length).toBeGreaterThan(0);
++  expect(puts.every((sent) => pickRoutes(sent).every((route) => route.id !== ''))).toBe(true);
+   await thirdId.fill('route-3');
+   await expect(edge(page, connected.id)).toHaveAttribute(
+     'aria-label',
+@@ -301,10 +438,11 @@ test('option IDs stay connected when numeric display labels change, save, and re
+   );
+   await closeNode(page);
+ 
+-  const settled = (await savedDraft(page, request, loopId)).edges.filter(
+-    (item) => item.from.port === 'route-3',
+-  );
++  const restored = await savedDraft(page, request, loopId);
++  const settled = restored.edges.filter((item) => item.from.port === 'route-3');
+   expect(settled.map((item) => [item.id, item.to.node])).toEqual([[connected.id, 'branch']]);
++  // The saved topology is exactly what it was before the blank ID.
++  expect(topology(restored.edges)).toEqual(topology(saved.definition.edges));
+   await page.reload();
+   await expect(handle(page, 'pick', 'route-3')).toBeVisible();
+   await expect(page.getByTestId('node-pick')).toContainText('7');
+@@ -346,6 +484,95 @@ test('option IDs stay connected when numeric display labels change, save, and re
+   });
+ });
+ 
++test('Loop issues remove the edge a blank route ID owns, and one Undo restores the whole draft', async ({
++  page,
++  request,
++}) => {
++  const loopId = await openLoop(page, request);
++  let dialog = await openNode(page, 'pick');
++  await dialog.getByRole('button', { name: 'Add routes', exact: true }).click();
++  await dialog.locator('[data-field="routes.2.id"] input').fill('route-3');
++  await dialog.locator('[data-field="routes.2.label"] input').fill('7');
++  await expect(handle(page, 'pick', 'route-3')).toBeVisible();
++  await closeNode(page);
++  await connectOnCanvas(page, 'pick', 'route-3', 'branch');
++  const connected = (await savedDraft(page, request, loopId)).edges.find(
++    (item) => item.from.port === 'route-3',
++  )!;
++  expect(connected.to.node).toBe('branch');
++  const saved = await serverDraft(request, loopId);
++  const puts = draftPuts(page, loopId);
++
++  // Blank the ID and leave the dialog: the edge is stored but not drawn.
++  dialog = await openNode(page, 'pick');
++  await dialog.locator('[data-field="routes.2.id"] input').fill('');
++  await closeNode(page);
++  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
++  await expect(edge(page, connected.id)).toHaveCount(0);
++  const blank = await deviceCopyWhen(
++    page,
++    loopId,
++    (copy) => pickRoutes(copy.definition)[2]?.id === '',
++  );
++  expectHeldBlank(blank, saved, connected.id);
++
++  // Loop issues list it by its stored ends, with the one Remove in the popover (#207).
++  await page.getByRole('button', { name: /^\d+ errors?\b/ }).click();
++  const issues = page.getByRole('dialog', { name: 'Loop issues' });
++  const group = issues.getByRole('group', { name: 'Connections the canvas cannot draw' });
++  await expect(group.getByRole('listitem')).toHaveCount(1);
++  await expect(group.getByRole('listitem')).toContainText(
++    `${connected.id} from pick output route-3 to branch`,
++  );
++  await expect(issues.getByRole('button', { name: /^Remove edge/ })).toHaveCount(1);
++  await group.getByRole('button', { name: `Remove edge ${connected.id}`, exact: true }).click();
++  await expect(issues).toHaveCount(0);
++
++  // Exactly that edge goes, as one undo step, still only on this device; the blank row owns none.
++  const removed = await deviceCopyWhen(
++    page,
++    loopId,
++    (copy) => !copy.definition.edges.some((item) => item.id === connected.id),
++  );
++  expect(removed.definition).toEqual({
++    ...blank.definition,
++    edges: blank.definition.edges.filter((item) => item.id !== connected.id),
++  });
++  expect(removed.decisionRoutes?.['pick']?.rows.map((row) => [row.id, row.edgeIds])).toEqual(
++    blank.decisionRoutes?.['pick']?.rows.map((row, index) => [
++      row.id,
++      index === 2 ? [] : row.edgeIds,
++    ]),
++  );
++  expect(removed).toMatchObject({ synced: false, baseToken: saved.token });
++  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
++
++  // One Undo restores the whole draft, the edge and its ownership included.
++  await page
++    .getByRole('button', { name: 'Undo remove edge pick route-3 to branch', exact: true })
++    .click();
++  const undone = await deviceCopyWhen(page, loopId, (copy) =>
++    copy.definition.edges.some((item) => item.id === connected.id),
++  );
++  expect(undone.definition).toEqual(blank.definition);
++  expect(undone.decisionRoutes).toEqual(blank.decisionRoutes);
++  expect(undone).toMatchObject({ synced: false, baseToken: saved.token });
++  expect(puts).toEqual([]);
++  expect(await serverDraft(request, loopId)).toEqual(saved);
++
++  // Repairing the ID draws the same edge again on its real handle and saves the saved topology.
++  dialog = await openNode(page, 'pick');
++  await dialog.locator('[data-field="routes.2.id"] input').fill('route-3');
++  await expect(edge(page, connected.id)).toHaveAttribute(
++    'aria-label',
++    'pick 7 (route-3) to branch',
++  );
++  await closeNode(page);
++  expect(topology((await savedDraft(page, request, loopId)).edges)).toEqual(
++    topology(saved.definition.edges),
++  );
++});
++
+ // The keyboard cannot create a connection since #207 (ADR-0076): the node editor's Connect form,
+ // which this test drove from the keyboard, was removed.
+ test('pointer connection reaches the eighth option by its ID while showing its numeric label', async ({
+diff --git a/apps/web/src/editor/Canvas.test.tsx b/apps/web/src/editor/Canvas.test.tsx
+index 4418fc99..c0f52a49 100644
+--- a/apps/web/src/editor/Canvas.test.tsx
++++ b/apps/web/src/editor/Canvas.test.tsx
+@@ -1,6 +1,6 @@
+ import { EdgeRouteSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
+ import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+-import { act, fireEvent, render, screen } from '@testing-library/react';
++import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+ import { Position, type ReactFlowProps } from '@xyflow/react';
+ import { createPortal } from 'react-dom';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+@@ -292,6 +292,10 @@ describe('Canvas handlers', () => {
+     expect(isOpen('Inside')).toBe(true);
+     act(() => flow().onMove!(null, { x: 20, y: 0, zoom: 1 }));
+     expect(isOpen('Inside')).toBe(false);
++    // A mouse pan's move closes them too (#207 adds the toolbar gate to the same callback).
++    toggle('Inside');
++    act(() => flow().onMove!(new MouseEvent('mousemove'), { x: 30, y: 0, zoom: 1 }));
++    expect(isOpen('Inside')).toBe(false);
+     toggle('Inside');
+     const node = flow().nodes!.find((n) => n.id === 'prep')!;
+     act(() => flow().onNodeDragStart!({} as never, node, [node]));
+@@ -968,6 +972,42 @@ describe('manual edge routes (#44)', () => {
+     expect(view.getByTestId('canvas')).toHaveFocus();
+   });
+ 
++  it('makes the toolbar unavailable from a mouse pan’s move until its release settles, and detaches on unmount (#207)', async () => {
++    const add = vi.spyOn(window, 'addEventListener');
++    const removeListener = vi.spyOn(window, 'removeEventListener');
++    const view = render(<Live />);
++    // One passive capture listener for releases, added at mount.
++    const releases = add.mock.calls.filter(([type]) => type === 'mouseup');
++    expect(releases).toHaveLength(1);
++    expect(releases[0]![2]).toEqual({ capture: true, passive: true });
++    select('start-work');
++    const remove = handle('Remove connection');
++    const viewport = { x: 0, y: 0, zoom: 1 };
++    // A new canvas is ready; a wheel, a touch pan and a fit never make it unavailable.
++    act(() => {
++      flow().onMove!(new WheelEvent('wheel'), viewport);
++      flow().onMove!(new TouchEvent('touchmove'), viewport);
++      flow().onMove!(null, viewport);
++    });
++    expect(remove).not.toHaveAttribute('aria-disabled');
++    act(() => flow().onMove!(new MouseEvent('mousemove'), viewport));
++    expect(remove).toHaveAttribute('aria-disabled', 'true');
++    expect(remove).toHaveAttribute('data-gesture', 'panning');
++    fireEvent.click(remove);
++    expect(store().definition!.edges.some((e) => e.id === 'start-work')).toBe(true);
++    expect(edge('start-work').selected).toBe(true);
++    act(() => {
++      window.dispatchEvent(new MouseEvent('mouseup'));
++    });
++    expect(remove).toHaveAttribute('data-gesture', 'settling');
++    await waitFor(() => expect(remove).not.toHaveAttribute('aria-disabled'));
++    fireEvent.click(remove);
++    expect(store().definition!.edges.some((e) => e.id === 'start-work')).toBe(false);
++    expect(labels()).toEqual(['remove edge start to work']);
++    view.unmount();
++    expect(removeListener).toHaveBeenCalledWith('mouseup', releases[0]![1], { capture: true });
++  });
++
+   it('forgets a selection whose connection is gone, so an edge reusing its id is not selected (#207)', () => {
+     render(<Live />);
+     select('start-work');
+diff --git a/apps/web/src/editor/Canvas.tsx b/apps/web/src/editor/Canvas.tsx
+index 4d1e6ddc..553ed5b3 100644
+--- a/apps/web/src/editor/Canvas.tsx
++++ b/apps/web/src/editor/Canvas.tsx
+@@ -20,6 +20,7 @@ import {
+   type OnConnectEnd,
+   type OnConnectStart,
+   type OnInit,
++  type OnMove,
+   type OnNodeDrag,
+   type XYPosition,
+ } from '@xyflow/react';
+@@ -71,6 +72,7 @@ import { ForwardEdge } from './ForwardEdge.js';
+ import { edgeLabelText } from './edge-label-text.js';
+ import { loopBackEdgeIds } from './loop-back-edges.js';
+ import { removalFocusTarget } from './canvas-focus.js';
++import { createViewportGestureGate } from './viewport-gesture.js';
+ 
+ const nodeTypes = { gg: NodeCard };
+ const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
+@@ -485,6 +487,18 @@ export function Canvas({
+   // A node's issue popover is placed from its badge: a pan, a zoom, or a drag closes it. Popovers
+   // elsewhere (the toolbar's) stay, since nothing they hang from moved.
+   const closeCanvasPopovers = useCallback(() => closePopovers(rootRef.current), []);
++  // A mouse pan's release leaves d3's click blocker in place for a task: the selected connection's
++  // toolbar is unavailable until it is gone (#207). The gate's window listener is added at mount,
++  // before any press adds d3's own; a layout effect adds it before the browser can deliver one.
++  const [gesture] = useState(createViewportGestureGate);
++  useLayoutEffect(() => gesture.attach(window), [gesture]);
++  const onMove: OnMove = useCallback(
++    (event) => {
++      gesture.move(event);
++      closeCanvasPopovers();
++    },
++    [gesture, closeCanvasPopovers],
++  );
+ 
+   const cardData = useMemo(() => {
+     const next = buildCardData(definition, issues, cardDataRef.current);
+@@ -698,8 +712,9 @@ export function Canvas({
+         setSelectedEdge((current) => (current === edgeId ? undefined : current));
+         removalFocusTarget()?.focus();
+       },
++      viewport: gesture,
+     };
+-  }, [announce, closeStep, removeEdge, screenToFlowPosition, setEdgeRoute]);
++  }, [announce, closeStep, gesture, removeEdge, screenToFlowPosition, setEdgeRoute]);
+ 
+   const pinnedCrossings = useCallback(() => {
+     const cards = cardBoxes(planRef.current.nodes);
+@@ -922,7 +937,7 @@ export function Canvas({
+           onClickConnectEnd={onClickConnectEnd}
+           isValidConnection={isValidConnection}
+           onNodeDragStop={onNodeDragStop}
+-          onMove={closeCanvasPopovers}
++          onMove={onMove}
+           onNodeDragStart={onNodeDragStart}
+           onNodeClick={onNodeClick}
+           nodeClickDistance={CLICK_DISTANCE}
+@@ -951,7 +966,7 @@ export function Canvas({
+       onClickConnectEnd,
+       isValidConnection,
+       onNodeDragStop,
+-      closeCanvasPopovers,
++      onMove,
+       onNodeDragStart,
+       onNodeClick,
+       onPaneClick,
+diff --git a/apps/web/src/editor/IssuePopover.tsx b/apps/web/src/editor/IssuePopover.tsx
+index 57013d31..6b83157d 100644
+--- a/apps/web/src/editor/IssuePopover.tsx
++++ b/apps/web/src/editor/IssuePopover.tsx
+@@ -1,4 +1,3 @@
+-import type { ReactNode } from 'react';
+ import { Icon } from '../components/icons/index.js';
+ import { Badge, Button, type PopoverControls } from '../components/ui/index.js';
+ import { cn } from '../lib/utils.js';
+@@ -85,15 +84,12 @@ export function IssueList({
+   issues,
+   onChoose,
+   onDiscard,
+-  rowAction,
+   subject = false,
+ }: {
+   issues: readonly EditorIssue[];
+   onChoose?: ((issue: EditorIssue) => void) | undefined;
+   /** Called after discarding an issue's held input. */
+   onDiscard?: ((issue: EditorIssue) => void) | undefined;
+-  /** A further control under an issue's row (by its index in `issues`), if it has one. */
+-  rowAction?: ((issue: EditorIssue, index: number) => ReactNode) | undefined;
+   /** Name each issue's node or edge (for a list from the whole loop). */
+   subject?: boolean;
+ }) {
+@@ -129,7 +125,6 @@ export function IssueList({
+               Discard the {issue.discard.input ?? 'unparsed text'}
+             </Button>
+           ) : null}
+-          {rowAction?.(issue, index)}
+         </li>
+       ))}
+     </ul>
+diff --git a/apps/web/src/editor/OrthogonalEdge.test.tsx b/apps/web/src/editor/OrthogonalEdge.test.tsx
+index f5acc556..72895d4e 100644
+--- a/apps/web/src/editor/OrthogonalEdge.test.tsx
++++ b/apps/web/src/editor/OrthogonalEdge.test.tsx
+@@ -1,4 +1,4 @@
+-import { act, fireEvent, render, screen } from '@testing-library/react';
++import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+ import { getSmoothStepPath, Position, ReactFlowProvider, type EdgeProps } from '@xyflow/react';
+ import type { ReactNode } from 'react';
+ import { beforeAll, describe, expect, it, vi } from 'vitest';
+@@ -11,6 +11,7 @@ import { ForwardEdge } from './ForwardEdge.js';
+ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+ import { VOICE_STEP_MESSAGE } from './chat-protection.js';
+ import { useEditorStore } from './store.js';
++import { createViewportGestureGate } from './viewport-gesture.js';
+ 
+ const data = (
+   route: RoutedEdge | undefined,
+@@ -79,11 +80,12 @@ function inFlow(children: ReactNode, editing: RouteEditing | undefined = undefin
+   );
+ }
+ 
+-const editor = () => ({
++const editor = (viewport: RouteEditing['viewport'] = createViewportGestureGate()) => ({
+   begin: vi.fn<RouteEditing['begin']>(),
+   nudge: vi.fn<RouteEditing['nudge']>(() => undefined),
+   reset: vi.fn<RouteEditing['reset']>(),
+   remove: vi.fn<RouteEditing['remove']>(),
++  viewport,
+ });
+ 
+ describe('OrthogonalEdge', () => {
+@@ -490,4 +492,115 @@ describe('OrthogonalEdge', () => {
+     expect(screen.getByRole('button', { name: 'Remove connection' })).toBeEnabled();
+     useEditorStore.setState({ definition: undefined, systemChat: false });
+   });
++
++  it('keeps Reset route and Remove connection visibly unavailable while a mouse pan settles (#207)', async () => {
++    useEditorStore.setState({ definition: undefined, systemChat: false });
++    const gate = createViewportGestureGate();
++    const detach = gate.attach(window);
++    const editing = editor(gate);
++    // xyflow's edge wrapper selects its edge in a React click handler on an ancestor.
++    const onClick = vi.fn();
++    try {
++      render(
++        <div onClick={onClick}>
++          {inFlow(
++            <OrthogonalEdge {...props} data={data({ ...route, manual: true })} selected />,
++            editing,
++          )}
++        </div>,
++      );
++      const reset = screen.getByRole('button', { name: 'Reset route' });
++      const remove = screen.getByRole('button', { name: 'Remove connection' });
++      const buttons = [reset, remove];
++      // A new canvas starts ready; wheel, touch and programmatic moves never add d3's blocker.
++      act(() => {
++        gate.move(new WheelEvent('wheel'));
++        gate.move(new Event('touchmove'));
++        gate.move(null);
++      });
++      for (const button of buttons) {
++        expect(button).not.toHaveAttribute('aria-disabled');
++        expect(button).not.toHaveAttribute('data-gesture');
++      }
++
++      act(() => gate.move(new MouseEvent('mousemove')));
++      for (const button of buttons) {
++        expect(button).toHaveAttribute('aria-disabled', 'true');
++        expect(button).toHaveAttribute('data-gesture', 'panning');
++        // A real hit target that keeps focus and `nopan`, not a disabled button a press falls
++        // through; no message: the drag in progress is the reason.
++        expect(button).toBeEnabled();
++        expect(button).not.toHaveAttribute('title');
++      }
++      remove.focus();
++      fireEvent.click(remove);
++      expect(editing.remove).not.toHaveBeenCalled();
++      // The refused click stays on the button, as an accepted one does.
++      expect(onClick).not.toHaveBeenCalled();
++      expect(remove).toHaveFocus();
++      fireEvent.click(reset);
++      expect(editing.reset).not.toHaveBeenCalled();
++
++      act(() => {
++        window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
++      });
++      for (const button of buttons) expect(button).toHaveAttribute('data-gesture', 'settling');
++      // A task queued now runs after the barrier's first task, which enables nothing; d3's cleanup,
++      // queued in the same release, would have run by then too. The handlers agree.
++      const afterFirst = await new Promise<string | null>((resolve) =>
++        setTimeout(() => {
++          fireEvent.click(remove);
++          fireEvent.click(reset);
++          resolve(remove.getAttribute('data-gesture'));
++        }, 0),
++      );
++      expect(afterFirst).toBe('settling');
++      expect(editing.remove).not.toHaveBeenCalled();
++      expect(editing.reset).not.toHaveBeenCalled();
++      // The second task makes both available again.
++      await waitFor(() => expect(remove).not.toHaveAttribute('aria-disabled'));
++      expect(reset).not.toHaveAttribute('aria-disabled');
++      expect(reset).not.toHaveAttribute('data-gesture');
++      fireEvent.click(remove);
++      expect(editing.remove).toHaveBeenCalledTimes(1);
++      expect(editing.remove).toHaveBeenCalledWith('return');
++      fireEvent.click(reset);
++      expect(editing.reset).toHaveBeenCalledTimes(1);
++    } finally {
++      detach();
++    }
++  });
++
++  it('keeps a protected voice step’s own reason while a pan settles (#207)', () => {
++    useEditorStore.setState({
++      systemChat: true,
++      definition: {
++        schemaVersion: 4,
++        name: 'Chat',
++        nodes: [
++          { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
++          { id: 'chat-normalize', kind: 'mutate', label: 'Norm', config: { operations: [] } },
++        ],
++        edges: [
++          {
++            id: 'return',
++            from: { node: 'chat-input', port: 'out' },
++            to: { node: 'chat-normalize' },
++          },
++        ],
++      } as unknown as LoopDefinitionInput,
++    });
++    const gate = createViewportGestureGate();
++    const editing = editor(gate);
++    render(inFlow(<OrthogonalEdge {...props} selected />, editing));
++    act(() => gate.move(new MouseEvent('mousemove')));
++    const remove = screen.getByRole('button', { name: 'Remove connection' });
++    expect(remove).toBeDisabled();
++    expect(remove).toHaveAttribute('title', VOICE_STEP_MESSAGE);
++    expect(remove).not.toHaveAttribute('aria-disabled');
++    expect(remove).not.toHaveAttribute('data-gesture');
++    fireEvent.click(remove);
++    expect(editing.remove).not.toHaveBeenCalled();
++    useEditorStore.setState({ definition: undefined, systemChat: false });
++  });
+ });
+diff --git a/apps/web/src/editor/OrthogonalEdge.tsx b/apps/web/src/editor/OrthogonalEdge.tsx
+index 36254474..3ad26c15 100644
+--- a/apps/web/src/editor/OrthogonalEdge.tsx
++++ b/apps/web/src/editor/OrthogonalEdge.tsx
+@@ -241,6 +241,13 @@ function RouteHandles({
+     const edge = s.definition?.edges.find((e) => e.id === edgeId);
+     return !!edge && !!s.definition && isProtectedVoiceEdge(s.definition, s.systemChat, edge);
+   });
++  // From a mouse pan's first move until its release settles, d3 may cancel the next click (#207).
++  // Reset route and Remove connection then say they are unavailable, keeping their hit target and
++  // focus (aria-disabled, not disabled), and their handlers refuse on the same rendered state.
++  const gesture = useSyncExternalStore(editing.viewport.subscribe, editing.viewport.state);
++  const settling = gesture === 'ready' ? undefined : gesture;
++  // The voice-step reason wins: that button stays disabled with its message.
++  const removeSettling = removalBlocked ? undefined : settling;
+   // After a nudge, keep focus on the moved segment even when a split renumbered it: once the
+   // stored route comes back with that segment, focus its handle.
+   const focusTargetRef = useRef<RouteSegment>(undefined);
+@@ -339,7 +346,10 @@ function RouteHandles({
+                 size="sm"
+                 variant="outline"
+                 className="nodrag nopan nokey pointer-coarse:h-11"
++                aria-disabled={settling ? true : undefined}
++                data-gesture={settling}
+                 onClick={() => {
++                  if (settling) return;
+                   editing.reset(edgeId);
+                   edgeElement()?.focus();
+                 }}
+@@ -353,10 +363,13 @@ function RouteHandles({
+               variant="outline"
+               className="nodrag nopan nokey pointer-coarse:h-11"
+               disabled={removalBlocked}
++              aria-disabled={removeSettling ? true : undefined}
++              data-gesture={removeSettling}
+               title={removalBlocked ? VOICE_STEP_MESSAGE : undefined}
+               onClick={(event) => {
+                 // The edge wrapper would select this (now removed) edge again on the same click.
+                 event.stopPropagation();
++                if (settling) return;
+                 editing.remove(edgeId);
+               }}
+               onKeyDown={toolbarKeys}
+diff --git a/apps/web/src/editor/ValidationIndicator.test.tsx b/apps/web/src/editor/ValidationIndicator.test.tsx
+index adc81cd4..0a49efc8 100644
+--- a/apps/web/src/editor/ValidationIndicator.test.tsx
++++ b/apps/web/src/editor/ValidationIndicator.test.tsx
+@@ -1,10 +1,10 @@
+ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+ import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+-import { render, screen, waitFor, within } from '@testing-library/react';
++import { act, render, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import { beforeEach, describe, expect, it } from 'vitest';
+ import { VOICE_STEP_MESSAGE } from './chat-protection.js';
+-import { fieldErrorIssues, validateDraft, type EditorIssue } from './model.js';
++import { countsLabel, fieldErrorIssues, validateDraft, type EditorIssue } from './model.js';
+ import { useEditorStore } from './store.js';
+ import { ValidationIndicator } from './ValidationIndicator.js';
+ 
+@@ -97,6 +97,10 @@ describe('ValidationIndicator', () => {
+     // An issue about a node that is gone stays visible here, so the counts add up.
+     expect(generalRows[2]).toHaveTextContent('node gone');
+     expect(within(general).queryAllByRole('button')).toHaveLength(0);
++    // The canvas draws every edge of this draft: nothing to recover.
++    expect(
++      within(popover).queryByRole('group', { name: 'Connections the canvas cannot draw' }),
++    ).toBeNull();
+ 
+     // Nodes in the definition's order, each with its count and worst severity.
+     const nodes = within(popover).getByRole('group', { name: 'Nodes' });
+@@ -124,7 +128,13 @@ describe('ValidationIndicator', () => {
+     expect(screen.queryByRole('group', { name: 'Nodes' })).toBeNull();
+   });
+ 
+-  it('removes an edge the canvas cannot draw from its issue row, once, then returns focus (#207)', async () => {
++  function Live() {
++    const def = useEditorStore((s) => s.definition)!;
++    return <ValidationIndicator issues={validateDraft(def).issues} definition={def} />;
++  }
++  const STRANDED = 'Connections the canvas cannot draw';
++
++  it('removes an edge the canvas cannot draw from its own group, once, then returns focus (#207)', async () => {
+     const user = userEvent.setup();
+     const stranded = kitchenSinkLoop();
+     stranded.edges.push({
+@@ -133,18 +143,24 @@ describe('ValidationIndicator', () => {
+       to: { node: 'gone' },
+     });
+     useEditorStore.getState().load('L1', stranded);
+-    function Live() {
+-      const def = useEditorStore((s) => s.definition)!;
+-      return <ValidationIndicator issues={validateDraft(def).issues} definition={def} />;
+-    }
+     render(<Live />);
+     const before = useEditorStore.getState().definition!;
+-    await user.click(screen.getByRole('button', { name: /error/ }));
++    // The counts are the issues' alone.
++    await user.click(
++      screen.getByRole('button', { name: countsLabel(validateDraft(before).issues) }),
++    );
+     const general = screen.getByRole('group', { name: 'Loop and connections' });
+-    // Two issues name the edge; one action. Drawable edges' rows have none.
++    // Two issues name the edge, and their rows only inform.
+     expect(within(general).getAllByText(/edge "ghost"/)).toHaveLength(2);
+-    const remove = within(general).getAllByRole('button', { name: /^Remove edge/ });
++    expect(within(general).queryAllByRole('button')).toHaveLength(0);
++    // The recovery group names it by its stored ends, with its one action in the popover.
++    const group = screen.getByRole('group', { name: STRANDED });
++    const rows = within(group).getAllByRole('listitem');
++    expect(rows).toHaveLength(1);
++    expect(rows[0]).toHaveTextContent('ghost from prep output nope to gone');
++    const remove = screen.getAllByRole('button', { name: /^Remove edge/ });
+     expect(remove.map((b) => b.textContent)).toEqual(['Remove edge ghost']);
++    expect(group).toContainElement(remove[0]!);
+     await user.click(remove[0]!);
+     const after = useEditorStore.getState().definition!;
+     expect(after.edges).toEqual(before.edges.filter((e) => e.id !== 'ghost'));
+@@ -158,6 +174,84 @@ describe('ValidationIndicator', () => {
+     expect(useEditorStore.getState().definition!.edges).toEqual(before.edges);
+   });
+ 
++  it('lists the edge a blank Decision route ID owns, though the draft does not parse (#207)', async () => {
++    const user = userEvent.setup();
++    const definition: LoopDefinitionInput = {
++      schemaVersion: kitchenSinkLoop().schemaVersion,
++      name: 'Blank route',
++      nodes: [
++        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++        {
++          id: 'pick',
++          kind: 'decision',
++          label: 'Pick',
++          config: {
++            kind: 'expression',
++            jsonata: '"yes"',
++            routes: [
++              { id: 'yes', label: 'Yes' },
++              { id: 'no', label: 'No' },
++              { id: 'route-3', label: '7' },
++            ],
++          },
++        },
++        {
++          id: 'branch',
++          kind: 'mutate',
++          label: 'Branch',
++          config: { operations: [{ op: 'append-message', role: 'note', content: 'Ran' }] },
++        },
++        { id: 'done', kind: 'exit', label: 'Done', config: {} },
++      ],
++      edges: [
++        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
++        { id: 'e2', from: { node: 'pick', port: 'yes' }, to: { node: 'done' } },
++        { id: 'e3', from: { node: 'pick', port: 'no' }, to: { node: 'done' } },
++        { id: 'e4', from: { node: 'branch', port: 'out' }, to: { node: 'done' } },
++        { id: 'e5', from: { node: 'pick', port: 'route-3' }, to: { node: 'branch' } },
++      ],
++    };
++    const state = () => useEditorStore.getState();
++    state().load('L1', definition);
++    const config = definition.nodes[1]!.config as { routes: { id: string; label: string }[] };
++    state().updateNode(
++      'pick',
++      {
++        config: {
++          ...config,
++          routes: config.routes.map((row, i) => (i === 2 ? { ...row, id: '' } : row)),
++        },
++      },
++      { path: 'routes.2.id', kind: 'typing', id: 1 },
++    );
++    const blank = { definition: state().definition!, decisionRoutes: state().decisionRoutes };
++    const { issues } = validateDraft(blank.definition);
++    expect(issues.map((i) => [i.code, i.nodeId, i.edgeId])).toEqual([
++      ['SCHEMA', 'pick', undefined],
++    ]);
++    render(<Live />);
++    // The one schema error, as before: the recovery adds nothing to the counts.
++    await user.click(screen.getByRole('button', { name: '1 error' }));
++    expect(screen.queryByRole('group', { name: 'Loop and connections' })).toBeNull();
++    expect(
++      within(screen.getByRole('group', { name: 'Nodes' })).getByRole('button'),
++    ).toHaveTextContent('pick: 1 issue');
++    const group = screen.getByRole('group', { name: STRANDED });
++    expect(within(group).getByRole('listitem')).toHaveTextContent(
++      'e5 from pick output route-3 to branch',
++    );
++    await user.click(within(group).getByRole('button', { name: 'Remove edge e5' }));
++    expect(state().definition!.edges).toEqual(
++      blank.definition.edges.filter((edge) => edge.id !== 'e5'),
++    );
++    expect(state().past.at(-1)!.label).toBe('remove edge pick route-3 to branch');
++    expect(screen.queryByRole('dialog', { name: 'Loop issues' })).toBeNull();
++    // One Undo restores the whole draft, the blank ID and the row's ownership of e5 included.
++    act(() => state().undo());
++    expect(state().definition).toEqual(blank.definition);
++    expect(state().decisionRoutes).toEqual(blank.decisionRoutes);
++  });
++
+   it('keeps a protected Chat voice step that the canvas cannot draw, saying why (#207)', async () => {
+     const user = userEvent.setup();
+     const chat = {
+diff --git a/apps/web/src/editor/ValidationIndicator.tsx b/apps/web/src/editor/ValidationIndicator.tsx
+index 5f1673cb..272032c7 100644
+--- a/apps/web/src/editor/ValidationIndicator.tsx
++++ b/apps/web/src/editor/ValidationIndicator.tsx
+@@ -12,7 +12,7 @@ import {
+   worstSeverity,
+ } from './IssuePopover.js';
+ import { countsLabel, groupIssues, issuesLabel, type EditorIssue } from './model.js';
+-import { removeStrandedEdge, strandedEdgeRows } from './stranded-edges.js';
++import { removeStrandedEdge, strandedEdges } from './stranded-edges.js';
+ import { useEditorStore } from './store.js';
+ 
+ const GROUP_LABEL = 'px-2 pt-0.5 text-xs font-semibold text-muted';
+@@ -38,8 +38,11 @@ const STATUS: Record<ServerCheck, { icon: 'queued' | 'info' | 'check-circle'; te
+  * Publish checks) that opens a popover listing every loop-level and edge issue in full, then one
+  * row per node with issues ("prep: 2 issues"), which opens that node; each node's badge on the
+  * canvas has the detail. A stored edge the canvas cannot draw (from a missing node or port, into a
+- * missing node or a trigger) has nothing to select on the canvas, so its first issue row offers
+- * Remove edge (#207): one undo step, refused for a protected Chat voice step.
++ * missing node or a trigger) has nothing to select on the canvas, so the popover's "Connections
++ * the canvas cannot draw" group lists each one by its stored ends with one Remove edge (#207): one
++ * undo step, refused for a protected Chat voice step. The group is read from the draft, so it is
++ * there also while the draft does not parse; it adds nothing to the counts. Such an edge always
++ * comes with an error (the schema's, or the edge's own), so the popover is there to open.
+  */
+ export function ValidationIndicator({
+   issues,
+@@ -58,7 +61,6 @@ export function ValidationIndicator({
+   const nodeGroupId = useId();
+   // Where focus goes when "Discard the unparsed text" removed the last issue, and with it the button.
+   const readyRef = useRef<HTMLSpanElement>(null);
+-  const system = useEditorStore((s) => s.systemChat);
+   if (issues.length === 0) {
+     const status = STATUS[check];
+     return (
+@@ -83,7 +85,6 @@ export function ValidationIndicator({
+   }
+   const severity = worstSeverity(issues);
+   const { general, nodes } = groupIssues(issues, definition);
+-  const stranded = strandedEdgeRows(general, definition);
+   return (
+     <Popover
+       label="Loop issues"
+@@ -114,29 +115,13 @@ export function ValidationIndicator({
+                 issues={general}
+                 subject
+                 onDiscard={() => refocusAfterDiscard(close, () => readyRef.current)}
+-                rowAction={(_issue, index) => {
+-                  const edge = stranded.get(index);
+-                  if (!edge) return null;
+-                  const blocked = isProtectedVoiceEdge(definition, system, edge);
+-                  return (
+-                    <Button
+-                      size="sm"
+-                      variant="outline"
+-                      className="ml-2"
+-                      disabled={blocked}
+-                      title={blocked ? VOICE_STEP_MESSAGE : undefined}
+-                      onClick={() => {
+-                        if (removeStrandedEdge(edge))
+-                          refocusAfterDiscard(close, () => readyRef.current);
+-                      }}
+-                    >
+-                      Remove edge {edge.id}
+-                    </Button>
+-                  );
+-                }}
+               />
+             </div>
+           ) : null}
++          <StrandedEdges
++            definition={definition}
++            onRemoved={() => refocusAfterDiscard(close, () => readyRef.current)}
++          />
+           {nodes.length > 0 ? (
+             <div role="group" aria-labelledby={nodeGroupId} className="grid gap-1.5">
+               <p id={nodeGroupId} className={GROUP_LABEL}>
+@@ -178,3 +163,54 @@ export function ValidationIndicator({
+     </Popover>
+   );
+ }
++
++/**
++ * The open popover's "Connections the canvas cannot draw" group (#207): each such stored edge by its
++ * id and stored ends, with its one Remove edge, disabled with the voice-step message for a protected
++ * Chat edge. Read from the draft only while the popover is open, since every edge's source card is
++ * checked for its port. Nothing when there are none.
++ */
++function StrandedEdges({
++  definition,
++  onRemoved,
++}: {
++  definition: LoopDefinitionInput;
++  onRemoved: () => void;
++}) {
++  const groupId = useId();
++  const system = useEditorStore((s) => s.systemChat);
++  const stranded = strandedEdges(definition);
++  if (stranded.length === 0) return null;
++  return (
++    <div role="group" aria-labelledby={groupId} className="grid gap-1.5">
++      <p id={groupId} className={GROUP_LABEL}>
++        Connections the canvas cannot draw
++      </p>
++      <ul className="grid gap-1">
++        {stranded.map((edge) => {
++          const blocked = isProtectedVoiceEdge(definition, system, edge);
++          return (
++            <li key={edge.id} className="grid justify-items-start gap-1">
++              <span className="px-2 text-sm leading-snug text-default">
++                <code>{edge.id}</code> from <code>{edge.from.node}</code> output{' '}
++                <code>{edge.from.port}</code> to <code>{edge.to.node}</code>
++              </span>
++              <Button
++                size="sm"
++                variant="outline"
++                className="ml-2"
++                disabled={blocked}
++                title={blocked ? VOICE_STEP_MESSAGE : undefined}
++                onClick={() => {
++                  if (removeStrandedEdge(edge)) onRemoved();
++                }}
++              >
++                Remove edge {edge.id}
++              </Button>
++            </li>
++          );
++        })}
++      </ul>
++    </div>
++  );
++}
+diff --git a/apps/web/src/editor/route-editing.ts b/apps/web/src/editor/route-editing.ts
+index 482161aa..f2e5156c 100644
+--- a/apps/web/src/editor/route-editing.ts
++++ b/apps/web/src/editor/route-editing.ts
+@@ -1,6 +1,7 @@
+ import { createContext } from 'react';
+ import type { Route, RouteSegment } from './manual-route.js';
+ import type { Point } from './routing-geometry.js';
++import type { ViewportGestureGate } from './viewport-gesture.js';
+ 
+ /** The route an edit starts from: the one drawn now, in stored form, between its port tips. */
+ export interface RouteBase {
+@@ -39,6 +40,11 @@ export interface RouteEditing {
+    * canvas drops the selection and moves focus to a control where Delete removes nothing.
+    */
+   remove(edgeId: string): void;
++  /**
++   * Whether Reset route and Remove connection may act (#207): not from a mouse pan's first move
++   * until its release has settled, while d3 may still cancel the next click (viewport-gesture.ts).
++   */
++  viewport: Pick<ViewportGestureGate, 'state' | 'subscribe'>;
+ }
+ 
+ export const RouteEditingContext = createContext<RouteEditing | undefined>(undefined);
+diff --git a/apps/web/src/editor/stranded-edges.test.ts b/apps/web/src/editor/stranded-edges.test.ts
+index bc439490..0d6d0332 100644
+--- a/apps/web/src/editor/stranded-edges.test.ts
++++ b/apps/web/src/editor/stranded-edges.test.ts
+@@ -1,8 +1,8 @@
+ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+ import { beforeEach, describe, expect, it } from 'vitest';
+-import { newLoopDefinition, validateDraft, type EditorIssue } from './model.js';
++import { canvasDrawsEdge, newLoopDefinition, validateDraft } from './model.js';
+ import { useEditorStore } from './store.js';
+-import { removeStrandedEdge, strandedEdgeRows } from './stranded-edges.js';
++import { removeStrandedEdge, strandedEdges } from './stranded-edges.js';
+ 
+ type Edge = LoopDefinitionInput['edges'][number];
+ const edge = (id: string, from: string, port: string, to: string): Edge => ({
+@@ -33,23 +33,99 @@ const store = () => useEditorStore.getState();
+ describe('stored edges the canvas cannot draw (#207)', () => {
+   beforeEach(() => store().load('L1', stranded()));
+ 
+-  it('offers one removal per undrawable edge, on its first issue row, and none for drawable edges', () => {
++  it('lists each undrawable edge once, in stored order, and no drawable edge', () => {
+     const def = store().definition!;
+-    const { issues } = validateDraft(def);
+-    const rows = strandedEdgeRows(issues, def);
+-    expect([...rows.values()].map((e) => e.id).sort()).toEqual(['e3', 'e4']);
+-    for (const [index, e] of rows) expect(issues[index]!.edgeId).toBe(e.id);
+-    // Two issues about one edge: the action is on the first only.
+-    const twice: EditorIssue[] = [
+-      { code: 'EDGE_TO_MISSING', severity: 'error', message: 'a', edgeId: 'e4' },
+-      { code: 'EDGE_PORT_MISSING', severity: 'error', message: 'b', edgeId: 'e4' },
+-      { code: 'PORT_MULTIPLY_CONNECTED', severity: 'error', message: 'c', edgeId: 'e2' },
+-      { code: 'NO_EXIT', severity: 'error', message: 'd' },
+-    ];
+-    expect([...strandedEdgeRows(twice, def)]).toEqual([[0, def.edges.find((e) => e.id === 'e4')]]);
++    const stranded = strandedEdges(def);
++    // The stored records themselves.
++    expect(stranded).toEqual([def.edges[2], def.edges[3]]);
++    expect(stranded[0]).toBe(def.edges[2]);
+     // An id two edges hold is not offered (removal by id would take both).
+     const doubled = { ...def, edges: [...def.edges, edge('e4', 'start', 'out', 'done')] };
+-    expect(strandedEdgeRows(twice, doubled).size).toBe(0);
++    expect(strandedEdges(doubled).map((e) => e.id)).toEqual(['e3']);
++    // Into a trigger, from a node that is gone, and an edge two issues name: each once.
++    const more = {
++      ...def,
++      edges: [
++        ...def.edges,
++        edge('e5', 'run', 'retry', 'start'),
++        edge('e6', 'gone', 'out', 'run'),
++        edge('e7', 'run', 'nope', 'ghost'),
++      ],
++    };
++    expect(validateDraft(more).issues.filter((i) => i.edgeId === 'e7')).toHaveLength(2);
++    expect(strandedEdges(more).map((e) => e.id)).toEqual(['e3', 'e4', 'e5', 'e6', 'e7']);
++    // In a draft that parses, each comes with an error of its own, so Loop issues has a list to
++    // open; the list itself does not depend on those issues.
++    const { issues, schemaValid } = validateDraft(more);
++    expect(schemaValid).toBe(true);
++    for (const e of strandedEdges(more))
++      expect(issues.some((i) => i.edgeId === e.id && i.severity === 'error')).toBe(true);
++  });
++
++  it('reads the draft, not its issues: a blank Decision route ID still lists the edge it owns', () => {
++    const def = newLoopDefinition('Blank');
++    def.nodes.push(
++      {
++        id: 'pick',
++        kind: 'decision',
++        label: 'Pick',
++        config: {
++          kind: 'expression',
++          jsonata: '"yes"',
++          routes: [
++            { id: 'yes', label: 'Yes' },
++            { id: 'no', label: 'No' },
++            { id: 'route-3', label: '7' },
++          ],
++        },
++      },
++      {
++        id: 'branch',
++        kind: 'mutate',
++        label: 'Branch',
++        config: { operations: [{ op: 'append-message', role: 'note', content: 'Branch ran' }] },
++      },
++    );
++    def.edges.push(
++      edge('e2', 'pick', 'yes', 'done'),
++      edge('e3', 'pick', 'no', 'done'),
++      edge('e5', 'pick', 'route-3', 'branch'),
++    );
++    store().load('L2', def);
++    expect(strandedEdges(store().definition!)).toEqual([]);
++    const node = store().definition!.nodes.find((n) => n.id === 'pick')!;
++    const config = node.config as { routes: { id: string; label: string }[] };
++    store().updateNode(
++      'pick',
++      {
++        config: {
++          ...config,
++          routes: config.routes.map((row, i) => (i === 2 ? { ...row, id: '' } : row)),
++        },
++      },
++      { path: 'routes.2.id', kind: 'typing', id: 1 },
++    );
++    const blank = store().definition!;
++    // The blank row keeps its edge on the last valid port; the draft does not parse, so its only
++    // issue is the schema's, on the node, and names no edge.
++    const e5 = blank.edges.find((e) => e.id === 'e5')!;
++    expect(e5).toEqual(edge('e5', 'pick', 'route-3', 'branch'));
++    const { issues, schemaValid } = validateDraft(blank);
++    expect(schemaValid).toBe(false);
++    expect(issues.every((i) => i.code === 'SCHEMA' && i.edgeId === undefined)).toBe(true);
++    expect(canvasDrawsEdge(blank, e5)).toBe(false);
++    expect(strandedEdges(blank)).toEqual([e5]);
++    // The edge's recovery removes exactly it, one step; Undo restores the draft and ownership.
++    const before = { definition: blank, decisionRoutes: store().decisionRoutes };
++    expect(removeStrandedEdge(e5)).toBe(true);
++    expect(store().definition!.edges).toEqual(blank.edges.filter((e) => e.id !== 'e5'));
++    expect(store().definition!.nodes).toBe(blank.nodes);
++    expect(store().past.at(-1)!.label).toBe('remove edge pick route-3 to branch');
++    expect(store().decisionRoutes['pick']!.rows[2]).toMatchObject({ id: '', edgeIds: [] });
++    store().undo();
++    expect(store().definition).toEqual(before.definition);
++    expect(store().decisionRoutes).toEqual(before.decisionRoutes);
++    expect(store().decisionRoutes['pick']!.rows[2]).toMatchObject({ id: '', edgeIds: ['e5'] });
+   });
+ 
+   it('removes exactly the expected edge as one undo step; undo restores it with its route', () => {
+diff --git a/apps/web/src/editor/stranded-edges.ts b/apps/web/src/editor/stranded-edges.ts
+index f2797b3f..1d497489 100644
+--- a/apps/web/src/editor/stranded-edges.ts
++++ b/apps/web/src/editor/stranded-edges.ts
+@@ -1,6 +1,6 @@
+ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+ import { isProtectedVoiceEdge } from './chat-protection.js';
+-import { canvasDrawsEdge, type EditorIssue } from './model.js';
++import { canvasDrawsEdge } from './model.js';
+ import { useEditorStore } from './store.js';
+ 
+ type Edge = LoopDefinitionInput['edges'][number];
+@@ -19,24 +19,20 @@ const sameEnds = (a: Edge, b: Edge) =>
+   (a.to.port ?? 'in') === (b.to.port ?? 'in');
+ 
+ /**
+- * The stored edges the canvas cannot draw that an issue list names (#207), each on its first issue
+- * row, by row index: an edge from a missing node or port, into a missing node or a trigger. Such an
+- * edge has no path to select on the canvas, so its issue row offers its removal; an edge the canvas
+- * draws, or an id more than one edge holds, gets no row action.
++ * The stored edges the canvas cannot draw (#207), in stored order: from a missing node or from a
++ * port that is not a handle on its card, into a missing node or into a trigger. They have no path
++ * to select on the canvas, so Loop issues lists each with its ends and offers its removal. This
++ * reads the draft itself, not its issues: while the draft does not parse (a Decision route's ID
++ * left blank, say) validation reports only the schema error, yet the edge the blank row owns is
++ * still stored and is not drawn. An id more than one edge holds is left out, since removal by id
++ * would take both.
+  */
+-export function strandedEdgeRows(
+-  issues: readonly EditorIssue[],
+-  definition: LoopDefinitionInput,
+-): Map<number, Edge> {
+-  const rows = new Map<number, Edge>();
+-  const seen = new Set<string>();
+-  issues.forEach((issue, index) => {
+-    if (issue.edgeId === undefined || seen.has(issue.edgeId)) return;
+-    seen.add(issue.edgeId);
+-    const edge = onlyEdge(definition, issue.edgeId);
+-    if (edge && !canvasDrawsEdge(definition, edge)) rows.set(index, edge);
+-  });
+-  return rows;
++export function strandedEdges(definition: LoopDefinitionInput): Edge[] {
++  const holders = new Map<string, number>();
++  for (const edge of definition.edges) holders.set(edge.id, (holders.get(edge.id) ?? 0) + 1);
++  return definition.edges.filter(
++    (edge) => holders.get(edge.id) === 1 && !canvasDrawsEdge(definition, edge),
++  );
+ }
+ 
+ /**
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 2ccad5cc..dc0d8bcf 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -270,12 +270,12 @@ Pressing a palette entry places the new card at x = 40, below the lowest existin
+ The owner's decision, recorded in [ADR-0076](decisions/ADR-0076-canvas-only-connection-authoring.md): connections are authored only on the canvas, for every node kind. The node dialog has no **Connections** section, no **Remove edge** buttons and no **Connect** form. Everything else in it stays: id and label, the config form, declaration editing (decision routes, Choice options, Noul sides, Score bands, Script exit-code rows and Repeat route settings) with its consequence reviews that name connections, **Delete node**, protected Chat voice steps and held input.
+ 
+ - **Create.** Drag from an output handle to an input handle, or click an output and then an input. A drag may start at either end. One edge per output; any number may enter one input; triggers have no input and exits no output. A drop on a port that refuses the connection shows the reason in the editor's "Connection refused: …" notice (`onConnectEnd` and the click-connect end in `editor/Canvas.tsx`, using `connectionProblem` in `editor/model.ts`); an occupied output says how to free it ("select its connection and choose Remove connection (or press Delete or Backspace), then draw it again"). A drop on the empty pane or on a port of the same type says nothing and leaves an earlier notice as it was, and a refusal never creates an edge. Protected Chat voice steps refuse as before ("Voice steps stay.").
+-- **Remove.** Click a connection, or focus it and press Enter or Space, to select it. Then press Delete or Backspace with focus on the canvas, or use **Remove connection** in the selected connection's toolbar beside **Reset route**: it is 32 px and 44 px under a coarse pointer, is disabled with the voice-step message on a protected edge, and moves focus to **Undo** afterwards. One connection is removed at a time; a selected node is never removed by an edge's removal. The screen-reader description of a focused connection says "Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection. To connect its output elsewhere, remove the connection and draw from the output again."
++- **Remove.** Click a connection, or focus it and press Enter or Space, to select it. Then press Delete or Backspace with focus on the canvas, or use **Remove connection** in the selected connection's toolbar beside **Reset route**: it is 32 px and 44 px under a coarse pointer, is disabled with the voice-step message on a protected edge, and moves focus to **Undo** afterwards. One connection is removed at a time; a selected node is never removed by an edge's removal. After a mouse pan the toolbar briefly refuses: d3-zoom ends a pan that moved by adding a window-capture `click.drag` listener (d3-drag's `yesdrag`) that cancels the next click anywhere on the page, and removes it in a zero-delay task, so a Remove connection click in between was swallowed while the button looked available. A per-canvas gate (`editor/viewport-gesture.ts`) is `panning` from the canvas's first `onMove` with a `mousemove` source event, `settling` from the next mouse release, and ready two tasks later. Its single passive window-capture `mouseup` listener is added when the canvas mounts, so it sees each release before d3-zoom's per-press listener stops it; it queues a zero-delay task that queues a second, and only the second, which runs after d3's cleanup, makes it ready, and only if no mouse move came since and the canvas is still mounted. Meanwhile **Remove connection** and **Reset route** are `aria-disabled` (dimmed, keeping focus, their hit target and `nopan`) with `data-gesture` set to the state, and their handlers refuse on that same rendered state: a click, Enter or Space then does nothing and says nothing, and the first click once they show as available acts once. The pan's own click is still cancelled and the selection kept. Wheel, touch, Fit View and other programmatic moves add no blocker and never touch the gate; they also cannot strand it, since it does not wait for xyflow's `onMoveEnd`, which a later wheel or programmatic end replaces. A release that never reaches the page leaves the gate unavailable until the next mouse release there, which also ends d3's gesture. Nothing is replayed, prevented or patched; a protected voice step keeps its own disabled reason. Clicks on xyflow's zoom controls and after a node drag meet the same d3 blocker and are not gated. The screen-reader description of a focused connection says "Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection. To connect its output elsewhere, remove the connection and draw from the output again."
+ - **Change is remove, then draw again.** There is no reconnect handle and no single-step retarget. Remove the connection, then draw from the same output (a new target) or from another output (a new port). That is **two undo steps**: "remove edge a to b", then "connect a to c". The replacement is a new edge record. It may reuse the freed edge id, and it does not inherit the old edge's manual route: the canvas routes it automatically. Undoing both steps restores the old edge with its id, ends and `ui.route` unchanged; redoing both gives the new connection back. Every other edge is unchanged by either step.
+ - **Geometry is a separate edit.** Dragging or nudging a segment and **Reset route** (see "Manual edge routes" below) change only `ui.route` of the same edge, one undo step each, and never its ends. Renaming a decision route's ID in the dialog is declaration editing: the edge keeps its id, target and layout while its source port follows the row (see "Editing decision routes").
+-- **Stored edges the canvas cannot draw.** An edge whose source or target node is missing, whose output port is not a handle on its source card, or that leads into a trigger has no path to select. They come from imported or API-written drafts, and from ordinary editing: renaming or removing a Script exit-code label or applying section JSON leaves its stored edges, which stay stored and block publication (`EDGE_PORT_MISSING` and the other edge codes). **Loop issues**, the validation indicator beside Publish and the "Loop and connections" group of its popover, list them and offer **Remove edge eN** on the first issue row of each such edge. It removes exactly that edge in one undo step, and Undo restores its id, ends and manual route. It acts only if the edge is still stored with those ends and still undrawable, so an action left over from before a repair, a removal or an id reuse removes nothing; it is disabled with the voice-step message for a protected Chat edge. The popover closes and focus returns to the indicator, or to the **Ready to publish** status when that was the last issue. Imported missing-node targets and a Script label renamed or removed are the cases it exists for. It is recovery for stranded topology, not an authoring form: Script labels are not followed automatically, and nothing is pruned silently. (`editor/stranded-edges.ts`, `editor/ValidationIndicator.tsx`.)
++- **Stored edges the canvas cannot draw.** An edge whose source or target node is missing, whose output port is not a handle on its source card, or that leads into a trigger has no path to select. They come from imported or API-written drafts, and from ordinary editing: renaming or removing a Script exit-code label or applying section JSON leaves its stored edges, which stay stored and block publication (`EDGE_PORT_MISSING` and the other edge codes). **Loop issues**, the validation indicator beside Publish, lists them in its popover's own group, "Connections the canvas cannot draw", each once by its id and stored ends ("e5 from pick output route-3 to branch") with one **Remove edge eN**. The group reads the draft itself, not the issues' `edgeId`s, so it is there while the draft does not parse too: a Decision route whose ID is blank has no handle, so the connection its row owns is stored but not drawn, and validation then reports only the schema error on the node. The issue rows only inform, the counts are the issues' alone, and an id two edges share is not offered. Remove edge removes exactly that edge in one undo step, and Undo restores its id, ends and manual route, and a blank row's ownership of it. It acts only if the edge is still stored with those ends and still undrawable, so an action left over from before a repair, a removal or an id reuse removes nothing; it is disabled with the voice-step message for a protected Chat edge. The popover closes and focus returns to the indicator, or to the **Ready to publish** status when that was the last issue. Imported missing-node targets and a Script label renamed or removed are the cases it exists for. It is recovery for stranded topology, not an authoring form: Script labels are not followed automatically, and nothing is pruned silently. (`editor/stranded-edges.ts`, `editor/ValidationIndicator.tsx`.)
+ - **What the keyboard can no longer do.** Keyboard connection creation is gone. The dialog's **Connect** form, which let a keyboard-only user pick one of a node's free outputs and a target and so build start → wait → done without a pointer (WP-D2 D18, `5a4d0665`), no longer exists, and no other keyboard path creates or retargets a connection. The keyboard keeps reaching and selecting a connection, removing it, moving its route segments and removing undrawable edges from Loop issues; a coarse pointer keeps the visible **Remove connection** button. This is not keyboard or touch parity with creation. On a zoomed-out touch canvas port targets shrink with zoom (see "Touch" under Breakpoints), and the dialog's form was the full-size alternative: zoom in to connect. Keyboard connection creation and broader accessibility or mobile changes remain deferred and are not a new proof-of-concept gate.
+-- **Regression.** `editor/NodeEditorDialog.test.tsx` (no Connections region, Connect form or Remove edge button on any of the nine node kinds, and no stored edge changes), `editor/EditorPage.test.tsx` (a dialog opened from the keyboard without those controls; Delete and Backspace in it edit nothing; the refusal in the page notice; a renamed node's edges), `editor/Canvas.test.tsx` and `editor/OrthogonalEdge.test.tsx` (refusal reasons, toolbar removal, undo), `editor/ValidationIndicator.test.tsx` and `editor/stranded-edges.test.ts` (recovery), `editor/model.test.ts`, and Edge `e2e/decision-routes.spec.ts`, `e2e/exit-primitives.spec.ts`, `e2e/issue-170-qa.spec.ts`, `e2e/loop-back-topology.spec.ts`, `e2e/loop-lifecycle.spec.ts`, `e2e/palette-placement.spec.ts`, `e2e/qa.spec.ts`, `e2e/responsive.spec.ts` and the `LIVE=1` `e2e/live.spec.ts`, which draw connections by pointer and remove them from the keyboard.
++- **Regression.** `editor/NodeEditorDialog.test.tsx` (no Connections region, Connect form or Remove edge button on any of the nine node kinds, and no stored edge changes), `editor/EditorPage.test.tsx` (a dialog opened from the keyboard without those controls; Delete and Backspace in it edit nothing; the refusal in the page notice; a renamed node's edges), `editor/Canvas.test.tsx` and `editor/OrthogonalEdge.test.tsx` (refusal reasons, toolbar removal, undo, the gate's rendered state), `editor/viewport-gesture.test.ts` (the gate's two tasks, a newer move, repeated releases, detach) and `editor/viewport-gesture.contract.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: listener order, the cancelled click while unavailable, the first available click delivered once, left and middle button, a newer pan, a programmatic or wheel end, unmount), `editor/ValidationIndicator.test.tsx` and `editor/stranded-edges.test.ts` (recovery, including a blank route ID), `editor/model.test.ts`, and Edge `e2e/decision-routes.spec.ts` (the blank ID's device copy and ownership through reload, its repair, and its recovery with one Undo), `e2e/exit-primitives.spec.ts`, `e2e/issue-170-qa.spec.ts`, `e2e/loop-back-topology.spec.ts`, `e2e/loop-lifecycle.spec.ts`, `e2e/palette-placement.spec.ts`, `e2e/qa.spec.ts`, `e2e/responsive.spec.ts` and the `LIVE=1` `e2e/live.spec.ts`, which draw connections by pointer and remove them from the keyboard.
+ 
+ ### Renaming a node (#273)
+ 
+diff --git a/docs/decisions/ADR-0076-canvas-only-connection-authoring.md b/docs/decisions/ADR-0076-canvas-only-connection-authoring.md
+index 93afbeb3..24f0715e 100644
+--- a/docs/decisions/ADR-0076-canvas-only-connection-authoring.md
++++ b/docs/decisions/ADR-0076-canvas-only-connection-authoring.md
+@@ -15,8 +15,8 @@ The canvas is the only place connections are authored, for every node kind. The
+ - **Create.** Drag from an output handle to an input handle, or click an output and then an input. One edge per output; many edges may enter one input; triggers have no input and exits have no output. A drop on a port that refuses it says why in the editor's "Connection refused" notice.
+ - **Change.** Changing a connection means removing it and drawing it again. That is two undo steps, "remove edge …" then "connect …". The replacement is a new record, so it does not inherit the old edge's manual route (it may reuse the freed edge id); undoing both restores the old record, route included. There is no reconnect handle and no single-step retarget.
+ - **Geometry.** Editing a connection's route is separate: dragging or nudging a segment and **Reset route** change only `ui.route`, one undo step each, and never the ends.
+-- **Remove.** Select a connection (click it, or focus it and press Enter or Space), then press Delete or Backspace, or use the **Remove connection** button in the selected connection's toolbar, which is 44 px on a coarse pointer. Protected Chat voice steps refuse removal with their existing message.
+-- **Recovery.** A stored edge the canvas cannot draw (its source or target node or its output port is missing, or it leads into a trigger) has no path to select. Such edges come from imported or API-written drafts and from ordinary editing, for example renaming or removing a Script exit-code label. They are listed under **Loop issues**, which offers **Remove edge eN** on the first issue of each such edge. It removes exactly that edge, one undo step, only if it is still stored unchanged and still undrawable; a protected voice step is disabled with its message. This is recovery for otherwise stranded topology, not a second authoring form.
++- **Remove.** Select a connection (click it, or focus it and press Enter or Space), then press Delete or Backspace, or use the **Remove connection** button in the selected connection's toolbar, which is 44 px on a coarse pointer. Protected Chat voice steps refuse removal with their existing message. From a mouse pan's first move until its release has settled, the toolbar is shown unavailable and refuses, because the pan's drag library cancels the next click on the page for that long (see docs/09).
++- **Recovery.** A stored edge the canvas cannot draw (its source or target node or its output port is missing, or it leads into a trigger) has no path to select. Such edges come from imported or API-written drafts and from ordinary editing, for example renaming or removing a Script exit-code label, or leaving a connected Decision route's ID blank for a moment. **Loop issues** lists each such edge once in its own group, by id and stored ends, with one **Remove edge eN**, read from the draft, so also while the draft does not parse. It removes exactly that edge, one undo step, only if it is still stored unchanged and still undrawable; a protected voice step is disabled with its message. This is recovery for otherwise stranded topology, not a second authoring form.
+ 
+ ### What is lost
+ 
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index c609e304..aced575f 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -126,7 +126,9 @@ Connect exactly one edge per output port. Multiple inputs may converge on a node
+ 
+ To change where a connection goes, remove it and draw it again: select it and press **Delete** or **Backspace** (or click **Remove connection**), then drag from the same output, or from another one, to the new target. That is two steps in **Undo** and **Redo**, "remove edge …" and then "connect …". The new connection routes automatically; undoing both brings the old one back with the route you gave it. Moving or resetting a line's segments (below) is a separate edit that never changes where a connection starts or ends. When a drop lands on a port that cannot take the connection, the **Connection refused** notice says why (for example, that the output is already connected) and nothing is connected.
+ 
+-Some stored connections cannot be drawn, so there is nothing on the canvas to select: one from a node or output that no longer exists, an imported or API-written one into a trigger, or one left behind when you rename or remove a Script's exit-code label. They appear among the loop's issues beside **Publish**: open the count, find the edge under **Loop and connections**, and click **Remove edge** _id_. That is one **Undo** step, and Undo brings the edge back. Nothing removes such an edge for you, and a renamed Script label keeps its old connection until you do.
++Right after you pan the canvas by dragging with the mouse, **Remove connection** and **Reset route** are dimmed for a moment and do nothing until the pan has finished settling; click again once they are no longer dimmed. Scrolling to zoom, touch and **Fit View** never dim them.
++
++Some stored connections cannot be drawn, so there is nothing on the canvas to select: one from a node or output that no longer exists (including a Decision route whose ID you have left blank for the moment), an imported or API-written one into a trigger, or one left behind when you rename or remove a Script's exit-code label. They appear among the loop's issues beside **Publish**: open the count, find the edge under **Connections the canvas cannot draw**, which names its node, output and target, and click **Remove edge** _id_. That is one **Undo** step, and Undo brings the edge back. Nothing removes such an edge for you, and a renamed Script label keeps its old connection until you do. A Decision route's connection comes back on the canvas as soon as its ID is valid again.
+ 
+ The keyboard can select, remove and reroute a connection but cannot create one: the node dialog's Connect form was removed so that connections have one place, the canvas. On a touch screen, zoom in until the handles are comfortably large; they shrink as the canvas zooms out.
+ 
