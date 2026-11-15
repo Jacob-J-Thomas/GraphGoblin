@@ -1897,4 +1897,205 @@ describe('the selected connection is the one the user selected (#207)', () => {
     fireEvent.click(remove);
     expect(labels()).toEqual(['move check', 'remove edge start to work']);
   });
+
+  describe('Reset route holds the selected connection’s toolbar where it was clicked (#207)', () => {
+    /** A manual route on a loop-back (`return`), and on a forward connection (`start-work`). */
+    const MANUAL = {
+      return: { route: [1116, 290, 268], reset: 'reset route of done repeat to work' },
+      'start-work': { route: [200], reset: 'reset route of start to work' },
+    } as const;
+    const REMOVE = {
+      return: 'remove edge done repeat to work',
+      'start-work': 'remove edge start to work',
+    } as const;
+    type Connection = keyof typeof MANUAL;
+    const CONNECTIONS = [
+      ['a loop-back', 'return'],
+      ['a forward connection', 'start-work'],
+    ] as const;
+    const withRoute = (id: Connection) => {
+      const definition = simpleLoop();
+      definition.edges.find((e) => e.id === id)!.ui = { route: [...MANUAL[id].route] };
+      return definition;
+    };
+    const deselect = (id: string) =>
+      act(() => flow().onEdgesChange!([{ type: 'select', id, selected: false }]));
+    const resetButton = () => screen.getByRole('button', { name: 'Reset route' });
+    const removeButton = () => screen.getByRole('button', { name: 'Remove connection' });
+    /** Where the selected connection's toolbar is: the transform of the group that holds it. */
+    const toolbarAt = () =>
+      removeButton().closest('foreignObject')!.parentElement!.getAttribute('transform');
+    const toolbar = () =>
+      [...document.querySelector('.gg-route-toolbar')!.children].map((child) => child.textContent);
+    /** Where the toolbar goes over the route as drawn now, at zoom 1. */
+    const overLabel = (id: string) => {
+      const { label } = (edge(id).data as OrthogonalEdgeData).channel.getSnapshot()!;
+      return `translate(${label.x} ${label.y - 18}) scale(1)`;
+    };
+
+    it.each(CONNECTIONS)(
+      'keeps the same two buttons through one Reset route on %s, then removes once on purpose: one step each, two Undos',
+      (_, id) => {
+        const definition = load(withRoute(id));
+        render(<Live />);
+        select(id);
+        const reset = resetButton();
+        const remove = removeButton();
+        const at = toolbarAt();
+        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
+        expect(reset).not.toHaveAttribute('aria-disabled');
+
+        // The first click of a double click: one reset, one step, announced as before.
+        fireEvent.click(reset);
+        expect(labels()).toEqual([MANUAL[id].reset]);
+        expect(store().definition!.edges.find((e) => e.id === id)!.ui).toBeUndefined();
+        expect(said()).toBe('Route reset: the connection routes automatically.');
+        const reseted = store().definition;
+        expect(selected()).toEqual([id]);
+        // The route is automatic now; the toolbar, and the very buttons in it, are where they were.
+        expect(edge(id).ariaLabel).not.toMatch(/manual route/);
+        expect(resetButton()).toBe(reset);
+        expect(removeButton()).toBe(remove);
+        expect(reset.isConnected && remove.isConnected).toBe(true);
+        expect(toolbarAt()).toBe(at);
+        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
+        expect(reset).toHaveAttribute('aria-disabled', 'true');
+        expect(reset).toHaveAttribute('title', 'The connection already routes automatically.');
+        expect(remove).toBeEnabled();
+        expect(remove).not.toHaveAttribute('aria-disabled');
+
+        // The rest of a double click, a triple click and modifiers: nothing is written or removed.
+        fireEvent.click(reset, { detail: 2 });
+        fireEvent.doubleClick(reset);
+        fireEvent.click(reset, { detail: 3 });
+        fireEvent.click(reset, { ctrlKey: true });
+        fireEvent.click(reset, { metaKey: true });
+        fireEvent.click(reset, { shiftKey: true });
+        expect(labels()).toEqual([MANUAL[id].reset]);
+        expect(store().definition).toBe(reseted);
+        expect(selected()).toEqual([id]);
+        expect(toolbarAt()).toBe(at);
+
+        // A deliberate click on Remove connection removes once, in a step of its own.
+        fireEvent.click(remove);
+        expect(labels()).toEqual([MANUAL[id].reset, REMOVE[id]]);
+        expect(store().definition!.edges.some((e) => e.id === id)).toBe(false);
+        expect(selected()).toEqual([]);
+        expect(undo).toHaveFocus();
+        act(() => store().undo());
+        expect(store().definition!.edges.find((e) => e.id === id)!.ui).toBeUndefined();
+        act(() => store().undo());
+        expect(store().definition).toEqual(definition);
+      },
+    );
+
+    it.each(CONNECTIONS)(
+      'follows the label again once Undo brings the manual route back on %s, and holds again at the next Reset',
+      (_, id) => {
+        const definition = load(withRoute(id));
+        render(<Live />);
+        select(id);
+        const reset = resetButton();
+        const at = toolbarAt();
+        fireEvent.click(reset);
+        expect(reset).toHaveAttribute('aria-disabled', 'true');
+        act(() => store().undo());
+        expect(store().definition).toEqual(definition);
+        expect(edge(id).ariaLabel).toMatch(/manual route/);
+        // The selection survives Undo: the very same buttons, and Reset route available again.
+        expect(resetButton()).toBe(reset);
+        expect(reset).not.toHaveAttribute('aria-disabled');
+        expect(reset).not.toHaveAttribute('title');
+        expect(toolbarAt()).toBe(at);
+
+        // The hold ended with the route Undo brought back: when it goes automatic some other way
+        // (a card moved onto it resets it; here an edit does), the toolbar follows its label and
+        // there is no Reset route to hold.
+        act(() => store().setEdgeRoute(id, undefined));
+        expect(toolbar()).toEqual(['Remove connection']);
+        const followed = toolbarAt();
+        expect(followed).not.toBe(at);
+        deselect(id);
+        select(id);
+        expect(toolbarAt()).toBe(followed);
+
+        // Undo again, and Reset route holds again where it is clicked.
+        act(() => store().undo());
+        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
+        expect(resetButton()).not.toHaveAttribute('aria-disabled');
+        fireEvent.click(resetButton());
+        expect(toolbarAt()).toBe(at);
+        expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
+        expect(labels()).toEqual([MANUAL[id].reset]);
+      },
+    );
+
+    it.each(CONNECTIONS)(
+      'follows the label again at a keyboard nudge, a drag and a later Undo of the route a held Reset route reset on %s',
+      (_, id) => {
+        const lane =
+          id === 'return'
+            ? { name: 'Route segment 3 of 5, horizontal', key: 'ArrowDown', drag: [0, 40] }
+            : { name: 'Route segment 2 of 3, vertical', key: 'ArrowRight', drag: [40, 0] };
+        load(withRoute(id));
+        render(<Live />);
+        select(id);
+        const at = toolbarAt();
+        for (const how of ['nudge', 'drag'] as const) {
+          fireEvent.click(resetButton());
+          expect(toolbarAt()).toBe(at);
+          expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
+          const handle = screen.getByRole('button', { name: lane.name });
+          if (how === 'nudge') fireEvent.keyDown(handle, { key: lane.key });
+          else {
+            fireEvent.pointerDown(handle, { button: 0, clientX: 0, clientY: 0 });
+            fireEvent.pointerMove(window, { clientX: lane.drag[0]!, clientY: lane.drag[1]! });
+            fireEvent.pointerUp(window);
+          }
+          // The connection is drawn by hand again: Reset route is available, and the toolbar is
+          // over the label of the route now drawn, not where the hold kept it.
+          expect(edge(id).ariaLabel).toMatch(/manual route/);
+          expect(resetButton()).not.toHaveAttribute('aria-disabled');
+          expect(resetButton()).not.toHaveAttribute('title');
+          expect(toolbarAt()).toBe(overLabel(id));
+          expect(toolbarAt()).not.toBe(at);
+          // Back to the route that was reset, for the next way of drawing it again.
+          act(() => store().setEdgeRoute(id, [...MANUAL[id].route]));
+          expect(toolbarAt()).toBe(at);
+        }
+      },
+    );
+
+    it.each(CONNECTIONS)(
+      'drops the hold on deselection and on a new load of the draft, so a fresh selection starts again on %s',
+      (_, id) => {
+        load(withRoute(id));
+        render(<Live />);
+        select(id);
+        const at = toolbarAt();
+        fireEvent.click(resetButton());
+        expect(toolbarAt()).toBe(at);
+        deselect(id);
+        expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
+        // Selected again: the ordinary toolbar of an automatic route, Remove connection alone.
+        select(id);
+        expect(toolbar()).toEqual(['Remove connection']);
+        expect(screen.queryByRole('button', { name: 'Reset route' })).toBeNull();
+        expect(toolbarAt()).not.toBe(at);
+
+        // Undo brings the manual route back; a Reset route held on it is forgotten with a load.
+        act(() => store().undo());
+        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
+        fireEvent.click(resetButton());
+        expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
+        act(() => store().load('L1', withRoute(id), { baseToken: 'server-2' }));
+        expect(selected()).toEqual([]);
+        expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
+        select(id);
+        expect(toolbar()).toEqual(['Reset route', 'Remove connection']);
+        expect(resetButton()).not.toHaveAttribute('aria-disabled');
+        expect(resetButton()).not.toHaveAttribute('title');
+      },
+    );
+  });
 });

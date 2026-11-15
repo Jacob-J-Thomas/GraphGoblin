@@ -334,7 +334,14 @@ test('keyboard: Tab reaches the handles, arrows nudge by grid steps, Escape retu
   await save();
   expect(await y()).toBeUndefined();
   await expect(edge(page, 'return')).toBeFocused();
-  await expect(page.getByRole('button', { name: 'Reset route', exact: true })).toHaveCount(0);
+  // Reset route stays where it was clicked, unavailable (#207): the second press of a double click
+  // lands on it, not on Remove connection. It goes with the selection.
+  const held = page.getByRole('button', { name: 'Reset route', exact: true });
+  await expect(held).toHaveAttribute('aria-disabled', 'true');
+  await expect(held).toHaveAttribute('title', 'The connection already routes automatically.');
+  await page.keyboard.press('Escape');
+  await expect(edge(page, 'return')).not.toHaveClass(/selected/);
+  await expect(held).toHaveCount(0);
 });
 
 test('moving a card onto a manual route takes it back to automatic, in the move’s undo step', async ({

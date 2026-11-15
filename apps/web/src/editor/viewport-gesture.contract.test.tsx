@@ -679,3 +679,137 @@ describe('the card-drag gate on the installed xyflow and d3 (#207)', () => {
     }
   });
 });
+
+/** The contract draft with `e1` routed by hand: Done below Start, the route's trunk beside the middle. */
+function withManualRoute(): LoopDefinitionInput {
+  const definition = newLoopDefinition('Contract');
+  definition.nodes.find((node) => node.id === 'done')!.ui = { x: 320, y: 240 };
+  definition.edges[0]!.ui = { route: [270] };
+  return definition;
+}
+
+/** A press as a browser sends it: mousedown, mouseup, then the click, each with `detail`. */
+function press(target: Element, detail: number, init?: MouseEventInit) {
+  target.dispatchEvent(mouse('mousedown', 0, 0, 0, 1, { detail, ...init }));
+  target.dispatchEvent(mouse('mouseup', 0, 0, 0, 0, { detail, ...init }));
+  const event = mouse('click', 0, 0, 0, 0, { detail, ...init });
+  return { delivered: target.dispatchEvent(event), event };
+}
+
+describe('Reset route on the installed xyflow and d3 (#207)', () => {
+  beforeEach(() => {
+    ends.length = 0;
+    flow = undefined;
+    xyflow = undefined;
+  });
+
+  /** `e1` selected by a click on its own path, as a pointer selects it; Reset route is shown. */
+  async function selectedByPath() {
+    const definition = withManualRoute();
+    store().load('L1', definition);
+    const rendered = render(<Live />);
+    const wrapper = await waitFor(() => {
+      const found = rendered.container.querySelector<SVGGElement>(
+        '.react-flow__edge[data-id="e1"]',
+      );
+      expect(found).not.toBeNull();
+      return found!;
+    });
+    expect(wrapper).not.toHaveClass('selected');
+    press(wrapper.querySelector('.react-flow__edge-interaction')!, 1);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Reset route' })).toBeVisible());
+    expect(wrapper).toHaveClass('selected');
+    return { definition, rendered, wrapper };
+  }
+  const resetButton = () => screen.getByRole('button', { name: 'Reset route' });
+  const toolbarAt = () =>
+    remove().closest('foreignObject')!.parentElement!.getAttribute('transform');
+
+  it('keeps the first-clicked Reset route under the second press of a double click, so nothing removes until Remove connection is clicked on purpose', async () => {
+    const { definition, rendered, wrapper } = await selectedByPath();
+    const reset = resetButton();
+    const button = remove();
+    const at = toolbarAt();
+    const viewport = () =>
+      rendered.container.querySelector<HTMLElement>('.react-flow__viewport')!.style.transform;
+    const before = { viewport: viewport(), transform: [...xyflow!.getState().transform] };
+    expect(reset).not.toHaveAttribute('aria-disabled');
+
+    // The first press of the double click.
+    expect(press(reset, 1).delivered).toBe(true);
+    await microtasks();
+    expect(store().past.map((step) => step.label)).toEqual(['reset route of start to done']);
+    expect(store().definition!.edges[0]!.ui).toBeUndefined();
+    // The same attached buttons where they were: nothing was remounted, and e1 is still selected.
+    expect(resetButton()).toBe(reset);
+    expect(remove()).toBe(button);
+    expect(reset.isConnected && button.isConnected && wrapper.isConnected).toBe(true);
+    expect(wrapper).toHaveClass('selected');
+    expect(toolbarAt()).toBe(at);
+    expect(reset).toHaveAttribute('aria-disabled', 'true');
+    expect(button).not.toHaveAttribute('aria-disabled');
+
+    // The second press (detail 2, with its double click) lands on that same unavailable button.
+    expect(press(reset, 2).delivered).toBe(true);
+    reset.dispatchEvent(
+      new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        view,
+        detail: 2,
+      }),
+    );
+    await microtasks();
+    await queuedTask(() => undefined);
+    expect(stored()).toEqual(['e1']);
+    expect(store().past.map((step) => step.label)).toEqual(['reset route of start to done']);
+    expect(resetButton()).toBe(reset);
+    expect(remove()).toBe(button);
+    expect(wrapper).toHaveClass('selected');
+    expect(toolbarAt()).toBe(at);
+    // The viewport was not zoomed by the double click.
+    expect({ viewport: viewport(), transform: [...xyflow!.getState().transform] }).toEqual(before);
+
+    // The first legitimate click on Remove connection removes once; two Undos restore everything.
+    expect(press(button, 1).delivered).toBe(true);
+    await microtasks();
+    expect(stored()).toEqual([]);
+    expect(store().past.map((step) => step.label)).toEqual([
+      'reset route of start to done',
+      'remove edge start to done',
+    ]);
+    store().undo();
+    expect(stored()).toEqual(['e1']);
+    store().undo();
+    expect(store().definition).toEqual(definition);
+  });
+
+  it('keeps the connection selected, and the hold with it, when Reset route is clicked with the multi-selection key held', async () => {
+    const { wrapper } = await selectedByPath();
+    await holdControl();
+    try {
+      const reset = resetButton();
+      const button = remove();
+      const at = toolbarAt();
+      // xyflow would unselect a selected connection clicked under its multi-selection key: Reset
+      // route's click ends on the button, as Remove connection's does.
+      press(reset, 1, CONTROL);
+      await microtasks();
+      expect(store().past.map((step) => step.label)).toEqual(['reset route of start to done']);
+      expect(wrapper).toHaveClass('selected');
+      expect(resetButton()).toBe(reset);
+      expect(remove()).toBe(button);
+      expect(toolbarAt()).toBe(at);
+      press(reset, 2, CONTROL);
+      press(reset, 3, CONTROL);
+      await microtasks();
+      expect(wrapper).toHaveClass('selected');
+      expect(resetButton()).toBe(reset);
+      expect(stored()).toEqual(['e1']);
+      expect(store().past).toHaveLength(1);
+    } finally {
+      releaseControl();
+    }
+  });
+});

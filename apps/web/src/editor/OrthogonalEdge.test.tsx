@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { getSmoothStepPath, Position, ReactFlowProvider, type EdgeProps } from '@xyflow/react';
 import type { ReactNode } from 'react';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OrthogonalEdge, type OrthogonalFlowEdge } from './OrthogonalEdge.js';
 import { RouteEditingContext, type RouteEditing } from './route-editing.js';
 import type { RoutedEdge } from './routing.js';
@@ -656,5 +657,373 @@ describe('OrthogonalEdge', () => {
     fireEvent.click(remove);
     expect(editing.remove).not.toHaveBeenCalled();
     useEditorStore.setState({ definition: undefined, systemChat: false });
+  });
+});
+
+/**
+ * Reset route keeps the toolbar where it was clicked (#207). A double click's second press lands on
+ * the point of the first: were the toolbar recentred on the automatic label with Reset route gone,
+ * Remove connection would sit under that point. These tests drive the real component, its route
+ * channel and the browser's click and key sequences; they assert what is rendered, never where a
+ * browser would hit-test (jsdom has no layout).
+ */
+describe('Reset route keeps its toolbar where it was clicked (#207)', () => {
+  const MESSAGE = 'The connection already routes automatically.';
+  const manual: RoutedEdge = { ...route, manual: true };
+  /** The router's route for the same loop-back: its label, and so the centred toolbar, is elsewhere. */
+  const automatic: RoutedEdge = {
+    ...route,
+    points: [
+      { x: 100, y: 0 },
+      { x: 120, y: 0 },
+      { x: 120, y: 120 },
+      { x: -10, y: 120 },
+      { x: -10, y: 40 },
+      { x: 0, y: 40 },
+    ],
+    label: { x: 40, y: 120 },
+  };
+  /** Another manual route, as a nudge or a drag of a handle draws one. */
+  const nudged: RoutedEdge = {
+    ...manual,
+    points: [
+      { x: 100, y: 0 },
+      { x: 130, y: 0 },
+      { x: 130, y: 200 },
+      { x: -20, y: 200 },
+      { x: -20, y: 40 },
+      { x: 0, y: 40 },
+    ],
+    label: { x: 70, y: 200 },
+  };
+  type Label = { x: number; y: number };
+  /** Where the toolbar goes for a label at `at`, at zoom 1. */
+  const above = (at: Label) => `translate(${at.x} ${at.y - 18}) scale(1)`;
+  const placed = (container: HTMLElement) =>
+    container.querySelector('foreignObject')!.parentElement!.getAttribute('transform');
+  const toolbar = (container: HTMLElement) =>
+    [...container.querySelector('.gg-route-toolbar')!.children].map((child) => child.textContent);
+  const labelAt = (container: HTMLElement) =>
+    container.querySelector('.react-flow__edge-textwrapper')!.getAttribute('transform');
+
+  beforeEach(() => {
+    useEditorStore.setState({ definition: undefined, systemChat: false });
+  });
+
+  /** The route channel of one connection, published to as the canvas does after an edit. */
+  function channelOf(initial: RoutedEdge, forward = false) {
+    const channels = createRouteChannels();
+    return {
+      data: { channel: channels.edge('return', initial), forward, suspended: false },
+      publish: (next: RoutedEdge | undefined) =>
+        act(() => channels.publish(new Map(next ? [['return', next]] : []), new Set(['return']))),
+    };
+  }
+  /**
+   * The edge selected inside xyflow's edge wrapper, whose React click handler (an ancestor here)
+   * selects it again, or with Control or Meta held toggles it off.
+   */
+  function setup(
+    stand: ReturnType<typeof channelOf>,
+    geometry: Partial<EdgeProps<OrthogonalFlowEdge>> = {},
+    editing: ReturnType<typeof editor> = editor(),
+  ) {
+    const onClick = vi.fn();
+    const onKeyDown = vi.fn();
+    const tree = (selected: boolean) => (
+      <div onClick={onClick} onKeyDown={onKeyDown}>
+        {inFlow(
+          <OrthogonalEdge {...props} {...geometry} data={stand.data} selected={selected} />,
+          editing,
+        )}
+      </div>
+    );
+    const view = render(tree(true));
+    return {
+      view,
+      editing,
+      onClick,
+      onKeyDown,
+      select: (selected: boolean) => view.rerender(tree(selected)),
+    };
+  }
+  const resetButton = () => screen.getByRole('button', { name: 'Reset route' });
+  const removeButton = () => screen.getByRole('button', { name: 'Remove connection' });
+
+  it.each([
+    ['a loop-back', false, automatic, {}],
+    [
+      'a forward connection',
+      true,
+      undefined,
+      { sourceX: 0, sourceY: 0, targetX: 300, targetY: 120 },
+    ],
+  ] as const)(
+    'keeps the toolbar and Reset route where they were on %s, so no later click lands on Remove connection',
+    async (_, forward, after, geometry) => {
+      const stand = channelOf(manual, forward);
+      const { view, editing, onClick } = setup(stand, geometry);
+      const user = userEvent.setup();
+      const reset = resetButton();
+      const remove = removeButton();
+      const at = placed(view.container);
+      const label = labelAt(view.container);
+      expect(toolbar(view.container)).toEqual(['Reset route', 'Remove connection']);
+      expect(reset).not.toHaveAttribute('aria-disabled');
+      expect(reset).not.toHaveAttribute('title');
+
+      // The first click of a double click: the browser's own sequence, then the canvas publishes.
+      await user.click(reset);
+      expect(editing.reset).toHaveBeenCalledTimes(1);
+      expect(editing.reset).toHaveBeenCalledWith('return');
+      expect(screen.getByTestId('edge')).toHaveFocus();
+      stand.publish(after);
+
+      // The route and its label moved on; the toolbar and its two controls did not.
+      expect(labelAt(view.container)).not.toBe(label);
+      expect(placed(view.container)).toBe(at);
+      expect(resetButton()).toBe(reset);
+      expect(removeButton()).toBe(remove);
+      expect(reset.isConnected).toBe(true);
+      expect(toolbar(view.container)).toEqual(['Reset route', 'Remove connection']);
+      expect(reset).toHaveTextContent('Reset route');
+      expect(reset).toHaveClass('nodrag', 'nopan', 'nokey', 'pointer-coarse:h-11');
+      // Unavailable because the route is automatic: a real hit target that keeps focus and `nopan`.
+      expect(reset).toBeEnabled();
+      expect(reset).toHaveAttribute('aria-disabled', 'true');
+      expect(reset).toHaveAttribute('title', MESSAGE);
+      expect(reset).not.toHaveAttribute('data-gesture');
+      expect(remove).toBeEnabled();
+      expect(remove).not.toHaveAttribute('aria-disabled');
+
+      // The second press of the double click, and any later click count, modifier or key, do nothing.
+      await user.dblClick(reset);
+      await user.tripleClick(reset);
+      for (const detail of [2, 3, 4, 5]) fireEvent.click(reset, { detail });
+      for (const modifier of [{ shiftKey: true }, { ctrlKey: true }, { metaKey: true }])
+        fireEvent.click(reset, modifier);
+      reset.focus();
+      await user.keyboard('{Enter}');
+      await user.keyboard(' ');
+      expect(editing.reset).toHaveBeenCalledTimes(1);
+      expect(editing.remove).not.toHaveBeenCalled();
+      // Each click ends on the button, as Remove connection's does: the edge wrapper never selects
+      // the connection again, which with Control or Meta held would toggle it off.
+      expect(onClick).not.toHaveBeenCalled();
+      expect(reset).toHaveFocus();
+      expect(placed(view.container)).toBe(at);
+      expect(resetButton()).toBe(reset);
+
+      // A deliberate click on Remove connection removes once.
+      await user.click(remove);
+      expect(editing.remove).toHaveBeenCalledTimes(1);
+      expect(editing.remove).toHaveBeenCalledWith('return');
+      expect(onClick).not.toHaveBeenCalled();
+    },
+  );
+
+  it('has Remove connection alone in a fresh selection of an automatic route, and forgets the hold on deselection', async () => {
+    const stand = channelOf(automatic);
+    const { view, select } = setup(stand);
+    // A normal fresh selection: nothing to reset, nothing held, the toolbar over the label.
+    expect(toolbar(view.container)).toEqual(['Remove connection']);
+    expect(screen.queryByRole('button', { name: 'Reset route' })).toBeNull();
+    expect(placed(view.container)).toBe(above(automatic.label));
+
+    stand.publish(manual);
+    await userEvent.setup().click(resetButton());
+    stand.publish(automatic);
+    expect(toolbar(view.container)).toEqual(['Reset route', 'Remove connection']);
+    expect(placed(view.container)).toBe(above(manual.label));
+    // Deselected, the toolbar goes; selected again it is a fresh one, as at the start.
+    select(false);
+    expect(view.container.querySelector('.gg-route-toolbar')).toBeNull();
+    select(true);
+    expect(toolbar(view.container)).toEqual(['Remove connection']);
+    expect(placed(view.container)).toBe(above(automatic.label));
+  });
+
+  it.each([
+    [
+      'the same points array again, as an Undo might return it',
+      { ...manual, label: { x: 70, y: 150 } },
+    ],
+    ['another manual route, as a nudge or a drag draws', nudged],
+  ])('ends the hold when %s is drawn, and holds again at the next click', async (_, next) => {
+    expect(next.manual).toBe(true);
+    const stand = channelOf(manual);
+    const { view, editing } = setup(stand);
+    const user = userEvent.setup();
+    await user.click(resetButton());
+    stand.publish(automatic);
+    expect(placed(view.container)).toBe(above(manual.label));
+    expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
+
+    // The route is drawn by hand again: the toolbar follows its label and Reset route is available.
+    stand.publish(next);
+    expect(resetButton()).toBeEnabled();
+    expect(resetButton()).not.toHaveAttribute('aria-disabled');
+    expect(resetButton()).not.toHaveAttribute('title');
+    expect(placed(view.container)).toBe(above(next.label));
+
+    // It resets that route too, and holds where that was clicked.
+    await user.click(resetButton());
+    expect(editing.reset).toHaveBeenCalledTimes(2);
+    stand.publish(automatic);
+    expect(placed(view.container)).toBe(above(next.label));
+    expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('follows a different manual route that arrives before the automatic one', async () => {
+    // A reset that took no effect, then the route is redrawn: nothing is held.
+    const stand = channelOf(manual);
+    const { view } = setup(stand);
+    await userEvent.setup().click(resetButton());
+    expect(placed(view.container)).toBe(above(manual.label));
+    stand.publish(nudged);
+    expect(placed(view.container)).toBe(above(nudged.label));
+    expect(resetButton()).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('keeps the width of Crosses a card as an inaccessible blank while held', async () => {
+    const stand = channelOf({ ...manual, crossing: true });
+    const { view, select } = setup(stand);
+    const chip = screen.getByText('Crosses a card');
+    const classes = chip.className.split(' ');
+    expect(chip).not.toHaveAttribute('aria-hidden');
+    expect(toolbar(view.container)).toEqual(['Crosses a card', 'Reset route', 'Remove connection']);
+
+    await userEvent.setup().click(resetButton());
+    stand.publish(automatic);
+    // The same element with the same text and classes, so the same width, now blank and hidden
+    // from assistive technology; the controls beside it do not move.
+    expect(toolbar(view.container)).toEqual(['Crosses a card', 'Reset route', 'Remove connection']);
+    const slot = view.container.querySelector('.gg-route-toolbar')!.children[0]!;
+    expect(slot).toBe(chip);
+    expect(slot).toHaveClass(...classes, 'invisible');
+    expect(slot).toHaveAttribute('aria-hidden', 'true');
+    expect(placed(view.container)).toBe(above(manual.label));
+    // A fresh selection of the automatic route, which crosses nothing, keeps no blank.
+    select(false);
+    select(true);
+    expect(toolbar(view.container)).toEqual(['Remove connection']);
+  });
+
+  it('shows the note again when a crossing manual route is drawn after the hold', async () => {
+    const stand = channelOf({ ...manual, crossing: true });
+    const { view } = setup(stand);
+    await userEvent.setup().click(resetButton());
+    stand.publish(automatic);
+    const slot = view.container.querySelector('.gg-route-toolbar')!.children[0]!;
+    expect(slot).toHaveAttribute('aria-hidden', 'true');
+    stand.publish({ ...nudged, crossing: true });
+    expect(view.container.querySelector('.gg-route-toolbar')!.children[0]).toBe(slot);
+    expect(slot).not.toHaveAttribute('aria-hidden');
+    expect(slot).not.toHaveClass('invisible');
+  });
+
+  it('keeps the toolbar keys on the held Reset route: Escape returns to the connection, the rest stay on the button', async () => {
+    const stand = channelOf(manual);
+    const { editing, onKeyDown } = setup(stand);
+    await userEvent.setup().click(resetButton());
+    stand.publish(automatic);
+    const reset = resetButton();
+    for (const key of ['Delete', 'Backspace', 'Enter', ' ']) fireEvent.keyDown(reset, { key });
+    expect(onKeyDown).not.toHaveBeenCalled();
+    reset.focus();
+    fireEvent.keyDown(reset, { key: 'Escape' });
+    expect(screen.getByTestId('edge')).toHaveFocus();
+    expect(editing.reset).toHaveBeenCalledTimes(1);
+    expect(editing.remove).not.toHaveBeenCalled();
+  });
+
+  it('refuses on the pan gate first, holding nothing, and keeps Reset route unavailable after a pan settles', async () => {
+    const gate = createViewportGestureGate();
+    const detach = gate.attach(window);
+    try {
+      const refused = channelOf(manual);
+      const first = setup(refused, {}, editor(gate));
+      act(() => gate.move(new MouseEvent('mousemove')));
+      expect(resetButton()).toHaveAttribute('data-gesture', 'panning');
+      fireEvent.click(resetButton());
+      expect(first.editing.reset).not.toHaveBeenCalled();
+      expect(first.onClick).not.toHaveBeenCalled();
+      // The refused click made no hold: when the route changes some other way, the toolbar follows it.
+      refused.publish(automatic);
+      expect(toolbar(first.view.container)).toEqual(['Remove connection']);
+      expect(placed(first.view.container)).toBe(above(automatic.label));
+      first.view.unmount();
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
+      });
+      await waitFor(() => expect(gate.state()).toBe('ready'));
+
+      // Held, then a pan: both controls say so; once it settles Reset route stays unavailable.
+      const stand = channelOf(manual);
+      const { view, editing } = setup(stand, {}, editor(gate));
+      await userEvent.setup().click(resetButton());
+      expect(editing.reset).toHaveBeenCalledTimes(1);
+      stand.publish(automatic);
+      const reset = resetButton();
+      const remove = removeButton();
+      expect(placed(view.container)).toBe(above(manual.label));
+      act(() => gate.move(new MouseEvent('mousemove')));
+      for (const button of [reset, remove]) {
+        expect(button).toHaveAttribute('aria-disabled', 'true');
+        expect(button).toHaveAttribute('data-gesture', 'panning');
+      }
+      fireEvent.click(remove);
+      expect(editing.remove).not.toHaveBeenCalled();
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
+      });
+      await waitFor(() => expect(remove).not.toHaveAttribute('aria-disabled'));
+      expect(reset).toHaveAttribute('aria-disabled', 'true');
+      expect(reset).toHaveAttribute('title', MESSAGE);
+      expect(reset).not.toHaveAttribute('data-gesture');
+      fireEvent.click(reset);
+      expect(editing.reset).toHaveBeenCalledTimes(1);
+      fireEvent.click(remove);
+      expect(editing.remove).toHaveBeenCalledTimes(1);
+      expect(editing.remove).toHaveBeenCalledWith('return');
+    } finally {
+      detach();
+    }
+  });
+
+  it('keeps the store’s reason on Remove connection beside the held Reset route', async () => {
+    const stand = channelOf(manual);
+    const { view, editing } = setup(stand);
+    await userEvent.setup().click(resetButton());
+    stand.publish(automatic);
+    act(() =>
+      useEditorStore.setState({
+        systemChat: true,
+        definition: {
+          schemaVersion: 4,
+          name: 'Chat',
+          nodes: [
+            { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
+            { id: 'chat-normalize', kind: 'mutate', label: 'Norm', config: { operations: [] } },
+          ],
+          edges: [
+            {
+              id: 'return',
+              from: { node: 'chat-input', port: 'out' },
+              to: { node: 'chat-normalize' },
+            },
+          ],
+        } as unknown as LoopDefinitionInput,
+      }),
+    );
+    expect(removeButton()).toBeDisabled();
+    expect(removeButton()).toHaveAttribute('title', VOICE_STEP_MESSAGE);
+    expect(resetButton()).toHaveAttribute('aria-disabled', 'true');
+    expect(resetButton()).toHaveAttribute('title', MESSAGE);
+    fireEvent.click(removeButton());
+    fireEvent.click(resetButton());
+    expect(editing.remove).not.toHaveBeenCalled();
+    expect(editing.reset).toHaveBeenCalledTimes(1);
+    expect(placed(view.container)).toBe(above(manual.label));
   });
 });

@@ -13,6 +13,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   useSyncExternalStore,
   type KeyboardEvent,
 } from 'react';
@@ -61,6 +62,29 @@ const HANDLE_REACH = 14;
 const TOOLBAR_WIDTH = 420;
 /** Keys a toolbar button keeps from the edge and the canvas: they act on the button alone. */
 const TOOLBAR_KEYS = ['Enter', ' ', 'Delete', 'Backspace'];
+/** What a held Reset route says: it is unavailable because the route is automatic. */
+const ROUTES_AUTOMATICALLY = 'The connection already routes automatically.';
+
+/**
+ * The toolbar as it was when Reset route was clicked (#207). The second press of a double click
+ * lands where the first did; recentred on the automatic label, with Reset route gone, the toolbar
+ * would put Remove connection under it. So the toolbar stays at `at` and Reset route stays in its
+ * slot, unavailable, until the connection is drawn by hand again or deselected (the toolbar
+ * unmounts). Meanwhile it may sit apart from the automatic label, or from a card moved since.
+ */
+interface ToolbarHold {
+  /** The label the toolbar was centred on. */
+  at: Point;
+  /** Whether Crosses a card was showing: its slot stays as a blank, so nothing shifts. */
+  crossing: boolean;
+  /**
+   * The manual route that was reset, until the automatic one has been drawn. The click's own render
+   * still draws that route, and it must not end the hold. After the automatic route, any manual
+   * route ends it (an Undo, a nudge or a drag), whatever array it comes back as; before it, only a
+   * different array does (the reset took no effect and the route was drawn again).
+   */
+  reset: readonly Point[] | undefined;
+}
 const ARROWS: Record<string, ['x' | 'y', -1 | 1]> = {
   ArrowLeft: ['x', -1],
   ArrowRight: ['x', 1],
@@ -72,8 +96,9 @@ const ARROWS: Record<string, ['x' | 'y', -1 | 1]> = {
  * One edge's path from ordered orthogonal points: a backward route from the router (#18), a manual
  * route (#44), or, for a forward edge without one, xyflow's own smoothstep. Selected, it shows a
  * handle on each segment and a toolbar: Remove connection (#207) and, for a manual route, Reset
- * route. xyflow's wrapper keeps the hit target, keyboard selection, and edge change and delete
- * events.
+ * route, which stays where it was clicked, unavailable, until the route is drawn by hand again or
+ * the connection is deselected. xyflow's wrapper keeps the hit target, keyboard selection, and edge
+ * change and delete events.
  */
 export const OrthogonalEdge = memo(function OrthogonalEdge({
   id,
@@ -230,6 +255,15 @@ function RouteHandles({
 }) {
   const zoom = useStore(zoomOf);
   const groupRef = useRef<SVGGElement>(null);
+  const [hold, setHold] = useState<ToolbarHold>();
+  // Reset route holds the toolbar until the connection is drawn by hand again (#207). Settled while
+  // rendering, as the canvas settles its selection: the automatic route first, then any manual one.
+  if (hold) {
+    if (!manual) {
+      if (hold.reset) setHold({ ...hold, reset: undefined });
+    } else if (points !== hold.reset) setHold(undefined);
+  }
+  const anchor = hold?.at ?? labelAt;
   const base = useMemo<RouteBase>(
     () => ({ route: coordinatesOf(points), from: points[0]!, to: points.at(-1)! }),
     [points],
@@ -327,7 +361,7 @@ function RouteHandles({
           </g>
         );
       })}
-      <g transform={`translate(${labelAt.x} ${labelAt.y - 18 / zoom}) ${scale}`}>
+      <g transform={`translate(${anchor.x} ${anchor.y - 18 / zoom}) ${scale}`}>
         <foreignObject
           x={-TOOLBAR_WIDTH / 2}
           y={-48}
@@ -340,16 +374,32 @@ function RouteHandles({
               <span className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted">
                 Crosses a card
               </span>
+            ) : hold?.crossing ? (
+              // The same span, blank and hidden from assistive technology: its width keeps the
+              // controls beside it where they were.
+              <span
+                className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted invisible"
+                aria-hidden="true"
+              >
+                Crosses a card
+              </span>
             ) : null}
-            {manual ? (
+            {manual || hold ? (
               <Button
                 size="sm"
                 variant="outline"
                 className="nodrag nopan nokey pointer-coarse:h-11"
-                aria-disabled={settling ? true : undefined}
+                // Held on an automatic route: unavailable because there is nothing to reset, and
+                // still a hit target that keeps focus and `nopan`, so a second press lands here.
+                aria-disabled={settling || !manual ? true : undefined}
                 data-gesture={settling}
-                onClick={() => {
-                  if (settling) return;
+                title={manual ? undefined : ROUTES_AUTOMATICALLY}
+                onClick={(event) => {
+                  // As Remove connection's: the edge wrapper would select this edge again, which
+                  // with Control or Meta held toggles it off and takes the hold with it.
+                  event.stopPropagation();
+                  if (settling || !manual) return;
+                  setHold({ at: labelAt, crossing, reset: points });
                   // Focus first: a reset refused for a stale selection moves focus on to Undo.
                   edgeElement()?.focus();
                   editing.reset(edgeId);

@@ -24,7 +24,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   issues beside **Publish**, and removed there with **Remove edge**, one **Undo** step each.
   Right after a mouse pan or a mouse drag of a card, **Remove connection** and **Reset route**
   are briefly shown unavailable and do nothing, until the drag's own click blocker is gone;
-  before, they looked available while a click on them was silently swallowed. Removing a
+  before, they looked available while a click on them was silently swallowed. After **Reset
+  route**, the toolbar stays where it was clicked and the button stays in its place, dimmed, so the
+  second click of a double click no longer lands on **Remove connection**; both go when the
+  connection is deselected, and the toolbar follows its label again once the route is moved by hand
+  or the reset is undone. Removing a
   connection takes exactly one stored record: an ID that more than one stored connection holds is
   refused with its reason, on the button and from the keyboard, instead of removing them all. A
   connection stays selected only while it is the one selected in the loaded draft: **Reload
