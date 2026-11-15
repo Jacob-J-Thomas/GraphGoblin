@@ -190,6 +190,14 @@ rejects the entire patch; earlier operations in that patch are not retained.
 
 The same operations power `InputTransform` and `OutputTransform` on inferencing nodes, so "structural mutation or omission of input and output" is one vocabulary everywhere.
 
+A context mutation stops at the first authored evaluation, render, validation or patch error. The
+run fails with `MUTATION_ERROR`, the node ID, and a bounded cause. The inspector numbers operations
+from one. `failure.details.operationIndex` starts at zero and `operationKind` identifies the authored
+operation, including after a `coerce` repair. Later operations do not run, and the node's accumulated
+patch is committed only if the whole node succeeds. Resume refuses this failure because the run is
+pinned to the failing definition. Completion provider failures and schema-repair policies retain
+their existing outcomes. See [ADR-0080](decisions/ADR-0080-run-failure-diagnostics.md).
+
 Ports: `out`.
 
 ## Subloop (Decided, mappings Draft)
@@ -273,6 +281,10 @@ Exits are terminal: `{outcome, returns, destinations}`. `outcome` is `success` (
 Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes the distinct terminal status `exhausted`. Exhausted means the authored graph gave up further repetition; normally a gate's Limit reached output leads here. It is an outcome, not a resumable node failure. Every outcome evaluates the same return expression and delivers its value unchanged; Exhausted adds no wrapper or implicit last output. Use `outputs.<workNodeId>.value` when returning work output, because the preceding gate replaces `lastOutput`.
 
 The caller destination resolves to the run result, the MCP caller or the parent subloop output mapping. Delivery records `return.delivered` or `return.failed` for each destination.
+
+A recognized error evaluating the authored return expression, including reaching the evaluator depth
+guard, fails at the Exit node with nonresumable `EXPRESSION_ERROR` and a bounded cause. Evaluation
+must succeed before the run records the exit outcome or schedules its deliveries.
 
 With `returns: "none"` the run finishes without a result and no destination receives anything: neither the exit's own nor those added by the start request's `return`. The engine records no delivery event for them. This is valid configuration, not a failure. A quiet exit is `returns: "none"` with no destinations. A return expression that evaluates to nothing returns `null`, which is a value and is delivered. The exit editor says which case applies, and the inspector states that a run returned nothing by configuration, naming the destinations that received nothing, or identifies the quiet exit (#129, #258).
 

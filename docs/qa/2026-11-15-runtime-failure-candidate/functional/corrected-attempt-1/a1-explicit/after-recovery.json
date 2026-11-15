@@ -1,0 +1,325 @@
+{
+  "after": {
+    "id": "01M7FYSFQYYB816V4N290WCKFT",
+    "ownerId": "local",
+    "loopId": "01M7FYSFPBP1HGEFC0VJF7D3YN",
+    "versionId": "01M7FYSFPBP1HGEFC0VJF7D3YP",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a1-explicit",
+      "label": "QA 381 a1-explicit v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FYSFQYYB816V4N290WCKFV",
+    "status": "failed",
+    "currentNodeId": "mut",
+    "iteration": 1,
+    "failure": {
+      "code": "MUTATION_ERROR",
+      "message": "Mutation operation 2 (set) failed: expression failed: author-QA-381",
+      "nodeId": "mut",
+      "resumable": false,
+      "details": {
+        "operationIndex": 1,
+        "operationKind": "set",
+        "cause": {
+          "code": "EXPRESSION_ERROR",
+          "message": "expression failed: author-QA-381"
+        }
+      }
+    },
+    "createdAt": "2026-11-15T15:56:36.990Z",
+    "startedAt": "2026-11-15T15:56:37.021Z",
+    "finishedAt": "2026-11-15T15:56:37.097Z",
+    "finalizedAt": "2026-11-15T15:56:37.104Z",
+    "lastEventSeq": 6,
+    "recovery": {
+      "observedSeq": 6,
+      "resume": {
+        "allowed": false,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "afterEvents": [
+    {
+      "runId": "01M7FYSFQYYB816V4N290WCKFT",
+      "seq": 1,
+      "ts": "2026-11-15T15:56:36.990Z",
+      "type": "run.queued",
+      "versionId": "01M7FYSFPBP1HGEFC0VJF7D3YP",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a1-explicit",
+        "label": "QA 381 a1-explicit v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FYSFQYYB816V4N290WCKFT",
+          "loopId": "01M7FYSFPBP1HGEFC0VJF7D3YN",
+          "versionId": "01M7FYSFPBP1HGEFC0VJF7D3YP",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FYSFQYYB816V4N290WCKFV",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T15:56:36.990Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FYSFQYYB816V4N290WCKFT",
+      "seq": 2,
+      "ts": "2026-11-15T15:56:37.025Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FYSFQYYB816V4N290WCKFT",
+      "seq": 3,
+      "ts": "2026-11-15T15:56:37.046Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FYSFQYYB816V4N290WCKFT",
+      "seq": 4,
+      "ts": "2026-11-15T15:56:37.056Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T15:56:37.053Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T15:56:37.053Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 2
+    },
+    {
+      "runId": "01M7FYSFQYYB816V4N290WCKFT",
+      "seq": 5,
+      "ts": "2026-11-15T15:56:37.081Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "d29e2ed41da60955"
+    },
+    {
+      "runId": "01M7FYSFQYYB816V4N290WCKFT",
+      "seq": 6,
+      "ts": "2026-11-15T15:56:37.094Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "MUTATION_ERROR",
+        "message": "Mutation operation 2 (set) failed: expression failed: author-QA-381",
+        "nodeId": "mut",
+        "resumable": false,
+        "details": {
+          "operationIndex": 1,
+          "operationKind": "set",
+          "cause": {
+            "code": "EXPRESSION_ERROR",
+            "message": "expression failed: author-QA-381"
+          }
+        }
+      }
+    }
+  ],
+  "afterRows": {
+    "rows": [
+      {
+        "id": "01M7FYSFQYYB816V4N290WCKFT",
+        "status": "failed",
+        "current_node_id": "mut",
+        "version_id": "01M7FYSFPBP1HGEFC0VJF7D3YP",
+        "failure": "{\"code\":\"MUTATION_ERROR\",\"message\":\"Mutation operation 2 (set) failed: expression failed: author-QA-381\",\"nodeId\":\"mut\",\"resumable\":false,\"details\":{\"operationIndex\":1,\"operationKind\":\"set\",\"cause\":{\"code\":\"EXPRESSION_ERROR\",\"message\":\"expression failed: author-QA-381\"}}}",
+        "result": null,
+        "last_event_seq": 6,
+        "finalized_at": "2026-11-15T15:56:37.104Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T15:56:36.990Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FYSFPBP1HGEFC0VJF7D3YP\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a1-explicit\",\"label\":\"QA 381 a1-explicit v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FYSFQYYB816V4N290WCKFT\",\"loopId\":\"01M7FYSFPBP1HGEFC0VJF7D3YN\",\"versionId\":\"01M7FYSFPBP1HGEFC0VJF7D3YP\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FYSFQYYB816V4N290WCKFV\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T15:56:36.990Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T15:56:37.025Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T15:56:37.046Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T15:56:37.056Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T15:56:37.053Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T15:56:37.053Z\"}}],\"route\":\"out\",\"durationMs\":2}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T15:56:37.081Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"d29e2ed41da60955\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T15:56:37.094Z",
+        "type": "run.failed",
+        "node_id": null,
+        "payload": "{\"failure\":{\"code\":\"MUTATION_ERROR\",\"message\":\"Mutation operation 2 (set) failed: expression failed: author-QA-381\",\"nodeId\":\"mut\",\"resumable\":false,\"details\":{\"operationIndex\":1,\"operationKind\":\"set\",\"cause\":{\"code\":\"EXPRESSION_ERROR\",\"message\":\"expression failed: author-QA-381\"}}}}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FYSFQYYB816V4N290WCKFT"
+      }
+    ]
+  }
+}

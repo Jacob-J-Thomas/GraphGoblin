@@ -1,0 +1,39 @@
+packages/engine/src/handlers/subloop.ts:11:  evaluateExpression,
+packages/engine/src/handlers/subloop.ts:61:      vars[name] = toJson(await evaluateExpression(expression, view));
+packages/engine/src/handlers/subloop.ts:78:async function outputMapping(
+packages/engine/src/handlers/subloop.ts:99:    const value = await evaluateExpression(output.custom?.patch ?? '[]', {
+packages/engine/src/handlers/subloop.ts:139:          vars[name] = toJson(await evaluateExpression(expression, childView));
+packages/engine/src/handlers/subloop.ts:221:    const triggerPayload = config.input.trigger
+packages/engine/src/handlers/subloop.ts:222:      ? toJson(await evaluateExpression(config.input.trigger.payload, view))
+packages/engine/src/handlers/subloop.ts:303:    patch = await outputMapping(ctx, child);
+packages/engine/src/handlers/inference-context.ts:3:  renderTemplate,
+packages/engine/src/handlers/inference-context.ts:58:  let prompt = await renderTemplate(options.template, { ...threadView(candidateThread) });
+packages/engine/src/handlers/inference-context.ts:67:    const candidate = await renderTemplate(options.template, { ...threadView(candidateThread) });
+packages/engine/src/handlers/inference.ts:14:  renderTemplate,
+packages/engine/src/handlers/inference.ts:62:  runMutations,
+packages/engine/src/handlers/inference.ts:306:    const viewThread: ContextThread = config.input.length
+packages/engine/src/handlers/inference.ts:307:      ? (await runMutations(ctx, ctx.thread, config.input)).thread
+packages/engine/src/handlers/inference.ts:315:        await renderTemplate(file.template, view),
+packages/engine/src/handlers/inference.ts:364:      prompt = visit.freshSession?.prompt ?? (await renderTemplate(config.prompt.template, view));
+packages/engine/src/handlers/inference.ts:412:              ...(config.output.schema?.native
+packages/engine/src/handlers/inference.ts:413:                ? { outputSchema: config.output.schema.jsonSchema }
+packages/engine/src/handlers/inference.ts:421:          template: config.prompt.template,
+packages/engine/src/handlers/inference.ts:504:    const schema = config.output.schema;
+packages/engine/src/handlers/inference.ts:608:          const repairPrompt = await renderTemplate(schema.repair.prompt ?? DEFAULT_REPAIR_PROMPT, {
+packages/engine/src/handlers/inference.ts:660:        output = config.output.capture === 'text' ? result.finalText : jsonOrText(result.finalText);
+packages/engine/src/handlers/inference.ts:666:      if (config.output.captureTranscript === 'artifact') {
+packages/engine/src/handlers/inference.ts:685:      if (config.output.toMessages !== 'none') {
+packages/engine/src/handlers/inference.ts:686:        if (config.output.toMessages === 'final-and-notes') {
+packages/engine/src/handlers/inference.ts:698:      if (config.output.transforms.length) {
+packages/engine/src/handlers/inference.ts:699:        const transformed = await runMutations(ctx, working, config.output.transforms);
+packages/engine/src/handlers/heartbeat.ts:2:import { evaluatePredicate, renderTemplate, threadView } from '@graphgoblin/domain';
+packages/engine/src/handlers/heartbeat.ts:20:        headers[k] = await renderTemplate(v, view);
+packages/engine/src/handlers/heartbeat.ts:26:            url: await renderTemplate(spec.url, view),
+packages/engine/src/handlers/heartbeat.ts:28:            ...(spec.body !== undefined ? { body: await renderTemplate(spec.body, view) } : {}),
+packages/engine/src/handlers/heartbeat.ts:50:      const args: string[] = [];
+packages/engine/src/handlers/heartbeat.ts:51:      for (const arg of spec.args) args.push(await renderTemplate(arg, view));
+packages/engine/src/handlers/heartbeat.ts:138:    if (config.until !== undefined && (await evaluatePredicate(config.until, probeView))) {
+packages/engine/src/handlers/heartbeat.ts:153:      const rendered = await renderTemplate(config.deadline, view);
+packages/engine/src/handlers/script.ts:7:import { renderTemplate } from '@graphgoblin/domain';
+packages/engine/src/handlers/script.ts:39:    const args: string[] = [];
+packages/engine/src/handlers/script.ts:40:    for (const arg of config.args) args.push(await renderTemplate(arg, view));

@@ -1,0 +1,309 @@
+{
+  "run": {
+    "id": "01M7FTZ5T6ETSA772FRKSE9EG4",
+    "ownerId": "local",
+    "loopId": "01M7FTZ5S7AYRBZK18P82HEQT6",
+    "versionId": "01M7FTZ5S7AYRBZK18P82HEQT7",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a2-final-thread",
+      "label": "QA 381 a2-final-thread v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FTZ5T6ETSA772FRKSE9EG5",
+    "status": "failed",
+    "currentNodeId": "mut",
+    "iteration": 1,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "node mut produced an invalid patch: [\n  {\n    \"expected\": \"record\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"vars\"\n    ],\n    \"message\": \"Invalid input: expected record, received number\"\n  }\n]",
+      "nodeId": "mut",
+      "resumable": false
+    },
+    "createdAt": "2026-11-15T14:49:49.126Z",
+    "startedAt": "2026-11-15T14:49:49.136Z",
+    "finishedAt": "2026-11-15T14:49:49.184Z",
+    "finalizedAt": "2026-11-15T14:49:49.189Z",
+    "lastEventSeq": 6,
+    "recovery": {
+      "observedSeq": 6,
+      "resume": {
+        "allowed": false,
+        "code": "FAILURE_NOT_RESUMABLE",
+        "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M7FTZ5T6ETSA772FRKSE9EG4",
+      "seq": 1,
+      "ts": "2026-11-15T14:49:49.126Z",
+      "type": "run.queued",
+      "versionId": "01M7FTZ5S7AYRBZK18P82HEQT7",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a2-final-thread",
+        "label": "QA 381 a2-final-thread v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FTZ5T6ETSA772FRKSE9EG4",
+          "loopId": "01M7FTZ5S7AYRBZK18P82HEQT6",
+          "versionId": "01M7FTZ5S7AYRBZK18P82HEQT7",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FTZ5T6ETSA772FRKSE9EG5",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T14:49:49.126Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FTZ5T6ETSA772FRKSE9EG4",
+      "seq": 2,
+      "ts": "2026-11-15T14:49:49.138Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FTZ5T6ETSA772FRKSE9EG4",
+      "seq": 3,
+      "ts": "2026-11-15T14:49:49.150Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FTZ5T6ETSA772FRKSE9EG4",
+      "seq": 4,
+      "ts": "2026-11-15T14:49:49.155Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:49.154Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:49.154Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M7FTZ5T6ETSA772FRKSE9EG4",
+      "seq": 5,
+      "ts": "2026-11-15T14:49:49.173Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "ef7e9fc8bf9b9272"
+    },
+    {
+      "runId": "01M7FTZ5T6ETSA772FRKSE9EG4",
+      "seq": 6,
+      "ts": "2026-11-15T14:49:49.181Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "node mut produced an invalid patch: [\n  {\n    \"expected\": \"record\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"vars\"\n    ],\n    \"message\": \"Invalid input: expected record, received number\"\n  }\n]",
+        "nodeId": "mut",
+        "resumable": false
+      }
+    }
+  ],
+  "raw": {
+    "rows": [
+      {
+        "id": "01M7FTZ5T6ETSA772FRKSE9EG4",
+        "status": "failed",
+        "current_node_id": "mut",
+        "version_id": "01M7FTZ5S7AYRBZK18P82HEQT7",
+        "failure": "{\"code\":\"INTERNAL_ERROR\",\"message\":\"node mut produced an invalid patch: [\\n  {\\n    \\\"expected\\\": \\\"record\\\",\\n    \\\"code\\\": \\\"invalid_type\\\",\\n    \\\"path\\\": [\\n      \\\"vars\\\"\\n    ],\\n    \\\"message\\\": \\\"Invalid input: expected record, received number\\\"\\n  }\\n]\",\"nodeId\":\"mut\",\"resumable\":false}",
+        "result": null,
+        "last_event_seq": 6,
+        "finalized_at": "2026-11-15T14:49:49.189Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T14:49:49.126Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FTZ5S7AYRBZK18P82HEQT7\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a2-final-thread\",\"label\":\"QA 381 a2-final-thread v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FTZ5T6ETSA772FRKSE9EG4\",\"loopId\":\"01M7FTZ5S7AYRBZK18P82HEQT6\",\"versionId\":\"01M7FTZ5S7AYRBZK18P82HEQT7\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FTZ5T6ETSA772FRKSE9EG5\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T14:49:49.126Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T14:49:49.138Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T14:49:49.150Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T14:49:49.155Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:49.154Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:49.154Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T14:49:49.173Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"ef7e9fc8bf9b9272\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T14:49:49.181Z",
+        "type": "run.failed",
+        "node_id": null,
+        "payload": "{\"failure\":{\"code\":\"INTERNAL_ERROR\",\"message\":\"node mut produced an invalid patch: [\\n  {\\n    \\\"expected\\\": \\\"record\\\",\\n    \\\"code\\\": \\\"invalid_type\\\",\\n    \\\"path\\\": [\\n      \\\"vars\\\"\\n    ],\\n    \\\"message\\\": \\\"Invalid input: expected record, received number\\\"\\n  }\\n]\",\"nodeId\":\"mut\",\"resumable\":false}}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FTZ5T6ETSA772FRKSE9EG4"
+      }
+    ]
+  }
+}

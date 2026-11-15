@@ -4,6 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Authored context-mutation errors fail with `MUTATION_ERROR`, the node, the failed operation and
+  a bounded evaluator or patch cause (#381, #414, ADR-0080). Authored Exit return evaluation
+  errors use `EXPRESSION_ERROR`. Both failures refuse Resume.
+- Newly recorded internal run failures keep implementation diagnostics in server logs. REST,
+  MCP and the inspector read the safe persisted failure. Secondary inference recording entries
+  retain their operation identifiers. Historical runs retain their original rows and events,
+  which can still contain diagnostics recorded by older builds. New parent failures omit
+  recognized historical engine diagnostics when forwarding a child's failure.
+
 - Poll triggers refuse malformed UTF-16 dedupe keys before lookup or admission (#361, ADR-0079).
   Item polls skip each affected candidate and admit later eligible items. Single-result polls check
   the actual derived key, including a surrogate pair split by the 512-code-unit limit. Warnings

@@ -1,0 +1,202 @@
+{
+  "test": {
+    "id": "a2-continue-raw",
+    "tier": "composed",
+    "mode": "invalid",
+    "calls": 1,
+    "ops": [
+      {
+        "op": "set",
+        "path": "/vars/qaBefore",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaRaw",
+        "value": {
+          "kind": "literal",
+          "value": {
+            "ok": "yes"
+          }
+        }
+      },
+      {
+        "op": "coerce",
+        "source": "/vars/qaRaw",
+        "target": "/vars/qaClean",
+        "jsonSchema": {
+          "type": "object",
+          "required": [
+            "ok"
+          ],
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            }
+          }
+        },
+        "repair": {
+          "enabled": true,
+          "maxAttempts": 1,
+          "onFailure": "continue-raw"
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaAfter",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      }
+    ],
+    "expect": {
+      "status": "succeeded",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/vars/qaBefore",
+          "value": true
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaRaw",
+          "value": {
+            "ok": "yes"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaClean",
+          "value": {
+            "ok": "yes"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaAfter",
+          "value": true
+        }
+      ],
+      "result": {
+        "qaBefore": true,
+        "qaRaw": {
+          "ok": "yes"
+        },
+        "qaClean": {
+          "ok": "yes"
+        },
+        "qaAfter": true
+      }
+    }
+  },
+  "definition": {
+    "schemaVersion": 4,
+    "name": "QA 381 a2-continue-raw",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "mut",
+        "kind": "mutate",
+        "label": "QA mutation",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/qaBefore",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaRaw",
+              "value": {
+                "kind": "literal",
+                "value": {
+                  "ok": "yes"
+                }
+              }
+            },
+            {
+              "op": "coerce",
+              "source": "/vars/qaRaw",
+              "target": "/vars/qaClean",
+              "jsonSchema": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "continue-raw"
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaAfter",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "outcome": "success",
+          "returns": "vars",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "mut"
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "mut",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  }
+}

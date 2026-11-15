@@ -1,0 +1,315 @@
+{
+  "run": {
+    "id": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+    "ownerId": "local",
+    "loopId": "01M7FTZDC7AHYZPQJMCSR5PNJV",
+    "versionId": "01M7FTZDC7AHYZPQJMCSR5PNJW",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a2-repaired-target",
+      "label": "QA 381 a2-repaired-target v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FTZDD1CJ8NXWEQ1X3RTB1P",
+    "status": "failed",
+    "currentNodeId": "mut",
+    "iteration": 1,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "operation 0 (add /vars/qaScalar/leaf): path \"/vars/qaScalar/leaf\" traverses a non-container value",
+      "nodeId": "mut",
+      "resumable": true,
+      "details": {
+        "name": "PatchError",
+        "stack": "PatchError: operation 0 (add /vars/qaScalar/leaf): path \"/vars/qaScalar/leaf\" traverses a non-container value\n    at applyPatch (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/patch.js:103:23)\n    at completeRepair (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/mutations.js:242:22)\n    at runMutations (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:200:26)\n    at async Object.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/mutate.js:5:27)\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)"
+      }
+    },
+    "createdAt": "2026-11-15T14:49:56.897Z",
+    "startedAt": "2026-11-15T14:49:56.907Z",
+    "finishedAt": "2026-11-15T14:49:56.954Z",
+    "finalizedAt": "2026-11-15T14:49:56.958Z",
+    "lastEventSeq": 6,
+    "recovery": {
+      "observedSeq": 6,
+      "resume": {
+        "allowed": true
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+      "seq": 1,
+      "ts": "2026-11-15T14:49:56.897Z",
+      "type": "run.queued",
+      "versionId": "01M7FTZDC7AHYZPQJMCSR5PNJW",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a2-repaired-target",
+        "label": "QA 381 a2-repaired-target v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+          "loopId": "01M7FTZDC7AHYZPQJMCSR5PNJV",
+          "versionId": "01M7FTZDC7AHYZPQJMCSR5PNJW",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FTZDD1CJ8NXWEQ1X3RTB1P",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T14:49:56.897Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+      "seq": 2,
+      "ts": "2026-11-15T14:49:56.910Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+      "seq": 3,
+      "ts": "2026-11-15T14:49:56.922Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+      "seq": 4,
+      "ts": "2026-11-15T14:49:56.927Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:56.926Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:56.926Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 1
+    },
+    {
+      "runId": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+      "seq": 5,
+      "ts": "2026-11-15T14:49:56.946Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "64ad15b52e27a0f9"
+    },
+    {
+      "runId": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+      "seq": 6,
+      "ts": "2026-11-15T14:49:56.953Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "operation 0 (add /vars/qaScalar/leaf): path \"/vars/qaScalar/leaf\" traverses a non-container value",
+        "nodeId": "mut",
+        "resumable": true,
+        "details": {
+          "name": "PatchError",
+          "stack": "PatchError: operation 0 (add /vars/qaScalar/leaf): path \"/vars/qaScalar/leaf\" traverses a non-container value\n    at applyPatch (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/patch.js:103:23)\n    at completeRepair (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/mutations.js:242:22)\n    at runMutations (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:200:26)\n    at async Object.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/mutate.js:5:27)\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)"
+        }
+      }
+    }
+  ],
+  "raw": {
+    "rows": [
+      {
+        "id": "01M7FTZDD1CJ8NXWEQ1X3RTB1N",
+        "status": "failed",
+        "current_node_id": "mut",
+        "version_id": "01M7FTZDC7AHYZPQJMCSR5PNJW",
+        "failure": "{\"code\":\"INTERNAL_ERROR\",\"message\":\"operation 0 (add /vars/qaScalar/leaf): path \\\"/vars/qaScalar/leaf\\\" traverses a non-container value\",\"nodeId\":\"mut\",\"resumable\":true,\"details\":{\"name\":\"PatchError\",\"stack\":\"PatchError: operation 0 (add /vars/qaScalar/leaf): path \\\"/vars/qaScalar/leaf\\\" traverses a non-container value\\n    at applyPatch (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/patch.js:103:23)\\n    at completeRepair (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/mutations.js:242:22)\\n    at runMutations (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:200:26)\\n    at async Object.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/mutate.js:5:27)\\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)\"}}",
+        "result": null,
+        "last_event_seq": 6,
+        "finalized_at": "2026-11-15T14:49:56.958Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T14:49:56.897Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FTZDC7AHYZPQJMCSR5PNJW\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a2-repaired-target\",\"label\":\"QA 381 a2-repaired-target v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FTZDD1CJ8NXWEQ1X3RTB1N\",\"loopId\":\"01M7FTZDC7AHYZPQJMCSR5PNJV\",\"versionId\":\"01M7FTZDC7AHYZPQJMCSR5PNJW\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FTZDD1CJ8NXWEQ1X3RTB1P\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T14:49:56.897Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T14:49:56.910Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T14:49:56.922Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T14:49:56.927Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:56.926Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:56.926Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T14:49:56.946Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"64ad15b52e27a0f9\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T14:49:56.953Z",
+        "type": "run.failed",
+        "node_id": null,
+        "payload": "{\"failure\":{\"code\":\"INTERNAL_ERROR\",\"message\":\"operation 0 (add /vars/qaScalar/leaf): path \\\"/vars/qaScalar/leaf\\\" traverses a non-container value\",\"nodeId\":\"mut\",\"resumable\":true,\"details\":{\"name\":\"PatchError\",\"stack\":\"PatchError: operation 0 (add /vars/qaScalar/leaf): path \\\"/vars/qaScalar/leaf\\\" traverses a non-container value\\n    at applyPatch (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/patch.js:103:23)\\n    at completeRepair (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/mutations.js:242:22)\\n    at runMutations (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/common.js:200:26)\\n    at async Object.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/mutate.js:5:27)\\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2086:26)\"}}}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FTZDD1CJ8NXWEQ1X3RTB1N"
+      }
+    ]
+  }
+}

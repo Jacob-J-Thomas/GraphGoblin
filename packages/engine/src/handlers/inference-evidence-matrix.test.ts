@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { RunManager } from '../run-manager.js';
 import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
 import { FakeHarness } from '../testing/fakes.js';
@@ -89,7 +89,22 @@ it.each(matrix)(
           resumable: expected.resumable,
           inference: { promptKind: 'repair', submission: expected.state },
         });
-        if (fired) expect(run.failure?.details).toMatchObject({ recording: expect.any(Array) });
+        if (fired) {
+          expect(run.failure?.details).toMatchObject({
+            recording: [{ operation: 'harness.submission' }],
+          });
+          expect(JSON.stringify([run.failure, e.events(run.id)])).not.toContain(
+            'Classification recording fault',
+          );
+          const logs = e.ports.logger.lines.filter(
+            ({ obj }) =>
+              obj.runId === run.id &&
+              obj.nodeId === run.failure?.nodeId &&
+              obj.turnId === run.failure?.inference?.turnId &&
+              obj.operation === 'harness.submission',
+          );
+          expect(JSON.stringify(logs)).toContain('Classification recording fault');
+        }
         if (expected.resumable) {
           await manager.resume(run.id);
           await manager.waitForIdle();
@@ -104,6 +119,76 @@ it.each(matrix)(
       expect(h.calls.length).toBe(!expected.cancelled && expected.resumable ? 3 : 2);
     } finally {
       manager.stop();
+    }
+  },
+);
+
+it.each([false, true])(
+  'keeps acceptance and recording evidence afterCommit=%s',
+  async (afterCommit) => {
+    const e = await createTestEngine();
+    const fault = new Error('D:/acceptance-recording-message/engine.ts');
+    fault.stack = 'D:/acceptance-recording-stack/engine.ts';
+    const statusFault = new Error('D:/status-recording-message/engine.ts');
+    statusFault.stack = 'D:/status-recording-stack/engine.ts';
+    const store = e.ports.events;
+    const append = store.append.bind(store);
+    let acceptanceFaults = 0;
+    vi.spyOn(store, 'append').mockImplementation(async (id, drafts, options) => {
+      if (drafts.some((draft) => draft.type === 'harness.submission' && draft.marker)) {
+        acceptanceFaults += 1;
+        if (afterCommit) await append(id, drafts, options);
+        throw fault;
+      }
+      return append(id, drafts, options);
+    });
+    const sessions = e.ports.sessions;
+    const upsert = sessions.upsert.bind(sessions);
+    vi.spyOn(sessions, 'upsert').mockImplementation(async (row) => {
+      if (row.status === 'failed') throw statusFault;
+      return upsert(row);
+    });
+    try {
+      const version = e.publish(failureLoop('codex'));
+      const run = await e.runToIdle(version.loopId);
+      expect(acceptanceFaults).toBe(1);
+      expect(run.failure).toMatchObject({
+        code: 'INTERNAL_ERROR',
+        resumable: true,
+        inference: { promptKind: 'authored', submission: 'delivery-uncertain' },
+      });
+      const details = run.failure?.details;
+      if (!details || typeof details !== 'object' || Array.isArray(details))
+        throw new Error('Expected public inference recording operations');
+      expect(details.recording).toEqual([
+        { operation: 'harness.submission' },
+        { operation: 'harness.status' },
+      ]);
+      const events = e.events(run.id);
+      expect(
+        events.filter((event) => event.type === 'harness.submission' && event.marker),
+      ).toHaveLength(afterCommit ? 1 : 0);
+      expect(events.filter((event) => event.type === 'harness.turn')).toHaveLength(1);
+      expect(events.at(-1)).toMatchObject({ type: 'run.failed', failure: run.failure });
+      expect(JSON.stringify([run.failure, events])).not.toContain('-recording-');
+      const log = e.ports.logger.lines.filter(
+        ({ obj }) =>
+          obj.runId === run.id &&
+          obj.nodeId === run.failure?.nodeId &&
+          obj.turnId === run.failure?.inference?.turnId,
+      );
+      expect(log.filter(({ obj }) => obj.operation).map(({ obj }) => obj)).toEqual([
+        expect.objectContaining({
+          operation: 'harness.submission',
+          error: { message: fault.message, name: 'Error', stack: fault.stack },
+        }),
+        expect.objectContaining({
+          operation: 'harness.status',
+          error: { message: statusFault.message, name: 'Error', stack: statusFault.stack },
+        }),
+      ]);
+    } finally {
+      e.manager.stop();
     }
   },
 );

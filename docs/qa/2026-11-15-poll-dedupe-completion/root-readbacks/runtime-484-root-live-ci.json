@@ -1,0 +1,468 @@
+{
+  "pr": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484",
+    "number": 484,
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "draft": true,
+    "body": "Poll keys containing lone UTF-16 surrogate units can evade SQLite deduplication and start another run on every poll. This change rejects those derived identities before lookup or admission, with bounded typed diagnostics. Item mode isolates malformed candidates while preserving whole-batch type, blank, length and valid-duplicate errors; single mode validates the existing 512-unit slice. Valid pairs, literal U+FFFD and intentional no-key behavior retain their exact semantics.\n\nCloses #361. Closes #483.\n\nThe #483 prerequisite adds the established optional garbage-collection step to two Windows SQLite test cleanup hooks. Its pre-existing failure reproduced on unchanged main. Product assertions, timeouts, retries and coverage thresholds are unchanged. ADR-0079 and the trigger documentation describe the identity rule; historical stored data is not rewritten.\n\nValidation on source candidate `420240cad27d3865988dc7009dc9d80291e93c9c`:\n\n- API coverage: 1,943 passed, 14 documented skips; 95.95% lines and 90.88% branches, using two local workers. Domain: 460 tests, 98.73% lines and 96.09% branches. Typecheck, affected lint/format and seven forced API build tasks passed.\n- Independent QA: 21 native scheduler/HTTP/SQLite observations across same-file restart, 15 exact durable IDs with matching queued events, held-response overlap checks, 20 controlled public-method cases, and one-process concurrent file-SQLite admission. Disposable stores and owned processes were cleaned up.\n- The native supervisor's original exit 1 is retained: two warning timestamps preceded the separate probe clock by 1 ms. Offline analysis of the unchanged logs used recorded gateway due times and assigned all 20 warnings uniquely. The native sequence was not rerun.\n- Original coverage, cleanup and baseline failures remain published. The genuine build ran before the source commit; all twelve changed source files and the complete compiled inventories were rebound to the committed bytes.\n\nEvidence: [baseline](docs/qa/2026-11-15-poll-dedupe-baseline/README.md), [implementation and cleanup diagnosis](docs/qa/2026-11-15-poll-dedupe-implementation/README.md), [independent corrected QA](docs/qa/2026-11-15-poll-dedupe-corrected/README.md). This publication also retains the preceding Space cards [final completion](docs/qa/2026-11-15-space-cards-completion/README.md) and [corrected CI](docs/qa/2026-11-15-space-cards-corrected-ci/README.md), without changing that product source or its pending owner acceptance.\n\nDelivery gates: independent Claude Opus 5.5 xhigh review, current-head CI and fresh GPT-6 Astra max exact-head/target sign-off remain pending. Three formal scans maximum, shared by the opposite-family review and final audit. QA agent: `/root/runtime_361_qa` (GPT-6.1 Sol xhigh). Human QA is not required for these two issues. Other batch acceptance obligations remain open.\n\r\n",
+    "title": "fix(api): reject malformed poll dedupe identities",
+    "base": "main",
+    "base_sha": "15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd",
+    "head": "codex/gg-20261115-poll-dedupe",
+    "head_sha": "08651317c485062eb90367e1df3f7632f8e1a6c7",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": "98d2bc2c473d3167a39ae966f9dfb9e2f00904fe",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-15T12:49:49Z",
+    "updated_at": "2026-11-15T12:49:49Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 2,
+    "changed_files": 343,
+    "additions": 197855,
+    "deletions": 16,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484",
+    "display_title": "fix(api): reject malformed poll dedupe identities"
+  },
+  "jobs": {
+    "jobs": [
+      {
+        "id": 132817046734,
+        "name": "Template image",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43715831258,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Build the distributed image",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Load installed templates without network or writable storage",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          }
+        ]
+      },
+      {
+        "id": 132817046977,
+        "name": "Windows launcher",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43715831258,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Native Windows launcher acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Upload native evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 132817046986,
+        "name": "Gates",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43715831258,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Reset acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Recovery process acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Chat restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Wait restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Prompt restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Webhook retry acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Current-format migration acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Typecheck",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Lint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Format check",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Layer rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Migration generation is a no-op",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Design token rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          },
+          {
+            "name": "Dependency graph rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20
+          },
+          {
+            "name": "Shipped templates and deliberate-invalid refusal",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          },
+          {
+            "name": "Install Chromium for tooling browser measurements",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22
+          },
+          {
+            "name": "Unit tests with coverage thresholds",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          },
+          {
+            "name": "Licence allowlist",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24
+          },
+          {
+            "name": "Generated docs are current",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25
+          },
+          {
+            "name": "Design token contrast table is current and passing",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 26
+          },
+          {
+            "name": "Dependency audit",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 27
+          },
+          {
+            "name": "Upload coverage reports",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 28
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 54
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 55
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 56
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 57
+          }
+        ]
+      },
+      {
+        "id": 132817046990,
+        "name": "Browser",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43715831258,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Install Edge",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Functional browser suite (no retries)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Browser coverage and exclusions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Upload browser failure evidence",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 10
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          }
+        ]
+      }
+    ]
+  }
+}

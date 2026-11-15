@@ -1,0 +1,412 @@
+{
+  "run": {
+    "id": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+    "ownerId": "local",
+    "loopId": "01M7FTZ2Y66VZ1QE8E74QE4TJK",
+    "versionId": "01M7FTZ2Y66VZ1QE8E74QE4TJM",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a1-success",
+      "label": "QA 381 a1-success v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FTZ2Z6CHBV1RC959PZ5FWK",
+    "status": "succeeded",
+    "iteration": 1,
+    "outcome": "success",
+    "result": {
+      "qaBefore": true,
+      "qaValue": "42",
+      "qaAnswer": 42,
+      "qaAfter": true
+    },
+    "createdAt": "2026-11-15T14:49:46.213Z",
+    "startedAt": "2026-11-15T14:49:46.225Z",
+    "finishedAt": "2026-11-15T14:49:46.298Z",
+    "finalizedAt": "2026-11-15T14:49:46.309Z",
+    "lastEventSeq": 11,
+    "recovery": {
+      "observedSeq": 11,
+      "resume": {
+        "allowed": false,
+        "code": "RUN_FINISHED",
+        "message": "This run has finished. Resume only continues paused runs or supported failures."
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 1,
+      "ts": "2026-11-15T14:49:46.213Z",
+      "type": "run.queued",
+      "versionId": "01M7FTZ2Y66VZ1QE8E74QE4TJM",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a1-success",
+        "label": "QA 381 a1-success v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+          "loopId": "01M7FTZ2Y66VZ1QE8E74QE4TJK",
+          "versionId": "01M7FTZ2Y66VZ1QE8E74QE4TJM",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FTZ2Z6CHBV1RC959PZ5FWK",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T14:49:46.213Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 2,
+      "ts": "2026-11-15T14:49:46.229Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 3,
+      "ts": "2026-11-15T14:49:46.243Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 4,
+      "ts": "2026-11-15T14:49:46.251Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:46.249Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T14:49:46.249Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 2
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 5,
+      "ts": "2026-11-15T14:49:46.260Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "3b34b55714139b38"
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 6,
+      "ts": "2026-11-15T14:49:46.267Z",
+      "type": "node.finished",
+      "nodeId": "mut",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/vars/qaBefore",
+          "value": true
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaValue",
+          "value": "42"
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaAnswer",
+          "value": 42
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaAfter",
+          "value": true
+        }
+      ],
+      "route": "out",
+      "durationMs": 2
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 7,
+      "ts": "2026-11-15T14:49:46.286Z",
+      "type": "node.started",
+      "nodeId": "done",
+      "kind": "exit",
+      "attempt": 1,
+      "configHash": "1edff379ce4c418b"
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 8,
+      "ts": "2026-11-15T14:49:46.293Z",
+      "type": "exit.evaluated",
+      "nodeId": "done",
+      "outcome": "success"
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 9,
+      "ts": "2026-11-15T14:49:46.293Z",
+      "type": "node.finished",
+      "nodeId": "done",
+      "patch": [],
+      "durationMs": 1
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 10,
+      "ts": "2026-11-15T14:49:46.293Z",
+      "type": "run.finished",
+      "status": "succeeded",
+      "outcome": "success",
+      "result": {
+        "qaBefore": true,
+        "qaValue": "42",
+        "qaAnswer": 42,
+        "qaAfter": true
+      }
+    },
+    {
+      "runId": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+      "seq": 11,
+      "ts": "2026-11-15T14:49:46.306Z",
+      "type": "return.delivered",
+      "channel": {
+        "kind": "caller"
+      },
+      "target": "run.result"
+    }
+  ],
+  "raw": {
+    "rows": [
+      {
+        "id": "01M7FTZ2Z5VK1EDTP7J7VMPDE2",
+        "status": "succeeded",
+        "current_node_id": null,
+        "version_id": "01M7FTZ2Y66VZ1QE8E74QE4TJM",
+        "failure": null,
+        "result": "{\"qaBefore\":true,\"qaValue\":\"42\",\"qaAnswer\":42,\"qaAfter\":true}",
+        "last_event_seq": 11,
+        "finalized_at": "2026-11-15T14:49:46.309Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T14:49:46.213Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FTZ2Y66VZ1QE8E74QE4TJM\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a1-success\",\"label\":\"QA 381 a1-success v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FTZ2Z5VK1EDTP7J7VMPDE2\",\"loopId\":\"01M7FTZ2Y66VZ1QE8E74QE4TJK\",\"versionId\":\"01M7FTZ2Y66VZ1QE8E74QE4TJM\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FTZ2Z6CHBV1RC959PZ5FWK\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T14:49:46.213Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T14:49:46.229Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T14:49:46.243Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T14:49:46.251Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:46.249Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T14:49:46.249Z\"}}],\"route\":\"out\",\"durationMs\":2}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T14:49:46.260Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"3b34b55714139b38\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T14:49:46.267Z",
+        "type": "node.finished",
+        "node_id": "mut",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/vars/qaBefore\",\"value\":true},{\"op\":\"add\",\"path\":\"/vars/qaValue\",\"value\":\"42\"},{\"op\":\"add\",\"path\":\"/vars/qaAnswer\",\"value\":42},{\"op\":\"add\",\"path\":\"/vars/qaAfter\",\"value\":true}],\"route\":\"out\",\"durationMs\":2}"
+      },
+      {
+        "seq": 7,
+        "ts": "2026-11-15T14:49:46.286Z",
+        "type": "node.started",
+        "node_id": "done",
+        "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"1edff379ce4c418b\"}"
+      },
+      {
+        "seq": 8,
+        "ts": "2026-11-15T14:49:46.293Z",
+        "type": "exit.evaluated",
+        "node_id": "done",
+        "payload": "{\"outcome\":\"success\"}"
+      },
+      {
+        "seq": 9,
+        "ts": "2026-11-15T14:49:46.293Z",
+        "type": "node.finished",
+        "node_id": "done",
+        "payload": "{\"patch\":[],\"durationMs\":1}"
+      },
+      {
+        "seq": 10,
+        "ts": "2026-11-15T14:49:46.293Z",
+        "type": "run.finished",
+        "node_id": null,
+        "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\",\"result\":{\"qaBefore\":true,\"qaValue\":\"42\",\"qaAnswer\":42,\"qaAfter\":true}}"
+      },
+      {
+        "seq": 11,
+        "ts": "2026-11-15T14:49:46.306Z",
+        "type": "return.delivered",
+        "node_id": null,
+        "payload": "{\"channel\":{\"kind\":\"caller\"},\"target\":\"run.result\"}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FTZ2Z5VK1EDTP7J7VMPDE2"
+      }
+    ]
+  }
+}

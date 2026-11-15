@@ -582,7 +582,11 @@ describe('adversarial engine invariants', () => {
       if (status === 'succeeded')
         expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
       if (status === 'failed')
-        expect(r.failure).toMatchObject({ code: 'INTERNAL_ERROR', resumable: true });
+        expect(r.failure).toMatchObject({
+          code: 'MUTATION_ERROR',
+          resumable: false,
+          details: { childDetails: { operationIndex: 0, operationKind: 'set' } },
+        });
       expect(e.eventTypes(r.id).filter((t) => t === 'run.woken')).toHaveLength(1);
     },
   );

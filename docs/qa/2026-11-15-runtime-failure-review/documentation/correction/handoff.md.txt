@@ -1,0 +1,43 @@
+# PR #485 documentation correction handoff
+
+Status: ready for root read; not staged or committed.
+
+## Scope and changes
+
+Worktree: C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin
+Base HEAD: 656a73214c5d59a25c22a4abf2d8b3bf17976959
+Claude Opus 5.5 xhigh scan 1 report: review-381-opus-scan1/full-report.md, SHA-256 44491862135f923290c7223ea593a8e27ae6294f43577eb3d704d641d25f9fc1. Root accepted F1 as FIX-IN-PR.
+
+Only these three files are modified:
+
+- docs/05-execution-engine.md: The Bug row and ordinary-internal paragraph now distinguish the safe INTERNAL_ERROR public copy from raw diagnostics in server logs correlated by run and node when available, while preserving node/resumability and historical rows/events. The existing decider safe-only logging statement remains intact. The child-failure paragraph says INTERNAL_ERROR children copy projected safe text and recognized legacy name/stack and secondary recording diagnostics are logged rather than republished.
+- docs/decisions/ADR-0080-run-failure-diagnostics.md: Consequences scope unchanged INTERNAL_ERROR classification/resumability to the remaining authored boundaries: script arguments; heartbeat probe/deadline templates and until predicates; subloop input/custom output mappings; inference prompt/context/file templates and input/output transforms. It states the exact safe message, log correlation, historical fidelity, and that existing higher-priority cancellation, script-outcome, and inference-submission classification remains in effect.
+- docs/guide/03-run-and-observe.md: Adds only MUTATION_ERROR. It directs the user to correct the authored operation, publish the corrected definition, and start a new run; it does not imply Replay changes a pinned definition. Other pre-existing table gaps were left alone.
+
+## Verification
+
+- Project Node: v22.23.4.
+- Scoped pnpm.cmd exec prettier --write and --check on those three Markdown files: exit 0. The write only re-aligned the existing resiliency table because its changed row widened the table.
+- git diff --check: exit 0.
+- Read-only source crossrefs confirmed the safe message in packages/engine/src/failure-publication.ts:12-13; projection and classification in packages/engine/src/run-manager.ts:3061-68; script args at script.ts:40; heartbeat templates/predicate at heartbeat.ts:20-28,51,138,153; subloop mappings at subloop.ts:61,99,139,222; inference templates/transforms at inference.ts:307,315,364,699 and inference-context.ts:58,67; MUTATION_ERROR contract at packages/contracts/src/run.ts:87.
+- No product tests, build, coverage, browser, QA suite, review, commit, index operation, or GitHub operation was run.
+- Worktree status after the edit shows exactly the three authorized Markdown paths modified.
+
+## Evidence files
+
+External folder: C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-485-doc-correction
+
+- documentation-final.patch is the final complete narrative diff.
+- hashes-before-after.txt records before/after document hashes, final patch hash, and scan-report hash.
+- documentation-before-narrowing.patch preserves the first draft before root's scope correction; it is historical provenance, not the final diff.
+- source-crossrefs-final.txt records source references.
+- prettier-write-final.*, prettier-check-final.*, and git-diff-check-final.* retain final command outputs and exit codes. Earlier formatting outputs are retained with initial filenames.
+- pre-change-state.txt and pre-change-doc-and-findings-context.txt preserve the starting checkout and relevant review context.
+
+Final document hashes:
+
+- docs/05-execution-engine.md: e2b43b08b8b82f87c91f8602ac7fddffb7cb2d8f1e481b792d3fa61c4e087587
+- docs/decisions/ADR-0080-run-failure-diagnostics.md: f0b24816f29107f0096d9da25b58d2110b44adda8507e3b39d219c6c52d3bace
+- docs/guide/03-run-and-observe.md: 07c9dd04972d0de505d18687f15392027a58fd45d705137d0cf9416a7fa2b6c5
+
+Root owns the subsequent review/readback, staging, commit, and current-head CI.

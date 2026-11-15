@@ -1,0 +1,307 @@
+{
+  "run": {
+    "id": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+    "ownerId": "local",
+    "loopId": "01M7FYSY8FZBN0ZAJZ1HQN26J9",
+    "versionId": "01M7FYSY8FZBN0ZAJZ1HQN26JA",
+    "pinned": {
+      "source": "published",
+      "version": 1,
+      "name": "QA 381 a2-provider-template",
+      "label": "QA 381 a2-provider-template v1",
+      "defaults": {
+        "owner": {
+          "byHarness": {}
+        },
+        "process": {
+          "byHarness": {
+            "codex": {
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        }
+      },
+      "limits": {
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null
+      },
+      "classifiers": {}
+    },
+    "invocationId": "01M7FYSYA0JYMSAR4E5DG6HTSY",
+    "status": "failed",
+    "currentNodeId": "mut",
+    "iteration": 1,
+    "failure": {
+      "code": "INTERNAL_ERROR",
+      "message": "An unexpected error interrupted the run. See the server logs for this run.",
+      "nodeId": "mut",
+      "resumable": true
+    },
+    "createdAt": "2026-11-15T15:56:51.904Z",
+    "startedAt": "2026-11-15T15:56:51.932Z",
+    "finishedAt": "2026-11-15T15:56:52.035Z",
+    "finalizedAt": "2026-11-15T15:56:52.049Z",
+    "lastEventSeq": 6,
+    "recovery": {
+      "observedSeq": 6,
+      "resume": {
+        "allowed": true
+      },
+      "replayDefault": {
+        "allowed": false,
+        "code": "REPLAY_NODE_NOT_REACHED",
+        "message": "This run never reached this node."
+      },
+      "replay": [
+        {
+          "nodeId": "start",
+          "label": "Start",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "mut",
+          "label": "QA mutation",
+          "action": {
+            "allowed": true
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        },
+        {
+          "nodeId": "done",
+          "label": "Done",
+          "action": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "effects": [
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "kind": "delivery"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "runId": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+      "seq": 1,
+      "ts": "2026-11-15T15:56:51.904Z",
+      "type": "run.queued",
+      "versionId": "01M7FYSY8FZBN0ZAJZ1HQN26JA",
+      "pinned": {
+        "source": "published",
+        "version": 1,
+        "name": "QA 381 a2-provider-template",
+        "label": "QA 381 a2-provider-template v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {
+              "codex": {
+                "model": "gpt-6-luna",
+                "effort": "low"
+              }
+            }
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "initialThread": {
+        "schemaVersion": 1,
+        "run": {
+          "id": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+          "loopId": "01M7FYSY8FZBN0ZAJZ1HQN26J9",
+          "versionId": "01M7FYSY8FZBN0ZAJZ1HQN26JA",
+          "iteration": 1
+        },
+        "invocation": {
+          "id": "01M7FYSYA0JYMSAR4E5DG6HTSY",
+          "source": "manual.api",
+          "caller": {
+            "kind": "user",
+            "id": "local"
+          },
+          "trigger": {
+            "nodeId": "start",
+            "kind": "manual",
+            "payload": {},
+            "receivedAt": "2026-11-15T15:56:51.904Z"
+          }
+        },
+        "messages": [],
+        "vars": {},
+        "artifacts": [],
+        "outputs": {},
+        "gates": {},
+        "counters": {
+          "nodeVisits": {},
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        }
+      }
+    },
+    {
+      "runId": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+      "seq": 2,
+      "ts": "2026-11-15T15:56:51.935Z",
+      "type": "run.started",
+      "attempt": 1
+    },
+    {
+      "runId": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+      "seq": 3,
+      "ts": "2026-11-15T15:56:51.959Z",
+      "type": "node.started",
+      "nodeId": "start",
+      "kind": "trigger",
+      "attempt": 1,
+      "configHash": "527dee9c4254fe4e"
+    },
+    {
+      "runId": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+      "seq": 4,
+      "ts": "2026-11-15T15:56:51.968Z",
+      "type": "node.finished",
+      "nodeId": "start",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/outputs/start",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T15:56:51.965Z"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/lastOutput",
+          "value": {
+            "nodeId": "start",
+            "value": {},
+            "at": "2026-11-15T15:56:51.965Z"
+          }
+        }
+      ],
+      "route": "out",
+      "durationMs": 3
+    },
+    {
+      "runId": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+      "seq": 5,
+      "ts": "2026-11-15T15:56:52.010Z",
+      "type": "node.started",
+      "nodeId": "mut",
+      "kind": "mutate",
+      "attempt": 1,
+      "configHash": "22fc37c4585158a7"
+    },
+    {
+      "runId": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+      "seq": 6,
+      "ts": "2026-11-15T15:56:52.029Z",
+      "type": "run.failed",
+      "failure": {
+        "code": "INTERNAL_ERROR",
+        "message": "An unexpected error interrupted the run. See the server logs for this run.",
+        "nodeId": "mut",
+        "resumable": true
+      }
+    }
+  ],
+  "raw": {
+    "rows": [
+      {
+        "id": "01M7FYSYA0JYMSAR4E5DG6HTSX",
+        "status": "failed",
+        "current_node_id": "mut",
+        "version_id": "01M7FYSY8FZBN0ZAJZ1HQN26JA",
+        "failure": "{\"code\":\"INTERNAL_ERROR\",\"message\":\"An unexpected error interrupted the run. See the server logs for this run.\",\"nodeId\":\"mut\",\"resumable\":true}",
+        "result": null,
+        "last_event_seq": 6,
+        "finalized_at": "2026-11-15T15:56:52.049Z"
+      }
+    ],
+    "events": [
+      {
+        "seq": 1,
+        "ts": "2026-11-15T15:56:51.904Z",
+        "type": "run.queued",
+        "node_id": null,
+        "payload": "{\"versionId\":\"01M7FYSY8FZBN0ZAJZ1HQN26JA\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 a2-provider-template\",\"label\":\"QA 381 a2-provider-template v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7FYSYA0JYMSAR4E5DG6HTSX\",\"loopId\":\"01M7FYSY8FZBN0ZAJZ1HQN26J9\",\"versionId\":\"01M7FYSY8FZBN0ZAJZ1HQN26JA\",\"iteration\":1},\"invocation\":{\"id\":\"01M7FYSYA0JYMSAR4E5DG6HTSY\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":{},\"receivedAt\":\"2026-11-15T15:56:51.904Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+      },
+      {
+        "seq": 2,
+        "ts": "2026-11-15T15:56:51.935Z",
+        "type": "run.started",
+        "node_id": null,
+        "payload": "{\"attempt\":1}"
+      },
+      {
+        "seq": 3,
+        "ts": "2026-11-15T15:56:51.959Z",
+        "type": "node.started",
+        "node_id": "start",
+        "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+      },
+      {
+        "seq": 4,
+        "ts": "2026-11-15T15:56:51.968Z",
+        "type": "node.finished",
+        "node_id": "start",
+        "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T15:56:51.965Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":{},\"at\":\"2026-11-15T15:56:51.965Z\"}}],\"route\":\"out\",\"durationMs\":3}"
+      },
+      {
+        "seq": 5,
+        "ts": "2026-11-15T15:56:52.010Z",
+        "type": "node.started",
+        "node_id": "mut",
+        "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"22fc37c4585158a7\"}"
+      },
+      {
+        "seq": 6,
+        "ts": "2026-11-15T15:56:52.029Z",
+        "type": "run.failed",
+        "node_id": null,
+        "payload": "{\"failure\":{\"code\":\"INTERNAL_ERROR\",\"message\":\"An unexpected error interrupted the run. See the server logs for this run.\",\"nodeId\":\"mut\",\"resumable\":true}}"
+      }
+    ],
+    "runs": [
+      {
+        "id": "01M7FYSYA0JYMSAR4E5DG6HTSX"
+      }
+    ]
+  }
+}

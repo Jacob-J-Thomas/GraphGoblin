@@ -577,7 +577,7 @@ describe('mutate node', () => {
     );
     const run = await engine.runToIdle(version.loopId);
     expect(run.status).toBe('failed');
-    expect(run.failure?.code).toBe('INTERNAL_ERROR');
+    expect(run.failure?.code).toBe('MUTATION_ERROR');
     expect(run.failure?.message).toMatch(/not in a mutable region/);
   });
 });

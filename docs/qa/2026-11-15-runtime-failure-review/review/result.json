@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 935447,
+  "stop_reason": "end_turn",
+  "session_id": "1b086120-cf10-4ddd-8957-27fbe2d51a35",
+  "total_cost_usd": 8.643700199999998,
+  "usage": {
+    "input_tokens": 190,
+    "cache_creation_input_tokens": 349009,
+    "cache_read_input_tokens": 19541341,
+    "output_tokens": 97130,
+    "output_tokens_details": {
+      "thinking_tokens": 57261
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 349009,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 2551,
+        "cache_read_input_tokens": 348592,
+        "cache_creation_input_tokens": 417,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 417
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 190,
+      "outputTokens": 97130,
+      "cacheReadInputTokens": 19541341,
+      "cacheCreationInputTokens": 349009,
+      "webSearchRequests": 0,
+      "costUSD": 8.643700199999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 57261,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 349009,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 115,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "# #381 / #414 formal scan 1 of 3 — CHANGES REQUIRED\n\n**Verdict: CHANGES REQUIRED.** One documentation fix is needed. The code itself has no correctness, security, recovery or test blocker, and no product or test change is needed.\n\nThe full report is at `review-381-opus-scan1/full-report.md` (31,361 bytes, SHA-256 `44491862135f923290c7223ea593a8e27ae6294f43577eb3d704d641d25f9fc1`). I made no repository, index, commit, push or GitHub writes, made no provider calls, and ran no product tests or builds. The checkout was clean before and after.\n\n## Admission check\nThe admission file exists and is consistent with the checkout and CI:\n- **PR #485:** head `656a73214c5d59a25c22a4abf2d8b3bf17976959`, tree `d6c3dc2f3ebf265133fc3761c775ed37b2077388`, target `f91bd69b79dc417a2997ddb9c7670cb33df7597c`, source commit `615d50bc358d73bc55ad0591f4f625f1a46cb671`.\n- **Hashes:** all 12 bound inputs and all 9 CI files match their recorded sizes and SHA-256 values.\n- **Tested merge:** `7c8cf9f2b8b099351a9ac138cab43d86ec5ad23f` has the same tree as the head, with parents target then head. All four job logs check out that merge.\n- **CI run 43737977820, attempt 1:** all four jobs passed, 9,605 tests passed and 41 skipped (the package totals add up to that).\n- **Source binding:** all 29 changed files match the accepted manifest at both `615d50bc` and `656a7321`. The two later commits change only evidence, the register and `.prettierignore`.\n\n## Finding F1 (must fix; documentation only, introduced by this PR)\n- **Stale text in a Decided doc.** `docs/05-execution-engine.md` lines 477 and 479 still say internal failures are recorded \"with full diagnostics\" and that \"ordinary internal defects retain their full diagnostics.\" That contradicts the new paragraph this PR added at lines 103–111. New internal failures now carry only a safe message, and the raw details go to server logs.\n- **Missing disclosure.** None of the new ADR, docs or CHANGELOG text says what happens to authored template and expression errors outside Context Mutation and Exit. Those nodes are script args, heartbeat, subloop mappings, and inference prompts, context, files and transforms. Their errors stay `INTERNAL_ERROR`, but the public message is now \"An unexpected error interrupted the run. See the server logs for this run.\" The author's own error text no longer appears in the inspector, REST or MCP.\n- **Evidence.** The internal QA subloop output-mapping case (`typed-subloop-mapping`) shows exactly this. The error text appears only in the private log.\n- **Minimum fix:**\n  1. Correct docs/05 lines 477 and 479.\n  2. In ADR-0080 or docs/05, name the node kinds whose authored errors now show only the generic text, with the cause in server logs.\n  3. Optionally, correct the subloop message wording at docs/05 line 225.\n\n## Requirements that are met\n- **Mutation errors:** they get `MUTATION_ERROR`, nonresumable, with the correct zero-based index (kept across a repair pause), the operation kind and a one-based number in the message. The cause is capped at 1,000 characters. ID, clock and serialization failures stay unexpected. The failed node commits no partial patch, and repair outcomes are unchanged.\n- **Provider and resolver errors:** exceptions of the same class from the completion provider or model resolver stay unexpected `INTERNAL_ERROR`.\n- **Invalid final thread:** it still fails as nonresumable `INTERNAL_ERROR` with no operation attribution.\n- **Exit:** only an expression error in the return evaluation becomes nonresumable `EXPRESSION_ERROR`, with no invented mutation identity. The depth limit still applies, and the wide literal still succeeds.\n- **Public versus private diagnostics:** the only place that writes `run.failed` is the run manager's `failRun`, and the event and run row get the same failure. Only engine-created failures can supply public text; that class is not exported from the engine package, so adapters can't forge it. Raw message and stack are logged with run and node identity before script evidence can change the classification.\n- **Preserved behaviour:** code, node, resumability, script and inference provenance, and stop/deadline/cancel order are unchanged.\n- **Decision provider:** it keeps its fixed safe text and safe-only warning. An existing manager test checks that the raw marker appears in neither the public record nor any log line, and it passed in CI.\n- **Inference recording:** recording-failure entries keep their order and carry only `{operation}`. The raw error is logged privately with run, node, turn and operation.\n- **Subloop forwarding:** only exact parent/child wrapper shapes are traversed, and old diagnostic fields are removed. Unrelated authored or provider fields are kept, and historical rows and events are untouched.\n\n## Follow-up candidates (not blockers)\n- **Typed errors for other nodes:** typed authored-error classification for those other node kinds would restore the in-product cause, but it is outside #381's scope.\n- **Guide table:** the guide's failure-code table has no `MUTATION_ERROR` row. It already omitted 10 other codes, so this continues existing drift.\n- **Evaluator timeouts:** an expression timeout (2-second default budget) is now nonresumable at Mutation and Exit, as the spec requires. Under heavy host load that could be environmental rather than an authoring error; Replay still works.\n- **Broken links:** `delivery-register-append.md` has three links that only work from `docs/delivery/`.\n- **Message wording:** patch-error messages read \"operation 4 … operation 0\" because they include the JSON Patch's own index. The stored details are correct; this is optional polish.\n\n## Evidence limitations\n- **Checks run:** my checks were read-only (git queries, hash verification, packet checksum and link checks, raw-file spot reads). I ran no product tests, because CI already passed on the exact tree and nothing open needed them.\n- **Two corrected parsing mistakes of mine:**\n  - The checksum files use Windows line endings, so my first check reported every file as failing. With carriage returns stripped, all five packets verify.\n  - My first parser misread the checksum separator. After correcting it, nothing is missing or unlisted.\n- **Local full check:** the local `pnpm check` failed. Root's readbacks attribute the engine part to old expectations later corrected in test files only; the voice, Codex probe and plugin timeout failures have no known cause. CI is the only full-suite pass.\n- **Test tiers:** historical-child cases use made-up rows seeded into real SQLite. The composed cases use a controlled completion provider, and there were no live provider turns.\n- **Curation still open:** the current CI packet still lacks the manifest and checksum files its README names. The failed first CI attempt (run 43735208367, at commit `5082bc17`) is kept only outside the repository so far and must appear in the eventual completion record.\n- **Inherited PR #484 packets:** their records match their raw logs and git.\n\nOwner acceptance is separate from this review. This is scan 1 of 3. Root decides whether F1 needs another formal scan or can be handled as a known-cause correction. The final Astra max sign-off is still required.",
+  "ttft_ms": 1701,
+  "type": "result",
+  "duration_ms": 979337,
+  "uuid": "495c907d-3094-4132-9098-9fa2065c1ca7",
+  "ttft_stream_ms": 1569,
+  "time_to_request_ms": 1042,
+  "first_content_frame_ms": 1569,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 190,
+      "outputTokens": 97130,
+      "cacheReadInputTokens": 19541341,
+      "cacheCreationInputTokens": 349009,
+      "webSearchRequests": 0,
+      "costUSD": 8.643700199999998,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 57261,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 349009,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

@@ -1,0 +1,3831 @@
+{
+  "at": "2026-11-15T13:55:26.754Z",
+  "runtime": "v22.23.4",
+  "before": {
+    "head": "08651317c485062eb90367e1df3f7632f8e1a6c7",
+    "tree": "c5d6d7f505e52b5ccf07b4bcb791777761dc45df",
+    "status": [],
+    "mergeBase": "15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd",
+    "indexSHA256": "6194765e02d4037c7468224c68dba0a9e0b4ee0bd42931c023f598372d97996b"
+  },
+  "after": {
+    "head": "08651317c485062eb90367e1df3f7632f8e1a6c7",
+    "tree": "c5d6d7f505e52b5ccf07b4bcb791777761dc45df",
+    "status": [],
+    "mergeBase": "15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd",
+    "indexSHA256": "6194765e02d4037c7468224c68dba0a9e0b4ee0bd42931c023f598372d97996b"
+  },
+  "changedPaths": [
+    "CHANGELOG.md",
+    "apps/api/src/ollama-container.test.ts",
+    "apps/api/src/preflight-ollama.test.ts",
+    "apps/api/src/triggers/poll-dedupe.test.ts",
+    "apps/api/src/triggers/poll-items.test.ts",
+    "apps/api/src/triggers/poll-items.ts",
+    "apps/api/src/triggers/poll.ts",
+    "docs/08-triggers-and-integrations.md",
+    "docs/decisions/ADR-0079-poll-dedupe-key-identities.md",
+    "docs/decisions/README.md",
+    "docs/delivery/2026-11-13-four-intents-register.md",
+    "docs/qa/.gitattributes",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/README.md",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/baseline-result.md.txt",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/cleanup/cleanup-continuation.ps1",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/binding-preparation.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/binding.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/gateway.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/handoff.md.txt",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/merged-main-binding.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/run-old.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/verify-cleanup.ps1",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/frozen-preparation/wire-fixtures.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/admission.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/cleanup-continuation.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/cleanup.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/initial-gateway.log",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/initial-initial-loop-list.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-items-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-items-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-items-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-items-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-items-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-items-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-items-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-items-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-lone-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-lone-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-lone-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-lone-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-lone-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-lone-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-lone-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-lone-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P5-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-split-P5-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-unkeyed-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-unkeyed-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-unkeyed-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-unkeyed-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-unkeyed-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-unkeyed-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-unkeyed-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-unkeyed-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-valid-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-valid-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-valid-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-valid-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-valid-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-valid-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-valid-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/old-valid-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/post-drain-readback.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/probe-requests.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/published-items.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/published-lone.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/published-split.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/published-unkeyed.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/published-valid.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/restart-first-due.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/restart-gateway.log",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/restart-initial-loop-list.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/restart-rearm.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/result.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/source-and-build-after.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/old-attempt-1/source-and-build.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/root-readbacks/root-baseline-admission.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/root-readbacks/root-baseline-readback.json",
+    "docs/qa/2026-11-15-poll-dedupe-baseline/source-copy-map.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/README.md",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/admission-preparation.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/admission.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/admission.template.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/binding.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/candidate-binding.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/admission.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/cleanup.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-during-hold.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-hold.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-items-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-lone-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-lone-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-lone-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-lone-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-lone-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-lone-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-lone-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-lone-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P5-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-split-P5-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-valid-P1-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-valid-P1-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-valid-P2-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-valid-P2-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-valid-P3-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-valid-P3-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-valid-P4-durable.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/corrected-valid-P4-rest.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/initial-gateway.log",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/initial-initial-loop-list.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/post-drain-readback.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/probe-requests.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/published-items.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/published-lone.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/published-split.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/published-unkeyed.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/published-valid.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/restart-first-due.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/restart-gateway.log",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/restart-initial-loop-list.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/restart-rearm.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/result.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/source-and-build-after.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-attempt-1/source-and-build.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/corrected-result.md.txt",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/diagnostic-reanalysis/original-session-completion.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/diagnostic-reanalysis/read-warnings.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/diagnostic-reanalysis/receipt.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/diagnostics.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/execution-completions.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/gateway.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/handoff.md.txt",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/ports-attempt-1/result.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/race-attempt-1/cleanup.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/race-attempt-1/result.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/run-corrected.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/run-ports.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/run-race.mjs",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/corrected-preparation-v3/verify-cleanup.ps1",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/root-baseline-admission.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/root-baseline-readback.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/root-corrected-behavior-readback.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/root-diagnostic-reanalysis-readback.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/root-final-qa-acceptance.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/runtime-361-committed-freeze.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/runtime-361-root-local-gates.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/runtime-361-source-build-rebind.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/runtime-361-source-manifest-normalization.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/root-readbacks/runtime-361-source-staged.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/source-copy-map.json",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/source-freeze/final-source-SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/source-freeze/runtime-361-source-for-freeze-normalized-SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-corrected/wire-fixtures.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/README.md",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/cleanup-483/SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/cleanup-483/final-source-readback.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/cleanup-483/pre-run-context.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/cleanup-483/run-receipt.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/cleanup-483/two-spec-run.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/full-report.md.txt",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/01-public-ports-red.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/02-focused-green.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/03-api-build-receipt.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/03-api-build.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/04-filtered-static.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/05-affected-package-coverage.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/06-format-check.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/07-final-compiled-inventory.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/07-final-source-build-receipt.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/08-after-first-coverage-inventory.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/09-api-four-file-isolation.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/10-post-isolation-readback.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/11-baseline-ollama-cleanup-state.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/11-baseline-ollama-cleanup.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/11-baseline-ollama-source-binding.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-01-11/full-report-before-cleanup-diagnosis.md.txt",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/12-final-api-coverage-receipt.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/12-final-api-coverage.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/13-final-static.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/14-compiled-inventory-before-total-correction.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/14-final-api-build-receipt.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/14-final-api-build.log",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/14-final-compiled-inventory.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/14-final-source-build-receipt.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/14-source-build-readback-before-total-correction.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/implementation-12-14/final-source-SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/root-readbacks/runtime-361-committed-freeze.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/root-readbacks/runtime-361-root-local-gates.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/root-readbacks/runtime-361-source-build-rebind.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/root-readbacks/runtime-361-source-for-freeze-normalized-SHA256SUMS",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/root-readbacks/runtime-361-source-manifest-normalization.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/root-readbacks/runtime-361-source-staged.json",
+    "docs/qa/2026-11-15-poll-dedupe-implementation/source-copy-map.json",
+    "docs/qa/2026-11-15-space-cards-completion/README.md",
+    "docs/qa/2026-11-15-space-cards-completion/SHA256SUMS",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/after-gh-ci-jobs.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/after-gh-ci-run.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/after-gh-main.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/after-gh-pr.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/after-gh-routing-jobs.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/after-gh-routing-run.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/brief.md.txt",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/ci-independent-summary.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/correction-delta.diff",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/effective-full-scope.diff",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/evidence-integrity.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/evidence-integrity.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/final-check-exit.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/final-check.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/final-check.mjs",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/first-evidence-integrity.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/first-evidence-integrity.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/first-inspect-retained.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/first-inspect-retained.mjs",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/first-native-independent-readback.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/first-verify-evidence.mjs",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/focused-first-run-exit.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/focused-first-run.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/gh-ci-jobs.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/gh-ci-run.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/gh-issue208.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/gh-main.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/gh-pr.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/gh-routing-jobs.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/gh-routing-run.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/gh-tested-merge.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/historical-native-independent-readback.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/historical-readback-exit.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/historical-readback.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/historical-readback.mjs",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/independent-correction-delta.diff",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/independent-effective-full-scope.diff",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/index-before.txt",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/inspect-retained-exit.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/inspect-retained.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/inspect-retained.mjs",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/live-ci-jobs.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/live-ci-run.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/live-main.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/live-pr.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/live-routing-jobs.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/live-routing-run.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/live-tested-merge.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/ls-remote-after.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/ls-remote-before.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/native-independent-readback.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/report-format-exit.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/report-format.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/report.md.txt",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/root-ci-body-readback.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/root-green-ci-admission.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/root-publication-comment.md.txt",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/seal-receipt.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/seal.mjs",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/source-identity.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/source-index-after.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/source-index-before.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/synchronous-public-probe-exit.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/synchronous-public-probe.cjs",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/synchronous-public-probe.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/synchronous-public-probe.log",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/verification.json",
+    "docs/qa/2026-11-15-space-cards-completion/audit-artifacts/verify-evidence.mjs",
+    "docs/qa/2026-11-15-space-cards-completion/source-copy-map.json",
+    "docs/qa/2026-11-15-space-cards-completion/source-receipts/audit-source-SHA256SUMS.txt",
+    "docs/qa/2026-11-15-space-cards-completion/source-receipts/corrected-ci-root-readback.json",
+    "docs/qa/2026-11-15-space-cards-completion/source-receipts/final-publication-readback.json",
+    "docs/qa/2026-11-15-space-cards-completion/source-receipts/merge-verification.json",
+    "docs/qa/2026-11-15-space-cards-completion/source-receipts/owner-acceptance-state-restored.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/README.md",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/SHA256SUMS",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/artifacts-43698925969-complete.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/artifacts-43698925969-initial.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/artifacts-43698926003-final.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/artifacts-43698926003-initial.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/base-main-ref-final.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/git-commit-e1237593.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/head-commit-final.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496037-routing-steps.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496037-routing.log",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496147-gates-steps.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496147-gates.log",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496370-template-image-steps.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496370-template-image.log",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496437-windows-launcher-steps.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496437-windows-launcher.log",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496455-browser-steps.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/job-132765496455-browser.log",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/jobs-43698925969-complete.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/jobs-43698925969-initial.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/jobs-43698926003-final.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/jobs-43698926003-initial.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/jobs-43698926003-progress-snapshot.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/log-manifest.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/log-readback.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/merge-ref-final.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/merge-ref-initial.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/run-43698925969-complete.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/run-43698925969-initial.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/run-43698926003-final.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/run-43698926003-initial.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/run-43698926003-progress-snapshot.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/tested-checkout-identity.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/tested-merge-commit-final.json",
+    "docs/qa/2026-11-15-space-cards-corrected-ci/tested-merge-commit.json",
+    "packages/domain/src/poll-items.test.ts",
+    "packages/domain/src/poll-items.ts"
+  ],
+  "sourceRecords": [
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 161349,
+      "sha256": "9827f66aed51daf2b7dfe436cd9505b72200d3065f2ba6c0c9c587ad6aef477d",
+      "blob": "560e7cc888d34b807834bd388c599e177ab963e9"
+    },
+    {
+      "path": "apps/api/src/ollama-container.test.ts",
+      "bytes": 7350,
+      "sha256": "048273390a1714ced2bd434526a3810f0ef9cdee58d47375e95211467e214e0f",
+      "blob": "3589f9a615c86a5206aed6c52c68482a9d0f918b"
+    },
+    {
+      "path": "apps/api/src/preflight-ollama.test.ts",
+      "bytes": 19249,
+      "sha256": "b7fcdc4ac97a13e85827a290738054d31690dca4f7027902c98b6b1540fda30a",
+      "blob": "81f30d4644246672f5ff6910f23ff3980f09257a"
+    },
+    {
+      "path": "apps/api/src/triggers/poll-dedupe.test.ts",
+      "bytes": 5583,
+      "sha256": "ff987592e0a55945b28253f8cf1d37cd84b1a2f1c54f1e08bc6def7c1c01daac",
+      "blob": "56eb2630a05eacb7f9e0e6001780485ee4050f32"
+    },
+    {
+      "path": "apps/api/src/triggers/poll-items.test.ts",
+      "bytes": 8900,
+      "sha256": "2a1a095baf87e1af88eec6c5cb97d5c0fb687decffe2d94faa27d157f67ee751",
+      "blob": "ea0465c3e104e0f64d18ed320b81236d5d1c6f84"
+    },
+    {
+      "path": "apps/api/src/triggers/poll-items.ts",
+      "bytes": 1819,
+      "sha256": "54953e76af98c3ccd80ab5abbd3751d515d17afc09ddb348836494554f3f698e",
+      "blob": "f714f46878eaa447ce409243ca1ec84195efea33"
+    },
+    {
+      "path": "apps/api/src/triggers/poll.ts",
+      "bytes": 9902,
+      "sha256": "1ececa003e4013b3557e12ac883bad32c12fca64281adcebc28e407a598b5dd5",
+      "blob": "80e2bb79f07f509875545817ad0b53d74bbd3e5b"
+    },
+    {
+      "path": "docs/08-triggers-and-integrations.md",
+      "bytes": 33723,
+      "sha256": "ab175aa8b8fdcb8debcb6074328e9cbc3a49e15f93185445e4718f435fd99d98",
+      "blob": "805d7d2fe5833e6e0ff3fd5d28ebac068f039bd5"
+    },
+    {
+      "path": "docs/decisions/ADR-0079-poll-dedupe-key-identities.md",
+      "bytes": 2373,
+      "sha256": "4ee5c6ad427f93fd6c2c8b5c70edd966a227d447a62121dafa4993923273be12",
+      "blob": "f1cf45ab2713a34e2fd1471d3b6e431a97ecbb59"
+    },
+    {
+      "path": "docs/decisions/README.md",
+      "bytes": 12963,
+      "sha256": "9b215530d6d9fd54264807990213f92e9e7892bca9b88d7cc7c9e08048943f8c",
+      "blob": "4a12de02de3926b3321413d1a8faccec8f6703ba"
+    },
+    {
+      "path": "packages/domain/src/poll-items.test.ts",
+      "bytes": 6006,
+      "sha256": "afa30c1882f974f1a8a827532fb9cb07cfac5cce9a0f0f44f8a39d0883ee7744",
+      "blob": "c057e912b5a2d49f726c5308e117ae7b0d18782a"
+    },
+    {
+      "path": "packages/domain/src/poll-items.ts",
+      "bytes": 4202,
+      "sha256": "6bfbb020e5800d53544701f15726543e9c54c6eda18c36bddcadce52e7adb257",
+      "blob": "5d561e649b94832824fceb446c8538048d690459"
+    }
+  ],
+  "claudeReportSHA256": "8804954db1e294f68493fe0a16f40e7a9ac7f9f73afbebd5b7e8535c9ca53b55",
+  "packetResults": [
+    {
+      "name": "2026-11-15-poll-dedupe-baseline",
+      "committed": true,
+      "files": 77,
+      "manifestEntries": 76,
+      "totalBytes": 5468612,
+      "sourceMapEntries": 75,
+      "sourceMapStatuses": {
+        "not-provided": 75
+      },
+      "copyRecords": [
+        {
+          "destination": "frozen-preparation/SHA256SUMS",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/binding.mjs",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/gateway.mjs",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/run-old.mjs",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/wire-fixtures.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/verify-cleanup.ps1",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/binding-preparation.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/handoff.md.txt",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/merged-main-binding.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "frozen-preparation/SHA256SUMS",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/admission.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/cleanup-continuation.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/cleanup.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/initial-gateway.log",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/initial-initial-loop-list.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-items-P1-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-items-P1-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-items-P2-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-items-P2-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-items-P3-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-items-P3-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-items-P4-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-items-P4-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-lone-P1-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-lone-P1-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-lone-P2-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-lone-P2-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-lone-P3-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-lone-P3-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-lone-P4-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-lone-P4-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P1-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P1-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P2-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P2-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P3-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P3-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P4-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P4-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P5-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-split-P5-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-unkeyed-P1-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-unkeyed-P1-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-unkeyed-P2-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-unkeyed-P2-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-unkeyed-P3-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-unkeyed-P3-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-unkeyed-P4-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-unkeyed-P4-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-valid-P1-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-valid-P1-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-valid-P2-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-valid-P2-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-valid-P3-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-valid-P3-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-valid-P4-durable.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/old-valid-P4-rest.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/post-drain-readback.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/probe-requests.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/published-items.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/published-lone.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/published-split.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/published-unkeyed.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/published-valid.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/restart-first-due.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/restart-gateway.log",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/restart-initial-loop-list.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/restart-rearm.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/result.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/source-and-build-after.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "old-attempt-1/source-and-build.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "root-readbacks/root-baseline-admission.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "root-readbacks/root-baseline-readback.json",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "baseline-result.md.txt",
+          "sourceStatus": "not-provided"
+        },
+        {
+          "destination": "cleanup/cleanup-continuation.ps1",
+          "sourceStatus": "not-provided"
+        }
+      ],
+      "records": [
+        {
+          "path": "README.md",
+          "bytes": 5788,
+          "sha256": "70868d87c06690b4150a6edb14e6141ca3e1e1e44f492568ea35a8ebabfdcefd",
+          "blob": "71e5b0ee429f942bd92954fff23b9f211c03abf4"
+        },
+        {
+          "path": "SHA256SUMS",
+          "bytes": 7889,
+          "sha256": "bb377851370455518fa95c1020a5b65402cc4b7f9439226068a1968ee9215b75",
+          "blob": "50099850dee581062768ed509fdc43a39aeb1898"
+        },
+        {
+          "path": "baseline-result.md.txt",
+          "bytes": 4204,
+          "sha256": "68ae9ca1e19775f87bd7dbed93d7493f8e415dc930987b81cc4c9506426a85db",
+          "blob": "09fc30a99609a48fb34e1b6c02b869bcb1d4757f"
+        },
+        {
+          "path": "cleanup/cleanup-continuation.ps1",
+          "bytes": 5446,
+          "sha256": "efe789ef2e59d457e49b29c7922a385592e33efbddb59110bd2a0216b7b9b17f",
+          "blob": "7115474c84c60afbaa157407222db0b95b6a0cbc"
+        },
+        {
+          "path": "frozen-preparation/SHA256SUMS",
+          "bytes": 572,
+          "sha256": "ee4ac300e565101e79f999414ca033a4a13d9548ea7556562f30bedb3e8715e8",
+          "blob": "a97a6cd63a67a4037d941d8917164eb2d24ee1a6"
+        },
+        {
+          "path": "frozen-preparation/binding-preparation.json",
+          "bytes": 525288,
+          "sha256": "8541d099548622bcb8369dc4493bd309635f5a71fb0865a2e7a75680b979fa05",
+          "blob": "e180d4eadf56424a1b515139d329af631e3c71c8"
+        },
+        {
+          "path": "frozen-preparation/binding.mjs",
+          "bytes": 7951,
+          "sha256": "c7e95660ebfcd61d78ec5f7df363c141a8d26454da668d15023b2db71d1ffb83",
+          "blob": "05b9d4fe18306df1dea00f48820da51ecde7432b"
+        },
+        {
+          "path": "frozen-preparation/gateway.mjs",
+          "bytes": 1261,
+          "sha256": "025da17e4e76390885686e8bc797c40d030d9e45fcf6a1305a86d398e8a46b08",
+          "blob": "2e01fbc188c80188be52909a7f5513d4ed45e10b"
+        },
+        {
+          "path": "frozen-preparation/handoff.md.txt",
+          "bytes": 5719,
+          "sha256": "40f242f353b0c4615397ffe0544edfc4f4cf96fbec2c863c36d12b800f8346c7",
+          "blob": "016d3721517813f4f9651bc49aa60ba393fbddec"
+        },
+        {
+          "path": "frozen-preparation/merged-main-binding.json",
+          "bytes": 525311,
+          "sha256": "ea397ee1d9c127ce3a8022f2fcf260c6f2e204ba96a29954c2b73fa777ba12ce",
+          "blob": "6cc7d5db87c26eb2afaa5dc8ef79ccc04c3d48ff"
+        },
+        {
+          "path": "frozen-preparation/run-old.mjs",
+          "bytes": 25473,
+          "sha256": "1f86b87208c75dcb45fc38c85b032bdc95d9c1a4b424da8c838fdcba4ce10eb7",
+          "blob": "b07e112de8b7e16fa6415c17f6bdc772de6083c4"
+        },
+        {
+          "path": "frozen-preparation/verify-cleanup.ps1",
+          "bytes": 4329,
+          "sha256": "663946956e55a38a178ee121af29f9c14c515912f91fafa61d7ef7c9be659bca",
+          "blob": "9c66b5ddada3d1be83c6bdd8861841b4a123c5c1"
+        },
+        {
+          "path": "frozen-preparation/wire-fixtures.json",
+          "bytes": 49851,
+          "sha256": "a73d3cad100e766799d44cf42fc14fd357e1a71d800ecb626a855b356882eef8",
+          "blob": "3fbb8fb4f8ca02ccb8d718d6514c1e1c374cb1a9"
+        },
+        {
+          "path": "old-attempt-1/admission.json",
+          "bytes": 883,
+          "sha256": "f94c8abc2e2a27df20580eeb507d5d57c6acbf9c9ef783dc58b00082632af8da",
+          "blob": "711f080ac148528fa382768a333badc55bd3021e"
+        },
+        {
+          "path": "old-attempt-1/cleanup-continuation.json",
+          "bytes": 2020,
+          "sha256": "3052c8e598bf6b58ada703a91d8b06f9102f6ce3bc5d8fd40771c63e2b9e251c",
+          "blob": "ad313e3d67066767e91796a1838b5010cd1fa7ff"
+        },
+        {
+          "path": "old-attempt-1/cleanup.json",
+          "bytes": 717,
+          "sha256": "532ddfb8d709ed489398cd0d6a1ce40a230a37598fd9ad82170b4348d55dfb9c",
+          "blob": "0fe29e032cf5db67463320e590eee9c285537023"
+        },
+        {
+          "path": "old-attempt-1/initial-gateway.log",
+          "bytes": 58711,
+          "sha256": "2d821a52e9f86143b2a4ea833849de123b41eceec0ee6a9b600f34cde03e5be3",
+          "blob": "c9c843c4ecca50e71b5e0c1589228932516f4e5e"
+        },
+        {
+          "path": "old-attempt-1/initial-initial-loop-list.json",
+          "bytes": 1298,
+          "sha256": "f0daeeeeaa23b71bdc55716ef41130af74dff06f3347eaaae5a81c63104aec1a",
+          "blob": "48724523b0265b4eb07e3bdc555593479d98d143"
+        },
+        {
+          "path": "old-attempt-1/old-items-P1-durable.json",
+          "bytes": 50326,
+          "sha256": "fc246215c7d35c2bd9e31d6f53cd1287c746e7c6912bf1fbbe6286a2aaf000ac",
+          "blob": "ed56ad877357e60742145886e54e10e3fbc6d057"
+        },
+        {
+          "path": "old-attempt-1/old-items-P1-rest.json",
+          "bytes": 137688,
+          "sha256": "90ff1d664c77803e2248166056f0f3b78674f9235b4ce345d9b6e99a830744b8",
+          "blob": "0bab03251055b12de699fc1593fadc3e237f5f4a"
+        },
+        {
+          "path": "old-attempt-1/old-items-P2-durable.json",
+          "bytes": 124745,
+          "sha256": "43249e51f7cb0e7338c0e2bca3c9863426599038fdaf7b6044ea9b2af02eb685",
+          "blob": "3fba05a4a251aecd9f7c8c5109b14ff4337b398b"
+        },
+        {
+          "path": "old-attempt-1/old-items-P2-rest.json",
+          "bytes": 95150,
+          "sha256": "c2175fd5397ab4feb21a60c22f71800876924070bd0e95f4a4014ce23c6d4b46",
+          "blob": "5c0f0ebf6e35f6cfd772e44405a61fcf1c6c1a75"
+        },
+        {
+          "path": "old-attempt-1/old-items-P3-durable.json",
+          "bytes": 172394,
+          "sha256": "45817c60c7ecf51a7ff54aa98d012e079c0fb48da09f8302ab3fc98d8c9fd758",
+          "blob": "6be0f290505c019ed6e403d879991aa5ad6f159d"
+        },
+        {
+          "path": "old-attempt-1/old-items-P3-rest.json",
+          "bytes": 84443,
+          "sha256": "2341a2bafd968887f79926856236c1052cfd2fb9f4fe7a3dfb769c3cd47bfb01",
+          "blob": "30a1fe689add81b0056679743e98b116c0c29244"
+        },
+        {
+          "path": "old-attempt-1/old-items-P4-durable.json",
+          "bytes": 220287,
+          "sha256": "66b4f9b31dd0131aa2f906555e6067af7ac47e178b4ff393a48a39f1020c5d82",
+          "blob": "12259db6f1ef655f1d07f5f050396d2b7637d55d"
+        },
+        {
+          "path": "old-attempt-1/old-items-P4-rest.json",
+          "bytes": 110962,
+          "sha256": "24b7cc6e351c4632252557125d084327d7239dac21a04c24be6532613f619fa3",
+          "blob": "87f39dbd03fcb4c6928adc91ccf67a173949adfa"
+        },
+        {
+          "path": "old-attempt-1/old-lone-P1-durable.json",
+          "bytes": 10932,
+          "sha256": "d02115772a818994a2908b83b6fbc9fb51677a036eac92b5d0f829ab60caa308",
+          "blob": "12eb35a49b6750e0684d4a01e5604731c2ab0261"
+        },
+        {
+          "path": "old-attempt-1/old-lone-P1-rest.json",
+          "bytes": 26554,
+          "sha256": "8e46deff91bda5a203090acf3060080e990207f84025941e963ee0f3d4eb5248",
+          "blob": "d22064942bfb7530015e6f6025fd43d31bba0d2e"
+        },
+        {
+          "path": "old-attempt-1/old-lone-P2-durable.json",
+          "bytes": 29574,
+          "sha256": "a87e2c18599e8e3d512a1326089a93d9669f9fe8c3d064418b52c9923bcc305e",
+          "blob": "4027a896c134b6374cfd1d2c7d1fac984f07c401"
+        },
+        {
+          "path": "old-attempt-1/old-lone-P2-rest.json",
+          "bytes": 28710,
+          "sha256": "4522c61ef343c8b87d86b245cec94b0556a5a4750c35ac1d3086353a4ab9b2b7",
+          "blob": "581108b0fdcabb99d14753386d19c7d7c7551b03"
+        },
+        {
+          "path": "old-attempt-1/old-lone-P3-durable.json",
+          "bytes": 48199,
+          "sha256": "82e8aa1b979a48eb13d46baf55206dd6a33b8108ddbdadafa311785c3e1b72ae",
+          "blob": "f16553031ace638ee2f07a61ed096e0840478cff"
+        },
+        {
+          "path": "old-attempt-1/old-lone-P3-rest.json",
+          "bytes": 30867,
+          "sha256": "b110292a467000ca2ff9ca07d36fd9e1b88c1e2d79392de113c8708e70282412",
+          "blob": "df7e1177ccd9dadf5a8cea9290d8eb45c59872a0"
+        },
+        {
+          "path": "old-attempt-1/old-lone-P4-durable.json",
+          "bytes": 66811,
+          "sha256": "472e214b06a6a3776d5a4be1f619578c72151df979d30a7e5bc6352dd3eee75d",
+          "blob": "ded624081394e6d6b0eb0004a6d6ac07880db6be"
+        },
+        {
+          "path": "old-attempt-1/old-lone-P4-rest.json",
+          "bytes": 33024,
+          "sha256": "1fab00635d0d660e48ba654d1acac4cc54d5d06d73cabbe480dc1fb3941ec44b",
+          "blob": "3827b9d4a7fc5ed722ce36f22f7af01b3466c427"
+        },
+        {
+          "path": "old-attempt-1/old-split-P1-durable.json",
+          "bytes": 24279,
+          "sha256": "22f6f18cefd73f61e115014638b0a094f9fef98b81bb52da4f4c4cedfffb5724",
+          "blob": "88461873d3c24a38e3e6cae93e62db134d6cd13e"
+        },
+        {
+          "path": "old-attempt-1/old-split-P1-rest.json",
+          "bytes": 40195,
+          "sha256": "219875574c7ae1b580905e58e3007524e348f57bf457cc4d926f67bb22c5043e",
+          "blob": "743cdaa46ef242258a9d30573e394bd20c5b16c2"
+        },
+        {
+          "path": "old-attempt-1/old-split-P2-durable.json",
+          "bytes": 68267,
+          "sha256": "53a217750c3fd3456796f56e7a59d2286a59c1d7037223a33c24d731934998b8",
+          "blob": "50ee6291598f2f95c77771ef8014377dbe07b0d4"
+        },
+        {
+          "path": "old-attempt-1/old-split-P2-rest.json",
+          "bytes": 42355,
+          "sha256": "d6694b787b9b64c650cb7009962cc06ddf5f157a650065fb44d755b2bda30973",
+          "blob": "b29681518beb5fb27d213c8ca556c7cfb37bd363"
+        },
+        {
+          "path": "old-attempt-1/old-split-P3-durable.json",
+          "bytes": 112229,
+          "sha256": "2fdda5f52621a2ef8d65e18c3573e73dcae8acb76a6e84790f4bc21f01ba5fc5",
+          "blob": "63ad32cd36821e291c869ac681da12e2dfebe91b"
+        },
+        {
+          "path": "old-attempt-1/old-split-P3-rest.json",
+          "bytes": 44517,
+          "sha256": "457266e491be9bec57a015f0ed44e8110b4b26aa9f49d6b2eb9d4bd35dc51f15",
+          "blob": "e2d547cbd88bb43de5c9445b91be54cdf4ce739b"
+        },
+        {
+          "path": "old-attempt-1/old-split-P4-durable.json",
+          "bytes": 156190,
+          "sha256": "95ad2ae70bed2ea5646bac79e9f9bf4cc80c5f9e0d1d6991e1f02b380ca2d3fc",
+          "blob": "cadf57d010fb06712c1e9ec7204161c3acf839e8"
+        },
+        {
+          "path": "old-attempt-1/old-split-P4-rest.json",
+          "bytes": 46678,
+          "sha256": "ba84c31818a9d6a440941fa9cd6b24cf84766bfa4d268b8324792ff722a8a2ed",
+          "blob": "678231afdbb0e4c2f8e1fcae37af7ff793c85e62"
+        },
+        {
+          "path": "old-attempt-1/old-split-P5-durable.json",
+          "bytes": 200054,
+          "sha256": "48ae544b4d34b8d68b4cf99b3328e2cad7da096d425113139103d81066548fba",
+          "blob": "f54e012906f7aa555b7b9b382c55ef81794259a2"
+        },
+        {
+          "path": "old-attempt-1/old-split-P5-rest.json",
+          "bytes": 48716,
+          "sha256": "5315cbfed52c334f338dc5959c9ef1f7fc0b28d68286e0537633c93bf029815c",
+          "blob": "009bf74ab40cf9826cb5e80ec9ff76da29863f66"
+        },
+        {
+          "path": "old-attempt-1/old-unkeyed-P1-durable.json",
+          "bytes": 10025,
+          "sha256": "d84e5d0ed2dd67545dbeb2aa1cae774835fc9672705f4809fac604c453dc9d3f",
+          "blob": "6bd02f278d9d06a063eedd0439d8ef29694ed869"
+        },
+        {
+          "path": "old-attempt-1/old-unkeyed-P1-rest.json",
+          "bytes": 25354,
+          "sha256": "d199b5a9061008c93856d9689d03ec2094fd06f3a6bd649a7b456e9a7043f49f",
+          "blob": "d15a81c1070b22f7fd58b8198e0ccfda6c70f939"
+        },
+        {
+          "path": "old-attempt-1/old-unkeyed-P2-durable.json",
+          "bytes": 26864,
+          "sha256": "fe78debf1b4ebc60288640a6aa72c33dad3a5a845d5294a05f3f53f4054b580f",
+          "blob": "c006f63f7988be6ce2c7ae879799827bf3dc213d"
+        },
+        {
+          "path": "old-attempt-1/old-unkeyed-P2-rest.json",
+          "bytes": 27523,
+          "sha256": "d8ec552bd0cf35081bd194914247b828978a91f9a5a1a98adf3e25e34ba9b993",
+          "blob": "195ab78e27df8034a26f2ab1f68887518044340c"
+        },
+        {
+          "path": "old-attempt-1/old-unkeyed-P3-durable.json",
+          "bytes": 43682,
+          "sha256": "7cf287cc047304feb60094601d54504732eb275ae8f3d1ae6bfe699f308e73a1",
+          "blob": "0e4a816f5d138065d54cb5a6e3bd0748ff4e9f96"
+        },
+        {
+          "path": "old-attempt-1/old-unkeyed-P3-rest.json",
+          "bytes": 29693,
+          "sha256": "01894d405e81b23288031ab39b2febbe6c4e59b20059f09f49145a8265c3fbb0",
+          "blob": "aed32a687d1e35029aec5491ec17c4b6d0d7371e"
+        },
+        {
+          "path": "old-attempt-1/old-unkeyed-P4-durable.json",
+          "bytes": 60499,
+          "sha256": "03bf5f411faa54e19ba3870c4c74e901b176b13ffb2e68da32b2d5213628779b",
+          "blob": "076ce3065e52af53a9282f8ad515d6eb7a71d583"
+        },
+        {
+          "path": "old-attempt-1/old-unkeyed-P4-rest.json",
+          "bytes": 31862,
+          "sha256": "7abdfa23bf0b0eb36d26a035597124c5e9d873f6daa37c60d05e3a82070cebfa",
+          "blob": "3a0f6dff8bcb3bdec0cdde130bfa2b600d6ef398"
+        },
+        {
+          "path": "old-attempt-1/old-valid-P1-durable.json",
+          "bytes": 10987,
+          "sha256": "9bac1eeef7e287cbf9db390eee94172e561bc653c0c0ece93383d2d374e927c1",
+          "blob": "a19f081a7763f6d497151c285bd7e80571dad2ac"
+        },
+        {
+          "path": "old-attempt-1/old-valid-P1-rest.json",
+          "bytes": 26605,
+          "sha256": "aba5d2a19e52c88f8b3db3438a23e98f3a3e5c5b21249f2b865c4ce4d3e3ddb1",
+          "blob": "a18a8cc489f5540628def6e9a48ceb96beabffa9"
+        },
+        {
+          "path": "old-attempt-1/old-valid-P2-durable.json",
+          "bytes": 42961,
+          "sha256": "e36a5bfbf911a65d1c61d28e985a8da68dc48c1700ee596251f91e607ec6f69f",
+          "blob": "2c53953d1c71e49b9546a375fe6d2ca39ccd532e"
+        },
+        {
+          "path": "old-attempt-1/old-valid-P2-rest.json",
+          "bytes": 42318,
+          "sha256": "1fe55631974c17b7f0183ad87c93e452ae35a9287650bdbc9091e2fc3a4d56f7",
+          "blob": "09522932193fd38e494acba89231120c3647e7ab"
+        },
+        {
+          "path": "old-attempt-1/old-valid-P3-durable.json",
+          "bytes": 73372,
+          "sha256": "24ca791be1747a76876e54d9902da3587007c1baa25acb056db40b40a3c14ef2",
+          "blob": "2c7947ba4513b861c724fc8ff8dff498be334c10"
+        },
+        {
+          "path": "old-attempt-1/old-valid-P3-rest.json",
+          "bytes": 30649,
+          "sha256": "d49fcfb8edebd2daed2236c46152ce04f0cad3745e8c518512da110b7a785fac",
+          "blob": "5e650a929f296c26eed15767df562bec9001940c"
+        },
+        {
+          "path": "old-attempt-1/old-valid-P4-durable.json",
+          "bytes": 82477,
+          "sha256": "c1ed6752c41b1a55e509b57456270926b97ea8ba811c404680d621f03a2a9091",
+          "blob": "abac3d0d064f9a3d937e4d10c5e7672ab44f39d8"
+        },
+        {
+          "path": "old-attempt-1/old-valid-P4-rest.json",
+          "bytes": 30648,
+          "sha256": "c3a4de61d27f1200b617ba5ffa4dfbeb04c8b843a6cf3bacd4e67ca40a346cd1",
+          "blob": "25edce622e53d40c6d33a21c483030976db33f20"
+        },
+        {
+          "path": "old-attempt-1/post-drain-readback.json",
+          "bytes": 345077,
+          "sha256": "25fd9ff465cffaa63d02a357ce14d090f8f49b0131097a2c55a04dfd8214f865",
+          "blob": "c528cf10c3e8c8f2cf17aadbf2101f971ff21cb4"
+        },
+        {
+          "path": "old-attempt-1/probe-requests.json",
+          "bytes": 37651,
+          "sha256": "a16a247ef4d17a8212523adf68cc5d02d58d7709f923f770061742920294fbdb",
+          "blob": "04e35d717b454613dee9ff1cfc887f86645bc56a"
+        },
+        {
+          "path": "old-attempt-1/published-items.json",
+          "bytes": 5730,
+          "sha256": "84d2f5a358d4f57251bf264f18a4855175af227ee9791c7fc083e8d0c4fc98ce",
+          "blob": "923fe5f4e1294dc41d0bb736df94e24fb2c464fb"
+        },
+        {
+          "path": "old-attempt-1/published-lone.json",
+          "bytes": 5376,
+          "sha256": "19d8693ed8890ea00abcab685287c37b1114b5aacac2c5f5be028ed823d414ef",
+          "blob": "860e53aa58b0505738cb93e310e173b9a7275c3f"
+        },
+        {
+          "path": "old-attempt-1/published-split.json",
+          "bytes": 5383,
+          "sha256": "7c60e9cb850132ab292b95a93bef2d0d25459271a49640bba036454826749c45",
+          "blob": "e961c02dc2718796f7a5917d0ac7fe6208a713a2"
+        },
+        {
+          "path": "old-attempt-1/published-unkeyed.json",
+          "bytes": 5266,
+          "sha256": "c981f77e30d30d2a3a1ab82eba46cc2834157b151a7be070161cf736752dbb5a",
+          "blob": "6c3a52af895e12b34f08c798794195b42fa6a86c"
+        },
+        {
+          "path": "old-attempt-1/published-valid.json",
+          "bytes": 5383,
+          "sha256": "b51525a1dbb4fd8cf6f96c355dad3d13c0f54457f02952d08d58d5f3cb8f6d19",
+          "blob": "64e49fa5ae6238bc44773cab627c83c3a474e758"
+        },
+        {
+          "path": "old-attempt-1/restart-first-due.json",
+          "bytes": 8940,
+          "sha256": "3bb57476fc5f28f764c8a92947f0a5625440afde04b5bd060a52cc588d78089a",
+          "blob": "ae7c16af1e19cb3a96daae480c8e57e39d9f1ebb"
+        },
+        {
+          "path": "old-attempt-1/restart-gateway.log",
+          "bytes": 23002,
+          "sha256": "316b3d3a3075a50e1ccbef2c44fb7370a7c11ff0cc5fd4c0edfb4492a10b16c6",
+          "blob": "98a2c6fc038a1c13aab2743ff40e37147cecc3a4"
+        },
+        {
+          "path": "old-attempt-1/restart-initial-loop-list.json",
+          "bytes": 5428,
+          "sha256": "a6a15caf07efa586b9d1d83821180a135f0434024fcdc8c5ef500f68bc30eb0b",
+          "blob": "5fcbfff87a20c92a6786f43be405fcb9c58cad2f"
+        },
+        {
+          "path": "old-attempt-1/restart-rearm.json",
+          "bytes": 2555,
+          "sha256": "a3055155013921a47c9213d749a27acd56bdca56c7bc2541237e24d481c45162",
+          "blob": "73c01889149e6febc2d18693e5eeac65884e0a83"
+        },
+        {
+          "path": "old-attempt-1/result.json",
+          "bytes": 58803,
+          "sha256": "c526423fadfd4bd571c4a82751322d79bd5a287795f9f84940f56825bbaf40a9",
+          "blob": "f58bee5c87e81afb094d5713fc180feeed60bfaa"
+        },
+        {
+          "path": "old-attempt-1/source-and-build-after.json",
+          "bytes": 525311,
+          "sha256": "ea397ee1d9c127ce3a8022f2fcf260c6f2e204ba96a29954c2b73fa777ba12ce",
+          "blob": "6cc7d5db87c26eb2afaa5dc8ef79ccc04c3d48ff"
+        },
+        {
+          "path": "old-attempt-1/source-and-build.json",
+          "bytes": 525311,
+          "sha256": "ea397ee1d9c127ce3a8022f2fcf260c6f2e204ba96a29954c2b73fa777ba12ce",
+          "blob": "6cc7d5db87c26eb2afaa5dc8ef79ccc04c3d48ff"
+        },
+        {
+          "path": "root-readbacks/root-baseline-admission.json",
+          "bytes": 1026,
+          "sha256": "3a153a51927c822bb8a188f1596ae611f9256066513718e5cdda5e5b1951fdad",
+          "blob": "e8e8d5964ae2574f1e6cc0e59b48ba560395cece"
+        },
+        {
+          "path": "root-readbacks/root-baseline-readback.json",
+          "bytes": 901,
+          "sha256": "3f22f0fcaca0afa4ccb6401ab96dbbe5c4561cde582e2c24d25c2d4dade295a2",
+          "blob": "bcccc9353fd06ca36f79e984058ba20515c36f46"
+        },
+        {
+          "path": "source-copy-map.json",
+          "bytes": 25093,
+          "sha256": "12140f26e151b908eca1196e7b011c6e378ae0d5af5c6855ea35f7d8768a593b",
+          "blob": "c1c7a6835a830fce80e9446265cd392b3edf0f75"
+        }
+      ]
+    },
+    {
+      "name": "2026-11-15-poll-dedupe-implementation",
+      "committed": true,
+      "files": 41,
+      "manifestEntries": 40,
+      "totalBytes": 1352550,
+      "sourceMapEntries": 39,
+      "sourceMapStatuses": {
+        "matches": 38,
+        "path-unavailable": 1
+      },
+      "copyRecords": [
+        {
+          "destination": "cleanup-483/final-source-readback.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-483-cleanup\\final-source-readback.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "cleanup-483/pre-run-context.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-483-cleanup\\pre-run-context.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "cleanup-483/run-receipt.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-483-cleanup\\run-receipt.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "cleanup-483/SHA256SUMS",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-483-cleanup\\SHA256SUMS",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "cleanup-483/two-spec-run.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-483-cleanup\\two-spec-run.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "full-report.md.txt",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\full-report.md",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/01-public-ports-red.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\01-public-ports-red.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/02-focused-green.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\02-focused-green.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/03-api-build-receipt.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\03-api-build-receipt.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/03-api-build.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\03-api-build.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/04-filtered-static.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\04-filtered-static.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/05-affected-package-coverage.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\05-affected-package-coverage.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/06-format-check.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\06-format-check.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/07-final-compiled-inventory.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\07-final-compiled-inventory.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/07-final-source-build-receipt.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\07-final-source-build-receipt.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/08-after-first-coverage-inventory.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\08-after-first-coverage-inventory.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/09-api-four-file-isolation.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\09-api-four-file-isolation.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/10-post-isolation-readback.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\10-post-isolation-readback.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/11-baseline-ollama-cleanup-state.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\11-baseline-ollama-cleanup-state.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/11-baseline-ollama-cleanup.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\11-baseline-ollama-cleanup.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/11-baseline-ollama-source-binding.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\11-baseline-ollama-source-binding.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-01-11/full-report-before-cleanup-diagnosis.md.txt",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\full-report-before-cleanup-diagnosis.md",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/12-final-api-coverage-receipt.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\12-final-api-coverage-receipt.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/12-final-api-coverage.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\12-final-api-coverage.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/13-final-static.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\13-final-static.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/14-compiled-inventory-before-total-correction.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\14-compiled-inventory-before-total-correction.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/14-final-api-build-receipt.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\14-final-api-build-receipt.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/14-final-api-build.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\14-final-api-build.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/14-final-compiled-inventory.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\14-final-compiled-inventory.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/14-final-source-build-receipt.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\14-final-source-build-receipt.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/14-source-build-readback-before-total-correction.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\14-source-build-readback-before-total-correction.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "implementation-12-14/final-source-SHA256SUMS",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\final-source-SHA256SUMS",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "README.md",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\README.md",
+          "sourceStatus": "path-unavailable"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-committed-freeze.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-committed-freeze.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-root-local-gates.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-root-local-gates.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-source-build-rebind.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-source-build-rebind.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-source-for-freeze-normalized-SHA256SUMS",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-source-for-freeze-SHA256SUMS",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-source-manifest-normalization.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-source-manifest-normalization.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-source-staged.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-source-staged.json",
+          "sourceStatus": "matches"
+        }
+      ],
+      "records": [
+        {
+          "path": "README.md",
+          "bytes": 8365,
+          "sha256": "f72f2c7e5b65b76e645599ee0843f4ccd458b40df9ca84e05f272bc5627213e3",
+          "blob": "1d535e8e459e5743098f501d3df53e183020f87c"
+        },
+        {
+          "path": "SHA256SUMS",
+          "bytes": 4573,
+          "sha256": "2f707f40013eccc98df5eb3b36ded8a09ab8a2877394fe0bb271568a97fb7538",
+          "blob": "78af30e8c4b8fd7607fa9476342c21d7ab8b6eac"
+        },
+        {
+          "path": "cleanup-483/SHA256SUMS",
+          "bytes": 350,
+          "sha256": "334f2c49f64dc38fe463c88363db8c7a5d1efb7f42493e7fdd3f8d39f0802a9e",
+          "blob": "a99ff33aacb59a7cc20aa64b2a115d036b8e3933"
+        },
+        {
+          "path": "cleanup-483/final-source-readback.json",
+          "bytes": 5308,
+          "sha256": "bb1b5145c112084ea3f160e7258b9fc855c693a387982e210544bbea387b25ad",
+          "blob": "314bc5453a31b3da4fc20fd163759c05e3ef61b8"
+        },
+        {
+          "path": "cleanup-483/pre-run-context.json",
+          "bytes": 4440,
+          "sha256": "54b130202bf19f20e77e15def1cac1ed3fac50caf17ee6e780f8ba9676daa1bb",
+          "blob": "8c784e65d7077528dec11c99c2800c0971703ca9"
+        },
+        {
+          "path": "cleanup-483/run-receipt.json",
+          "bytes": 882,
+          "sha256": "7284c494473cda8550e719ebcc8a3b137edc511433d17a15f0dca7232257ec26",
+          "blob": "6e83e009f971baaa810452358090f21fd7b75491"
+        },
+        {
+          "path": "cleanup-483/two-spec-run.log",
+          "bytes": 4361,
+          "sha256": "5fd0af8c296fa3d7936bb634cb86ab8716dd06a4a260b5cf6995978ab4660e0d",
+          "blob": "01184f110a43522573ca7f89d22ea48a07249199"
+        },
+        {
+          "path": "full-report.md.txt",
+          "bytes": 20108,
+          "sha256": "fce24a205286c52024d452bc2c6332e2d4c50097028ca6db251c071cfe2bc59d",
+          "blob": "bd18b9e2f470df2745b671829408931a051e7a32"
+        },
+        {
+          "path": "implementation-01-11/01-public-ports-red.log",
+          "bytes": 10728,
+          "sha256": "698d0a8f808311aab6ff313bbb557a9904d8b095dee36d38a93be12b65522af8",
+          "blob": "b11847a887ebcb17417e0ff910323dc9b1e414a7"
+        },
+        {
+          "path": "implementation-01-11/02-focused-green.log",
+          "bytes": 8527,
+          "sha256": "c07f11c07c2d4a050d190adbe011901a592a44b552d4fafcd8ef5a8392f55e50",
+          "blob": "403e802cb1ce8218bb916c9751ae35602fdfc5fb"
+        },
+        {
+          "path": "implementation-01-11/03-api-build-receipt.json",
+          "bytes": 6509,
+          "sha256": "ce76da74d0e35e8813f75a42d6d910fab1b578fd74e8d85b8657132b1745af4a",
+          "blob": "95b93527d94447a01f1e876f7b787ef638edbbb1"
+        },
+        {
+          "path": "implementation-01-11/03-api-build.log",
+          "bytes": 1560,
+          "sha256": "584ff84204cd86ca69769886cb3dea25b7f5f2f0d820f7a1a646690cfccbe13d",
+          "blob": "b022bd9efeedfffe25dde7949d7114cb889852bc"
+        },
+        {
+          "path": "implementation-01-11/04-filtered-static.log",
+          "bytes": 2386,
+          "sha256": "a7f71c727eaeaf554c555fab825be398c694de9fbc97a9c2e6f2d9974396ac63",
+          "blob": "64c044f6521509245fae216ea8187100d0514b79"
+        },
+        {
+          "path": "implementation-01-11/05-affected-package-coverage.log",
+          "bytes": 191381,
+          "sha256": "09594a0d3ceca9262c6fae99f126d93e1be7d57bc13201eb0a64bb1c278c1e17",
+          "blob": "fed1abc257a1ef4d3d59ade323a21f8891d01d75"
+        },
+        {
+          "path": "implementation-01-11/06-format-check.log",
+          "bytes": 459,
+          "sha256": "dc6029f4a063156e642e33fe5625b5dbb842fa5f9209309c1aca95e467da929d",
+          "blob": "4c2a7b85537a2331984184083d5aceedcf2a8d06"
+        },
+        {
+          "path": "implementation-01-11/07-final-compiled-inventory.json",
+          "bytes": 213108,
+          "sha256": "03c30ae5a105bd5a53533b789973a1bb5edca5d968fbd4cd34823a2de9642c0f",
+          "blob": "f893eaccf546e9adb00d1caf2603fcc94c19a8bb"
+        },
+        {
+          "path": "implementation-01-11/07-final-source-build-receipt.json",
+          "bytes": 5376,
+          "sha256": "9ab8b6b970da00f638895ca07d175a571a0f07edff3ad0220a131e4e457e4142",
+          "blob": "cd2aac5389d3d8978d298c9fa9bb1abe40a227d2"
+        },
+        {
+          "path": "implementation-01-11/08-after-first-coverage-inventory.json",
+          "bytes": 2061,
+          "sha256": "9d22670e99eacdc37e518a13b3afc72daba39f6341c8fd275e4c3b4fcbb2ae6c",
+          "blob": "2db4e4808b5b4a915ca720b7ea90d5eb13b1a22f"
+        },
+        {
+          "path": "implementation-01-11/09-api-four-file-isolation.log",
+          "bytes": 9936,
+          "sha256": "bd1a5a3847372988f3408ddfe85f2b051a6f0fbca9b2ff7ed15118e58d0ab924",
+          "blob": "60e321b6531ec8a05a062ccef2ab3743fe858809"
+        },
+        {
+          "path": "implementation-01-11/10-post-isolation-readback.json",
+          "bytes": 1550,
+          "sha256": "7835252b5396ed7bbd90a6f65401665629fc38b9ab5f8f32341ac394184cc3bd",
+          "blob": "e5feb47edd738d34805d2774e428b6a4e2362e67"
+        },
+        {
+          "path": "implementation-01-11/11-baseline-ollama-cleanup-state.json",
+          "bytes": 1424,
+          "sha256": "051332686df1e2721aa2329796386c8785610e13d4140a82b78197537ef43aac",
+          "blob": "3a297cb70b7da718783b7044e7ef721fd90a04eb"
+        },
+        {
+          "path": "implementation-01-11/11-baseline-ollama-cleanup.log",
+          "bytes": 8041,
+          "sha256": "16bdd290a9a752880691c37c90a8a1cf1c5d676da34bb29654e345e327cc83cb",
+          "blob": "baf392923cac9dc1fa35ab326053e9f339db6b0c"
+        },
+        {
+          "path": "implementation-01-11/11-baseline-ollama-source-binding.json",
+          "bytes": 65787,
+          "sha256": "08b5ef78cc21dc591067547d8ea906c6a049af2aefaff82f8b3b307b791910cb",
+          "blob": "6b208f4f67cb473d2a4e46c181b0b5522d6faeed"
+        },
+        {
+          "path": "implementation-01-11/full-report-before-cleanup-diagnosis.md.txt",
+          "bytes": 13218,
+          "sha256": "0949e401aa4f621ca9abb1bd4a5c598ac63027b26ae9d37e8649dc87ba34f531",
+          "blob": "ed034278c2ba31f415dc69ba51ee5996916f55cc"
+        },
+        {
+          "path": "implementation-12-14/12-final-api-coverage-receipt.json",
+          "bytes": 8869,
+          "sha256": "0bce90a400854343902fe1c709edda3dc394bd4eb4f7cada28e7ec491b8b88e0",
+          "blob": "ec8d6383d7b3d40a20fc1ec286adcf84389f223b"
+        },
+        {
+          "path": "implementation-12-14/12-final-api-coverage.log",
+          "bytes": 281267,
+          "sha256": "77e258aa16d51cf662d4004c16e240eb9bf848062cf2e5c6ec33d62ae13d7d73",
+          "blob": "2c259d84a5727c507e63e62ba540862fd15b8d95"
+        },
+        {
+          "path": "implementation-12-14/13-final-static.log",
+          "bytes": 1988,
+          "sha256": "34ee27f3cce8aae088f3b0d8ad2db6c3db9deea2128f816c020608f0b0a5429a",
+          "blob": "26f9e927d594f11ce2ea6c94570df401f81dbe59"
+        },
+        {
+          "path": "implementation-12-14/14-compiled-inventory-before-total-correction.json",
+          "bytes": 213108,
+          "sha256": "03c30ae5a105bd5a53533b789973a1bb5edca5d968fbd4cd34823a2de9642c0f",
+          "blob": "f893eaccf546e9adb00d1caf2603fcc94c19a8bb"
+        },
+        {
+          "path": "implementation-12-14/14-final-api-build-receipt.json",
+          "bytes": 7405,
+          "sha256": "278cee67a28e810f7766c5325c8590a4e14b109f844bf7b66338f64373cbd8b6",
+          "blob": "a0ac64e45bc6b0a0c1a844a974001e173fb2e004"
+        },
+        {
+          "path": "implementation-12-14/14-final-api-build.log",
+          "bytes": 1559,
+          "sha256": "64dccb4968e8e67dbe6db7736b9d3fca942b8b67f8c95edc2ca69fc79c66408f",
+          "blob": "b4001017d12adc134c307793675c3ff28a08d2b6"
+        },
+        {
+          "path": "implementation-12-14/14-final-compiled-inventory.json",
+          "bytes": 213108,
+          "sha256": "d86260127fde78a6f66998e8a7a29a58911e77589710c6f8a0c54758107b8cf3",
+          "blob": "b55b1d306db407677af0608a06269eafe5539297"
+        },
+        {
+          "path": "implementation-12-14/14-final-source-build-receipt.json",
+          "bytes": 5138,
+          "sha256": "dabe8b1ce6818228da0449956c4f6b6bdbb1b2c1cc344cae814479d6fceea49f",
+          "blob": "bcd24872f42027fed481b3504f98f815edd84e8d"
+        },
+        {
+          "path": "implementation-12-14/14-source-build-readback-before-total-correction.json",
+          "bytes": 5138,
+          "sha256": "a315a3c075526557d2afe7ead9f987d14c5c9a8d855a079575b9e9ec8a4e0f08",
+          "blob": "edadb974e9814660396eda5e428a75bee8d56f08"
+        },
+        {
+          "path": "implementation-12-14/final-source-SHA256SUMS",
+          "bytes": 1219,
+          "sha256": "30a8fcd1a25600ff900b710fab4490695bde310e2396465d2ff5c489275369a7",
+          "blob": "8b63e10449d2fcb47bfa7c273500bf1ab977c00d"
+        },
+        {
+          "path": "root-readbacks/runtime-361-committed-freeze.json",
+          "bytes": 407,
+          "sha256": "1b193538f9d520dcf62888bfaf0261f50d2ab4d60989b862283207cc6db15477",
+          "blob": "22736cf22f03cb24e6f1d1092083039f9f88ed84"
+        },
+        {
+          "path": "root-readbacks/runtime-361-root-local-gates.json",
+          "bytes": 687,
+          "sha256": "38db2252ae9c29e141a3bb2c7078a944ecc33e5bdb09f5d02a220d39c6b2ad91",
+          "blob": "92979573c04982df345bacca9a074b9f109f9ec7"
+        },
+        {
+          "path": "root-readbacks/runtime-361-source-build-rebind.json",
+          "bytes": 3452,
+          "sha256": "252145a9d2a5aec128c63719b40be62d4c62b7afff1b1de6a4533492fbd5d790",
+          "blob": "d2e36bc6122277e7f50b381ac47313c691e45846"
+        },
+        {
+          "path": "root-readbacks/runtime-361-source-for-freeze-normalized-SHA256SUMS",
+          "bytes": 1219,
+          "sha256": "18adf1e4efcc53fb1fcf25e0040cb998f045c0bc81bb046761eacf957f98277c",
+          "blob": "f73972fce6f2fe4ac4287c47f1b67509e72b0690"
+        },
+        {
+          "path": "root-readbacks/runtime-361-source-manifest-normalization.json",
+          "bytes": 550,
+          "sha256": "3f9056d3d04b243188e05ff27f43e6c595004ab645480f2ab43d3583dd7a8177",
+          "blob": "4505df31d2c41b38f1f4a5e1243f46f09d7ecde1"
+        },
+        {
+          "path": "root-readbacks/runtime-361-source-staged.json",
+          "bytes": 2030,
+          "sha256": "7fe77cd77990e2005f1e0c4930df5ba3d9d8fa9ea14dcb7ae8129dce7dd00cbf",
+          "blob": "cfa30632dcd6b2dcdbb30179977ac5ca356b4655"
+        },
+        {
+          "path": "source-copy-map.json",
+          "bytes": 14968,
+          "sha256": "29475a87fb3c59365802d81cf1be684cb360cc24703dff6ff5cb41f5e1092b87",
+          "blob": "db1661e23d0d20f107df0bba33d5772bd56b2809"
+        }
+      ]
+    },
+    {
+      "name": "2026-11-15-poll-dedupe-corrected",
+      "committed": true,
+      "files": 99,
+      "manifestEntries": 98,
+      "totalBytes": 3333251,
+      "sourceMapEntries": 97,
+      "sourceMapStatuses": {
+        "matches": 96,
+        "path-unavailable": 1
+      },
+      "copyRecords": [
+        {
+          "destination": "corrected-preparation-v3/admission-preparation.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\admission-preparation.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/admission.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\admission.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/admission.template.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\admission.template.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/binding.mjs",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\binding.mjs",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/candidate-binding.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\candidate-binding.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/admission.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\admission.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/cleanup.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\cleanup.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P1-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P1-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P1-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P1-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P2-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-during-hold.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P2-during-hold.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-hold.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P2-hold.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P2-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P3-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P3-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P3-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P3-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P4-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P4-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P4-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-items-P4-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P1-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-lone-P1-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P1-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-lone-P1-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P2-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-lone-P2-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P2-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-lone-P2-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P3-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-lone-P3-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P3-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-lone-P3-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P4-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-lone-P4-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P4-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-lone-P4-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P1-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P1-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P1-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P1-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P2-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P2-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P2-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P2-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P3-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P3-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P3-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P3-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P4-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P4-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P4-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P4-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P5-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P5-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P5-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-split-P5-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P1-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-unkeyed-P1-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P1-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-unkeyed-P1-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P2-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-unkeyed-P2-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P2-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-unkeyed-P2-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P3-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-unkeyed-P3-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P3-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-unkeyed-P3-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P4-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-unkeyed-P4-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P4-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-unkeyed-P4-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P1-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-valid-P1-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P1-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-valid-P1-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P2-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-valid-P2-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P2-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-valid-P2-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P3-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-valid-P3-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P3-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-valid-P3-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P4-durable.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-valid-P4-durable.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P4-rest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\corrected-valid-P4-rest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/initial-gateway.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\initial-gateway.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/initial-initial-loop-list.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\initial-initial-loop-list.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/post-drain-readback.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\post-drain-readback.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/probe-requests.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\probe-requests.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/published-items.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\published-items.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/published-lone.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\published-lone.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/published-split.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\published-split.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/published-unkeyed.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\published-unkeyed.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/published-valid.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\published-valid.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/restart-first-due.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\restart-first-due.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/restart-gateway.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\restart-gateway.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/restart-initial-loop-list.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\restart-initial-loop-list.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/restart-rearm.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\restart-rearm.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/result.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\result.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/source-and-build-after.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\source-and-build-after.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-attempt-1/source-and-build.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-attempt-1\\source-and-build.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/corrected-result.md.txt",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\corrected-result.md",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/diagnostic-reanalysis/original-session-completion.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\diagnostic-reanalysis\\original-session-completion.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/diagnostic-reanalysis/read-warnings.mjs",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\diagnostic-reanalysis\\read-warnings.mjs",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/diagnostic-reanalysis/receipt.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\diagnostic-reanalysis\\receipt.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/diagnostics.mjs",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\diagnostics.mjs",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/execution-completions.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\execution-completions.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/gateway.mjs",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\gateway.mjs",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/handoff.md.txt",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\handoff.md",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/ports-attempt-1/result.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\ports-attempt-1\\result.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/race-attempt-1/cleanup.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\race-attempt-1\\cleanup.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/race-attempt-1/result.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\race-attempt-1\\result.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/run-corrected.mjs",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\run-corrected.mjs",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/run-ports.mjs",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\run-ports.mjs",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/run-race.mjs",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\run-race.mjs",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/SHA256SUMS",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\SHA256SUMS",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "corrected-preparation-v3/verify-cleanup.ps1",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\verify-cleanup.ps1",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "README.md",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\README.md",
+          "sourceStatus": "path-unavailable"
+        },
+        {
+          "destination": "root-readbacks/root-baseline-admission.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\root-baseline-admission.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/root-baseline-readback.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\root-baseline-readback.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/root-corrected-behavior-readback.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\root-corrected-behavior-readback.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/root-diagnostic-reanalysis-readback.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\root-diagnostic-reanalysis-readback.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/root-final-qa-acceptance.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\root-final-qa-acceptance.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-committed-freeze.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-committed-freeze.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-root-local-gates.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-root-local-gates.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-source-build-rebind.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-source-build-rebind.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-source-manifest-normalization.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-source-manifest-normalization.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "root-readbacks/runtime-361-source-staged.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-source-staged.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "source-freeze/final-source-SHA256SUMS",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-implementation\\final-source-SHA256SUMS",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "source-freeze/runtime-361-source-for-freeze-normalized-SHA256SUMS",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-source-for-freeze-SHA256SUMS",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "wire-fixtures.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\wire-fixtures.json",
+          "sourceStatus": "matches"
+        }
+      ],
+      "records": [
+        {
+          "path": "README.md",
+          "bytes": 9823,
+          "sha256": "16a7b4d80e309155d4472a06107e965cfb19a6de1fa36ed8c370b98c846d4e05",
+          "blob": "b5808302d55f01196a6830e61a9ea23ca71f4ba6"
+        },
+        {
+          "path": "SHA256SUMS",
+          "bytes": 12756,
+          "sha256": "5b6141775b574ac72fdf1b93506fe9951086779eaaa02c7c6dc4f66a0ba0594c",
+          "blob": "5fe6413b8147ea0005536cfc1a09f3eabee1f98d"
+        },
+        {
+          "path": "corrected-preparation-v3/SHA256SUMS",
+          "bytes": 821,
+          "sha256": "957458526b7231c6dcf3f3103502dd9348e277cb4036dc53ea06db497ee6cfcc",
+          "blob": "5f104f6dbabb66a19808ff82f4278ca26013962e"
+        },
+        {
+          "path": "corrected-preparation-v3/admission-preparation.json",
+          "bytes": 1662,
+          "sha256": "2eac5a4b8b1484d6209c5f6ee278ea32e20850dbca47183e80ee6bc499bfcdde",
+          "blob": "d2b7eab051f26594ea847301fdc5cfca67ec2b46"
+        },
+        {
+          "path": "corrected-preparation-v3/admission.json",
+          "bytes": 2144,
+          "sha256": "27dd6040c1d605ff73de4da10c0e47c5a2a8fe7c86fd676413af21526edc3311",
+          "blob": "75d758a36cef10f6f5b20df19916d099ec089bf9"
+        },
+        {
+          "path": "corrected-preparation-v3/admission.template.json",
+          "bytes": 1296,
+          "sha256": "63065ace76371e8343ccd566ecceac7182c3b9a18729798cd6d5416d6b7d3cc8",
+          "blob": "c83a903754680a3bbe0185ec6096114f3dc63691"
+        },
+        {
+          "path": "corrected-preparation-v3/binding.mjs",
+          "bytes": 9960,
+          "sha256": "e109906efe02d352407247c32fcb6d27985b5ef23aa9a537415f48354fac0efc",
+          "blob": "68ffd4d7be295971c547774031c2de78d130989f"
+        },
+        {
+          "path": "corrected-preparation-v3/candidate-binding.json",
+          "bytes": 510357,
+          "sha256": "475325dc08c5f0de813e2c8e00f9d7b269471963407788e746f8d132f6822d6f",
+          "blob": "64d240aebc63364c40423dce8027b6b712f8194b"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/admission.json",
+          "bytes": 1112,
+          "sha256": "70ff5da41e04aa9b50c64210666a41a300eb8ae015a9a3e0458b7277b25d70da",
+          "blob": "1190e00057a5b70a85730c96e7f67a22cd5c87b5"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/cleanup.json",
+          "bytes": 1748,
+          "sha256": "b261dca68ea05f41c84d784dc92c6fb125b69ef2ab38a5d538fa309143e763d4",
+          "blob": "84e7810e0beaee9272bcd26dc5b47c8e5124b621"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P1-durable.json",
+          "bytes": 30574,
+          "sha256": "59bd95ef09497aebe9423a7a697c2c2b31f8d77a845b7c5ac9c6de1aa2032981",
+          "blob": "fc7ad233d86c4dc998bcde4a8185907ff6f6735f"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P1-rest.json",
+          "bytes": 78998,
+          "sha256": "b3a288633a2fd9d026f4e6129da444915d9694cc64a890fdf0f015391ddbc7db",
+          "blob": "2c59205f99632297ee76842211449105b5d17bd5"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-durable.json",
+          "bytes": 70917,
+          "sha256": "3b8796971498945e2eb4f17ece8cbb9e6eaf7e87a3390e22de47ea8c5ed75a76",
+          "blob": "4d0292dbfd153bde7f99fd8e7210f4a075016540"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-during-hold.json",
+          "bytes": 872,
+          "sha256": "aa5e61d25e7a9bdf34b7c647533ea5b432eb69a4fd9810056bbaabf4ff492667",
+          "blob": "37af8437e439091c44f859a2102bc9a5396b82d4"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-hold.json",
+          "bytes": 1664,
+          "sha256": "d5878e713f54d896dd6710f58a9b2b3751d4b9ecd42996f60a51e324b6a7e654",
+          "blob": "ad6321310d752034f9f87f487daee1642ac040f5"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P2-rest.json",
+          "bytes": 49104,
+          "sha256": "c269f2e393289a8770cc1dc97b5148f98f46a0ffe08684a061f6bc754d55d245",
+          "blob": "e50c1b9bcb06940155d3b1289f5977314407d605"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P3-durable.json",
+          "bytes": 85183,
+          "sha256": "ceb95a84a11d82a5b547b009b4340b01317f8181e12cb74e2d750177f967cda9",
+          "blob": "063e5f383669679dc91fb76d3989f6c4465b5467"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P3-rest.json",
+          "bytes": 31494,
+          "sha256": "ab2a12eda85c3c4165ac047c885b9769d5fe1d2b34676f5edf40086255d11e08",
+          "blob": "87f0d7788ddcfdd41ef0a5dcd58fb8b5fd154a47"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P4-durable.json",
+          "bytes": 92106,
+          "sha256": "9d1715426d0f1d395ba7e42e776e15924a0ff4da530ba0a3c31520c24eeeea41",
+          "blob": "4ce074c02934ae69cfbebbaa5ed79fc9a0dfaa62"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-items-P4-rest.json",
+          "bytes": 33655,
+          "sha256": "9da2d2d2a640a68b19af60b77396036bcc9f28fe0dff98f2fedeef13eb435115",
+          "blob": "7a8459bcb21d1e29d291d942a914df3c4383087b"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P1-durable.json",
+          "bytes": 1865,
+          "sha256": "977c025044d2cc80b1f41012efb4e5e3986fd4ca3681cdf4c7e8d4431f48cc32",
+          "blob": "f77c98b17a46c40c756ae5baf8a6eb9fd93f6009"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P1-rest.json",
+          "bytes": 435,
+          "sha256": "d47c90448251f685228cd635f1cd62d4a353db0ede08cc20bebed17c14c1a282",
+          "blob": "2c4f187d033bf9854f904970b7db2a33005062c0"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P2-durable.json",
+          "bytes": 1866,
+          "sha256": "113d7b4a5500b2b2859db3b6294c8af6060b7a7f3082ec3d34184f5c80b106d9",
+          "blob": "d931b4c521a32383e0bfb8cdc29b8431e2145366"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P2-rest.json",
+          "bytes": 436,
+          "sha256": "e1ce79b233d9346406ce6202f44a1af6167dae81c160f98b32a92604d80c1479",
+          "blob": "5851aeb7a202d680361103538352214db299de83"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P3-durable.json",
+          "bytes": 1866,
+          "sha256": "12603a94e9787c73633cebf76033d7efc773f14363eec0895d898cfe383cebdd",
+          "blob": "0beee859579d5a4a1f87c665dabaf402060b2904"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P3-rest.json",
+          "bytes": 436,
+          "sha256": "4d42c1f8be7d1e66ff66cc6d3c57b599765aeaccbd969488c878f191ec6e1717",
+          "blob": "3ad79594fa22f0d2559f7f70e8396fe3df2e42b2"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P4-durable.json",
+          "bytes": 1866,
+          "sha256": "9d0068736ab582c594ee6c9d27a79f3f305e0306431fad83e02f1be8073d9438",
+          "blob": "ac59783a8f5badec4d78708eb1b901a55bb1d8d7"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-lone-P4-rest.json",
+          "bytes": 436,
+          "sha256": "f6856d68c1da98a99079c5335b799d3f59c278eb416936190976b0ee9b659ac0",
+          "blob": "7f87a603bf5a986c0da27ae6f3c1b51401b0559f"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P1-durable.json",
+          "bytes": 2523,
+          "sha256": "ee3c1b6fd9b9d56c22e7aec38db978f37f4c6bc1782c60a4db6be7b47f75b1e3",
+          "blob": "e46654a182ba7da9fa43be47065f194bb044e2f4"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P1-rest.json",
+          "bytes": 436,
+          "sha256": "6e1bf0c3bd49bf06448ce7b7616baf32e07de10e874baaea0d7703dfae9bb622",
+          "blob": "20b510d16f5d1f4079bef41f48405d16f56c2200"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P2-durable.json",
+          "bytes": 2523,
+          "sha256": "95e735e936026dbfef79c6520761e94c4b2fe736225775a648861b925d0d36b7",
+          "blob": "329166db34f3b7508e8b174569497790bd47b972"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P2-rest.json",
+          "bytes": 435,
+          "sha256": "9f3000f766e7ee16480c5085593e906e7e81b1983421e0902c5aa994d5c08f86",
+          "blob": "f8354934c35dc6af9d12ca7efe92465720478dd0"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P3-durable.json",
+          "bytes": 2523,
+          "sha256": "f6aafdf44cde7edeaa2b61d40750c50cbe0aa91ee6c4abc4bec4cb978b99d28a",
+          "blob": "c6bff5bf0e9d899e715f4c8b7b39c3eed827b3b4"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P3-rest.json",
+          "bytes": 436,
+          "sha256": "a8dcb1b2f550484be469652a63bdef294f3a42b58cca3b9980363318101370e5",
+          "blob": "692fbfb73c0430c8f0154189c05612a20a3a0863"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P4-durable.json",
+          "bytes": 2522,
+          "sha256": "1726ad0e4fadc6d9e6128002be4771f87c247a32dc121d7b269b00ffccfe637e",
+          "blob": "67bb96dfb986a3120b291cd89c9df87eb60e4ba1"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P4-rest.json",
+          "bytes": 436,
+          "sha256": "2bb140b3e32b5b60e9ddd3d52d94f4c1e68c6bb310c3d063d414ac611acdd86c",
+          "blob": "4d9542ea90dc1a64d36e0b0cf3bfa10dc59cf6c3"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P5-durable.json",
+          "bytes": 24669,
+          "sha256": "b3e3896f56319997d38f4ed3bb09b744dcc986ed57f7dd9c29664e15f69da297",
+          "blob": "ca6e5bc9818f40e91ab87d6657e4b0b9a0366a03"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-split-P5-rest.json",
+          "bytes": 40504,
+          "sha256": "7b91df1e53f687b8cb976caf4e759d416e0e8f732cd1a91a4bc8d93fa6d8c910",
+          "blob": "ecbe0a451acb15d70900b8f6de85424aaf177dbf"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P1-durable.json",
+          "bytes": 10528,
+          "sha256": "872ea0b322cb0af98957d2649ba77bf7e8a64b0dcb93576a7e4c7a5b83263112",
+          "blob": "8fa9e630ec2fd69e6e18a8959012f90b97ecfc9a"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P1-rest.json",
+          "bytes": 25787,
+          "sha256": "feb8ce59e713f30870160d8bb78070ddbd14548329a58f43a17cb2634e69fc92",
+          "blob": "2d355002ccd6ab6ac4adca036fe4f013fb98ba43"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P2-durable.json",
+          "bytes": 27810,
+          "sha256": "8baaedbf9aa5cfee3d91143e47bae96d6d3a7010925fc1babea31a73ccee296e",
+          "blob": "bdf34e5e7235c9f7ba4039ef9683d092e84d1857"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P2-rest.json",
+          "bytes": 27956,
+          "sha256": "d523cc86d058042328e895e62182bf0cab23011f1515a98ba7f0fa5be5326a98",
+          "blob": "9ec56555d41d1497820c06d244f2eefff7d599e7"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P3-durable.json",
+          "bytes": 45073,
+          "sha256": "2ef1ec1580284c3c2821918c2543979921b8b0abd09f27cda3674018a79ebc17",
+          "blob": "0ccb740a640fba34241ae383b91eda139d0aabb4"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P3-rest.json",
+          "bytes": 30125,
+          "sha256": "29a340d3ff78238f067222838a8ff6efc791d0d15fad5f21542c6b31d9e0145a",
+          "blob": "0b34dc7203436bda6a44f81d7381ebd555e10323"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P4-durable.json",
+          "bytes": 62334,
+          "sha256": "e674ea6adbd677c4f1b39827f6eb52ab387a2cef54ebd0a0868697361f53226a",
+          "blob": "db86179dd9cfe10b11689f55f56866410ef39520"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-unkeyed-P4-rest.json",
+          "bytes": 32292,
+          "sha256": "1c748d009d363c87db276e55ac94f1dd6aaf77b8aa0f9fdc05f690458d960040",
+          "blob": "2fc6c7a5cda2da0300856225fa4ff1cd54812bea"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P1-durable.json",
+          "bytes": 11492,
+          "sha256": "73e142df7ce2acdf839a9389c946a1d0b07749ad1b5db2c011af27684a08c66b",
+          "blob": "e01ed27faf0834f2e4637d26e945f20e9f7bf17b"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P1-rest.json",
+          "bytes": 27035,
+          "sha256": "a300417945d6b801da1425e01a3f241504487ab7a87fb056bf9e59e25ff694c0",
+          "blob": "2ae5765a941d267c3c3cfd8f5bbba86d1d2d2472"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P2-durable.json",
+          "bytes": 43907,
+          "sha256": "e181e430dc61ee38e498b3c31bfc6fa57a2b88bfdca275ec6148827ddc52c4a6",
+          "blob": "0713110813031b183a1cc45b8a0f903b11179f22"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P2-rest.json",
+          "bytes": 42750,
+          "sha256": "6985da71dd2a0e14111215088b370e1efc798bb35e04b82cd3162255b704566d",
+          "blob": "b394db696f1e10a3bad54e7bd64b347433b143dd"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P3-durable.json",
+          "bytes": 74761,
+          "sha256": "8f8d4a0f8f2274dda02e545dc807deba151c040499096e2500162daa205e7090",
+          "blob": "54b535026424b43727e344b14e741a922200acd0"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P3-rest.json",
+          "bytes": 31079,
+          "sha256": "8bba3a163fad795231561977ae06eb32eaf82854f364a8b4e29a4c62514fc7a4",
+          "blob": "53fe1d8633ab11ed477a167535a7028297069610"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P4-durable.json",
+          "bytes": 84090,
+          "sha256": "36a101a4bc43faff7b4936e8568da0a75dacd037443ee28ad0aebf56fef7f2a2",
+          "blob": "a1859ff3545e13da5af550aaba08d3e1dba1173d"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/corrected-valid-P4-rest.json",
+          "bytes": 31079,
+          "sha256": "1bdcf9b1ee40d8bc735b3de444af27d35c3a3ff978e54d8be5158398d0e1a3b5",
+          "blob": "d062ef21f427d3ee806e88fcf8d881bfd1b230a1"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/initial-gateway.log",
+          "bytes": 43777,
+          "sha256": "8317656b6d21cf1dfdb1997e0d180434a1d3ce3a3dafe8cfc2cb76d734507de7",
+          "blob": "6b3981ad899029810140999b45bd1ac29e2f03b4"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/initial-initial-loop-list.json",
+          "bytes": 1298,
+          "sha256": "8f9f0d1f6cd9dc1fe8d2b559cc5ecf0024efb23351e1982b28f32812fa447941",
+          "blob": "0b288d99164c5841c24dfc72efd0bb2d6efe1711"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/post-drain-readback.json",
+          "bytes": 146100,
+          "sha256": "8a39fea1c6e32a0c1ae06fbd16d2405663557dd684559971701f9c540a5b0141",
+          "blob": "c84ab658650039921a3b0169efe4f4ecf69dc487"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/probe-requests.json",
+          "bytes": 45145,
+          "sha256": "f1527c19330cb3dd52baf5f6252a203703022f9125156fee27dd78a6eb4ed759",
+          "blob": "0df59e2cc3c95018c17c5262cc45372b8ec75a0f"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/published-items.json",
+          "bytes": 5730,
+          "sha256": "db55198d37a066bad2affde5df7ebe60bb63bc751a7612ce3788f7cc035f7622",
+          "blob": "87d00087fff4443f82abb014f32975c9ff301dfe"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/published-lone.json",
+          "bytes": 5376,
+          "sha256": "805ffc3f76f6699434a085e57b1c015887aa4b16d053f2f59ebe892c71bcd125",
+          "blob": "8e1ac25ef1657a7c98947324108b7ffe62fb93d9"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/published-split.json",
+          "bytes": 5383,
+          "sha256": "73b88f5a0a746f85b4e859d4896cf7169ad35b110158951b7afa10778c4c2fae",
+          "blob": "a48b3091ded1c96598c557074acf853bd140dbb1"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/published-unkeyed.json",
+          "bytes": 5266,
+          "sha256": "8df9fb8f5217491a38b32bda31466fa73ee7d3efa609531933a7eab197432433",
+          "blob": "45ce19758d30ec284d42fc629259d279bc4cc7d2"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/published-valid.json",
+          "bytes": 5383,
+          "sha256": "e81773bc680e8d40c77c4308dc382c5653f7a747f0650dc101045f455ecf9841",
+          "blob": "23d7cc71f9aa9330ca201dee4d8794e0a08c5a85"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/restart-first-due.json",
+          "bytes": 9695,
+          "sha256": "4890d6b1449aacae7a129090744f6193000d844f8aedce4ea7cce38fe06df513",
+          "blob": "9083a2bb28f89fa0d2017293ddb681756f780949"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/restart-gateway.log",
+          "bytes": 16472,
+          "sha256": "5f31a50a035484f7afe719a8ec4899ec9719986e21a300b37ba2fb5f91b89eb7",
+          "blob": "da6e93bb95df1df7a0b8627133e44bc6be25130a"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/restart-initial-loop-list.json",
+          "bytes": 4948,
+          "sha256": "f72d453630b4a0792245404eb3810b63388873754df9087d99c27d89dc3d7ae9",
+          "blob": "cc6eb744fa37ee68bc1d814d64ddf8edb34cb640"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/restart-rearm.json",
+          "bytes": 2043,
+          "sha256": "05d740ae16f30d3676bdb66ef756c7627b88c4f3b2a8d9cee1a328cf8fa9b2dd",
+          "blob": "789e3d5e09836630e3eaa4daefc265f786fbbe59"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/result.json",
+          "bytes": 66365,
+          "sha256": "03be248eb5b5c4328183544d31acb681f115bbb75d279be2877af53a861bf5f2",
+          "blob": "ead358c08ed86e37bbed8aadd69365bccd97901a"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/source-and-build-after.json",
+          "bytes": 513978,
+          "sha256": "fb547ec5d2039ac902c9ae81b72a8cba1c26722a8a2b3779b9f388eeb32e99ec",
+          "blob": "9e838c35266a038134c99ca96ef72259b3fcef70"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-attempt-1/source-and-build.json",
+          "bytes": 513978,
+          "sha256": "fb547ec5d2039ac902c9ae81b72a8cba1c26722a8a2b3779b9f388eeb32e99ec",
+          "blob": "9e838c35266a038134c99ca96ef72259b3fcef70"
+        },
+        {
+          "path": "corrected-preparation-v3/corrected-result.md.txt",
+          "bytes": 7816,
+          "sha256": "4c30e72cf57633a05a562892dca599fc4fa81c2210dc3e47d3632bcde8fa84fd",
+          "blob": "2fece0756dfb5044837ed1668571b95c7e683757"
+        },
+        {
+          "path": "corrected-preparation-v3/diagnostic-reanalysis/original-session-completion.json",
+          "bytes": 394,
+          "sha256": "522afcd609a8a8725fbc91c6a2de44b75e597427e3d6b22f92b7ef1ab0c21dcb",
+          "blob": "0ab88667f1383aa7b6c22e3e6d9f86a9a449af1f"
+        },
+        {
+          "path": "corrected-preparation-v3/diagnostic-reanalysis/read-warnings.mjs",
+          "bytes": 9646,
+          "sha256": "d6a09429748d33ae013bb0266006794f7766c02f2aed77428bbda0b8b5fac96b",
+          "blob": "8c77740e30dffd2affc37587038241d27eeb676f"
+        },
+        {
+          "path": "corrected-preparation-v3/diagnostic-reanalysis/receipt.json",
+          "bytes": 21462,
+          "sha256": "d12abd16f64a63fe9caa8eaae88c0840009480ddfb29c249fabb95d4c36563bd",
+          "blob": "8378193277c191a1c20bb5c8d354f35b5cee39bf"
+        },
+        {
+          "path": "corrected-preparation-v3/diagnostics.mjs",
+          "bytes": 3443,
+          "sha256": "f3e25300fa560308e58c0bd20a6a47d42e60e82c5e210da537a8cffa4af71dbd",
+          "blob": "438dfa5f65be406a2074fa9988711a4a2f9a7f68"
+        },
+        {
+          "path": "corrected-preparation-v3/execution-completions.json",
+          "bytes": 678,
+          "sha256": "22a6b99fa44fa9349a73ee2b0db3858e3cc7d598db47e8ecab4ebfc9c1e0237d",
+          "blob": "46e8aab8b188a81f0876db4cac0729da7fecf47d"
+        },
+        {
+          "path": "corrected-preparation-v3/gateway.mjs",
+          "bytes": 1261,
+          "sha256": "025da17e4e76390885686e8bc797c40d030d9e45fcf6a1305a86d398e8a46b08",
+          "blob": "2e01fbc188c80188be52909a7f5513d4ed45e10b"
+        },
+        {
+          "path": "corrected-preparation-v3/handoff.md.txt",
+          "bytes": 7193,
+          "sha256": "d1ce9f498abcf9e5a5214d66e66b11fbec05ec579515da0ac92bff756ee0d079",
+          "blob": "8830992850376513e3585581462dcd61ce8efcf8"
+        },
+        {
+          "path": "corrected-preparation-v3/ports-attempt-1/result.json",
+          "bytes": 9027,
+          "sha256": "376108d38117c737343109fca53fb821fc3e8a207f2c16312864c902116f9a4c",
+          "blob": "771bca0feac4b7df4a0693280bcb51b4bb8840a3"
+        },
+        {
+          "path": "corrected-preparation-v3/race-attempt-1/cleanup.json",
+          "bytes": 1126,
+          "sha256": "82e15a3df109a579ac6d252123fdcda9ca8d2fefabc1eb8e5348ed6d6ffc0ebd",
+          "blob": "1d6c1a7a7142953ec42e4c15039dc36e4f3f88c9"
+        },
+        {
+          "path": "corrected-preparation-v3/race-attempt-1/result.json",
+          "bytes": 4019,
+          "sha256": "9449949c33f06510b5d6935e877e9622e48d721f5cea893646ad22bb41f282a4",
+          "blob": "500327a7974368ad95faeec911beb3870c4409c9"
+        },
+        {
+          "path": "corrected-preparation-v3/run-corrected.mjs",
+          "bytes": 29175,
+          "sha256": "0a5e10d7221df59fb688fe2872eb2e53f8281f15b4308c3b7424b01a3da1e678",
+          "blob": "39617c1ed362f7cc03c061ec132932a326804c81"
+        },
+        {
+          "path": "corrected-preparation-v3/run-ports.mjs",
+          "bytes": 8760,
+          "sha256": "58bbe8f3cfa90379494e0ece6eef159403de3d2d032adf547dab300eaa28d81e",
+          "blob": "52258bc8e115273d6092c5039959ddd6b83b4f77"
+        },
+        {
+          "path": "corrected-preparation-v3/run-race.mjs",
+          "bytes": 5739,
+          "sha256": "2cccc730750b026946b4c6bcb8ef2b7a170dbf68ca701ee44651a9d15b190898",
+          "blob": "fe3c690b9adcb3d5e1d7b4197f31f5d698b0e9da"
+        },
+        {
+          "path": "corrected-preparation-v3/verify-cleanup.ps1",
+          "bytes": 5516,
+          "sha256": "9d9c9a5af8e7cdcd846957e03303b7478daf49b055fb05b013aa020a0cb02cd6",
+          "blob": "296da01df740f7a0eb71e4b250da2cfbe03acefd"
+        },
+        {
+          "path": "root-readbacks/root-baseline-admission.json",
+          "bytes": 1026,
+          "sha256": "3a153a51927c822bb8a188f1596ae611f9256066513718e5cdda5e5b1951fdad",
+          "blob": "e8e8d5964ae2574f1e6cc0e59b48ba560395cece"
+        },
+        {
+          "path": "root-readbacks/root-baseline-readback.json",
+          "bytes": 901,
+          "sha256": "3f22f0fcaca0afa4ccb6401ab96dbbe5c4561cde582e2c24d25c2d4dade295a2",
+          "blob": "bcccc9353fd06ca36f79e984058ba20515c36f46"
+        },
+        {
+          "path": "root-readbacks/root-corrected-behavior-readback.json",
+          "bytes": 1108,
+          "sha256": "1f84bd64ff8064c327d3290cd9399d2264fed23c7500cfc22ace6ef2f16d93d8",
+          "blob": "b71971b0d2503e72525362c6435f5fe4c8848dab"
+        },
+        {
+          "path": "root-readbacks/root-diagnostic-reanalysis-readback.json",
+          "bytes": 1009,
+          "sha256": "605d01a686b743efff8c65056b4a26ba0c943d7c3daca3fd2eeca3ad7e1988f0",
+          "blob": "94fe77682ac094f272da63c5b2bbf9349b3334e8"
+        },
+        {
+          "path": "root-readbacks/root-final-qa-acceptance.json",
+          "bytes": 1996,
+          "sha256": "8af59fd2c982eea88b2e20118870d7b29d2507362354f05e52faf537a981ddbc",
+          "blob": "a6dcee364c59ddd16fad09d5b9ef350a8344320b"
+        },
+        {
+          "path": "root-readbacks/runtime-361-committed-freeze.json",
+          "bytes": 407,
+          "sha256": "1b193538f9d520dcf62888bfaf0261f50d2ab4d60989b862283207cc6db15477",
+          "blob": "22736cf22f03cb24e6f1d1092083039f9f88ed84"
+        },
+        {
+          "path": "root-readbacks/runtime-361-root-local-gates.json",
+          "bytes": 687,
+          "sha256": "38db2252ae9c29e141a3bb2c7078a944ecc33e5bdb09f5d02a220d39c6b2ad91",
+          "blob": "92979573c04982df345bacca9a074b9f109f9ec7"
+        },
+        {
+          "path": "root-readbacks/runtime-361-source-build-rebind.json",
+          "bytes": 3452,
+          "sha256": "252145a9d2a5aec128c63719b40be62d4c62b7afff1b1de6a4533492fbd5d790",
+          "blob": "d2e36bc6122277e7f50b381ac47313c691e45846"
+        },
+        {
+          "path": "root-readbacks/runtime-361-source-manifest-normalization.json",
+          "bytes": 550,
+          "sha256": "3f9056d3d04b243188e05ff27f43e6c595004ab645480f2ab43d3583dd7a8177",
+          "blob": "4505df31d2c41b38f1f4a5e1243f46f09d7ecde1"
+        },
+        {
+          "path": "root-readbacks/runtime-361-source-staged.json",
+          "bytes": 2030,
+          "sha256": "7fe77cd77990e2005f1e0c4930df5ba3d9d8fa9ea14dcb7ae8129dce7dd00cbf",
+          "blob": "cfa30632dcd6b2dcdbb30179977ac5ca356b4655"
+        },
+        {
+          "path": "source-copy-map.json",
+          "bytes": 41047,
+          "sha256": "48e2e754ee7af2ebe1fa6b3a81702da1c72c78e594cccf3fdc9c427702f3ec1a",
+          "blob": "d89c7450fec518caa8a7d56b9c68be174d4fdb31"
+        },
+        {
+          "path": "source-freeze/final-source-SHA256SUMS",
+          "bytes": 1219,
+          "sha256": "30a8fcd1a25600ff900b710fab4490695bde310e2396465d2ff5c489275369a7",
+          "blob": "8b63e10449d2fcb47bfa7c273500bf1ab977c00d"
+        },
+        {
+          "path": "source-freeze/runtime-361-source-for-freeze-normalized-SHA256SUMS",
+          "bytes": 1219,
+          "sha256": "18adf1e4efcc53fb1fcf25e0040cb998f045c0bc81bb046761eacf957f98277c",
+          "blob": "f73972fce6f2fe4ac4287c47f1b67509e72b0690"
+        },
+        {
+          "path": "wire-fixtures.json",
+          "bytes": 49851,
+          "sha256": "a73d3cad100e766799d44cf42fc14fd357e1a71d800ecb626a855b356882eef8",
+          "blob": "3fbb8fb4f8ca02ccb8d718d6514c1e1c374cb1a9"
+        }
+      ]
+    },
+    {
+      "name": "2026-11-15-space-cards-completion",
+      "committed": true,
+      "files": 76,
+      "manifestEntries": 75,
+      "totalBytes": 4526490,
+      "sourceMapEntries": 36,
+      "sourceMapStatuses": {
+        "matches": 36
+      },
+      "copyRecords": [
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/artifacts-43698925969-complete.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\artifacts-43698925969-complete.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/artifacts-43698925969-initial.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\artifacts-43698925969-initial.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/artifacts-43698926003-final.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\artifacts-43698926003-final.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/artifacts-43698926003-initial.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\artifacts-43698926003-initial.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/base-main-ref-final.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\base-main-ref-final.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/git-commit-e1237593.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\git-commit-e1237593.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/head-commit-final.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\head-commit-final.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496037-routing-steps.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496037-routing-steps.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496037-routing.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496037-routing.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496147-gates-steps.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496147-gates-steps.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496147-gates.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496147-gates.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496370-template-image-steps.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496370-template-image-steps.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496370-template-image.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496370-template-image.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496437-windows-launcher-steps.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496437-windows-launcher-steps.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496437-windows-launcher.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496437-windows-launcher.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496455-browser-steps.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496455-browser-steps.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/job-132765496455-browser.log",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\job-132765496455-browser.log",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/jobs-43698925969-complete.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\jobs-43698925969-complete.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/jobs-43698925969-initial.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\jobs-43698925969-initial.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/jobs-43698926003-final.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\jobs-43698926003-final.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/jobs-43698926003-initial.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\jobs-43698926003-initial.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/jobs-43698926003-progress-snapshot.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\jobs-43698926003-progress-snapshot.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/log-manifest.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\log-manifest.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/log-readback.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\log-readback.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/merge-ref-final.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\merge-ref-final.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/merge-ref-initial.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\merge-ref-initial.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/README.md",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\README.md",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/run-43698925969-complete.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\run-43698925969-complete.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/run-43698925969-initial.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\run-43698925969-initial.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/run-43698926003-final.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\run-43698926003-final.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/run-43698926003-initial.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\run-43698926003-initial.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/run-43698926003-progress-snapshot.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\run-43698926003-progress-snapshot.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/SHA256SUMS",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\SHA256SUMS",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/tested-checkout-identity.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\tested-checkout-identity.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/tested-merge-commit-final.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\tested-merge-commit-final.json",
+          "sourceStatus": "matches"
+        },
+        {
+          "destination": "../2026-11-15-space-cards-corrected-ci/tested-merge-commit.json",
+          "source": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\corrected-ci\\tested-merge-commit.json",
+          "sourceStatus": "matches"
+        }
+      ],
+      "records": [
+        {
+          "path": "README.md",
+          "bytes": 5014,
+          "sha256": "6f8dc87d0858577db8bf91b2f984f046493d840bde61b8496ac6c8e1a2581aff",
+          "blob": "770ab21a72d771aabf9177ae4e59f8f0d5e81396"
+        },
+        {
+          "path": "SHA256SUMS",
+          "bytes": 7948,
+          "sha256": "1d7a82e14f4d538bb20f517638df11365247db4160244a0fc8174f19f528badf",
+          "blob": "65f109d4760bcf81750b9d551f5ef041d3423ac7"
+        },
+        {
+          "path": "audit-artifacts/after-gh-ci-jobs.json",
+          "bytes": 14297,
+          "sha256": "da1953c6d23bf81b3ccc80f8147f9d29712128ab58fa210d1ef7f963b05539a1",
+          "blob": "17e3e4bac6cc2297c10c5004b985cc78d9ead3d8"
+        },
+        {
+          "path": "audit-artifacts/after-gh-ci-run.json",
+          "bytes": 13714,
+          "sha256": "62cc6c41a3d4d662cd0e29aa953449486f5274ebce98c8bd5ea1ddefd8432a44",
+          "blob": "12b9c09704ca196c28475cdc9323cf3764487eca"
+        },
+        {
+          "path": "audit-artifacts/after-gh-main.json",
+          "bytes": 352,
+          "sha256": "b43a8ab2782bb49634b8246cfe42f5b2419077688e3a57560e447c6658d15ede",
+          "blob": "d7e2522e5e475a7151b5086e6b90d502d1fbd0e4"
+        },
+        {
+          "path": "audit-artifacts/after-gh-pr.json",
+          "bytes": 23082,
+          "sha256": "03dd1a569ab31c1c7a1b326974a559b28d820273d9474260bcd0d4395ce875c9",
+          "blob": "69b0699ccc447a0a3a2e3bdb69b6d4eb45a7c774"
+        },
+        {
+          "path": "audit-artifacts/after-gh-routing-jobs.json",
+          "bytes": 3244,
+          "sha256": "dfc1f57c62293bce0415871901540b4863123acf1973b463b2001eecb96a03b2",
+          "blob": "dcd53b5e60ad99193141e5eec7360a1e81220650"
+        },
+        {
+          "path": "audit-artifacts/after-gh-routing-run.json",
+          "bytes": 13741,
+          "sha256": "3ee17daf4c899947f9c2dfa55448a5fa6650c7338316306e54379922b8d6400d",
+          "blob": "974638b44101f9c15960c6710ccf75de72b2ceb1"
+        },
+        {
+          "path": "audit-artifacts/brief.md.txt",
+          "bytes": 8803,
+          "sha256": "7dc1bb7ecf2da75ec18a4ccd205aacf483a870095c9410c0dbc9364494269154",
+          "blob": "e4a286bc402bff5ec732ebde04020ace1bfee445"
+        },
+        {
+          "path": "audit-artifacts/ci-independent-summary.json",
+          "bytes": 2401,
+          "sha256": "635c598ddfdcc6b2eded28311e07adb43c7c171ed0445f72a8ccfd5a38f59ecf",
+          "blob": "11a09e701b59e9df81aeb8a9a2d514cc560eeede"
+        },
+        {
+          "path": "audit-artifacts/correction-delta.diff",
+          "bytes": 86165,
+          "sha256": "e6c44bc184728b7ff73a3a87716b9482d89e6bd8bae8f28a178972e269fde03f",
+          "blob": "7a6aef67c9d6070ddfa49d45f60750b795143aff"
+        },
+        {
+          "path": "audit-artifacts/effective-full-scope.diff",
+          "bytes": 253642,
+          "sha256": "13b080ef4c65299ca3bc84e4e8b5af48f326e3f3b2e5ae1744f2f63363e87b04",
+          "blob": "f57205d2ba015f4a67671e82b9c971a5a2ad5d34"
+        },
+        {
+          "path": "audit-artifacts/evidence-integrity.json",
+          "bytes": 2895,
+          "sha256": "a22d0d42be416e920fbdd7f985d079f29b7802d94578bc8956a53f8ff731a734",
+          "blob": "ab88858609d33b7824e6a87a7486d4d399d6d47c"
+        },
+        {
+          "path": "audit-artifacts/evidence-integrity.log",
+          "bytes": 2973,
+          "sha256": "020532b10707afb58c905126dd2154d2184b0df2958342c14372e201570a7257",
+          "blob": "45ecf996a26ba06cbef3f5d1afb7e2116f1bae89"
+        },
+        {
+          "path": "audit-artifacts/final-check-exit.json",
+          "bytes": 64,
+          "sha256": "c9f2cda8f77f6c22edaf97e2c23812bfe054f78991fc1afb52dc97df65e6a6aa",
+          "blob": "dee43700ab2ad061b75e57281b5052621a3002e7"
+        },
+        {
+          "path": "audit-artifacts/final-check.log",
+          "bytes": 3182,
+          "sha256": "83aab65e0682c019d967b1a1d50bdc39cb9db95cd349e2e408be4f78197947f3",
+          "blob": "bb1870f670378e867f110f3788b601bd207ec038"
+        },
+        {
+          "path": "audit-artifacts/final-check.mjs",
+          "bytes": 4312,
+          "sha256": "d8e8e337276d2e3446de3fea2f1aaaedb751a04eaf4c094e48f9de807a62fba5",
+          "blob": "331ba932582fa527e91cccc36f633522db9072f5"
+        },
+        {
+          "path": "audit-artifacts/first-evidence-integrity.json",
+          "bytes": 2555,
+          "sha256": "2ac2a241778b9569cf0213afc29f4775cc550f1e0983b0863a76249cd8118471",
+          "blob": "fe938233a9d027ae21350b44f1138b1d10094efd"
+        },
+        {
+          "path": "audit-artifacts/first-evidence-integrity.log",
+          "bytes": 2629,
+          "sha256": "2f9ac8a9b36f7f5d97787adcb37107903c4875e7cc757234d645eb4d530b611e",
+          "blob": "1553db4d1f79453442e08b4d1d5f8c06bb93ab89"
+        },
+        {
+          "path": "audit-artifacts/first-inspect-retained.log",
+          "bytes": 641,
+          "sha256": "5c77a1c658930ef3ae3d5c4c74b591171ddeed35578f1ae2cd2246db88ce6431",
+          "blob": "9f3efd8dbcb80e8cb90152445187b00f5692ca40"
+        },
+        {
+          "path": "audit-artifacts/first-inspect-retained.mjs",
+          "bytes": 5327,
+          "sha256": "6ddda7e37a7ab042a13aca362a94bf823e4f409f132c9be04ffde8f26695d7ca",
+          "blob": "e28947039991180c62850d651226ba5ea547f67d"
+        },
+        {
+          "path": "audit-artifacts/first-native-independent-readback.json",
+          "bytes": 4597,
+          "sha256": "5825745fef54ba98a779d6297657f51afbbedb20ba2a33853dffcb359df9316d",
+          "blob": "4f8e7ef11b150e785a83be01178a647a208fbc36"
+        },
+        {
+          "path": "audit-artifacts/first-verify-evidence.mjs",
+          "bytes": 4912,
+          "sha256": "d6ee2d62e41b67d4a898fb71cfd2698bc48a80b34b43bbb27e6fb82a002c306b",
+          "blob": "c6de8e4482bff7dd0f457e8f0a95828637e1dbea"
+        },
+        {
+          "path": "audit-artifacts/focused-first-run-exit.json",
+          "bytes": 60,
+          "sha256": "8c8cb5aa7ffb3cf96f46cea2869248337acee82953b359faef90046a08b3872f",
+          "blob": "274a1ee56dde540e635c5622a9313dc3f5b92953"
+        },
+        {
+          "path": "audit-artifacts/focused-first-run.log",
+          "bytes": 560,
+          "sha256": "a3de3f83dba470f4008aecb39b8b7c7a560e0ad40688e4b53057fe58b0ac2ccd",
+          "blob": "2b1efac79c0d0917e9592f74e2051cef0c8bd173"
+        },
+        {
+          "path": "audit-artifacts/gh-ci-jobs.json",
+          "bytes": 14297,
+          "sha256": "da1953c6d23bf81b3ccc80f8147f9d29712128ab58fa210d1ef7f963b05539a1",
+          "blob": "17e3e4bac6cc2297c10c5004b985cc78d9ead3d8"
+        },
+        {
+          "path": "audit-artifacts/gh-ci-run.json",
+          "bytes": 13714,
+          "sha256": "62cc6c41a3d4d662cd0e29aa953449486f5274ebce98c8bd5ea1ddefd8432a44",
+          "blob": "12b9c09704ca196c28475cdc9323cf3764487eca"
+        },
+        {
+          "path": "audit-artifacts/gh-issue208.json",
+          "bytes": 12670,
+          "sha256": "721827f50b16bc63786db7c0ab2f16f6f3458d7cc4a1984495a44a5202c5e0e7",
+          "blob": "849e7705714f14924e879880feca403492765bc0"
+        },
+        {
+          "path": "audit-artifacts/gh-main.json",
+          "bytes": 352,
+          "sha256": "b43a8ab2782bb49634b8246cfe42f5b2419077688e3a57560e447c6658d15ede",
+          "blob": "d7e2522e5e475a7151b5086e6b90d502d1fbd0e4"
+        },
+        {
+          "path": "audit-artifacts/gh-pr.json",
+          "bytes": 22282,
+          "sha256": "0b891fdf775eec1a0dd9de14569dd6d9cd12f6e0c985f82a7d7aeea81dcd1e0a",
+          "blob": "31bde30bc5128b7df6e87c967cf85f2fd7c1886f"
+        },
+        {
+          "path": "audit-artifacts/gh-routing-jobs.json",
+          "bytes": 3244,
+          "sha256": "dfc1f57c62293bce0415871901540b4863123acf1973b463b2001eecb96a03b2",
+          "blob": "dcd53b5e60ad99193141e5eec7360a1e81220650"
+        },
+        {
+          "path": "audit-artifacts/gh-routing-run.json",
+          "bytes": 13741,
+          "sha256": "3ee17daf4c899947f9c2dfa55448a5fa6650c7338316306e54379922b8d6400d",
+          "blob": "974638b44101f9c15960c6710ccf75de72b2ceb1"
+        },
+        {
+          "path": "audit-artifacts/gh-tested-merge.json",
+          "bytes": 2727,
+          "sha256": "3f9c44b40a3664aae51ac4c71d9a6f031fdd3347877b59d171e4844b3e107e58",
+          "blob": "f765cc7ae95639a474ac74bab01b7f9f558a3fb9"
+        },
+        {
+          "path": "audit-artifacts/historical-native-independent-readback.json",
+          "bytes": 5809,
+          "sha256": "6adb36691d9c29b1be32019734ad74c45b820d8c390a182f5ec6b5d3aead1a5f",
+          "blob": "04e23e9c4c7ae5daee7d92ddce210e75fd35e33d"
+        },
+        {
+          "path": "audit-artifacts/historical-readback-exit.json",
+          "bytes": 64,
+          "sha256": "356cba9f5cba34940120840927fa6218fe0bea77b305aa5764533d517e0ce164",
+          "blob": "b2e7ca3963470e38a1103d7331802997e51715cf"
+        },
+        {
+          "path": "audit-artifacts/historical-readback.log",
+          "bytes": 6054,
+          "sha256": "33246359783d395ae3c8e210e8ccfbc1fe993e40871250f1ff7ab20b7496d782",
+          "blob": "8187bd17f819f2c366728686d0d38e5303dd75a4"
+        },
+        {
+          "path": "audit-artifacts/historical-readback.mjs",
+          "bytes": 3580,
+          "sha256": "e6c31aab4bc2a6770d950e4b97c73e88850c7609f95b29cab09e9ad8e5ea1a4e",
+          "blob": "ebff0420debdfb1e30983b16e84e2bcc56e1c7df"
+        },
+        {
+          "path": "audit-artifacts/independent-correction-delta.diff",
+          "bytes": 86165,
+          "sha256": "e6c44bc184728b7ff73a3a87716b9482d89e6bd8bae8f28a178972e269fde03f",
+          "blob": "7a6aef67c9d6070ddfa49d45f60750b795143aff"
+        },
+        {
+          "path": "audit-artifacts/independent-effective-full-scope.diff",
+          "bytes": 253642,
+          "sha256": "13b080ef4c65299ca3bc84e4e8b5af48f326e3f3b2e5ae1744f2f63363e87b04",
+          "blob": "f57205d2ba015f4a67671e82b9c971a5a2ad5d34"
+        },
+        {
+          "path": "audit-artifacts/index-before.txt",
+          "bytes": 3307935,
+          "sha256": "3bac114a02b04c86255b993e0f56d8a93e0071c2e08a162ad9612d616e958449",
+          "blob": "59f1e00fb694dc8e16e78cebe2975bd224493573"
+        },
+        {
+          "path": "audit-artifacts/inspect-retained-exit.json",
+          "bytes": 64,
+          "sha256": "78c8d8fb5e81222377cbf56449662462de582c7af88bab949fd48a951f79fbe6",
+          "blob": "191ab947f6f59f3509b7095996b75bdf9a225974"
+        },
+        {
+          "path": "audit-artifacts/inspect-retained.log",
+          "bytes": 8495,
+          "sha256": "606443efc445feca5366200235ab5f0fc7218ddd92674b03e46981e883b30cee",
+          "blob": "14d48e17c1dfd16e380a2a8049843a91c9fd3368"
+        },
+        {
+          "path": "audit-artifacts/inspect-retained.mjs",
+          "bytes": 6407,
+          "sha256": "b397afbe5481a1e6314ef0417d71a12eb898cc36f9512659ed32bc76fb5ff7f7",
+          "blob": "d94df6b6e0bc218874a1d87646fe612078c91714"
+        },
+        {
+          "path": "audit-artifacts/live-ci-jobs.json",
+          "bytes": 157,
+          "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737",
+          "blob": "7d00d66eee9b2420e668ce5086871002949a8ded"
+        },
+        {
+          "path": "audit-artifacts/live-ci-run.json",
+          "bytes": 157,
+          "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737",
+          "blob": "7d00d66eee9b2420e668ce5086871002949a8ded"
+        },
+        {
+          "path": "audit-artifacts/live-main.json",
+          "bytes": 157,
+          "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737",
+          "blob": "7d00d66eee9b2420e668ce5086871002949a8ded"
+        },
+        {
+          "path": "audit-artifacts/live-pr.json",
+          "bytes": 157,
+          "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737",
+          "blob": "7d00d66eee9b2420e668ce5086871002949a8ded"
+        },
+        {
+          "path": "audit-artifacts/live-routing-jobs.json",
+          "bytes": 157,
+          "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737",
+          "blob": "7d00d66eee9b2420e668ce5086871002949a8ded"
+        },
+        {
+          "path": "audit-artifacts/live-routing-run.json",
+          "bytes": 157,
+          "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737",
+          "blob": "7d00d66eee9b2420e668ce5086871002949a8ded"
+        },
+        {
+          "path": "audit-artifacts/live-tested-merge.json",
+          "bytes": 157,
+          "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737",
+          "blob": "7d00d66eee9b2420e668ce5086871002949a8ded"
+        },
+        {
+          "path": "audit-artifacts/ls-remote-after.log",
+          "bytes": 260,
+          "sha256": "3bc8a5ef5c7fae785278b6d16fb4f295a8ac3ee65faa14dea2e549f2754e2dfa",
+          "blob": "4dffe996ae2812c9478bd9be774b1a4b7cae4e31"
+        },
+        {
+          "path": "audit-artifacts/ls-remote-before.log",
+          "bytes": 264,
+          "sha256": "b79735baed9b9e7de0e6b076bdd37350bda16ad57a5e1a4e6a892420f5313b12",
+          "blob": "5ad8e8829d8dcd01a276880121d9ad319883fffd"
+        },
+        {
+          "path": "audit-artifacts/native-independent-readback.json",
+          "bytes": 4946,
+          "sha256": "64fc3f739f1b56e97c751e14d51b57387cbb5b9e78013c3eda235f5dff577588",
+          "blob": "79d963058826c4afdfff5ddabeb003f802c48a0a"
+        },
+        {
+          "path": "audit-artifacts/report-format-exit.json",
+          "bytes": 64,
+          "sha256": "0b7345113fed731e9f58a1aff7410ff397eec5d066a5e6d2ef29be29300487af",
+          "blob": "72afe7c9336b323f1290b42cf45b60f387582c6a"
+        },
+        {
+          "path": "audit-artifacts/report-format.log",
+          "bytes": 101,
+          "sha256": "12b5a93386bac995bea787c0ee4791de5ecb296cedc75dc37102bdcfe3d6a98b",
+          "blob": "ad790270d05d785ccdea00246e417dda5e230863"
+        },
+        {
+          "path": "audit-artifacts/report.md.txt",
+          "bytes": 27672,
+          "sha256": "8ffa71cf11e8de4e084b6161c8af85492d0315254bf56a526c56a461aae7e81a",
+          "blob": "495708e607cba40cffa4945530ef2dd7e7e874a2"
+        },
+        {
+          "path": "audit-artifacts/root-ci-body-readback.json",
+          "bytes": 7547,
+          "sha256": "6b73238133f07bccccc02c6b9f884cd58c8de6e832b079549f1c73f9e19ae6aa",
+          "blob": "3519126088bfe560b3606e62351ab2bfd07eb87c"
+        },
+        {
+          "path": "audit-artifacts/root-green-ci-admission.json",
+          "bytes": 4284,
+          "sha256": "5d82928b5ab1523d771b52617fcdf85383b9c77d6b1a3d5204d14072c6956d61",
+          "blob": "5bfd32056b907b6bf2357ad55cb8dca47394114c"
+        },
+        {
+          "path": "audit-artifacts/root-publication-comment.md.txt",
+          "bytes": 28273,
+          "sha256": "d6fdd60ba4161694c07d4689e4e2521ba7e531c7a8570870933653ea6d76aa87",
+          "blob": "885eda5c2edcf2397e50f051fd8ee506f84dcd0e"
+        },
+        {
+          "path": "audit-artifacts/seal-receipt.json",
+          "bytes": 417,
+          "sha256": "b26dc7d3e87fe29cb25bc76a6ddd88bf718da121bea7aa9833e74cd2415e1efe",
+          "blob": "d18f4184a176dcbb31d21ef270277be48e510148"
+        },
+        {
+          "path": "audit-artifacts/seal.mjs",
+          "bytes": 12437,
+          "sha256": "fec9ddd47a5362c7150bdb1ba15049c42eac579cd6a3436a08777962837f1ae6",
+          "blob": "103bef329a3379534da8a3c4fb0d47b2692a88bc"
+        },
+        {
+          "path": "audit-artifacts/source-identity.json",
+          "bytes": 4374,
+          "sha256": "1262edd9f950e66f5627994757c3308aa5a21f0e6a26dbaf8c9fb41fc36aac97",
+          "blob": "2391cf3148384f36dcbc735319a64c553446287d"
+        },
+        {
+          "path": "audit-artifacts/source-index-after.json",
+          "bytes": 6414,
+          "sha256": "410dd7534c033742bcb816430cda74b1fed97fc1bf153fd5edd69beb3049f449",
+          "blob": "c65148932fa257f1de07cb8004566c0dc412f154"
+        },
+        {
+          "path": "audit-artifacts/source-index-before.json",
+          "bytes": 5235,
+          "sha256": "e2b7c0accc1d585ede41133e9df5ae7724e2e98c0e0bf9cbe52f768e87b9dc50",
+          "blob": "c34afd941252e121b96c09fa17bd45d0406af91c"
+        },
+        {
+          "path": "audit-artifacts/synchronous-public-probe-exit.json",
+          "bytes": 60,
+          "sha256": "ae353b8bab5bd39c0c7125f34863baec4aef4513fe2bf359463d3fe6403e352d",
+          "blob": "6e91ef1a581596ad8f162556618718cdc58ca04f"
+        },
+        {
+          "path": "audit-artifacts/synchronous-public-probe.cjs",
+          "bytes": 3699,
+          "sha256": "9cb1afe09445ed781ec3b315d015f9a74607d4a2b185e24d74f3e194a68edb71",
+          "blob": "a9cbf68356523c249eca8da9f641f9616040b58a"
+        },
+        {
+          "path": "audit-artifacts/synchronous-public-probe.json",
+          "bytes": 1007,
+          "sha256": "6b7582abd5c30294973d7e3231ac8ffdf240aeec0ac54b0f4fa8252ee0d43576",
+          "blob": "3a0610a5d40163eb3ec53b6335c20d411b3fa9f0"
+        },
+        {
+          "path": "audit-artifacts/synchronous-public-probe.log",
+          "bytes": 640,
+          "sha256": "3e6e6b525970de1670df225c694a82335772d7d1d8c8d0367515922264f6b4b9",
+          "blob": "55fe2d2115b231c8e2f4295f92dfe8ee2b326bbb"
+        },
+        {
+          "path": "audit-artifacts/verification.json",
+          "bytes": 28700,
+          "sha256": "cc6581b218595ce72553f5cc6811591466f9e05e263c29c9e3a59ce316d667b6",
+          "blob": "dcd93d3a32abc9b741f61780070cc3c16ab135aa"
+        },
+        {
+          "path": "audit-artifacts/verify-evidence.mjs",
+          "bytes": 5531,
+          "sha256": "c78a575c37c434c55a06b2fc04e172af3978dfb2f26c0e16cdfd391b3b5653e3",
+          "blob": "61a39cde1357fc2eb00cc220200e13ccdd07d2d2"
+        },
+        {
+          "path": "source-copy-map.json",
+          "bytes": 45935,
+          "sha256": "3c41170d91ebc88e769949142fd6f3b713e6d39b83a9179f071507014395af33",
+          "blob": "ed4a48baa045e04053780b65e1b8807cde2ef0f8"
+        },
+        {
+          "path": "source-receipts/audit-source-SHA256SUMS.txt",
+          "bytes": 6047,
+          "sha256": "78b0c58852c7b5533cf6bb67c575a506fbe4c27787f48c734e0e73b9bc1542bb",
+          "blob": "05c2a6f9dde5e8af5456287be54e99601ccefafe"
+        },
+        {
+          "path": "source-receipts/corrected-ci-root-readback.json",
+          "bytes": 799,
+          "sha256": "5e10cc3d487de61ea445e9493e4db9e9218f20a1224e686ccaf2b83593e4c8b8",
+          "blob": "2a06f284eece8d6bc46adc15d70303310593ed8e"
+        },
+        {
+          "path": "source-receipts/final-publication-readback.json",
+          "bytes": 68911,
+          "sha256": "51d41cde9afbc94793bed8d05d131698febd061a1d788aac6e1a0eb781073250",
+          "blob": "3a373a401a33dc44c938a64740823a8774a566fa"
+        },
+        {
+          "path": "source-receipts/merge-verification.json",
+          "bytes": 8838,
+          "sha256": "43e39934f17fdf51f499eebf0f74455f40165829a4654419a383f341a03de1f1",
+          "blob": "680f915cde064ebb6b2062e3b3feee96673b3fad"
+        },
+        {
+          "path": "source-receipts/owner-acceptance-state-restored.json",
+          "bytes": 24584,
+          "sha256": "dd769281200a7b65d90e74f4bc033cc3f4eb4e4dc28e07234ba2e8acbc201ca4",
+          "blob": "e5d93be4170579fbe7da580f76534599df4bacb6"
+        }
+      ]
+    },
+    {
+      "name": "2026-11-15-space-cards-corrected-ci",
+      "committed": true,
+      "files": 36,
+      "manifestEntries": 35,
+      "totalBytes": 891135,
+      "sourceMapEntries": 0,
+      "sourceMapStatuses": {},
+      "copyRecords": [],
+      "records": [
+        {
+          "path": "README.md",
+          "bytes": 11035,
+          "sha256": "9738f6e4397536266ae6276c41a9750af48f7b43f0d8a63e1ff92efb856c0db9",
+          "blob": "acf239cd64cb6f24d5e1e8e9facd16ce510c6a75"
+        },
+        {
+          "path": "SHA256SUMS",
+          "bytes": 3364,
+          "sha256": "207cf72922b1dded2ca8e30e70c35b0baedfd972c588e5e8ecf863cf10c3ba3a",
+          "blob": "50a6953c88d401c1144abb8c6e8c7d89dce64552"
+        },
+        {
+          "path": "artifacts-43698925969-complete.json",
+          "bytes": 754,
+          "sha256": "28a98ec4deb64534dd6feabc6505f7f76ee687d4a675db531458d6f84480b101",
+          "blob": "00f049043b0a81b20e5b5ffa792fc497cf7af76d"
+        },
+        {
+          "path": "artifacts-43698925969-initial.json",
+          "bytes": 754,
+          "sha256": "28a98ec4deb64534dd6feabc6505f7f76ee687d4a675db531458d6f84480b101",
+          "blob": "00f049043b0a81b20e5b5ffa792fc497cf7af76d"
+        },
+        {
+          "path": "artifacts-43698926003-final.json",
+          "bytes": 744,
+          "sha256": "6fcd2fe54a9bf9134a303d1217f13cd485bd83dd3fa8ed00670c4da5f0c863b9",
+          "blob": "186936a0da191aeba3d93f9657a74220b564116c"
+        },
+        {
+          "path": "artifacts-43698926003-initial.json",
+          "bytes": 32,
+          "sha256": "244563f989470892c537c9a4622920af0d228ee4528f7d00c64a06d6cd95856c",
+          "blob": "ccd036f15290ec2e42695f742d9edf63354be932"
+        },
+        {
+          "path": "base-main-ref-final.json",
+          "bytes": 350,
+          "sha256": "9a1a1cd8c89152025826bf43fc1bb2ac0c7ec1ca7ef54367badfeba9c3d7e488",
+          "blob": "29bb190c2455ebf217523680d43a25b9ba83b7a4"
+        },
+        {
+          "path": "git-commit-e1237593.json",
+          "bytes": 1231,
+          "sha256": "fe7e9852b78b44b581c66933a82666ce2f5f90767033fa392c835b087709f921",
+          "blob": "d2666c83153ca3dfdb9ca0b7bb259363085ef3be"
+        },
+        {
+          "path": "head-commit-final.json",
+          "bytes": 1231,
+          "sha256": "fe7e9852b78b44b581c66933a82666ce2f5f90767033fa392c835b087709f921",
+          "blob": "d2666c83153ca3dfdb9ca0b7bb259363085ef3be"
+        },
+        {
+          "path": "job-132765496037-routing-steps.json",
+          "bytes": 1246,
+          "sha256": "b7669c447c0eab74ecdd98563f782f56628d549919584c8a50a86b01dbd8f5a4",
+          "blob": "42fce0590ed5bbe9ff684fa52c35c579a0af75c5"
+        },
+        {
+          "path": "job-132765496037-routing.log",
+          "bytes": 66591,
+          "sha256": "84b5fa9eda172402d96b678f244630cf3e991cbe0ac76bb4de3c2661fe4f45ab",
+          "blob": "bb315602c4346858216eb94b11cf48db190b5104"
+        },
+        {
+          "path": "job-132765496147-gates-steps.json",
+          "bytes": 2933,
+          "sha256": "d24f70dfdbbe0197003c16645246de08df3228db4c68ac9f48b09d05ad9b751c",
+          "blob": "53687f4c2e3aa32730f0afaa7a2bb37b7019f6bb"
+        },
+        {
+          "path": "job-132765496147-gates.log",
+          "bytes": 401513,
+          "sha256": "f49869bac9cad21315a3aab58d5f9d1de734aa8f02d53dc71ce1226815681df3",
+          "blob": "7d442eb9b635f991c49619272d67dff5410d1481"
+        },
+        {
+          "path": "job-132765496370-template-image-steps.json",
+          "bytes": 573,
+          "sha256": "53211ee83800501fc4cb7faa4c230b58a530d18aef956019c8ae341e468d9cf3",
+          "blob": "f3040295b5398fe79b07c95ebf13b9003e06c9a5"
+        },
+        {
+          "path": "job-132765496370-template-image.log",
+          "bytes": 40738,
+          "sha256": "38ca061179302cbc354c516bcd0235213f1f91f0581d4f873e32090e839459ed",
+          "blob": "2c3236dee730e51968ea3c78991dab52570a9993"
+        },
+        {
+          "path": "job-132765496437-windows-launcher-steps.json",
+          "bytes": 1068,
+          "sha256": "95990cc0053f34f004ec203f32a041d91c5b5a137c4197a402fe1e65cb938387",
+          "blob": "463598fecca1c5fbe0a39fde526d738eb4736761"
+        },
+        {
+          "path": "job-132765496437-windows-launcher.log",
+          "bytes": 46292,
+          "sha256": "015f440eb773c2455128c931aa2adb921cfd097e794f4708b5ee26600f2b0271",
+          "blob": "3dd8903310befada5644726f69b3d0f9d68c50db"
+        },
+        {
+          "path": "job-132765496455-browser-steps.json",
+          "bytes": 1276,
+          "sha256": "3a325b9f0ffad387c20dd73f1342b9303b0150de2deb45826a9707f4014a7e8f",
+          "blob": "13bf4a046d7835846cefe6944d74d45d9634261b"
+        },
+        {
+          "path": "job-132765496455-browser.log",
+          "bytes": 178871,
+          "sha256": "b847521db2c2bf1fd9f6c9670afe0c6ad28a45e02edd24b99ea0d03fa0fcccef",
+          "blob": "0bae249e16d606c994638b1de6a4fdf67ec63393"
+        },
+        {
+          "path": "jobs-43698925969-complete.json",
+          "bytes": 3242,
+          "sha256": "2fd069317e45c2d72dfa5946f7288ea351b4e9949781bb4b491bf009adce9abb",
+          "blob": "9a6ba89e307441675866d7c4b07c34a0ba0fd3fe"
+        },
+        {
+          "path": "jobs-43698925969-initial.json",
+          "bytes": 3242,
+          "sha256": "2fd069317e45c2d72dfa5946f7288ea351b4e9949781bb4b491bf009adce9abb",
+          "blob": "9a6ba89e307441675866d7c4b07c34a0ba0fd3fe"
+        },
+        {
+          "path": "jobs-43698926003-final.json",
+          "bytes": 14295,
+          "sha256": "b4e21f02177a534828a86d6726ac3630d28642a24756fcaae5f239ab319261d1",
+          "blob": "fe2ffa46cbd984da80ca897e2849b909f76a6d36"
+        },
+        {
+          "path": "jobs-43698926003-initial.json",
+          "bytes": 12417,
+          "sha256": "6aa0a73ae11faa21302a842514913488047ca61ef3c6b5f1746b62bb6b67fdc8",
+          "blob": "0e1e5edce0d38f356691a7114cb7e9a9d9628ed1"
+        },
+        {
+          "path": "jobs-43698926003-progress-snapshot.json",
+          "bytes": 13344,
+          "sha256": "6aa6c192b3b8139724084e93c17a48361cf706ce145ba29bd4897d8523d395c9",
+          "blob": "538f2900b93233983f982a4507f3057d235feb53"
+        },
+        {
+          "path": "log-manifest.json",
+          "bytes": 1981,
+          "sha256": "f1179caaef327f3e74c39ac46ef79a47030ef869d1fc6a44430dc558a9720188",
+          "blob": "4294b762d2c75fb4a59b40bb67d495e96d662ad2"
+        },
+        {
+          "path": "log-readback.json",
+          "bytes": 1334,
+          "sha256": "df4e6cd71e7c16144500a973d4c496e796f219a0a7e19766dd067150606f1c82",
+          "blob": "757c089ab4a9ac67dae36c19fdcd402f78b796cb"
+        },
+        {
+          "path": "merge-ref-final.json",
+          "bytes": 363,
+          "sha256": "d00f5d2db7cd27929d8a8464ab64a6547d49e9b8837807964003cf80bbf75199",
+          "blob": "db37c4749f05cf7e398b96c4fccd4f090c8cf64b"
+        },
+        {
+          "path": "merge-ref-initial.json",
+          "bytes": 363,
+          "sha256": "d00f5d2db7cd27929d8a8464ab64a6547d49e9b8837807964003cf80bbf75199",
+          "blob": "db37c4749f05cf7e398b96c4fccd4f090c8cf64b"
+        },
+        {
+          "path": "run-43698925969-complete.json",
+          "bytes": 13739,
+          "sha256": "51bbf2998e3685d248d23b354f33e1c6de27951c9e0ea60964078d9f5fffa779",
+          "blob": "527a6f6d12161bc1ff7f10cbd78eefa09b886437"
+        },
+        {
+          "path": "run-43698925969-initial.json",
+          "bytes": 13739,
+          "sha256": "51bbf2998e3685d248d23b354f33e1c6de27951c9e0ea60964078d9f5fffa779",
+          "blob": "527a6f6d12161bc1ff7f10cbd78eefa09b886437"
+        },
+        {
+          "path": "run-43698926003-final.json",
+          "bytes": 13712,
+          "sha256": "119076ae577283a076e7d61d49b7fa990f3005374b6b119554f3c21fa958d2ae",
+          "blob": "be9eb8b1c9ab9f2a3a0db63093540740d9ca0e41"
+        },
+        {
+          "path": "run-43698926003-initial.json",
+          "bytes": 13709,
+          "sha256": "38d11a8308037db66e06296b255e92c023b62f408b40127127056486689fa013",
+          "blob": "e75d310e222aab1843662483a0c9371f0e517411"
+        },
+        {
+          "path": "run-43698926003-progress-snapshot.json",
+          "bytes": 13709,
+          "sha256": "38d11a8308037db66e06296b255e92c023b62f408b40127127056486689fa013",
+          "blob": "e75d310e222aab1843662483a0c9371f0e517411"
+        },
+        {
+          "path": "tested-checkout-identity.json",
+          "bytes": 5900,
+          "sha256": "682624847ab260614087c22bccf8cda9d793e1d43409cf04625b4de82e7fbef9",
+          "blob": "a766d346419b818fe323b847565f0699e9022997"
+        },
+        {
+          "path": "tested-merge-commit-final.json",
+          "bytes": 2725,
+          "sha256": "92a01c66b149a0345c83b55c050826c7be53892be3d7a44b166717986c664193",
+          "blob": "101c2e8af363aa649189654f36aec6192f52ca84"
+        },
+        {
+          "path": "tested-merge-commit.json",
+          "bytes": 2725,
+          "sha256": "92a01c66b149a0345c83b55c050826c7be53892be3d7a44b166717986c664193",
+          "blob": "101c2e8af363aa649189654f36aec6192f52ca84"
+        }
+      ]
+    },
+    {
+      "name": "2026-11-15-poll-dedupe-current-ci",
+      "committed": false,
+      "files": 34,
+      "manifestEntries": 33,
+      "totalBytes": 905866,
+      "sourceMapEntries": 0,
+      "sourceMapStatuses": {},
+      "copyRecords": [],
+      "records": [
+        {
+          "path": "README.md",
+          "bytes": 8295,
+          "sha256": "789dd837c50079acb33115945a2f061f3c5bd9df532dcfe9836a11b8fdaea405"
+        },
+        {
+          "path": "SHA256SUMS",
+          "bytes": 3403,
+          "sha256": "4bb2f6169930ba045f6bbeb10da10869200ce3ea2747d41503f9e84821bdaedf"
+        },
+        {
+          "path": "artifacts/coverage.zip",
+          "bytes": 21946,
+          "sha256": "f4b532ce0b6ac44ff3862b11a5cc1f9cc28b22edcec423d8c0d5c4ee83dbf981"
+        },
+        {
+          "path": "job-metadata/artifacts-browser-terminal-2026-11-15T1314Z.json",
+          "bytes": 746,
+          "sha256": "c951113fab16b78f3d128602b4af873c78ced5f305fba8dec897e5a1239160ab"
+        },
+        {
+          "path": "job-metadata/artifacts-final.json",
+          "bytes": 746,
+          "sha256": "c951113fab16b78f3d128602b4af873c78ced5f305fba8dec897e5a1239160ab"
+        },
+        {
+          "path": "job-metadata/artifacts-snapshot-2026-11-15T1306Z.json",
+          "bytes": 34,
+          "sha256": "e338fb10e6740e1e43cdbe137da3a22ec09f95d8097c5f247e751de5f81f87b4"
+        },
+        {
+          "path": "job-metadata/browser-job.json",
+          "bytes": 3230,
+          "sha256": "ccfeb1006659969bdab1671ddfae5424dabe6fb6b48b28ae425b2ad99d682b3e"
+        },
+        {
+          "path": "job-metadata/browser-steps.json",
+          "bytes": 3849,
+          "sha256": "30d75428386c0bbfd9f9364efc843ed58b3508b2eae676099bab8de8631f80b5"
+        },
+        {
+          "path": "job-metadata/gate-coverage-test-summary.json",
+          "bytes": 11315,
+          "sha256": "640edcb3f17105b49a9778b29fe93a8fe3e77c53b4c26766c83a975aa35a6bbb"
+        },
+        {
+          "path": "job-metadata/gates-job.json",
+          "bytes": 6217,
+          "sha256": "905889933013166b63bd352147b5ac1eed4df4fd14f10ece73370839fc0dec04"
+        },
+        {
+          "path": "job-metadata/gates-steps.json",
+          "bytes": 8024,
+          "sha256": "340073a302328a3d06d82e4adaec70d00dbfb1f4f086902336e4cc975513d964"
+        },
+        {
+          "path": "job-metadata/jobs-browser-terminal-2026-11-15T1314Z.json",
+          "bytes": 14297,
+          "sha256": "690c3bd589d81ad3e5778b80d583627a9dbb626bc33dc214caa17c61940d8287"
+        },
+        {
+          "path": "job-metadata/jobs-final.json",
+          "bytes": 14297,
+          "sha256": "690c3bd589d81ad3e5778b80d583627a9dbb626bc33dc214caa17c61940d8287"
+        },
+        {
+          "path": "job-metadata/jobs-snapshot-2026-11-15T1306Z.json",
+          "bytes": 13346,
+          "sha256": "7b96345cb4c413c704da1a560a9088e38246498571f0b42c40dba729d405ae19"
+        },
+        {
+          "path": "job-metadata/pr-484-changed-paths.txt",
+          "bytes": 29556,
+          "sha256": "5ebd9e8811128310cedce7dbc0df59c920f89634652a81236928d6fc99d84421"
+        },
+        {
+          "path": "job-metadata/pr-484-snapshot-2026-11-15T1306Z.json",
+          "bytes": 19777,
+          "sha256": "859b9539fea835cc23366ee7aef7274cdfffd3191ba33017805d42139794f6c7"
+        },
+        {
+          "path": "job-metadata/routing-path-filter-readback.json",
+          "bytes": 588,
+          "sha256": "a835fbc50eb07228572215f0de1ffb17d4c7aa0a09743d3950d220850164c718"
+        },
+        {
+          "path": "job-metadata/run-final.json",
+          "bytes": 13729,
+          "sha256": "b2eae3c38f3ce712e4d486e1743c0ef39d1fbe8f1716602d4e3e887b968b3bd1"
+        },
+        {
+          "path": "job-metadata/run-initial.json",
+          "bytes": 13726,
+          "sha256": "38e30ed5088eb037dce523519becdd15c81674d6835aac4209e86afcb0204bc3"
+        },
+        {
+          "path": "job-metadata/synthetic-merge-commit.json",
+          "bytes": 2727,
+          "sha256": "cbb8d0c1f82c8813472b5bba5b0ebaa336d98a5e1466ffce597d6dac204020ef"
+        },
+        {
+          "path": "job-metadata/template-image-job.json",
+          "bytes": 981,
+          "sha256": "a232ab9bd9248f3d538e7d81bfa0d9b944144bbc055f405f2c32b4e9bc175407"
+        },
+        {
+          "path": "job-metadata/template-image-steps.json",
+          "bytes": 745,
+          "sha256": "df6ebcfa15e04f54a1cb21e40484bc6100dd9edc05f9927f4a7735f8c993265f"
+        },
+        {
+          "path": "job-metadata/tested-checkout-identity.json",
+          "bytes": 3089,
+          "sha256": "fdfcdefc9c55bc193fabd0ccd1808a8273f3176a8c7b00ce6c850fe2ff1e0e10"
+        },
+        {
+          "path": "job-metadata/windows-launcher-job.json",
+          "bytes": 1730,
+          "sha256": "4476ea74a3a9b6b15781f98bcc5281a30585c9896a64d0d7f9fe5c781cf5fd8a"
+        },
+        {
+          "path": "job-metadata/windows-launcher-steps.json",
+          "bytes": 1420,
+          "sha256": "5a5372efa143542d04193f9bf0b31388ce5a42a018cac05057c7ecb82bb22bca"
+        },
+        {
+          "path": "raw-logs/browser.log",
+          "bytes": 178250,
+          "sha256": "d68192d119134678df6427bf5c90620cb717f926bfd1966e5430721d266315df"
+        },
+        {
+          "path": "raw-logs/gates.log",
+          "bytes": 415836,
+          "sha256": "e4a6e778604b385a1325d07759bada2490d7e6eb3e7a4ccc355888f27a02a9a9"
+        },
+        {
+          "path": "raw-logs/template-image.log",
+          "bytes": 40204,
+          "sha256": "a27f7457ca540df73e582da93176fbc1d9dcdf1e812d9ded26174079fe0f4efd"
+        },
+        {
+          "path": "raw-logs/windows-launcher.log",
+          "bytes": 46495,
+          "sha256": "da1dc4d40dc3c70c2045dbdf99ff152c78f8363dcccdb9aee95e9487a64e4a75"
+        },
+        {
+          "path": "source-copy-map.json",
+          "bytes": 13731,
+          "sha256": "3d8005f02733012c828fda38f41d11a1b511dc3f6a93f254cde2a721afccc4f8"
+        },
+        {
+          "path": "workflow-definitions/ci.yml",
+          "bytes": 8959,
+          "sha256": "1a58409782b70a9984928eae68bb222ebf415a4d10d96dfdab441b7e350bd29a"
+        },
+        {
+          "path": "workflow-definitions/ci.yml.source.json",
+          "bytes": 445,
+          "sha256": "3b29619a832c3199202fdd5b0815b313e090bc4287648c1cebaa6eec1bb6b6ea"
+        },
+        {
+          "path": "workflow-definitions/routing-perf.yml",
+          "bytes": 3648,
+          "sha256": "210f509c58d890534a1643cd8aad528baa356c31bd2a64157510f0bf24c18e72"
+        },
+        {
+          "path": "workflow-definitions/routing-perf.yml.source.json",
+          "bytes": 485,
+          "sha256": "e654596004a886d06b8ccbe93d62e9947689b785aaa515662a26cbc0f7e77ed7"
+        }
+      ]
+    }
+  ],
+  "failures": []
+}

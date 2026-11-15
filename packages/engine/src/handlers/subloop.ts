@@ -13,7 +13,13 @@ import {
   threadView,
   type MutationError,
 } from '@graphgoblin/domain';
-import { ChildCancelledError, describeError, RunFailureError } from '../errors.js';
+import { ChildCancelledError, RunFailureError } from '../errors.js';
+import {
+  childFailureForPublication,
+  errorDiagnostic,
+  INTERNAL_FAILURE_MESSAGE,
+  InternalRunFailureError,
+} from '../failure-publication.js';
 import type { ChildOutcome, NodeContext, NodeHandler, NodeResult } from '../handler.js';
 import type { EventDraft } from '../ports.js';
 import {
@@ -262,8 +268,22 @@ async function finishWithChild(
   // Exhausted exit) is data for the output mapping.
   if (child.status === 'cancelled') throw new ChildCancelledError(child.runId, records);
   if (child.failure) {
-    const { code, message, resumable, nodeId, details, script } = child.failure;
-    throw new RunFailureError(code, `subloop child ${child.runId} failed: ${message}`, {
+    const { code, resumable, nodeId, script } = child.failure;
+    const { message, details, diagnostics } = childFailureForPublication(child.failure);
+    if (diagnostics.length) {
+      ctx.ports.logger.error(
+        {
+          runId: ctx.run.id,
+          nodeId: ctx.node.id,
+          childRunId: child.runId,
+          childNodeId: nodeId,
+          diagnostics,
+        },
+        'subloop child failure contained internal diagnostics',
+      );
+    }
+    const summary = `subloop child ${child.runId} failed: ${message}`;
+    const options: RunFailureError['options'] = {
       nodeId: ctx.node.id,
       resumable,
       ...(script ? { script } : {}),
@@ -273,7 +293,10 @@ async function finishWithChild(
         ...(details !== undefined ? { childDetails: details } : {}),
       },
       records,
-    });
+    };
+    throw code === 'INTERNAL_ERROR'
+      ? new InternalRunFailureError(summary, options)
+      : new RunFailureError(code, summary, options);
   }
   let patch: NodeResult['patch'];
   try {
@@ -286,9 +309,17 @@ async function finishWithChild(
         ...error.options,
         records: [...records, ...(error.options.records ?? [])],
       });
-    throw new RunFailureError('INTERNAL_ERROR', describeError(error), {
-      resumable: true,
-      details: error instanceof Error ? { name: error.name, stack: error.stack ?? null } : null,
+    ctx.ports.logger.error(
+      {
+        runId: ctx.run.id,
+        nodeId: ctx.node.id,
+        childRunId: child.runId,
+        error: errorDiagnostic(error),
+      },
+      'subloop output mapping failed',
+    );
+    throw new InternalRunFailureError(INTERNAL_FAILURE_MESSAGE, {
+      nodeId: ctx.node.id,
       records,
     });
   }

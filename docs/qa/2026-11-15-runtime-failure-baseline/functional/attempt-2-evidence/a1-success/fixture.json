@@ -1,0 +1,162 @@
+{
+  "test": {
+    "id": "a1-success",
+    "tier": "native",
+    "ops": [
+      {
+        "op": "set",
+        "path": "/vars/qaBefore",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaValue",
+        "value": {
+          "kind": "literal",
+          "value": "42"
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaAnswer",
+        "value": {
+          "kind": "expression",
+          "jsonata": "$number(vars.qaValue)"
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaAfter",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      }
+    ],
+    "expect": {
+      "status": "succeeded",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/vars/qaBefore",
+          "value": true
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaValue",
+          "value": "42"
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaAnswer",
+          "value": 42
+        },
+        {
+          "op": "add",
+          "path": "/vars/qaAfter",
+          "value": true
+        }
+      ],
+      "result": {
+        "qaBefore": true,
+        "qaValue": "42",
+        "qaAnswer": 42,
+        "qaAfter": true
+      }
+    }
+  },
+  "definition": {
+    "schemaVersion": 4,
+    "name": "QA 381 a1-success",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "mut",
+        "kind": "mutate",
+        "label": "QA mutation",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/qaBefore",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaValue",
+              "value": {
+                "kind": "literal",
+                "value": "42"
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaAnswer",
+              "value": {
+                "kind": "expression",
+                "jsonata": "$number(vars.qaValue)"
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaAfter",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "outcome": "success",
+          "returns": "vars",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "mut"
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "mut",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  }
+}

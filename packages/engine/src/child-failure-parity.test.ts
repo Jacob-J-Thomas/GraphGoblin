@@ -154,7 +154,7 @@ const classifierChoice = {
 interface Scenario {
   name: string;
   /** The failure class this scenario stands for in the parity matrix. */
-  kind: 'transient' | 'deterministic' | 'provider' | 'bug';
+  kind: 'transient' | 'deterministic' | 'provider' | 'authored';
   work: TestNode;
   /** Make the node fail on its first execution; returns how to repair it before a resume. */
   arrange(e: TestEngine): () => void;
@@ -240,8 +240,8 @@ const scenarios: Scenario[] = [
     resumable: false,
   },
   {
-    name: 'a mutation expression throws (bug class)',
-    kind: 'bug',
+    name: 'an authored mutation expression throws',
+    kind: 'authored',
     work: {
       id: 'work',
       kind: 'mutate',
@@ -253,9 +253,8 @@ const scenarios: Scenario[] = [
       },
     },
     arrange: () => () => undefined,
-    code: 'INTERNAL_ERROR',
-    resumable: true,
-    afterResume: 'failed',
+    code: 'MUTATION_ERROR',
+    resumable: false,
   },
 ];
 

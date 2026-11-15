@@ -1,0 +1,60 @@
+ports keys [ 'scope', 'candidate', 'fixtureSha256', 'cases', 'failure' ]
+ports cases 20
+ - P2 lookup argument and admission trace  ""
+ - malformed-only incurs no lookup  ""
+ - wrong type  ""
+ - blank  ""
+ - overlong  ""
+ - valid duplicate  ""
+ - depth and seen state preserve the exact cap  ""
+ - lookup failure stops all attempts  ""
+ - admission failure stops the remaining tail  ""
+ - SH  ""
+ - SL  ""
+ - SPLIT  ""
+ - PREFIX  ""
+ - SR  ""
+ - SP  ""
+ - seen pair  ""
+ - intentional absence  ""
+ - configured undefined  ""
+ - configured null  ""
+ - configured empty  ""
+race {"phase":"concurrent public item admission against file SQLite","candidate":"420240cad27d3865988dc7009dc9d80291e93c9c","pid":51212,"createdAt":"2026-11-15T11:40:58.586Z","data":"C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\race-attempt-1\\disposable-store","db":"C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-361-native\\corrected-preparation-v3\\race-attempt-1\\disposable-store\\poll.sqlite","callWindow":{"startedAtMs":2829.629,"stoppedAtMs":2864.2888},"attempted":["MNC15V6CKRS9QZ5P072RY0KG0W","4KK3N7DJCW5Z3VG0F8BZVD3R82"],"outcomes":[{"fulfilled":true,"admitted":true,"id":"MNC15V6CKRS9QZ5P072RY0KG0W"},{"fulfilled":true,"admitted":false,"id":null}],"notifications":{"MNC15V6CKRS9QZ5P072RY0KG0W":[1],"4KK3N7DJCW5Z3VG0F8BZVD3R82":[]},"events":{"MNC15V6CKRS9QZ5P072RY0KG0W":[{"runId":"MNC15V6CKRS9QZ5P072RY0KG0W","seq":1,"ts":"2026-10-02T12:00:00.000Z","type":"run.queued","versionId":"H45H4SJKQEBKEJRRNSTZHJQ1P6","pinned":{"source":"published","version":1,"name":"Minimal","label":"Minimal v1","defaults":{"owner":{"byHarness":{}},"process":{"byHarness":{}}},"limits":{"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null},"classifiers":{}},"initialThread":{"schemaVersion":1,"run":{"id":"MNC15V6CKRS9QZ5P072RY0KG0W","loopId":"9WS7JEC71641JSER55W0AXM8CN","versionId":"H45H4SJKQEBKEJRRNSTZHJQ1P6","iteration":1},"invocation":{"id":"ECGK0QA93BG12QQ8YM3ZW5TW3M","source":"poll","trigger":{"nodeId":"poll","kind":"poll","payload":{"candidate":"a"},"receivedAt":"2026-10-02T12:00:00.000Z","dedupeKey":"…
+offline keys [
+  'schema',
+  'at',
+  'candidate',
+  'scriptSha256',
+  'exactInputs',
+  'warningSourceHashes',
+  'observations',
+  'uniqueAssignments',
+  'limits',
+  'originalFailure',
+  'lowerBound',
+  'upperBound',
+  'identity',
+  'allPerLoopWindowsNonoverlapping',
+  'warningCanaryMatches',
+  'discrepancies',
+  'assignments'
+]
+schema "graphgoblin-361-offline-diagnostic-reanalysis/v1"
+at "2026-11-15T11:37:30.339Z"
+candidate {"head":"420240cad27d3865988dc7009dc9d80291e93c9c","tree":"75d6720f6cc7da85e04d9f17f8b96f40b94c4094"}
+scriptSha256 "d6a09429748d33ae013bb0266006794f7766c02f2aed77428bbda0b8b5fac96b"
+exactInputs {"admission":"27dd6040c1d605ff73de4da10c0e47c5a2a8fe7c86fd676413af21526edc3311","fixtureManifest":"957458526b7231c6dcf3f3103502dd9348e277cb4036dc53ea06db497ee6cfcc","freeze":"252145a9d2a5aec128c63719b40be62d4c62b7afff1b1de6a4533492fbd5d790","source":"fb547ec5d2039ac902c9ae81b72a8cba1c26722a8a2b3779b9f388eeb32e99ec","result":"03be248eb5b5c4328183544d31acb681f115bbb75d279be2877af53a861bf5f2","reques…
+warningSourceHashes {"apps/api/src/triggers/poll.ts":"1ececa003e4013b3557e12ac883bad32c12fca64281adcebc28e407a598b5dd5","apps/api/src/triggers/poll-items.ts":"54953e76af98c3ccd80ab5abbd3751d515d17afc09ddb348836494554f3f698e","packages/domain/src/poll-items.ts":"6bfbb020e5800d53544701f15726543e9c54c6eda18c36bddcadce52e7adb257"}
+observations 21
+uniqueAssignments 20
+limits "Retained-log readback only. Original native result and checker failure stay unchanged."
+originalFailure {"name":"AssertionError","message":"corrected-lone-P3\n\n0 !== 1\n","stack":"AssertionError [ERR_ASSERTION]: corrected-lone-P3\n\n0 !== 1\n\n    at checkDiagnostics (file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-361-native/corrected-preparation-v3/diagnostics.mjs:39:12)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-361-native/corrected-pr…
+lowerBound "armed.nextPollAt, the due time from the gateway that emitted the warning"
+upperBound "later inert request reception, exclusive"
+identity "gateway PID, exact loop ID and trigger node"
+allPerLoopWindowsNonoverlapping true
+warningCanaryMatches 0
+discrepancies [{"label":"corrected-lone-P3","file":"initial-gateway.log","line":164,"fromDueMs":30,"fromProbeReceivedMs":-1},{"label":"corrected-split-P3","file":"initial-gateway.log","line":165,"fromDueMs":31,"fromProbeReceivedMs":-1}]
+assignments 21
+ sample {"target":"items","label":"corrected-items-P1","pid":34892,"loopId":"01M7FFJ8QQE5P1NN4JSYA8B60R","inclusiveDueMs":1794742236826,"exclusiveBarrierMs":1794742242494,"firstProbeMs":1794742237472,"expected":3,"assigned":[{"file":"initial-gateway.log","line":47,"entry":{"level":40,"time":1794742237554,"pid":34892,"hostname":"DESKTOP-RQPA3QI","loopId":"01M7FFJ8QQE5P1NN4JSYA8B60R","nodeId":"poll","code":…

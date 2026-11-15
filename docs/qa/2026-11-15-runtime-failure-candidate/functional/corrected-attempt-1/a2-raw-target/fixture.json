@@ -1,0 +1,186 @@
+{
+  "test": {
+    "id": "a2-raw-target",
+    "tier": "composed",
+    "mode": "invalid",
+    "calls": 1,
+    "ops": [
+      {
+        "op": "set",
+        "path": "/vars/qaBefore",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaRaw",
+        "value": {
+          "kind": "literal",
+          "value": {
+            "ok": "yes"
+          }
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaScalar",
+        "value": {
+          "kind": "literal",
+          "value": 7
+        }
+      },
+      {
+        "op": "coerce",
+        "source": "/vars/qaRaw",
+        "target": "/vars/qaScalar/leaf",
+        "jsonSchema": {
+          "type": "object",
+          "required": [
+            "ok"
+          ],
+          "properties": {
+            "ok": {
+              "type": "boolean"
+            }
+          }
+        },
+        "repair": {
+          "enabled": true,
+          "maxAttempts": 1,
+          "onFailure": "continue-raw"
+        }
+      },
+      {
+        "op": "set",
+        "path": "/vars/qaAfter",
+        "value": {
+          "kind": "literal",
+          "value": true
+        }
+      }
+    ],
+    "expect": {
+      "status": "failed",
+      "index": 3,
+      "op": "coerce",
+      "kind": "repair-patch",
+      "cause": "traverses a non-container"
+    }
+  },
+  "definition": {
+    "schemaVersion": 4,
+    "name": "QA 381 a2-raw-target",
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "trigger",
+        "label": "Start",
+        "config": {
+          "type": "manual"
+        }
+      },
+      {
+        "id": "mut",
+        "kind": "mutate",
+        "label": "QA mutation",
+        "config": {
+          "operations": [
+            {
+              "op": "set",
+              "path": "/vars/qaBefore",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaRaw",
+              "value": {
+                "kind": "literal",
+                "value": {
+                  "ok": "yes"
+                }
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaScalar",
+              "value": {
+                "kind": "literal",
+                "value": 7
+              }
+            },
+            {
+              "op": "coerce",
+              "source": "/vars/qaRaw",
+              "target": "/vars/qaScalar/leaf",
+              "jsonSchema": {
+                "type": "object",
+                "required": [
+                  "ok"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "repair": {
+                "enabled": true,
+                "maxAttempts": 1,
+                "onFailure": "continue-raw"
+              }
+            },
+            {
+              "op": "set",
+              "path": "/vars/qaAfter",
+              "value": {
+                "kind": "literal",
+                "value": true
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "done",
+        "kind": "exit",
+        "label": "Done",
+        "config": {
+          "outcome": "success",
+          "returns": "vars",
+          "destinations": [
+            {
+              "kind": "caller"
+            }
+          ]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "from": {
+          "node": "start",
+          "port": "out"
+        },
+        "to": {
+          "node": "mut"
+        }
+      },
+      {
+        "id": "e2",
+        "from": {
+          "node": "mut",
+          "port": "out"
+        },
+        "to": {
+          "node": "done"
+        }
+      }
+    ]
+  }
+}

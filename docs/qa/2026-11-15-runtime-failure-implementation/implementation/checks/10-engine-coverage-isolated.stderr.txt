@@ -1,0 +1,264 @@
+$ vitest run --coverage
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/adversarial.test.ts > adversarial engine invariants > ADV-015: a child that failed before its parent parks wakes the parent
+AssertionError: expected { code: 'MUTATION_ERROR', …(4) } to match object { code: 'INTERNAL_ERROR', …(1) }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INTERNAL_ERROR",
+-   "resumable": true,
++   "code": "MUTATION_ERROR",
++   "resumable": false,
+  }
+
+ ❯ src/adversarial.test.ts:585:27
+    583|         expect((await e.manager.getThread(r.id))?.lastOutput?.value).t…
+    584|       if (status === 'failed')
+    585|         expect(r.failure).toMatchObject({ code: 'INTERNAL_ERROR', resu…
+       |                           ^
+    586|       expect(e.eventTypes(r.id).filter((t) => t === 'run.woken')).toHa…
+    587|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  src/finalization.test.ts > terminal append survives crash before status: mutate-error
+AssertionError: expected 'MUTATION_ERROR' to be 'INTERNAL_ERROR' // Object.is equality
+
+Expected: "INTERNAL_ERROR"
+Received: "MUTATION_ERROR"
+
+ ❯ src/finalization.test.ts:309:43
+    307|           : 'failed';
+    308|     expect(final.status).toBe(expected);
+    309|     if (code) expect(final.failure?.code).toBe(code);
+       |                                           ^
+    310|     if (source === 'invalid-patch') {
+    311|       expect(e.events(r.id)).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  src/prompt-provenance.test.ts > prompt provenance through RunManager and the fake harness > retains the task when session bookkeeping fails before invoking the harness
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { code: 'INTERNAL_ERROR', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "details": {
+-     "name": "Error",
+-     "stack": StringContaining "storage unavailable before launch",
+-   },
+    "inference": {
+      "submission": "definitely-not-submitted",
+    },
+  }
+
+ ❯ src/prompt-provenance.test.ts:347:55
+    345|     });
+    346|     await manager.waitForIdle();
+    347|     expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+       |                                                       ^
+    348|       code: 'INTERNAL_ERROR',
+    349|       inference: { submission: 'definitely-not-submitted' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  src/prompt-recovery.test.ts > D-022 inherited-session recovery > does not authorize inherited resume-previous continuation when persisting acceptance fails
+AssertionError: expected { code: 'INTERNAL_ERROR', …(5) } to match object { code: 'INTERNAL_ERROR', …(3) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,14 @@
+  {
+    "code": "INTERNAL_ERROR",
+    "details": {
+-     "name": "Error",
+-     "stack": StringContaining "acceptance record not durable",
++     "cause": null,
++     "recording": [
++       {
++         "operation": "harness.submission",
++       },
++     ],
+    },
+    "inference": {
+      "sessionId": "fake-session-1",
+      "submission": "delivery-uncertain",
+    },
+
+ ❯ src/prompt-recovery.test.ts:164:57
+    162|       });
+    163|       await manager.waitForIdle();
+    164|       expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+       |                                                         ^
+    165|         code: 'INTERNAL_ERROR',
+    166|         resumable: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  src/prompt-recovery.test.ts > D-022 inherited-session recovery > does not authorize inherited resume-named continuation when persisting acceptance fails
+AssertionError: expected { code: 'INTERNAL_ERROR', …(5) } to match object { code: 'INTERNAL_ERROR', …(3) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -1,10 +1,14 @@
+  {
+    "code": "INTERNAL_ERROR",
+    "details": {
+-     "name": "Error",
+-     "stack": StringContaining "acceptance record not durable",
++     "cause": null,
++     "recording": [
++       {
++         "operation": "harness.submission",
++       },
++     ],
+    },
+    "inference": {
+      "sessionId": "fake-session-1",
+      "submission": "delivery-uncertain",
+    },
+
+ ❯ src/prompt-recovery.test.ts:164:57
+    162|       });
+    163|       await manager.waitForIdle();
+    164|       expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+       |                                                         ^
+    165|         code: 'INTERNAL_ERROR',
+    166|         resumable: false,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  src/handlers/claude.test.ts > inference consumption keeps engine failures and cleans up both harness families > preserves codex session persistence errors as INTERNAL_ERROR and cancels
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { code: 'INTERNAL_ERROR', …(3) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "details": {
+-     "name": "Error",
+-     "stack": StringContaining "Synthetic session persistence fault",
+-   },
+-   "message": "Synthetic session persistence fault",
++   "message": "An unexpected error interrupted the run. See the server logs for this run.",
+    "resumable": true,
+  }
+
+ ❯ src/handlers/claude.test.ts:294:27
+    292|       const v = engine.publish(singleNodeLoop('persist-' + family, inf…
+    293|       const run = await engine.runToIdle(v.loopId);
+    294|       expect(run.failure).toMatchObject({
+       |                           ^
+    295|         code: 'INTERNAL_ERROR',
+    296|         resumable: true,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  src/handlers/claude.test.ts > inference consumption keeps engine failures and cleans up both harness families > preserves claude session persistence errors as INTERNAL_ERROR and cancels
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { code: 'INTERNAL_ERROR', …(3) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "details": {
+-     "name": "Error",
+-     "stack": StringContaining "Synthetic session persistence fault",
+-   },
+-   "message": "Synthetic session persistence fault",
++   "message": "An unexpected error interrupted the run. See the server logs for this run.",
+    "resumable": true,
+  }
+
+ ❯ src/handlers/claude.test.ts:294:27
+    292|       const v = engine.publish(singleNodeLoop('persist-' + family, inf…
+    293|       const run = await engine.runToIdle(v.loopId);
+    294|       expect(run.failure).toMatchObject({
+       |                           ^
+    295|         code: 'INTERNAL_ERROR',
+    296|         resumable: true,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  src/handlers/inference-boundaries.test.ts > retains codex repair intent across append refusal afterCommit=false
+ FAIL  src/handlers/inference-boundaries.test.ts > retains codex repair intent across append refusal afterCommit=true
+ FAIL  src/handlers/inference-boundaries.test.ts > retains claude repair intent across append refusal afterCommit=false
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { code: 'INTERNAL_ERROR', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "details": {
+-     "name": "Error",
+-     "stack": StringContaining "Repair append refused",
+-   },
+    "inference": {
+      "promptKind": "repair",
+      "submission": "definitely-not-submitted",
+    },
+  }
+
+ ❯ src/handlers/inference-boundaries.test.ts:233:27
+    231|       await manager.waitForIdle();
+    232|       const run = (await e.ports.runs.get(started.id))!;
+    233|       expect(run.failure).toMatchObject({
+       |                           ^
+    234|         code: 'INTERNAL_ERROR',
+    235|         inference: { promptKind: 'repair', submission: 'definitely-not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  src/handlers/inference-boundaries.test.ts > retains claude repair intent across append refusal afterCommit=true
+AssertionError: expected { code: 'INTERNAL_ERROR', …(4) } to match object { code: 'INTERNAL_ERROR', …(2) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "code": "INTERNAL_ERROR",
+-   "details": {
+-     "name": "Error",
+-     "stack": StringContaining "Repair append refused",
+-   },
+    "inference": {
+      "promptKind": "repair",
+      "submission": "definitely-not-submitted",
+    },
+  }
+
+ ❯ src/handlers/inference-boundaries.test.ts:233:27
+    231|       await manager.waitForIdle();
+    232|       const run = (await e.ports.runs.get(started.id))!;
+    233|       expect(run.failure).toMatchObject({
+       |                           ^
+    234|         code: 'INTERNAL_ERROR',
+    235|         inference: { promptKind: 'repair', submission: 'definitely-not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261115-runtime\GraphGoblin\packages\engine
+

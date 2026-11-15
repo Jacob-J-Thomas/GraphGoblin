@@ -1,0 +1,503 @@
+﻿2026-11-15T12:49:57.0595706Z Current runner version: '2.338.2'
+2026-11-15T12:49:57.0622495Z ##[group]Runner Image Provisioner
+2026-11-15T12:49:57.0623376Z Hosted Compute Agent
+2026-11-15T12:49:57.0624101Z Version: 20261103.629
+2026-11-15T12:49:57.0624723Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-15T12:49:57.0625701Z Build Date: 2026-11-03T17:26:59Z
+2026-11-15T12:49:57.0626379Z Worker ID: {ef23368e-a006-4604-8449-d5fc0a276f07}
+2026-11-15T12:49:57.0627098Z Region: westus
+2026-11-15T12:49:57.0627698Z Cloud: Azure
+2026-11-15T12:49:57.0628232Z ##[endgroup]
+2026-11-15T12:49:57.0629789Z ##[group]Operating System
+2026-11-15T12:49:57.0630437Z Ubuntu
+2026-11-15T12:49:57.0630987Z 26.04.1
+2026-11-15T12:49:57.0631576Z LTS
+2026-11-15T12:49:57.0632079Z ##[endgroup]
+2026-11-15T12:49:57.0632647Z ##[group]Runner Image
+2026-11-15T12:49:57.0633257Z Image: ubuntu-26.04
+2026-11-15T12:49:57.0633847Z Version: 20261111.196.1
+2026-11-15T12:49:57.0635340Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-15T12:49:57.0636983Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+2026-11-15T12:49:57.0637977Z ##[endgroup]
+2026-11-15T12:49:57.0639257Z ##[group]GITHUB_TOKEN Permissions
+2026-11-15T12:49:57.0641158Z Contents: read
+2026-11-15T12:49:57.0641758Z Metadata: read
+2026-11-15T12:49:57.0642402Z Packages: read
+2026-11-15T12:49:57.0642987Z ##[endgroup]
+2026-11-15T12:49:57.0645364Z Secret source: Actions
+2026-11-15T12:49:57.0646425Z Cache mode: write
+2026-11-15T12:49:57.0647084Z Prepare workflow directory
+2026-11-15T12:49:57.0993489Z Prepare all required actions
+2026-11-15T12:49:57.1042781Z Getting action download info
+2026-11-15T12:49:57.4327849Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-15T12:49:57.6558617Z Complete job name: Template image
+2026-11-15T12:49:57.7446652Z ##[group]Run actions/checkout@v4
+2026-11-15T12:49:57.7447556Z with:
+2026-11-15T12:49:57.7448031Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-15T12:49:57.7452144Z   token: ***
+2026-11-15T12:49:57.7452593Z   ssh-strict: true
+2026-11-15T12:49:57.7453041Z   ssh-user: git
+2026-11-15T12:49:57.7453488Z   persist-credentials: true
+2026-11-15T12:49:57.7453980Z   clean: true
+2026-11-15T12:49:57.7454426Z   sparse-checkout-cone-mode: true
+2026-11-15T12:49:57.7455113Z   fetch-depth: 1
+2026-11-15T12:49:57.7455660Z   fetch-tags: false
+2026-11-15T12:49:57.7456115Z   show-progress: true
+2026-11-15T12:49:57.7456569Z   lfs: false
+2026-11-15T12:49:57.7456992Z   submodules: false
+2026-11-15T12:49:57.7457446Z   set-safe-directory: true
+2026-11-15T12:49:57.7457971Z   allow-unsafe-pr-checkout: false
+2026-11-15T12:49:57.7458905Z ##[endgroup]
+2026-11-15T12:49:58.0411838Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-15T12:49:58.0415461Z ##[group]Getting Git version info
+2026-11-15T12:49:58.0417135Z Working directory is '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-15T12:49:58.0419418Z [command]/usr/bin/git version
+2026-11-15T12:49:58.0459966Z git version 2.56.1
+2026-11-15T12:49:58.0482904Z ##[endgroup]
+2026-11-15T12:49:58.0501970Z Temporarily overriding HOME='/home/runner/work/_temp/7a5ac8cb-891c-4c8a-aa06-18434ced738d' before making global git config changes
+2026-11-15T12:49:58.0505060Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-15T12:49:58.0507851Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-15T12:49:58.0597685Z Deleting the contents of '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-15T12:49:58.0599707Z ##[group]Initializing the repository
+2026-11-15T12:49:58.0601064Z [command]/usr/bin/git init /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-15T12:49:58.0722922Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-15T12:49:58.0724702Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-15T12:49:58.0726567Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-15T12:49:58.0727881Z hint: call:
+2026-11-15T12:49:58.0728404Z hint:
+2026-11-15T12:49:58.0729055Z hint: 	git config --global init.defaultBranch <name>
+2026-11-15T12:49:58.0730054Z hint:
+2026-11-15T12:49:58.0730814Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-15T12:49:58.0731912Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-15T12:49:58.0732819Z hint:
+2026-11-15T12:49:58.0733439Z hint: 	git branch -m <name>
+2026-11-15T12:49:58.0734456Z hint:
+2026-11-15T12:49:58.0735919Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-15T12:49:58.0738245Z Initialized empty Git repository in /home/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-15T12:49:58.0750292Z [command]/usr/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-15T12:49:58.0810239Z ##[endgroup]
+2026-11-15T12:49:58.0811141Z ##[group]Disabling automatic garbage collection
+2026-11-15T12:49:58.0815167Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-15T12:49:58.0854324Z ##[endgroup]
+2026-11-15T12:49:58.0856376Z ##[group]Setting up auth
+2026-11-15T12:49:58.0862086Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-15T12:49:58.0902283Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-15T12:49:58.1488678Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-15T12:49:58.1543572Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-15T12:49:58.1853935Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-15T12:49:58.1902236Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-15T12:49:58.2179364Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-15T12:49:58.2222260Z ##[endgroup]
+2026-11-15T12:49:58.2223200Z ##[group]Fetching the repository
+2026-11-15T12:49:58.2232238Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +98d2bc2c473d3167a39ae966f9dfb9e2f00904fe:refs/remotes/pull/484/merge
+2026-11-15T12:50:08.7725348Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-15T12:50:08.7726422Z  * [new ref]           98d2bc2c473d3167a39ae966f9dfb9e2f00904fe -> pull/484/merge
+2026-11-15T12:50:08.7730508Z ##[endgroup]
+2026-11-15T12:50:08.7731350Z ##[group]Determining the checkout info
+2026-11-15T12:50:08.7734268Z ##[endgroup]
+2026-11-15T12:50:08.7741175Z [command]/usr/bin/git sparse-checkout disable
+2026-11-15T12:50:08.7804585Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-15T12:50:08.7838340Z ##[group]Checking out the ref
+2026-11-15T12:50:08.7842162Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/484/merge
+2026-11-15T12:50:09.8262982Z Updating files:  18% (5140/27595)
+2026-11-15T12:50:09.8631806Z Updating files:  19% (5244/27595)
+2026-11-15T12:50:09.8859940Z Updating files:  20% (5519/27595)
+2026-11-15T12:50:09.9091260Z Updating files:  21% (5795/27595)
+2026-11-15T12:50:09.9287584Z Updating files:  22% (6071/27595)
+2026-11-15T12:50:09.9693306Z Updating files:  23% (6347/27595)
+2026-11-15T12:50:10.0059211Z Updating files:  24% (6623/27595)
+2026-11-15T12:50:10.0317849Z Updating files:  25% (6899/27595)
+2026-11-15T12:50:10.0446226Z Updating files:  26% (7175/27595)
+2026-11-15T12:50:10.0770176Z Updating files:  27% (7451/27595)
+2026-11-15T12:50:10.1141102Z Updating files:  28% (7727/27595)
+2026-11-15T12:50:10.1337979Z Updating files:  29% (8003/27595)
+2026-11-15T12:50:10.1526156Z Updating files:  30% (8279/27595)
+2026-11-15T12:50:10.1901315Z Updating files:  31% (8555/27595)
+2026-11-15T12:50:10.2198261Z Updating files:  32% (8831/27595)
+2026-11-15T12:50:10.2381633Z Updating files:  33% (9107/27595)
+2026-11-15T12:50:10.2652292Z Updating files:  34% (9383/27595)
+2026-11-15T12:50:10.3409183Z Updating files:  35% (9659/27595)
+2026-11-15T12:50:10.3847126Z Updating files:  36% (9935/27595)
+2026-11-15T12:50:10.4426022Z Updating files:  37% (10211/27595)
+2026-11-15T12:50:10.4762760Z Updating files:  38% (10487/27595)
+2026-11-15T12:50:10.5003481Z Updating files:  39% (10763/27595)
+2026-11-15T12:50:10.5212060Z Updating files:  40% (11038/27595)
+2026-11-15T12:50:10.5709437Z Updating files:  41% (11314/27595)
+2026-11-15T12:50:10.6182432Z Updating files:  42% (11590/27595)
+2026-11-15T12:50:10.6476237Z Updating files:  43% (11866/27595)
+2026-11-15T12:50:10.6793909Z Updating files:  44% (12142/27595)
+2026-11-15T12:50:10.7172066Z Updating files:  45% (12418/27595)
+2026-11-15T12:50:10.7745919Z Updating files:  46% (12694/27595)
+2026-11-15T12:50:10.8092690Z Updating files:  47% (12970/27595)
+2026-11-15T12:50:10.8181776Z Updating files:  47% (13143/27595)
+2026-11-15T12:50:10.8374587Z Updating files:  48% (13246/27595)
+2026-11-15T12:50:10.8576171Z Updating files:  49% (13522/27595)
+2026-11-15T12:50:10.8833286Z Updating files:  50% (13798/27595)
+2026-11-15T12:50:10.9082257Z Updating files:  51% (14074/27595)
+2026-11-15T12:50:10.9329448Z Updating files:  52% (14350/27595)
+2026-11-15T12:50:10.9630992Z Updating files:  53% (14626/27595)
+2026-11-15T12:50:10.9793947Z Updating files:  54% (14902/27595)
+2026-11-15T12:50:11.0007839Z Updating files:  55% (15178/27595)
+2026-11-15T12:50:11.0430843Z Updating files:  56% (15454/27595)
+2026-11-15T12:50:11.0924556Z Updating files:  57% (15730/27595)
+2026-11-15T12:50:11.1205938Z Updating files:  58% (16006/27595)
+2026-11-15T12:50:11.1579809Z Updating files:  59% (16282/27595)
+2026-11-15T12:50:11.1923475Z Updating files:  60% (16557/27595)
+2026-11-15T12:50:11.2070810Z Updating files:  61% (16833/27595)
+2026-11-15T12:50:11.2409623Z Updating files:  62% (17109/27595)
+2026-11-15T12:50:11.2599899Z Updating files:  63% (17385/27595)
+2026-11-15T12:50:11.3102642Z Updating files:  64% (17661/27595)
+2026-11-15T12:50:11.3700018Z Updating files:  65% (17937/27595)
+2026-11-15T12:50:11.4013505Z Updating files:  66% (18213/27595)
+2026-11-15T12:50:11.4295249Z Updating files:  67% (18489/27595)
+2026-11-15T12:50:11.4672492Z Updating files:  68% (18765/27595)
+2026-11-15T12:50:11.5193451Z Updating files:  69% (19041/27595)
+2026-11-15T12:50:11.5457594Z Updating files:  70% (19317/27595)
+2026-11-15T12:50:11.5849979Z Updating files:  71% (19593/27595)
+2026-11-15T12:50:11.6211824Z Updating files:  72% (19869/27595)
+2026-11-15T12:50:11.6527256Z Updating files:  73% (20145/27595)
+2026-11-15T12:50:11.6769938Z Updating files:  74% (20421/27595)
+2026-11-15T12:50:11.7128014Z Updating files:  75% (20697/27595)
+2026-11-15T12:50:11.7309867Z Updating files:  76% (20973/27595)
+2026-11-15T12:50:11.7639256Z Updating files:  77% (21249/27595)
+2026-11-15T12:50:11.8041207Z Updating files:  78% (21525/27595)
+2026-11-15T12:50:11.8088886Z Updating files:  79% (21801/27595)
+2026-11-15T12:50:11.8474192Z Updating files:  79% (21840/27595)
+2026-11-15T12:50:11.8887879Z Updating files:  80% (22076/27595)
+2026-11-15T12:50:11.9116025Z Updating files:  81% (22352/27595)
+2026-11-15T12:50:11.9760942Z Updating files:  82% (22628/27595)
+2026-11-15T12:50:12.0098937Z Updating files:  83% (22904/27595)
+2026-11-15T12:50:12.0592776Z Updating files:  84% (23180/27595)
+2026-11-15T12:50:12.0926586Z Updating files:  85% (23456/27595)
+2026-11-15T12:50:12.1280772Z Updating files:  86% (23732/27595)
+2026-11-15T12:50:12.1699736Z Updating files:  87% (24008/27595)
+2026-11-15T12:50:12.1971447Z Updating files:  88% (24284/27595)
+2026-11-15T12:50:12.2300444Z Updating files:  89% (24560/27595)
+2026-11-15T12:50:12.2527515Z Updating files:  90% (24836/27595)
+2026-11-15T12:50:12.2703416Z Updating files:  91% (25112/27595)
+2026-11-15T12:50:12.2879505Z Updating files:  92% (25388/27595)
+2026-11-15T12:50:12.3070639Z Updating files:  93% (25664/27595)
+2026-11-15T12:50:12.3227121Z Updating files:  94% (25940/27595)
+2026-11-15T12:50:12.3488221Z Updating files:  95% (26216/27595)
+2026-11-15T12:50:12.3666204Z Updating files:  96% (26492/27595)
+2026-11-15T12:50:12.3856748Z Updating files:  97% (26768/27595)
+2026-11-15T12:50:12.4035397Z Updating files:  98% (27044/27595)
+2026-11-15T12:50:12.4222325Z Updating files:  99% (27320/27595)
+2026-11-15T12:50:12.4222990Z Updating files: 100% (27595/27595)
+2026-11-15T12:50:12.4223532Z Updating files: 100% (27595/27595), done.
+2026-11-15T12:50:12.4485384Z Note: switching to 'refs/remotes/pull/484/merge'.
+2026-11-15T12:50:12.4485832Z 
+2026-11-15T12:50:12.4486163Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-15T12:50:12.4487116Z changes and commit them, and you can discard any commits you make in this
+2026-11-15T12:50:12.4487877Z state without impacting any branches by switching back to a branch.
+2026-11-15T12:50:12.4488332Z 
+2026-11-15T12:50:12.4488644Z If you want to create a new branch to retain commits you create, you may
+2026-11-15T12:50:12.4489394Z do so (now or later) by using -c with the switch command. Example:
+2026-11-15T12:50:12.4489828Z 
+2026-11-15T12:50:12.4489998Z   git switch -c <new-branch-name>
+2026-11-15T12:50:12.4490289Z 
+2026-11-15T12:50:12.4490451Z Or undo this operation with:
+2026-11-15T12:50:12.4490717Z 
+2026-11-15T12:50:12.4490859Z   git switch -
+2026-11-15T12:50:12.4491055Z 
+2026-11-15T12:50:12.4491411Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-15T12:50:12.4491938Z 
+2026-11-15T12:50:12.4492539Z HEAD is now at 98d2bc2c Merge 08651317c485062eb90367e1df3f7632f8e1a6c7 into 15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd
+2026-11-15T12:50:12.4639579Z ##[endgroup]
+2026-11-15T12:50:12.4695313Z [command]/usr/bin/git log -1 --format=%H
+2026-11-15T12:50:12.4726438Z 98d2bc2c473d3167a39ae966f9dfb9e2f00904fe
+2026-11-15T12:50:12.4967612Z ##[group]Run docker build --tag graphgoblin-template-check .
+2026-11-15T12:50:12.4968147Z [36;1mdocker build --tag graphgoblin-template-check .[0m
+2026-11-15T12:50:12.5022346Z shell: /usr/bin/bash -e {0}
+2026-11-15T12:50:12.5022619Z ##[endgroup]
+2026-11-15T12:50:13.1812978Z #0 building with "default" instance using docker driver
+2026-11-15T12:50:13.1813437Z 
+2026-11-15T12:50:13.1813651Z #1 [internal] load build definition from Dockerfile
+2026-11-15T12:50:13.1814334Z #1 transferring dockerfile: 2.91kB done
+2026-11-15T12:50:13.1815573Z #1 DONE 0.0s
+2026-11-15T12:50:13.1815902Z 
+2026-11-15T12:50:13.1816442Z #2 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+2026-11-15T12:50:13.4218813Z #2 ...
+2026-11-15T12:50:13.4219071Z 
+2026-11-15T12:50:13.4219341Z #3 [auth] library/node:pull token for registry-1.docker.io
+2026-11-15T12:50:13.4219870Z #3 DONE 0.0s
+2026-11-15T12:50:13.5711464Z 
+2026-11-15T12:50:13.5712249Z #2 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+2026-11-15T12:50:13.8825102Z #2 DONE 0.9s
+2026-11-15T12:50:13.9946712Z 
+2026-11-15T12:50:13.9947617Z #4 [internal] load .dockerignore
+2026-11-15T12:50:13.9948757Z #4 transferring context: 716B done
+2026-11-15T12:50:13.9951765Z #4 DONE 0.0s
+2026-11-15T12:50:13.9981864Z 
+2026-11-15T12:50:13.9984433Z #5 [build  1/11] FROM docker.io/library/node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+2026-11-15T12:50:13.9986858Z #5 resolve docker.io/library/node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee 0.0s done
+2026-11-15T12:50:13.9988182Z #5 DONE 0.1s
+2026-11-15T12:50:13.9988639Z 
+2026-11-15T12:50:13.9989020Z #6 [internal] load build context
+2026-11-15T12:50:14.3663585Z #6 transferring context: 16.37MB 0.3s done
+2026-11-15T12:50:14.3664189Z #6 DONE 0.3s
+2026-11-15T12:50:14.3664424Z 
+2026-11-15T12:50:14.3665792Z #5 [build  1/11] FROM docker.io/library/node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+2026-11-15T12:50:14.3667463Z #5 sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e 448B / 448B 0.1s done
+2026-11-15T12:50:14.3668602Z #5 sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 1.71MB / 1.71MB 0.2s done
+2026-11-15T12:50:14.3669742Z #5 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 18.87MB / 49.90MB 0.3s
+2026-11-15T12:50:14.3670936Z #5 sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 3.31kB / 3.31kB 0.2s done
+2026-11-15T12:50:14.3672128Z #5 sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 28.25MB / 28.25MB 0.3s done
+2026-11-15T12:50:14.5865813Z #5 sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 49.90MB / 49.90MB 0.4s done
+2026-11-15T12:50:14.5866969Z #5 extracting sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3
+2026-11-15T12:50:15.1226658Z #5 extracting sha256:dd051e1b8c92ff101fa3071ab97ea4924885942f15644e01c3dc095764e863e3 0.8s done
+2026-11-15T12:50:15.1227873Z #5 DONE 1.2s
+2026-11-15T12:50:15.2817809Z 
+2026-11-15T12:50:15.2818821Z #5 [build  1/11] FROM docker.io/library/node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+2026-11-15T12:50:15.2820095Z #5 extracting sha256:076cba098ace87d6950e8fa4cc530bfe59834eba28f30061e8526d6f00bf52c8 done
+2026-11-15T12:50:15.2820883Z #5 extracting sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79
+2026-11-15T12:50:16.1102890Z #5 extracting sha256:0c4023204e5b4bcd551170279c40ff58285cc8ea87ddf9ff25cb3713e6ecda79 1.0s done
+2026-11-15T12:50:16.1103673Z #5 DONE 2.2s
+2026-11-15T12:50:16.3051778Z 
+2026-11-15T12:50:16.3076504Z #5 [build  1/11] FROM docker.io/library/node:22-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+2026-11-15T12:50:16.3078118Z #5 extracting sha256:aa4e8910862263c3bad50c754fb555bbbb7661c41e35ba703ae082ec6749c175 0.0s done
+2026-11-15T12:50:16.3080093Z #5 extracting sha256:cce880541c96dc730321857781d113e3c75c0cb383f9510300922762006d734e done
+2026-11-15T12:50:16.3081182Z #5 DONE 2.2s
+2026-11-15T12:50:16.3082438Z 
+2026-11-15T12:50:16.3083343Z #7 [runtime 2/4] WORKDIR /app
+2026-11-15T12:50:18.8992560Z #7 DONE 2.7s
+2026-11-15T12:50:18.8992749Z 
+2026-11-15T12:50:18.8993114Z #8 [build  2/11] RUN npm install --global pnpm@12.8.1 && pnpm --version
+2026-11-15T12:50:18.8993751Z #8 2.237 
+2026-11-15T12:50:18.8994409Z #8 2.237 added 2 packages in 2s
+2026-11-15T12:50:18.8995029Z #8 2.238 npm notice
+2026-11-15T12:50:18.8995758Z #8 2.238 npm notice New major version of npm available! 10.9.9 -> 12.2.2
+2026-11-15T12:50:18.8996458Z #8 2.238 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+2026-11-15T12:50:18.8996942Z #8 2.238 npm notice To update run: npm install -g npm@12.2.2
+2026-11-15T12:50:18.8997263Z #8 2.238 npm notice
+2026-11-15T12:50:18.8997459Z #8 2.316 12.8.1
+2026-11-15T12:50:19.0636327Z #8 DONE 2.7s
+2026-11-15T12:50:19.0636504Z 
+2026-11-15T12:50:19.0636645Z #9 [build  3/11] WORKDIR /workspace
+2026-11-15T12:50:19.0636953Z #9 DONE 0.0s
+2026-11-15T12:50:19.0637078Z 
+2026-11-15T12:50:19.0637512Z #10 [build  4/11] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json tsconfig.base.json tsconfig.json ./
+2026-11-15T12:50:19.0638314Z #10 DONE 0.0s
+2026-11-15T12:50:19.0638443Z 
+2026-11-15T12:50:19.0638551Z #11 [build  5/11] COPY patches ./patches
+2026-11-15T12:50:19.0638993Z #11 DONE 0.0s
+2026-11-15T12:50:19.0639166Z 
+2026-11-15T12:50:19.0639363Z #12 [build  6/11] COPY tooling ./tooling
+2026-11-15T12:50:19.0639838Z #12 DONE 0.0s
+2026-11-15T12:50:19.0640031Z 
+2026-11-15T12:50:19.0640230Z #13 [build  7/11] COPY packages ./packages
+2026-11-15T12:50:19.0640653Z #13 DONE 0.1s
+2026-11-15T12:50:19.2043591Z 
+2026-11-15T12:50:19.2044243Z #14 [build  8/11] COPY apps ./apps
+2026-11-15T12:50:19.2044721Z #14 DONE 0.1s
+2026-11-15T12:50:19.3565256Z 
+2026-11-15T12:50:19.3565821Z #15 [build  9/11] RUN pnpm install --frozen-lockfile
+2026-11-15T12:50:19.3717204Z #15 0.166 Scope: all 14 workspace projects
+2026-11-15T12:50:19.4959755Z #15 0.222 ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-15T12:50:19.4960608Z #15 0.290 Update available! 12.8.1 → 12.21.0.
+2026-11-15T12:50:19.4960960Z #15 0.290 Changelog: https://pnpm.io/v/12.21.0
+2026-11-15T12:50:19.4961678Z #15 0.290 To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+2026-11-15T12:50:19.6970883Z #15 0.385 Packages are hard linked from the content-addressable store to the virtual store.
+2026-11-15T12:50:19.6972147Z #15 0.385   Content-addressable store is at: /root/.local/share/pnpm/store/v11
+2026-11-15T12:50:19.6973197Z #15 0.385   Virtual store is at:             node_modules/.pnpm
+2026-11-15T12:50:19.6974064Z #15 0.489 Downloading @rolldown/binding-linux-x64-gnu@1.2.12: 0.00 B/8.07 MB
+2026-11-15T12:50:20.4186556Z #15 1.210 Downloading @turbo/linux-64@2.11.6: 0.00 B/17.61 MB
+2026-11-15T12:50:21.2525467Z #15 2.045 Downloading @openai/codex@0.160.0-linux-x64: 0.00 B/163.27 MB
+2026-11-15T12:50:22.2523203Z #15 3.046 Progress: resolved 801, reused 0, downloaded 632, added 627
+2026-11-15T12:50:22.3943322Z #15 3.188 ✓ Lockfile passes supply-chain policies (931 entries in 3s)
+2026-11-15T12:50:22.3944524Z #15 3.188 Lockfile is up to date, resolution step is skipped
+2026-11-15T12:50:23.4699669Z #15 4.264 Downloading @turbo/linux-64@2.11.6: 17.61 MB/17.61 MB, done
+2026-11-15T12:50:24.8085261Z #15 5.602 Downloading @openai/codex@0.160.0-linux-x64: 131.35 MB/163.27 MB
+2026-11-15T12:50:25.3717404Z #15 6.166 Packages: +801
+2026-11-15T12:50:25.3718587Z #15 6.166 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-15T12:50:25.4723028Z #15 6.267 Progress: resolved 801, reused 0, downloaded 793, added 801, done
+2026-11-15T12:50:25.6810743Z #15 6.278 .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-11-15T12:50:25.6812094Z #15 6.278 .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-11-15T12:50:25.6813363Z #15 6.356 .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-11-15T12:50:25.6814395Z #15 6.363 .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-11-15T12:50:25.6815474Z #15 6.475 
+2026-11-15T12:50:25.6816027Z #15 6.475 devDependencies:
+2026-11-15T12:50:25.6816509Z #15 6.475 + @eslint-react/eslint-plugin 5.23.3
+2026-11-15T12:50:25.6816832Z #15 6.475 + @eslint/js 10.0.1
+2026-11-15T12:50:25.6817089Z #15 6.475 + @vitest/coverage-v8 5.0.3
+2026-11-15T12:50:25.6817360Z #15 6.475 + dependency-cruiser 18.5.0
+2026-11-15T12:50:25.6817621Z #15 6.475 + eslint 10.11.0
+2026-11-15T12:50:25.6817866Z #15 6.475 + eslint-config-prettier 10.1.8
+2026-11-15T12:50:25.6818163Z #15 6.475 + eslint-plugin-react-hooks 7.1.1
+2026-11-15T12:50:25.6818437Z #15 6.475 + prettier 3.9.9
+2026-11-15T12:50:25.6818654Z #15 6.475 + turbo 2.11.6
+2026-11-15T12:50:25.6818874Z #15 6.475 + typescript 6.0.3
+2026-11-15T12:50:25.6819112Z #15 6.475 + typescript-eslint 8.71.0
+2026-11-15T12:50:25.6819363Z #15 6.475 + vitest 5.0.3
+2026-11-15T12:50:25.6819577Z #15 6.475 
+2026-11-15T12:50:25.8486647Z #15 6.492 Done in 6.3s using pnpm v12.8.1
+2026-11-15T12:50:27.3010152Z #15 DONE 8.1s
+2026-11-15T12:50:27.4521922Z 
+2026-11-15T12:50:27.4522751Z #16 [build 10/11] RUN pnpm exec turbo run build --filter=@graphgoblin/api... --filter=@graphgoblin/web
+2026-11-15T12:50:27.9400756Z #16 0.638 
+2026-11-15T12:50:27.9401166Z #16 0.638 Attention:
+2026-11-15T12:50:27.9401797Z #16 0.638 Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-15T12:50:27.9402755Z #16 0.638 This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-15T12:50:27.9404015Z #16 0.638 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-15T12:50:27.9405390Z #16 0.638 https://turborepo.dev/docs/telemetry
+2026-11-15T12:50:27.9405908Z #16 0.638 
+2026-11-15T12:50:28.1797991Z #16 0.662 
+2026-11-15T12:50:28.1799103Z #16 0.662    • turbo 2.11.6
+2026-11-15T12:50:28.1800964Z #16 0.662    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/tooling, @graphgoblin/web
+2026-11-15T12:50:28.1802700Z #16 0.662    • Running build in 9 packages
+2026-11-15T12:50:28.1803088Z #16 0.662    • Remote caching disabled
+2026-11-15T12:50:28.1803652Z #16 0.662 
+2026-11-15T12:50:28.1804130Z #16 0.710 @graphgoblin/contracts:build: cache miss, executing 83f19faabef19364
+2026-11-15T12:50:28.1805286Z #16 0.728 @graphgoblin/contracts:build: $ tsc -b tsconfig.build.json
+2026-11-15T12:50:30.2798527Z #16 2.978 @graphgoblin/domain:build: cache miss, executing 1c48c2200d28bf42
+2026-11-15T12:50:30.4486155Z #16 2.996 @graphgoblin/domain:build: $ tsc -b tsconfig.build.json
+2026-11-15T12:50:33.1572682Z #16 5.855 @graphgoblin/engine:build: cache miss, executing fe6964d982881aa5
+2026-11-15T12:50:33.3277969Z #16 5.873 @graphgoblin/engine:build: $ tsc -b tsconfig.build.json
+2026-11-15T12:50:37.2290321Z #16 9.927 @graphgoblin/adapter-codex:build: cache miss, executing 23745a4b73f2e671
+2026-11-15T12:50:37.4101100Z #16 9.927 @graphgoblin/infrastructure:build: cache miss, executing 85f12abe48f8aabc
+2026-11-15T12:50:37.4107000Z #16 9.927 @graphgoblin/adapter-jev:build: cache miss, executing ecbe52cb2d2c11b9
+2026-11-15T12:50:37.4107922Z #16 9.953 @graphgoblin/adapter-codex:build: $ tsc -b tsconfig.build.json
+2026-11-15T12:50:37.4108747Z #16 9.953 @graphgoblin/adapter-jev:build: $ tsc -b tsconfig.build.json
+2026-11-15T12:50:37.4109567Z #16 9.958 @graphgoblin/infrastructure:build: $ tsc -b tsconfig.build.json
+2026-11-15T12:50:46.0168064Z #16 18.71 @graphgoblin/api:build: cache miss, executing dd5ac58134fdf3f7
+2026-11-15T12:50:46.1951468Z #16 18.74 @graphgoblin/api:build: $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-15T12:50:53.2463763Z #16 25.94 @graphgoblin/api-client:build: cache miss, executing da375d26dee7285a
+2026-11-15T12:50:53.4150393Z #16 25.96 @graphgoblin/api-client:build: $ tsc -b tsconfig.build.json
+2026-11-15T12:50:56.2539573Z #16 28.95 @graphgoblin/web:build: cache miss, executing 303bf9cd40e7e036
+2026-11-15T12:50:56.4227800Z #16 28.97 @graphgoblin/web:build: $ vite build && vite build --config vite.goblin.config.ts
+2026-11-15T12:50:56.6461735Z #16 29.34 @graphgoblin/web:build: vite v8.3.4 building client environment for production...
+2026-11-15T12:50:56.8086189Z #16 29.36 @graphgoblin/web:build: transforming...
+2026-11-15T12:50:57.1380774Z #16 29.84 @graphgoblin/web:build: ✓ 779 modules transformed.
+2026-11-15T12:50:57.2730213Z #16 29.97 @graphgoblin/web:build: rendering chunks...
+2026-11-15T12:50:58.3142208Z #16 31.01 @graphgoblin/web:build: computing gzip size...
+2026-11-15T12:50:58.5009189Z #16 31.05 @graphgoblin/web:build: dist/manifest.webmanifest           0.47 kB
+2026-11-15T12:50:58.5011023Z #16 31.05 @graphgoblin/web:build: dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-15T12:50:58.5012819Z #16 31.05 @graphgoblin/web:build: dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-15T12:50:58.5014574Z #16 31.05 @graphgoblin/web:build: dist/assets/index-DHT0tKuN.js   2,132.11 kB │ gzip: 665.09 kB │ map: 9,491.04 kB
+2026-11-15T12:50:58.5016080Z #16 31.05 @graphgoblin/web:build: 
+2026-11-15T12:50:58.5016891Z #16 31.05 @graphgoblin/web:build: ✓ built in 1.70s
+2026-11-15T12:51:00.1910264Z #16 32.89 @graphgoblin/web:build: 
+2026-11-15T12:51:00.1910762Z #16 32.89 @graphgoblin/web:build: PWA v1.3.0
+2026-11-15T12:51:00.1911265Z #16 32.89 @graphgoblin/web:build: mode      generateSW
+2026-11-15T12:51:00.1911804Z #16 32.89 @graphgoblin/web:build: precache  21 entries (2650.98 KiB)
+2026-11-15T12:51:00.1912337Z #16 32.89 @graphgoblin/web:build: files generated
+2026-11-15T12:51:00.1912794Z #16 32.89 @graphgoblin/web:build:   dist/sw.js.map
+2026-11-15T12:51:00.1913250Z #16 32.89 @graphgoblin/web:build:   dist/sw.js
+2026-11-15T12:51:00.1913746Z #16 32.89 @graphgoblin/web:build:   dist/workbox-2fbc6a65.js.map
+2026-11-15T12:51:00.1914329Z #16 32.89 @graphgoblin/web:build:   dist/workbox-2fbc6a65.js
+2026-11-15T12:51:00.6680808Z #16 33.37 @graphgoblin/web:build: vite v8.3.4 building client environment for production...
+2026-11-15T12:51:00.8295887Z #16 33.38 @graphgoblin/web:build: transforming...
+2026-11-15T12:51:01.0116466Z #16 33.71 @graphgoblin/web:build: ✓ 284 modules transformed.
+2026-11-15T12:51:01.1386457Z #16 33.75 @graphgoblin/web:build: rendering chunks...
+2026-11-15T12:51:01.1386893Z #16 33.84 @graphgoblin/web:build: computing gzip size...
+2026-11-15T12:51:01.2965767Z #16 33.84 @graphgoblin/web:build: dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-15T12:51:01.2967268Z #16 33.84 @graphgoblin/web:build: dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-15T12:51:01.2968613Z #16 33.84 @graphgoblin/web:build: dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-15T12:51:01.2970058Z #16 33.84 @graphgoblin/web:build: dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-15T12:51:01.2970958Z #16 33.84 @graphgoblin/web:build: 
+2026-11-15T12:51:01.2971514Z #16 33.84 @graphgoblin/web:build: ✓ built in 476ms
+2026-11-15T12:51:02.8303955Z #16 35.53 @graphgoblin/web:build: 
+2026-11-15T12:51:02.8304333Z #16 35.53 @graphgoblin/web:build: PWA v1.3.0
+2026-11-15T12:51:02.8304707Z #16 35.53 @graphgoblin/web:build: mode      generateSW
+2026-11-15T12:51:02.8305367Z #16 35.53 @graphgoblin/web:build: precache  21 entries (989.31 KiB)
+2026-11-15T12:51:02.8305750Z #16 35.53 @graphgoblin/web:build: files generated
+2026-11-15T12:51:02.8306103Z #16 35.53 @graphgoblin/web:build:   ../dist-goblin/sw.js.map
+2026-11-15T12:51:02.8306467Z #16 35.53 @graphgoblin/web:build:   ../dist-goblin/sw.js
+2026-11-15T12:51:02.8306865Z #16 35.53 @graphgoblin/web:build:   ../dist-goblin/workbox-5f44db27.js.map
+2026-11-15T12:51:02.8307309Z #16 35.53 @graphgoblin/web:build:   ../dist-goblin/workbox-5f44db27.js
+2026-11-15T12:51:03.0154789Z #16 35.56 
+2026-11-15T12:51:03.0155796Z #16 35.56  Tasks:    9 successful, 9 total
+2026-11-15T12:51:03.0156381Z #16 35.56 Cached:    0 cached, 9 total
+2026-11-15T12:51:03.0156863Z #16 35.56   Time:    34.924s 
+2026-11-15T12:51:03.0157096Z #16 35.56 
+2026-11-15T12:51:03.0586288Z #16 DONE 35.8s
+2026-11-15T12:51:03.2098668Z 
+2026-11-15T12:51:03.2100234Z #17 [build 11/11] RUN pnpm --filter @graphgoblin/api deploy --prod --legacy /out/apps/api   && mkdir -p /out/apps/web   && cp -r apps/web/dist /out/apps/web/dist   && cp -r apps/web/dist-goblin /out/apps/web/dist-goblin
+2026-11-15T12:51:03.2780837Z #17 0.219 [WARN] Shared workspace lockfile detected but configuration forces legacy deploy implementation.
+2026-11-15T12:51:03.8592316Z #17 0.800 Packages are hard linked from the content-addressable store to the virtual store.
+2026-11-15T12:51:03.8593770Z #17 0.800   Content-addressable store is at: /root/.local/share/pnpm/store/v11
+2026-11-15T12:51:03.8597236Z #17 0.800   Virtual store is at:             ../out/apps/api/node_modules/.pnpm
+2026-11-15T12:51:04.8977040Z #17 1.838 Progress: resolved 51, reused 103, downloaded 0, added 44
+2026-11-15T12:51:05.8858716Z #17 2.826 Packages: +109
+2026-11-15T12:51:05.8859622Z #17 2.826 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-15T12:51:06.0633542Z #17 2.834 Progress: resolved 109, reused 103, downloaded 0, added 109, done
+2026-11-15T12:51:06.0634148Z #17 2.853 Done in 2.7s using pnpm v12.8.1
+2026-11-15T12:51:06.3488869Z #17 DONE 3.3s
+2026-11-15T12:51:08.7636940Z 
+2026-11-15T12:51:08.7637863Z #18 [runtime 3/4] COPY --from=build --chown=root:root /out/ /app/
+2026-11-15T12:51:11.0656317Z #18 DONE 2.3s
+2026-11-15T12:51:11.2173263Z 
+2026-11-15T12:51:11.2175834Z #19 [runtime 4/4] RUN codex_js="$(find /app/apps/api/node_modules -path '*/@openai/codex/bin/codex.js' | head -n 1)"   && test -n "$codex_js"   && printf '#!/bin/sh\nexec node %s "$@"\n' "$codex_js" > /usr/local/bin/codex   && chmod 755 /usr/local/bin/codex   && codex --version   && mkdir -p /data /home/node/.codex   && chown node:node /data /home/node/.codex
+2026-11-15T12:51:11.3452935Z #19 0.279 codex-cli 0.160.0
+2026-11-15T12:51:11.5152682Z #19 DONE 0.3s
+2026-11-15T12:51:11.5152938Z 
+2026-11-15T12:51:11.5153096Z #20 exporting to image
+2026-11-15T12:51:11.5153484Z #20 exporting layers
+2026-11-15T12:51:30.2657494Z #20 exporting layers 18.9s done
+2026-11-15T12:51:30.4446209Z #20 exporting manifest sha256:44782c8ef26068e1781cbdf1f9671e4ab9583b5010589ac9227938e93620d615 done
+2026-11-15T12:51:30.4447463Z #20 exporting config sha256:c94b32d4e21c08519b27de87775a491b6a70eeab093ed0d32a1907806b506b2f done
+2026-11-15T12:51:30.4448726Z #20 exporting attestation manifest sha256:f3382b25e5a555103c5128422ef67385947900da4151815c276fcf81025f817b done
+2026-11-15T12:51:30.4450025Z #20 exporting manifest list sha256:74bf2f90ba2e3445f92473e29cac4e1e1f26b8e14d9807c4e9790f68a76f446b done
+2026-11-15T12:51:30.4450900Z #20 naming to docker.io/library/graphgoblin-template-check:latest done
+2026-11-15T12:51:30.4451613Z #20 unpacking to docker.io/library/graphgoblin-template-check:latest
+2026-11-15T12:51:33.7184776Z #20 unpacking to docker.io/library/graphgoblin-template-check:latest 3.4s done
+2026-11-15T12:51:33.7936927Z #20 DONE 22.4s
+2026-11-15T12:51:33.8055525Z ##[group]Run docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node graphgoblin-template-check --input-type=module <<'JS'
+2026-11-15T12:51:33.8056910Z [36;1mdocker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --entrypoint node graphgoblin-template-check --input-type=module <<'JS'[0m
+2026-11-15T12:51:33.8057714Z [36;1mimport assert from 'node:assert/strict';[0m
+2026-11-15T12:51:33.8058095Z [36;1mimport { existsSync, readdirSync } from 'node:fs';[0m
+2026-11-15T12:51:33.8058567Z [36;1mimport { TemplateCatalog } from '/app/apps/api/dist/templates/catalog.js';[0m
+2026-11-15T12:51:33.8059113Z [36;1mconst catalog = new TemplateCatalog('/app/apps/api/dist/catalog');[0m
+2026-11-15T12:51:33.8059528Z [36;1mconst entries = await catalog.list();[0m
+2026-11-15T12:51:33.8059946Z [36;1massert.deepEqual(entries.map(({ manifest }) => manifest.id).sort(),[0m
+2026-11-15T12:51:33.8060416Z [36;1m  ['implementation', 'qa', 'review', 'starter']);[0m
+2026-11-15T12:51:33.8060906Z [36;1mconst assetFiles = (root) => readdirSync(root, { withFileTypes: true }).flatMap((entry) =>[0m
+2026-11-15T12:51:33.8061544Z [36;1m  entry.isDirectory() ? assetFiles(`${root}/${entry.name}`).map((file) => `${entry.name}/${file}`)[0m
+2026-11-15T12:51:33.8062027Z [36;1m    : [entry.name]).sort();[0m
+2026-11-15T12:51:33.8062403Z [36;1mconst keptFiles = ['catalog.json', ...entries.flatMap(({ manifest }) =>[0m
+2026-11-15T12:51:33.8062910Z [36;1m  [`${manifest.id}/manifest.json`, `${manifest.id}/draft.json`])].sort();[0m
+2026-11-15T12:51:33.8063429Z [36;1mfor (const root of ['/app/apps/api/templates', '/app/apps/api/dist/catalog']) {[0m
+2026-11-15T12:51:33.8063899Z [36;1m  assert.deepEqual(assetFiles(root), keptFiles,[0m
+2026-11-15T12:51:33.8064440Z [36;1m    'Only the index, manifests and independent drafts may ship; no configured graphs or support assets');[0m
+2026-11-15T12:51:33.8065173Z [36;1m}[0m
+2026-11-15T12:51:33.8065457Z [36;1mconst supportDir = '/app/apps/api/dist/templates/github';[0m
+2026-11-15T12:51:33.8066024Z [36;1massert.deepEqual(existsSync(supportDir) ? readdirSync(supportDir, { recursive: true }) : [], []);[0m
+2026-11-15T12:51:33.8066659Z [36;1mfor (const name of ['runtime', 'binding', 'scripts', 'authority', 'prerequisites',[0m
+2026-11-15T12:51:33.8067143Z [36;1m  'subjects', 'failures', 'support-result', 'instances']) {[0m
+2026-11-15T12:51:33.8067617Z [36;1m  assert.equal(existsSync(`/app/apps/api/dist/templates/${name}.js`), false);[0m
+2026-11-15T12:51:33.8068010Z [36;1m}[0m
+2026-11-15T12:51:33.8068233Z [36;1mfor (const { manifest, draft } of entries) {[0m
+2026-11-15T12:51:33.8068551Z [36;1m  assert.ok(draft.nodes.length > 0);[0m
+2026-11-15T12:51:33.8068881Z [36;1m  const first = await catalog.draft(manifest.id);[0m
+2026-11-15T12:51:33.8069443Z [36;1m  const second = await catalog.draft(manifest.id);[0m
+2026-11-15T12:51:33.8069795Z [36;1m  assert.deepEqual(first, draft);[0m
+2026-11-15T12:51:33.8070098Z [36;1m  assert.notEqual(first, second);[0m
+2026-11-15T12:51:33.8070396Z [36;1m  first.nodes[0].label = 'Changed copy';[0m
+2026-11-15T12:51:33.8070789Z [36;1m  assert.deepEqual(second, draft);[0m
+2026-11-15T12:51:33.8071190Z [36;1m  assert.deepEqual(await catalog.draft(manifest.id), draft);[0m
+2026-11-15T12:51:33.8071695Z [36;1m  console.log(JSON.stringify({ template: manifest.id, version: manifest.version,[0m
+2026-11-15T12:51:33.8072141Z [36;1m    draftNodes: draft.nodes.length }));[0m
+2026-11-15T12:51:33.8072419Z [36;1m}[0m
+2026-11-15T12:51:33.8072591Z [36;1mJS[0m
+2026-11-15T12:51:33.8124089Z shell: /usr/bin/bash -e {0}
+2026-11-15T12:51:33.8124368Z ##[endgroup]
+2026-11-15T12:51:35.4570678Z {"template":"starter","version":"2.0.0","draftNodes":4}
+2026-11-15T12:51:35.4818766Z {"template":"implementation","version":"2.0.0","draftNodes":11}
+2026-11-15T12:51:35.5052799Z {"template":"review","version":"2.0.0","draftNodes":10}
+2026-11-15T12:51:35.5252264Z {"template":"qa","version":"2.0.0","draftNodes":11}
+2026-11-15T12:51:35.5885714Z Post job cleanup.
+2026-11-15T12:51:35.6774238Z [command]/usr/bin/git version
+2026-11-15T12:51:35.6823074Z git version 2.56.1
+2026-11-15T12:51:35.6865608Z Temporarily overriding HOME='/home/runner/work/_temp/5cde5c0e-7caf-400a-b97b-b1102d59ca42' before making global git config changes
+2026-11-15T12:51:35.6867375Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-15T12:51:35.6872327Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-15T12:51:35.6922194Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-15T12:51:35.6965761Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-15T12:51:35.7324663Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-15T12:51:35.7355878Z http.https://github.com/.extraheader
+2026-11-15T12:51:35.7372460Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-15T12:51:35.7421097Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-15T12:51:35.7786133Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-15T12:51:35.7824159Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-15T12:51:35.8330103Z Cleaning up orphan processes
+2026-11-15T12:51:35.8770618Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

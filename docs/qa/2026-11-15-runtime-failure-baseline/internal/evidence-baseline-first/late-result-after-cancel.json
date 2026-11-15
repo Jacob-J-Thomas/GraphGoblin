@@ -1,0 +1,680 @@
+{
+  "name": "late-result-after-cancel",
+  "phase": "baseline",
+  "processLog": [],
+  "observations": {
+    "beforeLate": {
+      "raw": {
+        "run": {
+          "id": "00000000000000000000000003",
+          "owner_id": "local",
+          "loop_id": "00000000000000000000000001",
+          "version_id": "00000000000000000000000002",
+          "parent_run_id": null,
+          "invocation_id": "00000000000000000000000004",
+          "status": "cancelled",
+          "current_node_id": "mut",
+          "iteration": 1,
+          "waiting": null,
+          "cancel_requested_at": "2026-10-02T12:00:00.000Z",
+          "paused_at": null,
+          "failure": null,
+          "outcome": null,
+          "result": null,
+          "created_at": "2026-10-02T12:00:00.000Z",
+          "started_at": "2026-10-02T12:00:00.000Z",
+          "finished_at": "2026-10-02T12:00:00.000Z",
+          "last_event_seq": 7,
+          "initial_thread": "{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+          "thread_snapshot": "{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+          "thread_snapshot_seq": 4,
+          "finalized_at": "2026-11-15T15:02:46.237Z",
+          "pinned": "{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 repair boundary\",\"label\":\"QA 381 repair boundary v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}}",
+          "thread_snapshot_replay_state": "{\"strict\":true}",
+          "deletion_approval": null,
+          "deletion_revision": 0,
+          "replay_source_run_id": null,
+          "replay_intent_node_id": null,
+          "replay_intent_observed_seq": null
+        },
+        "events": [
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.queued",
+            "node_id": null,
+            "payload": "{\"versionId\":\"00000000000000000000000002\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 repair boundary\",\"label\":\"QA 381 repair boundary v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "node_id": null,
+            "payload": "{\"attempt\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "start",
+            "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "node_id": "start",
+            "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "mut",
+            "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"7e33432dedab6c7d\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.cancel_requested",
+            "node_id": null,
+            "payload": "{\"actor\":{\"kind\":\"user\",\"id\":\"local\"}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.cancelled",
+            "node_id": null,
+            "payload": "{}"
+          }
+        ]
+      },
+      "snapshot": {
+        "id": "00000000000000000000000003",
+        "ownerId": "local",
+        "loopId": "00000000000000000000000001",
+        "versionId": "00000000000000000000000002",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 381 repair boundary",
+          "label": "QA 381 repair boundary v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "00000000000000000000000004",
+        "status": "cancelled",
+        "currentNodeId": "mut",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-02T12:00:00.000Z",
+        "createdAt": "2026-10-02T12:00:00.000Z",
+        "startedAt": "2026-10-02T12:00:00.000Z",
+        "finishedAt": "2026-10-02T12:00:00.000Z",
+        "finalizedAt": "2026-11-15T15:02:46.237Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_CANCELLED",
+            "message": "This run was cancelled; Resume is unavailable."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "effects": [],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "mut",
+              "label": "Controlled repair",
+              "effects": [],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "effects": [],
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              }
+            }
+          ]
+        }
+      },
+      "events": [
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA 381 repair boundary",
+            "label": "QA 381 repair boundary v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000003",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000004",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 3,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 4,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 5,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "mut",
+          "kind": "mutate",
+          "attempt": 1,
+          "configHash": "7e33432dedab6c7d"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 6,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.cancel_requested",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 7,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.cancelled"
+        }
+      ],
+      "sessions": []
+    },
+    "afterLate": {
+      "raw": {
+        "run": {
+          "id": "00000000000000000000000003",
+          "owner_id": "local",
+          "loop_id": "00000000000000000000000001",
+          "version_id": "00000000000000000000000002",
+          "parent_run_id": null,
+          "invocation_id": "00000000000000000000000004",
+          "status": "cancelled",
+          "current_node_id": "mut",
+          "iteration": 1,
+          "waiting": null,
+          "cancel_requested_at": "2026-10-02T12:00:00.000Z",
+          "paused_at": null,
+          "failure": null,
+          "outcome": null,
+          "result": null,
+          "created_at": "2026-10-02T12:00:00.000Z",
+          "started_at": "2026-10-02T12:00:00.000Z",
+          "finished_at": "2026-10-02T12:00:00.000Z",
+          "last_event_seq": 7,
+          "initial_thread": "{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+          "thread_snapshot": "{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+          "thread_snapshot_seq": 4,
+          "finalized_at": "2026-11-15T15:02:46.237Z",
+          "pinned": "{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 repair boundary\",\"label\":\"QA 381 repair boundary v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}}",
+          "thread_snapshot_replay_state": "{\"strict\":true}",
+          "deletion_approval": null,
+          "deletion_revision": 0,
+          "replay_source_run_id": null,
+          "replay_intent_node_id": null,
+          "replay_intent_observed_seq": null
+        },
+        "events": [
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.queued",
+            "node_id": null,
+            "payload": "{\"versionId\":\"00000000000000000000000002\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 381 repair boundary\",\"label\":\"QA 381 repair boundary v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "node_id": null,
+            "payload": "{\"attempt\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "start",
+            "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "node_id": "start",
+            "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "mut",
+            "payload": "{\"kind\":\"mutate\",\"attempt\":1,\"configHash\":\"7e33432dedab6c7d\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.cancel_requested",
+            "node_id": null,
+            "payload": "{\"actor\":{\"kind\":\"user\",\"id\":\"local\"}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.cancelled",
+            "node_id": null,
+            "payload": "{}"
+          }
+        ]
+      },
+      "snapshot": {
+        "id": "00000000000000000000000003",
+        "ownerId": "local",
+        "loopId": "00000000000000000000000001",
+        "versionId": "00000000000000000000000002",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "QA 381 repair boundary",
+          "label": "QA 381 repair boundary v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "00000000000000000000000004",
+        "status": "cancelled",
+        "currentNodeId": "mut",
+        "iteration": 1,
+        "cancelRequestedAt": "2026-10-02T12:00:00.000Z",
+        "createdAt": "2026-10-02T12:00:00.000Z",
+        "startedAt": "2026-10-02T12:00:00.000Z",
+        "finishedAt": "2026-10-02T12:00:00.000Z",
+        "finalizedAt": "2026-11-15T15:02:46.237Z",
+        "lastEventSeq": 7,
+        "recovery": {
+          "observedSeq": 7,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_CANCELLED",
+            "message": "This run was cancelled; Resume is unavailable."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "effects": [],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "mut",
+              "label": "Controlled repair",
+              "effects": [],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "effects": [],
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              }
+            }
+          ]
+        }
+      },
+      "events": [
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "QA 381 repair boundary",
+            "label": "QA 381 repair boundary v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000003",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000004",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 3,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 4,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 5,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "mut",
+          "kind": "mutate",
+          "attempt": 1,
+          "configHash": "7e33432dedab6c7d"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 6,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.cancel_requested",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 7,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.cancelled"
+        }
+      ],
+      "sessions": []
+    }
+  },
+  "knownRuns": [
+    "00000000000000000000000003"
+  ],
+  "result": "assertions-met",
+  "store": {
+    "dir": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-381-native-internal-preparation\\evidence-baseline-first\\late-result-after-cancel",
+    "database": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-381-native-internal-preparation\\evidence-baseline-first\\late-result-after-cancel\\graphgoblin.db",
+    "closed": true,
+    "retainForA5": false,
+    "collectionPasses": 2,
+    "exclusiveProbe": {
+      "process": {
+        "pid": 41384,
+        "spawnRequestedAt": "2026-11-15T15:02:46.292Z",
+        "executable": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "args": [
+          "-NoLogo",
+          "-NoProfile",
+          "-NonInteractive",
+          "-EncodedCommand",
+          "CgAkAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlACAAPQAgACcAUwB0AG8AcAAnAAoAJABxAGEASABhAG4AZABsAGUAcwAgAD0AIABbAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AFsASQBPAC4ARgBpAGwAZQBTAHQAcgBlAGEAbQBdAF0AOgA6AG4AZQB3ACgAKQAKAHQAcgB5ACAAewAKACAAIAB3AGgAaQBsAGUAIAAoACQAbgB1AGwAbAAgAC0AbgBlACAAKAAkAHEAYQBMAGkAbgBlACAAPQAgAFsAQwBvAG4AcwBvAGwAZQBdADoAOgBJAG4ALgBSAGUAYQBkAEwAaQBuAGUAKAApACkAKQAgAHsACgAgACAAIAAgACQAcQBhAEYAaQBsAGUAIAA9ACAAWwBUAGUAeAB0AC4ARQBuAGMAbwBkAGkAbgBnAF0AOgA6AFUAVABGADgALgBHAGUAdABTAHQAcgBpAG4AZwAoAFsAQwBvAG4AdgBlAHIAdABdADoAOgBGAHIAbwBtAEIAYQBzAGUANgA0AFMAdAByAGkAbgBnACgAJABxAGEATABpAG4AZQApACkACgAgACAAIAAgACQAcQBhAEEAdAB0AHIAaQBiAHUAdABlAHMAIAA9ACAAWwBJAE8ALgBGAGkAbABlAF0AOgA6AEcAZQB0AEEAdAB0AHIAaQBiAHUAdABlAHMAKAAkAHEAYQBGAGkAbABlACkACgAgACAAIAAgAGkAZgAgACgAJABxAGEAQQB0AHQAcgBpAGIAdQB0AGUAcwAgAC0AYgBhAG4AZAAgACgAWwBJAE8ALgBGAGkAbABlAEEAdAB0AHIAaQBiAHUAdABlAHMAXQA6ADoARABpAHIAZQBjAHQAbwByAHkAIAAtAGIAbwByACAAWwBJAE8ALgBGAGkAbABlAEEAdAB0AHIAaQBiAHUAdABlAHMAXQA6ADoAUgBlAHAAYQByAHMAZQBQAG8AaQBuAHQAKQApACAAewAKACAAIAAgACAAIAAgAHQAaAByAG8AdwAgACIARQB4AGMAbAB1AHMAaQB2AGUALQBvAHAAZQBuACAAdABhAHIAZwBlAHQAIABtAHUAcwB0ACAAYgBlACAAYQAgAHIAZQBnAHUAbABhAHIAIABmAGkAbABlADoAIAAkAHEAYQBGAGkAbABlACIACgAgACAAIAAgAH0ACgAgACAAIAAgACQAcQBhAEgAYQBuAGQAbABlAHMALgBBAGQAZAAoAFsASQBPAC4ARgBpAGwAZQBdADoAOgBPAHAAZQBuACgAJABxAGEARgBpAGwAZQAsACAAWwBJAE8ALgBGAGkAbABlAE0AbwBkAGUAXQA6ADoATwBwAGUAbgAsACAAWwBJAE8ALgBGAGkAbABlAEEAYwBjAGUAcwBzAF0AOgA6AFIAZQBhAGQALAAgAFsASQBPAC4ARgBpAGwAZQBTAGgAYQByAGUAXQA6ADoATgBvAG4AZQApACkACgAgACAAfQAKAH0AIABmAGkAbgBhAGwAbAB5ACAAewAKACAAIABmAG8AcgBlAGEAYwBoACAAKAAkAHEAYQBIAGEAbgBkAGwAZQAgAGkAbgAgACQAcQBhAEgAYQBuAGQAbABlAHMAKQAgAHsAIAAkAHEAYQBIAGEAbgBkAGwAZQAuAEQAaQBzAHAAbwBzAGUAKAApACAAfQAKAH0ACgBbAEMAbwBuAHMAbwBsAGUAXQA6ADoATwB1AHQALgBXAHIAaQB0AGUATABpAG4AZQAoACcAcQBhAC0AZQB4AGMAbAB1AHMAaQB2AGUALQBvAHAAZQBuAC0AbwBrACAAJwAgACsAIAAkAHEAYQBIAGEAbgBkAGwAZQBzAC4AQwBvAHUAbgB0ACkACgA="
+        ],
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-381-native-internal-preparation\\evidence-baseline-first\\late-result-after-cancel",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "close": {
+          "code": 0,
+          "signal": null
+        }
+      },
+      "files": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-381-native-internal-preparation\\evidence-baseline-first\\late-result-after-cancel\\graphgoblin.db"
+      ],
+      "stdout": "qa-exclusive-open-ok 1\r\n",
+      "stderr": ""
+    },
+    "empty": true,
+    "remaining": []
+  }
+}

@@ -1,0 +1,14 @@
+$ pnpm typecheck && pnpm lint && pnpm check:layers && pnpm check:migrations && pnpm check:tokens && pnpm check:deps && pnpm test:coverage && pnpm check:templates && pnpm check:licenses && pnpm check:docs && pnpm check:contrast
+$ turbo run typecheck
+$ turbo run lint
+$ node tooling/scripts/check-layers.mjs
+Layer rules: OK
+$ node tooling/scripts/check-migrations.mjs
+$ node tooling/scripts/check-design-tokens.mjs
+Design tokens: OK (238 files checked)
+$ depcruise packages apps --config .dependency-cruiser.cjs
+$ turbo run test:coverage
+@graphgoblin/domain#test:coverage:  ERROR  command (C:\Users\98jak\.codex\worktrees\gg-20261115-runtime\GraphGoblin\packages\domain) C:\nvm4w\nodejs\pnpm.cmd run test:coverage exited (1)
+ ERROR  run failed: command  exited (1)
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

@@ -46,6 +46,31 @@ describe('terminal exits', () => {
     e.manager.stop();
   });
 
+  it('reports the authored expression when a published return reaches the evaluator depth guard', async () => {
+    const e = await createTestEngine();
+    const def = minimalLoop();
+    def.nodes[1] = {
+      id: 'done',
+      kind: 'exit',
+      label: 'Done',
+      config: { returns: '['.repeat(230) + '1' + ']'.repeat(230) },
+    };
+    const run = await e.runToIdle(e.publish(def).loopId);
+    expect(run.failure).toMatchObject({
+      code: 'EXPRESSION_ERROR',
+      nodeId: 'done',
+      resumable: false,
+      message: expect.stringContaining('max depth 200'),
+    });
+    expect(e.events(run.id).filter((event) => event.type === 'run.failed')).toEqual([
+      expect.objectContaining({ failure: run.failure }),
+    ]);
+    await expect(e.manager.resume(run.id)).rejects.toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
+    expect(e.eventTypes(run.id)).not.toContain('exit.evaluated');
+    expect(e.eventTypes(run.id)).not.toContain('run.finished');
+    e.manager.stop();
+  });
+
   it('records exit evidence, completion and run outcome in one append', async () => {
     const e = await createTestEngine();
     const append = vi.spyOn(e.ports.events, 'append');

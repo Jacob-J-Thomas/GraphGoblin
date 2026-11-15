@@ -74,6 +74,11 @@ import {
   isAbortError,
 } from './errors.js';
 import { deciderFailure, isDeciderError } from './decider-errors.js';
+import {
+  errorDiagnostic,
+  INTERNAL_FAILURE_MESSAGE,
+  InternalRunFailureError,
+} from './failure-publication.js';
 import type {
   ChildOutcome,
   ChildStartRequest,
@@ -1973,19 +1978,21 @@ export class RunManager {
       void this.execute(runId, controller)
         .catch(async (error: unknown) => {
           this.ports.logger.error(
-            { runId, error: describeError(error) },
+            { runId, error: errorDiagnostic(error) },
             'executor crashed outside node execution',
           );
           try {
             await this.failRun(
               runId,
-              error instanceof RunFailureError
-                ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
-                : {
-                    code: 'INTERNAL_ERROR',
-                    message: describeError(error),
-                    resumable: true,
-                  },
+              error instanceof InternalRunFailureError
+                ? error
+                : error instanceof RunFailureError
+                  ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
+                  : {
+                      code: 'INTERNAL_ERROR',
+                      message: INTERNAL_FAILURE_MESSAGE,
+                      resumable: true,
+                    },
             );
           } catch (recordError) {
             this.ports.logger.error(
@@ -2340,11 +2347,12 @@ export class RunManager {
     // comes before anything that could record a second terminal event.
     if (await this.completeFromLog(run, version?.definition, events)) return;
     if (!version) {
-      await this.failRun(runId, {
-        code: 'INTERNAL_ERROR',
-        message: `loop version ${run.versionId} not found`,
-        resumable: false,
-      });
+      await this.failRun(
+        runId,
+        new InternalRunFailureError(`loop version ${run.versionId} not found`, {
+          resumable: false,
+        }),
+      );
       return;
     }
     // A run admitted before ADR-0044 can be pinned to a definition whose exit publishes an Event:
@@ -2526,11 +2534,12 @@ export class RunManager {
       if (current.status === 'paused') return;
       const node = nodeById(def, nodeId);
       if (!node) {
-        await this.failRun(runId, {
-          code: 'INTERNAL_ERROR',
-          message: `node ${nodeId} not found in loop version`,
-          resumable: false,
-        });
+        await this.failRun(
+          runId,
+          new InternalRunFailureError(`node ${nodeId} not found in loop version`, {
+            resumable: false,
+          }),
+        );
         return;
       }
       const attempt = attemptFor(events, nodeId);
@@ -2633,29 +2642,39 @@ export class RunManager {
           !(error instanceof RunFailureError) && isDeciderError(error)
             ? deciderFailure(error)
             : undefined;
-        const failure: RunFailure =
-          error instanceof RunFailureError
-            ? error.toFailure(nodeId)
-            : {
-                code: 'INTERNAL_ERROR',
-                message: providerFailure?.message ?? describeError(error),
-                nodeId,
-                resumable: true,
-                details:
-                  providerFailure?.details ??
-                  (error instanceof Error
-                    ? {
-                        name: error.name,
-                        stack: error.stack ?? null,
-                      }
-                    : null),
-              };
+        const failure =
+          error instanceof InternalRunFailureError
+            ? error
+            : error instanceof RunFailureError
+              ? error.toFailure(nodeId)
+              : providerFailure
+                ? new InternalRunFailureError(providerFailure.message, {
+                    nodeId,
+                    details: providerFailure.details,
+                  })
+                : {
+                    code: 'INTERNAL_ERROR' as const,
+                    message: INTERNAL_FAILURE_MESSAGE,
+                    nodeId,
+                    resumable: true,
+                  };
         if (providerFailure)
           this.ports.logger.warn(
             { runId, nodeId, ...providerFailure.diagnostic },
             'node provider failed',
           );
-        else this.ports.logger.error({ runId, nodeId, failure }, 'node failed');
+        else
+          this.ports.logger.error(
+            {
+              runId,
+              nodeId,
+              failure: failure instanceof InternalRunFailureError ? failure.toFailure() : failure,
+              ...(failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
+                ? { error: errorDiagnostic(error) }
+                : {}),
+            },
+            'node failed',
+          );
         await this.failRun(
           runId,
           failure,
@@ -2711,15 +2730,17 @@ export class RunManager {
       try {
         thread = ContextThreadSchema.parse(applyPatch(thread, result.patch));
       } catch (error) {
+        this.ports.logger.error(
+          { runId, nodeId, error: errorDiagnostic(error) },
+          'node produced an invalid patch',
+        );
         // What the visit learned stays with the failure it ends in (#398).
         await this.failRun(
           runId,
-          {
-            code: 'INTERNAL_ERROR',
-            message: `node ${nodeId} produced an invalid patch: ${describeError(error)}`,
+          new InternalRunFailureError(`node ${nodeId} produced an invalid patch`, {
             nodeId,
             resumable: false,
-          },
+          }),
           result.kind === 'done' ? result.records : undefined,
         );
         return;
@@ -2772,12 +2793,17 @@ export class RunManager {
       await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
       const edge = outgoingEdge(def, nodeId, result.route);
       if (!edge) {
-        await this.failRun(runId, {
-          code: 'INTERNAL_ERROR',
-          message: `node ${nodeId} routed to "${result.route}" but no edge leaves that port`,
-          nodeId,
-          resumable: false,
-        });
+        this.ports.logger.error(
+          { runId, nodeId, route: result.route },
+          'node selected a route without an edge',
+        );
+        await this.failRun(
+          runId,
+          new InternalRunFailureError(`node ${nodeId} selected a route with no edge`, {
+            nodeId,
+            resumable: false,
+          }),
+        );
         return;
       }
       nodeId = edge.to.node;
@@ -3012,7 +3038,7 @@ export class RunManager {
 
   private async failRun(
     runId: string,
-    authoredFailure: RunFailure,
+    authoredFailure: RunFailure | InternalRunFailureError,
     records: readonly EventDraft[] = [],
   ): Promise<void> {
     const run = await this.ports.runs.get(runId);
@@ -3026,7 +3052,19 @@ export class RunManager {
     }
     // A bookkeeping error is not a script outcome. Classify against durable evidence before
     // recording either handler failures (progress writes) or outer failures (completion writes).
-    const failure = boundedFailure(classifyScriptFailure(events, runId, authoredFailure));
+    const engineAuthored = authoredFailure instanceof InternalRunFailureError;
+    const classified = classifyScriptFailure(
+      events,
+      runId,
+      engineAuthored ? authoredFailure.toFailure() : authoredFailure,
+    );
+    // Only an explicit engine-owned projection can supply public copy for an internal cause.
+    const { details: _privateDetails, ...fields } = classified;
+    const failure = boundedFailure(
+      classified.code === 'INTERNAL_ERROR' && !engineAuthored
+        ? { ...fields, message: INTERNAL_FAILURE_MESSAGE }
+        : classified,
+    );
     await this.ports.events.append(runId, [...records, { type: 'run.failed', failure }]);
     const failed = await this.ports.runs.transition(runId, ACTIVE_STATUSES, {
       status: 'failed',

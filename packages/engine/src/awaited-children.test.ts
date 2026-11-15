@@ -4,7 +4,7 @@
  * child's configured output (or its absence) is what the parent receives.
  */
 import { describe, expect, it, vi } from 'vitest';
-import type { LoopDefinitionInput, RunEvent, RunRecord } from '@graphgoblin/contracts';
+import type { LoopDefinitionInput, RunEvent, RunFailure, RunRecord } from '@graphgoblin/contracts';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { RunManager } from './run-manager.js';
 import { createTestEngine, singleNodeLoop, type TestEngine } from './testing/scenario.js';
@@ -784,6 +784,114 @@ describe('awaiting a child across failures and restarts (#242)', () => {
       expect(done?.status).toBe(parentStatus);
       if (parentStatus === 'succeeded')
         expect(done?.result).toMatchObject({ child: { result: 'new' }, after: true });
+    },
+  );
+
+  it.each(['INTERNAL_ERROR', 'HARNESS_TRANSPORT_FAILED'] as const)(
+    'does not republish old %s diagnostics through nested child details',
+    async (code) => {
+      const e = await createTestEngine({ maxConcurrentRuns: 3 });
+      const leaf = e.publish(inputLoop('legacy leaf'));
+      const middle = e.publish(singleNodeLoop('legacy middle', subNode(leaf.loopId)));
+      const root = await e.runToIdle(
+        e.publish(singleNodeLoop('new root', subNode(middle.loopId))).loopId,
+      );
+      const [middleRun] = await e.ports.runs.listChildren(root.id);
+      const [leafRun] = await e.ports.runs.listChildren(middleRun!.id);
+      expect(root.waiting).toMatchObject({ kind: 'child', childRunId: middleRun!.id });
+      expect(middleRun!.waiting).toMatchObject({ kind: 'child', childRunId: leafRun!.id });
+      expect(leafRun!.waiting).toMatchObject({ kind: 'input' });
+      e.manager.stop();
+
+      const providerPath = 'D:/provider-owned/keep.txt';
+      const message = 'D:/historical-message-canary/engine.ts';
+      const stack = 'D:/historical-stack-canary/engine.ts';
+      const providerDetail = {
+        path: providerPath,
+        recording: [{ operation: 'harness.status', message: providerPath }],
+      };
+      const recording = [{ operation: 'harness.status', message, name: 'Error', stack }];
+      const leafFailure: RunFailure = {
+        code,
+        message: code === 'INTERNAL_ERROR' ? message : 'Provider reported ' + providerPath,
+        nodeId: 'wait',
+        resumable: true,
+        details:
+          code === 'INTERNAL_ERROR'
+            ? { name: 'Error', stack, recording, providerDetail }
+            : { recording, providerDetail },
+      };
+      const nested = {
+        childRunId: leafRun!.id,
+        childNodeId: 'wait',
+        childDetails: leafFailure.details!,
+      };
+      const legacyFailures = [
+        { runId: leafRun!.id, failure: leafFailure },
+        {
+          runId: middleRun!.id,
+          failure: {
+            ...leafFailure,
+            nodeId: 'sub',
+            message: 'subloop child ' + leafRun!.id + ' failed: ' + leafFailure.message,
+            details: nested,
+          },
+        },
+      ];
+      for (const { runId, failure } of legacyFailures) {
+        await e.ports.events.append(runId, [{ type: 'run.failed', failure }]);
+        await e.ports.runs.transition(runId, ['waiting'], {
+          status: 'failed',
+          failure,
+          waiting: undefined,
+          finishedAt: e.ports.clock.now().toISOString(),
+        });
+        await e.ports.runs.markFinalized(runId);
+      }
+      const legacyBytes = async () =>
+        JSON.stringify(
+          await Promise.all(
+            legacyFailures.map(async ({ runId }) => [
+              await e.ports.runs.get(runId),
+              e.events(runId),
+            ]),
+          ),
+        );
+      const before = await legacyBytes();
+      const manager = new RunManager(e.ports, e.settings);
+      await manager.start();
+      try {
+        await manager.waitForIdle();
+        const failed = await manager.getRun(root.id);
+        expect(failed?.failure).toMatchObject({ code, nodeId: 'sub', resumable: true });
+        expect(failed?.failure?.details).toEqual({
+          childRunId: middleRun!.id,
+          childNodeId: 'sub',
+          childDetails: {
+            ...nested,
+            childDetails: { recording: [{ operation: 'harness.status' }], providerDetail },
+          },
+        });
+        if (code !== 'INTERNAL_ERROR') expect(failed?.failure?.message).toContain(providerPath);
+        const outcomes = e
+          .events(root.id)
+          .filter((event) => event.type === 'child_run.finished' || event.type === 'run.failed');
+        expect(outcomes).toEqual([
+          expect.objectContaining({ type: 'child_run.finished', childRunId: middleRun!.id }),
+          expect.objectContaining({ type: 'run.failed', failure: failed?.failure }),
+        ]);
+        expect(JSON.stringify([failed?.failure, outcomes])).not.toMatch(
+          /historical-(message|stack)-canary/,
+        );
+        const logs = e.ports.logger.lines.filter(
+          ({ obj }) => obj.runId === root.id && obj.childRunId === middleRun!.id,
+        );
+        expect(JSON.stringify(logs)).toContain(message);
+        expect(JSON.stringify(logs)).toContain(stack);
+        expect(await legacyBytes()).toBe(before);
+      } finally {
+        manager.stop();
+      }
     },
   );
 

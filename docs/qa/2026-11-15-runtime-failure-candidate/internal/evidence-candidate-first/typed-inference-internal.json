@@ -1,0 +1,1342 @@
+{
+  "name": "typed-inference-internal",
+  "phase": "candidate",
+  "processLog": [],
+  "observations": {
+    "terminal": {
+      "raw": {
+        "run": {
+          "id": "00000000000000000000000003",
+          "owner_id": "local",
+          "loop_id": "00000000000000000000000001",
+          "version_id": "00000000000000000000000002",
+          "parent_run_id": null,
+          "invocation_id": "00000000000000000000000004",
+          "status": "failed",
+          "current_node_id": "infer",
+          "iteration": 1,
+          "waiting": null,
+          "cancel_requested_at": null,
+          "paused_at": null,
+          "failure": "{\"code\":\"INTERNAL_ERROR\",\"message\":\"An unexpected error interrupted the run. See the server logs for this run.\",\"nodeId\":\"infer\",\"resumable\":true,\"details\":{\"cause\":null,\"recording\":[{\"operation\":\"turn.intent.reconcile\"},{\"operation\":\"harness.status\"}]},\"inference\":{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"submission\":\"definitely-not-submitted\",\"promptKind\":\"repair\",\"sessionId\":\"fake-session-1\",\"retry\":{\"harness\":\"codex\",\"prompt\":\"Repair exactly: \\\"invalid\\\"\",\"resumeSessionId\":\"fake-session-1\"}}}",
+          "outcome": null,
+          "result": null,
+          "created_at": "2026-10-02T12:00:00.000Z",
+          "started_at": "2026-10-02T12:00:00.000Z",
+          "finished_at": "2026-10-02T12:00:00.000Z",
+          "last_event_seq": 13,
+          "initial_thread": "{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+          "thread_snapshot": "{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+          "thread_snapshot_seq": 4,
+          "finalized_at": "2026-11-15T16:03:34.817Z",
+          "pinned": "{\"source\":\"published\",\"version\":1,\"name\":\"Failure evidence matrix\",\"label\":\"Failure evidence matrix v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}}",
+          "thread_snapshot_replay_state": "{\"strict\":true}",
+          "deletion_approval": null,
+          "deletion_revision": 0,
+          "replay_source_run_id": null,
+          "replay_intent_node_id": null,
+          "replay_intent_observed_seq": null
+        },
+        "events": [
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.queued",
+            "node_id": null,
+            "payload": "{\"versionId\":\"00000000000000000000000002\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Failure evidence matrix\",\"label\":\"Failure evidence matrix v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "node_id": null,
+            "payload": "{\"attempt\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "start",
+            "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "node_id": "start",
+            "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "infer",
+            "payload": "{\"kind\":\"inference\",\"attempt\":1,\"configHash\":\"2f810e56cb86d7ee\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000005\",\"harness\":\"codex\",\"promptKind\":\"authored\",\"prompt\":\"Original task\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "node_id": "infer",
+            "payload": "{\"harness\":\"codex\",\"sessionId\":\"fake-session-1\",\"mode\":\"fresh\",\"model\":\"gpt-6-luna\",\"effort\":\"low\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 8,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000005\",\"submission\":\"submitted\",\"marker\":\"fake.accepted\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 9,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "node_id": "infer",
+            "payload": "{\"progress\":{\"item\":{\"id\":\"i1\",\"summary\":\"invalid\",\"type\":\"message\"}}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 10,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "node_id": "infer",
+            "payload": "{\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 11,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"harness\":\"codex\",\"promptKind\":\"repair\",\"prompt\":\"Repair exactly: \\\"invalid\\\"\",\"resumeSessionId\":\"fake-session-1\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 12,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"submission\":\"definitely-not-submitted\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 13,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.failed",
+            "node_id": null,
+            "payload": "{\"failure\":{\"code\":\"INTERNAL_ERROR\",\"message\":\"An unexpected error interrupted the run. See the server logs for this run.\",\"nodeId\":\"infer\",\"resumable\":true,\"details\":{\"cause\":null,\"recording\":[{\"operation\":\"turn.intent.reconcile\"},{\"operation\":\"harness.status\"}]},\"inference\":{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"submission\":\"definitely-not-submitted\",\"promptKind\":\"repair\",\"sessionId\":\"fake-session-1\",\"retry\":{\"harness\":\"codex\",\"prompt\":\"Repair exactly: \\\"invalid\\\"\",\"resumeSessionId\":\"fake-session-1\"}}}}"
+          }
+        ]
+      },
+      "snapshot": {
+        "id": "00000000000000000000000003",
+        "ownerId": "local",
+        "loopId": "00000000000000000000000001",
+        "versionId": "00000000000000000000000002",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Failure evidence matrix",
+          "label": "Failure evidence matrix v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "00000000000000000000000004",
+        "status": "failed",
+        "currentNodeId": "infer",
+        "iteration": 1,
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "cause": null,
+            "recording": [
+              {
+                "operation": "turn.intent.reconcile"
+              },
+              {
+                "operation": "harness.status"
+              }
+            ]
+          },
+          "inference": {
+            "visitId": "00000000000000000000000003:5",
+            "turnId": "00000000000000000000000006",
+            "submission": "definitely-not-submitted",
+            "promptKind": "repair",
+            "sessionId": "fake-session-1",
+            "retry": {
+              "harness": "codex",
+              "prompt": "Repair exactly: \"invalid\"",
+              "resumeSessionId": "fake-session-1"
+            }
+          }
+        },
+        "createdAt": "2026-10-02T12:00:00.000Z",
+        "startedAt": "2026-10-02T12:00:00.000Z",
+        "finishedAt": "2026-10-02T12:00:00.000Z",
+        "finalizedAt": "2026-11-15T16:03:34.817Z",
+        "lastEventSeq": 13,
+        "recovery": {
+          "observedSeq": 13,
+          "resume": {
+            "allowed": true
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "effects": [],
+              "action": {
+                "allowed": false,
+                "code": "REPLAY_NODE_NOT_REACHED",
+                "message": "This run never reached this node."
+              }
+            }
+          ]
+        }
+      },
+      "events": [
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Failure evidence matrix",
+            "label": "Failure evidence matrix v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000003",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000004",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 3,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 4,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 5,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "infer",
+          "kind": "inference",
+          "attempt": 1,
+          "configHash": "2f810e56cb86d7ee"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 6,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.turn",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000005",
+          "harness": "codex",
+          "promptKind": "authored",
+          "prompt": "Original task"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 7,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.session",
+          "nodeId": "infer",
+          "harness": "codex",
+          "sessionId": "fake-session-1",
+          "mode": "fresh",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 8,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000005",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 9,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.progress",
+          "nodeId": "infer",
+          "progress": {
+            "item": {
+              "id": "i1",
+              "summary": "invalid",
+              "type": "message"
+            }
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 10,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.usage",
+          "nodeId": "infer",
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 11,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.turn",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000006",
+          "harness": "codex",
+          "promptKind": "repair",
+          "prompt": "Repair exactly: \"invalid\"",
+          "resumeSessionId": "fake-session-1"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 12,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000006",
+          "submission": "definitely-not-submitted"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 13,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.failed",
+          "failure": {
+            "code": "INTERNAL_ERROR",
+            "message": "An unexpected error interrupted the run. See the server logs for this run.",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "cause": null,
+              "recording": [
+                {
+                  "operation": "turn.intent.reconcile"
+                },
+                {
+                  "operation": "harness.status"
+                }
+              ]
+            },
+            "inference": {
+              "visitId": "00000000000000000000000003:5",
+              "turnId": "00000000000000000000000006",
+              "submission": "definitely-not-submitted",
+              "promptKind": "repair",
+              "sessionId": "fake-session-1",
+              "retry": {
+                "harness": "codex",
+                "prompt": "Repair exactly: \"invalid\"",
+                "resumeSessionId": "fake-session-1"
+              }
+            }
+          }
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "00000000000000000000000003",
+          "nodeId": "infer",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "fake-session-1",
+          "status": "failed",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "updatedAt": "2026-10-02T12:00:00.000Z"
+        }
+      ]
+    },
+    "resumed": {
+      "raw": {
+        "run": {
+          "id": "00000000000000000000000003",
+          "owner_id": "local",
+          "loop_id": "00000000000000000000000001",
+          "version_id": "00000000000000000000000002",
+          "parent_run_id": null,
+          "invocation_id": "00000000000000000000000004",
+          "status": "succeeded",
+          "current_node_id": null,
+          "iteration": 1,
+          "waiting": null,
+          "cancel_requested_at": null,
+          "paused_at": null,
+          "failure": null,
+          "outcome": "success",
+          "result": null,
+          "created_at": "2026-10-02T12:00:00.000Z",
+          "started_at": "2026-10-02T12:00:00.000Z",
+          "finished_at": "2026-10-02T12:00:00.000Z",
+          "last_event_seq": 25,
+          "initial_thread": "{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+          "thread_snapshot": "{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[{\"id\":\"00000000000000000000000008\",\"role\":\"assistant\",\"content\":\"42\",\"nodeId\":\"infer\",\"ts\":\"2026-10-02T12:00:00.000Z\"}],\"vars\":{},\"artifacts\":[{\"id\":\"00000000000000000000000007\",\"kind\":\"transcript\",\"ref\":\"mem://transcript/1\",\"nodeId\":\"infer\",\"label\":\"transcript infer\",\"bytes\":45}],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"},\"infer\":{\"nodeId\":\"infer\",\"value\":42,\"at\":\"2026-10-02T12:00:00.000Z\"}},\"lastOutput\":{\"nodeId\":\"infer\",\"value\":42,\"at\":\"2026-10-02T12:00:00.000Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1,\"infer\":2,\"done\":1},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+          "thread_snapshot_seq": 25,
+          "finalized_at": "2026-11-15T16:03:34.913Z",
+          "pinned": "{\"source\":\"published\",\"version\":1,\"name\":\"Failure evidence matrix\",\"label\":\"Failure evidence matrix v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}}",
+          "thread_snapshot_replay_state": "{\"strict\":true}",
+          "deletion_approval": null,
+          "deletion_revision": 0,
+          "replay_source_run_id": null,
+          "replay_intent_node_id": null,
+          "replay_intent_observed_seq": null
+        },
+        "events": [
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 1,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.queued",
+            "node_id": null,
+            "payload": "{\"versionId\":\"00000000000000000000000002\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"Failure evidence matrix\",\"label\":\"Failure evidence matrix v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"00000000000000000000000003\",\"loopId\":\"00000000000000000000000001\",\"versionId\":\"00000000000000000000000002\",\"iteration\":1},\"invocation\":{\"id\":\"00000000000000000000000004\",\"source\":\"manual.api\",\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 2,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.started",
+            "node_id": null,
+            "payload": "{\"attempt\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 3,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "start",
+            "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 4,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "node_id": "start",
+            "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}}],\"route\":\"out\",\"durationMs\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 5,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "infer",
+            "payload": "{\"kind\":\"inference\",\"attempt\":1,\"configHash\":\"2f810e56cb86d7ee\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 6,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000005\",\"harness\":\"codex\",\"promptKind\":\"authored\",\"prompt\":\"Original task\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 7,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "node_id": "infer",
+            "payload": "{\"harness\":\"codex\",\"sessionId\":\"fake-session-1\",\"mode\":\"fresh\",\"model\":\"gpt-6-luna\",\"effort\":\"low\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 8,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000005\",\"submission\":\"submitted\",\"marker\":\"fake.accepted\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 9,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "node_id": "infer",
+            "payload": "{\"progress\":{\"item\":{\"id\":\"i1\",\"summary\":\"invalid\",\"type\":\"message\"}}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 10,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "node_id": "infer",
+            "payload": "{\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 11,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"harness\":\"codex\",\"promptKind\":\"repair\",\"prompt\":\"Repair exactly: \\\"invalid\\\"\",\"resumeSessionId\":\"fake-session-1\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 12,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"submission\":\"definitely-not-submitted\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 13,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.failed",
+            "node_id": null,
+            "payload": "{\"failure\":{\"code\":\"INTERNAL_ERROR\",\"message\":\"An unexpected error interrupted the run. See the server logs for this run.\",\"nodeId\":\"infer\",\"resumable\":true,\"details\":{\"cause\":null,\"recording\":[{\"operation\":\"turn.intent.reconcile\"},{\"operation\":\"harness.status\"}]},\"inference\":{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"submission\":\"definitely-not-submitted\",\"promptKind\":\"repair\",\"sessionId\":\"fake-session-1\",\"retry\":{\"harness\":\"codex\",\"prompt\":\"Repair exactly: \\\"invalid\\\"\",\"resumeSessionId\":\"fake-session-1\"}}}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 14,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.resumed",
+            "node_id": null,
+            "payload": "{\"actor\":{\"kind\":\"user\",\"id\":\"local\"}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 15,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "infer",
+            "payload": "{\"kind\":\"inference\",\"attempt\":2,\"configHash\":\"2f810e56cb86d7ee\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 16,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.turn",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"harness\":\"codex\",\"promptKind\":\"repair\",\"prompt\":\"Repair exactly: \\\"invalid\\\"\",\"resumeSessionId\":\"fake-session-1\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 17,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.submission",
+            "node_id": "infer",
+            "payload": "{\"visitId\":\"00000000000000000000000003:5\",\"turnId\":\"00000000000000000000000006\",\"submission\":\"submitted\",\"marker\":\"fake.accepted\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 18,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.progress",
+            "node_id": "infer",
+            "payload": "{\"progress\":{\"item\":{\"id\":\"i1\",\"summary\":\"42\",\"type\":\"message\"}}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 19,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.usage",
+            "node_id": "infer",
+            "payload": "{\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 20,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "harness.session",
+            "node_id": "infer",
+            "payload": "{\"harness\":\"codex\",\"sessionId\":\"fake-session-1\",\"mode\":\"resumed\",\"model\":\"gpt-6-luna\",\"effort\":\"low\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 21,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "node_id": "infer",
+            "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/artifacts/-\",\"value\":{\"id\":\"00000000000000000000000007\",\"kind\":\"transcript\",\"ref\":\"mem://transcript/1\",\"nodeId\":\"infer\",\"bytes\":45,\"label\":\"transcript infer\"}},{\"op\":\"add\",\"path\":\"/messages/-\",\"value\":{\"id\":\"00000000000000000000000008\",\"role\":\"assistant\",\"content\":\"42\",\"nodeId\":\"infer\",\"ts\":\"2026-10-02T12:00:00.000Z\"}},{\"op\":\"add\",\"path\":\"/outputs/infer\",\"value\":{\"nodeId\":\"infer\",\"value\":42,\"at\":\"2026-10-02T12:00:00.000Z\"}},{\"op\":\"replace\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"infer\",\"value\":42,\"at\":\"2026-10-02T12:00:00.000Z\"}},{\"op\":\"replace\",\"path\":\"/counters/usage\",\"value\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}],\"route\":\"out\",\"durationMs\":17}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 22,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.started",
+            "node_id": "done",
+            "payload": "{\"kind\":\"exit\",\"attempt\":1,\"configHash\":\"caacd31f1376b30f\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 23,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "exit.evaluated",
+            "node_id": "done",
+            "payload": "{\"outcome\":\"success\"}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 24,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "node.finished",
+            "node_id": "done",
+            "payload": "{\"patch\":[],\"durationMs\":1}"
+          },
+          {
+            "run_id": "00000000000000000000000003",
+            "seq": 25,
+            "ts": "2026-10-02T12:00:00.000Z",
+            "type": "run.finished",
+            "node_id": null,
+            "payload": "{\"status\":\"succeeded\",\"outcome\":\"success\"}"
+          }
+        ]
+      },
+      "snapshot": {
+        "id": "00000000000000000000000003",
+        "ownerId": "local",
+        "loopId": "00000000000000000000000001",
+        "versionId": "00000000000000000000000002",
+        "pinned": {
+          "source": "published",
+          "version": 1,
+          "name": "Failure evidence matrix",
+          "label": "Failure evidence matrix v1",
+          "defaults": {
+            "owner": {
+              "byHarness": {}
+            },
+            "process": {
+              "byHarness": {
+                "codex": {
+                  "model": "gpt-6-luna",
+                  "effort": "low"
+                }
+              }
+            }
+          },
+          "limits": {
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null
+          },
+          "classifiers": {}
+        },
+        "invocationId": "00000000000000000000000004",
+        "status": "succeeded",
+        "iteration": 1,
+        "outcome": "success",
+        "createdAt": "2026-10-02T12:00:00.000Z",
+        "startedAt": "2026-10-02T12:00:00.000Z",
+        "finishedAt": "2026-10-02T12:00:00.000Z",
+        "finalizedAt": "2026-11-15T16:03:34.913Z",
+        "lastEventSeq": 25,
+        "recovery": {
+          "observedSeq": 25,
+          "resume": {
+            "allowed": false,
+            "code": "RUN_FINISHED",
+            "message": "This run has finished. Resume only continues paused runs or supported failures."
+          },
+          "replayDefault": {
+            "allowed": false,
+            "code": "REPLAY_NODE_NOT_REACHED",
+            "message": "This run never reached this node."
+          },
+          "replay": [
+            {
+              "nodeId": "start",
+              "label": "Start",
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "infer",
+              "label": "Infer",
+              "effects": [
+                {
+                  "nodeId": "infer",
+                  "label": "Infer",
+                  "kind": "inference"
+                }
+              ],
+              "action": {
+                "allowed": true
+              }
+            },
+            {
+              "nodeId": "done",
+              "label": "Done",
+              "effects": [],
+              "action": {
+                "allowed": true
+              }
+            }
+          ]
+        }
+      },
+      "events": [
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 1,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.queued",
+          "versionId": "00000000000000000000000002",
+          "pinned": {
+            "source": "published",
+            "version": 1,
+            "name": "Failure evidence matrix",
+            "label": "Failure evidence matrix v1",
+            "defaults": {
+              "owner": {
+                "byHarness": {}
+              },
+              "process": {
+                "byHarness": {
+                  "codex": {
+                    "model": "gpt-6-luna",
+                    "effort": "low"
+                  }
+                }
+              }
+            },
+            "limits": {
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null
+            },
+            "classifiers": {}
+          },
+          "initialThread": {
+            "schemaVersion": 1,
+            "run": {
+              "id": "00000000000000000000000003",
+              "loopId": "00000000000000000000000001",
+              "versionId": "00000000000000000000000002",
+              "iteration": 1
+            },
+            "invocation": {
+              "id": "00000000000000000000000004",
+              "source": "manual.api",
+              "trigger": {
+                "nodeId": "start",
+                "kind": "manual",
+                "payload": null,
+                "receivedAt": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            "messages": [],
+            "vars": {},
+            "artifacts": [],
+            "outputs": {},
+            "gates": {},
+            "counters": {
+              "nodeVisits": {},
+              "usage": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 2,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.started",
+          "attempt": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 3,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "start",
+          "kind": "trigger",
+          "attempt": 1,
+          "configHash": "527dee9c4254fe4e"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 4,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.finished",
+          "nodeId": "start",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/outputs/start",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "start",
+                "value": null,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 5,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "infer",
+          "kind": "inference",
+          "attempt": 1,
+          "configHash": "2f810e56cb86d7ee"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 6,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.turn",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000005",
+          "harness": "codex",
+          "promptKind": "authored",
+          "prompt": "Original task"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 7,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.session",
+          "nodeId": "infer",
+          "harness": "codex",
+          "sessionId": "fake-session-1",
+          "mode": "fresh",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 8,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000005",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 9,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.progress",
+          "nodeId": "infer",
+          "progress": {
+            "item": {
+              "id": "i1",
+              "summary": "invalid",
+              "type": "message"
+            }
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 10,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.usage",
+          "nodeId": "infer",
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 11,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.turn",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000006",
+          "harness": "codex",
+          "promptKind": "repair",
+          "prompt": "Repair exactly: \"invalid\"",
+          "resumeSessionId": "fake-session-1"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 12,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000006",
+          "submission": "definitely-not-submitted"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 13,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.failed",
+          "failure": {
+            "code": "INTERNAL_ERROR",
+            "message": "An unexpected error interrupted the run. See the server logs for this run.",
+            "nodeId": "infer",
+            "resumable": true,
+            "details": {
+              "cause": null,
+              "recording": [
+                {
+                  "operation": "turn.intent.reconcile"
+                },
+                {
+                  "operation": "harness.status"
+                }
+              ]
+            },
+            "inference": {
+              "visitId": "00000000000000000000000003:5",
+              "turnId": "00000000000000000000000006",
+              "submission": "definitely-not-submitted",
+              "promptKind": "repair",
+              "sessionId": "fake-session-1",
+              "retry": {
+                "harness": "codex",
+                "prompt": "Repair exactly: \"invalid\"",
+                "resumeSessionId": "fake-session-1"
+              }
+            }
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 14,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.resumed",
+          "actor": {
+            "kind": "user",
+            "id": "local"
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 15,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "infer",
+          "kind": "inference",
+          "attempt": 2,
+          "configHash": "2f810e56cb86d7ee"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 16,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.turn",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000006",
+          "harness": "codex",
+          "promptKind": "repair",
+          "prompt": "Repair exactly: \"invalid\"",
+          "resumeSessionId": "fake-session-1"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 17,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.submission",
+          "nodeId": "infer",
+          "visitId": "00000000000000000000000003:5",
+          "turnId": "00000000000000000000000006",
+          "submission": "submitted",
+          "marker": "fake.accepted"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 18,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.progress",
+          "nodeId": "infer",
+          "progress": {
+            "item": {
+              "id": "i1",
+              "summary": "42",
+              "type": "message"
+            }
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 19,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.usage",
+          "nodeId": "infer",
+          "usage": {
+            "inputTokens": 0,
+            "outputTokens": 0,
+            "cachedInputTokens": 0,
+            "reasoningOutputTokens": 0
+          }
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 20,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "harness.session",
+          "nodeId": "infer",
+          "harness": "codex",
+          "sessionId": "fake-session-1",
+          "mode": "resumed",
+          "model": "gpt-6-luna",
+          "effort": "low"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 21,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.finished",
+          "nodeId": "infer",
+          "patch": [
+            {
+              "op": "add",
+              "path": "/artifacts/-",
+              "value": {
+                "id": "00000000000000000000000007",
+                "kind": "transcript",
+                "ref": "mem://transcript/1",
+                "nodeId": "infer",
+                "bytes": 45,
+                "label": "transcript infer"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/messages/-",
+              "value": {
+                "id": "00000000000000000000000008",
+                "role": "assistant",
+                "content": "42",
+                "nodeId": "infer",
+                "ts": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            {
+              "op": "add",
+              "path": "/outputs/infer",
+              "value": {
+                "nodeId": "infer",
+                "value": 42,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/lastOutput",
+              "value": {
+                "nodeId": "infer",
+                "value": 42,
+                "at": "2026-10-02T12:00:00.000Z"
+              }
+            },
+            {
+              "op": "replace",
+              "path": "/counters/usage",
+              "value": {
+                "inputTokens": 0,
+                "outputTokens": 0,
+                "cachedInputTokens": 0,
+                "reasoningOutputTokens": 0
+              }
+            }
+          ],
+          "route": "out",
+          "durationMs": 17
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 22,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.started",
+          "nodeId": "done",
+          "kind": "exit",
+          "attempt": 1,
+          "configHash": "caacd31f1376b30f"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 23,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "exit.evaluated",
+          "nodeId": "done",
+          "outcome": "success"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 24,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "node.finished",
+          "nodeId": "done",
+          "patch": [],
+          "durationMs": 1
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "seq": 25,
+          "ts": "2026-10-02T12:00:00.000Z",
+          "type": "run.finished",
+          "status": "succeeded",
+          "outcome": "success"
+        }
+      ],
+      "sessions": [
+        {
+          "runId": "00000000000000000000000003",
+          "nodeId": "infer",
+          "attempt": 1,
+          "harness": "codex",
+          "sessionId": "fake-session-1",
+          "status": "failed",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "updatedAt": "2026-10-02T12:00:00.000Z"
+        },
+        {
+          "runId": "00000000000000000000000003",
+          "nodeId": "infer",
+          "attempt": 2,
+          "harness": "codex",
+          "sessionId": "fake-session-1",
+          "status": "finished",
+          "model": "gpt-6-luna",
+          "effort": "low",
+          "updatedAt": "2026-10-02T12:00:00.000Z"
+        }
+      ]
+    }
+  },
+  "knownRuns": [
+    "00000000000000000000000003"
+  ],
+  "result": "assertions-met",
+  "store": {
+    "dir": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-381-native-internal-preparation\\evidence-candidate-first\\typed-inference-internal",
+    "database": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-381-native-internal-preparation\\evidence-candidate-first\\typed-inference-internal\\graphgoblin.db",
+    "closed": true,
+    "retainForA5": false,
+    "collectionPasses": 2,
+    "exclusiveProbe": {
+      "process": {
+        "pid": 49004,
+        "spawnRequestedAt": "2026-11-15T16:03:34.966Z",
+        "executable": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "args": [
+          "-NoLogo",
+          "-NoProfile",
+          "-NonInteractive",
+          "-EncodedCommand",
+          "CgAkAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlACAAPQAgACcAUwB0AG8AcAAnAAoAJABxAGEASABhAG4AZABsAGUAcwAgAD0AIABbAEMAbwBsAGwAZQBjAHQAaQBvAG4AcwAuAEcAZQBuAGUAcgBpAGMALgBMAGkAcwB0AFsASQBPAC4ARgBpAGwAZQBTAHQAcgBlAGEAbQBdAF0AOgA6AG4AZQB3ACgAKQAKAHQAcgB5ACAAewAKACAAIAB3AGgAaQBsAGUAIAAoACQAbgB1AGwAbAAgAC0AbgBlACAAKAAkAHEAYQBMAGkAbgBlACAAPQAgAFsAQwBvAG4AcwBvAGwAZQBdADoAOgBJAG4ALgBSAGUAYQBkAEwAaQBuAGUAKAApACkAKQAgAHsACgAgACAAIAAgACQAcQBhAEYAaQBsAGUAIAA9ACAAWwBUAGUAeAB0AC4ARQBuAGMAbwBkAGkAbgBnAF0AOgA6AFUAVABGADgALgBHAGUAdABTAHQAcgBpAG4AZwAoAFsAQwBvAG4AdgBlAHIAdABdADoAOgBGAHIAbwBtAEIAYQBzAGUANgA0AFMAdAByAGkAbgBnACgAJABxAGEATABpAG4AZQApACkACgAgACAAIAAgACQAcQBhAEEAdAB0AHIAaQBiAHUAdABlAHMAIAA9ACAAWwBJAE8ALgBGAGkAbABlAF0AOgA6AEcAZQB0AEEAdAB0AHIAaQBiAHUAdABlAHMAKAAkAHEAYQBGAGkAbABlACkACgAgACAAIAAgAGkAZgAgACgAJABxAGEAQQB0AHQAcgBpAGIAdQB0AGUAcwAgAC0AYgBhAG4AZAAgACgAWwBJAE8ALgBGAGkAbABlAEEAdAB0AHIAaQBiAHUAdABlAHMAXQA6ADoARABpAHIAZQBjAHQAbwByAHkAIAAtAGIAbwByACAAWwBJAE8ALgBGAGkAbABlAEEAdAB0AHIAaQBiAHUAdABlAHMAXQA6ADoAUgBlAHAAYQByAHMAZQBQAG8AaQBuAHQAKQApACAAewAKACAAIAAgACAAIAAgAHQAaAByAG8AdwAgACIARQB4AGMAbAB1AHMAaQB2AGUALQBvAHAAZQBuACAAdABhAHIAZwBlAHQAIABtAHUAcwB0ACAAYgBlACAAYQAgAHIAZQBnAHUAbABhAHIAIABmAGkAbABlADoAIAAkAHEAYQBGAGkAbABlACIACgAgACAAIAAgAH0ACgAgACAAIAAgACQAcQBhAEgAYQBuAGQAbABlAHMALgBBAGQAZAAoAFsASQBPAC4ARgBpAGwAZQBdADoAOgBPAHAAZQBuACgAJABxAGEARgBpAGwAZQAsACAAWwBJAE8ALgBGAGkAbABlAE0AbwBkAGUAXQA6ADoATwBwAGUAbgAsACAAWwBJAE8ALgBGAGkAbABlAEEAYwBjAGUAcwBzAF0AOgA6AFIAZQBhAGQALAAgAFsASQBPAC4ARgBpAGwAZQBTAGgAYQByAGUAXQA6ADoATgBvAG4AZQApACkACgAgACAAfQAKAH0AIABmAGkAbgBhAGwAbAB5ACAAewAKACAAIABmAG8AcgBlAGEAYwBoACAAKAAkAHEAYQBIAGEAbgBkAGwAZQAgAGkAbgAgACQAcQBhAEgAYQBuAGQAbABlAHMAKQAgAHsAIAAkAHEAYQBIAGEAbgBkAGwAZQAuAEQAaQBzAHAAbwBzAGUAKAApACAAfQAKAH0ACgBbAEMAbwBuAHMAbwBsAGUAXQA6ADoATwB1AHQALgBXAHIAaQB0AGUATABpAG4AZQAoACcAcQBhAC0AZQB4AGMAbAB1AHMAaQB2AGUALQBvAHAAZQBuAC0AbwBrACAAJwAgACsAIAAkAHEAYQBIAGEAbgBkAGwAZQBzAC4AQwBvAHUAbgB0ACkACgA="
+        ],
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-381-native-internal-preparation\\evidence-candidate-first\\typed-inference-internal",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "close": {
+          "code": 0,
+          "signal": null
+        }
+      },
+      "files": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-381-native-internal-preparation\\evidence-candidate-first\\typed-inference-internal\\graphgoblin.db"
+      ],
+      "stdout": "qa-exclusive-open-ok 1\r\n",
+      "stderr": ""
+    },
+    "empty": true,
+    "remaining": []
+  }
+}

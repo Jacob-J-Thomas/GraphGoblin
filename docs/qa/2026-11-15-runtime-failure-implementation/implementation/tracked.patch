@@ -1,0 +1,1549 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 560e7cc8..db9de772 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Authored context-mutation errors fail with `MUTATION_ERROR`, the node, the failed operation and
++  a bounded evaluator or patch cause (#381, #414, ADR-0080). Authored Exit return evaluation
++  errors use `EXPRESSION_ERROR`. Both failures refuse Resume.
++- Newly recorded internal run failures keep implementation diagnostics in server logs. REST,
++  MCP and the inspector read the safe persisted failure. Secondary inference recording entries
++  retain their operation identifiers. Historical runs retain their original rows and events,
++  which can still contain diagnostics recorded by older builds. New parent failures omit
++  recognized historical engine diagnostics when forwarding a child's failure.
++
+ - Poll triggers refuse malformed UTF-16 dedupe keys before lookup or admission (#361, ADR-0079).
+   Item polls skip each affected candidate and admit later eligible items. Single-result polls check
+   the actual derived key, including a surrogate pair split by the 512-code-unit limit. Warnings
+diff --git a/docs/04-node-catalog.md b/docs/04-node-catalog.md
+index 2c030b2a..1fb8fc94 100644
+--- a/docs/04-node-catalog.md
++++ b/docs/04-node-catalog.md
+@@ -190,6 +190,14 @@ rejects the entire patch; earlier operations in that patch are not retained.
+ 
+ The same operations power `InputTransform` and `OutputTransform` on inferencing nodes, so "structural mutation or omission of input and output" is one vocabulary everywhere.
+ 
++A context mutation stops at the first authored evaluation, render, validation or patch error. The
++run fails with `MUTATION_ERROR`, the node ID, and a bounded cause. The inspector numbers operations
++from one. `failure.details.operationIndex` starts at zero and `operationKind` identifies the authored
++operation, including after a `coerce` repair. Later operations do not run, and the node's accumulated
++patch is committed only if the whole node succeeds. Resume refuses this failure because the run is
++pinned to the failing definition. Completion provider failures and schema-repair policies retain
++their existing outcomes. See [ADR-0080](decisions/ADR-0080-run-failure-diagnostics.md).
++
+ Ports: `out`.
+ 
+ ## Subloop (Decided, mappings Draft)
+@@ -274,6 +282,10 @@ Success finishes `succeeded`, Failure finishes `failed`, and Exhausted finishes
+ 
+ The caller destination resolves to the run result, the MCP caller or the parent subloop output mapping. Delivery records `return.delivered` or `return.failed` for each destination.
+ 
++A recognized error evaluating the authored return expression, including reaching the evaluator depth
++guard, fails at the Exit node with nonresumable `EXPRESSION_ERROR` and a bounded cause. Evaluation
++must succeed before the run records the exit outcome or schedules its deliveries.
++
+ With `returns: "none"` the run finishes without a result and no destination receives anything: neither the exit's own nor those added by the start request's `return`. The engine records no delivery event for them. This is valid configuration, not a failure. A quiet exit is `returns: "none"` with no destinations. A return expression that evaluates to nothing returns `null`, which is a value and is delivered. The exit editor says which case applies, and the inspector states that a run returned nothing by configuration, naming the destinations that received nothing, or identifies the quiet exit (#129, #258).
+ 
+ ## Post-1.0 node ideas (recorded, not planned)
+diff --git a/docs/05-execution-engine.md b/docs/05-execution-engine.md
+index dd9b9101..bdb27ff4 100644
+--- a/docs/05-execution-engine.md
++++ b/docs/05-execution-engine.md
+@@ -99,6 +99,16 @@ make this safe:
+   version is missing at recovery). At recovery a run whose log ends in such an event (not
+   followed by `run.resumed` or `run.started`) gets its status from the event. Nothing is
+   executed again, so an exit is never re-evaluated.
++
++- **Failure diagnostics are projected before the terminal append.** Newly emitted `run.failed`
++  events and their run rows share one failure. Unexpected faults use safe `INTERNAL_ERROR` messages,
++  with raw exception diagnostics in the server log. The engine preserves dispatch and retry
++  evidence when classifying failures. Secondary inference recording entries keep their operation
++  and order in the public failure, and raw diagnostics are logged privately with the run, node, turn
++  and operation. When a parent publishes a child's failure, it keeps child identities and recovery
++  evidence and projects recognized private diagnostic slots out of the copied child chain.
++  Historical rows and events remain readable as originally recorded.
++  [ADR-0080](decisions/ADR-0080-run-failure-diagnostics.md) defines these boundaries.
+ - **Finalization is recorded.** After a terminal status the engine drops the run's timers,
+   cancels its children (when it was cancelled), delivers its returns (when it finished), wakes
+   its parent, and only then marks the run finalized (`RunRepository.markFinalized`, column
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index 4a12de02..5df8c817 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -95,3 +95,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
+ [ADR-0078 — Stationary history controls and a one-owner connection banner](ADR-0078-stationary-history-controls.md) records the fixed leading Undo and Redo slot, their non-moving press, and the loaded editor owning the one connection banner under its toolbar, with the baseline causes and the shell fallback for every other state (#208).
+ 
+ [ADR-0079 - Refuse malformed poll dedupe keys before lookup](ADR-0079-poll-dedupe-key-identities.md) refines D-020 for exact poll identities and candidate-local refusal (#361).
++
++[ADR-0080 - Authored failures and private run diagnostics](ADR-0080-run-failure-diagnostics.md) defines the mutation operation identity, Exit evaluation failure, and the public failure projection (#381, #414).
+diff --git a/packages/api-client/openapi.json b/packages/api-client/openapi.json
+index 21760a51..c45e577a 100644
+--- a/packages/api-client/openapi.json
++++ b/packages/api-client/openapi.json
+@@ -5268,6 +5268,7 @@
+               "TEMPLATE_AUTHORITY_REFUSED",
+               "TEMPLATE_BINDING_CHANGED",
+               "EXPRESSION_ERROR",
++              "MUTATION_ERROR",
+               "WAIT_TIMEOUT",
+               "HEARTBEAT_EXHAUSTED",
+               "HTTP_PROBE_BODY_OVERFLOW",
+@@ -16197,6 +16198,7 @@
+               "TEMPLATE_AUTHORITY_REFUSED",
+               "TEMPLATE_BINDING_CHANGED",
+               "EXPRESSION_ERROR",
++              "MUTATION_ERROR",
+               "WAIT_TIMEOUT",
+               "HEARTBEAT_EXHAUSTED",
+               "HTTP_PROBE_BODY_OVERFLOW",
+diff --git a/packages/api-client/src/generated/schema.ts b/packages/api-client/src/generated/schema.ts
+index 4a6fa9d0..4f7120ee 100644
+--- a/packages/api-client/src/generated/schema.ts
++++ b/packages/api-client/src/generated/schema.ts
+@@ -5766,7 +5766,7 @@ export interface components {
+         RunStatusInput: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
+         RunFailureInput: {
+             /** @enum {string} */
+-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_START_FAILED" | "SCRIPT_OUTCOME_UNCERTAIN" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "INFERENCE_CONTEXT_LIMIT" | "INFERENCE_CONTEXT_UNSUPPORTED" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
++            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_START_FAILED" | "SCRIPT_OUTCOME_UNCERTAIN" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "INFERENCE_CONTEXT_LIMIT" | "INFERENCE_CONTEXT_UNSUPPORTED" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "MUTATION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+             message: string;
+             nodeId?: string | undefined;
+             resumable: boolean;
+@@ -8310,7 +8310,7 @@ export interface components {
+         RunStatus: "queued" | "running" | "waiting" | "paused" | "succeeded" | "failed" | "cancelled" | "exhausted";
+         RunFailure: {
+             /** @enum {string} */
+-            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_START_FAILED" | "SCRIPT_OUTCOME_UNCERTAIN" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "INFERENCE_CONTEXT_LIMIT" | "INFERENCE_CONTEXT_UNSUPPORTED" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
++            code: "HARNESS_NOT_INSTALLED" | "HARNESS_NOT_AUTHENTICATED" | "HARNESS_QUOTA_EXHAUSTED" | "HARNESS_TURN_FAILED" | "HARNESS_TRANSPORT_FAILED" | "HARNESS_OUTPUT_LIMIT" | "RUN_DEADLINE_EXCEEDED" | "STRUCTURED_COMPLETION_TIMEOUT" | "RUN_INTERRUPTED_BY_STOP" | "SCRIPT_TERMINATION_UNCONFIRMED" | "HARNESS_DELIVERY_UNCERTAIN" | "HARNESS_SESSION_MISSING" | "HARNESS_TERMINATION_UNCONFIRMED" | "WORKING_DIRECTORY_MISSING" | "SCRIPT_EXIT_CODE" | "SCRIPT_START_FAILED" | "SCRIPT_OUTCOME_UNCERTAIN" | "SCRIPT_TIMEOUT" | "INFERENCE_TIMEOUT" | "INFERENCE_CONTEXT_LIMIT" | "INFERENCE_CONTEXT_UNSUPPORTED" | "OUTPUT_SCHEMA_MISMATCH" | "ARTIFACT_WRITE_FAILED" | "SUBLOOP_DEPTH_EXCEEDED" | "SUBLOOP_NOT_FOUND" | "LOOP_UPGRADE_REQUIRED" | "DECISION_NO_ROUTE" | "EVALUATION_UNAVAILABLE" | "EVALUATION_PROVIDER_FAILED" | "EVALUATION_INVALID_CONFIGURATION" | "EVALUATION_INVALID_RESPONSE" | "EVALUATION_RESULT_REJECTED" | "EVALUATION_EXPRESSION_FAILED" | "DECIDER_UNAVAILABLE" | "SECRET_MISSING" | "TEMPLATE_ERROR" | "TEMPLATE_PREREQUISITE_UNAVAILABLE" | "TEMPLATE_ISOLATION_UNAVAILABLE" | "TEMPLATE_REPORT_UNAVAILABLE" | "TEMPLATE_AUTHORITY_REFUSED" | "TEMPLATE_BINDING_CHANGED" | "EXPRESSION_ERROR" | "MUTATION_ERROR" | "WAIT_TIMEOUT" | "HEARTBEAT_EXHAUSTED" | "HTTP_PROBE_BODY_OVERFLOW" | "RETURN_DELIVERY_FAILED" | "MAX_NODE_VISITS" | "EVENT_INVALID" | "INTERNAL_ERROR";
+             message: string;
+             nodeId?: string | undefined;
+             resumable: boolean;
+diff --git a/packages/contracts/src/run.ts b/packages/contracts/src/run.ts
+index 95184224..c094ade5 100644
+--- a/packages/contracts/src/run.ts
++++ b/packages/contracts/src/run.ts
+@@ -84,6 +84,7 @@ export const RunErrorCodeSchema = z.enum([
+   'TEMPLATE_AUTHORITY_REFUSED',
+   'TEMPLATE_BINDING_CHANGED',
+   'EXPRESSION_ERROR',
++  'MUTATION_ERROR',
+   'WAIT_TIMEOUT',
+   'HEARTBEAT_EXHAUSTED',
+   'HTTP_PROBE_BODY_OVERFLOW',
+diff --git a/packages/domain/src/mutations.ts b/packages/domain/src/mutations.ts
+index 74e42f4c..251c9fbd 100644
+--- a/packages/domain/src/mutations.ts
++++ b/packages/domain/src/mutations.ts
+@@ -41,6 +41,23 @@ export interface RepairRequest {
+ export type MutationPlan =
+   { kind: 'patch'; patch: JsonPatch } | { kind: 'repair'; request: RepairRequest };
+ 
++/** Optional error mapping for callers that report authored operation failures. */
++export type MutationFailureMapper = (
++  error: unknown,
++  index: number,
++  operation: MutationOperation['op'],
++) => unknown;
++
++type Rethrow = (error: unknown) => never;
++
++function authored<T>(operation: () => T, rethrow: Rethrow): T {
++  try {
++    return operation();
++  } catch (error) {
++    return rethrow(error);
++  }
++}
++
+ export interface MutationResult {
+   thread: ContextThread;
+   patch: JsonPatch;
+@@ -63,14 +80,15 @@ function messageJson(message: Message): JsonValue {
+ async function resolveValue(
+   source: Extract<MutationOperation, { op: 'set' }>['value'],
+   view: Record<string, unknown>,
++  rethrow: Rethrow,
+ ): Promise<JsonValue> {
+   switch (source.kind) {
+     case 'literal':
+       return source.value;
+     case 'template':
+-      return renderTemplate(source.template, view);
++      return renderTemplate(source.template, view).catch(rethrow);
+     case 'expression':
+-      return asJson(await evaluateExpression(source.jsonata, view));
++      return asJson(await evaluateExpression(source.jsonata, view).catch(rethrow));
+   }
+ }
+ 
+@@ -94,10 +112,11 @@ async function selectIndices(
+   items: readonly unknown[],
+   where: string,
+   view: Record<string, unknown>,
++  rethrow: Rethrow,
+ ): Promise<number[]> {
+   const out: number[] = [];
+   for (const [index, item] of items.entries()) {
+-    if (await evaluatePredicate(where, item, { bindings: { thread: view, index } }))
++    if (await evaluatePredicate(where, item, { bindings: { thread: view, index } }).catch(rethrow))
+       out.push(index);
+   }
+   return out;
+@@ -144,23 +163,28 @@ export async function planMutation(
+   op: MutationOperation,
+   ctx: MutationContext,
+   opIndex = 0,
++  mapFailure?: MutationFailureMapper,
+ ): Promise<MutationPlan> {
+   const view = threadView(thread) as unknown as Record<string, unknown>;
++  const rethrow = (error: unknown): never => {
++    throw mapFailure ? mapFailure(error, opIndex, op.op) : error;
++  };
+ 
+   switch (op.op) {
+     case 'set': {
+-      assertMutablePath(op.path);
+-      const value = await resolveValue(op.value, view);
+-      const exists = getAtPointer(thread, op.path).found;
++      authored(() => assertMutablePath(op.path), rethrow);
++      const value = await resolveValue(op.value, view, rethrow);
++      const exists = authored(() => getAtPointer(thread, op.path), rethrow).found;
+       return { kind: 'patch', patch: [{ op: exists ? 'replace' : 'add', path: op.path, value }] };
+     }
+     case 'delete': {
+-      assertMutablePath(op.path);
+-      if (!getAtPointer(thread, op.path).found) return { kind: 'patch', patch: [] };
++      authored(() => assertMutablePath(op.path), rethrow);
++      if (!authored(() => getAtPointer(thread, op.path), rethrow).found)
++        return { kind: 'patch', patch: [] };
+       return { kind: 'patch', patch: [{ op: 'remove', path: op.path }] };
+     }
+     case 'append-message': {
+-      const content = await renderTemplate(op.content, view);
++      const content = await renderTemplate(op.content, view).catch(rethrow);
+       const message = makeMessage(ctx, op.role, content, op.tags);
+       return {
+         kind: 'patch',
+@@ -176,7 +200,7 @@ export async function planMutation(
+             : Math.min(op.position, thread.messages.length);
+       const patch: PatchOperation[] = [];
+       for (const [offset, injected] of op.messages.entries()) {
+-        const content = await renderTemplate(injected.content, view);
++        const content = await renderTemplate(injected.content, view).catch(rethrow);
+         patch.push({
+           op: 'add',
+           path: `/messages/${index + offset}`,
+@@ -187,7 +211,7 @@ export async function planMutation(
+     }
+     case 'truncate': {
+       const candidates = op.where
+-        ? await selectIndices(thread.messages, op.where, view)
++        ? await selectIndices(thread.messages, op.where, view, rethrow)
+         : thread.messages.map((_, i) => i);
+       const keep = new Set<number>();
+       if (op.keep.first !== undefined)
+@@ -208,14 +232,14 @@ export async function planMutation(
+     }
+     case 'drop': {
+       const items = op.target === 'messages' ? thread.messages : thread.artifacts;
+-      const indices = await selectIndices(items, op.where, view);
++      const indices = await selectIndices(items, op.where, view, rethrow);
+       return { kind: 'patch', patch: removeIndices(`/${op.target}`, indices) };
+     }
+     case 'replace': {
+-      const re = compileRegex(op.pattern, op.flags);
++      const re = authored(() => compileRegex(op.pattern, op.flags), rethrow);
+       if (op.target === 'messages') {
+         const indices = op.where
+-          ? await selectIndices(thread.messages, op.where, view)
++          ? await selectIndices(thread.messages, op.where, view, rethrow)
+           : thread.messages.map((_, i) => i);
+         const patch: PatchOperation[] = [];
+         for (const i of indices) {
+@@ -232,7 +256,9 @@ export async function planMutation(
+       return { kind: 'patch', patch: [{ op: 'replace', path: '/vars', value: nextVars }] };
+     }
+     case 'redact': {
+-      const regexes = op.patterns.map((p) => compileRegex(p, 'g'));
++      const regexes = op.patterns.map((pattern) =>
++        authored(() => compileRegex(pattern, 'g'), rethrow),
++      );
+       const redact = (s: string): string =>
+         regexes.reduce((acc, re) => acc.replace(re, op.replacement), s);
+       const patch: PatchOperation[] = [];
+@@ -252,12 +278,12 @@ export async function planMutation(
+       return { kind: 'patch', patch };
+     }
+     case 'coerce': {
+-      assertMutablePath(op.target);
+-      const source = getAtPointer(thread, op.source);
++      authored(() => assertMutablePath(op.target), rethrow);
++      const source = authored(() => getAtPointer(thread, op.source), rethrow);
+       const value = source.found ? source.value : undefined;
+-      const validation = validateJson(op.jsonSchema, value);
++      const validation = authored(() => validateJson(op.jsonSchema, value), rethrow);
+       if (validation.ok) {
+-        const exists = getAtPointer(thread, op.target).found;
++        const exists = authored(() => getAtPointer(thread, op.target), rethrow).found;
+         return {
+           kind: 'patch',
+           patch: [{ op: exists ? 'replace' : 'add', path: op.target, value: asJson(value) }],
+@@ -289,16 +315,21 @@ export async function applyMutations(
+   ops: readonly MutationOperation[],
+   ctx: MutationContext,
+   startAt = 0,
++  mapFailure?: MutationFailureMapper,
+ ): Promise<MutationResult> {
+   let current = thread;
+   const combined: PatchOperation[] = [];
+   for (let i = startAt; i < ops.length; i += 1) {
+     const op = ops[i] as MutationOperation;
+-    const plan = await planMutation(current, op, ctx, i);
++    const plan = await planMutation(current, op, ctx, i, mapFailure);
+     if (plan.kind === 'repair') {
+       return { thread: current, patch: combined, pending: plan.request, appliedThrough: i };
+     }
+-    current = applyPatch(current, plan.patch);
++    try {
++      current = applyPatch(current, plan.patch);
++    } catch (error) {
++      throw mapFailure ? mapFailure(error, i, op.op) : error;
++    }
+     combined.push(...plan.patch);
+   }
+   return { thread: current, patch: combined, appliedThrough: ops.length };
+diff --git a/packages/engine/src/adversarial.test.ts b/packages/engine/src/adversarial.test.ts
+index 7334551f..3e3f4ef7 100644
+--- a/packages/engine/src/adversarial.test.ts
++++ b/packages/engine/src/adversarial.test.ts
+@@ -582,7 +582,11 @@ describe('adversarial engine invariants', () => {
+       if (status === 'succeeded')
+         expect((await e.manager.getThread(r.id))?.lastOutput?.value).toMatchObject({ status });
+       if (status === 'failed')
+-        expect(r.failure).toMatchObject({ code: 'INTERNAL_ERROR', resumable: true });
++        expect(r.failure).toMatchObject({
++          code: 'MUTATION_ERROR',
++          resumable: false,
++          details: { childDetails: { operationIndex: 0, operationKind: 'set' } },
++        });
+       expect(e.eventTypes(r.id).filter((t) => t === 'run.woken')).toHaveLength(1);
+     },
+   );
+diff --git a/packages/engine/src/awaited-children.test.ts b/packages/engine/src/awaited-children.test.ts
+index 2f8bf935..ccc9ffd2 100644
+--- a/packages/engine/src/awaited-children.test.ts
++++ b/packages/engine/src/awaited-children.test.ts
+@@ -4,7 +4,7 @@
+  * child's configured output (or its absence) is what the parent receives.
+  */
+ import { describe, expect, it, vi } from 'vitest';
+-import type { LoopDefinitionInput, RunEvent, RunRecord } from '@graphgoblin/contracts';
++import type { LoopDefinitionInput, RunEvent, RunFailure, RunRecord } from '@graphgoblin/contracts';
+ import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+ import { RunManager } from './run-manager.js';
+ import { createTestEngine, singleNodeLoop, type TestEngine } from './testing/scenario.js';
+@@ -787,6 +787,114 @@ describe('awaiting a child across failures and restarts (#242)', () => {
+     },
+   );
+ 
++  it.each(['INTERNAL_ERROR', 'HARNESS_TRANSPORT_FAILED'] as const)(
++    'does not republish old %s diagnostics through nested child details',
++    async (code) => {
++      const e = await createTestEngine({ maxConcurrentRuns: 3 });
++      const leaf = e.publish(inputLoop('legacy leaf'));
++      const middle = e.publish(singleNodeLoop('legacy middle', subNode(leaf.loopId)));
++      const root = await e.runToIdle(
++        e.publish(singleNodeLoop('new root', subNode(middle.loopId))).loopId,
++      );
++      const [middleRun] = await e.ports.runs.listChildren(root.id);
++      const [leafRun] = await e.ports.runs.listChildren(middleRun!.id);
++      expect(root.waiting).toMatchObject({ kind: 'child', childRunId: middleRun!.id });
++      expect(middleRun!.waiting).toMatchObject({ kind: 'child', childRunId: leafRun!.id });
++      expect(leafRun!.waiting).toMatchObject({ kind: 'input' });
++      e.manager.stop();
++
++      const providerPath = 'D:/provider-owned/keep.txt';
++      const message = 'D:/historical-message-canary/engine.ts';
++      const stack = 'D:/historical-stack-canary/engine.ts';
++      const providerDetail = {
++        path: providerPath,
++        recording: [{ operation: 'harness.status', message: providerPath }],
++      };
++      const recording = [{ operation: 'harness.status', message, name: 'Error', stack }];
++      const leafFailure: RunFailure = {
++        code,
++        message: code === 'INTERNAL_ERROR' ? message : 'Provider reported ' + providerPath,
++        nodeId: 'wait',
++        resumable: true,
++        details:
++          code === 'INTERNAL_ERROR'
++            ? { name: 'Error', stack, recording, providerDetail }
++            : { recording, providerDetail },
++      };
++      const nested = {
++        childRunId: leafRun!.id,
++        childNodeId: 'wait',
++        childDetails: leafFailure.details!,
++      };
++      const legacyFailures = [
++        { runId: leafRun!.id, failure: leafFailure },
++        {
++          runId: middleRun!.id,
++          failure: {
++            ...leafFailure,
++            nodeId: 'sub',
++            message: 'subloop child ' + leafRun!.id + ' failed: ' + leafFailure.message,
++            details: nested,
++          },
++        },
++      ];
++      for (const { runId, failure } of legacyFailures) {
++        await e.ports.events.append(runId, [{ type: 'run.failed', failure }]);
++        await e.ports.runs.transition(runId, ['waiting'], {
++          status: 'failed',
++          failure,
++          waiting: undefined,
++          finishedAt: e.ports.clock.now().toISOString(),
++        });
++        await e.ports.runs.markFinalized(runId);
++      }
++      const legacyBytes = async () =>
++        JSON.stringify(
++          await Promise.all(
++            legacyFailures.map(async ({ runId }) => [
++              await e.ports.runs.get(runId),
++              e.events(runId),
++            ]),
++          ),
++        );
++      const before = await legacyBytes();
++      const manager = new RunManager(e.ports, e.settings);
++      await manager.start();
++      try {
++        await manager.waitForIdle();
++        const failed = await manager.getRun(root.id);
++        expect(failed?.failure).toMatchObject({ code, nodeId: 'sub', resumable: true });
++        expect(failed?.failure?.details).toEqual({
++          childRunId: middleRun!.id,
++          childNodeId: 'sub',
++          childDetails: {
++            ...nested,
++            childDetails: { recording: [{ operation: 'harness.status' }], providerDetail },
++          },
++        });
++        if (code !== 'INTERNAL_ERROR') expect(failed?.failure?.message).toContain(providerPath);
++        const outcomes = e
++          .events(root.id)
++          .filter((event) => event.type === 'child_run.finished' || event.type === 'run.failed');
++        expect(outcomes).toEqual([
++          expect.objectContaining({ type: 'child_run.finished', childRunId: middleRun!.id }),
++          expect.objectContaining({ type: 'run.failed', failure: failed?.failure }),
++        ]);
++        expect(JSON.stringify([failed?.failure, outcomes])).not.toMatch(
++          /historical-(message|stack)-canary/,
++        );
++        const logs = e.ports.logger.lines.filter(
++          ({ obj }) => obj.runId === root.id && obj.childRunId === middleRun!.id,
++        );
++        expect(JSON.stringify(logs)).toContain(message);
++        expect(JSON.stringify(logs)).toContain(stack);
++        expect(await legacyBytes()).toBe(before);
++      } finally {
++        manager.stop();
++      }
++    },
++  );
++
+   it('the first durable parent outcome records its child completion and a mapping retry reuses it (#320, #398)', async () => {
+     const e = await createTestEngine({ maxConcurrentRuns: 3 });
+     const leaf = e.publish(
+diff --git a/packages/engine/src/child-failure-parity.test.ts b/packages/engine/src/child-failure-parity.test.ts
+index 178e0d53..d603b7c0 100644
+--- a/packages/engine/src/child-failure-parity.test.ts
++++ b/packages/engine/src/child-failure-parity.test.ts
+@@ -154,7 +154,7 @@ const classifierChoice = {
+ interface Scenario {
+   name: string;
+   /** The failure class this scenario stands for in the parity matrix. */
+-  kind: 'transient' | 'deterministic' | 'provider' | 'bug';
++  kind: 'transient' | 'deterministic' | 'provider' | 'authored';
+   work: TestNode;
+   /** Make the node fail on its first execution; returns how to repair it before a resume. */
+   arrange(e: TestEngine): () => void;
+@@ -240,8 +240,8 @@ const scenarios: Scenario[] = [
+     resumable: false,
+   },
+   {
+-    name: 'a mutation expression throws (bug class)',
+-    kind: 'bug',
++    name: 'an authored mutation expression throws',
++    kind: 'authored',
+     work: {
+       id: 'work',
+       kind: 'mutate',
+@@ -253,9 +253,8 @@ const scenarios: Scenario[] = [
+       },
+     },
+     arrange: () => () => undefined,
+-    code: 'INTERNAL_ERROR',
+-    resumable: true,
+-    afterResume: 'failed',
++    code: 'MUTATION_ERROR',
++    resumable: false,
+   },
+ ];
+ 
+diff --git a/packages/engine/src/edge-cases.test.ts b/packages/engine/src/edge-cases.test.ts
+index 6899fa93..47cc3782 100644
+--- a/packages/engine/src/edge-cases.test.ts
++++ b/packages/engine/src/edge-cases.test.ts
+@@ -418,9 +418,9 @@ describe('run manager edge cases', () => {
+     await manager.waitForIdle();
+     expect((await ports.runs.get(a.id))?.failure).toMatchObject({
+       code: 'INTERNAL_ERROR',
+-      message: 'boom',
+-      details: null,
++      resumable: true,
+     });
++    expect((await ports.runs.get(a.id))?.failure?.message).not.toContain('boom');
+     expect((await ports.runs.get(b.id))?.failure).toMatchObject({
+       code: 'INTERNAL_ERROR',
+       message: expect.stringMatching(/invalid patch/) as string,
+@@ -434,13 +434,18 @@ describe('run manager edge cases', () => {
+   it('fails a run when infrastructure throws outside node execution', async () => {
+     const engine = await createTestEngine();
+     const version = engine.publish(minimalLoop());
+-    vi.spyOn(engine.ports.runs, 'saveThread').mockRejectedValueOnce(new Error('disk full'));
++    const fault = new Error('disk full at D:/outer-message-canary/engine.ts');
++    fault.stack = 'Error: disk full\n    at D:/outer-stack-canary/engine.ts:12:1';
++    vi.spyOn(engine.ports.runs, 'saveThread').mockRejectedValueOnce(fault);
+     const run = await engine.runToIdle(version.loopId);
+     expect(run.status).toBe('failed');
+-    expect(run.failure).toMatchObject({ code: 'INTERNAL_ERROR', message: 'disk full' });
+-    expect(
+-      engine.ports.logger.lines.some((l) => l.msg === 'executor crashed outside node execution'),
+-    ).toBe(true);
++    expect(run.failure).toMatchObject({ code: 'INTERNAL_ERROR', resumable: true });
++    expect(JSON.stringify([run.failure, engine.events(run.id)])).not.toMatch(
++      /outer-(message|stack)-canary/,
++    );
++    const logs = engine.ports.logger.lines.filter(({ obj }) => obj.runId === run.id);
++    expect(JSON.stringify(logs)).toContain('outer-message-canary');
++    expect(JSON.stringify(logs)).toContain('outer-stack-canary');
+   });
+ 
+   it('logs a failed timer wake and reports it to the timer port, which keeps the timer', async () => {
+diff --git a/packages/engine/src/finalization.test.ts b/packages/engine/src/finalization.test.ts
+index 38e7937a..0e3a962e 100644
+--- a/packages/engine/src/finalization.test.ts
++++ b/packages/engine/src/finalization.test.ts
+@@ -211,7 +211,7 @@ for (const source of [
+           ],
+         },
+       });
+-      code = 'INTERNAL_ERROR';
++      code = 'MUTATION_ERROR';
+     }
+     if (source === 'timeout') {
+       def = singleNodeLoop(source, {
+@@ -307,6 +307,14 @@ for (const source of [
+           : 'failed';
+     expect(final.status).toBe(expected);
+     if (code) expect(final.failure?.code).toBe(code);
++    if (source === 'mutate-error') {
++      expect(final.failure).toMatchObject({
++        nodeId: 'mutate',
++        resumable: false,
++        details: { operationIndex: 0, operationKind: 'set' },
++      });
++      expect(before[0]).toMatchObject({ type: 'run.failed', failure: final.failure });
++    }
+     if (source === 'invalid-patch') {
+       expect(e.events(r.id)).toEqual(
+         expect.arrayContaining([
+diff --git a/packages/engine/src/handlers/claude.test.ts b/packages/engine/src/handlers/claude.test.ts
+index d0d220af..4f5dfbd0 100644
+--- a/packages/engine/src/handlers/claude.test.ts
++++ b/packages/engine/src/handlers/claude.test.ts
+@@ -294,11 +294,20 @@ describe('inference consumption keeps engine failures and cleans up both harness
+       expect(run.failure).toMatchObject({
+         code: 'INTERNAL_ERROR',
+         resumable: true,
+-        message: 'Synthetic session persistence fault',
+-        details: {
+-          name: 'Error',
+-          stack: expect.stringContaining('Synthetic session persistence fault'),
+-        },
++      });
++      const diagnostic = 'Synthetic session persistence fault';
++      expect(JSON.stringify([run.failure, engine.events(run.id)])).not.toContain(diagnostic);
++      const logged = engine.ports.logger.lines.find(
++        ({ obj }) =>
++          obj.runId === run.id &&
++          obj.nodeId === run.failure?.nodeId &&
++          obj.turnId === run.failure?.inference?.turnId &&
++          obj.error,
++      );
++      expect(logged?.obj.error).toMatchObject({
++        name: 'Error',
++        message: diagnostic,
++        stack: expect.stringContaining(diagnostic),
+       });
+       expect(harness.cancelled).toHaveLength(1);
+     },
+diff --git a/packages/engine/src/handlers/common.ts b/packages/engine/src/handlers/common.ts
+index 9374005b..38f784b6 100644
+--- a/packages/engine/src/handlers/common.ts
++++ b/packages/engine/src/handlers/common.ts
+@@ -18,7 +18,10 @@ import {
+   renderTemplate,
+   threadView,
+   validateJson,
++  PatchError,
++  TemplateError,
+   type MutationContext,
++  type MutationFailureMapper,
+   type RepairRequest,
+ } from '@graphgoblin/domain';
+ import { applyMutations, completeRepair, applyPatch } from '@graphgoblin/domain';
+@@ -196,6 +199,7 @@ export async function repairValue<K extends NodeKind>(
+     repair: RepairPolicy;
+     model?: string;
+     effort?: Effort;
++    onPromptFailure?: (error: TemplateError) => unknown;
+   },
+ ): Promise<{ value: JsonValue; repaired: boolean }> {
+   const { repair } = input;
+@@ -211,13 +215,20 @@ export async function repairValue<K extends NodeKind>(
+     }
+     const { model, effort } = await ctx.services.resolveModel('codex', input.model, input.effort);
+     for (let attempt = 1; attempt <= repair.maxAttempts; attempt += 1) {
+-      const prompt = await renderTemplate(repair.prompt ?? DEFAULT_REPAIR_PROMPT, {
++      const view = {
+         ...threadView(ctx.thread),
+         schema: JSON.stringify(input.schema, null, 2),
+         value: JSON.stringify(input.value ?? null, null, 2),
+         errors,
+         attempt,
+-      });
++      };
++      const prompt = await renderTemplate(repair.prompt ?? DEFAULT_REPAIR_PROMPT, view).catch(
++        (error: unknown) => {
++          throw error instanceof TemplateError && input.onPromptFailure
++            ? input.onPromptFailure(error)
++            : error;
++        },
++      );
+       const completion = await completeWithDeadline(
+         (signal) => structured.complete({ prompt, schema: input.schema, model, effort }, signal),
+         ctx.signal,
+@@ -256,13 +267,14 @@ export async function runMutations<K extends NodeKind>(
+   ctx: NodeContext<K>,
+   thread: ContextThread,
+   ops: readonly MutationOperation[],
++  mapFailure?: MutationFailureMapper,
+ ): Promise<{ thread: ContextThread; patch: PatchOperation[] }> {
+   const mctx = mutationContext(ctx);
+   let current = thread;
+   const patch: PatchOperation[] = [];
+   let startAt = 0;
+   for (;;) {
+-    const result = await applyMutations(current, ops, mctx, startAt);
++    const result = await applyMutations(current, ops, mctx, startAt, mapFailure);
+     current = result.thread;
+     patch.push(...result.patch);
+     if (!result.pending) return { thread: current, patch };
+@@ -272,19 +284,29 @@ export async function runMutations<K extends NodeKind>(
+       schema: pending.jsonSchema,
+       errors: pending.errors,
+       repair: pending.repair,
++      ...(mapFailure
++        ? { onPromptFailure: (error) => mapFailure(error, pending.opIndex, 'coerce') }
++        : {}),
+     });
+-    if (repaired.repaired) {
+-      const done = completeRepair(current, pending, repaired.value);
+-      current = done.thread;
+-      patch.push(...done.patch);
+-    } else {
+-      const op: PatchOperation = {
+-        op: hasPath(current, pending.target) ? 'replace' : 'add',
+-        path: pending.target,
+-        value: repaired.value,
+-      };
+-      current = applyPatch(current, [op]);
+-      patch.push(op);
++    try {
++      if (repaired.repaired) {
++        const done = completeRepair(current, pending, repaired.value);
++        current = done.thread;
++        patch.push(...done.patch);
++      } else {
++        const op: PatchOperation = {
++          op: hasPath(current, pending.target) ? 'replace' : 'add',
++          path: pending.target,
++          value: repaired.value,
++        };
++        current = applyPatch(current, [op]);
++        patch.push(op);
++      }
++    } catch (error) {
++      // Only the authored target write. A provider result rejected by validation stays a repair fault.
++      throw error instanceof PatchError && mapFailure
++        ? mapFailure(error, pending.opIndex, 'coerce')
++        : error;
+     }
+     startAt = pending.opIndex + 1;
+   }
+diff --git a/packages/engine/src/handlers/exit.test.ts b/packages/engine/src/handlers/exit.test.ts
+index 21fe951d..4558359d 100644
+--- a/packages/engine/src/handlers/exit.test.ts
++++ b/packages/engine/src/handlers/exit.test.ts
+@@ -46,6 +46,31 @@ describe('terminal exits', () => {
+     e.manager.stop();
+   });
+ 
++  it('reports the authored expression when a published return reaches the evaluator depth guard', async () => {
++    const e = await createTestEngine();
++    const def = minimalLoop();
++    def.nodes[1] = {
++      id: 'done',
++      kind: 'exit',
++      label: 'Done',
++      config: { returns: '['.repeat(230) + '1' + ']'.repeat(230) },
++    };
++    const run = await e.runToIdle(e.publish(def).loopId);
++    expect(run.failure).toMatchObject({
++      code: 'EXPRESSION_ERROR',
++      nodeId: 'done',
++      resumable: false,
++      message: expect.stringContaining('max depth 200'),
++    });
++    expect(e.events(run.id).filter((event) => event.type === 'run.failed')).toEqual([
++      expect.objectContaining({ failure: run.failure }),
++    ]);
++    await expect(e.manager.resume(run.id)).rejects.toMatchObject({ code: 'FAILURE_NOT_RESUMABLE' });
++    expect(e.eventTypes(run.id)).not.toContain('exit.evaluated');
++    expect(e.eventTypes(run.id)).not.toContain('run.finished');
++    e.manager.stop();
++  });
++
+   it('records exit evidence, completion and run outcome in one append', async () => {
+     const e = await createTestEngine();
+     const append = vi.spyOn(e.ports.events, 'append');
+diff --git a/packages/engine/src/handlers/exit.ts b/packages/engine/src/handlers/exit.ts
+index 3d74aa41..03eab7b1 100644
+--- a/packages/engine/src/handlers/exit.ts
++++ b/packages/engine/src/handlers/exit.ts
+@@ -1,4 +1,7 @@
+-import { evaluateExpression, threadView } from '@graphgoblin/domain';
++import type { JsonValue } from '@graphgoblin/contracts';
++import { evaluateExpression, ExpressionError, threadView } from '@graphgoblin/domain';
++import { RunFailureError } from '../errors.js';
++import { boundedAuthoredCause } from '../failure-publication.js';
+ import type { NodeHandler } from '../handler.js';
+ import { toJson } from './common.js';
+ 
+@@ -7,10 +10,18 @@ export const exitHandler: NodeHandler<'exit'> = {
+   kind: 'exit',
+   async execute(ctx) {
+     const mapping = ctx.config.returns;
+-    const returnPayload =
+-      mapping === 'none'
+-        ? undefined
+-        : toJson(await evaluateExpression(mapping, threadView(ctx.thread)));
++    let returnPayload: JsonValue | undefined;
++    if (mapping !== 'none') {
++      const view = threadView(ctx.thread);
++      const evaluated = await evaluateExpression(mapping, view).catch((error: unknown) => {
++        if (!(error instanceof ExpressionError)) throw error;
++        throw new RunFailureError('EXPRESSION_ERROR', boundedAuthoredCause(error.message), {
++          nodeId: ctx.node.id,
++          resumable: false,
++        });
++      });
++      returnPayload = toJson(evaluated);
++    }
+     return {
+       kind: 'exit',
+       patch: [],
+diff --git a/packages/engine/src/handlers/flow.test.ts b/packages/engine/src/handlers/flow.test.ts
+index 59f079ee..632cccd0 100644
+--- a/packages/engine/src/handlers/flow.test.ts
++++ b/packages/engine/src/handlers/flow.test.ts
+@@ -577,7 +577,7 @@ describe('mutate node', () => {
+     );
+     const run = await engine.runToIdle(version.loopId);
+     expect(run.status).toBe('failed');
+-    expect(run.failure?.code).toBe('INTERNAL_ERROR');
++    expect(run.failure?.code).toBe('MUTATION_ERROR');
+     expect(run.failure?.message).toMatch(/not in a mutable region/);
+   });
+ });
+diff --git a/packages/engine/src/handlers/inference-boundaries.test.ts b/packages/engine/src/handlers/inference-boundaries.test.ts
+index 0c811752..8c205afe 100644
+--- a/packages/engine/src/handlers/inference-boundaries.test.ts
++++ b/packages/engine/src/handlers/inference-boundaries.test.ts
+@@ -233,7 +233,20 @@ it.each(
+       expect(run.failure).toMatchObject({
+         code: 'INTERNAL_ERROR',
+         inference: { promptKind: 'repair', submission: 'definitely-not-submitted' },
+-        details: { name: 'Error', stack: expect.stringContaining('Repair append refused') },
++      });
++      const diagnostic = 'Repair append refused';
++      expect(JSON.stringify([run.failure, e.events(run.id)])).not.toContain(diagnostic);
++      const logged = e.ports.logger.lines.find(
++        ({ obj }) =>
++          obj.runId === run.id &&
++          obj.nodeId === run.failure?.nodeId &&
++          obj.turnId === run.failure?.inference?.turnId &&
++          obj.error,
++      );
++      expect(logged?.obj.error).toMatchObject({
++        name: 'Error',
++        message: diagnostic,
++        stack: expect.stringContaining(diagnostic),
+       });
+       const repair = e
+         .events(run.id)
+diff --git a/packages/engine/src/handlers/inference-evidence-matrix.test.ts b/packages/engine/src/handlers/inference-evidence-matrix.test.ts
+index baebb386..70272e40 100644
+--- a/packages/engine/src/handlers/inference-evidence-matrix.test.ts
++++ b/packages/engine/src/handlers/inference-evidence-matrix.test.ts
+@@ -1,4 +1,4 @@
+-import { expect, it } from 'vitest';
++import { expect, it, vi } from 'vitest';
+ import { RunManager } from '../run-manager.js';
+ import { createTestEngine, singleNodeLoop } from '../testing/scenario.js';
+ import { FakeHarness } from '../testing/fakes.js';
+@@ -89,7 +89,22 @@ it.each(matrix)(
+           resumable: expected.resumable,
+           inference: { promptKind: 'repair', submission: expected.state },
+         });
+-        if (fired) expect(run.failure?.details).toMatchObject({ recording: expect.any(Array) });
++        if (fired) {
++          expect(run.failure?.details).toMatchObject({
++            recording: [{ operation: 'harness.submission' }],
++          });
++          expect(JSON.stringify([run.failure, e.events(run.id)])).not.toContain(
++            'Classification recording fault',
++          );
++          const logs = e.ports.logger.lines.filter(
++            ({ obj }) =>
++              obj.runId === run.id &&
++              obj.nodeId === run.failure?.nodeId &&
++              obj.turnId === run.failure?.inference?.turnId &&
++              obj.operation === 'harness.submission',
++          );
++          expect(JSON.stringify(logs)).toContain('Classification recording fault');
++        }
+         if (expected.resumable) {
+           await manager.resume(run.id);
+           await manager.waitForIdle();
+@@ -108,6 +123,76 @@ it.each(matrix)(
+   },
+ );
+ 
++it.each([false, true])(
++  'keeps acceptance and recording evidence afterCommit=%s',
++  async (afterCommit) => {
++    const e = await createTestEngine();
++    const fault = new Error('D:/acceptance-recording-message/engine.ts');
++    fault.stack = 'D:/acceptance-recording-stack/engine.ts';
++    const statusFault = new Error('D:/status-recording-message/engine.ts');
++    statusFault.stack = 'D:/status-recording-stack/engine.ts';
++    const store = e.ports.events;
++    const append = store.append.bind(store);
++    let acceptanceFaults = 0;
++    vi.spyOn(store, 'append').mockImplementation(async (id, drafts, options) => {
++      if (drafts.some((draft) => draft.type === 'harness.submission' && draft.marker)) {
++        acceptanceFaults += 1;
++        if (afterCommit) await append(id, drafts, options);
++        throw fault;
++      }
++      return append(id, drafts, options);
++    });
++    const sessions = e.ports.sessions;
++    const upsert = sessions.upsert.bind(sessions);
++    vi.spyOn(sessions, 'upsert').mockImplementation(async (row) => {
++      if (row.status === 'failed') throw statusFault;
++      return upsert(row);
++    });
++    try {
++      const version = e.publish(failureLoop('codex'));
++      const run = await e.runToIdle(version.loopId);
++      expect(acceptanceFaults).toBe(1);
++      expect(run.failure).toMatchObject({
++        code: 'INTERNAL_ERROR',
++        resumable: true,
++        inference: { promptKind: 'authored', submission: 'delivery-uncertain' },
++      });
++      const details = run.failure?.details;
++      if (!details || typeof details !== 'object' || Array.isArray(details))
++        throw new Error('Expected public inference recording operations');
++      expect(details.recording).toEqual([
++        { operation: 'harness.submission' },
++        { operation: 'harness.status' },
++      ]);
++      const events = e.events(run.id);
++      expect(
++        events.filter((event) => event.type === 'harness.submission' && event.marker),
++      ).toHaveLength(afterCommit ? 1 : 0);
++      expect(events.filter((event) => event.type === 'harness.turn')).toHaveLength(1);
++      expect(events.at(-1)).toMatchObject({ type: 'run.failed', failure: run.failure });
++      expect(JSON.stringify([run.failure, events])).not.toContain('-recording-');
++      const log = e.ports.logger.lines.filter(
++        ({ obj }) =>
++          obj.runId === run.id &&
++          obj.nodeId === run.failure?.nodeId &&
++          obj.turnId === run.failure?.inference?.turnId,
++      );
++      expect(log.filter(({ obj }) => obj.operation).map(({ obj }) => obj)).toEqual([
++        expect.objectContaining({
++          operation: 'harness.submission',
++          error: { message: fault.message, name: 'Error', stack: fault.stack },
++        }),
++        expect.objectContaining({
++          operation: 'harness.status',
++          error: { message: statusFault.message, name: 'Error', stack: statusFault.stack },
++        }),
++      ]);
++    } finally {
++      e.manager.stop();
++    }
++  },
++);
++
+ it.each(
+   (['codex', 'claude'] as const).flatMap((family) =>
+     [false, true].map((afterCommit) => ({ family, afterCommit })),
+diff --git a/packages/engine/src/handlers/inference.ts b/packages/engine/src/handlers/inference.ts
+index 36ca3db2..fc3e73f7 100644
+--- a/packages/engine/src/handlers/inference.ts
++++ b/packages/engine/src/handlers/inference.ts
+@@ -16,13 +16,13 @@ import {
+   validateJson,
+   systemChatIssues,
+ } from '@graphgoblin/domain';
++import { ArtifactStoreError, RunCancelledError, RunFailureError, isAbortError } from '../errors.js';
+ import {
+-  ArtifactStoreError,
+-  RunCancelledError,
+-  RunFailureError,
+-  describeError,
+-  isAbortError,
+-} from '../errors.js';
++  errorDiagnostic,
++  INTERNAL_FAILURE_MESSAGE,
++  InternalRunFailureError,
++  type InferenceRecordingOperation,
++} from '../failure-publication.js';
+ import type { NodeContext, NodeHandler } from '../handler.js';
+ import type {
+   HarnessItem,
+@@ -134,17 +134,27 @@ interface TurnFailures {
+   evidence?: HarnessFailureEvidence | undefined;
+   rejected: boolean;
+   acceptanceFailure?: { error: unknown };
+-  recording: { operation: string; message: string; name?: string; stack?: string }[];
++  recording: { operation: InferenceRecordingOperation }[];
+ }
+ 
+-function recordingFault(state: TurnFailures, operation: string, error: unknown): void {
+-  state.recording.push({
+-    operation,
+-    message: describeError(error),
+-    ...(error instanceof Error
+-      ? { name: error.name, ...(error.stack ? { stack: error.stack } : {}) }
+-      : {}),
+-  });
++function recordingFault(
++  ctx: NodeContext<'inference'>,
++  pending: PendingTurn,
++  state: TurnFailures,
++  operation: InferenceRecordingOperation,
++  error: unknown,
++): void {
++  state.recording.push({ operation });
++  ctx.ports.logger.error(
++    {
++      runId: ctx.run.id,
++      nodeId: ctx.node.id,
++      turnId: pending.turn.turnId,
++      operation,
++      error: errorDiagnostic(error),
++    },
++    'inference recording failed',
++  );
+ }
+ function observe(state: TurnFailures, error: unknown): void {
+   state.evidence = mergeHarnessFailure(state.evidence, harnessFailureEvidence(error));
+@@ -165,7 +175,7 @@ async function recordSubmission(
+   try {
+     await submission(ctx, pending, value, marker);
+   } catch (error) {
+-    recordingFault(state, 'harness.submission', error);
++    recordingFault(ctx, pending, state, 'harness.submission', error);
+     if (marker) state.acceptanceFailure = { error };
+   }
+ }
+@@ -710,7 +720,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+             await recordTurn(pending);
+           pending.intentUnconfirmed = false;
+         } catch (recordError) {
+-          recordingFault(failures, 'turn.intent.reconcile', recordError);
++          recordingFault(ctx, pending, failures, 'turn.intent.reconcile', recordError);
+         }
+       }
+       const unconfirmed = () =>
+@@ -760,12 +770,27 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+           nodeId: ctx.node.id,
+           details: { ref: failure.ref },
+         });
+-      if (!(failure instanceof RunFailureError) && !(failure instanceof RunCancelledError))
+-        failure = new RunFailureError('INTERNAL_ERROR', describeError(failure), {
+-          nodeId: ctx.node.id,
+-          details:
+-            failure instanceof Error ? { name: failure.name, stack: failure.stack ?? null } : null,
++      if (
++        !(failure instanceof RunCancelledError) &&
++        (!(failure instanceof RunFailureError) ||
++          (failure.code === 'INTERNAL_ERROR' && !(failure instanceof InternalRunFailureError)))
++      ) {
++        const { details, ...options } = failure instanceof RunFailureError ? failure.options : {};
++        ctx.ports.logger.error(
++          {
++            runId: ctx.run.id,
++            nodeId: ctx.node.id,
++            turnId: pending.turn.turnId,
++            error: errorDiagnostic(failure),
++            details,
++          },
++          'inference execution failed',
++        );
++        failure = new InternalRunFailureError(INTERNAL_FAILURE_MESSAGE, {
++          ...options,
++          nodeId: options.nodeId ?? ctx.node.id,
+         });
++      }
+ 
+       // Decide first, persist second. Even a before/after-commit storage exception can only add
+       // details.recording; it cannot change cause, submission, cancellation precedence or retry.
+@@ -786,7 +811,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+         try {
+           await ctx.ports.sessions.upsert({ ...row });
+         } catch (recordError) {
+-          recordingFault(failures, 'harness.status', recordError);
++          recordingFault(ctx, pending, failures, 'harness.status', recordError);
+         }
+       }
+       if (failure instanceof RunFailureError) {
+@@ -803,52 +828,55 @@ export const inferenceHandler: NodeHandler<'inference'> = {
+             ? 'HARNESS_DELIVERY_UNCERTAIN'
+             : failure.code;
+         const details = failure.options.details;
+-        failure = new RunFailureError(
+-          code,
+-          missing
+-            ? missingFailure(pending).message
+-            : uncertain && !canContinueTurn(pending)
+-              ? failure.message + '. ' + recoveryFailure(pending, ctx.node.id).message
+-              : failure.message,
+-          {
+-            ...failure.options,
+-            inference: provenance(pending),
+-            ...(missing ? { missingSession: missingFailure(pending).options.missingSession } : {}),
+-            ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
+-              ? {
+-                  details: {
+-                    ...(typeof details === 'object' && details !== null && !Array.isArray(details)
+-                      ? details
+-                      : { cause: details ?? null }),
+-                    interruptedByStop:
+-                      timeout.signal.reason instanceof RunFailureError &&
+-                      timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+-                  },
+-                }
+-              : {}),
+-            ...(failures.recording.length
+-              ? {
+-                  details: {
+-                    ...(typeof details === 'object' && details !== null && !Array.isArray(details)
+-                      ? details
+-                      : { cause: details ?? null }),
+-                    ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
+-                      ? {
+-                          interruptedByStop:
+-                            timeout.signal.reason instanceof RunFailureError &&
+-                            timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+-                        }
+-                      : {}),
+-                    recording: failures.recording,
+-                  },
+-                }
+-              : {}),
+-            resumable:
+-              !missing &&
+-              (!uncertain || canContinueTurn(pending)) &&
+-              failure.options.resumable !== false,
+-          },
+-        );
++        const message = missing
++          ? missingFailure(pending).message
++          : uncertain && !canContinueTurn(pending)
++            ? failure.message +
++              (failure instanceof InternalRunFailureError ? ' ' : '. ') +
++              recoveryFailure(pending, ctx.node.id).message
++            : failure.message;
++        const options: RunFailureError['options'] = {
++          ...failure.options,
++          inference: provenance(pending),
++          ...(missing ? { missingSession: missingFailure(pending).options.missingSession } : {}),
++          ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
++            ? {
++                details: {
++                  ...(typeof details === 'object' && details !== null && !Array.isArray(details)
++                    ? details
++                    : { cause: details ?? null }),
++                  interruptedByStop:
++                    timeout.signal.reason instanceof RunFailureError &&
++                    timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
++                },
++              }
++            : {}),
++          ...(failures.recording.length
++            ? {
++                details: {
++                  ...(typeof details === 'object' && details !== null && !Array.isArray(details)
++                    ? details
++                    : { cause: details ?? null }),
++                  ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
++                    ? {
++                        interruptedByStop:
++                          timeout.signal.reason instanceof RunFailureError &&
++                          timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
++                      }
++                    : {}),
++                  recording: failures.recording,
++                },
++              }
++            : {}),
++          resumable:
++            !missing &&
++            (!uncertain || canContinueTurn(pending)) &&
++            failure.options.resumable !== false,
++        };
++        failure =
++          code === 'INTERNAL_ERROR' && failure instanceof InternalRunFailureError
++            ? new InternalRunFailureError(message, options)
++            : new RunFailureError(code, message, options);
+       }
+       throw failure;
+     } finally {
+diff --git a/packages/engine/src/handlers/mutate.ts b/packages/engine/src/handlers/mutate.ts
+index 99aa8fb3..ef3ca8d6 100644
+--- a/packages/engine/src/handlers/mutate.ts
++++ b/packages/engine/src/handlers/mutate.ts
+@@ -1,10 +1,38 @@
++import { ExpressionError, MutationError, PatchError, TemplateError } from '@graphgoblin/domain';
++import { RunFailureError } from '../errors.js';
++import { boundedAuthoredCause } from '../failure-publication.js';
+ import type { NodeHandler } from '../handler.js';
+ import { runMutations } from './common.js';
+ 
+ export const mutateHandler: NodeHandler<'mutate'> = {
+   kind: 'mutate',
+   async execute(ctx) {
+-    const { patch } = await runMutations(ctx, ctx.thread, ctx.config.operations);
++    const { patch } = await runMutations(
++      ctx,
++      ctx.thread,
++      ctx.config.operations,
++      (error, operationIndex, operationKind) => {
++        if (!(
++          error instanceof ExpressionError ||
++          error instanceof TemplateError ||
++          error instanceof MutationError ||
++          error instanceof PatchError
++        ))
++          return error;
++        const cause = { code: error.code, message: boundedAuthoredCause(error.message) };
++        const reason =
++          error instanceof PatchError ? `Patch error: ${cause.message}` : cause.message;
++        return new RunFailureError(
++          'MUTATION_ERROR',
++          `Mutation operation ${operationIndex + 1} (${operationKind}) failed: ${reason}`,
++          {
++            nodeId: ctx.node.id,
++            resumable: false,
++            details: { operationIndex, operationKind, cause },
++          },
++        );
++      },
++    );
+     return { kind: 'done', patch, route: 'out' };
+   },
+ };
+diff --git a/packages/engine/src/handlers/subloop.ts b/packages/engine/src/handlers/subloop.ts
+index ab29fba0..f8f219d5 100644
+--- a/packages/engine/src/handlers/subloop.ts
++++ b/packages/engine/src/handlers/subloop.ts
+@@ -13,7 +13,13 @@ import {
+   threadView,
+   type MutationError,
+ } from '@graphgoblin/domain';
+-import { ChildCancelledError, describeError, RunFailureError } from '../errors.js';
++import { ChildCancelledError, RunFailureError } from '../errors.js';
++import {
++  childFailureForPublication,
++  errorDiagnostic,
++  INTERNAL_FAILURE_MESSAGE,
++  InternalRunFailureError,
++} from '../failure-publication.js';
+ import type { ChildOutcome, NodeContext, NodeHandler, NodeResult } from '../handler.js';
+ import type { EventDraft } from '../ports.js';
+ import {
+@@ -262,8 +268,22 @@ async function finishWithChild(
+   // Exhausted exit) is data for the output mapping.
+   if (child.status === 'cancelled') throw new ChildCancelledError(child.runId, records);
+   if (child.failure) {
+-    const { code, message, resumable, nodeId, details, script } = child.failure;
+-    throw new RunFailureError(code, `subloop child ${child.runId} failed: ${message}`, {
++    const { code, resumable, nodeId, script } = child.failure;
++    const { message, details, diagnostics } = childFailureForPublication(child.failure);
++    if (diagnostics.length) {
++      ctx.ports.logger.error(
++        {
++          runId: ctx.run.id,
++          nodeId: ctx.node.id,
++          childRunId: child.runId,
++          childNodeId: nodeId,
++          diagnostics,
++        },
++        'subloop child failure contained internal diagnostics',
++      );
++    }
++    const summary = `subloop child ${child.runId} failed: ${message}`;
++    const options: RunFailureError['options'] = {
+       nodeId: ctx.node.id,
+       resumable,
+       ...(script ? { script } : {}),
+@@ -273,7 +293,10 @@ async function finishWithChild(
+         ...(details !== undefined ? { childDetails: details } : {}),
+       },
+       records,
+-    });
++    };
++    throw code === 'INTERNAL_ERROR'
++      ? new InternalRunFailureError(summary, options)
++      : new RunFailureError(code, summary, options);
+   }
+   let patch: NodeResult['patch'];
+   try {
+@@ -286,9 +309,17 @@ async function finishWithChild(
+         ...error.options,
+         records: [...records, ...(error.options.records ?? [])],
+       });
+-    throw new RunFailureError('INTERNAL_ERROR', describeError(error), {
+-      resumable: true,
+-      details: error instanceof Error ? { name: error.name, stack: error.stack ?? null } : null,
++    ctx.ports.logger.error(
++      {
++        runId: ctx.run.id,
++        nodeId: ctx.node.id,
++        childRunId: child.runId,
++        error: errorDiagnostic(error),
++      },
++      'subloop output mapping failed',
++    );
++    throw new InternalRunFailureError(INTERNAL_FAILURE_MESSAGE, {
++      nodeId: ctx.node.id,
+       records,
+     });
+   }
+diff --git a/packages/engine/src/prompt-provenance.test.ts b/packages/engine/src/prompt-provenance.test.ts
+index 4580da66..e3e1867f 100644
+--- a/packages/engine/src/prompt-provenance.test.ts
++++ b/packages/engine/src/prompt-provenance.test.ts
+@@ -344,13 +344,24 @@ describe('prompt provenance through RunManager and the fake harness', () => {
+       source: 'manual.api',
+     });
+     await manager.waitForIdle();
+-    expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
++    const failure = (await e.ports.runs.get(run.id))?.failure;
++    expect(failure).toMatchObject({
+       code: 'INTERNAL_ERROR',
+       inference: { submission: 'definitely-not-submitted' },
+-      details: {
+-        name: 'Error',
+-        stack: expect.stringContaining('storage unavailable before launch'),
+-      },
++    });
++    const diagnostic = 'storage unavailable before launch';
++    expect(JSON.stringify([failure, e.events(run.id)])).not.toContain(diagnostic);
++    const logged = e.ports.logger.lines.find(
++      ({ obj }) =>
++        obj.runId === run.id &&
++        obj.nodeId === failure?.nodeId &&
++        obj.turnId === failure?.inference?.turnId &&
++        obj.error,
++    );
++    expect(logged?.obj.error).toMatchObject({
++      name: 'Error',
++      message: diagnostic,
++      stack: expect.stringContaining(diagnostic),
+     });
+     expect(e.ports.harness.started).toHaveLength(0);
+     await manager.resume(run.id);
+diff --git a/packages/engine/src/prompt-recovery.test.ts b/packages/engine/src/prompt-recovery.test.ts
+index 309ba2f7..3e1436ef 100644
+--- a/packages/engine/src/prompt-recovery.test.ts
++++ b/packages/engine/src/prompt-recovery.test.ts
+@@ -161,11 +161,26 @@ describe('D-022 inherited-session recovery', () => {
+         source: 'manual.api',
+       });
+       await manager.waitForIdle();
+-      expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
++      const failure = (await e.ports.runs.get(run.id))?.failure;
++      expect(failure).toMatchObject({
+         code: 'INTERNAL_ERROR',
+         resumable: false,
+         inference: { submission: 'delivery-uncertain', sessionId: 'fake-session-1' },
+-        details: { name: 'Error', stack: expect.stringContaining('acceptance record not durable') },
++        details: { recording: [{ operation: 'harness.submission' }] },
++      });
++      const diagnostic = 'acceptance record not durable';
++      expect(JSON.stringify([failure, e.events(run.id)])).not.toContain(diagnostic);
++      const logged = e.ports.logger.lines.find(
++        ({ obj }) =>
++          obj.runId === run.id &&
++          obj.nodeId === failure?.nodeId &&
++          obj.turnId === failure?.inference?.turnId &&
++          obj.operation === 'harness.submission',
++      );
++      expect(logged?.obj.error).toMatchObject({
++        name: 'Error',
++        message: diagnostic,
++        stack: expect.stringContaining(diagnostic),
+       });
+       await expect(manager.resume(run.id)).rejects.toThrow();
+       expect(e.ports.harness.resumed.map((call) => call.request.turn.prompt)).toEqual(['Task B']);
+diff --git a/packages/engine/src/run-manager.ts b/packages/engine/src/run-manager.ts
+index 39fc78a4..df927d7d 100644
+--- a/packages/engine/src/run-manager.ts
++++ b/packages/engine/src/run-manager.ts
+@@ -74,6 +74,11 @@ import {
+   isAbortError,
+ } from './errors.js';
+ import { deciderFailure, isDeciderError } from './decider-errors.js';
++import {
++  errorDiagnostic,
++  INTERNAL_FAILURE_MESSAGE,
++  InternalRunFailureError,
++} from './failure-publication.js';
+ import type {
+   ChildOutcome,
+   ChildStartRequest,
+@@ -1973,19 +1978,21 @@ export class RunManager {
+       void this.execute(runId, controller)
+         .catch(async (error: unknown) => {
+           this.ports.logger.error(
+-            { runId, error: describeError(error) },
++            { runId, error: errorDiagnostic(error) },
+             'executor crashed outside node execution',
+           );
+           try {
+             await this.failRun(
+               runId,
+-              error instanceof RunFailureError
+-                ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
+-                : {
+-                    code: 'INTERNAL_ERROR',
+-                    message: describeError(error),
+-                    resumable: true,
+-                  },
++              error instanceof InternalRunFailureError
++                ? error
++                : error instanceof RunFailureError
++                  ? error.toFailure((await this.ports.runs.get(runId))?.currentNodeId)
++                  : {
++                      code: 'INTERNAL_ERROR',
++                      message: INTERNAL_FAILURE_MESSAGE,
++                      resumable: true,
++                    },
+             );
+           } catch (recordError) {
+             this.ports.logger.error(
+@@ -2340,11 +2347,12 @@ export class RunManager {
+     // comes before anything that could record a second terminal event.
+     if (await this.completeFromLog(run, version?.definition, events)) return;
+     if (!version) {
+-      await this.failRun(runId, {
+-        code: 'INTERNAL_ERROR',
+-        message: `loop version ${run.versionId} not found`,
+-        resumable: false,
+-      });
++      await this.failRun(
++        runId,
++        new InternalRunFailureError(`loop version ${run.versionId} not found`, {
++          resumable: false,
++        }),
++      );
+       return;
+     }
+     // A run admitted before ADR-0044 can be pinned to a definition whose exit publishes an Event:
+@@ -2526,11 +2534,12 @@ export class RunManager {
+       if (current.status === 'paused') return;
+       const node = nodeById(def, nodeId);
+       if (!node) {
+-        await this.failRun(runId, {
+-          code: 'INTERNAL_ERROR',
+-          message: `node ${nodeId} not found in loop version`,
+-          resumable: false,
+-        });
++        await this.failRun(
++          runId,
++          new InternalRunFailureError(`node ${nodeId} not found in loop version`, {
++            resumable: false,
++          }),
++        );
+         return;
+       }
+       const attempt = attemptFor(events, nodeId);
+@@ -2633,29 +2642,39 @@ export class RunManager {
+           !(error instanceof RunFailureError) && isDeciderError(error)
+             ? deciderFailure(error)
+             : undefined;
+-        const failure: RunFailure =
+-          error instanceof RunFailureError
+-            ? error.toFailure(nodeId)
+-            : {
+-                code: 'INTERNAL_ERROR',
+-                message: providerFailure?.message ?? describeError(error),
+-                nodeId,
+-                resumable: true,
+-                details:
+-                  providerFailure?.details ??
+-                  (error instanceof Error
+-                    ? {
+-                        name: error.name,
+-                        stack: error.stack ?? null,
+-                      }
+-                    : null),
+-              };
++        const failure =
++          error instanceof InternalRunFailureError
++            ? error
++            : error instanceof RunFailureError
++              ? error.toFailure(nodeId)
++              : providerFailure
++                ? new InternalRunFailureError(providerFailure.message, {
++                    nodeId,
++                    details: providerFailure.details,
++                  })
++                : {
++                    code: 'INTERNAL_ERROR' as const,
++                    message: INTERNAL_FAILURE_MESSAGE,
++                    nodeId,
++                    resumable: true,
++                  };
+         if (providerFailure)
+           this.ports.logger.warn(
+             { runId, nodeId, ...providerFailure.diagnostic },
+             'node provider failed',
+           );
+-        else this.ports.logger.error({ runId, nodeId, failure }, 'node failed');
++        else
++          this.ports.logger.error(
++            {
++              runId,
++              nodeId,
++              failure: failure instanceof InternalRunFailureError ? failure.toFailure() : failure,
++              ...(failure.code === 'INTERNAL_ERROR' && !(error instanceof InternalRunFailureError)
++                ? { error: errorDiagnostic(error) }
++                : {}),
++            },
++            'node failed',
++          );
+         await this.failRun(
+           runId,
+           failure,
+@@ -2711,15 +2730,17 @@ export class RunManager {
+       try {
+         thread = ContextThreadSchema.parse(applyPatch(thread, result.patch));
+       } catch (error) {
++        this.ports.logger.error(
++          { runId, nodeId, error: errorDiagnostic(error) },
++          'node produced an invalid patch',
++        );
+         // What the visit learned stays with the failure it ends in (#398).
+         await this.failRun(
+           runId,
+-          {
+-            code: 'INTERNAL_ERROR',
+-            message: `node ${nodeId} produced an invalid patch: ${describeError(error)}`,
++          new InternalRunFailureError(`node ${nodeId} produced an invalid patch`, {
+             nodeId,
+             resumable: false,
+-          },
++          }),
+           result.kind === 'done' ? result.records : undefined,
+         );
+         return;
+@@ -2772,12 +2793,17 @@ export class RunManager {
+       await this.ports.runs.saveThread(runId, thread, seq, { strict: true });
+       const edge = outgoingEdge(def, nodeId, result.route);
+       if (!edge) {
+-        await this.failRun(runId, {
+-          code: 'INTERNAL_ERROR',
+-          message: `node ${nodeId} routed to "${result.route}" but no edge leaves that port`,
+-          nodeId,
+-          resumable: false,
+-        });
++        this.ports.logger.error(
++          { runId, nodeId, route: result.route },
++          'node selected a route without an edge',
++        );
++        await this.failRun(
++          runId,
++          new InternalRunFailureError(`node ${nodeId} selected a route with no edge`, {
++            nodeId,
++            resumable: false,
++          }),
++        );
+         return;
+       }
+       nodeId = edge.to.node;
+@@ -3012,7 +3038,7 @@ export class RunManager {
+ 
+   private async failRun(
+     runId: string,
+-    authoredFailure: RunFailure,
++    authoredFailure: RunFailure | InternalRunFailureError,
+     records: readonly EventDraft[] = [],
+   ): Promise<void> {
+     const run = await this.ports.runs.get(runId);
+@@ -3026,7 +3052,19 @@ export class RunManager {
+     }
+     // A bookkeeping error is not a script outcome. Classify against durable evidence before
+     // recording either handler failures (progress writes) or outer failures (completion writes).
+-    const failure = boundedFailure(classifyScriptFailure(events, runId, authoredFailure));
++    const engineAuthored = authoredFailure instanceof InternalRunFailureError;
++    const classified = classifyScriptFailure(
++      events,
++      runId,
++      engineAuthored ? authoredFailure.toFailure() : authoredFailure,
++    );
++    // Only an explicit engine-owned projection can supply public copy for an internal cause.
++    const { details: _privateDetails, ...fields } = classified;
++    const failure = boundedFailure(
++      classified.code === 'INTERNAL_ERROR' && !engineAuthored
++        ? { ...fields, message: INTERNAL_FAILURE_MESSAGE }
++        : classified,
++    );
+     await this.ports.events.append(runId, [...records, { type: 'run.failed', failure }]);
+     const failed = await this.ports.runs.transition(runId, ACTIVE_STATUSES, {
+       status: 'failed',

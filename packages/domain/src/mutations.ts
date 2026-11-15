@@ -41,6 +41,23 @@ export interface RepairRequest {
 export type MutationPlan =
   { kind: 'patch'; patch: JsonPatch } | { kind: 'repair'; request: RepairRequest };
 
+/** Optional error mapping for callers that report authored operation failures. */
+export type MutationFailureMapper = (
+  error: unknown,
+  index: number,
+  operation: MutationOperation['op'],
+) => unknown;
+
+type Rethrow = (error: unknown) => never;
+
+function authored<T>(operation: () => T, rethrow: Rethrow): T {
+  try {
+    return operation();
+  } catch (error) {
+    return rethrow(error);
+  }
+}
+
 export interface MutationResult {
   thread: ContextThread;
   patch: JsonPatch;
@@ -63,14 +80,15 @@ function messageJson(message: Message): JsonValue {
 async function resolveValue(
   source: Extract<MutationOperation, { op: 'set' }>['value'],
   view: Record<string, unknown>,
+  rethrow: Rethrow,
 ): Promise<JsonValue> {
   switch (source.kind) {
     case 'literal':
       return source.value;
     case 'template':
-      return renderTemplate(source.template, view);
+      return renderTemplate(source.template, view).catch(rethrow);
     case 'expression':
-      return asJson(await evaluateExpression(source.jsonata, view));
+      return asJson(await evaluateExpression(source.jsonata, view).catch(rethrow));
   }
 }
 
@@ -94,10 +112,11 @@ async function selectIndices(
   items: readonly unknown[],
   where: string,
   view: Record<string, unknown>,
+  rethrow: Rethrow,
 ): Promise<number[]> {
   const out: number[] = [];
   for (const [index, item] of items.entries()) {
-    if (await evaluatePredicate(where, item, { bindings: { thread: view, index } }))
+    if (await evaluatePredicate(where, item, { bindings: { thread: view, index } }).catch(rethrow))
       out.push(index);
   }
   return out;
@@ -144,23 +163,28 @@ export async function planMutation(
   op: MutationOperation,
   ctx: MutationContext,
   opIndex = 0,
+  mapFailure?: MutationFailureMapper,
 ): Promise<MutationPlan> {
   const view = threadView(thread) as unknown as Record<string, unknown>;
+  const rethrow = (error: unknown): never => {
+    throw mapFailure ? mapFailure(error, opIndex, op.op) : error;
+  };
 
   switch (op.op) {
     case 'set': {
-      assertMutablePath(op.path);
-      const value = await resolveValue(op.value, view);
-      const exists = getAtPointer(thread, op.path).found;
+      authored(() => assertMutablePath(op.path), rethrow);
+      const value = await resolveValue(op.value, view, rethrow);
+      const exists = authored(() => getAtPointer(thread, op.path), rethrow).found;
       return { kind: 'patch', patch: [{ op: exists ? 'replace' : 'add', path: op.path, value }] };
     }
     case 'delete': {
-      assertMutablePath(op.path);
-      if (!getAtPointer(thread, op.path).found) return { kind: 'patch', patch: [] };
+      authored(() => assertMutablePath(op.path), rethrow);
+      if (!authored(() => getAtPointer(thread, op.path), rethrow).found)
+        return { kind: 'patch', patch: [] };
       return { kind: 'patch', patch: [{ op: 'remove', path: op.path }] };
     }
     case 'append-message': {
-      const content = await renderTemplate(op.content, view);
+      const content = await renderTemplate(op.content, view).catch(rethrow);
       const message = makeMessage(ctx, op.role, content, op.tags);
       return {
         kind: 'patch',
@@ -176,7 +200,7 @@ export async function planMutation(
             : Math.min(op.position, thread.messages.length);
       const patch: PatchOperation[] = [];
       for (const [offset, injected] of op.messages.entries()) {
-        const content = await renderTemplate(injected.content, view);
+        const content = await renderTemplate(injected.content, view).catch(rethrow);
         patch.push({
           op: 'add',
           path: `/messages/${index + offset}`,
@@ -187,7 +211,7 @@ export async function planMutation(
     }
     case 'truncate': {
       const candidates = op.where
-        ? await selectIndices(thread.messages, op.where, view)
+        ? await selectIndices(thread.messages, op.where, view, rethrow)
         : thread.messages.map((_, i) => i);
       const keep = new Set<number>();
       if (op.keep.first !== undefined)
@@ -208,14 +232,14 @@ export async function planMutation(
     }
     case 'drop': {
       const items = op.target === 'messages' ? thread.messages : thread.artifacts;
-      const indices = await selectIndices(items, op.where, view);
+      const indices = await selectIndices(items, op.where, view, rethrow);
       return { kind: 'patch', patch: removeIndices(`/${op.target}`, indices) };
     }
     case 'replace': {
-      const re = compileRegex(op.pattern, op.flags);
+      const re = authored(() => compileRegex(op.pattern, op.flags), rethrow);
       if (op.target === 'messages') {
         const indices = op.where
-          ? await selectIndices(thread.messages, op.where, view)
+          ? await selectIndices(thread.messages, op.where, view, rethrow)
           : thread.messages.map((_, i) => i);
         const patch: PatchOperation[] = [];
         for (const i of indices) {
@@ -232,7 +256,9 @@ export async function planMutation(
       return { kind: 'patch', patch: [{ op: 'replace', path: '/vars', value: nextVars }] };
     }
     case 'redact': {
-      const regexes = op.patterns.map((p) => compileRegex(p, 'g'));
+      const regexes = op.patterns.map((pattern) =>
+        authored(() => compileRegex(pattern, 'g'), rethrow),
+      );
       const redact = (s: string): string =>
         regexes.reduce((acc, re) => acc.replace(re, op.replacement), s);
       const patch: PatchOperation[] = [];
@@ -252,12 +278,12 @@ export async function planMutation(
       return { kind: 'patch', patch };
     }
     case 'coerce': {
-      assertMutablePath(op.target);
-      const source = getAtPointer(thread, op.source);
+      authored(() => assertMutablePath(op.target), rethrow);
+      const source = authored(() => getAtPointer(thread, op.source), rethrow);
       const value = source.found ? source.value : undefined;
-      const validation = validateJson(op.jsonSchema, value);
+      const validation = authored(() => validateJson(op.jsonSchema, value), rethrow);
       if (validation.ok) {
-        const exists = getAtPointer(thread, op.target).found;
+        const exists = authored(() => getAtPointer(thread, op.target), rethrow).found;
         return {
           kind: 'patch',
           patch: [{ op: exists ? 'replace' : 'add', path: op.target, value: asJson(value) }],
@@ -289,16 +315,21 @@ export async function applyMutations(
   ops: readonly MutationOperation[],
   ctx: MutationContext,
   startAt = 0,
+  mapFailure?: MutationFailureMapper,
 ): Promise<MutationResult> {
   let current = thread;
   const combined: PatchOperation[] = [];
   for (let i = startAt; i < ops.length; i += 1) {
     const op = ops[i] as MutationOperation;
-    const plan = await planMutation(current, op, ctx, i);
+    const plan = await planMutation(current, op, ctx, i, mapFailure);
     if (plan.kind === 'repair') {
       return { thread: current, patch: combined, pending: plan.request, appliedThrough: i };
     }
-    current = applyPatch(current, plan.patch);
+    try {
+      current = applyPatch(current, plan.patch);
+    } catch (error) {
+      throw mapFailure ? mapFailure(error, i, op.op) : error;
+    }
     combined.push(...plan.patch);
   }
   return { thread: current, patch: combined, appliedThrough: ops.length };

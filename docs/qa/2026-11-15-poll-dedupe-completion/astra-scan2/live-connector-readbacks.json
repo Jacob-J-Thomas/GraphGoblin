@@ -1,0 +1,712 @@
+{
+  "capturedAt": "2026-11-15T13:53:41.320Z",
+  "pr": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484",
+      "number": 484,
+      "state": "open",
+      "merged": false,
+      "mergeable": true,
+      "draft": true,
+      "body": "Poll keys containing lone UTF-16 surrogate units can evade SQLite deduplication and start another run on every poll. This change rejects those derived identities before lookup or admission, with bounded typed diagnostics. Item mode isolates malformed candidates while preserving whole-batch type, blank, length and valid-duplicate errors; single mode validates the existing 512-unit slice. Valid pairs, literal U+FFFD and intentional no-key behavior retain their exact semantics.\n\nCloses #361. Closes #483.\n\nThe #483 prerequisite adds the established optional garbage-collection step to two Windows SQLite test cleanup hooks. Its pre-existing failure reproduced on unchanged main. Product assertions, timeouts, retries and coverage thresholds are unchanged. ADR-0079 and the trigger documentation describe the identity rule; historical stored data is not rewritten.\n\nValidation on source candidate `420240cad27d3865988dc7009dc9d80291e93c9c`:\n\n- API coverage: 1,943 passed, 14 documented skips; 95.95% lines and 90.88% branches, using two local workers. Domain: 460 tests, 98.73% lines and 96.09% branches. Typecheck, affected lint/format and seven forced API build tasks passed.\n- Independent QA: 21 native scheduler/HTTP/SQLite observations across same-file restart, 15 exact durable IDs with matching queued events, held-response overlap checks, 20 controlled public-method cases, and one-process concurrent file-SQLite admission. Disposable stores and owned processes were cleaned up.\n- The native supervisor's original exit 1 is retained: two warning timestamps preceded the separate probe clock by 1 ms. Offline analysis of the unchanged logs used recorded gateway due times and assigned all 20 warnings uniquely. The native sequence was not rerun.\n- Original coverage, cleanup and baseline failures remain published. The genuine build ran before the source commit; all twelve changed source files and the complete compiled inventories were rebound to the committed bytes.\n\nEvidence: [baseline](docs/qa/2026-11-15-poll-dedupe-baseline/README.md), [implementation and cleanup diagnosis](docs/qa/2026-11-15-poll-dedupe-implementation/README.md), [independent corrected QA](docs/qa/2026-11-15-poll-dedupe-corrected/README.md). This publication also retains the preceding Space cards [final completion](docs/qa/2026-11-15-space-cards-completion/README.md) and [corrected CI](docs/qa/2026-11-15-space-cards-corrected-ci/README.md), without changing that product source or its pending owner acceptance.\n\nDelivery gates: independent Claude Opus 5.5 xhigh review, current-head CI and fresh GPT-6 Astra max exact-head/target sign-off remain pending. Three formal scans maximum, shared by the opposite-family review and final audit. QA agent: `/root/runtime_361_qa` (GPT-6.1 Sol xhigh). Human QA is not required for these two issues. Other batch acceptance obligations remain open.\n\r\n",
+      "title": "fix(api): reject malformed poll dedupe identities",
+      "base": "main",
+      "base_sha": "15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd",
+      "head": "codex/gg-20261115-poll-dedupe",
+      "head_sha": "08651317c485062eb90367e1df3f7632f8e1a6c7",
+      "head_repo_id": 1403707890,
+      "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+      "merge_commit_sha": "98d2bc2c473d3167a39ae966f9dfb9e2f00904fe",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "requested_reviewers": null,
+      "requested_team_reviewers": null,
+      "diff": null,
+      "comments": null,
+      "created_at": "2026-11-15T12:49:49Z",
+      "updated_at": "2026-11-15T13:48:43Z",
+      "closed_at": null,
+      "merged_at": null,
+      "commits": 2,
+      "changed_files": 343,
+      "additions": 197855,
+      "deletions": 16,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484",
+      "display_title": "fix(api): reject malformed poll dedupe identities"
+    },
+    "isError": false
+  },
+  "jobs": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "jobs": [
+        {
+          "id": 132817046734,
+          "name": "Template image",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43715831258,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Build the distributed image",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Load installed templates without network or writable storage",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        },
+        {
+          "id": 132817046977,
+          "name": "Windows launcher",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43715831258,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Native Windows launcher acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Upload native evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            }
+          ]
+        },
+        {
+          "id": 132817046986,
+          "name": "Gates",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43715831258,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install (frozen lockfile)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Reset acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Recovery process acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Chat restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Wait restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Prompt restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Webhook retry acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Current-format migration acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Typecheck",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Lint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Format check",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Layer rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Migration generation is a no-op",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Design token rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Dependency graph rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Shipped templates and deliberate-invalid refusal",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Install Chromium for tooling browser measurements",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Unit tests with coverage thresholds",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            },
+            {
+              "name": "Licence allowlist",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Generated docs are current",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            },
+            {
+              "name": "Design token contrast table is current and passing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26
+            },
+            {
+              "name": "Dependency audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27
+            },
+            {
+              "name": "Upload coverage reports",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 54
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 55
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 56
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 57
+            }
+          ]
+        },
+        {
+          "id": 132817046990,
+          "name": "Browser",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43715831258,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install (frozen lockfile)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Install Edge",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Functional browser suite (no retries)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Browser coverage and exclusions",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Upload browser failure evidence",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  },
+  "issue361": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issue": {
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/361",
+        "title": "Poll candidates with lone-surrogate dedupe keys start a new run on every poll",
+        "issue_number": 361,
+        "body": "<!-- graphgoblin-runtime-progress:2026-11-15 -->\n**Implemented and independently verified; PR #484 is in the delivery gates.** [Draft PR #484](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484) publishes head `08651317c485062eb90367e1df3f7632f8e1a6c7` against main `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`. Its product source is identical to tested candidate `420240cad27d3865988dc7009dc9d80291e93c9c`; the later commit contains evidence and delivery documentation only.\n\nThe current-main baseline reproduced 21 observations and 34 durable IDs, including repeated malformed-key admissions across restart. The corrected fixture's separately declared inputs produced 21 expected observations and 15 exact durable IDs with matching queued events, REST readbacks, same-file restart and held-response scheduler behavior. Twenty controlled public-method checks and a one-process file-SQLite concurrent admission check passed. Original cleanup and local-gate failures remain retained.\n\nThe original corrected native supervisor exited 1 at a warning clock-correlation assertion. Offline analysis of unchanged logs used gateway-reported poll due times, uniquely assigned all 20 expected warnings, and retained the two -1 ms cross-process differences. The native sequence was not rerun. Root accepted the independent evidence and verified owned-resource cleanup. [Baseline](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/08651317c485062eb90367e1df3f7632f8e1a6c7/docs/qa/2026-11-15-poll-dedupe-baseline/README.md) · [Implementation and prerequisite #483](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/08651317c485062eb90367e1df3f7632f8e1a6c7/docs/qa/2026-11-15-poll-dedupe-implementation/README.md) · [Corrected QA](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/08651317c485062eb90367e1df3f7632f8e1a6c7/docs/qa/2026-11-15-poll-dedupe-corrected/README.md)\n\n## Delivery\n\nImplementation: GPT-6.1 Sol xhigh; the two test-only #483 cleanup hooks use GPT-6 Luna xhigh. Independent behavior QA: `/root/runtime_361_qa` (GPT-6.1 Sol xhigh). Local API coverage passed 1,943 tests with 14 documented skips, 95.95% lines and 90.88% branches using two workers; domain coverage passed 460 tests. Source, build and exact publication bytes were verified.\n\nCurrent-head CI is running. Claude Opus 5.5 xhigh review and fresh GPT-6 Astra max exact-head/target sign-off remain required within the shared three-scan cap; zero scans have been used. This issue and #483 have no owner-only acceptance obligation. No merge, closure or other batch owner acceptance is claimed.\n<!-- /graphgoblin-runtime-progress:2026-11-15 -->\n\n<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for the third lane, after I08 and the parallel Claude plugin lane. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\nFound by the independent Claude Opus 5.5 review of WP-C3 (#140 investigation) on 2026-10-19, through the public API against the built binary with real SQLite. Outside every I01 to I07 bolt; filed for triage.\n\n## Defect\n\nA poll candidate whose dedupe key contains a lone UTF-16 surrogate is never recognised as already admitted, so it starts a new run on every poll, without bound.\n\n## Steps\n\n1. Publish a loop with a poll trigger: `intervalSeconds: 5`, an http probe to a loopback source, `fireWhen: 'true'`, `items: { select: 'probe.json', dedupeKey: 'item.key', maxRunsPerPoll: 5 }`, then an input wait and an exit.\n2. Let the source return `[{\"key\":\"lone-\\ud800-key\"},{\"key\":\"sg-a\"},{\"key\":\"sg-b\"}]` with the `\\ud800` sent as a JSON escape.\n3. Observe three polls.\n\nExpected: the lone-surrogate key is admitted once (or refused once with a typed diagnostic); `sg-a` and `sg-b` are admitted once each.\n\nActual: a new run for the lone-surrogate key on every poll (three polls gave three runs); `sg-a` and `sg-b` were admitted once each.\n\n## Cause (confirmed in-process)\n\nlibsql binds the key parameter as U+FFFD (`EF BF BD`), while `json_extract` decodes the stored `\\ud800` escape as `ED A0 80`, so `findTriggerDedupeKeys` and the in-transaction key check never match. `hasTriggerDedupe` (single-result polls) most likely has the same problem; not verified.\n\n## Where\n\n`packages/domain/src/poll-items.ts` (candidate key validation) and the SQLite dedupe lookups in `packages/infrastructure/src/sqlite`. Options: refuse keys that are not well-formed UTF-16 with a typed per-candidate diagnostic (consistent with D-020 in `docs/delivery/2026-10-18-i01-i07-register.md`), or normalise keys before storing and comparing.\n\n## Related\n\n#140 (poll starvation; the structural-depth refusal landed there), UoW #300 admission boundary.\n",
+        "state": "open",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "assignees": null,
+        "labels": [
+          {
+            "name": "aidlc-ready",
+            "color": "0E8A16",
+            "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+          },
+          {
+            "name": "qa:touched-systems",
+            "color": "FBCA04",
+            "description": "QA tests and catalogues every system the change touches, positive and negative"
+          },
+          {
+            "name": "impl:gpt-6.1-sol",
+            "color": "1D76DB",
+            "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+          },
+          {
+            "name": "review:claude-opus-5.5",
+            "color": "006B75",
+            "description": "Cross-vendor reviewer: Claude Opus 5.5"
+          },
+          {
+            "name": "type:bug",
+            "color": "D73A4A",
+            "description": "Something does not work as documented"
+          },
+          {
+            "name": "area:api",
+            "color": "BFDADC",
+            "description": "Fastify API"
+          },
+          {
+            "name": "area:engine",
+            "color": "BFDADC",
+            "description": "Engine and run manager"
+          }
+        ],
+        "milestone": null,
+        "state_reason": null,
+        "comments": 1,
+        "created_at": "2026-10-20T08:13:11Z",
+        "updated_at": "2026-11-15T12:51:24Z",
+        "closed_at": null,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/361",
+        "display_title": "Poll candidates with lone-surrogate dedupe keys start a new run on every poll"
+      },
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/361",
+      "title": "Poll candidates with lone-surrogate dedupe keys start a new run on every poll",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/361",
+      "display_title": "Poll candidates with lone-surrogate dedupe keys start a new run on every poll"
+    },
+    "isError": false
+  },
+  "issue483": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issue": {
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/483",
+        "title": "Release closed SQLite fixture handles before Ollama test cleanup on Windows",
+        "issue_number": 483,
+        "body": "Verification prerequisite discovered during #361 in the authorized four-intent delivery batch.\n\n## Reproduction and scope\n\nThe unchanged `apps/api/src/ollama-container.test.ts` and `apps/api/src/preflight-ollama.test.ts` cleanup hooks fail with Windows `EBUSY` deleting disposable SQLite database or sidecar files after their clients close. The failures occurred in the first candidate API coverage run and a one-worker four-file isolation run. A separate one-worker baseline run at `e1237593babd4d03466b91685fc05dbe49223b2a` (tree identical to merged main `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`) reproduced four cleanup failures with 21 passing tests. Baseline and candidate matched 123 relevant raw source/config/lockfile blobs and seven installed dependency files, including the native libsql binary. Node was 22.23.4. This is pre-existing test teardown behavior, not a poll regression.\n\nThe existing `ollama-startup.test.ts` and API subprocess helper already collect closed native statements before removing SQLite fixtures. `docs/research/sqlite-libsql.md` documents this Windows behavior. The two failing hooks omit that collection step.\n\n## Accepted bounded correction\n\nApply the established `globalThis.gc?.()` cleanup step after fixture shutdown/reference and mock cleanup, before `rm`, in these two test hooks only. Preserve all product code, assertions, timeouts, retry configuration and coverage floors. Cleanup must still fail if removal fails. No broad temp deletion or process termination.\n\n## Acceptance and delivery\n\n- Retain original coverage, isolated-candidate and unchanged-baseline failures.\n- Both affected specs pass with the same one-worker invocation after the narrow correction.\n- Full API coverage passes with unchanged thresholds; report any reduced local worker count explicitly.\n- Current-head CI, independent Claude review, independent QA and final Astra gate cover this prerequisite alongside the #361 patch.\n\nImplementation: GPT-6 Luna xhigh. Opposite-family review: Claude Opus 5.5 xhigh. QA: the #361 independent delivery worker and current CI. This issue carries no owner-only acceptance obligation.\n\nDuplicate search covered existing issues for `EBUSY` and Ollama cleanup; no matching root cause was found. Evidence is published with [PR #484](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/484).\n\n## Delivery progress — 2026-11-15\n\nThe exact two-hook correction is included in source `420240cad27d3865988dc7009dc9d80291e93c9c` and publication head `08651317c485062eb90367e1df3f7632f8e1a6c7`. The first corrected one-worker pair passed 25/25 tests; the subsequent full API coverage run passed 1,943 tests with 14 documented skips at 95.95% lines and 90.88% branches using two workers. Original candidate, isolation and unchanged-main cleanup failures remain retained in the [implementation evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/08651317c485062eb90367e1df3f7632f8e1a6c7/docs/qa/2026-11-15-poll-dedupe-implementation/README.md).\n\nQA roles: `/root/runtime_361_impl` (GPT-6.1 Sol xhigh) performed the complete API gate independently of the Luna-authored cleanup change; `/root/runtime_361_qa` (GPT-6.1 Sol xhigh) performed the separate #361 behavior verification. Current-head CI, Claude Opus 5.5 xhigh review and fresh Astra max sign-off remain pending on PR #484. No merge or closure is claimed.\n",
+        "state": "open",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "assignees": null,
+        "labels": [
+          {
+            "name": "aidlc-ready",
+            "color": "0E8A16",
+            "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+          },
+          {
+            "name": "qa:touched-systems",
+            "color": "FBCA04",
+            "description": "QA tests and catalogues every system the change touches, positive and negative"
+          },
+          {
+            "name": "impl:gpt-6-luna",
+            "color": "C5DEF5",
+            "description": "Implementer: Codex gpt-6-luna (mundane work), reasoning xhigh"
+          },
+          {
+            "name": "review:claude-opus-5.5",
+            "color": "006B75",
+            "description": "Cross-vendor reviewer: Claude Opus 5.5"
+          },
+          {
+            "name": "type:chore",
+            "color": "CFD3D7",
+            "description": "Maintenance, tooling, or docs"
+          },
+          {
+            "name": "area:api",
+            "color": "BFDADC",
+            "description": "Fastify API"
+          }
+        ],
+        "milestone": null,
+        "state_reason": null,
+        "comments": 0,
+        "created_at": "2026-11-15T11:01:38Z",
+        "updated_at": "2026-11-15T12:51:59Z",
+        "closed_at": null,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/483",
+        "display_title": "Release closed SQLite fixture handles before Ollama test cleanup on Windows"
+      },
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/483",
+      "title": "Release closed SQLite fixture handles before Ollama test cleanup on Windows",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/483",
+      "display_title": "Release closed SQLite fixture handles before Ollama test cleanup on Windows"
+    },
+    "isError": false
+  },
+  "issue208": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issue": {
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/208",
+        "title": "[I08/U24/B67] Keep Undo/Redo stationary and improve default spacing",
+        "issue_number": 208,
+        "body": "<!-- graphgoblin-engineering-progress:2026-11-15 -->\n**Engineering delivered; owner acceptance pending (2026-11-15).** Stationary Undo/Redo merged through [PR #480](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/480) at `177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd`. The owner-selected explicit **Space cards** action merged through [PR #482](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482) at `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd`; its tree equals the independently audited and CI-tested candidate. [Fresh Astra MAX scan 2 SIGN-OFF and full evidence assessment](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482#issuecomment-6892947230). All five corrected-head CI jobs passed on attempt 1; 245 final-audit focused tests and three additional public viewport probes also passed. The four affected native groups passed 194 checks with 33 accepted browser saves and one intentional conflict. The scan-1 queued-fit defect, original failed CI, fixture stops and evidence limits remain retained.\n\nThe engineering criterion is verified. **Owner product acceptance and closure remain pending**: on the combined build, assess whether rapid Undo/Redo feels stable and clear, whether explicit Space cards provides useful spacing at usual window/text sizes, and whether continued editing feels natural. Record the build and observations here. This issue is parked against duplicate implementation pickup while waiting for that acceptance.\n\nTracking correction: GitHub treated a negated closing-keyword sentence in PR #482 as a closing reference at merge. The wording has been removed and this issue reopened; that automatic transition was not owner acceptance.\n<!-- /graphgoblin-engineering-progress:2026-11-15 -->\n\n<!-- graphgoblin-routing:2026-11-14 -->\n**Owner routing update (2026-11-14):** Claude owns UI design and implementation; GPT independently adversarially reviews it. This issue routes to Claude Opus 5.5 xhigh implementation and GPT-6.1 Sol xhigh review, with separate behavior QA and the preserved fresh Astra max exact-head audit. Earlier GPT frontend proposals are unaccepted inputs for Claude to assess and own, not completed UI delivery. Model tier/effort stays proportional to each slice; smaller independent implementation work is delegated to faster agents. The older proposed routing below is historical.\n<!-- /graphgoblin-routing:2026-11-14 -->\n\nPart of #313\n\n<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for I08, the first lane, alongside the Claude plugin. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\n<!-- graphgoblin-approved-roadmap:2026-10-17:B67 -->\n\n**Owner-approved plan, 2026-10-17. Implementation is held.** The owner explicitly authorized publishing the agreed backlog and said not to start implementation. This issue has no pickup gate; release requires a later owner dispatch decision.\n\nAuthority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.\n\n## Bounded change\n\nKeep Undo/Redo stationary and improve default spacing\n\n## Acceptance criteria\n\n- [x] Undo/Redo keep a stable header position during rapid use; newly laid-out/unpositioned graphs are readable without overwriting saved manual geometry.\n\n## Verification\n\nBrowser rapid undo/redo at supported desktop widths and default/manual-layout controls.\n\n## Dependencies\n\n- #281 — X-EDITOR\n- #279 — implementation dispatch remains held.\n\n## Scope limits\n\nThese are independent small UI changes; split into separate delivery patches if they touch different review surfaces. No broad layout redesign.\n\n## Delivery and closure\n\nApproved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.\n\n**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.\n\nNo implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.\n\n## Source requirements\n\n#124, #208\n\n## Specific owner feedback\n\n- Higher priority among visual improvements, after serious bugs. Keep node cards minimal. Default layout must not overwrite deliberately saved positions/routes.\n- Undo/Redo must retain the same hit-target position during rapid repeated clicks and status/enabled-state changes. Existing shortcuts and history behavior remain intact.\n\n## Evidence provenance (not a new test result)\n\nThe observations below describe their original assessed baseline. They are not current solution requirements; the approved scope above controls. Reproduce on the accepted target before relying on them.\n\n### Source #124 — historical evidence\n\n**Backlog: explicitly deferred by the owner on 2026-10-08. Create this issue only; do not plan or implement it yet.** It is outside the current feature PR delivery. No implementation or product gate is active while parked. When unparked: GPT-6.1 Sol xhigh implementation; Claude Opus 5.5 xhigh review and QA; touched-systems verification and owner product acceptance.\n\n\n## Consolidated source reports\n\n- #124: Editor: readable default node spacing when a loop loads.\n\nThese reports are closed as duplicate tracking records. Their accepted requirements and owner-review conditions remain in this bolt. This bolt is the sole open delivery record; no implementation or acceptance is claimed by consolidation.\n",
+        "state": "open",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "assignees": null,
+        "labels": [
+          {
+            "name": "qa:touched-systems",
+            "color": "FBCA04",
+            "description": "QA tests and catalogues every system the change touches, positive and negative"
+          },
+          {
+            "name": "impl:claude-opus-5.5",
+            "color": "0052CC",
+            "description": "Implementer: Claude Opus 5.5 (harder work), reasoning xhigh"
+          },
+          {
+            "name": "review:gpt-6.1-sol",
+            "color": "0E8A8A",
+            "description": "Cross-vendor reviewer: Codex gpt-6.1-sol"
+          },
+          {
+            "name": "type:ui-polish",
+            "color": "F9D0C4",
+            "description": "Visual or interaction polish"
+          },
+          {
+            "name": "area:web",
+            "color": "BFDADC",
+            "description": "Web app shell and screens"
+          },
+          {
+            "name": "area:editor",
+            "color": "BFDADC",
+            "description": "Loop editor canvas and node forms"
+          },
+          {
+            "name": "backlog",
+            "color": "9E9E9E",
+            "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+          },
+          {
+            "name": "kind:bolt",
+            "color": "1d76db",
+            "description": "Bounded deliverable with dependencies and acceptance"
+          }
+        ],
+        "milestone": 3,
+        "state_reason": "reopened",
+        "comments": 5,
+        "created_at": "2026-10-16T00:24:27Z",
+        "updated_at": "2026-11-15T10:30:54Z",
+        "closed_at": null,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/208",
+        "display_title": "[I08/U24/B67] Keep Undo/Redo stationary and improve default spacing"
+      },
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/208",
+      "title": "[I08/U24/B67] Keep Undo/Redo stationary and improve default spacing",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/208",
+      "display_title": "[I08/U24/B67] Keep Undo/Redo stationary and improve default spacing"
+    },
+    "isError": false
+  }
+}
