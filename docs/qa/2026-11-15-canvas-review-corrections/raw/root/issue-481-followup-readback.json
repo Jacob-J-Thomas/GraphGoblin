@@ -1,0 +1,64 @@
+{
+  "at": "2026-11-15T01:23:36.961Z",
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/481",
+    "title": "Preserve edge records when duplicate IDs make route ownership ambiguous",
+    "issue_number": 481,
+    "body": "Follow-up from the #207 corrections in PR #478. This pre-existing behavior is outside the bounded removal/selection/drag fixes and is parked; creation does not dispatch implementation.\n\nA current-format draft can pass the public shape schema while validation reports `DUPLICATE_EDGE_ID`. When a Decision row owns one of two edge records with that ID, an unrelated successful editor change can rewrite the other record's output port. In the retained store test, removing unique edge `c1` unexpectedly changed `start → pick` edge `e1` from output `out` to `yes`, the port belonging to the other Decision-owned `e1`.\n\nEvidence is a controlled store test, not a native browser reproduction: Claude Opus 5.5 xhigh's first correction run, `04-new-tests-first-run.log`, lines 278–303; the unchanged handoff records the limit. Root read the failure and traced the production path. [Decision route bookkeeping](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/993d58a781ed2f0b4d13756c39e83162307b0ccd/apps/web/src/editor/decision-route-edges.ts#L118) uses edge IDs as keys for port rewriting, then applies those keys across the stored edge list. The editor's shared edit path calls it after the intended mutation.\n\nRelated ambiguity, established by source inspection: `setEdgeRoute` maps every record with the supplied ID, so Reset/nudge/drag may change multiple holders' geometry. No separate native witness is claimed. PR #478 deliberately fixes shared-ID **removal** by refusal and preserves selection identity; it does not change these broader routing semantics or the schema.\n\nAcceptance:\n\n- Unrelated successful edits preserve every other stored edge's exact endpoints and manual geometry even when IDs are duplicated.\n- Decision row ownership never rewrites or prunes a different record merely because its ID matches.\n- A route edit that cannot identify a unique record refuses with clear guidance instead of changing multiple records.\n- Keep deliberate duplicate-ID validation, current-format admission, ordinary unique-ID editing, exact Undo/Redo and device/save ownership intact; no silent content migration or compatibility path.\n- Add effective old-code failures and unique-ID controls through the store, followed by bounded public API/device/browser verification where required.\n\nP2 data-preservation follow-up. Searches for `decisionRouteEdges` and `DUPLICATE_EDGE_ID` found no existing issue. Future delivery: GPT architecture, Claude Opus 5.5 xhigh editor implementation, independent GPT review/QA and the applicable exact-head audit. This issue remains outside the currently authorized four-intent batch.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:claude-opus-5.5",
+        "color": "0052CC",
+        "description": "Implementer: Claude Opus 5.5 (harder work), reasoning xhigh"
+      },
+      {
+        "name": "review:gpt-6.1-sol",
+        "color": "0E8A8A",
+        "description": "Cross-vendor reviewer: Codex gpt-6.1-sol"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:editor",
+        "color": "BFDADC",
+        "description": "Loop editor canvas and node forms"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-15T01:22:54Z",
+    "updated_at": "2026-11-15T01:22:54Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/481",
+    "display_title": "Preserve edge records when duplicate IDs make route ownership ambiguous"
+  },
+  "bodyExact": true,
+  "classification": "DEFER-ISSUE preexisting identity scope; no implementation dispatch",
+  "searches": [
+    "decisionRouteEdges exact 0",
+    "DUPLICATE_EDGE_ID exact 0"
+  ]
+}
