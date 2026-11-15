@@ -1,0 +1,1896 @@
+diff --git a/apps/web/src/editor/Canvas.space-cards.test.tsx b/apps/web/src/editor/Canvas.space-cards.test.tsx
+new file mode 100644
+index 00000000..802542be
+--- /dev/null
++++ b/apps/web/src/editor/Canvas.space-cards.test.tsx
+@@ -0,0 +1,215 @@
++import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
++import { act, fireEvent, render, screen, within } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import type { NodeChange, ReactFlowProps } from '@xyflow/react';
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { Canvas } from './Canvas.js';
++import type { FlowNode } from './NodeCard.js';
++import { spacedPositions } from './space-cards.js';
++import { useEditorStore } from './store.js';
++import type { RoutingGeometry } from './useRouting.js';
++
++let props: ReactFlowProps<FlowNode> | undefined;
++const fitView = vi.fn(() => Promise.resolve(true));
++const geometry: RoutingGeometry = { nodes: [], preparationMs: 0, outputOrder: new Map() };
++
++vi.mock('@xyflow/react', async (importOriginal) => {
++  const actual = await importOriginal<Record<string, unknown>>();
++  return {
++    ...actual,
++    ReactFlow: (p: ReactFlowProps<FlowNode>) => {
++      props = p;
++      return <div data-testid="flow" />;
++    },
++    useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p, fitView }),
++    useStore: (selector?: { name?: string }) => (selector?.name === 'zoomOf' ? 1 : geometry),
++  };
++});
++
++const store = () => useEditorStore.getState();
++const flow = () => props as ReactFlowProps<FlowNode>;
++const CARDS = kitchenSinkLoop().nodes.length;
++const OFFER = `${CARDS} cards are stacked in one spot`;
++const offer = () => screen.queryByRole('region', { name: OFFER });
++const spaceButton = () => screen.getByRole('button', { name: 'Space cards' });
++const canvas = () => screen.getByTestId('canvas');
++const announced = () => canvas().querySelector('[aria-live="polite"]')!.textContent;
++const labels = () => store().past.map((step) => step.label);
++const positions = () => store().definition!.nodes.map((node) => node.ui ?? { x: 0, y: 0 });
++const OPENING_FIT = {
++  padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
++  minZoom: 0.5,
++};
++
++/** xyflow's measurement of every card in the current draft: `heights` by id, else 100. */
++const measure = (heights: Record<string, number> = {}) =>
++  act(() =>
++    flow().onNodesChange!(
++      store().definition!.nodes.map((node): NodeChange<FlowNode> => ({
++        type: 'dimensions',
++        id: node.id,
++        dimensions: { width: 184, height: heights[node.id] ?? 100 },
++      })),
++    ),
++  );
++
++/** The canvas as the editor page renders it: on the store's current draft. */
++function Live() {
++  const definition = useEditorStore((s) => s.definition)!;
++  return <Canvas definition={definition} issues={[]} />;
++}
++
++describe('Space cards on the canvas (#208)', () => {
++  beforeEach(() => {
++    fitView.mockClear();
++    store().load('L1', kitchenSinkLoop());
++  });
++
++  it('floats the offer over a pile, named and described, ahead of the cards in the Tab order', () => {
++    render(<Live />);
++    const region = screen.getByRole('region', { name: OFFER });
++    const space = within(region).getByRole('button', { name: 'Space cards' });
++    expect(space).toHaveAccessibleDescription(
++      'Space cards puts them in columns that follow the connections. Only card positions change; Undo puts them back.',
++    );
++    const dismiss = within(region).getByRole('button', { name: 'Dismiss suggestion' });
++    // DOM order is focus order: the action, then Dismiss, then the flow and its cards.
++    expect(space.compareDocumentPosition(dismiss) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
++    expect(
++      dismiss.compareDocumentPosition(screen.getByTestId('flow')) &
++        Node.DOCUMENT_POSITION_FOLLOWING,
++    ).toBeTruthy();
++    // Placed over the canvas rather than in the page flow, and shielded from the canvas keys.
++    expect(canvas()).toHaveClass('relative');
++    expect(region.parentElement).toHaveClass('nokey', 'absolute');
++  });
++
++  it('hides the offer while a card is dragged and for a draft that is not a pile, and offers it again on undo', () => {
++    render(<Live />);
++    act(() =>
++      flow().onNodesChange!([
++        { type: 'position', id: 'prep', position: { x: 50, y: 60 }, dragging: true },
++      ]),
++    );
++    expect(offer()).toBeNull();
++    act(() =>
++      flow().onNodesChange!([
++        { type: 'position', id: 'prep', position: { x: 50, y: 60 }, dragging: false },
++      ]),
++    );
++    expect(labels()).toEqual(['move prep']);
++    expect(offer()).toBeNull();
++    act(() => store().undo());
++    expect(offer()).not.toBeNull();
++    act(() => store().setEdgeRoute('e1', [240, 360, 420]));
++    expect(offer()).toBeNull();
++  });
++
++  it('spaces with measured heights in one step, focuses the canvas, announces Undo, and fits once', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    const original = store().definition!;
++    measure({ prep: 400 });
++    await user.click(spaceButton());
++    expect(labels()).toEqual(['space cards']);
++    expect(positions()).toEqual(
++      spacedPositions(
++        original,
++        original.nodes.map((node) => (node.id === 'prep' ? 400 : 100)),
++      ),
++    );
++    expect(canvas()).toHaveFocus();
++    expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
++    expect(offer()).toBeNull();
++    expect(fitView).toHaveBeenCalledTimes(1);
++    expect(fitView).toHaveBeenCalledWith(OPENING_FIT);
++    // Undo, redo, an ordinary edit and later measurements never fit the view again.
++    act(() => store().undo());
++    act(() => store().redo());
++    act(() => store().moveNode('prep', { x: 1, y: 1 }));
++    measure({ prep: 410 });
++    expect(fitView).toHaveBeenCalledTimes(1);
++  });
++
++  it('fits only once the spaced cards are measured, and drops the fit when an undo or a load comes first', async () => {
++    const user = userEvent.setup();
++    let view = render(<Live />);
++    await user.click(spaceButton());
++    expect(fitView).not.toHaveBeenCalled();
++    measure();
++    expect(fitView).toHaveBeenCalledTimes(1);
++
++    for (const first of [() => store().undo(), () => store().load('L1', kitchenSinkLoop())]) {
++      // A new canvas, with nothing measured yet.
++      act(() => store().load('L1', kitchenSinkLoop()));
++      view.unmount();
++      view = render(<Live />);
++      fitView.mockClear();
++      await user.click(spaceButton());
++      act(first);
++      measure();
++      expect(fitView).not.toHaveBeenCalled();
++    }
++  });
++
++  it('refuses an offer the store has moved past: nothing changes, focus is on the canvas, and it says why', async () => {
++    const user = userEvent.setup();
++    // Rendered with the pile; the store's draft then changes without this canvas rendering again.
++    render(<Canvas definition={store().definition!} issues={[]} />);
++    act(() => store().moveNode('prep', { x: 5, y: 5 }));
++    const state = store();
++    await user.click(spaceButton());
++    expect(store()).toBe(state);
++    expect(canvas()).toHaveFocus();
++    expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
++    expect(fitView).not.toHaveBeenCalled();
++  });
++
++  it('keeps keys on the offer from the canvas, and spaces once for a held Enter or Space', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    act(() => store().select('prep'));
++    act(() => spaceButton().focus());
++    // Delete and Backspace on its buttons never remove the selected card.
++    fireEvent.keyDown(spaceButton(), { key: 'Delete' });
++    fireEvent.keyDown(screen.getByRole('button', { name: 'Dismiss suggestion' }), {
++      key: 'Backspace',
++    });
++    expect(store().definition!.nodes.some((node) => node.id === 'prep')).toBe(true);
++    expect(labels()).toEqual([]);
++    // Enter held down: the first press spaces and moves focus to the canvas, where the repeats
++    // neither space again nor open or delete the selected card.
++    await user.keyboard('{Enter>4/}');
++    expect(labels()).toEqual(['space cards']);
++    expect(canvas()).toHaveFocus();
++    expect(store()).toMatchObject({ selectedNodeId: 'prep', nodeDialogOpen: false });
++    // Space held down acts once, on release.
++    act(() => store().undo());
++    act(() => spaceButton().focus());
++    await user.keyboard('[Space>4/]');
++    expect(labels()).toEqual(['space cards']);
++    expect(store().future).toEqual([]);
++    expect(canvas()).toHaveFocus();
++  });
++
++  it('dismisses the offer for this editor load only', async () => {
++    const user = userEvent.setup();
++    const view = render(<Live />);
++    await user.click(screen.getByRole('button', { name: 'Dismiss suggestion' }));
++    expect(offer()).toBeNull();
++    expect(canvas()).toHaveFocus();
++    expect(announced()).toBe('Suggestion dismissed.');
++    expect(store()).toMatchObject({ revision: 0, past: [] });
++    // Edits and undo within the load keep it dismissed.
++    act(() => store().moveNode('prep', { x: 1, y: 1 }));
++    act(() => store().undo());
++    expect(offer()).toBeNull();
++    // A load (reopening, Reload server draft) offers it again, and so does a new canvas.
++    act(() => store().load('L1', kitchenSinkLoop()));
++    expect(offer()).not.toBeNull();
++    await user.click(screen.getByRole('button', { name: 'Dismiss suggestion' }));
++    view.unmount();
++    render(<Live />);
++    expect(offer()).not.toBeNull();
++  });
++});
+diff --git a/apps/web/src/editor/EditorPage.space-cards.test.tsx b/apps/web/src/editor/EditorPage.space-cards.test.tsx
+new file mode 100644
+index 00000000..f0c8f4ed
+--- /dev/null
++++ b/apps/web/src/editor/EditorPage.space-cards.test.tsx
+@@ -0,0 +1,62 @@
++import type { LoopDefinitionInput } from '@graphgoblin/contracts';
++import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
++import { screen, waitFor } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { describe, expect, it } from 'vitest';
++import { FakeApi } from '../__fixtures__/fake-api.js';
++import { renderApp } from '../__fixtures__/render.js';
++import { loadLocalDraft } from '../drafts/local-drafts.js';
++import { sameValue } from './history.js';
++import { useEditorStore } from './store.js';
++import { AUTOSAVE_DELAY_MS } from './useAutosave.js';
++
++const SAVE_WAIT = { timeout: 4000 };
++const withoutUi = (definition: LoopDefinitionInput) => ({
++  ...definition,
++  nodes: definition.nodes.map(({ ui: _ui, ...node }) => node),
++});
++
++describe('Space cards in the editor (#208)', () => {
++  it('opens a pile without writing, saves Space cards as one ordinary edit, and saves its Undo as the original', async () => {
++    const user = userEvent.setup();
++    const api = new FakeApi();
++    const loop = api.addLoop(kitchenSinkLoop());
++    const loaded = api.draftToken(loop.id);
++    const saves = () => api.callsTo('PUT', `/loops/${loop.id}/draft`);
++    renderApp(`/loops/${loop.id}/edit`, api);
++    await screen.findByRole('heading', { name: 'kitchen-sink' });
++    const original = useEditorStore.getState().definition!;
++    // Opening writes nothing, also once autosave's delay has passed.
++    await new Promise((resolve) => setTimeout(resolve, AUTOSAVE_DELAY_MS + 200));
++    expect(saves()).toHaveLength(0);
++
++    await user.click(screen.getByRole('button', { name: 'Space cards' }));
++    // Focus stays on the canvas, not on the Undo that now names the step.
++    expect(screen.getByTestId('canvas')).toHaveFocus();
++    const undo = screen.getByRole('button', { name: 'Undo space cards' });
++    expect(undo).not.toHaveFocus();
++    expect(screen.queryByRole('button', { name: 'Space cards' })).toBeNull();
++
++    // One ordinary save of the loaded draft, differing from it only in the cards' ui.
++    await waitFor(() => expect(saves()).toHaveLength(1), SAVE_WAIT);
++    const [save] = saves();
++    expect(save!.headers.get('if-match')).toBe(`"${loaded}"`);
++    const sent = (save!.body as { definition: LoopDefinitionInput }).definition;
++    expect(sameValue(withoutUi(sent), withoutUi(original))).toBe(true);
++    // The first card stays as loaded (the stored format's explicit origin); the others moved.
++    expect(sent.nodes[0]).toEqual(original.nodes[0]);
++    expect(sent.nodes.slice(1).every((node) => node.ui && (node.ui.x || node.ui.y))).toBe(true);
++    await waitFor(async () => {
++      const copy = await loadLocalDraft(loop.id);
++      expect(copy?.synced).toBe(true);
++      expect(sameValue(copy?.definition, sent)).toBe(true);
++    }, SAVE_WAIT);
++
++    // Undo is an ordinary edit too: it saves the original draft, and the offer is back.
++    await user.click(undo);
++    await waitFor(() => expect(saves()).toHaveLength(2), SAVE_WAIT);
++    const restored = (saves()[1]!.body as { definition: LoopDefinitionInput }).definition;
++    expect(sameValue(restored, original)).toBe(true);
++    expect(screen.getByRole('button', { name: 'Space cards' })).toBeInTheDocument();
++  });
++});
+diff --git a/apps/web/src/editor/SpaceCardsOffer.tsx b/apps/web/src/editor/SpaceCardsOffer.tsx
+new file mode 100644
+index 00000000..5ee9b82b
+--- /dev/null
++++ b/apps/web/src/editor/SpaceCardsOffer.tsx
+@@ -0,0 +1,49 @@
++import { useId } from 'react';
++import { Icon } from '../components/icons/index.js';
++import { Button } from '../components/ui/index.js';
++
++/**
++ * The Space cards offer (#208, ADR-0077): a small panel at the top centre of the canvas while
++ * every card of the loop sits in one spot. It floats over the canvas (absolutely placed in the
++ * canvas root, which is `relative`), so it moves neither the toolbar nor the canvas when it comes
++ * and goes. `nokey` keeps the canvas's Delete and Backspace and xyflow's Space-to-pan away from
++ * its buttons, so a key pressed on them never removes the selected card or pans. Its DOM order is
++ * its visual order: the text, then **Space cards**, then **Dismiss suggestion**.
++ */
++export function SpaceCardsOffer({
++  count,
++  onSpace,
++  onDismiss,
++}: {
++  count: number;
++  onSpace: () => void;
++  onDismiss: () => void;
++}) {
++  const titleId = useId();
++  const helpId = useId();
++  return (
++    <div className="nokey pointer-events-none absolute inset-x-0 top-3 z-[5] flex justify-center px-4">
++      <section
++        aria-labelledby={titleId}
++        data-testid="space-cards-offer"
++        className="pointer-events-auto grid max-w-md min-w-0 gap-2 rounded-lg border border-default bg-surface-raised px-4 py-3 text-sm text-default shadow-2"
++      >
++        <p id={titleId} className="font-semibold">
++          {count} cards are stacked in one spot
++        </p>
++        <p id={helpId} className="text-xs text-muted">
++          Space cards puts them in columns that follow the connections. Only card positions change;
++          Undo puts them back.
++        </p>
++        <div className="flex items-center justify-between gap-2">
++          <Button variant="outline" size="sm" aria-describedby={helpId} onClick={onSpace}>
++            Space cards
++          </Button>
++          <Button variant="ghost" size="icon" aria-label="Dismiss suggestion" onClick={onDismiss}>
++            <Icon name="close" />
++          </Button>
++        </div>
++      </section>
++    </div>
++  );
++}
+diff --git a/apps/web/src/editor/space-cards.test.ts b/apps/web/src/editor/space-cards.test.ts
+new file mode 100644
+index 00000000..674b7e9c
+--- /dev/null
++++ b/apps/web/src/editor/space-cards.test.ts
+@@ -0,0 +1,1121 @@
++import {
++  CURRENT_DEFINITION_FORMAT,
++  LoopDefinitionSchema,
++  type LoopDefinitionInput,
++  type NodeInput,
++} from '@graphgoblin/contracts';
++import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
++import { describe, expect, it } from 'vitest';
++import { canvasPorts } from './model.js';
++import { NODE_CARD_SIZE, nodeCardHeight, type Point } from './routing-geometry.js';
++import {
++  SPACE_CARDS,
++  spaceCardsEligible,
++  spacedCardHeight,
++  spacedPositions,
++  withSpacedPositions,
++} from './space-cards.js';
++
++type Graph = Pick<LoopDefinitionInput, 'nodes' | 'edges'>;
++type Edge = Graph['edges'][number];
++
++// The layout contract, written out: 272 px between columns, 44 px between stacked cards, and a
++// card is 92 px tall plus 46 px for each output (44 px coarse row and 2 px gap) and a 2 px lead-in.
++const COLUMN = 272;
++const GAP = 44;
++const footprint = (ports: number): number => 92 + (ports > 0 ? 2 + 46 * ports : 0);
++// Cards by output count: exit 92, trigger or work 140, script 186, three-way decision 232.
++
++const trigger = (id: string): NodeInput => ({
++  id,
++  kind: 'trigger',
++  label: id,
++  config: { type: 'manual' },
++});
++const work = (id: string): NodeInput => ({
++  id,
++  kind: 'mutate',
++  label: id,
++  config: { operations: [{ op: 'delete', path: '/scratch' }] },
++});
++const exit = (id: string): NodeInput => ({ id, kind: 'exit', label: id, config: {} });
++const script = (id: string): NodeInput => ({
++  id,
++  kind: 'script',
++  label: id,
++  config: { command: 'true', exitCodeRoutes: { '1': 'retry' } },
++});
++const choice = (id: string, ports: readonly string[]): NodeInput => ({
++  id,
++  kind: 'decision',
++  label: id,
++  config: {
++    kind: 'expression',
++    jsonata: '"next"',
++    routes: ports.map((port) => ({ id: port, label: `Route ${port}` })),
++  },
++});
++const at = (node: NodeInput, x: number, y: number): NodeInput => ({ ...node, ui: { x, y } });
++const edge = (id: string, from: string, to: string, port = 'out'): Edge => ({
++  id,
++  from: { node: from, port },
++  to: { node: to },
++});
++const loop = (nodes: NodeInput[], edges: Edge[] = []): LoopDefinitionInput => ({
++  ...minimalLoop(),
++  nodes,
++  edges,
++});
++const pt = (x: number, y: number): Point => ({ x, y });
++
++function deepFreeze<T>(value: T): T {
++  if (typeof value === 'object' && value !== null && !Object.isFrozen(value)) {
++    for (const child of Object.values(value) as unknown[]) deepFreeze(child);
++    Object.freeze(value);
++  }
++  return value;
++}
++
++describe('test fixtures', () => {
++  it('have the output ports the expected layouts assume', () => {
++    expect(canvasPorts(trigger('t'))).toEqual(['out']);
++    expect(canvasPorts(work('w'))).toEqual(['out']);
++    expect(canvasPorts(exit('x'))).toEqual([]);
++    expect(canvasPorts(script('s'))).toEqual(['out', 'retry']);
++    expect(canvasPorts(choice('d', ['a', 'b', 'c']))).toEqual(['a', 'b', 'c']);
++  });
++});
++
++describe('SPACE_CARDS and spacedCardHeight', () => {
++  it('fix the column step and row gap', () => {
++    expect(SPACE_CARDS).toEqual({ column: 272, rowGap: 44 });
++    // 184 px cards leave 88 px between neighbouring columns.
++    expect(SPACE_CARDS.column - NODE_CARD_SIZE.width).toBe(88);
++  });
++
++  it('give a conservative coarse-pointer footprint by output count', () => {
++    expect(spacedCardHeight(0)).toBe(92);
++    expect(spacedCardHeight(1)).toBe(140);
++    expect(spacedCardHeight(2)).toBe(186);
++    expect(spacedCardHeight(3)).toBe(232);
++    expect(spacedCardHeight(64)).toBe(92 + 2 + 46 * 64);
++    // Never below the fine-pointer estimate the canvas uses before measuring.
++    for (let ports = 0; ports <= 64; ports += 1)
++      expect(spacedCardHeight(ports)).toBeGreaterThanOrEqual(nodeCardHeight(ports));
++  });
++});
++
++describe('spaceCardsEligible', () => {
++  const malformedUi = (ui: unknown): NodeInput['ui'] => ui as NodeInput['ui'];
++  const routed = (id: string, from: string, to: string): Edge => ({
++    ...edge(id, from, to),
++    ui: { route: [120] },
++  });
++  const zero = (id: string): NodeInput => at(work(id), 0, 0);
++
++  const cases: [string, LoopDefinitionInput, boolean][] = [
++    ['no cards', loop([]), false],
++    ['one card without a position', loop([work('a')]), false],
++    ['one card at an explicit zero', loop([zero('a')]), false],
++    ['two cards without positions', loop([work('a'), work('b')]), true],
++    ['two cards at explicit zeros', loop([zero('a'), zero('b')]), true],
++    ['an absent position beside an explicit zero', loop([work('a'), zero('b')]), true],
++    [
++      'negative zeros',
++      loop([at(work('a'), -0, -0), at(work('b'), 0, -0), at(work('c'), -0, 0)]),
++      true,
++    ],
++    ['two cards and no connections', loop([work('a'), work('b')], []), true],
++    [
++      'plain connections',
++      loop(
++        [work('a'), work('b')],
++        [edge('e1', 'a', 'b'), { ...edge('e2', 'b', 'a'), ui: undefined }],
++      ),
++      true,
++    ],
++    ['the minimal loop', minimalLoop(), true],
++    ['the kitchen sink loop', kitchenSinkLoop(), true],
++    ['a nonzero x', loop([work('a'), at(work('b'), 1, 0)]), false],
++    ['a nonzero y', loop([work('a'), at(work('b'), 0, 1)]), false],
++    ['a negative offset', loop([work('a'), at(work('b'), 0, -1)]), false],
++    ['a tiny offset', loop([work('a'), at(work('b'), 0, 1e-9)]), false],
++    ['a position that is not a number', loop([work('a'), at(work('b'), Number.NaN, 0)]), false],
++    ['the first card off the origin', loop([at(work('a'), 5, 5), work('b')]), false],
++    [
++      'a deliberate pile at one nonzero point',
++      loop([at(work('a'), 40, 40), at(work('b'), 40, 40), at(work('c'), 40, 40)]),
++      false,
++    ],
++    [
++      'a partly positioned loop',
++      loop([work('a'), work('b'), at(work('c'), 300, 0), work('d')]),
++      false,
++    ],
++    ['a position missing y', loop([work('a'), { ...work('b'), ui: malformedUi({ x: 0 }) }]), false],
++    ['a position missing x', loop([work('a'), { ...work('b'), ui: malformedUi({ y: 0 }) }]), false],
++    [
++      'a routed connection on an origin pile',
++      loop([zero('a'), zero('b')], [routed('e1', 'a', 'b')]),
++      false,
++    ],
++    [
++      'one routed connection among plain ones',
++      loop(
++        [work('a'), work('b'), work('c')],
++        [edge('e1', 'a', 'b'), routed('e2', 'b', 'c'), edge('e3', 'c', 'a')],
++      ),
++      false,
++    ],
++  ];
++
++  it.each(cases)('%s', (_name, definition, expected) => {
++    expect(spaceCardsEligible(definition)).toBe(expected);
++  });
++});
++
++describe('spacedPositions: representative layouts', () => {
++  it('places nothing for no cards and the origin for one card', () => {
++    expect(spacedPositions(loop([]))).toEqual([]);
++    expect(spacedPositions(loop([work('a')]))).toEqual([pt(0, 0)]);
++  });
++
++  it('puts the minimal loop exit one column right of its trigger', () => {
++    expect(spacedPositions(minimalLoop())).toEqual([pt(0, 0), pt(272, 0)]);
++  });
++
++  it('lays out the kitchen sink loop by connection depth', () => {
++    // Two triggers share column 0 (a trigger is 140 tall: 140 + 44 = 184). The chain
++    // prep, infer, check, decide runs right, the back edge from check changes nothing, and
++    // decide's two routes share a column, stacked in edge order.
++    expect(spacedPositions(kitchenSinkLoop())).toEqual([
++      pt(0, 0), // start
++      pt(0, 184), // nightly
++      pt(272, 0), // prep
++      pt(544, 0), // infer
++      pt(816, 0), // check
++      pt(1088, 0), // decide
++      pt(1360, 0), // sub
++      pt(1360, 184), // approve
++      pt(1632, 0), // poll
++      pt(1904, 0), // done
++    ]);
++  });
++
++  it('runs a chain left to right', () => {
++    const chain = loop(
++      [trigger('t'), work('a'), work('b'), exit('c')],
++      [edge('e1', 't', 'a'), edge('e2', 'a', 'b'), edge('e3', 'b', 'c')],
++    );
++    expect(spacedPositions(chain)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0), pt(816, 0)]);
++  });
++
++  it('stacks a branch in the order its connections are stored, not the card order', () => {
++    const branch = loop(
++      [trigger('t'), choice('d', ['a', 'b', 'c']), work('l1'), work('l2'), work('l3')],
++      [
++        edge('e1', 't', 'd'),
++        edge('e2', 'd', 'l2', 'b'),
++        edge('e3', 'd', 'l3', 'c'),
++        edge('e4', 'd', 'l1', 'a'),
++      ],
++    );
++    expect(spacedPositions(branch)).toEqual([
++      pt(0, 0),
++      pt(272, 0),
++      pt(544, 368), // l1: third discovered, below two 140 tall cards
++      pt(544, 0), // l2
++      pt(544, 184), // l3
++    ]);
++  });
++
++  it('clears taller cards: a stack of cards with more outputs is spaced further apart', () => {
++    const tall = loop(
++      [trigger('t'), script('s1'), script('s2'), choice('d', ['a', 'b', 'c']), work('w')],
++      [edge('e1', 't', 's1'), edge('e2', 't', 'd'), edge('e3', 't', 's2'), edge('e4', 't', 'w')],
++    );
++    // Column 1 in discovery order is s1 (186 tall), d (232), s2 (186), w (140), each followed by 44.
++    expect(spacedPositions(tall)).toEqual([
++      pt(0, 0), // t
++      pt(272, 0), // s1
++      pt(272, 506), // s2: 186 + 44 + 232 + 44
++      pt(272, 230), // d: 186 + 44
++      pt(272, 736), // w: 506 + 186 + 44
++    ]);
++  });
++
++  it('places a merge once, below the first parent that reaches it', () => {
++    const merge = loop(
++      [trigger('t'), work('a'), work('b'), exit('m')],
++      [edge('e1', 't', 'a'), edge('e2', 'a', 'm'), edge('e3', 't', 'b'), edge('e4', 'b', 'm')],
++    );
++    expect(spacedPositions(merge)).toEqual([pt(0, 0), pt(272, 0), pt(272, 184), pt(544, 0)]);
++  });
++
++  it('uses the shortest route when a shortcut and a long path reach one card', () => {
++    const shortcut = loop(
++      [trigger('t'), work('a'), work('b'), exit('d')],
++      [edge('e1', 't', 'a'), edge('e2', 'a', 'b'), edge('e3', 'b', 'd'), edge('e4', 't', 'd')],
++    );
++    expect(spacedPositions(shortcut)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0), pt(272, 184)]);
++  });
++
++  it('finishes on a cycle and keeps the forward columns', () => {
++    const cycle = loop(
++      [trigger('t'), work('a'), work('b')],
++      [edge('e1', 't', 'a'), edge('e2', 'a', 'b'), edge('e3', 'b', 'a')],
++    );
++    expect(spacedPositions(cycle)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0)]);
++  });
++
++  it('ignores a self-loop', () => {
++    const plain = loop([trigger('t'), work('a')], [edge('e1', 't', 'a')]);
++    const looped = loop([trigger('t'), work('a')], [edge('e1', 't', 'a'), edge('e2', 'a', 'a')]);
++    expect(spacedPositions(looped)).toEqual(spacedPositions(plain));
++    expect(spacedPositions(looped)).toEqual([pt(0, 0), pt(272, 0)]);
++  });
++
++  it('starts every trigger in column 0, stacked in card order', () => {
++    const triggers = loop(
++      [trigger('t1'), trigger('t2'), work('a'), work('b')],
++      [edge('e1', 't1', 'a'), edge('e2', 't2', 'b')],
++    );
++    expect(spacedPositions(triggers)).toEqual([pt(0, 0), pt(0, 184), pt(272, 0), pt(272, 184)]);
++  });
++
++  it('starts from the cards nothing leads to when there is no trigger', () => {
++    const roots = loop(
++      [work('x'), work('y'), exit('z')],
++      [edge('e1', 'x', 'z'), edge('e2', 'y', 'z')],
++    );
++    expect(spacedPositions(roots)).toEqual([pt(0, 0), pt(0, 184), pt(272, 0)]);
++  });
++
++  it('starts all those cards together, so a later one reaches a shared card by its shorter path', () => {
++    // No trigger, so a and b are both entries, and a comes first. b -> c is one hop and
++    // a -> x -> c is two, so c is in column 1. Starting from a alone would put c in column 2.
++    const sources = loop(
++      [work('a'), work('x'), exit('c'), work('b')],
++      [edge('e1', 'a', 'x'), edge('e2', 'x', 'c'), edge('e3', 'b', 'c')],
++    );
++    expect(spacedPositions(sources)).toEqual([
++      pt(0, 0), // a
++      pt(272, 0), // x
++      pt(272, 184), // c: column 1, below x
++      pt(0, 184), // b: column 0, below a
++    ]);
++  });
++
++  it('starts from the first card when every card is led to', () => {
++    // a -> b -> c -> a with the cycle entered at the first card of the array.
++    const ring = loop(
++      [work('c'), work('a'), work('b')],
++      [edge('e1', 'a', 'b'), edge('e2', 'b', 'c'), edge('e3', 'c', 'a')],
++    );
++    expect(spacedPositions(ring)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0)]);
++  });
++
++  it('prefers a card nothing leads to over the first card when there is no trigger', () => {
++    // c leads into the a <-> b cycle, so c is the only entry even though a is first.
++    const fed = loop(
++      [work('a'), work('b'), work('c')],
++      [edge('e1', 'a', 'b'), edge('e2', 'b', 'a'), edge('e3', 'c', 'a')],
++    );
++    // c at column 0, a at 1, b at 2, then shifted so a (the first card) is the origin.
++    expect(spacedPositions(fed)).toEqual([pt(0, 0), pt(272, 0), pt(-272, 0)]);
++  });
++
++  it('puts disconnected cards in column 0 beneath the entries, in card order', () => {
++    const parts = loop(
++      [trigger('t'), work('a'), work('p'), work('q'), exit('r')],
++      [edge('e1', 't', 'a'), edge('e2', 'p', 'q')],
++    );
++    expect(spacedPositions(parts)).toEqual([
++      pt(0, 0), // t
++      pt(272, 0), // a
++      pt(0, 184), // p starts the first leftover search
++      pt(272, 184), // q: below a in column 1
++      pt(0, 368), // r
++    ]);
++  });
++
++  it('starts each unreached part at its first card in array order', () => {
++    // p leads to q, but q comes first in the array, so q starts its own search at column 0.
++    const parts = loop([trigger('t'), work('q'), work('p')], [edge('e1', 'p', 'q')]);
++    expect(spacedPositions(parts)).toEqual([pt(0, 0), pt(0, 184), pt(0, 368)]);
++  });
++
++  it('shifts so the first card is the origin, even when it sits deep in the graph', () => {
++    const reversed = loop([exit('done'), trigger('start')], [edge('e1', 'start', 'done')]);
++    expect(spacedPositions(reversed)).toEqual([pt(0, 0), pt(-272, 0)]);
++
++    const lower = loop([work('m'), trigger('t')]);
++    expect(spacedPositions(lower)).toEqual([pt(0, 0), pt(0, -184)]);
++  });
++
++  it('shifts both axes together relative to the first card', () => {
++    // Triggers t2, t1 enter in that order; b leads from t2 and a from t1. a is the first card.
++    const mixed = loop(
++      [work('a'), trigger('t2'), trigger('t1'), work('b')],
++      [edge('e1', 't1', 'a'), edge('e2', 't2', 'b')],
++    );
++    // Absolute: t2 (0,0), t1 (0,184), b (272,0), a (272,184). Relative to a:
++    expect(spacedPositions(mixed)).toEqual([pt(0, 0), pt(-272, -184), pt(-272, 0), pt(0, -184)]);
++  });
++
++  it('counts the ports the canvas draws on a half-edited decision', () => {
++    // One route is not a valid decision, but the canvas still draws its handle, so a connection
++    // from it is drawn and counts.
++    const half = loop(
++      [trigger('t'), choice('d', ['solo']), exit('x')],
++      [edge('e1', 't', 'd'), edge('e2', 'd', 'x', 'solo')],
++    );
++    expect(spacedPositions(half)).toEqual([pt(0, 0), pt(272, 0), pt(544, 0)]);
++  });
++});
++
++describe('spacedPositions: ambiguous and invalid drafts', () => {
++  it('places every card, and invents no path through an id used twice', () => {
++    const ambiguous = loop(
++      [trigger('t'), work('d'), work('d'), work('b')],
++      [edge('e1', 't', 'd'), edge('e2', 'd', 'b')],
++    );
++    const before = structuredClone(ambiguous);
++    // Neither connection names one card, so nothing is adjacent: each card after the trigger
++    // starts its own search in column 0.
++    expect(spacedPositions(ambiguous)).toEqual([pt(0, 0), pt(0, 184), pt(0, 368), pt(0, 552)]);
++    expect(ambiguous).toEqual(before);
++
++    // The same connections do count once the ids are told apart: this is not a vacuous result.
++    const resolved = loop(
++      [trigger('t'), work('d'), work('d2'), work('b')],
++      [edge('e1', 't', 'd'), edge('e2', 'd', 'b')],
++    );
++    expect(spacedPositions(resolved)).toEqual([pt(0, 0), pt(272, 0), pt(0, 184), pt(544, 0)]);
++  });
++
++  it('still enters every trigger at column 0 when trigger ids repeat', () => {
++    const twins = loop([trigger('t'), trigger('t'), work('a')], [edge('e1', 't', 'a')]);
++    expect(spacedPositions(twins)).toEqual([pt(0, 0), pt(0, 184), pt(0, 368)]);
++  });
++
++  it('ignores both connections that share an id', () => {
++    const shared = loop(
++      [trigger('t'), work('a'), work('b')],
++      [edge('e', 't', 'a'), edge('e', 'a', 'b'), edge('f', 't', 'b')],
++    );
++    // Only f counts: b is in column 1, and a is an unreached card below the trigger.
++    expect(spacedPositions(shared)).toEqual([pt(0, 0), pt(0, 184), pt(272, 0)]);
++
++    const unique = loop(
++      [trigger('t'), work('a'), work('b')],
++      [edge('e1', 't', 'a'), edge('e2', 'a', 'b'), edge('f', 't', 'b')],
++    );
++    expect(spacedPositions(unique)).toEqual([pt(0, 0), pt(272, 0), pt(272, 184)]);
++  });
++
++  const base = (): Graph => ({
++    nodes: [trigger('t'), work('a'), work('b')],
++    edges: [edge('e1', 't', 'a')],
++  });
++  const baseline = (): Point[] => spacedPositions(base());
++
++  it('has a baseline in which b is an unreached card', () => {
++    expect(baseline()).toEqual([pt(0, 0), pt(272, 0), pt(0, 184)]);
++  });
++
++  const notCounted: [string, Edge[], Edge][] = [
++    [
++      'a repeated connection id',
++      [edge('dup', 'a', 'b'), edge('dup', 'a', 'b')],
++      edge('ok', 'a', 'b'),
++    ],
++    ['a port the source does not have', [edge('x', 'a', 'b', 'gone')], edge('x', 'a', 'b')],
++  ];
++  it.each(notCounted)('does not count %s', (_name, invalid, valid) => {
++    const { nodes, edges } = base();
++    expect(spacedPositions({ nodes, edges: [...edges, ...invalid] })).toEqual(baseline());
++    // The same connection in a valid form moves b right, so the check above bites.
++    expect(spacedPositions({ nodes, edges: [...edges, valid] })[2]).toEqual(pt(544, 0));
++  });
++
++  it('counts a connection only from a port its source draws', () => {
++    const nodes = [trigger('t'), choice('d', ['yes', 'no']), exit('b'), script('s'), exit('c')];
++    const graph = (edges: Edge[]): Graph => ({ nodes, edges: [edge('e1', 't', 'd'), ...edges] });
++    // A decision has no "out" port, and an exit has none at all.
++    expect(spacedPositions(graph([edge('x', 'd', 'b')]))).toEqual(spacedPositions(graph([])));
++    expect(spacedPositions(graph([edge('x', 'b', 'c')]))).toEqual(spacedPositions(graph([])));
++    expect(spacedPositions(graph([edge('x', 's', 'c', 'bogus')]))).toEqual(
++      spacedPositions(graph([])),
++    );
++    // Its real ports do count, including a script's exit-code label.
++    expect(spacedPositions(graph([edge('x', 'd', 'b', 'yes')]))[2]).toEqual(pt(544, 0));
++    const fromScript = spacedPositions(graph([edge('x', 't', 's'), edge('y', 's', 'c', 'retry')]));
++    expect(fromScript[3]).toEqual(pt(272, 230)); // s: below the two-output decision, 186 + 44
++    expect(fromScript[4]).toEqual(pt(544, 0)); // c: reached through the script's "retry" port
++  });
++
++  const harmless: [string, Edge][] = [
++    ['a missing source', edge('x', 'ghost', 'b')],
++    ['a missing target', edge('x', 'a', 'ghost')],
++    ['a trigger target', edge('x', 'a', 't')],
++    ['a self-loop', edge('x', 'a', 'a')],
++    ['a self-loop on a trigger', edge('x', 't', 't')],
++  ];
++  it.each(harmless)('does not change positions for %s', (_name, extra) => {
++    const { nodes, edges } = base();
++    expect(spacedPositions({ nodes, edges: [...edges, extra] })).toEqual(baseline());
++    expect(spacedPositions({ nodes, edges: [extra, ...edges] })).toEqual(baseline());
++  });
++
++  it('does not let a connection that cannot count stop a card being an entry', () => {
++    // With no trigger, the cards nothing leads to are the entries. A connection that is not
++    // counted must not take that away: x, y and z all stay entries.
++    const nodes = [work('x'), work('y'), work('z')];
++    const plain = spacedPositions({ nodes, edges: [] });
++    const junk = spacedPositions({
++      nodes,
++      edges: [edge('e1', 'ghost', 'y'), edge('e2', 'x', 'x'), edge('e3', 'x', 'z', 'gone')],
++    });
++    expect(junk).toEqual(plain);
++    expect(plain).toEqual([pt(0, 0), pt(0, 184), pt(0, 368)]);
++  });
++});
++
++describe('spacedPositions: measured heights', () => {
++  // Three triggers stack in column 0, each 140 tall unless measured.
++  const three = loop([trigger('t1'), trigger('t2'), trigger('t3')]);
++  const second = (heights?: readonly (number | undefined)[]): number =>
++    spacedPositions(three, heights)[1]!.y;
++  const third = (heights?: readonly (number | undefined)[]): number =>
++    spacedPositions(three, heights)[2]!.y;
++
++  it('stacks by the footprint when nothing is measured', () => {
++    expect(second()).toBe(184);
++    expect(second([])).toBe(184);
++    expect(third()).toBe(368);
++  });
++
++  it('uses a measured height that is larger than the footprint', () => {
++    expect(second([300])).toBe(344);
++    expect(second([141])).toBe(185);
++    // Only the card's own height moves what is below it.
++    expect(third([undefined, 300])).toBe(184 + 300 + 44);
++    expect(third([300, 300])).toBe(344 + 300 + 44);
++  });
++
++  it('never goes below the footprint', () => {
++    expect(second([140])).toBe(184);
++    expect(second([139])).toBe(184);
++    expect(second([1])).toBe(184);
++  });
++
++  const invalid: [string, number | undefined][] = [
++    ['NaN', Number.NaN],
++    ['Infinity', Number.POSITIVE_INFINITY],
++    ['-Infinity', Number.NEGATIVE_INFINITY],
++    ['zero', 0],
++    ['negative zero', -0],
++    ['a negative height', -300],
++    ['a missing entry', undefined],
++  ];
++  it.each(invalid)('ignores %s', (_name, measured) => {
++    expect(spacedPositions(three, [measured])).toEqual(spacedPositions(three));
++    expect(spacedPositions(three, [measured, measured, measured])).toEqual(spacedPositions(three));
++    // Ignoring one entry leaves a valid neighbour in force.
++    expect(third([measured, 300])).toBe(184 + 300 + 44);
++  });
++
++  it('ignores a hole in the list and a value that is not a number', () => {
++    const sparse: (number | undefined)[] = [];
++    sparse[1] = 300; // index 0 is a hole
++    expect(spacedPositions(three, sparse)).toEqual([pt(0, 0), pt(0, 184), pt(0, 528)]);
++    expect(second(['300' as unknown as number])).toBe(184);
++  });
++
++  it('passes a fractional measurement through unrounded', () => {
++    expect(second([150.5])).toBe(194.5);
++  });
++
++  it('ignores entries past the last card and never changes columns', () => {
++    expect(spacedPositions(three, [undefined, undefined, undefined, 999, 999])).toEqual(
++      spacedPositions(three),
++    );
++    const chain = loop([trigger('t'), work('a')], [edge('e1', 't', 'a')]);
++    expect(spacedPositions(chain, [500, 500]).map((p) => p.x)).toEqual([0, 272]);
++  });
++
++  it('is indexed by position, so cards that share an id keep their own measurements', () => {
++    const twins = loop([trigger('t'), work('x'), work('x')]);
++    expect(spacedPositions(twins, [undefined, 300, 200])).toEqual([
++      pt(0, 0),
++      pt(0, 184),
++      pt(0, 528),
++    ]);
++    expect(spacedPositions(twins, [undefined, 200, 300])).toEqual([
++      pt(0, 0),
++      pt(0, 184),
++      pt(0, 428),
++    ]);
++  });
++
++  it('moves the origin shift with the first card when it is measured', () => {
++    // m is first, below t. Measuring t pushes m further down, but m stays the origin.
++    const lower = loop([work('m'), trigger('t')]);
++    expect(spacedPositions(lower, [undefined, 300])).toEqual([pt(0, 0), pt(0, -344)]);
++  });
++});
++
++describe('withSpacedPositions', () => {
++  it('writes only ui on the other cards and keeps everything else by identity', () => {
++    const definition = deepFreeze(kitchenSinkLoop());
++    const positions = spacedPositions(definition);
++    const spaced = withSpacedPositions(definition, positions);
++
++    expect(spaced).not.toBe(definition);
++    expect(spaced.nodes).not.toBe(definition.nodes);
++    expect(spaced.nodes).toHaveLength(definition.nodes.length);
++    expect(spaced.edges).toBe(definition.edges);
++    expect(spaced.settings).toBe(definition.settings);
++    expect(spaced.variables).toBe(definition.variables);
++    expect(spaced.name).toBe(definition.name);
++    expect(spaced.description).toBe(definition.description);
++    expect(spaced.schemaVersion).toBe(definition.schemaVersion);
++
++    definition.nodes.forEach((original, index) => {
++      const node = spaced.nodes[index]!;
++      if (index === 0) {
++        expect(node).toBe(original);
++        return;
++      }
++      expect(node.ui).toEqual(positions[index]);
++      expect(node.ui).not.toBe(positions[index]);
++      expect(node.id).toBe(original.id);
++      expect(node.kind).toBe(original.kind);
++      expect(node.label).toBe(original.label);
++      expect(node.config).toBe(original.config);
++      // The fixture's cards have no ui, so the only new key is ui.
++      expect(Object.keys(node).sort()).toEqual(['config', 'id', 'kind', 'label', 'ui']);
++    });
++  });
++
++  it('keeps the first card exactly as it is, including an absent ui', () => {
++    const definition = kitchenSinkLoop();
++    expect('ui' in definition.nodes[0]!).toBe(false);
++    const spaced = withSpacedPositions(definition, spacedPositions(definition));
++    expect(spaced.nodes[0]).toBe(definition.nodes[0]);
++    expect('ui' in spaced.nodes[0]!).toBe(false);
++
++    const explicit = loop([at(work('a'), -0, 0), work('b')]);
++    const next = withSpacedPositions(explicit, [pt(5, 5), pt(272, 0)]);
++    expect(next.nodes[0]).toBe(explicit.nodes[0]);
++    expect(Object.is(next.nodes[0]!.ui!.x, -0)).toBe(true);
++  });
++
++  it('leaves the input untouched', () => {
++    const definition = deepFreeze(minimalLoop());
++    const snapshot = structuredClone(definition);
++    const spaced = withSpacedPositions(definition, [pt(0, 0), pt(272, 0)]);
++    expect(spaced.nodes[0]).toBe(definition.nodes[0]);
++    expect(spaced.nodes[1]!.ui).toEqual(pt(272, 0));
++    expect(definition).toEqual(snapshot);
++    expect('ui' in definition.nodes[1]!).toBe(false);
++  });
++
++  it('refuses positions that are not one per card, before returning or changing anything', () => {
++    for (const definition of [deepFreeze(minimalLoop()), deepFreeze(kitchenSinkLoop())]) {
++      const snapshot = structuredClone(definition);
++      const full = spacedPositions(definition);
++      const cards = definition.nodes.length;
++      expect(full).toHaveLength(cards);
++
++      // Too few would space only some cards, and too many means the positions are for another loop.
++      const wrongCounts = [[], full.slice(0, cards - 1), [...full, pt(9 * COLUMN, 0)]];
++      for (const positions of wrongCounts) {
++        expect(() => withSpacedPositions(definition, positions)).toThrow(
++          `one position for each of the ${cards} cards, but got ${positions.length}`,
++        );
++      }
++      expect(definition).toEqual(snapshot);
++
++      // The exact count is still accepted, so the refusal is about the count alone.
++      expect(withSpacedPositions(definition, full).nodes).toHaveLength(cards);
++    }
++  });
++
++  it('copies the position values, so later edits of the positions do not reach the loop', () => {
++    const positions = [pt(0, 0), pt(272, 0)];
++    const spaced = withSpacedPositions(minimalLoop(), positions);
++    positions[1]!.x = 9999;
++    expect(spaced.nodes[1]!.ui).toEqual(pt(272, 0));
++  });
++
++  it('turns an eligible loop into one that can no longer be spaced', () => {
++    for (const definition of [minimalLoop(), kitchenSinkLoop()]) {
++      expect(spaceCardsEligible(definition)).toBe(true);
++      const spaced = withSpacedPositions(definition, spacedPositions(definition));
++      expect(spaceCardsEligible(spaced)).toBe(false);
++      // Every card but the anchor now has a distinct, nonzero position.
++      const shown = spaced.nodes.map((node) => `${node.ui?.x ?? 0},${node.ui?.y ?? 0}`);
++      expect(new Set(shown).size).toBe(shown.length);
++    }
++  });
++
++  it('differs from the original only in node ui when everything else is compared', () => {
++    const definition = kitchenSinkLoop();
++    const spaced = withSpacedPositions(definition, spacedPositions(definition));
++    const withoutUi = (d: LoopDefinitionInput): unknown =>
++      JSON.parse(
++        JSON.stringify(d, (key, value: unknown) => (key === 'ui' ? undefined : value)),
++      ) as unknown;
++    expect(withoutUi(spaced)).toEqual(withoutUi(definition));
++    expect(LoopDefinitionSchema.safeParse(spaced).success).toBe(true);
++  });
++});
++
++describe('purity', () => {
++  it('does not modify frozen input and returns fresh values each time', () => {
++    const definition = deepFreeze(kitchenSinkLoop());
++    const heights = Object.freeze([undefined, 400, Number.NaN, 150]);
++    expect(() => spaceCardsEligible(definition)).not.toThrow();
++    const first = spacedPositions(definition, heights);
++    const second = spacedPositions(definition, heights);
++    expect(second).toEqual(first);
++    expect(second).not.toBe(first);
++    expect(second[0]).not.toBe(first[0]);
++  });
++
++  it('gives the same result for the same graph and heights', () => {
++    for (let seed = 1; seed <= 30; seed += 1) {
++      const { definition } = randomGraph(seed);
++      const heights = randomHeights(seed, definition.nodes.length);
++      expect(spacedPositions(definition, heights)).toEqual(spacedPositions(definition, heights));
++      expect(spacedPositions(structuredClone(definition), heights)).toEqual(
++        spacedPositions(definition, heights),
++      );
++    }
++  });
++
++  it('never returns a negative zero', () => {
++    for (let seed = 1; seed <= 60; seed += 1) {
++      const { definition } = randomGraph(seed);
++      for (const p of spacedPositions(definition)) {
++        expect(Object.is(p.x, -0)).toBe(false);
++        expect(Object.is(p.y, -0)).toBe(false);
++      }
++    }
++  });
++});
++
++describe('ids', () => {
++  const rename = (definition: Graph, to: (id: string) => string): Graph => ({
++    nodes: definition.nodes.map((node) => ({ ...node, id: to(node.id) })),
++    edges: definition.edges.map((e) => ({
++      ...e,
++      id: to(e.id),
++      from: { ...e.from, node: to(e.from.node) },
++      to: { ...e.to, node: to(e.to.node) },
++    })),
++  });
++  const renames: [string, (id: string) => string][] = [
++    ['reversed text', (id) => `r_${[...id].reverse().join('')}`],
++    ['uppercase with a suffix', (id) => `${id.toUpperCase()}-renamed`],
++    ['one shared prefix that sorts last', (id) => `zz-${id}`],
++  ];
++
++  it.each(renames)('does not move any card when ids are renamed consistently: %s', (_name, to) => {
++    const kitchen = kitchenSinkLoop();
++    expect(spacedPositions(rename(kitchen, to))).toEqual(spacedPositions(kitchen));
++    for (let seed = 1; seed <= 60; seed += 1) {
++      const { definition } = randomGraph(seed);
++      const heights = randomHeights(seed, definition.nodes.length);
++      expect(spacedPositions(rename(definition, to), heights)).toEqual(
++        spacedPositions(definition, heights),
++      );
++    }
++  });
++
++  it('does not order cards by id: a reversed id order gives the same layout', () => {
++    const named = (ids: string[]): Graph => ({
++      nodes: [trigger(ids[0]!), work(ids[1]!), work(ids[2]!), work(ids[3]!)],
++      edges: [
++        edge('e1', ids[0]!, ids[3]!),
++        edge('e2', ids[0]!, ids[1]!),
++        edge('e3', ids[1]!, ids[2]!),
++      ],
++    });
++    expect(spacedPositions(named(['a', 'b', 'c', 'd']))).toEqual(
++      spacedPositions(named(['d', 'c', 'b', 'a'])),
++    );
++  });
++});
++
++// ---------------------------------------------------------------------------
++// Generated drafts
++// ---------------------------------------------------------------------------
++
++interface Generated {
++  definition: LoopDefinitionInput;
++  /** Output port names of each card by index, from how it was built. */
++  ports: string[][];
++}
++
++function random(seed: number): () => number {
++  let state = seed >>> 0;
++  return () => {
++    state = (state + 0x6d2b79f5) >>> 0;
++    let t = state;
++    t = Math.imul(t ^ (t >>> 15), t | 1);
++    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
++    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
++  };
++}
++
++/** A draft with duplicate ids, repeated connection ids, missing endpoints and stale ports. */
++function randomGraph(seed: number): Generated {
++  const rand = random(seed);
++  const int = (below: number): number => Math.floor(rand() * below);
++  const count = 2 + int(28);
++  // Odd seeds enter through a trigger that is also the first card, so columns are absolute.
++  const nodes: NodeInput[] = [];
++  const ports: string[][] = [];
++  for (let index = 0; index < count; index += 1) {
++    const id = index > 0 && rand() < 0.08 ? nodes[index - 1]!.id : `n${index}`;
++    const roll = index === 0 && seed % 2 === 1 ? 0 : rand();
++    if (roll < 0.15) {
++      nodes.push(trigger(id));
++      ports.push(['out']);
++    } else if (roll < 0.5) {
++      nodes.push(work(id));
++      ports.push(['out']);
++    } else if (roll < 0.65) {
++      nodes.push(exit(id));
++      ports.push([]);
++    } else if (roll < 0.9) {
++      const routes = Array.from({ length: 2 + int(3) }, (_, r) => `r${r}`);
++      nodes.push(choice(id, routes));
++      ports.push(routes);
++    } else {
++      nodes.push(script(id));
++      ports.push(['out', 'retry']);
++    }
++  }
++  const edges: Edge[] = [];
++  const total = int(count * 2.5);
++  for (let k = 0; k < total; k += 1) {
++    const source = int(count);
++    const own = ports[source]!;
++    const port = rand() < 0.88 && own.length > 0 ? own[int(own.length)]! : 'bogus';
++    const from = rand() < 0.03 ? 'ghost' : nodes[source]!.id;
++    const to = rand() < 0.06 ? 'ghost' : nodes[int(count)]!.id;
++    const id = k > 0 && rand() < 0.05 ? edges[int(k)]!.id : `e${k}`;
++    edges.push(edge(id, from, to, port));
++  }
++  return { definition: loop(nodes, edges), ports };
++}
++
++function randomHeights(seed: number, count: number): (number | undefined)[] {
++  const rand = random(seed * 7919);
++  const options = [undefined, undefined, Number.NaN, Number.POSITIVE_INFINITY, 0, -20];
++  // Half-pixel steps keep every sum exact, so clearance can be compared without a tolerance.
++  return Array.from({ length: count }, () =>
++    rand() < 0.5 ? 100 + Math.floor(rand() * 800) / 2 : options[Math.floor(rand() * 6)],
++  );
++}
++
++/** What the card needs: the footprint, or a finite measurement above it. */
++function boxHeight(ports: number, measured: number | undefined): number {
++  const base = footprint(ports);
++  return measured !== undefined && Number.isFinite(measured) && measured > base ? measured : base;
++}
++
++/** Cards that overlap, or sit closer than the column gap and row gap, as readable strings. */
++function crowding(positions: readonly Point[], heights: readonly number[]): string[] {
++  const problems: string[] = [];
++  for (let i = 0; i < positions.length; i += 1) {
++    for (let j = i + 1; j < positions.length; j += 1) {
++      const [a, b] = [positions[i]!, positions[j]!];
++      if (a.x !== b.x) {
++        if (Math.abs(a.x - b.x) < NODE_CARD_SIZE.width + 88)
++          problems.push(`${i} and ${j}: columns too close`);
++        continue;
++      }
++      const [upper, lower, upperHeight] = a.y <= b.y ? [a, b, heights[i]!] : [b, a, heights[j]!];
++      if (lower.y < upper.y + upperHeight + GAP) problems.push(`${i} and ${j}: ${a.y} vs ${b.y}`);
++    }
++  }
++  return problems;
++}
++
++/** The connections the canvas draws between cards that each have one id, by the layout contract. */
++function countedEdges({ definition, ports }: Generated): Edge[] {
++  const nodeCounts = new Map<string, number>();
++  for (const node of definition.nodes) nodeCounts.set(node.id, (nodeCounts.get(node.id) ?? 0) + 1);
++  const edgeCounts = new Map<string, number>();
++  for (const e of definition.edges) edgeCounts.set(e.id, (edgeCounts.get(e.id) ?? 0) + 1);
++  const indexOf = (id: string): number =>
++    nodeCounts.get(id) === 1 ? definition.nodes.findIndex((node) => node.id === id) : -1;
++  return definition.edges.filter((e) => {
++    const from = indexOf(e.from.node);
++    const to = indexOf(e.to.node);
++    return (
++      edgeCounts.get(e.id) === 1 &&
++      from >= 0 &&
++      to >= 0 &&
++      from !== to &&
++      definition.nodes[to]!.kind !== 'trigger' &&
++      ports[from]!.includes(e.from.port)
++    );
++  });
++}
++
++/** Shortest hop count from any trigger, by repeated relaxation (not a breadth-first search). */
++function distancesFromTriggers(generated: Generated): (number | undefined)[] {
++  const { definition } = generated;
++  const counted = countedEdges(generated);
++  const unique = (id: string): number => {
++    const matches = definition.nodes.filter((node) => node.id === id);
++    return matches.length === 1 ? definition.nodes.indexOf(matches[0]!) : -1;
++  };
++  const distance: (number | undefined)[] = definition.nodes.map((node) =>
++    node.kind === 'trigger' ? 0 : undefined,
++  );
++  for (let changed = true; changed;) {
++    changed = false;
++    for (const e of counted) {
++      const from = distance[unique(e.from.node)];
++      const to = unique(e.to.node);
++      if (from !== undefined && (distance[to] === undefined || from + 1 < distance[to])) {
++        distance[to] = from + 1;
++        changed = true;
++      }
++    }
++  }
++  return distance;
++}
++
++describe('spacedPositions: invariants over generated drafts', () => {
++  const seeds = Array.from({ length: 150 }, (_, k) => k + 1);
++
++  it('places every card exactly once, on its own spot, with the first card at the origin', () => {
++    for (const seed of seeds) {
++      const { definition } = randomGraph(seed);
++      const positions = spacedPositions(definition);
++      expect(positions).toHaveLength(definition.nodes.length);
++      expect(positions[0]).toEqual(pt(0, 0));
++      for (const p of positions) {
++        expect(Number.isFinite(p.x)).toBe(true);
++        expect(Number.isFinite(p.y)).toBe(true);
++        // Columns are whole steps from the first card's column (abs: -272 % 272 is -0).
++        expect(Math.abs(p.x % COLUMN)).toBe(0);
++      }
++      const spots = positions.map((p) => `${p.x},${p.y}`);
++      expect(new Set(spots).size).toBe(spots.length);
++    }
++  });
++
++  it('never overlaps cards or crowds them closer than the gaps, by the footprint', () => {
++    for (const seed of seeds) {
++      const generated = randomGraph(seed);
++      const heights = generated.ports.map((p) => boxHeight(p.length, undefined));
++      expect(crowding(spacedPositions(generated.definition), heights)).toEqual([]);
++    }
++  });
++
++  it('keeps that clearance for whatever valid measured heights are larger', () => {
++    for (const seed of seeds) {
++      const generated = randomGraph(seed);
++      const measured = randomHeights(seed, generated.ports.length);
++      const heights = generated.ports.map((p, i) => boxHeight(p.length, measured[i]));
++      expect(crowding(spacedPositions(generated.definition, measured), heights)).toEqual([]);
++    }
++  });
++
++  it('keeps every card in its column when measurements are added', () => {
++    for (const seed of seeds) {
++      const { definition } = randomGraph(seed);
++      const plain = spacedPositions(definition);
++      const measured = spacedPositions(definition, randomHeights(seed, definition.nodes.length));
++      expect(measured.map((p) => p.x)).toEqual(plain.map((p) => p.x));
++    }
++  });
++
++  it('puts each card reachable from a trigger at its shortest hop count from a trigger', () => {
++    for (const seed of seeds.filter((s) => s % 2 === 1)) {
++      const generated = randomGraph(seed);
++      expect(generated.definition.nodes[0]!.kind).toBe('trigger');
++      const positions = spacedPositions(generated.definition);
++      distancesFromTriggers(generated).forEach((distance, index) => {
++        const column = positions[index]!.x / COLUMN;
++        if (distance === undefined) expect(column).toBeGreaterThanOrEqual(0);
++        else expect(column).toBe(distance);
++      });
++    }
++  });
++
++  it('is the same as dropping every connection that cannot be drawn', () => {
++    for (const seed of seeds) {
++      const generated = randomGraph(seed);
++      const { definition } = generated;
++      const drawable = { nodes: definition.nodes, edges: countedEdges(generated) };
++      expect(spacedPositions(definition)).toEqual(spacedPositions(drawable));
++    }
++  });
++
++  it('is not changed by the edge order of connections that do not count', () => {
++    for (const seed of seeds) {
++      const generated = randomGraph(seed);
++      const { definition } = generated;
++      const counted = new Set(countedEdges(generated));
++      const junk = definition.edges.filter((e) => !counted.has(e));
++      const kept = definition.edges.filter((e) => counted.has(e));
++      // Moving the uncounted edges to the front or the back of the array changes nothing.
++      expect(spacedPositions({ nodes: definition.nodes, edges: [...junk, ...kept] })).toEqual(
++        spacedPositions({ nodes: definition.nodes, edges: [...kept, ...junk] }),
++      );
++    }
++  });
++
++  it('makes an eligible draft ineligible and still ends at the same positions', () => {
++    for (const seed of seeds) {
++      const { definition } = randomGraph(seed);
++      expect(spaceCardsEligible(definition)).toBe(true);
++      const positions = spacedPositions(definition);
++      const spaced = withSpacedPositions(definition, positions);
++      expect(spaceCardsEligible(spaced)).toBe(false);
++      expect(spaced.nodes.map((node, i) => (i === 0 ? pt(0, 0) : node.ui))).toEqual(positions);
++      expect(spaced.edges).toBe(definition.edges);
++    }
++  });
++});
++
++// ---------------------------------------------------------------------------
++// The contract's limits: 500 cards and 2,000 connections
++// ---------------------------------------------------------------------------
++
++/** Wraps an array so the test can see how often each element is read. */
++function counted<T extends object>(items: T[]): { items: T[]; reads: () => number } {
++  let reads = 0;
++  const proxy = new Proxy(items, {
++    get(target, key, receiver) {
++      if (typeof key === 'string' && /^\d+$/.test(key)) reads += 1;
++      return Reflect.get(target, key, receiver) as unknown;
++    },
++  });
++  return { items: proxy, reads: () => reads };
++}
++
++/**
++ * Each fixture has exactly 500 cards and 2,000 connections with unique ids. The shapes are
++ * deliberately beyond what the editor lets a user draw (several connections from one port, and
++ * connections into a trigger), since an imported or API-written draft can hold them.
++ */
++const limitFixtures = {
++  // A long chain: trigger -> n1 -> ... -> n499, each decision also leading back to earlier cards.
++  chain(): LoopDefinitionInput {
++    const nodes = [trigger('n0')];
++    const edges = [edge('start', 'n0', 'n1')];
++    for (let i = 1; i < 500; i += 1) {
++      const targets = [
++        i < 499 ? i + 1 : 1,
++        Math.max(1, i - 1),
++        Math.max(1, i - 2),
++        Math.max(1, i - 3),
++      ];
++      if (i <= 3) targets.push(Math.max(1, i - 4));
++      nodes.push(
++        choice(
++          `n${i}`,
++          targets.map((_, r) => `r${r}`),
++        ),
++      );
++      targets.forEach((target, r) =>
++        edges.push(edge(`e${i}-${r}`, `n${i}`, `n${target}`, `r${r}`)),
++      );
++    }
++    return loop(nodes, edges);
++  },
++  // One hub leading to 499 leaves that lead on to each other and back to the hub.
++  star(): LoopDefinitionInput {
++    const nodes = [trigger('hub'), ...Array.from({ length: 499 }, (_, k) => work(`l${k + 1}`))];
++    const edges: Edge[] = [];
++    for (let i = 1; i <= 499; i += 1) edges.push(edge(`out-${i}`, 'hub', `l${i}`));
++    for (let i = 1; i <= 499; i += 1) edges.push(edge(`ring-${i}`, `l${i}`, `l${(i % 499) + 1}`));
++    for (let i = 1; i <= 499; i += 1)
++      edges.push(edge(`skip-${i}`, `l${i}`, `l${((i + 1) % 499) + 1}`));
++    for (let i = 1; i <= 499; i += 1) edges.push(edge(`back-${i}`, `l${i}`, 'hub'));
++    for (let i = 1; i <= 4; i += 1) edges.push(edge(`extra-${i}`, 'hub', `l${i}`));
++    return loop(nodes, edges);
++  },
++  // No trigger and no card without an incoming connection: every card reaches the next four.
++  denseCycle(): LoopDefinitionInput {
++    const nodes = Array.from({ length: 500 }, (_, i) => choice(`n${i}`, ['r0', 'r1', 'r2', 'r3']));
++    const edges: Edge[] = [];
++    for (let i = 0; i < 500; i += 1)
++      for (let r = 0; r < 4; r += 1)
++        edges.push(edge(`e${i}-${r}`, `n${i}`, `n${(i + 1 + r) % 500}`, `r${r}`));
++    return loop(nodes, edges);
++  },
++};
++
++describe('spacedPositions: the 500 card and 2,000 connection limit', () => {
++  it.each(Object.entries(limitFixtures))(
++    '%s is a full-size, contract-valid draft',
++    (_name, build) => {
++      const definition = build();
++      expect(definition.nodes).toHaveLength(500);
++      expect(definition.edges).toHaveLength(2000);
++      expect(new Set(definition.edges.map((e) => e.id)).size).toBe(2000);
++      expect(new Set(definition.nodes.map((n) => n.id)).size).toBe(500);
++      expect(LoopDefinitionSchema.safeParse(definition).success).toBe(true);
++      expect(definition.schemaVersion).toBe(CURRENT_DEFINITION_FORMAT);
++      expect(spaceCardsEligible(definition)).toBe(true);
++    },
++  );
++
++  it('lays out a 500 card chain one card per column', () => {
++    const positions = spacedPositions(limitFixtures.chain());
++    expect(positions).toHaveLength(500);
++    positions.forEach((p, i) => expect(p).toEqual(pt(272 * i, 0)));
++  });
++
++  it('lays out a 500 card star as one hub and one column of 499 leaves', () => {
++    const positions = spacedPositions(limitFixtures.star());
++    expect(positions[0]).toEqual(pt(0, 0));
++    for (let i = 1; i <= 499; i += 1) expect(positions[i]).toEqual(pt(272, 184 * (i - 1)));
++  });
++
++  it('lays out a 500 card dense cycle from its first card, four cards per column', () => {
++    const positions = spacedPositions(limitFixtures.denseCycle());
++    expect(positions[0]).toEqual(pt(0, 0));
++    // Each card leads to the next four, so card i is ceil(i / 4) steps from card 0. A decision
++    // with four outputs is 278 tall, so its column stacks at 278 + 44 = 322.
++    for (let i = 1; i < 500; i += 1)
++      expect(positions[i]).toEqual(pt(272 * Math.ceil(i / 4), 322 * ((i - 1) % 4)));
++  });
++
++  it.each(Object.entries(limitFixtures))(
++    'reads each card and connection of %s a small, fixed number of times',
++    (_name, build) => {
++      const definition = build();
++      const nodes = counted(definition.nodes);
++      const edges = counted(definition.edges);
++      const expected = spacedPositions(definition);
++      expect(spacedPositions({ nodes: nodes.items, edges: edges.items })).toEqual(expected);
++      // A scan of every connection for each card would read edges about 500 times each.
++      expect(edges.reads()).toBeLessThanOrEqual(4 * 2000);
++      expect(nodes.reads()).toBeLessThanOrEqual(4 * 500);
++    },
++  );
++
++  it('keeps the clearance at full size, with and without measured heights', () => {
++    for (const build of Object.values(limitFixtures)) {
++      const definition = build();
++      const heights = definition.nodes.map((node) => footprint(canvasPorts(node).length));
++      expect(crowding(spacedPositions(definition), heights)).toEqual([]);
++      const measured = definition.nodes.map((_, i) => 100 + ((i * 37) % 400));
++      const taller = heights.map((h, i) => Math.max(h, measured[i]!));
++      expect(crowding(spacedPositions(definition, measured), taller)).toEqual([]);
++    }
++  });
++});
+diff --git a/apps/web/src/editor/space-cards.ts b/apps/web/src/editor/space-cards.ts
+new file mode 100644
+index 00000000..629b45cf
+--- /dev/null
++++ b/apps/web/src/editor/space-cards.ts
+@@ -0,0 +1,205 @@
++import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
++import { canvasPorts } from './model.js';
++import type { Point } from './routing-geometry.js';
++
++type SpaceDefinition = Pick<LoopDefinitionInput, 'nodes' | 'edges'>;
++
++/**
++ * Space cards layout in flow pixels: the distance between neighbouring columns (a 184 px card and
++ * an 88 px gap) and the clear space kept between cards stacked in one column.
++ */
++export const SPACE_CARDS = { column: 272, rowGap: 44 } as const;
++
++/**
++ * A card's conservative height in flow pixels, without measuring it. A card with no outputs is 92
++ * tall (border, 36 px header and text rows). Each output adds a 44 px coarse-pointer row and a 2 px
++ * gap, and the first row follows a 4 px margin, so n outputs add 2 + 46n (`NodeCard`,
++ * `canvas.css`). The fine pointer's rows are shorter, so this never underestimates them. It does
++ * not depend on the viewport or the pointer, so the same graph gets the same spacing everywhere at
++ * the default text size. Larger text needs a measured height; see `spacedPositions`.
++ */
++export const spacedCardHeight = (ports: number): number => 92 + (ports > 0 ? 2 + 46 * ports : 0);
++
++const atOrigin = (node: NodeInput): boolean => !node.ui || (node.ui.x === 0 && node.ui.y === 0);
++
++/**
++ * Whether the Space cards action may be offered: at least two cards, every card displayed at the
++ * origin (an absent `ui` and an explicit zero, including `-0`, are the same), and no connection
++ * with a stored route. Positioned, partly positioned and routed loops are never candidates.
++ * Eligibility only means the offer may show; the caller checks it again before applying.
++ */
++export function spaceCardsEligible(definition: SpaceDefinition): boolean {
++  return (
++    definition.nodes.length >= 2 &&
++    definition.nodes.every(atOrigin) &&
++    definition.edges.every((edge) => !edge.ui)
++  );
++}
++
++/** What placement needs to know about one card. */
++interface Card {
++  readonly id: string;
++  readonly trigger: boolean;
++  /** The output ports a connection may leave from. */
++  readonly ports: ReadonlySet<string>;
++  readonly height: number;
++  /** Where this card's counted connections lead, in edge array order. */
++  readonly next: Card[];
++  /** Counted connections that lead here. */
++  incoming: number;
++  /** Depth from the entries; -1 until the card is discovered. */
++  column: number;
++  y: number;
++}
++
++function cardOf(node: NodeInput, measured: number | undefined): Card {
++  const ports = canvasPorts(node);
++  const footprint = spacedCardHeight(ports.length);
++  return {
++    id: node.id,
++    trigger: node.kind === 'trigger',
++    ports: new Set(ports),
++    // Anything not above the footprint (missing, NaN, zero, negative) keeps the footprint.
++    height:
++      measured !== undefined && Number.isFinite(measured) && measured > footprint
++        ? measured
++        : footprint,
++    next: [],
++    incoming: 0,
++    column: -1,
++    y: 0,
++  };
++}
++
++/**
++ * Records the connections that count for placement. A connection is ignored, never changed, when
++ * its id is not unique, either end is missing or names more than one card, it enters a trigger,
++ * it leaves from a port the source does not have, or it is a self-loop.
++ */
++function connect(cards: readonly Card[], edges: SpaceDefinition['edges']): void {
++  const byId = new Map<string, Card>();
++  const ambiguous = new Set<string>();
++  for (const card of cards) {
++    if (byId.has(card.id)) ambiguous.add(card.id);
++    else byId.set(card.id, card);
++  }
++  // Two cards with one id must not be combined into an invented path.
++  for (const id of ambiguous) byId.delete(id);
++
++  const edgeCounts = new Map<string, number>();
++  for (const edge of edges) edgeCounts.set(edge.id, (edgeCounts.get(edge.id) ?? 0) + 1);
++  for (const edge of edges) {
++    const from = byId.get(edge.from.node);
++    const to = byId.get(edge.to.node);
++    if (!from || !to || from === to || to.trigger) continue;
++    if (edgeCounts.get(edge.id) !== 1 || !from.ports.has(edge.from.port)) continue;
++    from.next.push(to);
++    to.incoming += 1;
++  }
++}
++
++/** Every trigger, else every card nothing leads to, else the first card. */
++function entryCards(cards: readonly Card[]): Card[] {
++  const triggers = cards.filter((card) => card.trigger);
++  if (triggers.length > 0) return triggers;
++  const sources = cards.filter((card) => card.incoming === 0);
++  return sources.length > 0 ? sources : cards.slice(0, 1);
++}
++
++/**
++ * Gives every card a column (its breadth-first depth) and returns the cards in the order they were
++ * discovered. All entries start together at depth 0, and each card is marked when it is queued, so
++ * every card and counted connection is handled once. Cards no entry reaches then start their own
++ * search at depth 0, in array order.
++ */
++function discover(cards: readonly Card[]): Card[] {
++  const queue: Card[] = [];
++  let head = 0;
++  const enqueue = (card: Card, column: number): void => {
++    card.column = column;
++    queue.push(card);
++  };
++  const drain = (): void => {
++    for (; head < queue.length; head += 1) {
++      const card = queue[head]!;
++      for (const next of card.next) if (next.column < 0) enqueue(next, card.column + 1);
++    }
++  };
++  for (const entry of entryCards(cards)) enqueue(entry, 0);
++  drain();
++  for (const card of cards) {
++    if (card.column >= 0) continue;
++    enqueue(card, 0);
++    drain();
++  }
++  return queue;
++}
++
++/** Stacks each column's cards top down in discovery order, with the row gap between them. */
++function stack(discovered: readonly Card[]): void {
++  const bottoms: number[] = [];
++  for (const card of discovered) {
++    const top = bottoms[card.column] ?? 0;
++    card.y = top;
++    bottoms[card.column] = top + card.height + SPACE_CARDS.rowGap;
++  }
++}
++
++/**
++ * Space cards positions, one per card and indexed like `definition.nodes`. A card's column is its
++ * depth from the entries along connections the canvas can draw, so connected cards read left to
++ * right. Columns are `SPACE_CARDS.column` apart and each column's cards stack with at least
++ * `SPACE_CARDS.rowGap` between them. The whole layout then shifts so `nodes[0]` is at the origin,
++ * which can leave other coordinates negative. Every card is placed, whatever its id, and the
++ * result depends on the graph's shape and array order, not on its ids, so renaming ids
++ * consistently changes nothing. The same graph and heights always give the same result.
++ *
++ * Each card takes the larger of `spacedCardHeight` and its entry in `heights`, a measured height
++ * in flow pixels by node index. A missing, non-finite, zero or negative entry is ignored. The
++ * helper never reads the DOM or the viewport. It does not promise crossing-free connections or
++ * that a long chain fits in one view, and it neither checks eligibility nor changes anything.
++ *
++ * Work is O(nodes + edges + total ports): each card's ports are listed once, each edge is read
++ * twice, and each card and counted connection is visited once.
++ */
++export function spacedPositions(
++  definition: SpaceDefinition,
++  heights: readonly (number | undefined)[] = [],
++): Point[] {
++  const cards = definition.nodes.map((node, index) => cardOf(node, heights[index]));
++  connect(cards, definition.edges);
++  stack(discover(cards));
++  const anchor = cards[0];
++  if (!anchor) return [];
++  const anchorX = anchor.column * SPACE_CARDS.column;
++  return cards.map((card) => ({
++    x: card.column * SPACE_CARDS.column - anchorX,
++    y: card.y - anchor.y,
++  }));
++}
++
++/**
++ * A copy of the definition with `ui` set from `positions`, which must hold exactly one position per
++ * node and be indexed like the nodes, as `spacedPositions` returns them. It is the last step of the
++ * all-card Space cards action, not a way to move some cards, so a different count throws before
++ * anything is built and no loop is ever spaced in part. The first node is the anchor and is never
++ * written (its object, and an absent `ui`, stay as they are). Everything else, edges included,
++ * keeps its identity, and the input is not modified.
++ */
++export function withSpacedPositions(
++  definition: LoopDefinitionInput,
++  positions: readonly Point[],
++): LoopDefinitionInput {
++  if (positions.length !== definition.nodes.length) {
++    throw new Error(
++      `Space cards needs one position for each of the ${definition.nodes.length} cards, but got ${positions.length}.`,
++    );
++  }
++  return {
++    ...definition,
++    nodes: definition.nodes.map((node, index) => {
++      const position = positions[index]!;
++      return index === 0 ? node : { ...node, ui: { x: position.x, y: position.y } };
++    }),
++  };
++}
+diff --git a/apps/web/src/editor/store.space-cards.test.ts b/apps/web/src/editor/store.space-cards.test.ts
+new file mode 100644
+index 00000000..9da6d26c
+--- /dev/null
++++ b/apps/web/src/editor/store.space-cards.test.ts
+@@ -0,0 +1,173 @@
++import type { LoopDefinitionInput, NodeInput } from '@graphgoblin/contracts';
++import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
++import { beforeEach, describe, expect, it } from 'vitest';
++import type { DecisionRoutes } from './decision-route-edges.js';
++import { spacedPositions } from './space-cards.js';
++import { useEditorStore } from './store.js';
++
++const store = () => useEditorStore.getState();
++const ORIGIN = { x: 0, y: 0 };
++const positions = () => store().definition!.nodes.map((node) => node.ui ?? ORIGIN);
++
++/**
++ * A pile that an ordinary `edit` would not leave alone. Its restored routes table gives the
++ * decision's two connections to each other's rows, so any `edit` moves their ports. It also has
++ * stored edges the canvas cannot draw: a repeated id, a missing target and a port the source does
++ * not have. The second card is at `-0`, the third at an explicit origin, and the first has no `ui`.
++ */
++function pile(): LoopDefinitionInput {
++  const definition = kitchenSinkLoop();
++  definition.nodes[1] = { ...definition.nodes[1]!, ui: { x: -0, y: 0 } };
++  definition.nodes[2] = { ...definition.nodes[2]!, ui: { x: 0, y: 0 } };
++  definition.edges.push(
++    { id: 'e3', from: { node: 'infer', port: 'out' }, to: { node: 'done' } },
++    { id: 'gone', from: { node: 'prep', port: 'out' }, to: { node: 'ghost' } },
++    { id: 'stale', from: { node: 'approve', port: 'nope' }, to: { node: 'done' } },
++  );
++  return definition;
++}
++const SWAPPED: DecisionRoutes = {
++  decide: {
++    nextKey: 2,
++    rows: [
++      { key: 0, id: 'good', edgeIds: ['e7'] },
++      { key: 1, id: 'bad', edgeIds: ['e6'] },
++    ],
++  },
++};
++const port = (edgeId: string) => store().definition!.edges.find((e) => e.id === edgeId)!.from.port;
++
++describe('spaceCards', () => {
++  beforeEach(() => store().reset());
++
++  it('spaces a pile in one ordinary step that changes only node ui, and undo and redo restore it exactly', () => {
++    const original = pile();
++    store().load('L1', original, { baseToken: 'token-1', decisionRoutes: SWAPPED });
++    // Opening wrote nothing.
++    expect(store()).toMatchObject({ definition: original, revision: 0, past: [] });
++    // Held input, a conflict, a name refusal, the selection and the open dialog all stay.
++    store().setFieldError('node:prep', 'config.operations', { message: 'Invalid', text: '[' });
++    store().setConflict({ serverToken: 'server-token' });
++    store().setNameConflict({
++      name: 'kitchen-sink',
++      suggestedName: 'kitchen-sink copy',
++      retrying: false,
++      retried: false,
++    });
++    store().openNode('infer');
++    const before = store();
++
++    expect(store().spaceCards()).toBe('applied');
++
++    const after = store();
++    const spaced = after.definition!;
++    expect(after.revision).toBe(before.revision + 1);
++    expect(after.saveState).toBe('pending');
++    expect(after.past.map((step) => step.label)).toEqual([
++      ...before.past.map((step) => step.label),
++      'space cards',
++    ]);
++    expect(after.past.at(-1)!.definition).toBe(original);
++    expect(after).toMatchObject({ future: [], openStep: undefined });
++    for (const key of [
++      'fieldErrors',
++      'decisionRoutes',
++      'conflict',
++      'nameConflict',
++      'baseToken',
++      'selectedNodeId',
++      'nodeDialogOpen',
++      'nodeDialogSession',
++      'renameReport',
++      'formEpochs',
++      'historyEpoch',
++      'savedRevision',
++      'deviceRevision',
++      'connectionError',
++      'generation',
++    ] as const)
++      expect(after[key], key).toBe(before[key]);
++
++    // Every edge (the undrawable ones and the decision's mismatched pair included) and every
++    // field other than the nodes keep their identity; the first card keeps its object and no ui.
++    expect(spaced.edges).toBe(original.edges);
++    const { nodes: _spacedNodes, ...spacedRest } = spaced;
++    const { nodes: _originalNodes, ...originalRest } = original;
++    expect(Object.keys(spacedRest)).toEqual(Object.keys(originalRest));
++    for (const [key, value] of Object.entries(originalRest))
++      expect(spacedRest[key as keyof typeof spacedRest], key).toBe(value);
++    expect(spaced.nodes[0]).toBe(original.nodes[0]);
++    expect(spaced.nodes[0]).not.toHaveProperty('ui');
++    spaced.nodes.forEach((node, index) => {
++      const { ui: _ui, ...fields } = node;
++      const { ui: _before, ...originalFields } = original.nodes[index]!;
++      expect(Object.keys(fields)).toEqual(Object.keys(originalFields));
++      for (const [key, value] of Object.entries(originalFields))
++        expect(fields[key as keyof typeof fields], `${node.id}.${key}`).toBe(value);
++    });
++    expect(positions()).toEqual(spacedPositions(original));
++
++    // Undo restores the very draft it replaced (the absent ui and -0 included); redo the very
++    // spaced draft, not a new layout.
++    store().undo();
++    expect(store().definition).toBe(original);
++    expect(store()).toMatchObject({ revision: after.revision + 1, saveState: 'pending' });
++    expect(store().fieldErrors).toBe(before.fieldErrors);
++    store().redo();
++    expect(store().definition).toBe(spaced);
++    expect(store().decisionRoutes).toBe(before.decisionRoutes);
++
++    // The hazard this action avoids: an ordinary edit of this draft rewrites the decision's edges.
++    expect([port('e6'), port('e7')]).toEqual(['good', 'bad']);
++    store().moveNode('done', { x: 1, y: 1 });
++    expect([port('e6'), port('e7')]).toEqual(['bad', 'good']);
++  });
++
++  it('refuses a draft that is not a pile now, changing nothing at all', () => {
++    const refuses = () => {
++      const state = store();
++      expect(store().spaceCards()).toBe('ineligible');
++      expect(store()).toBe(state);
++    };
++    // No draft.
++    refuses();
++    // A card moved since the offer showed.
++    store().load('L1', pile());
++    store().moveNode('prep', { x: 0, y: 1 });
++    refuses();
++    // A stored route.
++    store().undo();
++    store().setEdgeRoute('e1', [240, 360, 420]);
++    refuses();
++    // A single card.
++    const single = kitchenSinkLoop();
++    store().load('L1', { ...single, nodes: single.nodes.slice(0, 1), edges: [] });
++    refuses();
++    // A second press: the cards are no longer in one spot.
++    store().load('L1', pile());
++    expect(store().spaceCards()).toBe('applied');
++    refuses();
++  });
++
++  it('takes measured heights by the current cards’ ids, and lends none to cards that share an id', () => {
++    const card = (id: string, label = id): NodeInput => ({ id, kind: 'exit', label, config: {} });
++    // No trigger and no connections: every card is an entry, stacked in column 0 in card order,
++    // so a card's height moves every card after it.
++    const definition: LoopDefinitionInput = {
++      ...kitchenSinkLoop(),
++      nodes: [card('t'), card('a'), card('a', 'a again'), card('b')],
++      edges: [],
++    };
++    store().load('L1', definition);
++    const measured = new Map([
++      ['t', 400],
++      ['a', 500],
++      ['b', 300],
++      ['ghost', 999],
++    ]);
++    expect(store().spaceCards(measured)).toBe('applied');
++    expect(positions()).toEqual(spacedPositions(definition, [400, undefined, undefined, 300]));
++    // Lending "a"'s measurement to both cards would have placed them differently.
++    expect(positions()).not.toEqual(spacedPositions(definition, [400, 500, 500, 300]));
++  });
++});
+diff --git a/docs/decisions/ADR-0077-explicit-space-cards.md b/docs/decisions/ADR-0077-explicit-space-cards.md
+new file mode 100644
+index 00000000..49ff1e7b
+--- /dev/null
++++ b/docs/decisions/ADR-0077-explicit-space-cards.md
+@@ -0,0 +1,29 @@
++# ADR-0077 — Explicit Space cards for loops stacked in one spot
++
++Status: Accepted for #208. The decision is the owner's.
++
++## Context
++
++A loop written outside the editor (through the API, an import, a plugin or an agent) can store no positions. The stored format then gives every node `ui: {x: 0, y: 0}`, so the editor opens with every card in one pile at the origin. Nothing in the editor spaces them, and moving each card by hand is tedious. #208 asked how the editor should handle this.
++
++The rejected options came from the #208 design refinement. One was to compute a layout and write it during other edits: opening, a rename or a palette add would silently move cards. That changes positions the author never asked to change, makes Undo of an unrelated edit move many cards, and hides a geometry write inside other history steps. The other was an automatic preview or hidden position map that draws a layout without storing it. Then the screen and the stored draft disagree, and every drag, route edit and saved position needs a second coordinate system.
++
++The owner chose an explicit, undoable action on [#208](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/208) (comment 6883971339); its architecture is recorded there in comment 6884349952.
++
++## Decision
++
++The editor never moves cards by itself. When a draft has at least two nodes, every node is displayed at the origin (absent `ui` or an explicit zero, `-0` included) and no edge has a stored route, the canvas offers **Space cards** in a floating panel. Pressing it is one ordinary, undoable edit:
++
++- It acts on the current draft only after checking it again; a draft that no longer qualifies is left exactly as it is.
++- It writes only node `ui`, from a deterministic layout that is linear in nodes, edges and ports (`editor/space-cards.ts`). Columns follow the connections, and each card takes the larger of its measured height and a conservative footprint. The first node keeps its object and stays at the origin. Every edge, including ones the canvas cannot draw, and every other field are unchanged.
++- It is one history step, one revision and one autosave like any edit, with no special save or permission path. Undo restores the exact earlier draft and Redo the exact spaced one.
++- Focus stays on the canvas, the result is announced with Undo's availability, and the view fits once after the spaced cards render.
++
++Dismissing the offer lasts for the editor load. There is no general arrange command for loops that already have positions, and no change to the stored, export or API format.
++
++## Consequences
++
++- Opening a loop, ordinary edits, Undo and Redo never change positions on their own, so a pile stays a pile until the author acts.
++- Loops partly positioned, positioned off the origin or with any routed connection are never offered the action. Arranging them stays out of scope.
++- The layout does not promise crossing-free connections or that a long chain fits in one view. Spacing at larger text sizes depends on the measured heights that the canvas passes in, and still needs native checks.
++- Contracts, the API, migrations and stored data are unchanged, so there is no upgrade note.

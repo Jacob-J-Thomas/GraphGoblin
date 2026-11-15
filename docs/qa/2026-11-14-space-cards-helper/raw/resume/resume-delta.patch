@@ -1,0 +1,88 @@
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-space-helper-resume/before/space-cards.ts b/apps/web/src/editor/space-cards.ts
+index ebd4aff4..629b45cf 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-space-helper-resume/before/space-cards.ts
++++ b/apps/web/src/editor/space-cards.ts
+@@ -179,20 +179,27 @@ export function spacedPositions(
+ }
+ 
+ /**
+- * A copy of the definition with `ui` set from `positions`, which are indexed like the nodes. The
+- * first node is the anchor and is never written (its object, and an absent `ui`, stay as they
+- * are), and a node without a position keeps its object. Everything else, edges included, keeps its
+- * identity, and the input is not modified.
++ * A copy of the definition with `ui` set from `positions`, which must hold exactly one position per
++ * node and be indexed like the nodes, as `spacedPositions` returns them. It is the last step of the
++ * all-card Space cards action, not a way to move some cards, so a different count throws before
++ * anything is built and no loop is ever spaced in part. The first node is the anchor and is never
++ * written (its object, and an absent `ui`, stay as they are). Everything else, edges included,
++ * keeps its identity, and the input is not modified.
+  */
+ export function withSpacedPositions(
+   definition: LoopDefinitionInput,
+   positions: readonly Point[],
+ ): LoopDefinitionInput {
++  if (positions.length !== definition.nodes.length) {
++    throw new Error(
++      `Space cards needs one position for each of the ${definition.nodes.length} cards, but got ${positions.length}.`,
++    );
++  }
+   return {
+     ...definition,
+     nodes: definition.nodes.map((node, index) => {
+-      const position = positions[index];
+-      return index === 0 || !position ? node : { ...node, ui: { x: position.x, y: position.y } };
++      const position = positions[index]!;
++      return index === 0 ? node : { ...node, ui: { x: position.x, y: position.y } };
+     }),
+   };
+ }
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-space-helper-resume/before/space-cards.test.ts b/apps/web/src/editor/space-cards.test.ts
+index 4bb5444b..a0873781 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-space-helper-resume/before/space-cards.test.ts
++++ b/apps/web/src/editor/space-cards.test.ts
+@@ -597,20 +597,37 @@ describe('withSpacedPositions', () => {
+     expect(Object.is(next.nodes[0]!.ui!.x, -0)).toBe(true);
+   });
+ 
+-  it('leaves the input untouched and a card without a position as it was', () => {
++  it('leaves the input untouched', () => {
+     const definition = deepFreeze(minimalLoop());
+     const snapshot = structuredClone(definition);
+-    const none = withSpacedPositions(definition, []);
+-    expect(none.nodes[0]).toBe(definition.nodes[0]);
+-    expect(none.nodes[1]).toBe(definition.nodes[1]);
+-    expect(definition).toEqual(snapshot);
+-
+-    const some = withSpacedPositions(definition, [pt(0, 0), pt(272, 0)]);
+-    expect(some.nodes[1]!.ui).toEqual(pt(272, 0));
++    const spaced = withSpacedPositions(definition, [pt(0, 0), pt(272, 0)]);
++    expect(spaced.nodes[0]).toBe(definition.nodes[0]);
++    expect(spaced.nodes[1]!.ui).toEqual(pt(272, 0));
+     expect(definition).toEqual(snapshot);
+     expect('ui' in definition.nodes[1]!).toBe(false);
+   });
+ 
++  it('refuses positions that are not one per card, before returning or changing anything', () => {
++    for (const definition of [deepFreeze(minimalLoop()), deepFreeze(kitchenSinkLoop())]) {
++      const snapshot = structuredClone(definition);
++      const full = spacedPositions(definition);
++      const cards = definition.nodes.length;
++      expect(full).toHaveLength(cards);
++
++      // Too few would space only some cards, and too many means the positions are for another loop.
++      const wrongCounts = [[], full.slice(0, cards - 1), [...full, pt(9 * COLUMN, 0)]];
++      for (const positions of wrongCounts) {
++        expect(() => withSpacedPositions(definition, positions)).toThrow(
++          `one position for each of the ${cards} cards, but got ${positions.length}`,
++        );
++      }
++      expect(definition).toEqual(snapshot);
++
++      // The exact count is still accepted, so the refusal is about the count alone.
++      expect(withSpacedPositions(definition, full).nodes).toHaveLength(cards);
++    }
++  });
++
+   it('copies the position values, so later edits of the positions do not reach the loop', () => {
+     const positions = [pt(0, 0), pt(272, 0)];
+     const spaced = withSpacedPositions(minimalLoop(), positions);

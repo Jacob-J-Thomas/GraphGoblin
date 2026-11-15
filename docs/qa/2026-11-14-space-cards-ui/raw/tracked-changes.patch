@@ -1,0 +1,285 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a72dc085..c65f46c8 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- A loop that opens with all its cards stacked in one spot, for example one written through the
++  API or an import, now offers **Space cards** in a panel at the top of the canvas (#208,
++  ADR-0077, the owner's decision). It puts the cards in columns that follow the connections and
++  keeps the first card where it is. Only card positions change, in one **Undo** step ("Undo space
++  cards") that is saved like any edit. Focus stays on the canvas, and the view fits once after the
++  cards move. The panel shows only while every card is at the same spot and no connection has a
++  route you set; **Dismiss suggestion** hides it until the loop is opened or reloaded again.
++  Opening a loop, other edits, Undo and Redo never move cards by themselves. No stored or exported
++  data changes, so there is no upgrade note.
+ - Connections are drawn, selected and removed only on the canvas (#207, ADR-0076, the owner's
+   decision). The node dialog no longer has a **Connections** list, **Remove edge** buttons or the
+   **Connect** form, for any node kind. Everything else in it stays: id and label, configuration,
+diff --git a/apps/web/src/editor/Canvas.tsx b/apps/web/src/editor/Canvas.tsx
+index 4d1e6ddc..d94a9d9b 100644
+--- a/apps/web/src/editor/Canvas.tsx
++++ b/apps/web/src/editor/Canvas.tsx
+@@ -25,6 +25,7 @@ import {
+ } from '@xyflow/react';
+ import {
+   useCallback,
++  useEffect,
+   useLayoutEffect,
+   useMemo,
+   useRef,
+@@ -71,6 +72,8 @@ import { ForwardEdge } from './ForwardEdge.js';
+ import { edgeLabelText } from './edge-label-text.js';
+ import { loopBackEdgeIds } from './loop-back-edges.js';
+ import { removalFocusTarget } from './canvas-focus.js';
++import { spaceCardsEligible } from './space-cards.js';
++import { SpaceCardsOffer } from './SpaceCardsOffer.js';
+ 
+ const nodeTypes = { gg: NodeCard };
+ const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
+@@ -452,6 +455,7 @@ export function Canvas({
+   issues: readonly EditorIssue[];
+ }) {
+   const selected = useEditorStore((s) => s.selectedNodeId);
++  const generation = useEditorStore((s) => s.generation);
+   const {
+     select,
+     openNode,
+@@ -462,8 +466,9 @@ export function Canvas({
+     addNode,
+     closeStep,
+     setEdgeRoute,
++    spaceCards,
+   } = useEditorStore.getState();
+-  const { screenToFlowPosition } = useReactFlow();
++  const { screenToFlowPosition, fitView } = useReactFlow();
+   // A segment drag in progress (#44): its route is routed as a preview until the pointer is up.
+   const [routeDrag, setRouteDrag] = useState<{ edgeId: string; route: readonly number[] }>();
+   const [announcement, setAnnouncement] = useState({ text: '', key: 0 });
+@@ -905,6 +910,50 @@ export function Canvas({
+     event.preventDefault();
+   };
+ 
++  // Space cards (#208, ADR-0077): offered while every card is at the origin and no card or route
++  // is being dragged. Dismissing it lasts for this editor load; a load or a remount offers it again.
++  const pile = useMemo(() => spaceCardsEligible(definition), [definition]);
++  const [dismissedOffer, setDismissedOffer] = useState<number>();
++  const offered = pile && !moving && dismissedOffer !== generation;
++  // The one view fit that Space cards asks for: the draft it produced, kept until that draft has
++  // rendered with every card measured (this passive effect runs after xyflow's own, which hands it
++  // the new positions). Another edit, an undo or a load first drops it; no edit, undo or redo
++  // fits the view by itself.
++  const spacedFitRef = useRef<{ definition: LoopDefinitionInput; generation: number }>(undefined);
++  useEffect(() => {
++    const pending = spacedFitRef.current;
++    if (!pending) return;
++    if (pending.definition !== definition || pending.generation !== generation) {
++      spacedFitRef.current = undefined;
++      return;
++    }
++    if (!definition.nodes.every((node) => Object.hasOwn(measured, node.id))) return;
++    spacedFitRef.current = undefined;
++    void fitView(INITIAL_FIT_VIEW_OPTIONS);
++  }, [definition, generation, measured, fitView]);
++  // The store checks its current draft again, so a second press, a repeated key or an offer left
++  // from an older render changes nothing.
++  const spaceAll = () => {
++    // xyflow measures each card's layout box, which zoom does not scale: flow pixels.
++    const heights = new Map(Object.entries(measured).map(([id, size]) => [id, size.height]));
++    const result = spaceCards(heights);
++    // The canvas, never Undo: a held or repeated Enter must not undo what it just did.
++    rootRef.current?.focus();
++    if (result === 'applied') {
++      const state = useEditorStore.getState();
++      const spaced = state.definition!;
++      spacedFitRef.current = { definition: spaced, generation: state.generation };
++      announce(`Spaced ${spaced.nodes.length} cards. Undo puts them back.`);
++    } else {
++      announce('Cards were not spaced: they are no longer all in one spot.');
++    }
++  };
++  const dismissOffer = () => {
++    setDismissedOffer(generation);
++    rootRef.current?.focus();
++    announce('Suggestion dismissed.');
++  };
++
+   // A geometry-only update publishes edge channels without rendering the whole canvas again.
+   const flow = useMemo(
+     () => (
+@@ -961,10 +1010,10 @@ export function Canvas({
+   return (
+     <div
+       ref={rootRef}
+-      className="h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
++      className="relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+       data-testid="canvas"
+       data-editor-canvas=""
+-      // Focus lands here when the node editor closes on a deleted node.
++      // Focus lands here when the node editor closes on a deleted node, and after Space cards.
+       tabIndex={-1}
+       onKeyDown={onKeyDown}
+       onDragOver={(event) => {
+@@ -973,6 +1022,14 @@ export function Canvas({
+       }}
+       onDrop={onDrop}
+     >
++      {/* Before the flow: after the palette and before the first card in the Tab order. */}
++      {offered ? (
++        <SpaceCardsOffer
++          count={definition.nodes.length}
++          onSpace={spaceAll}
++          onDismiss={dismissOffer}
++        />
++      ) : null}
+       {flow}
+       <CanvasZoom canvasRef={rootRef} nodes={plan.nodes} />
+       <span aria-live="polite" aria-atomic="true" className="sr-only">
+diff --git a/apps/web/src/editor/store.ts b/apps/web/src/editor/store.ts
+index 3002f1fd..7a1d852b 100644
+--- a/apps/web/src/editor/store.ts
++++ b/apps/web/src/editor/store.ts
+@@ -39,6 +39,7 @@ import {
+   type ConnectionRequest,
+   type EditorIssue,
+ } from './model.js';
++import { spaceCardsEligible, spacedPositions, withSpacedPositions } from './space-cards.js';
+ 
+ type EdgeInput = z.input<typeof EdgeSchema>;
+ 
+@@ -239,6 +240,15 @@ export interface EditorState {
+     expected: Pick<EditorState, 'fieldErrors' | 'historyEpoch' | 'generation'>,
+   ) => string | undefined;
+   moveNode: (nodeId: string, position: { x: number; y: number }) => void;
++  /**
++   * Space cards (#208, ADR-0077): spread a loop whose cards all sit at the origin into columns that
++   * follow its connections (`space-cards.ts`), as one ordinary edit labelled "space cards". It
++   * reads the current draft and checks it again: unless that draft is still eligible
++   * (`spaceCardsEligible`) it changes nothing and returns `'ineligible'`. `measured` holds card
++   * heights in flow pixels by node id; a card whose id another card shares gets none, so it never
++   * takes another card's height. Only node `ui` changes, and the first node keeps its object.
++   */
++  spaceCards: (measured?: ReadonlyMap<string, number>) => 'applied' | 'ineligible';
+   removeNode: (nodeId: string) => void;
+   connect: (connection: ConnectionRequest) => string | null;
+   removeEdge: (edgeId: string) => void;
+@@ -424,6 +434,19 @@ function configStep(nodeId: string, change: FormChange | undefined): HistoryStep
+   return formStep(`edit config of ${nodeId}`, `config:${nodeId}`, change);
+ }
+ 
++/**
++ * The measured heights of the current draft's cards, by node index. An id that more than one card
++ * uses names no single card, so those cards keep the conservative footprint (`spacedPositions`).
++ */
++function heightsByIndex(
++  nodes: readonly NodeInput[],
++  measured: ReadonlyMap<string, number>,
++): (number | undefined)[] {
++  const uses = new Map<string, number>();
++  for (const node of nodes) uses.set(node.id, (uses.get(node.id) ?? 0) + 1);
++  return nodes.map((node) => (uses.get(node.id) === 1 ? measured.get(node.id) : undefined));
++}
++
+ /** An edge in an undo label: "start to done", or "decide yes to infer" from a named port. */
+ function edgeName(edge: EdgeInput): string {
+   const port = edge.from.port === 'out' ? '' : ` ${edge.from.port}`;
+@@ -809,6 +832,32 @@ export const useEditorStore = create<EditorState>((set, get) => {
+         { label: `move ${nodeId}`, coalesceKey: `move:${nodeId}` },
+       ),
+ 
++    spaceCards: (measured = new Map()) => {
++      const s = get();
++      const def = s.definition;
++      if (!def || !spaceCardsEligible(def)) return 'ineligible';
++      const definition = withSpacedPositions(
++        def,
++        spacedPositions(def, heightsByIndex(def.nodes, measured)),
++      );
++      // Not `edit`: its decision-route pass may rewrite edges, and this edit only moves cards. The
++      // routes table, held input, selection, the dialog and the save and conflict state stay.
++      const { fieldErrors, decisionRoutes } = s;
++      set({
++        definition,
++        revision: s.revision + 1,
++        saveState: 'pending',
++        ...recordStep(
++          historyOf(s),
++          { definition: def, fieldErrors, decisionRoutes },
++          { definition, fieldErrors, decisionRoutes },
++          { label: 'space cards' },
++          performance.now(),
++        ),
++      });
++      return 'applied';
++    },
++
+     removeNode: (nodeId) => {
+       const state = get();
+       if (state.definition && isProtectedVoiceNode(state.definition, state.systemChat, nodeId)) {
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 2ccad5cc..2c22139e 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -261,10 +261,23 @@ for inference limits and [ADR-0066](decisions/ADR-0066-native-ollama-and-model-d
+ - Undo and redo: every change of the draft, from the toolbar or with Ctrl+Z and Ctrl+Shift+Z (see "Undo and redo" below).
+ - Edge routes: a selected connection's segments can be dragged or nudged out of the way, and the route is saved with the edge (see "Manual edge routes" below).
+ 
+-**Fit View** fits the whole graph into the canvas between the open panels, with room for the zoom controls. The canvas zooms from 0.1 to 2, so a long graph fits even with both panels open. Opening the editor fits the graph too, but never below 50%, so cards stay readable; a larger graph may then extend past the canvas until Fit View is used.
++**Fit View** fits the whole graph into the canvas between the open panels, with room for the zoom controls. The canvas zooms from 0.1 to 2, so a long graph fits even with both panels open. Opening the editor fits the graph too, but never below 50%, so cards stay readable; a larger graph may then extend past the canvas until Fit View is used. **Space cards** (below) fits once more with the same options after it spaces the cards; other edits, Undo and Redo never fit the view.
+ 
+ Pressing a palette entry places the new card at x = 40, below the lowest existing card bottom plus 22 px clearance, and pans to it. Placement takes the larger of the measured height and the current port count's card footprint, including a Decision's Limit reached row. An empty canvas starts at (40, 40). Existing nodes stay where authored; dragging from the palette still uses the drop point. Routed labels retain their reserved positions and shortening. A forward label leaves xyflow's default position only when its pill collides with a card, an earlier label or another edge's segment (4 px card/label clearance and a 2 px segment envelope). A short straight segment or a rounded corner alone never moves it. Only a label with a collision searches for the nearest free interval along its own horizontal or vertical segments, with 10 px corner allowance and stable edge-ID priority. A squeezed label searches for a local callout within 96 px of its edge, with a straight leader that never enters a card and a pill clear of other edge lanes. If no legal local candidate exists, it keeps its default position without a leader. Placements are solved after edits and drag release; displaced labels follow their own segment during a drag without rebuilding the obstacle index. These are view positions, not definition changes. Regression: `node-placement.test.ts`, `edge-label-placement.test.ts`, and `e2e/palette-placement.spec.ts` (#425).
+ 
++### Space cards (Decided, #208, ADR-0077)
++
++The owner's decision, recorded in [ADR-0077](decisions/ADR-0077-explicit-space-cards.md): a loop whose cards all sit in one spot is spread out only when the author asks. Opening the editor and every other edit leave positions exactly as stored, and there is no preview.
++
++- **When it is offered.** The draft has at least two nodes; every node's displayed position is the origin (`ui` absent or `{x: 0, y: 0}`, `-0` included; the stored format writes an absent `ui` as the explicit origin); and no edge has `ui`. No card or route drag is in progress, and the offer has not been dismissed in this editor load. `spaceCardsEligible` in `editor/space-cards.ts` decides this. Protected Chat loops are offered it too, since card positions are not protected there.
++- **The offer.** A panel at the top centre of the canvas (`editor/SpaceCardsOffer.tsx`), absolutely placed inside the canvas root (now `relative`), so showing or hiding it moves neither the toolbar nor the canvas. It is a region named by its first line, **_n_ cards are stacked in one spot**, then "Space cards puts them in columns that follow the connections. Only card positions change; Undo puts them back.", then **Space cards** (outline, 32 px, 44 px under a coarse pointer, described by that sentence) and **Dismiss suggestion** (an × icon button, 32 px, 44 px coarse). DOM order is visual order, and the panel comes before the flow, so Tab reaches it after the palette and before the first card. The panel's wrapper is `nokey`, so Delete, Backspace and xyflow's Space-to-pan pressed on its buttons never reach the canvas or remove the selected card. While the voice draft stages or the node dialog is open the page is inert, and the panel with it.
++- **Dismissing.** **Dismiss suggestion** hides the offer for this editor load (its `generation`); focus moves to the canvas and "Suggestion dismissed." is announced. A load (opening the loop, **Reload server draft**, restoring a set-aside copy) or a new canvas offers it again.
++- **Pressing Space cards** (click, Enter or Space). The canvas passes xyflow's measured card heights by node id to the store's `spaceCards`. They are layout heights, which zoom does not scale, so they are in flow pixels. The store reads its current draft and checks eligibility again. If the draft no longer qualifies, nothing changes: no revision, no step, the same state object. Otherwise it maps the heights onto the current nodes by index, giving none to a node whose id another node shares, and computes `spacedPositions`. It writes them with `withSpacedPositions` in one `set`: one history step labelled "space cards" with no merge key, `revision + 1` and `saveState: 'pending'`. Autosave, the device mirror, `If-Match` and the conflict, name-refusal, offline and invalid states then apply as to any edit, with no special save path. It does not go through `edit`, whose decision-route pass can rewrite edges when a restored routes table disagrees with the draft. Only node `ui` changes: `nodes[0]` keeps its object (an absent `ui` stays absent), and the edges array, every non-node field, `decisionRoutes`, `fieldErrors`, the selection, the dialog, the rename report, `conflict`, `nameConflict` and `baseToken` keep their references.
++- **Afterwards.** Focus moves to the canvas root, never to **Undo**, so a held or repeated Enter cannot undo the step it just made, and the polite region announces "Spaced _n_ cards. Undo puts them back." A refusal also focuses the canvas and announces "Cards were not spaced: they are no longer all in one spot." The offer leaves, since the draft no longer qualifies. Once the spaced draft has rendered with every card measured, the canvas fits the view once with the opening options (never below 50%). Another edit, an undo or a load before then drops that fit. Undo, Redo and ordinary edits never fit.
++- **Layout.** Columns 272 px apart, cards in a column at least 44 px apart, each card the larger of its measured height and a conservative coarse-pointer footprint (92 px, plus 2 + 46 px per output). A card's column is its breadth-first depth from every trigger together, else from every card nothing leads to, else from the first card. Cards no entry reaches start their own search, in card order. The whole layout shifts so the first card stays at the origin. Connections the canvas cannot draw, or that are ambiguous (a repeated id, an end whose id is repeated or missing, a port the source lacks, a self-loop, an edge into a trigger) are ignored for placement and never changed. The work is linear in nodes, edges and ports. Not promised: crossing-free connections, or a long chain fitting in one view.
++- **Undo and redo.** Undo restores the exact earlier draft, including absent `ui`, and the offer returns. Redo restores the spaced draft object itself, without computing it again. Both are ordinary edits that autosave sends.
++- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original). Native browser checks for real measurement, pointer hit-testing after the panel leaves, larger text and coarse pointers are still to be recorded.
++
+ ### Connections are drawn on the canvas (Decided, #207, ADR-0076)
+ 
+ The owner's decision, recorded in [ADR-0076](decisions/ADR-0076-canvas-only-connection-authoring.md): connections are authored only on the canvas, for every node kind. The node dialog has no **Connections** section, no **Remove edge** buttons and no **Connect** form. Everything else in it stays: id and label, the config form, declaration editing (decision routes, Choice options, Noul sides, Score bands, Script exit-code rows and Repeat route settings) with its consequence reviews that name connections, **Delete node**, protected Chat voice steps and held input.
+@@ -980,7 +993,7 @@ The owner's request: list Jev and its open-source equivalents in a section of th
+ 
+ The owner's request of 2026-10-04: undo and redo for the editor, with Ctrl+Z and Ctrl+Shift+Z.
+ 
+-- **Steps.** Every change of the draft goes through the store's `edit` with a step: a label for the buttons and an optional merge key (`editor/history.ts`). The steps are adding, moving, connecting, renaming, and deleting nodes, removing edges, rerouting an edge and resetting its route (#44), a node's label and config, the loop's name and description, its settings, and its variables. A change that leaves the definition as it was is not an edit: no revision, no save, no step. Changes with the same key less than a second apart (`COALESCE_MS`, counted from the step's latest change) are one step: typing in one field (a node's label; the loop's name; its description; one field of a schema-driven form), a drag (it ends in one move, since xyflow's second report of the same position changes nothing, and its start closes the step before it, so two quick drags are two steps), a run of arrow-key nudges of one node, and a run of arrow-key nudges of one edge's segments. A segment drag is one step like a node drag; **Reset route** is a step of its own; a node move that takes a manual route back to automatic does so inside the move's step. A merged step that ends where it started (typed, then deleted) is dropped. An undo or redo closes the open step, so the next change starts a new one, and a new step clears redo.
++- **Steps.** Every change of the draft goes through the store's `edit` with a step: a label for the buttons and an optional merge key (`editor/history.ts`). The steps are adding, moving, connecting, renaming, and deleting nodes, **Space cards** (#208, one step that moves every card of a pile, recorded by the store's `spaceCards` rather than `edit`; see "Space cards"), removing edges, rerouting an edge and resetting its route (#44), a node's label and config, the loop's name and description, its settings, and its variables. A change that leaves the definition as it was is not an edit: no revision, no save, no step. Changes with the same key less than a second apart (`COALESCE_MS`, counted from the step's latest change) are one step: typing in one field (a node's label; the loop's name; its description; one field of a schema-driven form), a drag (it ends in one move, since xyflow's second report of the same position changes nothing, and its start closes the step before it, so two quick drags are two steps), a run of arrow-key nudges of one node, and a run of arrow-key nudges of one edge's segments. A segment drag is one step like a node drag; **Reset route** is a step of its own; a node move that takes a manual route back to automatic does so inside the move's step. A merged step that ends where it started (typed, then deleted) is dropped. An undo or redo closes the open step, so the next change starts a new one, and a new step clears redo.
+ - **Form changes.** The schema-driven forms (a node's config, the loop's settings, its variables) report each change with the field's path and its kind (`FormChange`, `forms/changes.ts`), decided in the shared form layer: every field binds with `useField(name, kind)`, and an action that makes several writes wraps them in one change (`useFormChange`, the outermost description wins). A **commit** is a discrete choice: a select or picker (model, effort, classifier, a union's variant, the cron preset), a switch, a segmented control, a checkbox, a button that sets a value (Use my time zone, Add or Remove of an optional object, Customize), and adding or removing a collection's rows. Each commit is a step of its own, however soon it follows the last change, and the writes one commit makes (its value and the unparsed text it moves or drops) are that one step. **Typing** (text, number, code, JSON, the cron builder's step and time inputs, a record's key or value) merges per field path: three keystrokes in one field are one step, typing in another field starts another, and typing after a commit starts a new one. So changing Model and then Effort within a second is two steps, and toggling a switch twice is two. A record key's rename merges by its row, since the key itself changes; a record value's typing by the value's path. A change no field describes is a step of its own. The store (`updateNode`, `updateSettings`, `updateVariables`, `setFieldError`) turns a change into the step's merge key: the form and the field's path for typing, the form and the commit's id for a commit.
+ - **Held input.** A step holds `fieldErrors` with the definition, and a form's report of held input (unparsed text, an incomplete schedule or unapplied section JSON) is a change like any other: typed text merges into the step of the typing in that field, and text a commit moves or drops (a row's removal) is part of that commit's step. Refreshing the message or pending/invalid classification of unchanged held text after parent validation adds no history step and preserves redo. Neither validation nor a remount releases held section JSON that has become equal to the section: only the author's typing, Apply, Cancel or discard does. Undo therefore takes back text that does not parse together with the typing that produced it, and redo brings it back with its blocking issue. **Discard the unparsed text**, in the field or in an issue's row, is a step of its own that never merges, however soon it follows the typing (the form reports it as a discard, `reason` `'discard'`, not as text that started to parse), so undo always brings the discarded text back; undoing a node's deletion or rename brings back its unparsed text under its id. This keeps the stored text consistent with the definition it was typed against: no undo leaves text behind for a node or path that the restored draft does not have.
+ - **Not steps.** Selection, the open node editor, the loop panel's state, and save state. The history holds at most 100 steps (`HISTORY_LIMIT`, the oldest forgotten first), lives in memory only, and starts afresh on every load: opening the editor, **Reload server draft**, and restoring a set-aside device copy.
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index a505674b..38fe5243 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -89,3 +89,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
+ [ADR-0075 — Repair references in the current loop's node state](ADR-0075-node-id-reference-repair.md) records the repair and publication boundaries for node-ID changes (#273).
+ 
+ [ADR-0076 — Canvas-only connection authoring](ADR-0076-canvas-only-connection-authoring.md) records the owner decision that connections are authored only on the canvas, that changing one means removing it and drawing it again, and the keyboard connection-creation path it removes (#207).
++
++[ADR-0077 — Explicit Space cards for loops stacked in one spot](ADR-0077-explicit-space-cards.md) records the owner decision that a loop whose cards all sit in one spot is spaced only by an explicit, undoable action that writes node positions alone, and the rejected implicit layout and preview (#208).
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index c609e304..ed85a672 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -9,9 +9,11 @@
+ 5. Drag from a labelled output handle to the next node's input handle. Connections are drawn only on the canvas, with a pointer: the node's dialog does not list or create them, and the keyboard cannot create one. **Delete node** in the dialog removes the node and its edges.
+ 6. Use the **Loop settings** panel on the right for the loop's name, description, workspace, defaults, limits, and declared variables. Its Show and Hide buttons collapse or expand it.
+ 
++A loop made outside the editor, for example through the API, an import or a plugin, can open with all its cards stacked in one spot. The editor never moves them by itself. Instead, a small panel at the top of the canvas says **_n_ cards are stacked in one spot** and offers **Space cards**. It puts the cards in columns that follow the connections, left to right, keeping the first card where it is. Only card positions change, and it is one **Undo** step, named **Undo space cards**. The view then fits the spaced cards once; long loops may still reach past the edges, and connections may still cross. Focus stays on the canvas. The panel shows only while every card is at the same spot and no connection has a route you set. Moving one card is enough to hide it, and undoing that move brings it back. **Dismiss suggestion** hides it until the loop is opened again or you choose **Reload server draft**.
++
+ Structured edits in the dialog save as you type; section JSON saves when applied, and unfinished text stays in this editing session when closing: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
+ 
+-**Undo** and **Redo** at the start of the toolbar's buttons take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, removing edges, rerouting or resetting a line, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and all connections to it, and discarding held input can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
++**Undo** and **Redo** at the start of the toolbar's buttons take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, **Space cards**, removing edges, rerouting or resetting a line, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and all connections to it, and discarding held input can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
+ 
+ The **Palette** and **Loop settings** panels each have their own Show and Hide buttons. The browser remembers both choices; until you choose, the palette starts expanded on windows at least 1024 px wide and collapsed below, and the loop panel starts expanded at 1280 px and wider and collapsed below. Each collapsed panel keeps a narrow rail with its Show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
+ 

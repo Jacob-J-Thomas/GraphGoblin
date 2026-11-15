@@ -1,0 +1,32 @@
+The Space cards result is finished and verified, and the worktree is ready for your full review. `Canvas.tsx` and `SpaceCardsOffer.tsx` are byte-identical to the checkpoint. This resume changed two test files, `docs/09` and one CHANGELOG clause. Nothing was committed or staged, and I did not build or run native or browser checks. I didn't run the 7-group native plan, so the Space fixture budget stays at 1/2.
+
+**State**
+- HEAD `5c80b06f…`, tree `77d7b647…`. Nothing is staged and nothing is untracked.
+- The raw index file, its size and its mtime, and the `git ls-files -s` hash all equal the original baseline.
+- I used only read-only git commands: status, diff, ls-files, show and rev-parse. No `add`, `add -N`, reset, checkout or stash.
+- Hashes for all seven changed files are in `final/final-identity.txt` and the report.
+
+**Final bound runs** (Node v22.23.4, `pnpm.cmd`)
+- The 7-file focused set ran once: 159/159 passed, against 140 at HEAD for the same files.
+- `tsc --noEmit`, eslint, prettier and `git diff --check` all exit 0.
+- The checkpoint's 35-pass run is historical and superseded by this one.
+- I changed one CHANGELOG clause after those runs, so prettier and `git diff --check` were re-run on it. No test reads that file.
+
+**Old-production controls**
+- I put HEAD's two production files back temporarily, in a trap-safe script that checks hashes before and after, and ran the retained new tests: 14 fail, 23 pass.
+- The gate test now models where the second press lands: the result while it shows, otherwise Zoom Out.
+- Without the result, two presses on Zoom Out take the viewport zoom 2 → 1.3889, which is the original double hit.
+- A press dragged on the pane pans 30 px (Shift off). With Shift on, the viewport moves instead.
+- All 15 existing unit tests, the 3 existing gate tests, the keyboard control and the four outside-press controls pass at old production, so outside gestures behave the same with and without the result.
+- The restores were hash-exact, and the seven source hashes matched after each run.
+
+**First failures kept**
+- The checkpoint's outside-pan failure: its immediate assertion ran before React committed the result's removal, which happens in the microtask after the `pointerdown` listener returns, before that press's `mousedown`. The code was right and the test was wrong. The rerun added a microtask wait, and I added a comment explaining why.
+- An eslint floating-promise error in the unit test: fixed with a block body.
+- A cascade in my first old-production gate control: one failing test left d3 mid-gesture, which swallowed the next test's click. Fixed with a release in `afterEach`.
+
+**Open items for you**
+- **Guide doc:** `docs/guide/02-build-a-loop.md` line 12 is still accurate, but I left it alone because it wasn't in the brief's doc list. A sentence about the result staying until the next press would be consistent, so that's your call.
+- **Native-only:** jsdom has no hit-testing, click counting or `Touch`. I didn't emulate touch there, so touch and pen taps, the real R512 hit point, route-handle, node and connection drags after the result ends, and the box geometry stay native checks.
+
+The report is `report.md` in `ui-208-double-hit-implementation-resume-0250`, alongside the final diff, the checkpoint delta, source copies and all logs. The original output directory and the checkpoint were not modified.

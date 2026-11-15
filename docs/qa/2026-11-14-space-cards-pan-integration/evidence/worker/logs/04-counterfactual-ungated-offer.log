@@ -1,0 +1,812 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx (3 tests | 3 failed) 703ms
+   ❯ the Space cards offer on the pan gate and the installed d3 (#207, #208) (3)
+     × shares the gate with Remove: Space cards is refused in every window, and the first available press acts once 443ms
+     × refuses Dismiss suggestion the same way, and dismissing changes no draft 118ms
+     × lets a new pan invalidate an earlier release, and starts ready again after the canvas unmounts mid-settle 137ms
+ ❯ src/editor/Canvas.space-cards.test.tsx (15 tests | 8 failed) 1159ms
+   ❯ Space cards follow the canvas viewport gate (#207, #208) (8)
+     × keeps both buttons attached and focusable but unavailable, from a mouse pan’s first move until its release settles 21ms
+     × refuses Space cards by click, Enter and Space while unavailable, then spaces once on the first press after release 106ms
+     × refuses Dismiss suggestion while unavailable, then dismisses once with no edit, save or history step 77ms
+     × keeps the store’s own recheck behind the gate: a stale offer is refused unheard while unavailable, then by the store 14ms
+     × uses the canvas’s one gate: no second window listener, detached with the canvas 14ms
+     × reads the gate when the offer returns mid-pan, so it is never shown available while unavailable 14ms
+     ❯ the offer on its own, with the shared gate (2)
+       × subscribes once while shown, unsubscribes when it leaves, and reads the current state on return 5ms
+       × asks the gate again when pressed, so a rendered state that missed a pan still refuses 14ms
+pnpm.cmd : 
+At line:1 char:104
++ ... $env:PATH"; pnpm.cmd exec vitest run src/editor/Canvas.space-cards.te ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/Canvas.space-cards.gate.test.tsx > the Space cards offer on the pan gate and the installed d3 (#207, 
+#208) > shares the gate with Remove: Space cards is refused in every window, and the first available press acts once
+Error: expect(element).toHaveAttribute("aria-disabled", "true") // element.getAttribute("aria-disabled") === "true"
+Expected the element to have attribute:
+  aria-disabled="true"
+Received:
+  null
+ ❯ expectOneGate src/editor/Canvas.space-cards.gate.test.tsx:193:22
+    191|   for (const button of [space(), dismiss(), remove()]) {
+    192|     if (gesture) {
+    193|       expect(button).toHaveAttribute('aria-disabled', 'true');
+       |                      ^
+    194|       expect(button).toHaveAttribute('data-gesture', gesture);
+    195|     } else {
+ ❯ panAndRelease src/editor/Canvas.space-cards.gate.test.tsx:212:3
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx:227:22
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+ FAIL  src/editor/Canvas.space-cards.gate.test.tsx > the Space cards offer on the pan gate and the installed d3 (#207, 
+#208) > refuses Dismiss suggestion the same way, and dismissing changes no draft
+Error: expect(element).toHaveAttribute("aria-disabled", "true") // element.getAttribute("aria-disabled") === "true"
+Expected the element to have attribute:
+  aria-disabled="true"
+Received:
+  null
+ ❯ expectOneGate src/editor/Canvas.space-cards.gate.test.tsx:193:22
+    191|   for (const button of [space(), dismiss(), remove()]) {
+    192|     if (gesture) {
+    193|       expect(button).toHaveAttribute('aria-disabled', 'true');
+       |                      ^
+    194|       expect(button).toHaveAttribute('data-gesture', gesture);
+    195|     } else {
+ ❯ panAndRelease src/editor/Canvas.space-cards.gate.test.tsx:212:3
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx:289:7
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+ FAIL  src/editor/Canvas.space-cards.gate.test.tsx > the Space cards offer on the pan gate and the installed d3 (#207, 
+#208) > lets a new pan invalidate an earlier release, and starts ready again after the canvas unmounts mid-settle
+Error: expect(element).toHaveAttribute("aria-disabled", "true") // element.getAttribute("aria-disabled") === "true"
+Expected the element to have attribute:
+  aria-disabled="true"
+Received:
+  null
+ ❯ expectOneGate src/editor/Canvas.space-cards.gate.test.tsx:193:22
+    191|   for (const button of [space(), dismiss(), remove()]) {
+    192|     if (gesture) {
+    193|       expect(button).toHaveAttribute('aria-disabled', 'true');
+       |                      ^
+    194|       expect(button).toHaveAttribute('data-gesture', gesture);
+    195|     } else {
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx:338:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > keeps both 
+buttons attached and focusable but unavailable, from a mouse pan’s first move until its release settles
+Error: expect(element).toHaveAttribute("aria-disabled", "true") // element.getAttribute("aria-disabled") === "true"
+Expected the element to have attribute:
+  aria-disabled="true"
+Received:
+  null
+ ❯ expectGesture src/editor/Canvas.space-cards.test.tsx:238:24
+    236|     for (const button of [spaceButton(), dismissButton()]) {
+    237|       if (gesture) {
+    238|         expect(button).toHaveAttribute('aria-disabled', 'true');
+       |                        ^
+    239|         expect(button).toHaveAttribute('data-gesture', gesture);
+    240|       } else {
+ ❯ src/editor/Canvas.space-cards.test.tsx:266:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > refuses 
+Space cards by click, Enter and Space while unavailable, then spaces once on the first press after release
+AssertionError: expected { loopId: 'L1', …(56) } to be { loopId: 'L1', …(56) } // Object.is equality
+- Expected
++ Received
+@@ -163,11 +163,15 @@
+            "type": "cron",
+          },
+          "id": "nightly",
+          "kind": "trigger",
+          "label": "Nightly",
++         "ui": {
++           "x": 0,
++           "y": 184,
+          },
++       },
+        {
+          "config": {
+            "operations": [
+              {
+                "op": "set",
+@@ -185,10 +189,14 @@
+            ],
+          },
+          "id": "prep",
+          "kind": "mutate",
+          "label": "Prepare",
++         "ui": {
++           "x": 272,
++           "y": 0,
++         },
+        },
+        {
+          "config": {
+            "output": {
+              "schema": {
+@@ -208,11 +216,15 @@
+            },
+          },
+          "id": "infer",
+          "kind": "inference",
+          "label": "Infer",
++         "ui": {
++           "x": 544,
++           "y": 0,
+          },
++       },
+        {
+          "config": {
+            "args": [
+              "check.js",
+            ],
+@@ -223,10 +235,14 @@
+            },
+          },
+          "id": "check",
+          "kind": "script",
+          "label": "Check",
++         "ui": {
++           "x": 816,
++           "y": 0,
++         },
+        },
+        {
+          "config": {
+            "jsonata": "lastOutput.value.ok ? \"good\" : \"bad\"",
+            "kind": "expression",
+@@ -242,39 +258,55 @@
+            ],
+          },
+          "id": "decide",
+          "kind": "decision",
+          "label": "Decide",
++         "ui": {
++           "x": 1088,
++           "y": 0,
++         },
+        },
+        {
+          "config": {
+            "loopRef": {
+              "loopId": "YR3VKRN0N8NSTP5794CGCJ22KD",
+            },
+          },
+          "id": "sub",
+          "kind": "subloop",
+          "label": "Sub",
++         "ui": {
++           "x": 1360,
++           "y": 0,
++         },
+        },
+        {
+          "config": {
+            "mode": "input",
+            "prompt": "Approve?",
+            "timeoutSeconds": 3600,
+          },
+          "id": "approve",
+          "kind": "wait",
+          "label": "Approve",
++         "ui": {
++           "x": 1360,
++           "y": 184,
++         },
+        },
+        {
+          "config": {
+            "intervalSeconds": 60,
+            "maxBeats": 5,
+          },
+          "id": "poll",
+          "kind": "heartbeat",
+          "label": "Poll",
++         "ui": {
++           "x": 1632,
++           "y": 0,
++         },
+        },
+        {
+          "config": {
+            "destinations": [
+              {
+@@ -288,11 +320,15 @@
+            "returns": "{ \"topic\": vars.topic }",
+          },
+          "id": "done",
+          "kind": "exit",
+          "label": "Done",
++         "ui": {
++           "x": 1904,
++           "y": 0,
+          },
++       },
+      ],
+      "schemaVersion": 4,
+      "settings": {
+        "defaults": {
+          "byHarness": {
+@@ -328,20 +364,328 @@
+    "nodeDialogOpen": false,
+    "nodeDialogSession": 0,
+    "nodeFocus": undefined,
+    "openNode": [Function openNode],
+    "openStep": undefined,
+-   "past": [],
++   "past": [
++     {
++       "decisionRoutes": {
++         "decide": {
++           "nextKey": 2,
++           "rows": [
++             {
++               "edgeIds": [
++                 "e6",
++               ],
++               "id": "good",
++               "key": 0,
++             },
++             {
++               "edgeIds": [
++                 "e7",
++               ],
++               "id": "bad",
++               "key": 1,
++             },
++           ],
++         },
++       },
++       "definition": {
++         "description": "Every node kind, for tests.",
++         "edges": [
++           {
++             "from": {
++               "node": "start",
++               "port": "out",
++             },
++             "id": "e1",
++             "to": {
++               "node": "prep",
++             },
++           },
++           {
++             "from": {
++               "node": "nightly",
++               "port": "out",
++             },
++             "id": "e2",
++             "to": {
++               "node": "prep",
++             },
++           },
++           {
++             "from": {
++               "node": "prep",
++               "port": "out",
++             },
++             "id": "e3",
++             "to": {
++               "node": "infer",
++             },
++           },
++           {
++             "from": {
++               "node": "infer",
++               "port": "out",
++             },
++             "id": "e4",
++             "to": {
++               "node": "check",
++             },
++           },
++           {
++             "from": {
++               "node": "check",
++               "port": "out",
++             },
++             "id": "e5",
++             "to": {
++               "node": "decide",
++             },
++           },
++           {
++             "from": {
++               "node": "check",
++               "port": "retry",
++             },
++             "id": "e5b",
++             "to": {
++               "node": "infer",
++             },
++           },
++           {
++             "from": {
++               "node": "decide",
++               "port": "good",
++             },
++             "id": "e6",
++             "to": {
++               "node": "sub",
++             },
++           },
++           {
++             "from": {
++               "node": "decide",
++               "port": "bad",
++             },
++             "id": "e7",
++             "to": {
++               "node": "approve",
++             },
++           },
++           {
++             "from": {
++               "node": "sub",
++               "port": "out",
++             },
++             "id": "e8",
++             "to": {
++               "node": "poll",
++             },
++           },
++           {
++             "from": {
++               "node": "approve",
++               "port": "out",
++             },
++             "id": "e9",
++             "to": {
++               "node": "poll",
++             },
++           },
++           {
++             "from": {
++               "node": "poll",
++               "port": "out",
++             },
++             "id": "e10",
++             "to": {
++               "node": "done",
++             },
++           },
++         ],
++         "name": "kitchen-sink",
++         "nodes": [
++           {
++             "config": {
++               "type": "manual",
++             },
++             "id": "start",
++             "kind": "trigger",
++             "label": "Start",
++           },
++           {
++             "config": {
++               "expression": "0 2 * * *",
++               "timezone": "UTC",
++               "type": "cron",
++             },
++             "id": "nightly",
++             "kind": "trigger",
++             "label": "Nightly",
++           },
++           {
++             "config": {
++               "operations": [
++                 {
++                   "op": "set",
++                   "path": "/vars/topic",
++                   "value": {
++                     "kind": "literal",
++                     "value": "loops",
++                   },
++                 },
++                 {
++                   "content": "Topic is {{ vars.topic }}",
++                   "op": "append-message",
++                   "role": "note",
++                 },
++               ],
++             },
++             "id": "prep",
++             "kind": "mutate",
++             "label": "Prepare",
++           },
++           {
++             "config": {
++               "output": {
++                 "schema": {
++                   "jsonSchema": {
++                     "required": [
++                       "ok",
++                     ],
++                     "type": "object",
++                   },
++                   "repair": {
++                     "maxAttempts": 2,
++                   },
++                 },
++               },
++               "prompt": {
++                 "template": "Write about {{ vars.topic }}.",
++               },
++             },
++             "id": "infer",
++             "kind": "inference",
++             "label": "Infer",
++           },
++           {
++             "config": {
++               "args": [
++                 "check.js",
++               ],
++               "command": "node",
++               "exitCodeRoutes": {
++                 "0": "out",
++                 "3": "retry",
++               },
++             },
++             "id": "check",
++             "kind": "script",
++             "label": "Check",
++           },
++           {
++             "config": {
++               "jsonata": "lastOutput.value.ok ? \"good\" : \"bad\"",
++               "kind": "expression",
++               "routes": [
++                 {
++                   "id": "good",
++                   "label": "good",
++                 },
++                 {
++                   "id": "bad",
++                   "label": "bad",
++                 },
++               ],
++             },
++             "id": "decide",
++             "kind": "decision",
++             "label": "Decide",
++           },
++           {
++             "config": {
++               "loopRef": {
++                 "loopId": "YR3VKRN0N8NSTP5794CGCJ22KD",
++               },
++             },
++             "id": "sub",
++             "kind": "subloop",
++             "label": "Sub",
++           },
++           {
++             "config": {
++               "mode": "input",
++               "prompt": "Approve?",
++               "timeoutSeconds": 3600,
++             },
++             "id": "approve",
++             "kind": "wait",
++             "label": "Approve",
++           },
++           {
++             "config": {
++               "intervalSeconds": 60,
++               "maxBeats": 5,
++             },
++             "id": "poll",
++             "kind": "heartbeat",
++             "label": "Poll",
++           },
++           {
++             "config": {
++               "destinations": [
++                 {
++                   "kind": "caller",
++                 },
++                 {
++                   "kind": "log",
++                 },
++               ],
++               "outcome": "success",
++               "returns": "{ \"topic\": vars.topic }",
++             },
++             "id": "done",
++             "kind": "exit",
++             "label": "Done",
++           },
++         ],
++         "schemaVersion": 4,
++         "settings": {
++           "defaults": {
++             "byHarness": {
++               "codex": {
++                 "effort": "low",
++                 "model": "gpt-6-luna",
++               },
++             },
++           },
++           "maxNodeVisits": 3,
++           "workingDirectory": {
++             "kind": "fixed",
++             "path": "/tmp/work",
++           },
++         },
++         "variables": {
++           "topic": {
++             "type": "string",
++           },
++         },
++       },
++       "fieldErrors": {},
++       "label": "space cards",
++     },
++   ],
+    "redo": [Function redo],
+    "removeEdge": [Function removeEdge],
+
+    "removeNode": [Function removeNode],
+    "renameNode": [Function renameNode],
+ Test Files  2 failed (2)
+      Tests  11 failed | 7 passed (18)
+   Start at  17:29:12
+    "renameReport": undefined,
+    "reset": [Function reset],
+   Duration  6.85s (environment 41%, setup 15%, import 15%, tests 15%, transform 14%)
+-   "revision": 0,
++   "revision": 1,
+    "saveMessage": undefined,
+-   "saveState": "saved",
++   "saveState": "pending",
+    "savedRevision": 0,
+    "select": [Function select],
+    "selectedNodeId": undefined,
+
+    "setBaseToken": [Function setBaseToken],
+    "setConflict": [Function setConflict],
+ ❯ refused src/editor/Canvas.space-cards.test.tsx:293:23
+    291|     act(() => space.focus());
+    292|     const refused = () => {
+    293|       expect(store()).toBe(state);
+       |                       ^
+    294|       // Focus did not leave the button for the canvas, and nothing wa…
+    295|       expect(space).toHaveFocus();
+ ❯ src/editor/Canvas.space-cards.test.tsx:304:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > refuses 
+Dismiss suggestion while unavailable, then dismisses once with no edit, save or history step
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Space cards"
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the 
+`hidden` option to `true`. Learn more about this here: 
+https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 
+focus-visible:outline-focus"[39m
+      [33mdata-editor-canvas[39m=[32m""[39m
+      [33mdata-testid[39m=[32m"canvas"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"flow"[39m
+      [36m/>[39m
+      [36m<span[39m
+        [33maria-atomic[39m=[32m"true"[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSuggestion dismissed.[0m
+        [36m</span>[39m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError 
+../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ spaceButton src/editor/Canvas.space-cards.test.tsx:36:34
+     34| const OFFER = `${CARDS} cards are stacked in one spot`;
+     35| const offer = () => screen.queryByRole('region', { name: OFFER });
+     36| const spaceButton = () => screen.getByRole('button', { name: 'Space ca…
+       |                                  ^
+     37| const canvas = () => screen.getByTestId('canvas');
+     38| const announced = () => canvas().querySelector('[aria-live="polite"]')…
+ ❯ expectGesture src/editor/Canvas.space-cards.test.tsx:236:27
+ ❯ src/editor/Canvas.space-cards.test.tsx:342:7
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > keeps the 
+store’s own recheck behind the gate: a stale offer is refused unheard while unavailable, then by the store
+Error: expect(element).toHaveFocus()
+Expected element with focus:
+  <button
+  aria-describedby="_r_19_"
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md 
+border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong 
+bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm 
+pointer-coarse:h-11 [&_svg]:size-[15px]"
+  type="button"
+>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    Space cards
+  </span>
+</button>
+Received element with focus:
+  <div
+  class="relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+  data-editor-canvas=""
+  data-testid="canvas"
+  tabindex="-1"
+>
+  <div
+    class="nokey pointer-events-none absolute inset-x-0 top-3 z-[5] flex justify-center px-4"
+  >
+    <section
+      aria-labelledby="_r_18_"
+      class="pointer-events-auto grid max-w-md min-w-0 gap-2 rounded-lg border border-default bg-surface-raised px-4 
+py-3 text-sm text-default shadow-2"
+      data-testid="space-cards-offer"
+    >
+      <p
+        class="font-semibold"
+        id="_r_18_"
+      >
+        10
+         cards are stacked in one spot
+      </p>
+      <p
+        class="text-xs text-muted"
+        id="_r_19_"
+      >
+        Space cards puts them in columns that follow the connections. Only card positions change; Undo puts them back.
+      </p>
+      <div
+        class="flex items-center justify-between gap-2"
+      >
+        <button
+          aria-describedby="_r_19_"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap 
+rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong 
+bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm 
+pointer-coarse:h-11 [&_svg]:size-[15px]"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Space cards
+          </span>
+        </button>
+        <button
+          aria-label="Dismiss suggestion"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap 
+rounded-md border font-semibold leading-none cursor-pointer select-none no-underline 
+transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 
+focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 
+disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none 
+border-transparent bg-transparent text-default hover:bg-surface-hover active:translate-y-px size-8 p-0 text-sm 
+pointer-coarse:size-11 [&_svg]:size-[15px]"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="close"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M6 6l12 12M18 6 6 18"
+            />
+          </svg>
+        </button>
+      </div>
+    </section>
+  </div>
+  <div
+    data-testid="flow"
+  />
+  <span
+    aria-atomic="true"
+    aria-live="polite"
+    class="sr-only"
+  >
+    <span>
+      Cards were not spaced: they are no longer all in one spot.
+    </span>
+  </span>
+</div>
+ ❯ src/editor/Canvas.space-cards.test.tsx:375:19
+    373|     // The gate refused first: the store was not asked, so no refusal …
+    374|     expect(store()).toBe(state);
+    375|     expect(space).toHaveFocus();
+       |                   ^
+    376|     expect(announced()).toBe('');
+    377|
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > uses the 
+canvas’s one gate: no second window listener, detached with the canvas
+Error: expect(element).toHaveAttribute("aria-disabled", "true") // element.getAttribute("aria-disabled") === "true"
+Expected the element to have attribute:
+  aria-disabled="true"
+Received:
+  null
+ ❯ expectGesture src/editor/Canvas.space-cards.test.tsx:238:24
+    236|     for (const button of [spaceButton(), dismissButton()]) {
+    237|       if (gesture) {
+    238|         expect(button).toHaveAttribute('aria-disabled', 'true');
+       |                        ^
+    239|         expect(button).toHaveAttribute('data-gesture', gesture);
+    240|       } else {
+ ❯ src/editor/Canvas.space-cards.test.tsx:398:7
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > reads the 
+gate when the offer returns mid-pan, so it is never shown available while unavailable
+Error: expect(element).toHaveAttribute("aria-disabled", "true") // element.getAttribute("aria-disabled") === "true"
+Expected the element to have attribute:
+  aria-disabled="true"
+Received:
+  null
+ ❯ expectGesture src/editor/Canvas.space-cards.test.tsx:238:24
+    236|     for (const button of [spaceButton(), dismissButton()]) {
+    237|       if (gesture) {
+    238|         expect(button).toHaveAttribute('aria-disabled', 'true');
+       |                        ^
+    239|         expect(button).toHaveAttribute('data-gesture', gesture);
+    240|       } else {
+ ❯ src/editor/Canvas.space-cards.test.tsx:415:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > the offer 
+on its own, with the shared gate > subscribes once while shown, unsubscribes when it leaves, and reads the current 
+state on return
+AssertionError: expected +0 to be 1 // Object.is equality
+- Expected
++ Received
+- 1
++ 0
+ ❯ src/editor/Canvas.space-cards.test.tsx:459:29
+    457|       try {
+    458|         const first = offerOn(viewportOf);
+    459|         expect(subscribers).toBe(1);
+       |                             ^
+    460|         act(() => gate.move(new MouseEvent('mousemove')));
+    461|         expectGesture('panning');
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > the offer 
+on its own, with the shared gate > asks the gate again when pressed, so a rendered state that missed a pan still 
+refuses
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+Received:
+  1st vi.fn() call:
+    Array []
+Number of calls: 1
+ ❯ src/editor/Canvas.space-cards.test.tsx:504:27
+    502|       fireEvent.click(spaceButton());
+    503|       fireEvent.click(dismissButton());
+    504|       expect(onSpace).not.toHaveBeenCalled();
+       |                           ^
+    505|       expect(onDismiss).not.toHaveBeenCalled();
+    506|     });
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+exit=1

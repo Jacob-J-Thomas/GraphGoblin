@@ -1,0 +1,26 @@
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-space-integration/reconstructed-authorized-space-cards.test.ts.txt b/apps/web/src/editor/space-cards.test.ts
+index a0873781..674b7e9c 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-space-integration/reconstructed-authorized-space-cards.test.ts.txt
++++ b/apps/web/src/editor/space-cards.test.ts
+@@ -291,6 +291,21 @@ describe('spacedPositions: representative layouts', () => {
+     expect(spacedPositions(roots)).toEqual([pt(0, 0), pt(0, 184), pt(272, 0)]);
+   });
+ 
++  it('starts all those cards together, so a later one reaches a shared card by its shorter path', () => {
++    // No trigger, so a and b are both entries, and a comes first. b -> c is one hop and
++    // a -> x -> c is two, so c is in column 1. Starting from a alone would put c in column 2.
++    const sources = loop(
++      [work('a'), work('x'), exit('c'), work('b')],
++      [edge('e1', 'a', 'x'), edge('e2', 'x', 'c'), edge('e3', 'b', 'c')],
++    );
++    expect(spacedPositions(sources)).toEqual([
++      pt(0, 0), // a
++      pt(272, 0), // x
++      pt(272, 184), // c: column 1, below x
++      pt(0, 184), // b: column 0, below a
++    ]);
++  });
++
+   it('starts from the first card when every card is led to', () => {
+     // a -> b -> c -> a with the cycle entered at the first card of the array.
+     const ring = loop(

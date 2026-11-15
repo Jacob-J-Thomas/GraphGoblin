@@ -1,0 +1,140 @@
+# #208 explicit Space cards: stateful UI integration handoff
+
+Worker: Claude Opus 5.5 (`claude-opus-5-5`), xhigh. This is the implementation owner's own completion check, **not** an independent or adversarial review, and it used none of the PR's three scans. No subagents, Git index writes, commits, pushes, GitHub, owner service or store, providers, new dependencies, build, coverage, or native/browser runs. `report.md`, `result.json` and `events.jsonl` in this directory belong to the runner and were not touched.
+
+## Checkout and inputs (verified before editing)
+
+- Worktree `C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin`, branch `codex/gg-20261114-space-cards`.
+- HEAD `64a955887962f72287e532824be1b8cb32c5f055`, tree `a6691516210eb25887cb92abdcbd8c7abe1a4bb3`. Both are unchanged at the end, and the index is empty.
+- At start, exactly two untracked files existed, matching the brief: `space-cards.ts` `8921ad9e…fafd3` and `space-cards.test.ts` `cbcf2450…967384`.
+- Read in full: AGENTS.md, docs/README.md, docs/15, `ui-208-final-architecture-disposition.md`, `ui-208-explicit-design/report.md` and `ui-208-space-helper-resume/handoff.md`. Where the design and the root disposition differ, I followed the disposition: focus the canvas, not Undo; heights in flow space by index with an ambiguous-id fallback; no blanket single-card Undo invariant.
+- Runtime: Node v22.23.4, the project runtime, on PATH for every command, run in Git Bash.
+
+## What is implemented
+
+**Store action** (`store.ts`): `spaceCards(measured?: ReadonlyMap<string, number>) → 'applied' | 'ineligible'`.
+- It reads `get()` now and checks `spaceCardsEligible` again. With no draft, or a draft that no longer qualifies, it returns `'ineligible'` and never calls `set`, so the state object is the same reference.
+- Heights: the private `heightsByIndex` maps the id-keyed measurements onto the *current* nodes by index. An id used by more than one node gets `undefined`, which means the footprint. The pass is linear. Measurements for ids no longer in the draft are ignored.
+- It calls `withSpacedPositions(def, spacedPositions(def, heights))` in one `set`: `revision + 1`, `saveState: 'pending'`, and `recordStep` labelled `space cards` with no merge key.
+- It does **not** call `edit()`, because `decisionRouteEdges` can rewrite edges. `decisionRoutes`, `fieldErrors`, the selection, the dialog, `renameReport`, `conflict`, `nameConflict`, `baseToken`, `formEpochs` and `historyEpoch` keep their references. Undo and Redo are the existing `travel`, so Undo restores the exact earlier object and Redo the exact spaced object, with no recomputation.
+- No Chat protection check: geometry is not protected, and no other protection is relaxed.
+- The helper's count-mismatch `Error` is not caught. The positions come from the same `def`, so it cannot fire.
+
+**Offer** (new `SpaceCardsOffer.tsx`):
+- Wrapper `nokey pointer-events-none absolute inset-x-0 top-3 z-[5] flex justify-center px-4`. The xyflow wrapper is `relative; z-index: 0`, so the panel paints above the flow without layout displacement.
+- A `<section aria-labelledby>`: "{n} cards are stacked in one spot", then the muted help line from the design.
+- Then **Space cards** (outline `sm`: 32 px, 44 px under a coarse pointer, `aria-describedby` the help line) and **Dismiss suggestion** (ghost icon, 32 or 44 px). They share one row, so DOM order equals visual order and there is no CSS reordering.
+
+**Canvas** (`Canvas.tsx`):
+- The root gains `relative`. The offer renders first inside the root, before the flow, so Tab goes palette → Space cards → Dismiss → cards.
+- `offered = spaceCardsEligible(definition) && !moving && dismissedOffer !== generation`, with eligibility memoised on the definition.
+- Dismissal is Canvas state keyed by the store `generation`. A load (reopen, Reload server draft, set-aside restore) or a remount offers it again. Dismiss focuses the canvas root and announces "Suggestion dismissed." The design did not specify this; it is there to avoid losing focus to `<body>`.
+- Press: builds a `Map` of xyflow-measured heights (`offsetHeight`, which zoom does not scale, so flow pixels) and calls `spaceCards`. It then focuses the existing root (`tabIndex=-1`) and announces through the existing polite region. On success: "Spaced {n} cards. Undo puts them back." On refusal: "Cards were not spaced: they are no longer all in one spot." No focus on Undo, no global key suppression, no synthesized gestures.
+- Fit: on success, a ref holds `{definition: spaced, generation}`. A passive effect over `[definition, generation, measured, fitView]` calls `fitView(INITIAL_FIT_VIEW_OPTIONS)` once, when the rendered draft is that object and every node id has a measurement. It drops the pending fit if any other definition or generation renders first (an edit, an undo, a load). Unmount discards the ref.
+  - Why this works: in xyflow 12.12, `fitView` queues and resolves on the next `setNodes`. Child passive effects run before Canvas's, so xyflow's `StoreUpdater` has adopted the spaced nodes first.
+  - Undo, Redo and ordinary edits never set the ref.
+
+**Helper**: the production file is byte-identical (`8921ad9e…`). The test file gains only the requested counterexample (+15 lines, proven below): no triggers, cards `[a, x, c, b]`, edges `a→x, x→c, b→c`. c must sit in column 1 under x, reached by the later source b. A first-source-only start would put c in column 2.
+
+**Docs**:
+- docs/09: Fit View note, a new "Space cards (Decided, #208, ADR-0077)" section, and an Undo steps entry.
+- Guide 02: a Space cards paragraph and an entry in the Undo list.
+- CHANGELOG: an Unreleased entry, with no upgrade note.
+- New ADR-0077 and its line in the decisions index.
+- **The ADR number is provisional.** 0077 is the next number after 0076 in this stack, but 0070, 0071 and 0074 are gaps that may belong to in-flight branches, so root should confirm it at integration.
+- No API, format, migration, dependency or package changes. `docs:generate` is not needed: there is no schema or route change.
+
+## Final files and SHA-256 (also in `final-SHA256.txt`)
+
+| File | State | SHA-256 |
+|---|---|---|
+| apps/web/src/editor/space-cards.ts | untracked, unchanged from authorized | `8921ad9e67218fa788bb30e401f02702aa097932509d8413c02592d77e0fafd3` |
+| apps/web/src/editor/space-cards.test.ts | untracked, authorized + 15 lines | `09bb10ed019019a5b1c69d5bb71f8211b3ef24b67af7084d093f4a220fce5f40` |
+| apps/web/src/editor/SpaceCardsOffer.tsx | new | `6e4846ae8ae364c1e0b107a8b695463fbdf6061aa43d60f8053dadf35dd71c27` |
+| apps/web/src/editor/store.space-cards.test.ts | new | `ec3b04b6e9d770316610bc9eee728185287391fba90ff57d5f6d38d29cd6f469` |
+| apps/web/src/editor/Canvas.space-cards.test.tsx | new | `f99ebd83010e5069ddbe609bd5a337928be9bc11bd93745bd8ef96199845167b` |
+| apps/web/src/editor/EditorPage.space-cards.test.tsx | new | `573bace747db5a9aeac861d4c20c515517ca12a57c8e4bc54663a410c8b3b96d` |
+| docs/decisions/ADR-0077-explicit-space-cards.md | new | `18137e4b9d5cd48901bdbf98258549074979a89a6f896fdb148696f66775ed44` |
+| apps/web/src/editor/Canvas.tsx | modified (+60/−3) | `61647ebf6e0e82afeeff5856be2af283c2652cdd4fa0b8196a7dc43c7117db72` |
+| apps/web/src/editor/store.ts | modified (+49/−0) | `0ab21459f6b8c08e8a7b851b7ec96cff495237ff0cd329f2fc231830ebc2e2a5` |
+| docs/09-frontend-and-pwa.md | modified (+15/−2) | `87a70e756c71750ca8c07b6bd49591b3ee776eb130b5edad39f9e031b27e6e9b` |
+| docs/guide/02-build-a-loop.md | modified (+3/−1) | `93e2bc9f713b0427a8f8e0a4f88dfedaba4b56846201194300ff6528ec759628` |
+| docs/decisions/README.md | modified (+2/−0) | `cea8ca15ceafa4761908151b620e8db5bc94a74f562908f4e0e2f513600f151b` |
+| CHANGELOG.md | modified (+9/−0) | `a89db6277c75d7e0a28ca38d42d45d8578372b9123626d7c8966d05b93d50589` |
+
+Artifacts here:
+- `tracked-changes.patch` (`de7ababa…`) and `new-files.patch` (`e6321664…`). The latter was made with `git diff --no-index`, so the index was not touched.
+- `space-cards.test.delta.patch` (`d4b8a7a5…`), and `reconstructed-authorized-space-cards.test.ts.txt`. Removing my 15 lines reproduces exactly `cbcf2450…967384`, which proves the helper test delta is only the counterexample.
+- `final-git-status.txt`, `final-head.txt`, `patch-SHA256.txt`, `logs/`.
+
+## Checks actually run (cwd `apps/web` unless noted)
+
+| # | Command | Result | Log |
+|---|---|---|---|
+| 1 | `pnpm exec vitest run src/editor/Canvas.test.tsx src/editor/store.test.ts src/editor/space-cards.test.ts` (with the integration, before new tests) | exit 0, 3 files, 190 passed. The fixture piles' new offer caused no existing-test churn | `logs/01-initial-existing-focused.log` |
+| 2 | `vitest run` space-cards, store.space-cards, Canvas.space-cards, EditorPage.space-cards | **exit 1**: 116 passed, 1 failed (see below) | `logs/02-new-tests-first-run.log` |
+| 3 | `vitest run src/editor/EditorPage.space-cards.test.tsx` after the fix | exit 0, 1 passed | `logs/03-editorpage-rerun.log` |
+| 4 | `pnpm exec tsc -p tsconfig.json --noEmit` | exit 0 | `logs/04-tsc-noemit.log` |
+| 5 | `pnpm exec eslint` on the 8 changed TS/TSX files | exit 0 but **2 warnings** (`@eslint-react/naming-convention-id-name` for `useId` names) | `logs/05-eslint.log` |
+| 6 | `pnpm exec prettier --check` on the same 8 files | **exit 1**: `Canvas.space-cards.test.tsx` | `logs/06-prettier-check.log` |
+| 7 | `pnpm exec prettier --write src/editor/Canvas.space-cards.test.tsx` | exit 0; the only change was one `.map` call's wrapping (before-copy kept) | `logs/07-*` |
+| 8 | `prettier --check` (repo root) on 8 TS/TSX + CHANGELOG, docs/09, guide 02, ADR-0077, decisions README | exit 0 | `logs/08-prettier-check-all.log` |
+| 9 | `tsc -p tsconfig.json --noEmit` (final) | exit 0 | `logs/09-tsc-noemit-final.log` |
+| 10 | `eslint --max-warnings 0` on the 8 files (final) | exit 0, no output | `logs/10-eslint-final.log` |
+| 11 | `vitest run` on 15 files: the 4 new/updated ones; store, Canvas and EditorPage.undo; and the editor files that render the page or dialog over a pile fixture (EditorPage, NodeEditorDialog, template-readiness, effort-issues, harness-switch, model-effort-refresh, model-effort, model-pickers) | exit 0, **15 files, 356 passed**, 122.6 s | `logs/11-vitest-final-focused.log` |
+| 12 | After a comment-only edit to Canvas.tsx: prettier --check, `eslint --max-warnings 0`, `tsc --noEmit`, vitest Canvas.space-cards + Canvas | all exit 0; vitest 2 files, 51 passed | `logs/12-after-comment-*` |
+| 13 | `git diff --check` (tracked) and `git diff --no-index --check /dev/null <file>` per new file (repo root) | tracked exit 0. Each new file exit 1 with no output (the no-index exit for "files differ"); no whitespace errors were printed | `logs/13-diff-check.log` |
+
+Failures and fixes, in order:
+1. The EditorPage test asserted that the server copy's first node had no `ui`. The contract (`nodes.ts:760`) defaults `ui` to `{x:0, y:0}`, so a server-loaded pile has an explicit origin, and the action correctly kept it. Fix: the assertion now checks the first node equals the loaded one. The action did not change.
+2. ESLint `useId` naming warnings: renamed to `titleId` and `helpId`.
+3. Prettier wrapping in one test file: fixed with `--write`.
+4. Off by one in my own artifact reconstruction, outside the repo: redone, and it now matches `cbcf2450…`.
+
+Afterwards: no `dist` and no `*.tsbuildinfo` under `apps/web`, HEAD and tree unchanged, nothing staged.
+
+Not run, by instruction: build, emitting typecheck, coverage (so the 90% gate is unverified for the new code), the `pnpm check` gates, broad or whole-suite tests, Playwright e2e, native or browser runs, and any mutation sweep. The non-editor test files that reference pile fixtures were not run: OwnerChatSummary, loop-names, TemplateGallery, NewRunPage, VoiceSetupSheet. They do not obviously render the editor canvas over a pile.
+
+## What the tests establish (component and jsdom level only)
+
+- **Store** (3 tests):
+  - One step labelled `space cards`, `revision + 1`, pending.
+  - Every non-node field, the edges array, `nodes[0]` and every node field except `ui` keep their identity. This holds on a draft with a duplicate edge id, a missing target, a stale port, `-0`, absent `ui`, held text, a conflict, a name refusal, the selection and an open dialog.
+  - Positions equal `spacedPositions`. Undo gives back the original object; Redo the spaced object.
+  - Counterfactual: `moveNode` on the same draft does rewrite the decision edges, which proves why `edit()` is avoided.
+  - Refusal returns the same state object for: no draft, a moved card, a routed edge, a single card, and a second press.
+  - Measured heights follow current ids; duplicate ids get none and do not borrow; a stale id is ignored.
+- **Canvas** (7 tests): name, description and order; `nokey`, `relative` and `absolute`; hidden mid-drag, after a move or a route, back on Undo; one step with measured heights, focus on the canvas, the Undo announcement and exactly one `fitView` with the opening options (padding, `minZoom: 0.5`), and no further fit on Undo, Redo, an edit or a re-measure; a fit waits for measurement and is dropped by an undo or a load; a stale offer is refused with no state change, canvas focus and the refusal text; Delete and Backspace on the panel keep the selected card; held Enter (`{Enter>4/}`) and held Space (`[Space>4/]`) give exactly one step, no dialog and canvas focus; dismissal lasts per load and returns after a load or a remount.
+- **EditorPage with FakeApi** (1 test): opening sends no PUT after the autosave delay; Space cards → canvas focused, not "Undo space cards" → exactly one PUT with the loaded `If-Match`, differing from the loaded draft only in `ui`, the first node as loaded; the device copy is synced and equal; Undo → a second PUT canonically equal to the original, and the offer returns.
+
+## Preserved predecessors and scope
+
+- No predecessor (#273, #237, #207) source was edited or "fixed". The known in-progress #273 activation correction, #207's post-pan click blocker and its CI test failure are left to their owners.
+- The frozen canvas checkout was not touched.
+- No stationary Undo/Redo (A1), connection-banner relocation (A2), preview, implicit or incidental layout write, or general arrange command.
+- Root must integrate the corrected predecessors before the final gates. `Canvas.tsx` and `store.ts` may need a rebase, but the additions sit in self-contained blocks.
+
+## Honest limits, and what still needs native, CI, review or owner gates
+
+1. **Double click.** jsdom cannot hit-test. After the first click, React unmounts the panel and the cards move in the same discrete event. A native second click lands on whatever is then under the pointer: often the pane, which can xyflow-zoom on `dblclick`, or a card in column 0 above the first card, which it can select or open in the node dialog. It cannot space again, since the store refuses. No draft edit or delete follows from the click itself, but selecting or opening a card is possible, and a later deliberate Delete would act on the selection. This needs the root's native check; I added no gesture suppression, by instruction.
+2. **Space-to-pan** shielding rests on reading xyflow 12.12's `isInputDOMNode` (`.nokey` match). It is not natively verified.
+3. **Measurement.** Flow-space `offsetHeight`, larger-text spacing, coarse 44 px targets, panel wrapping at narrow widths, and both themes need native and screenshot evidence.
+   - A pile can sit under the panel on a short canvas before the action. Cards under the panel cannot be clicked until it is dismissed or used. Not measured.
+4. **Fit.** It needs every node id measured. A card xyflow never measures (for example, hidden) means no fit until the next definition change drops it; that has not been seen natively.
+5. **e2e churn.** Playwright specs that build all-origin loops through REST will now show the panel at the top centre of the canvas. Clicks there may hit it. Not run.
+6. **Gates.** Still to come: coverage, build, the full `pnpm check`, current-target CI after root integration, opposite-family (GPT) formal review within the three-scan budget, native QA, the fresh sign-off, and owner acceptance. #208 stays open, and PRs should say "Part of #208".
+
+## Native scenario prerequisites (for root's heavy slot; not run)
+
+- **Setup:** the built successor with integrated predecessors; an isolated API and store on alternate ports; Edge.
+- **Fixtures:** REST-created twins of a pile, one with `ui` omitted and one with explicit zeros, using the kitchen-sink shape and a 300-node pile.
+- **Record at each step:** PUT count, bodies and `If-Match`, the IndexedDB copy, focus target, the live region, the viewport transform before and after, and per-card boxes.
+- **Configurations:** fine and coarse pointers, 100/125/150% root font, 1440×900 and 768 px.
+- **Checks:**
+  - the double click and a held Enter or Space on the button: no second step, nothing deleted, and record what the second click lands on;
+  - Delete with a card selected while focus is on the panel;
+  - Space pressed on the panel does not pan;
+  - Undo and Redo do not refit;
+  - Reload after saving shows no panel;
+  - Reload server draft during a conflict brings back the pile and the panel;
+  - offline, a failed PUT and a name refusal follow the existing pipeline.

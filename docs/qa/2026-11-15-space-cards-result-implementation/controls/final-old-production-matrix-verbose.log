@@ -1,0 +1,391 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > floats the offer over a pile, named and described, ahead of the cards in the Tab order 250ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > hides the offer while a card is dragged and for a draft that is not a pile, and offers it again on undo 41ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > spaces with measured heights in one step, focuses the canvas, announces Undo, and fits once 76ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > fits only once the spaced cards are measured, and drops the fit when an undo or a load comes first 192ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > refuses an offer the store has moved past: nothing changes, focus is on the canvas, and it says why 59ms
+ ✓ src/editor/Canvas.space-cards.gate.test.tsx > the Space cards offer on the pan gate and the installed d3 (#207, #208) > shares the gate with Remove: Space cards is refused in every window, and the first available press acts once 628ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > keeps keys on the offer from the canvas, and spaces once for a held Enter or Space 170ms
+ ✓ src/editor/Canvas.space-cards.gate.test.tsx > the Space cards offer on the pan gate and the installed d3 (#207, #208) > refuses Dismiss suggestion the same way, and dismissing changes no draft 223ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > dismisses the offer for this editor load only 117ms
+ × src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > replaces the offer, in the same commit and box, with a plain line: no control, no live region, the same announcement 78ms
+   → expected [ 'neither' ] to include 'result'
+ × src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > shows Suggestion dismissed. in the box for Dismiss, with no edit, save or step 72ms
+   → Cannot read properties of null (reading 'textContent')
+ × src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > shows the refusal line when the store refuses an offer that retires in the same update, and none while the offer stays 12ms
+   → Cannot read properties of null (reading 'textContent')
+ × src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > holds presses on it, plain, with Shift and as a double click, without preventing or stopping any event 68ms
+   → Unable to find an element by: [data-testid="space-cards-result"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"[39m
+      [33mdata-editor-canvas[39m=[32m""[39m
+      [33mdata-testid[39m=[32m"canvas"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"flow"[39m
+      [36m/>[39m
+      [36m<span[39m
+        [33maria-atomic[39m=[32m"true"[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSpaced 10 cards. Undo puts them back.[0m
+        [36m</span>[39m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ✓ src/editor/Canvas.space-cards.gate.test.tsx > the Space cards offer on the pan gate and the installed d3 (#207, #208) > lets a new pan invalidate an earlier release, and starts ready again after the canvas unmounts mid-settle 301ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > is not left by a keyboard or scripted activation: Enter, Space and a click with no detail retire the offer at once 109ms
+ × src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > ends at the next pointerdown outside it, which goes on untouched, and not at one inside it 45ms
+   → Unable to find an element by: [data-testid="space-cards-result"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"[39m
+      [33mdata-editor-canvas[39m=[32m""[39m
+      [33mdata-testid[39m=[32m"canvas"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"flow"[39m
+      [36m/>[39m
+      [36m<span[39m
+        [33maria-atomic[39m=[32m"true"[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSpaced 10 cards. Undo puts them back.[0m
+        [36m</span>[39m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > is dropped when the offer returns or another draft loads, and kept through other edits of this one 63ms
+   → expected null not to be null
+ × src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > stays until a press elsewhere, however long: no timer ends it 18ms
+   → expected null not to be null
+ × src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > listens on the document for one passive capture pointerdown only while it shows, and cleans up when it ends and on unmount 75ms
+   → listeners is not iterable (cannot read property Symbol(Symbol.iterator))
+ × src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > holds the second and third presses of a run on the result, Shift held: neither xyflow nor d3 sees them 294ms
+   → expected { x: 283.3333333333333, …(2) } to deeply equal { x: 144, y: 280, zoom: 2 }
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > keeps both buttons attached and focusable but unavailable, from a mouse pan’s first move until its release settles 85ms
+ × src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > holds a press dragged on the result: no pan, selection box or listener begins (Shift false) 226ms
+   → expected { x: 174, y: 280, zoom: 2 } to deeply equal { x: 144, y: 280, zoom: 2 }
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > refuses Space cards by click, Enter and Space while unavailable, then spaces once on the first press after release 213ms
+ × src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > holds a press dragged on the result: no pan, selection box or listener begins (Shift true) 177ms
+   → expected { x: 129, y: 265, zoom: 2 } to deeply equal { x: 144, y: 280, zoom: 2 }
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > refuses Dismiss suggestion while unavailable, then dismisses once with no edit, save or history step 169ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > keeps the store’s own recheck behind the gate: a stale offer is refused unheard while unavailable, then by the store 108ms
+ × src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > leaves no result for a pointer press the gate refuses, and one for the first press that acts 92ms
+   → Cannot read properties of null (reading 'textContent')
+ ✓ src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > control: the first press on the pane ends the result and clears both selections as ever (Shift false) 248ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > uses the canvas’s one gate: no second window listener, detached with the canvas 15ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > reads the gate when the offer returns mid-pan, so it is never shown available while unavailable 48ms
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > the offer on its own, with the shared gate > subscribes once while shown, unsubscribes when it leaves, and reads the current state on return 78ms
+ × src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > the offer on its own, with the shared gate > hands the canvas the offer’s measured box for a pointer click, and none for a keyboard or scripted one 10ms
+   → expected last "vi.fn()" call to have been called with [ { width: 392, height: 129.5 } ]
+ × src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > the offer on its own, with the shared gate > shows its line in the given box, ends at a pointerdown outside only, and listens no more once gone 4ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ ✓ src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > the offer on its own, with the shared gate > asks the gate again when pressed, so a rendered state that missed a pan still refuses 10ms
+ ✓ src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > control: the first press on the pane ends the result and clears both selections as ever (Shift true) 264ms
+ ✓ src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > control: a mouse pan that is the first press elsewhere ends the result and pans as ever 242ms
+ ✓ src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > control: a Zoom Out press that is the first press elsewhere ends the result and zooms out once 263ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > holds the second and third presses of a run on the result, Shift held: neither xyflow nor d3 sees them
+AssertionError: expected { x: 283.3333333333333, …(2) } to deeply equal { x: 144, y: 280, zoom: 2 }
+
+- Expected
++ Received
+
+  {
+-   "x": 144,
+-   "y": 280,
+-   "zoom": 2,
++   "x": 283.3333333333333,
++   "y": 316.66666666666663,
++   "zoom": 1.388888888888889,
+  }
+
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx:518:33
+    516|
+    517|     // The view is still the one fit, and both selections are kept.
+    518|     expect(flow!.getViewport()).toEqual(fitted);
+       |                                 ^
+    519|     expect(store().selectedNodeId).toBe(nodeId);
+    520|     expect(remove()).toBeInTheDocument();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > holds a press dragged on the result: no pan, selection box or listener begins (Shift false)
+AssertionError: expected { x: 174, y: 280, zoom: 2 } to deeply equal { x: 144, y: 280, zoom: 2 }
+
+- Expected
++ Received
+
+  {
+-   "x": 144,
++   "x": 174,
+    "y": 280,
+    "zoom": 2,
+  }
+
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx:567:35
+    565|       }
+    566|       // Mid-drag, where a pan would have started or a selection box b…
+    567|       expect(flow!.getViewport()).toEqual(fitted);
+       |                                   ^
+    568|       expect(remove()).not.toHaveAttribute('data-gesture');
+    569|       expect(flowStore!.getState()).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.gate.test.tsx > presses after a Space cards click, on the installed xyflow and d3 (#208) > holds a press dragged on the result: no pan, selection box or listener begins (Shift true)
+AssertionError: expected { x: 129, y: 265, zoom: 2 } to deeply equal { x: 144, y: 280, zoom: 2 }
+
+- Expected
++ Received
+
+  {
+-   "x": 144,
+-   "y": 280,
++   "x": 129,
++   "y": 265,
+    "zoom": 2,
+  }
+
+ ❯ src/editor/Canvas.space-cards.gate.test.tsx:567:35
+    565|       }
+    566|       // Mid-drag, where a pan would have started or a selection box b…
+    567|       expect(flow!.getViewport()).toEqual(fitted);
+       |                                   ^
+    568|       expect(remove()).not.toHaveAttribute('data-gesture');
+    569|       expect(flowStore!.getState()).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > replaces the offer, in the same commit and box, with a plain line: no control, no live region, the same announcement
+AssertionError: expected [ 'neither' ] to include 'result'
+ ❯ src/editor/Canvas.space-cards.test.tsx:275:34
+    273|
+    274|     // The offer is never gone without its result: no commit shows nei…
+    275|     expect(states.slice(before)).toContain('result');
+       |                                  ^
+    276|     expect(states.slice(before)).not.toContain('neither');
+    277|     expect(states.slice(before)).not.toContain('both');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > shows Suggestion dismissed. in the box for Dismiss, with no edit, save or step
+TypeError: Cannot read properties of null (reading 'textContent')
+ ❯ src/editor/Canvas.space-cards.test.tsx:310:20
+    308|     await user.click(dismissButton());
+    309|     expect(offer()).toBeNull();
+    310|     expect(result()!.textContent).toBe('Suggestion dismissed.');
+       |                    ^
+    311|     expect(result()).toHaveStyle({ width: '392px', height: '129.5px' }…
+    312|     expect(announced()).toBe('Suggestion dismissed.');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > shows the refusal line when the store refuses an offer that retires in the same update, and none while the offer stays
+TypeError: Cannot read properties of null (reading 'textContent')
+ ❯ src/editor/Canvas.space-cards.test.tsx:326:20
+    324|     });
+    325|     expect(offer()).toBeNull();
+    326|     expect(result()!.textContent).toBe(
+       |                    ^
+    327|       'Cards were not spaced: they are no longer all in one spot.',
+    328|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > holds presses on it, plain, with Shift and as a double click, without preventing or stopping any event
+TestingLibraryElementError: Unable to find an element by: [data-testid="space-cards-result"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"[39m
+      [33mdata-editor-canvas[39m=[32m""[39m
+      [33mdata-testid[39m=[32m"canvas"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"flow"[39m
+      [36m/>[39m
+      [36m<span[39m
+        [33maria-atomic[39m=[32m"true"[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSpaced 10 cards. Undo puts them back.[0m
+        [36m</span>[39m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/editor/Canvas.space-cards.test.tsx:349:26
+    347|     act(() => store().select('prep'));
+    348|     await user.click(spaceButton());
+    349|     const shown = screen.getByTestId('space-cards-result');
+       |                          ^
+    350|     const state = store();
+    351|     const seen: { type: string; prevented: boolean }[] = [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > ends at the next pointerdown outside it, which goes on untouched, and not at one inside it
+TestingLibraryElementError: Unable to find an element by: [data-testid="space-cards-result"]
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"relative h-full w-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"[39m
+      [33mdata-editor-canvas[39m=[32m""[39m
+      [33mdata-testid[39m=[32m"canvas"[39m
+      [33mtabindex[39m=[32m"-1"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mdata-testid[39m=[32m"flow"[39m
+      [36m/>[39m
+      [36m<span[39m
+        [33maria-atomic[39m=[32m"true"[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"sr-only"[39m
+      [36m>[39m
+        [36m<span>[39m
+          [0mSpaced 10 cards. Undo puts them back.[0m
+        [36m</span>[39m
+      [36m</span>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ show src/editor/Canvas.space-cards.test.tsx:404:21
+    402|         await user.click(spaceButton());
+    403|       }
+    404|       return screen.getByTestId('space-cards-result');
+       |                     ^
+    405|     };
+    406|     const shown = await show();
+ ❯ src/editor/Canvas.space-cards.test.tsx:406:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > is dropped when the offer returns or another draft loads, and kept through other edits of this one
+AssertionError: expected null not to be null
+ ❯ src/editor/Canvas.space-cards.test.tsx:440:26
+    438|     render(<Live />);
+    439|     await user.click(spaceButton());
+    440|     expect(result()).not.toBeNull();
+       |                          ^
+    441|     // Edits and the undo of one, within this load, keep it: it was no…
+    442|     act(() => store().moveNode('prep', { x: 1, y: 1 }));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > stays until a press elsewhere, however long: no timer ends it
+AssertionError: expected null not to be null
+ ❯ src/editor/Canvas.space-cards.test.tsx:480:28
+    478|       render(<Live />);
+    479|       fireEvent.click(spaceButton(), { detail: 1 });
+    480|       expect(result()).not.toBeNull();
+       |                            ^
+    481|       act(() => {
+    482|         vi.advanceTimersByTime(60 * 60 * 1000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > the result a pointer press leaves where the offer was (#208) > listens on the document for one passive capture pointerdown only while it shows, and cleans up when it ends and on unmount
+TypeError: listeners is not iterable (cannot read property Symbol(Symbol.iterator))
+ ❯ src/editor/Canvas.space-cards.test.tsx:502:34
+    500|       expect(listeners(removed)).toHaveLength(0);
+    501|       await user.click(spaceButton());
+    502|       const [, press, options] = listeners(added).at(-1)!;
+       |                                  ^
+    503|       expect(listeners(added)).toHaveLength(baseline + 1);
+    504|       expect(options).toEqual({ capture: true, passive: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > leaves no result for a pointer press the gate refuses, and one for the first press that acts
+TypeError: Cannot read properties of null (reading 'textContent')
+ ❯ src/editor/Canvas.space-cards.test.tsx:713:22
+    711|       await user.click(spaceButton());
+    712|       expect(offer()).toBeNull();
+    713|       expect(result()!.textContent).toBe(`Spaced ${CARDS} cards.`);
+       |                      ^
+    714|       expect(labels()).toEqual(['space cards']);
+    715|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > the offer on its own, with the shared gate > hands the canvas the offer’s measured box for a pointer click, and none for a keyboard or scripted one
+AssertionError: expected last "vi.fn()" call to have been called with [ { width: 392, height: 129.5 } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "height": 129.5,
+-     "width": 392,
+-   },
+- ]
++ []
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:827:25
+    825|         fireEvent.click(spaceButton(), { detail: 1 });
+    826|         fireEvent.click(dismissButton(), { detail: 2 });
+    827|         expect(onSpace).toHaveBeenLastCalledWith(OFFER_BOX);
+       |                         ^
+    828|         expect(onDismiss).toHaveBeenLastCalledWith(OFFER_BOX);
+    829|         // Enter, Space and `element.click()` report a detail of 0.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards follow the canvas viewport gate (#207, #208) > the offer on its own, with the shared gate > shows its line in the given box, ends at a pointerdown outside only, and listens no more once gone
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ ❯ createFiberFromTypeAndProps ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:5330:28
+ ❯ createFiberFromElement ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:5344:14
+ ❯ createChild ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:6701:26
+ ❯ reconcileChildrenArray ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:7033:25
+ ❯ reconcileChildFibersImpl ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:7357:20
+ ❯ ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:7456:33
+ ❯ reconcileChildren ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:10097:13
+ ❯ beginWork ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:12326:15
+ ❯ runWithFiberInDEV ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:1048:13
+ ❯ performUnitOfWork ../../node_modules/.pnpm/react-dom@19.3.0_react@19.3.0/node_modules/react-dom/cjs/react-dom-client.development.js:19176:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 23 passed (37)
+   Start at  21:00:56
+   Duration  8.80s (environment 32%, tests 31%, import 13%, setup 12%, transform 12%)
+

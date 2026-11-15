@@ -1,0 +1,9 @@
+# Handoff recovery provenance
+
+The runner's current report.md was preserved unchanged (3,386 bytes; SHA-256 8430c2a25d5ee77b289c91d09527c1541088baac850553577424fced8f2f6031). The final artifact manifest records a different worker report hash: 555a1e68d07d7620d38b231c38406fc505cdca2d25ad02817975bbbf3b1b1815.
+
+Recovery used only the final report-target Write and the later report-correction Bash tool-use arguments in events.jsonl. The initial Write was event UUID b042f6cf-2e9f-473e-837f-937bf6c6aa6b, tool-use ID toolu_01UxHLP3yS7XLNEMEwrUSwvN. Its 15,336-character content was first reconstructed as UTF-8 without BOM. The subsequent correction was event UUID dfdf507f-bc22-4bd4-986b-96e22ea6c54b, tool-use ID toolu_01EZCfFhxXur4etDMjN2YUq9. Its Node heredoc specifies four ordered literal string replacements followed by a file write. I parsed those replacement literals as data and applied them to the initial content; I did not execute the logged command. An earlier report.md mention (event UUID a1148bd5-1e79-4fbe-86a6-f647e5d91d2c) was a read-only run-log inspection. No other Write/Bash content write to the final report path was found in the scoped event records.
+
+The reconstructed handoff-recovered.md is 15,522 bytes and SHA-256 555a1e68d07d7620d38b231c38406fc505cdca2d25ad02817975bbbf3b1b1815, exactly matching the worker manifest. The artifact manifest was checked against 59 files: 58 match; the sole mismatch is the preserved current report.md versus the worker's expected report hash. No manifest paths were missing. All listed non-report artifacts, including run logs, matched; no runtime-append exception was needed.
+
+The current report, event log, and artifact manifest were not modified. No result, thinking, signature, or arbitrary logged command was read or executed for recovery.

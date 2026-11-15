@@ -1,0 +1,932 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f826a98fdd134daec40ad3b8038de1b797bcbd85..f0a77e2b8028c80c9f7eddfa27da69dbaf230047 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -12,9 +12,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   cards move. The panel shows only while every card is at the same spot and no connection has a
+   route you set; **Dismiss suggestion** hides it until the loop is opened or reloaded again.
+   Right after a mouse pan, both buttons are briefly shown unavailable and do nothing, like
+-  **Remove connection**, until the pan's own click blocker is gone. Opening a loop, other edits,
+-  Undo and Redo never move cards by themselves. No stored or exported data changes, so there is
+-  no upgrade note.
++  **Remove connection**, until the pan's own click blocker is gone. After a click, tap or pen
++  press on either button, the panel's box stays where it was and shows the result (**Spaced _n_
++  cards.**, the refusal, or **Suggestion dismissed.**) until the next press anywhere else, so the
++  second press of a double click lands on it and not on the controls under the panel (at narrow
++  widths, **Zoom Out**). The area it covers, and any card the fit places there, stays covered
++  until then; the keyboard leaves nothing behind. Opening a loop, other edits, Undo and Redo
++  never move cards by themselves. No stored or exported data changes, so there is no upgrade note.
+ 
+ - **Undo** and **Redo** stay where they are (#208, ADR-0078). A native baseline showed them moving
+   with the editor's changing toolbar: 30 to 37 px sideways when the validation text ("Checking…",
+diff --git a/apps/web/src/editor/Canvas.space-cards.gate.test.tsx b/apps/web/src/editor/Canvas.space-cards.gate.test.tsx
+index ee5c16b41809bd4b3bd5c5daf24f52f453687422..5bacbe3f691ce64124c9b96c63d99d9fc660da5d 100644
+--- a/apps/web/src/editor/Canvas.space-cards.gate.test.tsx
++++ b/apps/web/src/editor/Canvas.space-cards.gate.test.tsx
+@@ -7,13 +7,32 @@
+  *
+  * It shows that the offer's two buttons follow the same gate as the selected connection's Remove
+  * button: d3 cancels the click that follows a mouse pan before it reaches any of them, all three say
+- * so, and the first press after they show as available acts once. jsdom has no hit-testing and no
+- * layout: where a native press lands, target sizes and doubleclicks stay native checks.
++ * so, and the first press after they show as available acts once. It also shows what xyflow and d3
++ * do, and do not do, with the presses that follow a Space cards click once its result has replaced
++ * the offer (#208): presses on the result reach neither, while the first press elsewhere ends the
++ * result and acts exactly as it would have without it. jsdom has no hit-testing and no layout:
++ * which element a native press lands on, target sizes, the browser's own click counting and touch
++ * stay native checks, and here each press is dispatched at the element a browser would hit.
+  */
+ import type { LoopDefinitionInput } from '@graphgoblin/contracts';
+ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+-import { ReactFlowProvider } from '@xyflow/react';
+-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
++import {
++  ReactFlowProvider,
++  useReactFlow,
++  useStoreApi,
++  type ReactFlowInstance,
++} from '@xyflow/react';
++import {
++  afterAll,
++  afterEach,
++  beforeAll,
++  beforeEach,
++  describe,
++  expect,
++  it,
++  vi,
++  type MockInstance,
++} from 'vitest';
+ import { Canvas } from './Canvas.js';
+ import { newLoopDefinition } from './model.js';
+ import { NODE_CARD_SIZE } from './routing-geometry.js';
+@@ -148,11 +167,22 @@ function whenFirstAvailable<T>(button: HTMLElement, act: () => T): Promise<T> {
+   });
+ }
+ 
++let flow: ReactFlowInstance | undefined;
++let flowStore: ReturnType<typeof useStoreApi> | undefined;
++
++/** Reads xyflow's instance and store, which the Canvas leaves to the provider. */
++function Observe() {
++  flow = useReactFlow();
++  flowStore = useStoreApi();
++  return null;
++}
++
+ function Live() {
+   const definition = useEditorStore((s) => s.definition)!;
+   return (
+     <ReactFlowProvider>
+       <Canvas definition={definition} issues={[]} />
++      <Observe />
+     </ReactFlowProvider>
+   );
+ }
+@@ -358,3 +388,183 @@ describe('the Space cards offer on the pan gate and the installed d3 (#207, #208
+     expectOneGate(undefined);
+   });
+ });
++
++/** d3's window listeners now, as d3-selection records them (read only). */
++const d3Listeners = () =>
++  ((view as unknown as { __on?: { type: string; name: string }[] }).__on ?? []).map(
++    (listener) => `${listener.type}.${listener.name}`,
++  );
++
++const PRIMARY = {
++  bubbles: true,
++  cancelable: true,
++  composed: true,
++  view,
++  clientX: 93,
++  clientY: 290,
++  button: 0,
++};
++
++/** The pointerdown a browser sends before the mousedown of a press, for a press done by hand. */
++const pointerDown = (target: Element) =>
++  target.dispatchEvent(
++    new PointerEvent('pointerdown', { ...PRIMARY, buttons: 1, pointerType: 'mouse', pointerId: 1 }),
++  );
++
++/**
++ * One press of the primary mouse button as a browser delivers it to `target`, the `count`th of a
++ * run: pointerdown and pointerup (no click count yet), then mousedown, mouseup and click carrying
++ * it, and a dblclick after the second.
++ */
++async function press(target: Element, count: number, shiftKey = false) {
++  const base = { ...PRIMARY, shiftKey };
++  const pointer = (type: string, buttons: number) =>
++    new PointerEvent(type, {
++      ...base,
++      buttons,
++      pointerType: 'mouse',
++      isPrimary: true,
++      pointerId: 1,
++    });
++  const mouseEvent = (type: string, buttons: number) =>
++    new MouseEvent(type, { ...base, buttons, detail: count });
++  for (const event of [
++    pointer('pointerdown', 1),
++    mouseEvent('mousedown', 1),
++    pointer('pointerup', 0),
++    mouseEvent('mouseup', 0),
++    mouseEvent('click', 0),
++    ...(count === 2 ? [mouseEvent('dblclick', 0)] : []),
++  ]) {
++    target.dispatchEvent(event);
++    // As in a browser, microtasks run between one event's listeners and the next event.
++    await microtasks();
++  }
++}
++
++/** A few tasks and microtasks: React commits, d3's cleanup and the fit have all had their turn. */
++async function settle() {
++  for (let i = 0; i < 4; i += 1) {
++    await queuedTask(() => undefined);
++    await microtasks();
++  }
++}
++
++describe('presses after a Space cards click, on the installed xyflow and d3 (#208)', () => {
++  const result = () => screen.queryByTestId('space-cards-result');
++  const zoomOut = () => document.querySelector<HTMLElement>('.react-flow__controls-zoomout')!;
++  let boxSpy: MockInstance<Element['getBoundingClientRect']>;
++
++  beforeEach(() => {
++    // jsdom has no layout: the offer's box is the one a browser measured at 512 px.
++    const measured = Element.prototype.getBoundingClientRect;
++    boxSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
++      this: Element,
++    ) {
++      return this.getAttribute('data-testid') === 'space-cards-offer'
++        ? DOMRect.fromRect({ width: 392, height: 129.5 })
++        : measured.call(this);
++    });
++  });
++  afterEach(() => {
++    fireEvent.keyUp(document.body, { key: 'Shift', code: 'ShiftLeft' });
++    boxSpy.mockRestore();
++  });
++
++  /** The pile with its connection and one card selected, and Shift held when asked. */
++  async function selectedPile(shift: boolean) {
++    const opened = await openedPile();
++    const nodeId = store().definition!.nodes[0]!.id;
++    store().select(nodeId);
++    if (shift)
++      fireEvent.keyDown(document.body, { key: 'Shift', code: 'ShiftLeft', shiftKey: true });
++    await settle();
++    expect(store().selectedNodeId).toBe(nodeId);
++    expect(remove()).toBeInTheDocument();
++    return { ...opened, nodeId };
++  }
++
++  /** Press 1: Space cards. Waits for the result and for the one fit to land. */
++  async function spaced(shift: boolean) {
++    await press(space(), 1, shift);
++    const shown = await waitFor(() => {
++      const found = result();
++      expect(found).not.toBeNull();
++      return found!;
++    });
++    await settle();
++    return shown;
++  }
++
++  it('holds the second and third presses of a run on the result, Shift held: neither xyflow nor d3 sees them', async () => {
++    const { nodeId } = await selectedPile(true);
++    const before = { revision: store().revision, d3: d3Listeners() };
++    const shown = await spaced(true);
++    const fitted = flow!.getViewport();
++
++    // Press 2 (and its dblclick) on the result, press 3 on its text.
++    await press(shown, 2, true);
++    await press(shown.firstElementChild!, 3, true);
++    await settle();
++
++    expect(result()).toBe(shown);
++    expect(flow!.getViewport()).toEqual(fitted);
++    // Both selections are kept, and no selection box, drag or pan began.
++    expect(store().selectedNodeId).toBe(nodeId);
++    expect(remove()).toBeInTheDocument();
++    expect(flowStore!.getState()).toMatchObject({
++      userSelectionActive: false,
++      userSelectionRect: null,
++      nodesSelectionActive: false,
++    });
++    expect(d3Listeners()).toEqual(before.d3);
++    expect(screen.queryByRole('dialog')).toBeNull();
++    // The one step, and nothing announced or focused again.
++    expect(store().past.map((step) => step.label)).toEqual(['space cards']);
++    expect(store().revision).toBe(before.revision + 1);
++    expect(announced()).toBe('Spaced 2 cards. Undo puts them back.');
++    expect(canvas()).toHaveFocus();
++  });
++
++  it.each([false, true])(
++    'control: the first press on the pane ends the result and clears both selections as ever (Shift %s)',
++    async (shift) => {
++      const { pane } = await selectedPile(shift);
++      await spaced(shift);
++      await press(pane, 1, shift);
++      await settle();
++      expect(result()).toBeNull();
++      expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
++      expect(store().selectedNodeId).toBeUndefined();
++      expect(store().past.map((step) => step.label)).toEqual(['space cards']);
++    },
++  );
++
++  it('control: a mouse pan that is the first press elsewhere ends the result and pans as ever', async () => {
++    const { pane } = await selectedPile(false);
++    await spaced(false);
++    const fitted = flow!.getViewport();
++    pointerDown(pane);
++    await microtasks();
++    expect(result()).toBeNull();
++    pane.dispatchEvent(mouse('mousedown', 600, 400, 0, 1));
++    await microtasks();
++    pane.dispatchEvent(mouse('mousemove', 710, 400, 0, 1));
++    await microtasks();
++    expect(remove()).toHaveAttribute('data-gesture', 'panning');
++    expect(flow!.getViewport().x).toBeCloseTo(fitted.x + 110, 5);
++    pane.dispatchEvent(mouse('mouseup', 710, 400, 0, 0));
++    await whenFirstAvailable(remove(), () => undefined);
++    expect(remove()).not.toHaveAttribute('data-gesture');
++  });
++
++  it('control: a Zoom Out press that is the first press elsewhere ends the result and zooms out once', async () => {
++    await selectedPile(false);
++    await spaced(false);
++    const zoom = flow!.getViewport().zoom;
++    await press(zoomOut(), 1);
++    await settle();
++    expect(result()).toBeNull();
++    expect(flow!.getViewport().zoom).toBeCloseTo(zoom / 1.2, 5);
++  });
++});
+diff --git a/apps/web/src/editor/Canvas.space-cards.test.tsx b/apps/web/src/editor/Canvas.space-cards.test.tsx
+index 4a17fc3f1b54ae68790ceeca7727ec6d5a8a964b..99518dd5d8ae6c234c62d5ab0aed97158fa87a4e 100644
+--- a/apps/web/src/editor/Canvas.space-cards.test.tsx
++++ b/apps/web/src/editor/Canvas.space-cards.test.tsx
+@@ -2,11 +2,12 @@ import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+ import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+ import userEvent from '@testing-library/user-event';
+ import type { NodeChange, ReactFlowProps } from '@xyflow/react';
+-import { beforeEach, describe, expect, it, vi } from 'vitest';
++import { Profiler } from 'react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+ import { Canvas } from './Canvas.js';
+ import type { FlowNode } from './NodeCard.js';
+ import { spacedPositions } from './space-cards.js';
+-import { SpaceCardsOffer } from './SpaceCardsOffer.js';
++import { SpaceCardsOffer, SpaceCardsResult } from './SpaceCardsOffer.js';
+ import { useEditorStore } from './store.js';
+ import type { RoutingGeometry } from './useRouting.js';
+ import { createViewportGestureGate } from './viewport-gesture.js';
+@@ -38,6 +39,21 @@ const canvas = () => screen.getByTestId('canvas');
+ const announced = () => canvas().querySelector('[aria-live="polite"]')!.textContent;
+ const labels = () => store().past.map((step) => step.label);
+ const positions = () => store().definition!.nodes.map((node) => node.ui ?? { x: 0, y: 0 });
++const result = () => screen.queryByTestId('space-cards-result');
++const dismissButton = () => screen.getByRole('button', { name: 'Dismiss suggestion' });
++
++/** The box a browser measured for the offer at 512 px (#208): jsdom has no layout of its own. */
++const OFFER_BOX = { width: 392, height: 129.5 };
++function stubOfferBox() {
++  const measured = Element.prototype.getBoundingClientRect;
++  return vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
++    this: Element,
++  ) {
++    return this.getAttribute('data-testid') === 'space-cards-offer'
++      ? DOMRect.fromRect(OFFER_BOX)
++      : measured.call(this);
++  });
++}
+ const OPENING_FIT = {
+   padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
+   minZoom: 0.5,
+@@ -216,9 +232,298 @@ describe('Space cards on the canvas (#208)', () => {
+   });
+ });
+ 
++describe('the result a pointer press leaves where the offer was (#208)', () => {
++  const PRESSES = [
++    'pointerdown',
++    'mousedown',
++    'pointerup',
++    'mouseup',
++    'click',
++    'dblclick',
++  ] as const;
++  let boxSpy: ReturnType<typeof stubOfferBox>;
++
++  beforeEach(() => {
++    fitView.mockClear();
++    store().load('L1', kitchenSinkLoop());
++    boxSpy = stubOfferBox();
++  });
++  afterEach(() => boxSpy.mockRestore());
++
++  /** What the DOM shows after each commit: the offer, its result, or (never) neither. */
++  const commitsOf = (states: string[]) => () => {
++    const offered = screen.queryByTestId('space-cards-offer') !== null;
++    const shown = result() !== null;
++    states.push(offered ? (shown ? 'both' : 'offer') : shown ? 'result' : 'neither');
++  };
++
++  it('replaces the offer, in the same commit and box, with a plain line: no control, no live region, the same announcement', async () => {
++    const user = userEvent.setup();
++    const states: string[] = [];
++    render(
++      <Profiler id="canvas" onRender={commitsOf(states)}>
++        <Live />
++      </Profiler>,
++    );
++    const panel = screen.getByTestId('space-cards-offer');
++    const was = { wrapper: panel.parentElement!.className, section: panel.className };
++    measure({ prep: 400 });
++    const before = states.length;
++    await user.click(spaceButton());
++
++    // The offer is never gone without its result: no commit shows neither.
++    expect(states.slice(before)).toContain('result');
++    expect(states.slice(before)).not.toContain('neither');
++    expect(states.slice(before)).not.toContain('both');
++    const shown = screen.getByTestId('space-cards-result');
++    expect(offer()).toBeNull();
++    expect(shown.textContent).toBe(`Spaced ${CARDS} cards.`);
++    // The offer's own wrapper, classes (background, border, shadow) and measured size, ahead of the flow.
++    expect(shown.parentElement!.className).toBe(was.wrapper);
++    for (const name of was.section.split(' ')) expect(shown).toHaveClass(name);
++    expect(shown).toHaveStyle({ width: '392px', height: '129.5px' });
++    expect(shown.parentElement!.parentElement).toBe(canvas());
++    expect(
++      shown.compareDocumentPosition(screen.getByTestId('flow')) & Node.DOCUMENT_POSITION_FOLLOWING,
++    ).toBeTruthy();
++    // Nothing to press, focus, select or hear: the canvas's one polite region says it, once.
++    expect(shown).toHaveClass('select-none');
++    expect(
++      shown.querySelectorAll('button, a, input, select, textarea, [tabindex], [role]'),
++    ).toHaveLength(0);
++    expect(shown).not.toHaveAttribute('tabindex');
++    expect(canvas().querySelectorAll('[aria-live]')).toHaveLength(1);
++    expect(shown.closest('[aria-live]')).toBeNull();
++    expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
++    expect(canvas()).toHaveFocus();
++    // One step and one fit, as without the result.
++    expect(labels()).toEqual(['space cards']);
++    expect(fitView).toHaveBeenCalledTimes(1);
++  });
++
++  it('shows Suggestion dismissed. in the box for Dismiss, with no edit, save or step', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    const state = store();
++    await user.click(dismissButton());
++    expect(offer()).toBeNull();
++    expect(result()!.textContent).toBe('Suggestion dismissed.');
++    expect(result()).toHaveStyle({ width: '392px', height: '129.5px' });
++    expect(announced()).toBe('Suggestion dismissed.');
++    expect(canvas()).toHaveFocus();
++    expect(store()).toBe(state);
++  });
++
++  it('shows the refusal line when the store refuses an offer that retires in the same update, and none while the offer stays', async () => {
++    const user = userEvent.setup();
++    const view = render(<Live />);
++    // The click arrives in the update that moves the draft: the pile is gone when it renders.
++    act(() => {
++      store().moveNode('prep', { x: 5, y: 5 });
++      fireEvent.click(spaceButton(), { detail: 1 });
++    });
++    expect(offer()).toBeNull();
++    expect(result()!.textContent).toBe(
++      'Cards were not spaced: they are no longer all in one spot.',
++    );
++    expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
++    expect(labels()).toEqual(['move prep']);
++    expect(canvas()).toHaveFocus();
++    view.unmount();
++
++    // A canvas that still shows the stale offer replaces nothing, so it adds nothing.
++    act(() => store().load('L1', kitchenSinkLoop()));
++    render(<Canvas definition={store().definition!} issues={[]} />);
++    act(() => store().moveNode('prep', { x: 6, y: 6 }));
++    await user.click(spaceButton());
++    expect(result()).toBeNull();
++    expect(offer()).not.toBeNull();
++    expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
++  });
++
++  it('holds presses on it, plain, with Shift and as a double click, without preventing or stopping any event', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    act(() => store().select('prep'));
++    await user.click(spaceButton());
++    const shown = screen.getByTestId('space-cards-result');
++    const state = store();
++    const seen: { type: string; prevented: boolean }[] = [];
++    const record = (event: Event) =>
++      seen.push({ type: event.type, prevented: event.defaultPrevented });
++    for (const type of PRESSES) window.addEventListener(type, record);
++    try {
++      await user.dblClick(shown);
++      await user.keyboard('{Shift>}');
++      await user.dblClick(shown);
++      await user.keyboard('{/Shift}');
++    } finally {
++      for (const type of PRESSES) window.removeEventListener(type, record);
++    }
++    // Every kind of press reached the page's bubble phase, none cancelled.
++    expect(new Set(seen.map((event) => event.type))).toEqual(new Set(PRESSES));
++    expect(seen.some((event) => event.prevented)).toBe(false);
++    // And it did nothing: the result stays, the draft, selection, focus and announcement are as they were.
++    expect(result()).toBe(shown);
++    expect(store()).toBe(state);
++    expect(store().selectedNodeId).toBe('prep');
++    expect(canvas()).toHaveFocus();
++    expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
++  });
++
++  it('is not left by a keyboard or scripted activation: Enter, Space and a click with no detail retire the offer at once', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    for (const press of [
++      () => user.keyboard('{Enter}'),
++      () => user.keyboard('[Space]'),
++      () => fireEvent.click(document.activeElement!),
++    ]) {
++      act(() => store().load('L1', kitchenSinkLoop()));
++      act(() => spaceButton().focus());
++      await act(async () => press());
++      expect(offer()).toBeNull();
++      expect(result()).toBeNull();
++    }
++    act(() => store().load('L1', kitchenSinkLoop()));
++    act(() => dismissButton().focus());
++    fireEvent.click(dismissButton());
++    expect(offer()).toBeNull();
++    expect(result()).toBeNull();
++    expect(announced()).toBe('Suggestion dismissed.');
++  });
++
++  it('ends at the next pointerdown outside it, which goes on untouched, and not at one inside it', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    const show = async () => {
++      if (result() === null) {
++        act(() => store().load('L1', kitchenSinkLoop()));
++        await user.click(spaceButton());
++      }
++      return screen.getByTestId('space-cards-result');
++    };
++    const shown = await show();
++    fireEvent.pointerDown(shown, { button: 0 });
++    fireEvent.pointerDown(shown.firstElementChild!, { button: 0 });
++    expect(result()).toBe(shown);
++
++    const flowElement = screen.getByTestId('flow');
++    const arrivals: boolean[] = [];
++    flowElement.addEventListener('pointerdown', (event) => arrivals.push(event.defaultPrevented));
++    const presses = [
++      { button: 0 },
++      { button: 2 },
++      { button: 1 },
++      { button: 0, pointerType: 'touch' },
++      { button: 0, pointerType: 'pen' },
++    ];
++    for (const init of presses) {
++      await show();
++      fireEvent.pointerDown(flowElement, init);
++      expect(result()).toBeNull();
++    }
++    // Each press went on to the flow, never cancelled on the way.
++    expect(arrivals).toEqual(presses.map(() => false));
++    // Anywhere else on the page ends it too: the canvas's own root, and the page.
++    for (const target of [canvas(), document.body]) {
++      await show();
++      fireEvent.pointerDown(target, { button: 0 });
++      expect(result()).toBeNull();
++    }
++  });
++
++  it('is dropped when the offer returns or another draft loads, and kept through other edits of this one', async () => {
++    const user = userEvent.setup();
++    render(<Live />);
++    await user.click(spaceButton());
++    expect(result()).not.toBeNull();
++    // Edits and the undo of one, within this load, keep it: it was no offer's place.
++    act(() => store().moveNode('prep', { x: 1, y: 1 }));
++    expect(result()).not.toBeNull();
++    act(() => store().undo());
++    expect(result()).not.toBeNull();
++    // The undo that brings the offer back takes it away, and a redo adds none.
++    act(() => store().undo());
++    expect(offer()).not.toBeNull();
++    expect(result()).toBeNull();
++    act(() => store().redo());
++    expect(offer()).toBeNull();
++    expect(result()).toBeNull();
++
++    // A load of a draft that is no pile drops it, and so does a load of one that is.
++    act(() => store().undo());
++    await user.click(spaceButton());
++    expect(result()).not.toBeNull();
++    const loop = kitchenSinkLoop();
++    act(() =>
++      store().load('L2', {
++        ...loop,
++        nodes: loop.nodes.map((node, index) => ({ ...node, ui: { x: index * 300, y: 0 } })),
++      }),
++    );
++    expect(offer()).toBeNull();
++    expect(result()).toBeNull();
++    act(() => store().load('L1', kitchenSinkLoop()));
++    await user.click(dismissButton());
++    expect(result()!.textContent).toBe('Suggestion dismissed.');
++    act(() => store().load('L1', kitchenSinkLoop()));
++    expect(offer()).not.toBeNull();
++    expect(result()).toBeNull();
++  });
++
++  it('stays until a press elsewhere, however long: no timer ends it', () => {
++    vi.useFakeTimers();
++    try {
++      render(<Live />);
++      fireEvent.click(spaceButton(), { detail: 1 });
++      expect(result()).not.toBeNull();
++      act(() => vi.advanceTimersByTime(60 * 60 * 1000));
++      expect(result()).not.toBeNull();
++    } finally {
++      vi.useRealTimers();
++    }
++  });
++
++  it('listens on the document for one passive capture pointerdown only while it shows, and cleans up when it ends and on unmount', async () => {
++    const user = userEvent.setup();
++    const added = vi.spyOn(document, 'addEventListener');
++    const removed = vi.spyOn(document, 'removeEventListener');
++    const windowAdded = vi.spyOn(window, 'addEventListener');
++    const listeners = (spy: typeof added) =>
++      spy.mock.calls.filter(([type]) => type === 'pointerdown');
++    try {
++      const view = render(<Live />);
++      const baseline = listeners(added).length;
++      expect(listeners(removed)).toHaveLength(0);
++      await user.click(spaceButton());
++      const [, press, options] = listeners(added).at(-1)!;
++      expect(listeners(added)).toHaveLength(baseline + 1);
++      expect(options).toEqual({ capture: true, passive: true });
++      // Ending it removes that very listener; nothing else is left behind.
++      fireEvent.pointerDown(document.body);
++      expect(listeners(removed)).toEqual([['pointerdown', press, { capture: true }]]);
++      // The canvas's own gate stays the page's one window `mouseup` listener.
++      expect(windowAdded.mock.calls.filter(([type]) => type === 'mouseup')).toHaveLength(1);
++
++      act(() => store().undo());
++      await user.click(dismissButton());
++      expect(result()).not.toBeNull();
++      const second = listeners(added).at(-1)![1];
++      view.unmount();
++      expect(listeners(removed).at(-1)).toEqual(['pointerdown', second, { capture: true }]);
++      expect(listeners(added)).toHaveLength(baseline + 2);
++      expect(listeners(removed)).toHaveLength(2);
++    } finally {
++      added.mockRestore();
++      removed.mockRestore();
++      windowAdded.mockRestore();
++    }
++  });
++});
++
+ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
+   const viewport = { x: 0, y: 0, zoom: 1 };
+-  const dismissButton = () => screen.getByRole('button', { name: 'Dismiss suggestion' });
+   /** xyflow's `onMove` for the first move of a mouse pan: the gate is `panning` from here. */
+   const pan = () => act(() => flow().onMove!(new MouseEvent('mousemove'), viewport));
+   /** A mouse release on the page, seen first by the canvas's one window listener. */
+@@ -384,6 +689,32 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
+     expect(fitView).not.toHaveBeenCalled();
+   });
+ 
++  it('leaves no result for a pointer press the gate refuses, and one for the first press that acts', async () => {
++    const user = userEvent.setup();
++    const boxSpy = stubOfferBox();
++    try {
++      render(<Live />);
++      const state = store();
++      pan();
++      fireEvent.click(spaceButton(), { detail: 1 });
++      fireEvent.click(dismissButton(), { detail: 1 });
++      release();
++      fireEvent.click(spaceButton(), { detail: 1 });
++      expectGesture('settling');
++      expect(result()).toBeNull();
++      expect(offer()).not.toBeNull();
++      expect(store()).toBe(state);
++
++      await untilAvailable();
++      await user.click(spaceButton());
++      expect(offer()).toBeNull();
++      expect(result()!.textContent).toBe(`Spaced ${CARDS} cards.`);
++      expect(labels()).toEqual(['space cards']);
++    } finally {
++      boxSpy.mockRestore();
++    }
++  });
++
+   it('uses the canvas’s one gate: no second window listener, detached with the canvas', () => {
+     const add = vi.spyOn(window, 'addEventListener');
+     const removeListener = vi.spyOn(window, 'removeEventListener');
+@@ -484,6 +815,49 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
+       }
+     });
+ 
++    it('hands the canvas the offer’s measured box for a pointer click, and none for a keyboard or scripted one', () => {
++      const boxSpy = stubOfferBox();
++      try {
++        const gate = createViewportGestureGate();
++        const { onSpace, onDismiss } = offerOn(gate);
++        fireEvent.click(spaceButton(), { detail: 1 });
++        fireEvent.click(dismissButton(), { detail: 2 });
++        expect(onSpace).toHaveBeenLastCalledWith(OFFER_BOX);
++        expect(onDismiss).toHaveBeenLastCalledWith(OFFER_BOX);
++        // Enter, Space and `element.click()` report a detail of 0.
++        fireEvent.click(spaceButton());
++        fireEvent.click(dismissButton(), { detail: 0 });
++        expect(onSpace).toHaveBeenLastCalledWith(undefined);
++        expect(onDismiss).toHaveBeenLastCalledWith(undefined);
++        expect(onSpace).toHaveBeenCalledTimes(2);
++        expect(onDismiss).toHaveBeenCalledTimes(2);
++      } finally {
++        boxSpy.mockRestore();
++      }
++    });
++
++    it('shows its line in the given box, ends at a pointerdown outside only, and listens no more once gone', () => {
++      const onEnd = vi.fn();
++      const view = render(
++        <>
++          <SpaceCardsResult message="Done." box={{ width: 200, height: 60 }} onEnd={onEnd} />
++          <button type="button">Elsewhere</button>
++        </>,
++      );
++      const shown = screen.getByTestId('space-cards-result');
++      expect(shown).toHaveStyle({ width: '200px', height: '60px' });
++      expect(shown).toHaveTextContent('Done.');
++      fireEvent.pointerDown(shown);
++      fireEvent.pointerDown(within(shown).getByText('Done.'));
++      expect(onEnd).not.toHaveBeenCalled();
++      fireEvent.pointerDown(screen.getByRole('button', { name: 'Elsewhere' }));
++      fireEvent.pointerDown(document);
++      expect(onEnd).toHaveBeenCalledTimes(2);
++      view.unmount();
++      fireEvent.pointerDown(document.body);
++      expect(onEnd).toHaveBeenCalledTimes(2);
++    });
++
+     it('asks the gate again when pressed, so a rendered state that missed a pan still refuses', () => {
+       const gate = createViewportGestureGate();
+       // A subscription that never reports: the buttons stay rendered available whatever happens.
+diff --git a/apps/web/src/editor/Canvas.tsx b/apps/web/src/editor/Canvas.tsx
+index 1438a5cf56148e54d5e9348827ab664d769b9712..9ee6787deb6cdabeaebee6de1d5daffc1fe4b916 100644
+--- a/apps/web/src/editor/Canvas.tsx
++++ b/apps/web/src/editor/Canvas.tsx
+@@ -74,7 +74,7 @@ import { edgeLabelText } from './edge-label-text.js';
+ import { loopBackEdgeIds } from './loop-back-edges.js';
+ import { removalFocusTarget } from './canvas-focus.js';
+ import { spaceCardsEligible } from './space-cards.js';
+-import { SpaceCardsOffer } from './SpaceCardsOffer.js';
++import { SpaceCardsOffer, SpaceCardsResult, type OfferBox } from './SpaceCardsOffer.js';
+ import { createViewportGestureGate } from './viewport-gesture.js';
+ 
+ const nodeTypes = { gg: NodeCard };
+@@ -931,6 +931,22 @@ export function Canvas({
+   const pile = useMemo(() => spaceCardsEligible(definition), [definition]);
+   const [dismissedOffer, setDismissedOffer] = useState<number>();
+   const offered = pile && !moving && dismissedOffer !== generation;
++  // What a pointer press on the offer leaves in its box (#208): the result of the press, until the
++  // next press elsewhere, so a double click's second press lands on it and not on what the offer
++  // covered. Like a selected connection that is gone, it is dropped while rendering when the offer
++  // is back (undo) or the draft was loaded; a keyboard press leaves none.
++  const [offerResult, setOfferResult] = useState<{
++    message: string;
++    box: OfferBox;
++    generation: number;
++  }>();
++  if (offerResult && (offered || offerResult.generation !== generation)) setOfferResult(undefined);
++  const endOfferResult = useCallback(() => setOfferResult(undefined), []);
++  // The polite announcement says `spoken`, which defaults to what the result shows.
++  const report = (message: string, box: OfferBox | undefined, spoken = message) => {
++    announce(spoken);
++    if (box) setOfferResult({ message, box, generation: useEditorStore.getState().generation });
++  };
+   // The one view fit that Space cards asks for: the draft it produced, kept until that draft has
+   // rendered with every card measured (this passive effect runs after xyflow's own, which hands it
+   // the new positions). Another edit, an undo or a load first drops it; no edit, undo or redo
+@@ -949,7 +965,7 @@ export function Canvas({
+   }, [definition, generation, measured, fitView]);
+   // The store checks its current draft again, so a second press, a repeated key or an offer left
+   // from an older render changes nothing.
+-  const spaceAll = () => {
++  const spaceAll = (box: OfferBox | undefined) => {
+     // xyflow measures each card's layout box, which zoom does not scale: flow pixels.
+     const heights = new Map(Object.entries(measured).map(([id, size]) => [id, size.height]));
+     const result = spaceCards(heights);
+@@ -959,15 +975,16 @@ export function Canvas({
+       const state = useEditorStore.getState();
+       const spaced = state.definition!;
+       spacedFitRef.current = { definition: spaced, generation: state.generation };
+-      announce(`Spaced ${spaced.nodes.length} cards. Undo puts them back.`);
++      const shown = `Spaced ${spaced.nodes.length} cards.`;
++      report(shown, box, `${shown} Undo puts them back.`);
+     } else {
+-      announce('Cards were not spaced: they are no longer all in one spot.');
++      report('Cards were not spaced: they are no longer all in one spot.', box);
+     }
+   };
+-  const dismissOffer = () => {
++  const dismissOffer = (box: OfferBox | undefined) => {
+     setDismissedOffer(generation);
+     rootRef.current?.focus();
+-    announce('Suggestion dismissed.');
++    report('Suggestion dismissed.', box);
+   };
+ 
+   // A geometry-only update publishes edge channels without rendering the whole canvas again.
+@@ -1047,6 +1064,13 @@ export function Canvas({
+           onDismiss={dismissOffer}
+         />
+       ) : null}
++      {offerResult ? (
++        <SpaceCardsResult
++          message={offerResult.message}
++          box={offerResult.box}
++          onEnd={endOfferResult}
++        />
++      ) : null}
+       {flow}
+       <CanvasZoom canvasRef={rootRef} nodes={plan.nodes} />
+       <span aria-live="polite" aria-atomic="true" className="sr-only">
+diff --git a/apps/web/src/editor/SpaceCardsOffer.tsx b/apps/web/src/editor/SpaceCardsOffer.tsx
+index dc114b14ce9fbf0e732b1d3dc3dd6e47f122586a..e8358be5c3461e60159b62345929c299938ddada 100644
+--- a/apps/web/src/editor/SpaceCardsOffer.tsx
++++ b/apps/web/src/editor/SpaceCardsOffer.tsx
+@@ -1,8 +1,19 @@
+-import { useId, useSyncExternalStore } from 'react';
++import { useId, useLayoutEffect, useRef, useSyncExternalStore, type MouseEvent } from 'react';
+ import { Icon } from '../components/icons/index.js';
+ import { Button } from '../components/ui/index.js';
+ import type { ViewportGestureGate } from './viewport-gesture.js';
+ 
++/** The offer panel's measured size in CSS pixels, which its result then keeps. */
++export interface OfferBox {
++  readonly width: number;
++  readonly height: number;
++}
++
++// The offer and its result share one wrapper and one box, so the result covers what the offer did.
++const WRAPPER = 'nokey pointer-events-none absolute inset-x-0 top-3 z-[5] flex justify-center px-4';
++const BOX =
++  'pointer-events-auto grid max-w-md min-w-0 gap-2 rounded-lg border border-default bg-surface-raised px-4 py-3 text-sm text-default shadow-2';
++
+ /**
+  * The Space cards offer (#208, ADR-0077): a small panel at the top centre of the canvas while
+  * every card of the loop sits in one spot. It floats over the canvas (absolutely placed in the
+@@ -18,6 +29,10 @@ import type { ViewportGestureGate } from './viewport-gesture.js';
+  * settled they say they are unavailable (`aria-disabled` and `data-gesture`, not `disabled`, so
+  * they keep their place, hit target and focus), and a press then does nothing and says nothing.
+  * The offer is not hidden, so no press falls through to the canvas below it.
++ *
++ * A press that acts reports the panel's box when it is a pointer's click (`detail` of 1 or more),
++ * measured before the action, so the canvas can show `SpaceCardsResult` in it. A keyboard press
++ * (`detail` 0) reports none and the panel leaves at once.
+  */
+ export function SpaceCardsOffer({
+   count,
+@@ -28,24 +43,27 @@ export function SpaceCardsOffer({
+   count: number;
+   /** The canvas's gate: only `ready` lets the buttons act. */
+   viewport: Pick<ViewportGestureGate, 'state' | 'subscribe'>;
+-  onSpace: () => void;
+-  onDismiss: () => void;
++  onSpace: (box: OfferBox | undefined) => void;
++  onDismiss: (box: OfferBox | undefined) => void;
+ }) {
+   const titleId = useId();
+   const helpId = useId();
++  const sectionRef = useRef<HTMLElement>(null);
+   const gesture = useSyncExternalStore(viewport.subscribe, viewport.state);
+   const settling = gesture === 'ready' ? undefined : gesture;
+   // A press acts only when the buttons are shown available and the gate agrees right now.
+-  const guarded = (act: () => void) => () => {
++  const guarded = (act: (box: OfferBox | undefined) => void) => (event: MouseEvent) => {
+     if (settling || viewport.state() !== 'ready') return;
+-    act();
++    const box = event.detail > 0 ? sectionRef.current?.getBoundingClientRect() : undefined;
++    act(box && { width: box.width, height: box.height });
+   };
+   return (
+-    <div className="nokey pointer-events-none absolute inset-x-0 top-3 z-[5] flex justify-center px-4">
++    <div className={WRAPPER}>
+       <section
++        ref={sectionRef}
+         aria-labelledby={titleId}
+         data-testid="space-cards-offer"
+-        className="pointer-events-auto grid max-w-md min-w-0 gap-2 rounded-lg border border-default bg-surface-raised px-4 py-3 text-sm text-default shadow-2"
++        className={BOX}
+       >
+         <p id={titleId} className="font-semibold">
+           {count} cards are stacked in one spot
+@@ -80,3 +98,53 @@ export function SpaceCardsOffer({
+     </div>
+   );
+ }
++
++/**
++ * What a pointer press on the offer leaves behind (#208): a plain, visible line in the offer's own
++ * wrapper and box (`box`, measured before it acted), in the same commit that removes the offer.
++ * The press that follows a double click, a tap pair or a mouse run would otherwise land on whatever
++ * the offer covered (at 512 px, Zoom Out), whatever the browser numbers that press. Here it lands on
++ * this box, which does nothing: no control, no focus, no selectable text, no live region (the
++ * canvas's own polite announcement already said the result), no handler, and no event is prevented,
++ * stopped, delayed or replayed.
++ *
++ * It ends at the next `pointerdown` anywhere outside it, heard in the document's capture phase on a
++ * passive listener that exists only while it shows, so that press goes on untouched to what it hit.
++ * It also ends when the canvas drops it (the offer is back, or a new load) and when the canvas
++ * unmounts. The cost is plain: the area the offer covered stays covered, and the cards the fit
++ * places there stay hidden, until the next press elsewhere. A resize or a layout change while it
++ * shows re-centres or shrinks it, and nothing here protects what is then under its old place.
++ */
++export function SpaceCardsResult({
++  message,
++  box,
++  onEnd,
++}: {
++  message: string;
++  box: OfferBox;
++  /** Called at a `pointerdown` outside the result. */
++  onEnd: () => void;
++}) {
++  const ref = useRef<HTMLElement>(null);
++  // A layout effect adds the listener in the commit that shows the result, before any press.
++  useLayoutEffect(() => {
++    const press = (event: PointerEvent) => {
++      if (event.target instanceof Node && ref.current?.contains(event.target)) return;
++      onEnd();
++    };
++    document.addEventListener('pointerdown', press, { capture: true, passive: true });
++    return () => document.removeEventListener('pointerdown', press, { capture: true });
++  }, [onEnd]);
++  return (
++    <div className={WRAPPER}>
++      <section
++        ref={ref}
++        data-testid="space-cards-result"
++        style={{ width: box.width, height: box.height }}
++        className={`${BOX} content-start overflow-hidden select-none`}
++      >
++        <p className="font-semibold">{message}</p>
++      </section>
++    </div>
++  );
++}
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index c011e7777a6b58bd4d203fcaa93c47ba2d9bc15a..4c57577f27d6ca6a72279e7d78bede8f7d8247a6 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -271,13 +271,16 @@ The owner's decision, recorded in [ADR-0077](decisions/ADR-0077-explicit-space-c
+ 
+ - **When it is offered.** The draft has at least two nodes; every node's displayed position is the origin (`ui` absent or `{x: 0, y: 0}`, `-0` included; the stored format writes an absent `ui` as the explicit origin); and no edge has `ui`. No card or route drag is in progress, and the offer has not been dismissed in this editor load. `spaceCardsEligible` in `editor/space-cards.ts` decides this. Protected Chat loops are offered it too, since card positions are not protected there.
+ - **The offer.** A panel at the top centre of the canvas (`editor/SpaceCardsOffer.tsx`), absolutely placed inside the canvas root (now `relative`), so showing or hiding it moves neither the toolbar nor the canvas. It is a region named by its first line, **_n_ cards are stacked in one spot**, then "Space cards puts them in columns that follow the connections. Only card positions change; Undo puts them back.", then **Space cards** (outline, 32 px, 44 px under a coarse pointer, described by that sentence) and **Dismiss suggestion** (an × icon button, 32 px, 44 px coarse). DOM order is visual order, and the panel comes before the flow, so Tab reaches it after the palette and before the first card. The panel's wrapper is `nokey`, so Delete, Backspace and xyflow's Space-to-pan pressed on its buttons never reach the canvas or remove the selected card. While the voice draft stages or the node dialog is open the page is inert, and the panel with it.
+-- **Dismissing.** **Dismiss suggestion** hides the offer for this editor load (its `generation`); focus moves to the canvas and "Suggestion dismissed." is announced. A load (opening the loop, **Reload server draft**, restoring a set-aside copy) or a new canvas offers it again.
++- **Dismissing.** **Dismiss suggestion** hides the offer for this editor load (its `generation`); focus moves to the canvas and "Suggestion dismissed." is announced. A pointer click also leaves the visible line **Suggestion dismissed.** in the panel's box (see "The result of a pointer press" below). A load (opening the loop, **Reload server draft**, restoring a set-aside copy) or a new canvas offers it again.
+ - **After a mouse pan.** The offer's buttons sit outside the flow, but inside the same page-wide capture path as d3-drag's `click.drag` blocker (see "Remove" under "Connections are drawn on the canvas" below), so a click on them right after a mouse pan could be swallowed while they looked available. **Space cards** and **Dismiss suggestion** therefore follow the canvas's own viewport gate, the one that guards **Remove connection** and **Reset route**: the canvas hands it to the offer as `viewport`, the offer subscribes with `useSyncExternalStore`, and there is no second gate and no second window listener. From a pan's first move until its release has settled both buttons are `aria-disabled` with `data-gesture` set to `panning` or `settling`. They are not `disabled`, not `pointer-events: none` and not hidden, so they keep their place, hit target and focus, and a press cannot fall through to the canvas below the panel. A click, Enter or Space then does nothing and says nothing: no announcement, no focus move and no call to the store. A press acts only when the rendered state and the gate's own state at that moment are both ready, so the two cannot disagree. The first press once the buttons show as available acts once, as described below, and **Dismiss suggestion** never writes anything: no edit, no history step, no save. The offer is unavailable for as long as the gate is, also when it returns mid-pan (an Undo of a move). Wheel, touch, Fit View and other programmatic moves never touch the gate.
+ - **Pressing Space cards** (click, Enter or Space). The canvas passes xyflow's measured card heights by node id to the store's `spaceCards`. They are layout heights, which zoom does not scale, so they are in flow pixels. The store reads its current draft and checks eligibility again. If the draft no longer qualifies, nothing changes: no revision, no step, the same state object. Otherwise it maps the heights onto the current nodes by index, giving none to a node whose id another node shares, and computes `spacedPositions`. It writes them with `withSpacedPositions` in one `set`: one history step labelled "space cards" with no merge key, `revision + 1` and `saveState: 'pending'`. Autosave, the device mirror, `If-Match` and the conflict, name-refusal, offline and invalid states then apply as to any edit, with no special save path. It does not go through `edit`, whose decision-route pass can rewrite edges when a restored routes table disagrees with the draft. Only node `ui` changes: `nodes[0]` keeps its object (an absent `ui` stays absent), and the edges array, every non-node field, `decisionRoutes`, `fieldErrors`, the selection, the dialog, the rename report, `conflict`, `nameConflict` and `baseToken` keep their references.
+-- **Afterwards.** Focus moves to the canvas root, never to **Undo**, so a held or repeated Enter cannot undo the step it just made, and the polite region announces "Spaced _n_ cards. Undo puts them back." A refusal also focuses the canvas and announces "Cards were not spaced: they are no longer all in one spot." The offer leaves, since the draft no longer qualifies. Once the spaced draft has rendered with every card measured, the canvas fits the view once with the opening options (never below 50%). Another edit, an undo or a load before then drops that fit. Undo, Redo and ordinary edits never fit.
++- **Afterwards.** Focus moves to the canvas root, never to **Undo**, so a held or repeated Enter cannot undo the step it just made, and the polite region announces "Spaced _n_ cards. Undo puts them back." A refusal also focuses the canvas and announces "Cards were not spaced: they are no longer all in one spot." The offer leaves, since the draft no longer qualifies; after a keyboard press it leaves at once, and after a pointer click a result takes its place (next bullet). Once the spaced draft has rendered with every card measured, the canvas fits the view once with the opening options (never below 50%). Another edit, an undo or a load before then drops that fit. Undo, Redo and ordinary edits never fit.
+ - **Layout.** Columns 272 px apart, cards in a column at least 44 px apart, each card the larger of its measured height and a conservative coarse-pointer footprint (92 px, plus 2 + 46 px per output). A card's column is its breadth-first depth from every trigger together, else from every card nothing leads to, else from the first card. Cards no entry reaches start their own search, in card order. The whole layout shifts so the first card stays at the origin. Connections the canvas cannot draw, or that are ambiguous (a repeated id, an end whose id is repeated or missing, a port the source lacks, a self-loop, an edge into a trigger) are ignored for placement and never changed. The work is linear in nodes, edges and ports. Not promised: crossing-free connections, or a long chain fitting in one view.
+-- **Undo and redo.** Undo restores the exact earlier draft, including absent `ui`, and the offer returns. Redo restores the spaced draft object itself, without computing it again. Both are ordinary edits that autosave sends.
+-- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit; and, with the canvas's real gate, both buttons staying attached, focusable and `aria-disabled` from a pan's first move until its release settles, refusal by click, Enter and Space, the first press after release acting once, Dismiss writing nothing, a stale offer refused first by the gate and then by the store, no second window listener, and the offer's subscription ending when it leaves and reading the gate again when it returns), `editor/Canvas.space-cards.gate.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: d3's `click.drag` cancels the click after a mouse pan before it reaches Space cards or Dismiss, the press that arrives while the gate still settles is refused, the first press once the buttons show as available acts once, and the offer shares each state with the selected connection's Remove) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original; Dismiss changing, saving and writing nothing). These are jsdom tests: native first-input delivery after a real pan, target geometry, a double click on Space cards, real measurement, pointer hit-testing after the panel leaves, larger text and coarse pointers are still to be recorded in a browser.
++- **The result of a pointer press.** A click of **Space cards** or **Dismiss suggestion** whose `detail` is 1 or more (a mouse click, a tap or a pen press; Enter, Space and a scripted `click()` report 0) and that the viewport gate lets act first measures the panel's box (`getBoundingClientRect` width and height) and hands it to the canvas with the action. In the same React commit that removes the panel, the canvas then shows a **result** in its place: `SpaceCardsResult` in `editor/SpaceCardsOffer.tsx`, in the panel's own wrapper (so before the flow, `nokey`, the same absolute place and `z-[5]`), with the panel's own classes (background, border, shadow, rounding and padding) and exactly that width and height, saying **Spaced _n_ cards.**, **Cards were not spaced: they are no longer all in one spot.** or **Suggestion dismissed.** The visible line leaves out "Undo puts them back." because the result can outlive later edits; the announcement still says it. **Why.** A native check at 512 px found the panel's left part covering **Zoom Out** at (93, 290): the first press of a double click hit **Space cards**, the panel left, and the second press of the same run hit **Zoom Out**, which zoomed the view out (1.30597 to 1.08831) before the one fit took it to 0.5. A press cannot be sorted into "belongs to the same run" when it starts: its click count arrives with `mousedown` and `click`, after the pointer handlers, the Shift selection path, a route handle's own `pointerdown` and a touch press have already acted. So the panel's place stays occupied instead. The result has no button, no `tabindex`, no handler, no live region of its own (the canvas's polite region already announced it, once) and unselectable text (`select-none`); a press on it does nothing, and nothing about it is prevented, stopped, delayed, replayed or synthesized, so it reaches no pane, d3-zoom or d3-drag, route handle, port or zoom control. Focus stays on the canvas root; the one step, the one save and the one fit are as above. A keyboard or scripted press (`detail` 0) leaves no result, and a press the gate refuses leaves none and does nothing.
++- **When the result goes.** At the next `pointerdown` outside it, of any pointer type and button, and at no other press: a passive listener on the `document` in the capture phase, added in the commit that shows the result and removed when it ends or the canvas unmounts, so the outside press then goes on untouched to what it hit, and a press on the result itself leaves it. It also goes when the panel returns (an Undo of the spacing), when a new draft is loaded (a new `generation`, whether or not it is a pile), and when the canvas unmounts. Other edits, an Undo or Redo that leaves the draft not a pile, keys, wheel, the fit and autosave leave it as it was. A Redo of the spacing shows none. There is no timer. This listener is not a second gate: it is on the document, exists only while the result shows and changes nothing; the canvas's one `mouseup` window listener stays the only one.
++- **What it costs, and what it does not claim.** The area the panel covered stays covered, and the cards the fit places there stay hidden, until the next press elsewhere: at 512 px that is up to 392 × 129.5 px and includes **Zoom Out**. The owner's decision stands that Space cards is explicit and undoable; this keeps the panel's footprint, not an invisible one. The box is fixed at the size measured when the button was pressed. A resize, a panel or toolbar toggle or a change of text size while it shows may move or shrink it, and nothing here protects what lies under its old place then, after the press that ended it, or after a load; the presses of the same browser-counted run that follow a deliberate press elsewhere are not covered either. Which element a native press lands on is a browser fact that jsdom does not have.
++- **Undo and redo.** Undo restores the exact earlier draft, including absent `ui`, and the offer returns, taking the result away (a Redo leaves none). Redo restores the spaced draft object itself, without computing it again. Both are ordinary edits that autosave sends.
++- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit; and, with the canvas's real gate, both buttons staying attached, focusable and `aria-disabled` from a pan's first move until its release settles, refusal by click, Enter and Space, the first press after release acting once, Dismiss writing nothing, a stale offer refused first by the gate and then by the store, no second window listener, and the offer's subscription ending when it leaves and reading the gate again when it returns; and the result: the offer replaced in the same commit by a result in the same wrapper, classes and measured box, ahead of the flow, with no control, no live region and the unchanged announcement, one step and one fit; Dismiss and the refusal line; plain, Shift and double presses on it changing nothing and cancelling no event; none after Enter, Space or a scripted click, or while the gate refuses, and one for the first press that acts; its end at a `pointerdown` outside only (any button or pointer type, the event arriving uncancelled), and its drop on the offer's return, on a load and not on other edits; and its one passive capture `pointerdown` listener, removed on end and on unmount), `editor/Canvas.space-cards.gate.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: d3's `click.drag` cancels the click after a mouse pan before it reaches Space cards or Dismiss, the press that arrives while the gate still settles is refused, the first press once the buttons show as available acts once, and the offer shares each state with the selected connection's Remove; and, with a card and a connection selected and Shift held, the second and third presses of a run on the result reaching neither xyflow nor d3 while the first press elsewhere ends it and acts as it always did: a pane press clearing both selections, a mouse pan, and a Zoom Out press zooming once) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original; Dismiss changing, saving and writing nothing). These are jsdom tests: native first-input delivery after a real pan, target geometry, a double click on Space cards, real measurement, which element a real press lands on while the result shows and after it ends, the result's box at the documented viewports and text sizes, and coarse pointers are still to be recorded in a browser. They do not establish hit-testing, the browser's click counting or touch.
+ 
+ ### Connections are drawn on the canvas (Decided, #207, ADR-0076)
+ 
+diff --git a/docs/decisions/ADR-0077-explicit-space-cards.md b/docs/decisions/ADR-0077-explicit-space-cards.md
+index a27e9d4c4ddc793c575ec7ed45d0f85330a296b6..812e921b8816428099cc8276d563f116f05c7cd7 100644
+--- a/docs/decisions/ADR-0077-explicit-space-cards.md
++++ b/docs/decisions/ADR-0077-explicit-space-cards.md
+@@ -28,4 +28,5 @@ Dismissing the offer lasts for the editor load. There is no general arrange comm
+ - Opening a loop, ordinary edits, Undo and Redo never change positions on their own, so a pile stays a pile until the author acts.
+ - Loops partly positioned, positioned off the origin or with any routed connection are never offered the action. Arranging them stays out of scope.
+ - The layout does not promise crossing-free connections or that a long chain fits in one view. Spacing at larger text sizes depends on the measured heights that the canvas passes in, and still needs native checks.
++- A pointer press on either button leaves a plain result in the panel's box until the next press elsewhere, so the second press of a double click cannot reach what the panel covered (found at 512 px, where it covers Zoom Out). That area, and any card the fit places there, stays covered for that long. The action itself is as decided: explicit, one step, nothing applied or previewed by itself.
+ - Contracts, the API, migrations and stored data are unchanged, so there is no upgrade note.

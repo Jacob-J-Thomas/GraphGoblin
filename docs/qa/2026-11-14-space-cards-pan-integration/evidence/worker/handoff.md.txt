@@ -1,0 +1,108 @@
+# #208 Space cards: corrected-canvas integration (handoff)
+
+Worker: Claude Sonnet 5.5 (`claude-sonnet-5-5`), xhigh. This is the implementer's own completion check, **not** an independent or adversarial review, and it used **0 formal reviews** (none of the three-scan budget). No subagents, no commit, push, merge, issue or GitHub action, no install, build, browser or native run, no full coverage or `pnpm check`, no provider, no owner service/store/ports 4747/4748, no credentials, no other worktree. `events.jsonl`, `latest.md`, `launch.json`, and the runner's result/report in this directory are the runner's and were not read, printed or edited.
+
+## Root owns the merge and the index
+
+- Checkout `C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin`, branch `codex/gg-20261114-space-cards`, HEAD `c162c486b06e4b642911610c46b9a75eea9a5fd2` (unchanged), `MERGE_HEAD` `bc9094fd426fe1c1a4b81b0e490e3887f977dbc7`.
+- The merge is **still unresolved in the index and root-owned**. `apps/web/src/editor/Canvas.tsx` is still `UU` with stage entries 1 `4d1e6dd…`, 2 `d94a9d9…`, 3 `553ed5b…`. I resolved only its **working-tree** import conflict. Root must stage it, and decide what to stage of the other working-tree edits below (they show as `MM` / ` M` / `??`).
+- I never ran `git add` (including `-N`), `reset`, `checkout`/`restore`, `commit`, `merge`, `abort`, `stash` or any publish. Only read-only git was used.
+- Read-only evidence in this directory:
+  - `index-initial.txt` (taken before my first edit) and `index-final.txt` (taken after all work): `git ls-files --stage`, 21,313 lines each, **byte-identical**, SHA-256 `331ca0d759fd35ab83404d169edb88e7ccc33cdf76675abe0d3f5e71a1a6982c`.
+  - The index file itself, `…/.git/worktrees/GraphGoblin30/index`, had SHA-256 `209148a93d10c154dcefc2f5167e8ec9287efe62dd18d5c2ea910bdaba78ad40` and mtime 17:21:53.218 when I first hashed it, and the same hash and mtime at the end (re-checked last, below).
+- **Disclosure.** My very first command ran `git status --short` *without* `GIT_OPTIONAL_LOCKS=0`. The index mtime (17:21:53) falls in the first seconds of this run, so that command may have refreshed stat data in the index file. If so, entries, modes, blob ids and stages (what `ls-files --stage` shows) are unchanged, as the identical listings show, but I cannot prove the file's bytes were the same before it, so the byte baseline above starts after that command. Every later git command ran with `GIT_OPTIONAL_LOCKS=0`. One later `git write-tree` probe was refused (unmerged entry) and wrote nothing.
+- Everything the merge auto-merged is untouched: `git diff-files` lists only the paths below. `apps/web/src/editor/viewport-gesture.ts` (SHA-256 `8b5385fe…bfd43`, blob `d2c8a106…`), `route-editing.ts`, `OrthogonalEdge.tsx` and all other parent paths equal the index.
+
+## What was implemented
+
+The required #208 obligation only: the Space cards offer's two buttons use the **same Canvas-owned viewport gate** that guards Remove connection and Reset route after a mouse pan.
+
+- **`Canvas.tsx`**
+  - Conflict resolved by keeping both Space cards imports (`spaceCardsEligible`, `SpaceCardsOffer`) and `createViewportGestureGate`. No markers remain.
+  - One wiring line: `<SpaceCardsOffer … viewport={gesture} …>`, the existing `useState(createViewportGestureGate)` gate that `RouteEditing.viewport` already uses. Plus a comment. No second gate, no new window listener, no store change.
+- **`SpaceCardsOffer.tsx`**
+  - New prop `viewport: Pick<ViewportGestureGate, 'state' | 'subscribe'>`; the offer subscribes with `useSyncExternalStore(viewport.subscribe, viewport.state)`, as `OrthogonalEdge` does. The subscription is in the offer, not Canvas, so a gate change re-renders only the panel and never the 100-card canvas.
+  - While the gate is not `ready` (`panning`, then `settling`), **Space cards** and **Dismiss suggestion** render `aria-disabled="true"` and `data-gesture="panning|settling"`. They are not `disabled`, not `pointer-events: none` and not hidden, so they stay attached, hittable and focusable and nothing falls through to the canvas. No timeout, no replay.
+  - Each click handler is guarded: it returns, silently (no announcement, no focus move, no store call), unless the **rendered** state is ready **and** `viewport.state()` is ready *now*. This is the existing route controls' "refuse on the same rendered state" plus an action-time read of the same gate.
+- **Unchanged:** `spaceCardsEligible` and the store's action-time recheck, one history step and conditional save, exact nongeometry/edges/first anchor, the one deliberate fit, canvas focus, the polite announcements, the `!moving` hiding during a card or route drag (that is not the viewport gate, and I did not touch node-drag behaviour), `space-cards.ts` (SHA-256 `8921ad9e67218fa788bb30e401f02702aa097932509d8413c02592d77e0fafd3`, byte-identical to the required hash and to HEAD), `store.ts`, `viewport-gesture.ts`, route actions.
+- **Docs** (descriptions only): ADR-0077 (a paragraph under Decision), docs/09 (new "After a mouse pan" bullet, a cross-reference in the #207 gate paragraph, and the regression bullet), guide 02 (Space cards paragraph and the existing dimmed-after-pan paragraph), CHANGELOG (one sentence in the Space cards entry). ADR number 0077 was not changed; no new ADR; no API, contract, format, migration or dependency change.
+
+## Changed files and SHA-256 (also `final-SHA256.txt`)
+
+"Before" is the pre-task working-tree blob: the index stage-0 blob, or for `Canvas.tsx` the conflict-marked `AUTO_MERGE` blob.
+
+| File | State | Before | SHA-256 now |
+|---|---|---|---|
+| apps/web/src/editor/Canvas.tsx | UU, working tree only | `6fc5925` (AUTO_MERGE) | `b47c77b45c6d31e5fcc2235daa270d2da093677ef4b5f6cd7c3c9f8e48f4190e` |
+| apps/web/src/editor/SpaceCardsOffer.tsx | modified | `5ee9b82` | `248c7416f78053c515610990ac4d8fa5fbad19988d46505e134920479a06bd85` |
+| apps/web/src/editor/Canvas.space-cards.test.tsx | modified (+289/−1) | `802542b` | `e8c93560ce4ef4da67b5db24cd4f7ca9273d13f274c6325bb4a4f3079f49f425` |
+| apps/web/src/editor/Canvas.space-cards.gate.test.tsx | **new** (untracked, 360 lines) | none | `23c7e7819aeffa4444424b2696d4430dda8b88cf3e290281ec1bc7f3ab354142` |
+| apps/web/src/editor/EditorPage.space-cards.test.tsx | modified (+21) | `f0c8f4e` | `d565d7fd847103c843291ff3ac9eb9347bb2974ffa3016fc22bcc88ce92a02e0` |
+| docs/decisions/ADR-0077-explicit-space-cards.md | modified (+2) | `49ff1e7` | `2a3e0f053d0cbf0877bde0f0ae0e5780d557fe637d0dba6f644dc3a20fb3d096` |
+| docs/09-frontend-and-pwa.md | modified, over the staged merge (`MM`) | `01fec19` | `77fc000c62a9ddab147d3f5a6d334f8026f60bef0475a3d9584e9a9e731f4763` |
+| docs/guide/02-build-a-loop.md | modified, over the staged merge (`MM`) | `0f21e18` | `e3066b35abcfba5047a73a19068ed8c4a34d0ac09997ec9868941cfda374d672` |
+| CHANGELOG.md | modified, over the staged merge (`MM`) | `ca66282` | `b5ffb33bb9124ae4b5043938c15c560b528941f58619325c6c83cfcafdb6ce80` |
+| apps/web/src/editor/space-cards.ts | **unchanged** | n/a | `8921ad9e…fafd3` |
+| apps/web/src/editor/viewport-gesture.ts | **unchanged** | n/a | `8b5385fe9c46ff8aad698ab34a02423b98380c074e2f6cd4ec815eaa525bfd43` |
+
+Patches, made with `git diff --no-index` against extracted pre-task blobs, so the index was not used (`patch-SHA256.txt`):
+- `tracked-changes.patch` (`69932c49…2996`): the eight modified files, in the repo-relative `-p1` form. It is my delta only, not the parent merge.
+- `new-files.patch` (`953167f0…10add`): the new gate test.
+- Both applied to the pre-task blobs with `git -c core.autocrlf=false apply -p1` reproduce the final files **byte-exactly** (checked for all nine). Apply outside a repo on this host without that flag and Windows autocrlf rewrites to CRLF.
+
+## Checks actually run
+
+Node v22.23.4 and `pnpm.cmd`, from `apps/web`, through PowerShell. Logs are in `logs/`.
+
+| # | Check | Result |
+|---|---|---|
+| 01 | Existing `Canvas.space-cards.test.tsx` + `viewport-gesture.test.ts` against the wired source, before writing tests | exit 0, 13 passed |
+| 02 | `Canvas.space-cards.test.tsx` with the 8 new gate tests added | exit 0, 15 passed (first run) |
+| 03 | New `Canvas.space-cards.gate.test.tsx` | exit 0, 3 passed (first run) |
+| 04 | **One counterfactual probe**, not a mutation campaign: the offer temporarily made ungated (rendered state fixed `ready`, no guard), the new and old Canvas Space cards files run | exit 1, **11 failed, 7 passed**: every new gate test failed and the 7 pre-existing ones passed. File restored; SHA-256 `248c7416…` before and after (`probe-before.sha`, `probe-after.sha`). |
+| 05 | `EditorPage.space-cards.test.tsx` with the new Dismiss test | exit 0, 2 passed |
+| 06 | `tsc -p tsconfig.json --noEmit` | exit 0 |
+| 07 | `eslint --max-warnings 0` on the 5 TS/TSX files | exit 0, no output |
+| 08 | `prettier --check` on those plus CHANGELOG, docs/09, guide 02, ADR-0077 | **exit 1** (first): only `Canvas.space-cards.test.tsx`. |
+| 09 | `prettier --write` on that file only | exit 0. Its only change was one `<SpaceCardsOffer …/>` JSX call joined to one line (before-copy `logs/Canvas.space-cards.test.tsx.before-prettier`). |
+| 10 | Final focused `vitest run`, 19 files: the 4 Space cards files, the new gate test, `viewport-gesture.test.ts`, `viewport-gesture.contract.test.tsx`, `Canvas.test.tsx`, `OrthogonalEdge.test.tsx`, `store.test.ts`, `EditorPage.undo.test.tsx`, `EditorPage.test.tsx`, `NodeEditorDialog.test.tsx`, `template-readiness`, `effort-issues`, `harness-switch`, `model-effort-refresh`, `model-effort`, `model-pickers` | exit 0, **19 files, 396 passed**, 134.7 s |
+| 11-13 | Final `tsc --noEmit`, `eslint --max-warnings 0`, `prettier --check` after all edits | all exit 0 |
+
+First attempt note: my first append of the gate tests (a shell heredoc) failed on a quoting error before any test ran; the file was unchanged and I re-applied it with the edit tool. No test failed on its first execution apart from the deliberate probe (04) and the Prettier format check (08).
+
+## What the tests establish (jsdom, component level)
+
+`Canvas.space-cards.test.tsx` (the real Canvas and its real gate; only xyflow's `ReactFlow` is stubbed):
+- Both buttons stay the same attached elements, enabled (`not disabled`, no `pointer-events-none` class), take focus, and say `aria-disabled`/`data-gesture` = `panning` then `settling`, from the first mouse `onMove` until the release settles. Wheel, touch and programmatic moves never change that. The offer is not hidden.
+- Refused while unavailable by click, Enter and Space: store state object unchanged, no step, no fit, no announcement, and focus stays on the button. After release, the first press spaces **once**: one `space cards` step, measured heights, canvas focus, the Undo announcement, one fit.
+- Dismiss is refused the same way, then acts once: no `useEditorStore` change at all (a subscriber is never called), same state object, `revision: 0`, no past or future, canvas focus, announcement.
+- Stale eligibility: an offer rendered before the store moved is refused by the gate first (store not asked, nothing announced), and after release is refused by the store's own recheck (same state, canvas focus, the refusal text, no fit).
+- One gate: exactly one `mouseup` window listener, passive capture, with the offer rendered; it is removed on unmount.
+- Offer returning mid-pan (an Undo of a move while panning) is already shown unavailable.
+- Direct offer tests with the real gate: one subscription for any number of changes, none after unmount, current state read on return; and a deaf subscription (rendered ready) is still refused at action time.
+
+`Canvas.space-cards.gate.test.tsx` (real xyflow, d3-zoom, d3-drag, same fixture as `viewport-gesture.contract.test.tsx`, a two-card pile with its connection selected): the offer and the Remove toolbar show the same state at each stage; d3's `click.drag` blocker cancels the click after a pan before it reaches Space cards or Dismiss; the click that arrives after d3's cleanup while the gate still settles is delivered but refused; at the first moment the buttons show available the blocker is gone and the press acts once (Space cards: one step, first node, edges and revision as expected, exact Undo; Dismiss: store never written). A second pan invalidates an earlier release; unmount mid-settle leaves nothing, and a new canvas starts ready.
+
+`EditorPage.space-cards.test.tsx`: after Dismiss, with FakeApi, the same store state object, Undo still unavailable, no PUT and no device-copy change after the autosave delay.
+
+Existing helper, store, Canvas, route-toolbar and contract tests ran and pass unchanged.
+
+## Not tested or not executed
+
+- No native or browser evidence. jsdom cannot show first-input delivery in a real browser after a real pan, target geometry or hit-testing, a **double click** (the second click after the offer leaves lands on whatever is then under it), actual enlarged-font spacing, 44 px coarse targets, panel wrapping or both themes. Those remain in `layout-208-independent-preparation/space-cards.md`.
+- The corrected stack's native pan/Reset/blank passes cover the **route** controls only. Node-drag overlap with D3's own short blocker stays qualified for the formal reviewer. I did not broaden this task to a node-drag fix.
+- No coverage run, so the 90% package gate is unverified (the new branches in `SpaceCardsOffer` are each exercised by the tests above), no build, no `pnpm check`, no Playwright e2e, no broad suite. The other e2e specs that build all-origin loops (the earlier note's churn risk) were not run.
+- Not rerun in this checkout: `EditorPage.*` files other than `.test`, `.undo`, `.space-cards`, and non-editor tests that reference pile fixtures.
+- Same-gate agreement with the route controls rests on `useSyncExternalStore` and the shared object; there is no test that both consumers see one notification count.
+- The gate test relies on d3-selection's `__on` bookkeeping and the Vitest `jsdom` global exactly as the contract test does, so a dependency change that breaks one will break the other.
+- The shared worktree's other files and the unfinished history-controls source were not touched or merged.
+
+## Status
+
+- **Implementation, source-only, uncommitted.** The merge is unresolved in the index (root's). The working tree has the resolved `Canvas.tsx`; root must stage it and whichever other edits it accepts.
+- **0 formal reviews**; my own checks above are not an independent review.
+- Still required, and none done here: final parent/main integration (including root's later history-controls merge), native QA of a real pan then first Space cards/Dismiss press, the double-click and larger-text checks, GPT opposite-family review, fresh Astra/current-target CI (with coverage), and owner acceptance. #208 stays open, and PRs should say "Part of #208".
+
+## Final index re-check
+
+Recorded in `final-index-check.txt` (written last).

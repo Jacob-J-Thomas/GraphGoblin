@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "derivedFrom": [
+    "ui-208-space-helper-resume/handoff.md",
+    "launch.json",
+    "exit.json",
+    "ui-208-space-helper-restart/independent-mutation-quiescence-final.json"
+  ],
+  "workerResultTextIncluded": false,
+  "attempts": [
+    {
+      "name": "initial path-ambiguity setup",
+      "model": "claude-sonnet-5-5",
+      "effort": "xhigh",
+      "startedAt": "2026-11-14T21:17:42.518Z",
+      "finishedAt": "2026-11-14T21:21:14.130Z",
+      "exitCode": 4294967295,
+      "status": "Root-interrupted after path ambiguity; no source changes; owned setup process tree cleaned."
+    },
+    {
+      "name": "restart",
+      "model": "claude-sonnet-5-5",
+      "effort": "xhigh",
+      "startedAt": "2026-11-14T21:21:26.007Z",
+      "finishedAt": "2026-11-14T21:39:08.752Z",
+      "exitCode": 1,
+      "status": "Session-limit exit recorded by root quiescence projection.",
+      "quotaMessageRecorded": true
+    },
+    {
+      "name": "successful resume",
+      "model": "claude-sonnet-5-5",
+      "effort": "xhigh",
+      "startedAt": "2026-11-14T21:50:48.245Z",
+      "finishedAt": "2026-11-14T21:55:02.598Z",
+      "exitCode": 0,
+      "status": "Completed bounded source assignment."
+    }
+  ],
+  "resumeChecks": {
+    "focusedTests": {
+      "files": 1,
+      "passed": 105,
+      "failed": 0,
+      "firstRun": true
+    },
+    "webNoEmitTypecheck": {
+      "exitCode": 0
+    },
+    "focusedLint": {
+      "exitCode": 0
+    },
+    "prettier": {
+      "exitCode": 0
+    },
+    "node": "v22.23.4",
+    "pnpm": "12.8.1"
+  },
+  "mutationSweep": {
+    "sourceSha256": "29c68018bac9f626dc20e9ee3b2107fd650ce96a0f17f6d63bf14916ba3d2e8a",
+    "total": 35,
+    "killed": 31,
+    "survived": 2,
+    "timedOutStatusNull": 1,
+    "brokenBuild": 1,
+    "rerun": false,
+    "interpretation": "Qualified historical evidence, not proof of completeness.",
+    "survivors": [
+      "sources-only-first",
+      "no-fallback-entry"
+    ],
+    "rootFlaggedTestGap": "sources-only-first shortest-path case remains planned in integration lane."
+  }
+}

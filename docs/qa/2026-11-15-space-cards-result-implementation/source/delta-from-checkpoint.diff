@@ -1,0 +1,183 @@
+--- checkpoint/CHANGELOG.md
++++ final/CHANGELOG.md
+@@ -15,10 +15,11 @@
+   **Remove connection**, until the pan's own click blocker is gone. After a click, tap or pen
+   press on either button, the panel's box stays where it was and shows the result (**Spaced _n_
+   cards.**, the refusal, or **Suggestion dismissed.**) until the next press anywhere else, so the
+-  second press of a double click lands on it and not on the controls under the panel (at narrow
+-  widths, **Zoom Out**). The area it covers, and any card the fit places there, stays covered
+-  until then; the keyboard leaves nothing behind. Opening a loop, other edits, Undo and Redo
+-  never move cards by themselves. No stored or exported data changes, so there is no upgrade note.
++  second press of a double click lands on it and not on the controls under the panel (found at
++  512 px, where it covers **Zoom Out**). The area it covers, and any card the fit places there,
++  stays covered until then; the keyboard leaves nothing behind. Opening a loop, other edits, Undo
++  and Redo never move cards by themselves. No stored or exported data changes, so there is no
++  upgrade note.
+ 
+ - **Undo** and **Redo** stay where they are (#208, ADR-0078). A native baseline showed them moving
+   with the editor's changing toolbar: 30 to 37 px sideways when the validation text ("Checking…",
+--- checkpoint/apps/web/src/editor/Canvas.space-cards.gate.test.tsx
++++ final/apps/web/src/editor/Canvas.space-cards.gate.test.tsx
+@@ -466,7 +466,11 @@
+         : measured.call(this);
+     });
+   });
+-  afterEach(() => {
++  afterEach(async () => {
++    // A test that failed mid-gesture must not leave d3's window listeners, or its click blocker,
++    // to swallow the next test's press: release, then let the blocker's own task run.
++    view.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, view }));
++    await queuedTask(() => undefined);
+     fireEvent.keyUp(document.body, { key: 'Shift', code: 'ShiftLeft' });
+     boxSpy.mockRestore();
+   });
+@@ -484,34 +488,37 @@
+     return { ...opened, nodeId };
+   }
+ 
+-  /** Press 1: Space cards. Waits for the result and for the one fit to land. */
++  /** Press 1: Space cards. Waits for the offer to go and the one fit to land. */
+   async function spaced(shift: boolean) {
+     await press(space(), 1, shift);
+-    const shown = await waitFor(() => {
+-      const found = result();
+-      expect(found).not.toBeNull();
+-      return found!;
+-    });
++    await waitFor(() => expect(screen.queryByTestId('space-cards-offer')).toBeNull());
+     await settle();
+-    return shown;
+   }
+ 
++  /**
++   * Where the next press of the run lands, as a browser would hit it at the box's point: on the
++   * result while there is one, else on what the offer covered (`covered`: at 512 px, Zoom Out, as
++   * the native run found). jsdom has no hit-testing, so the premise is stated here; xyflow and d3
++   * then do whatever they really do with it. Without the result this reproduces the double hit.
++   */
++  const landing = (covered: Element) => result() ?? covered;
++
+   it('holds the second and third presses of a run on the result, Shift held: neither xyflow nor d3 sees them', async () => {
+     const { nodeId } = await selectedPile(true);
+     const before = { revision: store().revision, d3: d3Listeners() };
+-    const shown = await spaced(true);
++    await spaced(true);
+     const fitted = flow!.getViewport();
+ 
+-    // Press 2 (and its dblclick) on the result, press 3 on its text.
+-    await press(shown, 2, true);
+-    await press(shown.firstElementChild!, 3, true);
++    // Press 2 (and its dblclick) on what it lands on, press 3 on that element's first child.
++    await press(landing(zoomOut()), 2, true);
++    await press(landing(zoomOut()).firstElementChild!, 3, true);
+     await settle();
+ 
+-    expect(result()).toBe(shown);
++    // The view is still the one fit, and both selections are kept.
+     expect(flow!.getViewport()).toEqual(fitted);
+-    // Both selections are kept, and no selection box, drag or pan began.
+     expect(store().selectedNodeId).toBe(nodeId);
+     expect(remove()).toBeInTheDocument();
++    // No selection box, drag or pan began, and nothing was opened.
+     expect(flowStore!.getState()).toMatchObject({
+       userSelectionActive: false,
+       userSelectionRect: null,
+@@ -519,7 +526,8 @@
+     });
+     expect(d3Listeners()).toEqual(before.d3);
+     expect(screen.queryByRole('dialog')).toBeNull();
+-    // The one step, and nothing announced or focused again.
++    // The result is still there, and the one step, announcement and focus are as press 1 left them.
++    expect(result()).not.toBeNull();
+     expect(store().past.map((step) => step.label)).toEqual(['space cards']);
+     expect(store().revision).toBe(before.revision + 1);
+     expect(announced()).toBe('Spaced 2 cards. Undo puts them back.');
+@@ -527,6 +535,55 @@
+   });
+ 
+   it.each([false, true])(
++    'holds a press dragged on the result: no pan, selection box or listener begins (Shift %s)',
++    async (shift) => {
++      const { pane, nodeId } = await selectedPile(shift);
++      const before = d3Listeners();
++      await spaced(shift);
++      const fitted = flow!.getViewport();
++      const target = landing(pane);
++      const at = (type: string, x: number, buttons: number) => ({
++        pointer: new PointerEvent(type, {
++          ...PRIMARY,
++          clientX: x,
++          buttons,
++          pointerType: 'mouse',
++          isPrimary: true,
++          pointerId: 1,
++        }),
++        mouse: mouse(type.replace('pointer', 'mouse'), x, 290, 0, buttons),
++      });
++      for (const [type, x, buttons] of [
++        ['pointerdown', 93, 1],
++        ['pointermove', 103, 1],
++        ['pointermove', 123, 1],
++      ] as const) {
++        const events = at(type, x, buttons);
++        target.dispatchEvent(events.pointer);
++        target.dispatchEvent(events.mouse);
++        await microtasks();
++      }
++      // Mid-drag, where a pan would have started or a selection box been drawn.
++      expect(flow!.getViewport()).toEqual(fitted);
++      expect(remove()).not.toHaveAttribute('data-gesture');
++      expect(flowStore!.getState()).toMatchObject({
++        userSelectionActive: false,
++        userSelectionRect: null,
++      });
++      expect(d3Listeners()).toEqual(before);
++      const release = at('pointerup', 123, 0);
++      target.dispatchEvent(release.pointer);
++      target.dispatchEvent(release.mouse);
++      await settle();
++      expect(flow!.getViewport()).toEqual(fitted);
++      expect(store().selectedNodeId).toBe(nodeId);
++      expect(remove()).toBeInTheDocument();
++      expect(result()).not.toBeNull();
++      expect(store().past.map((step) => step.label)).toEqual(['space cards']);
++    },
++  );
++
++  it.each([false, true])(
+     'control: the first press on the pane ends the result and clears both selections as ever (Shift %s)',
+     async (shift) => {
+       const { pane } = await selectedPile(shift);
+@@ -545,6 +602,8 @@
+     await spaced(false);
+     const fitted = flow!.getViewport();
+     pointerDown(pane);
++    // The pointerdown's own listener only schedules the end: React commits it in the microtask after
++    // the listeners return, which is before this press's mousedown and anything it triggers.
+     await microtasks();
+     expect(result()).toBeNull();
+     pane.dispatchEvent(mouse('mousedown', 600, 400, 0, 1));
+--- checkpoint/apps/web/src/editor/Canvas.space-cards.test.tsx
++++ final/apps/web/src/editor/Canvas.space-cards.test.tsx
+@@ -478,7 +478,9 @@
+       render(<Live />);
+       fireEvent.click(spaceButton(), { detail: 1 });
+       expect(result()).not.toBeNull();
+-      act(() => vi.advanceTimersByTime(60 * 60 * 1000));
++      act(() => {
++        vi.advanceTimersByTime(60 * 60 * 1000);
++      });
+       expect(result()).not.toBeNull();
+     } finally {
+       vi.useRealTimers();
+--- checkpoint/docs/09-frontend-and-pwa.md
++++ final/docs/09-frontend-and-pwa.md
+@@ -280,7 +280,7 @@
+ - **When the result goes.** At the next `pointerdown` outside it, of any pointer type and button, and at no other press: a passive listener on the `document` in the capture phase, added in the commit that shows the result and removed when it ends or the canvas unmounts, so the outside press then goes on untouched to what it hit, and a press on the result itself leaves it. It also goes when the panel returns (an Undo of the spacing), when a new draft is loaded (a new `generation`, whether or not it is a pile), and when the canvas unmounts. Other edits, an Undo or Redo that leaves the draft not a pile, keys, wheel, the fit and autosave leave it as it was. A Redo of the spacing shows none. There is no timer. This listener is not a second gate: it is on the document, exists only while the result shows and changes nothing; the canvas's one `mouseup` window listener stays the only one.
+ - **What it costs, and what it does not claim.** The area the panel covered stays covered, and the cards the fit places there stay hidden, until the next press elsewhere: at 512 px that is up to 392 × 129.5 px and includes **Zoom Out**. The owner's decision stands that Space cards is explicit and undoable; this keeps the panel's footprint, not an invisible one. The box is fixed at the size measured when the button was pressed. A resize, a panel or toolbar toggle or a change of text size while it shows may move or shrink it, and nothing here protects what lies under its old place then, after the press that ended it, or after a load; the presses of the same browser-counted run that follow a deliberate press elsewhere are not covered either. Which element a native press lands on is a browser fact that jsdom does not have.
+ - **Undo and redo.** Undo restores the exact earlier draft, including absent `ui`, and the offer returns, taking the result away (a Redo leaves none). Redo restores the spaced draft object itself, without computing it again. Both are ordinary edits that autosave sends.
+-- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit; and, with the canvas's real gate, both buttons staying attached, focusable and `aria-disabled` from a pan's first move until its release settles, refusal by click, Enter and Space, the first press after release acting once, Dismiss writing nothing, a stale offer refused first by the gate and then by the store, no second window listener, and the offer's subscription ending when it leaves and reading the gate again when it returns; and the result: the offer replaced in the same commit by a result in the same wrapper, classes and measured box, ahead of the flow, with no control, no live region and the unchanged announcement, one step and one fit; Dismiss and the refusal line; plain, Shift and double presses on it changing nothing and cancelling no event; none after Enter, Space or a scripted click, or while the gate refuses, and one for the first press that acts; its end at a `pointerdown` outside only (any button or pointer type, the event arriving uncancelled), and its drop on the offer's return, on a load and not on other edits; and its one passive capture `pointerdown` listener, removed on end and on unmount), `editor/Canvas.space-cards.gate.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: d3's `click.drag` cancels the click after a mouse pan before it reaches Space cards or Dismiss, the press that arrives while the gate still settles is refused, the first press once the buttons show as available acts once, and the offer shares each state with the selected connection's Remove; and, with a card and a connection selected and Shift held, the second and third presses of a run on the result reaching neither xyflow nor d3 while the first press elsewhere ends it and acts as it always did: a pane press clearing both selections, a mouse pan, and a Zoom Out press zooming once) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original; Dismiss changing, saving and writing nothing). These are jsdom tests: native first-input delivery after a real pan, target geometry, a double click on Space cards, real measurement, which element a real press lands on while the result shows and after it ends, the result's box at the documented viewports and text sizes, and coarse pointers are still to be recorded in a browser. They do not establish hit-testing, the browser's click counting or touch.
++- **Regression.** `editor/space-cards.test.ts` (eligibility, layouts, ambiguous drafts, measured heights, identity, generated invariants and the 500-node, 2,000-edge limit), `editor/store.space-cards.test.ts` (one step, references kept, exact undo and redo, a draft that `edit` would rewrite, refusal with no change, heights by current id), `editor/Canvas.space-cards.test.tsx` (offer, names, order, hiding while dragging, dismissal per load, held Enter and Space, Delete on the panel, the stale refusal, focus, announcements and the one fit; and, with the canvas's real gate, both buttons staying attached, focusable and `aria-disabled` from a pan's first move until its release settles, refusal by click, Enter and Space, the first press after release acting once, Dismiss writing nothing, a stale offer refused first by the gate and then by the store, no second window listener, and the offer's subscription ending when it leaves and reading the gate again when it returns; and the result: the offer replaced in the same commit by a result in the same wrapper, classes and measured box, ahead of the flow, with no control, no live region and the unchanged announcement, one step and one fit; Dismiss and the refusal line; plain, Shift and double presses on it changing nothing and cancelling no event; none after Enter, Space or a scripted click, or while the gate refuses, and one for the first press that acts; its end at a `pointerdown` outside only (any button or pointer type, the event arriving uncancelled), and its drop on the offer's return, on a load and not on other edits; and its one passive capture `pointerdown` listener, removed on end and on unmount), `editor/Canvas.space-cards.gate.test.tsx` (the real Canvas on the installed xyflow and d3 in jsdom: d3's `click.drag` cancels the click after a mouse pan before it reaches Space cards or Dismiss, the press that arrives while the gate still settles is refused, the first press once the buttons show as available acts once, and the offer shares each state with the selected connection's Remove; and, with a card and a connection selected, the second and third presses of a run on the result (Shift held, with the second press's double click) and a press dragged on it reaching neither xyflow nor d3, so the view stays at the one fit, both selections stay, and no pan, selection box or window listener begins, while the first press elsewhere ends it and acts as it always did: a pane press clearing both selections, a mouse pan, and a Zoom Out press zooming once. Each of these presses is dispatched at the element the test states a browser would hit, the result while it shows and otherwise what the panel covered; without the result the same test zooms out twice or pans, which is the double hit found at 512 px) and `editor/EditorPage.space-cards.test.tsx` (no save on opening; one `If-Match` save that differs only in `ui`; the device copy; Undo saving the original; Dismiss changing, saving and writing nothing). These are jsdom tests: native first-input delivery after a real pan, target geometry, a double click on Space cards, real measurement, which element a real press lands on while the result shows and after it ends, the result's box at the documented viewports and text sizes, and coarse pointers are still to be recorded in a browser. They do not establish hit-testing, the browser's click counting or touch.
+ 
+ ### Connections are drawn on the canvas (Decided, #207, ADR-0076)
+ 
