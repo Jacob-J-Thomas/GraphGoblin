@@ -1,0 +1,994 @@
+{
+  "origin": "http://127.0.0.1:57226",
+  "mapping": "237-review-corrected-native-v1",
+  "phase": "corrected",
+  "scenario": "f1",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "outcomes": [
+    {
+      "active": "F1 divergent",
+      "variant": "divergent",
+      "oldOutcome": {
+        "failedReads": [
+          {
+            "seq": 16,
+            "type": "deliberately failed browser detail read",
+            "wallMs": 1794700259437,
+            "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X"
+          },
+          {
+            "seq": 19,
+            "type": "deliberately failed browser detail read",
+            "wallMs": 1794700259442,
+            "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X"
+          }
+        ]
+      },
+      "count": 1,
+      "conflict": true,
+      "local": {
+        "loopId": "01M7E7HBJPQN4G14CZ4M1KC39X",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry divergent 0b8c6102",
+          "description": "A1 acknowledged by the original editor",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"v1\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "decisionRoutes": {},
+        "savedAt": "2026-11-14T23:50:59.581Z",
+        "synced": false,
+        "baseToken": "3cf35daa8b4e7ca9"
+      },
+      "server": {
+        "loop": {
+          "id": "01M7E7HBJPQN4G14CZ4M1KC39X",
+          "ownerId": "local",
+          "name": "Divergent retry divergent 0b8c6102",
+          "description": "B from independent writer",
+          "currentVersionId": "01M7E7HBJQC81D4NSR4RH5J4HV",
+          "draftVersionId": "01M7E7HBM2HWGZA362SCWW25KZ",
+          "createdAt": "2026-11-14T23:50:58.902Z",
+          "updatedAt": "2026-11-14T23:50:59.523Z"
+        },
+        "current": {
+          "id": "01M7E7HBJQC81D4NSR4RH5J4HV",
+          "loopId": "01M7E7HBJPQN4G14CZ4M1KC39X",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry divergent 0b8c6102",
+            "description": "Exact older version",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"v1\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:50:58.902Z",
+          "publishedAt": "2026-11-14T23:50:58.923Z"
+        },
+        "draft": {
+          "id": "01M7E7HBM2HWGZA362SCWW25KZ",
+          "loopId": "01M7E7HBJPQN4G14CZ4M1KC39X",
+          "version": 2,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry divergent 0b8c6102",
+            "description": "B from independent writer",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"Separate B graph\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:50:58.946Z"
+        },
+        "draftToken": "84b520df978ecdd4"
+      },
+      "publishedHistory": [
+        {
+          "id": "01M7E7HBJQC81D4NSR4RH5J4HV",
+          "loopId": "01M7E7HBJPQN4G14CZ4M1KC39X",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry divergent 0b8c6102",
+            "description": "Exact older version",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"v1\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:50:58.902Z",
+          "publishedAt": "2026-11-14T23:50:58.923Z"
+        }
+      ],
+      "state": {
+        "path": "/app/loops/01M7E7HBJPQN4G14CZ4M1KC39X/edit",
+        "title": "Divergent retry divergent 0b8c6102",
+        "save": "Draft changed elsewhere",
+        "description": "A1 acknowledged by the original editor",
+        "notices": [
+          {
+            "role": "status",
+            "text": "The draft changed on the serverThe server now holds a different draft from the one this editor’s changes are based on. Your changes are kept on this device and nothing was overwritten. Reload server draftOverwrite with this copy",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "Nothing was publishedThis Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. Its current version, version 1, does not hold the draft saved for this publish either. Choose Reload server draft or Overwrite with this copy before publishing again.",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          }
+        ]
+      }
+    }
+  ],
+  "chronology": [
+    {
+      "seq": 1,
+      "type": "independent HTTP",
+      "wallMs": 1794700258914,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry divergent 0b8c6102",
+          "description": "Exact older version",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"v1\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "type": "independent HTTP",
+      "wallMs": 1794700258929,
+      "method": "POST",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/publish",
+      "status": 200
+    },
+    {
+      "seq": 3,
+      "type": "independent HTTP",
+      "wallMs": 1794700258935,
+      "method": "GET",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "status": 200
+    },
+    {
+      "seq": 4,
+      "type": "independent HTTP",
+      "wallMs": 1794700258954,
+      "method": "PUT",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/draft",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry divergent 0b8c6102",
+          "description": "A1 acknowledged by the original editor",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"v1\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"458e1da660096484\""
+    },
+    {
+      "seq": 5,
+      "type": "bound browser entry",
+      "wallMs": 1794700258998,
+      "tag": "primary",
+      "path": "/app/assets/index-DBQ4wl7Y.js",
+      "status": 200
+    },
+    {
+      "seq": 6,
+      "type": "browser request",
+      "wallMs": 1794700259075,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 7,
+      "type": "browser response",
+      "wallMs": 1794700259081,
+      "requestSeq": 6,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "method": "GET"
+    },
+    {
+      "seq": 8,
+      "type": "browser request",
+      "wallMs": 1794700259248,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry divergent 0b8c6102",
+          "description": "A1 acknowledged by the original editor",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"v1\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 9,
+      "type": "browser response",
+      "wallMs": 1794700259256,
+      "requestSeq": 8,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 10,
+      "type": "browser validation result",
+      "wallMs": 1794700259260,
+      "requestSeq": 8,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/validate",
+      "issues": []
+    },
+    {
+      "seq": 11,
+      "type": "browser request",
+      "wallMs": 1794700259426,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 12,
+      "type": "barrier intercepted",
+      "wallMs": 1794700259427,
+      "label": "The first browser POST never reaches the gateway",
+      "order": "before",
+      "method": "POST",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/publish",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 13,
+      "type": "barrier dispatched",
+      "wallMs": 1794700259432,
+      "label": "The first browser POST never reaches the gateway"
+    },
+    {
+      "seq": 14,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794700259435,
+      "requestSeq": 11,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/publish"
+    },
+    {
+      "seq": 15,
+      "type": "browser request",
+      "wallMs": 1794700259437,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 16,
+      "type": "deliberately failed browser detail read",
+      "wallMs": 1794700259437,
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X"
+    },
+    {
+      "seq": 17,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794700259439,
+      "requestSeq": 15,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X"
+    },
+    {
+      "seq": 18,
+      "type": "browser request",
+      "wallMs": 1794700259441,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 19,
+      "type": "deliberately failed browser detail read",
+      "wallMs": 1794700259442,
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X"
+    },
+    {
+      "seq": 20,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794700259450,
+      "requestSeq": 18,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X"
+    },
+    {
+      "seq": 21,
+      "type": "independent HTTP",
+      "wallMs": 1794700259513,
+      "method": "GET",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "status": 200
+    },
+    {
+      "seq": 22,
+      "type": "independent HTTP",
+      "wallMs": 1794700259531,
+      "method": "PUT",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/draft",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry divergent 0b8c6102",
+          "description": "B from independent writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"Separate B graph\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"3cf35daa8b4e7ca9\""
+    },
+    {
+      "seq": 23,
+      "type": "independent HTTP",
+      "wallMs": 1794700259536,
+      "method": "GET",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "status": 200
+    },
+    {
+      "seq": 24,
+      "type": "browser request",
+      "wallMs": 1794700259564,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 25,
+      "type": "barrier intercepted",
+      "wallMs": 1794700259564,
+      "label": "Known actual retry readback is held for observation",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 26,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794700259572,
+      "label": "Known actual retry readback is held for observation",
+      "status": 200
+    },
+    {
+      "seq": 27,
+      "type": "barrier observer release",
+      "wallMs": 1794700259573,
+      "label": "Known actual retry readback is held for observation",
+      "drop": false
+    },
+    {
+      "seq": 28,
+      "type": "browser response",
+      "wallMs": 1794700259576,
+      "requestSeq": 24,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "method": "GET"
+    },
+    {
+      "seq": 29,
+      "type": "browser request",
+      "wallMs": 1794700259583,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 30,
+      "type": "browser response",
+      "wallMs": 1794700259594,
+      "requestSeq": 29,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "method": "GET"
+    },
+    {
+      "seq": 31,
+      "type": "independent HTTP",
+      "wallMs": 1794700259637,
+      "method": "GET",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X",
+      "status": 200
+    },
+    {
+      "seq": 32,
+      "type": "independent HTTP",
+      "wallMs": 1794700259647,
+      "method": "GET",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/versions/01M7E7HBJQC81D4NSR4RH5J4HV",
+      "status": 200
+    },
+    {
+      "seq": 33,
+      "type": "independent HTTP",
+      "wallMs": 1794700259658,
+      "method": "GET",
+      "path": "/loops/01M7E7HBJPQN4G14CZ4M1KC39X/versions",
+      "status": 200
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "Completed F1 divergent",
+      "path": "/app/loops/01M7E7HBJPQN4G14CZ4M1KC39X/edit",
+      "title": "Divergent retry divergent 0b8c6102",
+      "save": "Draft changed elsewhere",
+      "description": "A1 acknowledged by the original editor",
+      "notices": [
+        {
+          "role": "status",
+          "text": "The draft changed on the serverThe server now holds a different draft from the one this editor’s changes are based on. Your changes are kept on this device and nothing was overwritten. Reload server draftOverwrite with this copy",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "Nothing was publishedThis Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. Its current version, version 1, does not hold the draft saved for this publish either. Choose Reload server draft or Overwrite with this copy before publishing again.",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "failures": []
+}

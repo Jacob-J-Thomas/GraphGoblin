@@ -1,0 +1,7 @@
+# Raw TSX evidence preservation
+
+The first formatting check of the five assembled #237 evidence packets failed on two historical files under `docs/qa/2026-11-14-save-publish-implementation/raw/evidence/candidate-source-backup-1/apps/web/src/editor/`: `ConflictNotice.tsx` and `EditorPage.tsx`. The original command/output is retained in `five-packets-format.log`.
+
+Repository `docs/15-issue-workflow.md` already requires raw JavaScript/TypeScript QA evidence to retain its bytes and hashes. `.prettierignore` enumerated `.ts`, `.mts` and `.cts` in `docs/qa`, but omitted `.tsx`. Add only `docs/qa/**/*.tsx` to that existing raw-evidence extension list. This keeps both recorded artifacts unchanged and leaves authored QA Markdown, all product code, coverage, lint, tests and thresholds under their existing gates. No raw file is reformatted and no product formatting input is excluded.
+
+The follow-up runs the exact same affected guide/five-packet formatting command and independently rechecks every copied evidence byte against the original manifests. This is a publication/configuration correction after the observed native runtime, not a product runtime change.

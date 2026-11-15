@@ -46,6 +46,8 @@ export const keys = {
   /** Under the loop's key, so invalidating the loop (after a publish) refetches them too. */
   versions: (id: string) => ['loops', id, 'versions'] as const,
   version: (loopId: string, versionId: string) => ['loops', loopId, 'version', versionId] as const,
+  /** The loop's webhook endpoints, which follow its published version (ADR-0008). */
+  triggers: (id: string) => ['loops', id, 'triggers'] as const,
   /**
    * The API's checks of a saved draft (`POST /loops/{id}/validate`), keyed by what they read: the
    * draft (its server draft token, a hash of its content, or `draftContentKey` when there is no
@@ -264,6 +266,50 @@ export function draftContentKey(definition: LoopDefinitionInput): string {
 /** Whether a query key is one of the editor's API checks (`keys.validation`). */
 export function isValidationKey(queryKey: readonly unknown[]): boolean {
   return queryKey[0] === 'loops' && queryKey[2] === 'validate';
+}
+
+/**
+ * After the server accepted a draft save of `loopId`, or answered a publish of it (#237): read the
+ * Loops list and the loop's detail again, at once where they are shown and on next use otherwise.
+ * A read that began before the write may hold the earlier name, description or draft, so it is
+ * cancelled first and its answer is never stored, even when it is a first load with nothing cached
+ * (a cancelled fetch is replaced by the new one rather than joined). Nothing is written from the
+ * write's own answer: an older write proves a commit, not that it is the newest state, and the
+ * server's list keeps its order, the other loops and the run summaries.
+ *
+ * A publish also refreshes the loop's versions and webhook endpoints, and marks other loops' API
+ * checks stale without running them (a subloop reference reads this loop's published version).
+ * Such a check still running may have read the loop before the publication, and an answer that
+ * lands after the mark would make its key fresh again: it is cancelled first and its answer
+ * dropped. The query keeps its earlier answer, if any, marked stale, and checks again on its next
+ * use (reopening, a refocus, a new draft). The open editor's checks of its own draft are keyed by
+ * its token and are left alone, running or not.
+ *
+ * Failed reads stay in their queries' error state (TanStack does not reject here), so the returned
+ * promise never rejects and can be left unawaited.
+ */
+export async function refreshLoopAfterWrite(
+  queryClient: QueryClient,
+  loopId: string,
+  { published = false }: { published?: boolean } = {},
+): Promise<void> {
+  const exact = [
+    keys.loops,
+    keys.loop(loopId),
+    ...(published ? [keys.versions(loopId), keys.triggers(loopId)] : []),
+  ].map((queryKey) => ({ queryKey, exact: true }));
+  const dependents = {
+    predicate: ({ queryKey }: { queryKey: readonly unknown[] }) =>
+      isValidationKey(queryKey) && queryKey[1] !== loopId,
+  };
+  await Promise.all([
+    ...exact.map((filters) => queryClient.cancelQueries(filters, { silent: true, revert: false })),
+    ...(published ? [queryClient.cancelQueries(dependents)] : []),
+  ]);
+  await Promise.all([
+    ...exact.map((filters) => queryClient.invalidateQueries(filters)),
+    ...(published ? [queryClient.invalidateQueries({ ...dependents, refetchType: 'none' })] : []),
+  ]);
 }
 
 /**

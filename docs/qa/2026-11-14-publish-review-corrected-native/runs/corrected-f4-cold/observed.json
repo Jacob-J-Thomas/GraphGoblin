@@ -1,0 +1,1885 @@
+{
+  "origin": "http://127.0.0.1:62317",
+  "mapping": "237-review-corrected-native-v1",
+  "phase": "corrected",
+  "scenario": "f4",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "outcomes": [
+    {
+      "active": "F4 cold dependent validation response crosses actual publication",
+      "variant": "cold",
+      "old": {
+        "status": 200,
+        "body": {
+          "issues": [
+            {
+              "code": "SUBLOOP_NOT_PUBLISHED",
+              "severity": "error",
+              "message": "subloop \"invoke\" references \"Dependency target cold 8f1bbe12\", which has no published version",
+              "nodeId": "invoke"
+            }
+          ],
+          "publishable": false
+        }
+      },
+      "bRequest": {
+        "seq": 19,
+        "type": "browser request",
+        "wallMs": 1794687140923,
+        "tag": "primary",
+        "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+        "method": "POST",
+        "ifMatch": null,
+        "body": {
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Dependent B cold 8f1bbe12",
+            "description": "B stays exact",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "invoke",
+                "label": "Invoke A",
+                "ui": {
+                  "x": 285,
+                  "y": 200
+                },
+                "kind": "subloop",
+                "config": {
+                  "loopRef": {
+                    "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                    "version": "latest"
+                  },
+                  "input": {
+                    "mode": "fresh"
+                  },
+                  "output": {
+                    "mode": "result-only",
+                    "resultTo": {
+                      "lastOutput": true
+                    },
+                    "usage": "roll-up"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "invoke",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "after",
+                "from": {
+                  "node": "invoke",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "late": {
+        "ok": true
+      },
+      "during": {
+        "path": "/app/loops/01M7DV10B0S3CX5PSHS477A2QP/edit",
+        "title": "Dependent B cold 8f1bbe12",
+        "save": "All changes saved",
+        "description": "B stays exact",
+        "notices": [
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          }
+        ]
+      },
+      "visible": {
+        "path": "/app/loops/01M7DV10B0S3CX5PSHS477A2QP/edit",
+        "title": "Dependent B cold 8f1bbe12",
+        "save": "All changes saved",
+        "description": "B stays exact",
+        "notices": [
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          }
+        ]
+      },
+      "afterA": {
+        "loop": {
+          "id": "01M7DV109ZZSJSQE0SP54R1HWV",
+          "ownerId": "local",
+          "name": "Dependency target cold 8f1bbe12",
+          "description": "A draft only",
+          "currentVersionId": "01M7DV10A0K9BD20FSBKKJEH6W",
+          "createdAt": "2026-11-14T20:12:20.159Z",
+          "updatedAt": "2026-11-14T20:12:20.968Z"
+        },
+        "current": {
+          "id": "01M7DV10A0K9BD20FSBKKJEH6W",
+          "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Dependency target cold 8f1bbe12",
+            "description": "A draft only",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:12:20.159Z",
+          "publishedAt": "2026-11-14T20:12:20.968Z"
+        },
+        "draftToken": "7314c655971d5585"
+      },
+      "beforeB": {
+        "loop": {
+          "id": "01M7DV10B0S3CX5PSHS477A2QP",
+          "ownerId": "local",
+          "name": "Dependent B cold 8f1bbe12",
+          "description": "B stays exact",
+          "draftVersionId": "01M7DV10B0S3CX5PSHS477A2QQ",
+          "createdAt": "2026-11-14T20:12:20.192Z",
+          "updatedAt": "2026-11-14T20:12:20.192Z"
+        },
+        "draft": {
+          "id": "01M7DV10B0S3CX5PSHS477A2QQ",
+          "loopId": "01M7DV10B0S3CX5PSHS477A2QP",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Dependent B cold 8f1bbe12",
+            "description": "B stays exact",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "invoke",
+                "label": "Invoke A",
+                "ui": {
+                  "x": 285,
+                  "y": 200
+                },
+                "kind": "subloop",
+                "config": {
+                  "loopRef": {
+                    "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                    "version": "latest"
+                  },
+                  "input": {
+                    "mode": "fresh"
+                  },
+                  "output": {
+                    "mode": "result-only",
+                    "resultTo": {
+                      "lastOutput": true
+                    },
+                    "usage": "roll-up"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "invoke",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "after",
+                "from": {
+                  "node": "invoke",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:12:20.192Z"
+        },
+        "draftToken": "d558070b54de6968"
+      },
+      "refresh": [],
+      "actual": {
+        "issues": [],
+        "publishable": true
+      },
+      "activeRechecks": [],
+      "ownRechecks": [],
+      "untouchedRechecks": [],
+      "fresh": [
+        {
+          "seq": 38,
+          "type": "browser request",
+          "wallMs": 1794687142247,
+          "tag": "primary",
+          "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+          "method": "POST",
+          "ifMatch": null,
+          "body": {
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Dependent B cold 8f1bbe12",
+              "description": "B stays exact",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "invoke",
+                  "label": "Invoke A",
+                  "ui": {
+                    "x": 285,
+                    "y": 200
+                  },
+                  "kind": "subloop",
+                  "config": {
+                    "loopRef": {
+                      "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                      "version": "latest"
+                    },
+                    "input": {
+                      "mode": "fresh"
+                    },
+                    "output": {
+                      "mode": "result-only",
+                      "resultTo": {
+                        "lastOutput": true
+                      },
+                      "usage": "roll-up"
+                    }
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"seed release\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "invoke",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "after",
+                  "from": {
+                    "node": "invoke",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "reopened": [
+        {
+          "seq": 38,
+          "type": "browser request",
+          "wallMs": 1794687142247,
+          "tag": "primary",
+          "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+          "method": "POST",
+          "ifMatch": null,
+          "body": {
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Dependent B cold 8f1bbe12",
+              "description": "B stays exact",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "invoke",
+                  "label": "Invoke A",
+                  "ui": {
+                    "x": 285,
+                    "y": 200
+                  },
+                  "kind": "subloop",
+                  "config": {
+                    "loopRef": {
+                      "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                      "version": "latest"
+                    },
+                    "input": {
+                      "mode": "fresh"
+                    },
+                    "output": {
+                      "mode": "result-only",
+                      "resultTo": {
+                        "lastOutput": true
+                      },
+                      "usage": "roll-up"
+                    }
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"seed release\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "invoke",
+                    "port": "in"
+                  }
+                },
+                {
+                  "id": "after",
+                  "from": {
+                    "node": "invoke",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "freshResponse": {
+        "seq": 40,
+        "type": "browser validation result",
+        "wallMs": 1794687142259,
+        "requestSeq": 38,
+        "tag": "primary",
+        "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+        "issues": []
+      }
+    }
+  ],
+  "chronology": [
+    {
+      "seq": 1,
+      "type": "independent HTTP",
+      "wallMs": 1794687140171,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Dependency target cold 8f1bbe12",
+          "description": "A draft only",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"seed release\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "type": "independent HTTP",
+      "wallMs": 1794687140181,
+      "method": "GET",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV",
+      "status": 200
+    },
+    {
+      "seq": 3,
+      "type": "independent HTTP",
+      "wallMs": 1794687140203,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Dependent B cold 8f1bbe12",
+          "description": "B stays exact",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "invoke",
+              "kind": "subloop",
+              "label": "Invoke A",
+              "ui": {
+                "x": 285,
+                "y": 200
+              },
+              "config": {
+                "loopRef": {
+                  "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                  "version": "latest"
+                },
+                "input": {
+                  "mode": "fresh"
+                },
+                "output": {
+                  "mode": "result-only",
+                  "resultTo": {
+                    "lastOutput": true
+                  }
+                }
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"seed release\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "invoke",
+                "port": "in"
+              }
+            },
+            {
+              "id": "after",
+              "from": {
+                "node": "invoke",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 4,
+      "type": "independent HTTP",
+      "wallMs": 1794687140208,
+      "method": "GET",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP",
+      "status": 200
+    },
+    {
+      "seq": 5,
+      "type": "independent HTTP",
+      "wallMs": 1794687140222,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Unrelated cache C cold 8f1bbe12",
+          "description": "A separate valid draft",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"seed release\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 6,
+      "type": "independent HTTP",
+      "wallMs": 1794687140227,
+      "method": "GET",
+      "path": "/loops/01M7DV10BPQH7939FPPJ1W5369",
+      "status": 200
+    },
+    {
+      "seq": 7,
+      "type": "bound browser entry",
+      "wallMs": 1794687140265,
+      "tag": "primary",
+      "path": "/app/assets/index-B5gksvM4.js",
+      "status": 200
+    },
+    {
+      "seq": 8,
+      "type": "browser request",
+      "wallMs": 1794687140339,
+      "tag": "primary",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 9,
+      "type": "browser response",
+      "wallMs": 1794687140344,
+      "requestSeq": 8,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV",
+      "method": "GET"
+    },
+    {
+      "seq": 10,
+      "type": "browser request",
+      "wallMs": 1794687140502,
+      "tag": "primary",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Dependency target cold 8f1bbe12",
+          "description": "A draft only",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 11,
+      "type": "browser response",
+      "wallMs": 1794687140508,
+      "requestSeq": 10,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 12,
+      "type": "browser validation result",
+      "wallMs": 1794687140513,
+      "requestSeq": 10,
+      "tag": "primary",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV/validate",
+      "issues": []
+    },
+    {
+      "seq": 13,
+      "type": "browser request",
+      "wallMs": 1794687140684,
+      "tag": "primary",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 14,
+      "type": "barrier intercepted",
+      "wallMs": 1794687140685,
+      "label": "A waits before any real upstream publication",
+      "order": "before",
+      "method": "POST",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV/publish",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 15,
+      "type": "browser request",
+      "wallMs": 1794687140740,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 16,
+      "type": "browser response",
+      "wallMs": 1794687140751,
+      "requestSeq": 15,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 17,
+      "type": "browser request",
+      "wallMs": 1794687140892,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 18,
+      "type": "browser response",
+      "wallMs": 1794687140900,
+      "requestSeq": 17,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP",
+      "method": "GET"
+    },
+    {
+      "seq": 19,
+      "type": "browser request",
+      "wallMs": 1794687140923,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Dependent B cold 8f1bbe12",
+          "description": "B stays exact",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "invoke",
+              "label": "Invoke A",
+              "ui": {
+                "x": 285,
+                "y": 200
+              },
+              "kind": "subloop",
+              "config": {
+                "loopRef": {
+                  "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                  "version": "latest"
+                },
+                "input": {
+                  "mode": "fresh"
+                },
+                "output": {
+                  "mode": "result-only",
+                  "resultTo": {
+                    "lastOutput": true
+                  },
+                  "usage": "roll-up"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "invoke",
+                "port": "in"
+              }
+            },
+            {
+              "id": "after",
+              "from": {
+                "node": "invoke",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 20,
+      "type": "barrier intercepted",
+      "wallMs": 1794687140923,
+      "label": "B validate has really read A as unpublished but its reply is held",
+      "order": "after",
+      "method": "POST",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+      "ifMatch": null,
+      "data": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Dependent B cold 8f1bbe12",
+          "description": "B stays exact",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "invoke",
+              "label": "Invoke A",
+              "ui": {
+                "x": 285,
+                "y": 200
+              },
+              "kind": "subloop",
+              "config": {
+                "loopRef": {
+                  "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                  "version": "latest"
+                },
+                "input": {
+                  "mode": "fresh"
+                },
+                "output": {
+                  "mode": "result-only",
+                  "resultTo": {
+                    "lastOutput": true
+                  },
+                  "usage": "roll-up"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "invoke",
+                "port": "in"
+              }
+            },
+            {
+              "id": "after",
+              "from": {
+                "node": "invoke",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 21,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794687140932,
+      "label": "B validate has really read A as unpublished but its reply is held",
+      "status": 200
+    },
+    {
+      "seq": 22,
+      "type": "independent HTTP",
+      "wallMs": 1794687140961,
+      "method": "GET",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV",
+      "status": 200
+    },
+    {
+      "seq": 23,
+      "type": "barrier dispatched",
+      "wallMs": 1794687140961,
+      "label": "A waits before any real upstream publication"
+    },
+    {
+      "seq": 24,
+      "type": "browser response",
+      "wallMs": 1794687140979,
+      "requestSeq": 13,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV/publish",
+      "method": "POST"
+    },
+    {
+      "seq": 25,
+      "type": "independent HTTP",
+      "wallMs": 1794687141589,
+      "method": "GET",
+      "path": "/loops/01M7DV109ZZSJSQE0SP54R1HWV",
+      "status": 200
+    },
+    {
+      "seq": 26,
+      "type": "barrier observer release",
+      "wallMs": 1794687141590,
+      "label": "B validate has really read A as unpublished but its reply is held",
+      "drop": false
+    },
+    {
+      "seq": 27,
+      "type": "browser response",
+      "wallMs": 1794687141593,
+      "requestSeq": 19,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 28,
+      "type": "browser validation result",
+      "wallMs": 1794687141595,
+      "requestSeq": 19,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+      "issues": [
+        {
+          "code": "SUBLOOP_NOT_PUBLISHED",
+          "severity": "error",
+          "message": "subloop \"invoke\" references \"Dependency target cold 8f1bbe12\", which has no published version",
+          "nodeId": "invoke"
+        }
+      ]
+    },
+    {
+      "seq": 29,
+      "type": "browser request",
+      "wallMs": 1794687142035,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 30,
+      "type": "browser response",
+      "wallMs": 1794687142042,
+      "requestSeq": 29,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 31,
+      "type": "browser request",
+      "wallMs": 1794687142084,
+      "tag": "primary",
+      "path": "/loops/01M7DV10BPQH7939FPPJ1W5369",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 32,
+      "type": "browser response",
+      "wallMs": 1794687142091,
+      "requestSeq": 31,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV10BPQH7939FPPJ1W5369",
+      "method": "GET"
+    },
+    {
+      "seq": 33,
+      "type": "browser request",
+      "wallMs": 1794687142115,
+      "tag": "primary",
+      "path": "/loops/01M7DV10BPQH7939FPPJ1W5369/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Unrelated cache C cold 8f1bbe12",
+          "description": "A separate valid draft",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 34,
+      "type": "browser response",
+      "wallMs": 1794687142127,
+      "requestSeq": 33,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV10BPQH7939FPPJ1W5369/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 35,
+      "type": "browser validation result",
+      "wallMs": 1794687142130,
+      "requestSeq": 33,
+      "tag": "primary",
+      "path": "/loops/01M7DV10BPQH7939FPPJ1W5369/validate",
+      "issues": []
+    },
+    {
+      "seq": 36,
+      "type": "browser request",
+      "wallMs": 1794687142224,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 37,
+      "type": "browser response",
+      "wallMs": 1794687142239,
+      "requestSeq": 36,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP",
+      "method": "GET"
+    },
+    {
+      "seq": 38,
+      "type": "browser request",
+      "wallMs": 1794687142247,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Dependent B cold 8f1bbe12",
+          "description": "B stays exact",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "invoke",
+              "label": "Invoke A",
+              "ui": {
+                "x": 285,
+                "y": 200
+              },
+              "kind": "subloop",
+              "config": {
+                "loopRef": {
+                  "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                  "version": "latest"
+                },
+                "input": {
+                  "mode": "fresh"
+                },
+                "output": {
+                  "mode": "result-only",
+                  "resultTo": {
+                    "lastOutput": true
+                  },
+                  "usage": "roll-up"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "invoke",
+                "port": "in"
+              }
+            },
+            {
+              "id": "after",
+              "from": {
+                "node": "invoke",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 39,
+      "type": "browser response",
+      "wallMs": 1794687142256,
+      "requestSeq": 38,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 40,
+      "type": "browser validation result",
+      "wallMs": 1794687142259,
+      "requestSeq": 38,
+      "tag": "primary",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+      "issues": []
+    },
+    {
+      "seq": 41,
+      "type": "independent HTTP",
+      "wallMs": 1794687142303,
+      "method": "POST",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP/validate",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Dependent B cold 8f1bbe12",
+          "description": "B stays exact",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "invoke",
+              "label": "Invoke A",
+              "ui": {
+                "x": 285,
+                "y": 200
+              },
+              "kind": "subloop",
+              "config": {
+                "loopRef": {
+                  "loopId": "01M7DV109ZZSJSQE0SP54R1HWV",
+                  "version": "latest"
+                },
+                "input": {
+                  "mode": "fresh"
+                },
+                "output": {
+                  "mode": "result-only",
+                  "resultTo": {
+                    "lastOutput": true
+                  },
+                  "usage": "roll-up"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "invoke",
+                "port": "in"
+              }
+            },
+            {
+              "id": "after",
+              "from": {
+                "node": "invoke",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 42,
+      "type": "independent HTTP",
+      "wallMs": 1794687142309,
+      "method": "GET",
+      "path": "/loops/01M7DV10B0S3CX5PSHS477A2QP",
+      "status": 200
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "After actual stale B reply released",
+      "path": "/app/loops/01M7DV10B0S3CX5PSHS477A2QP/edit",
+      "title": "Dependent B cold 8f1bbe12",
+      "save": "All changes saved",
+      "description": "B stays exact",
+      "notices": [
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        }
+      ]
+    },
+    {
+      "label": "B on ordinary reopening after A commit",
+      "path": "/app/loops/01M7DV10B0S3CX5PSHS477A2QP/edit",
+      "title": "Dependent B cold 8f1bbe12",
+      "save": "All changes saved",
+      "description": "B stays exact",
+      "notices": [
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "failures": []
+}

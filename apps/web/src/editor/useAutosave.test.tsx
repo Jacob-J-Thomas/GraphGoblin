@@ -162,14 +162,13 @@ describe('autosave on API recovery', () => {
     const view = await mountAutosave();
     await failSave(view);
     view.api.offline = false;
-    let finish!: (response: Response) => void;
-    view.api.override(
-      'PUT /loops/:id/draft',
-      () =>
-        new Promise<Response>((resolve) => {
-          finish = resolve;
-        }),
-    );
+    // The API's own answer, held until released.
+    let finish!: () => void;
+    const held = new Promise<void>((resolve) => (finish = resolve));
+    view.api.override('PUT /loops/:id/draft', async (call) => {
+      await held;
+      return view.api.builtIn(call);
+    });
     act(notifyRecovery);
     await waitFor(() => expect(view.requests('PUT')).toHaveLength(2));
     act(() => {
@@ -178,11 +177,7 @@ describe('autosave on API recovery', () => {
       window.dispatchEvent(new Event('online'));
     });
     expect(view.requests('PUT')).toHaveLength(2);
-    finish(
-      new Response(JSON.stringify({ draftToken: 'saved-token', issues: [] }), {
-        headers: { 'content-type': 'application/json' },
-      }),
-    );
+    finish();
     await waitFor(() => expect(useEditorStore.getState().saveState).toBe('saved'));
     await act(async () => {
       await view.result.current();
@@ -194,14 +189,13 @@ describe('autosave on API recovery', () => {
     const view = await mountAutosave();
     await failSave(view);
     view.api.offline = false;
-    let finish!: (response: Response) => void;
-    view.api.override(
-      'PUT /loops/:id/draft',
-      () =>
-        new Promise<Response>((resolve) => {
-          finish = resolve;
-        }),
-    );
+    // The API's own answer, held until released.
+    let finish!: () => void;
+    const held = new Promise<void>((resolve) => (finish = resolve));
+    view.api.override('PUT /loops/:id/draft', async (call) => {
+      await held;
+      return view.api.builtIn(call);
+    });
     act(notifyRecovery);
     await waitFor(() => expect(view.requests('PUT')).toHaveLength(2));
     const generation = useEditorStore.getState().generation;
@@ -210,11 +204,7 @@ describe('autosave on API recovery', () => {
         .getState()
         .load(view.loop.id, newLoopDefinition('later generation'), { baseToken: 'later-token' }),
     );
-    finish(
-      new Response(JSON.stringify({ draftToken: 'old-save-token', issues: [] }), {
-        headers: { 'content-type': 'application/json' },
-      }),
-    );
+    finish();
     await act(async () => {
       await view.result.current();
     });

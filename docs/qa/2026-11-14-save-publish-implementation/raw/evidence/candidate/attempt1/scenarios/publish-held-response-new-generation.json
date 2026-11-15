@@ -1,0 +1,714 @@
+{
+  "name": "publish-held-response-new-generation",
+  "network": [
+    {
+      "t": 426,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 426,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 427,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG",
+      "ifMatch": null
+    },
+    {
+      "t": 427,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 427,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 427,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 428,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 429,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 430,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 430,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 430,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N1b",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "6c3df40f5fa08b90"
+      }
+    },
+    {
+      "t": 433,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 437,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 437,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 488,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 491,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 543,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N1b",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 550,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1186,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/draft",
+      "ifMatch": "\"6c3df40f5fa08b90\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N1b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1215,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/draft",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N1b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "1a907df095ac3de9"
+      }
+    },
+    {
+      "t": 1219,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG",
+      "ifMatch": null
+    },
+    {
+      "t": 1223,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N1b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "1a907df095ac3de9"
+      }
+    },
+    {
+      "t": 1226,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N1b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1232,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1367,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/publish",
+      "ifMatch": null
+    },
+    {
+      "t": 2926,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/publish",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N1b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 2930,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/draft",
+      "ifMatch": "\"1a907df095ac3de9\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N1b",
+          "description": "E",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 2931,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG",
+      "ifMatch": null
+    },
+    {
+      "t": 2944,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/draft",
+      "status": 409,
+      "body": {
+        "code": "DRAFT_CONFLICT"
+      }
+    },
+    {
+      "t": 2947,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA5AM5HHYCN3BVAG1GFANF",
+          "version": 2,
+          "status": "draft",
+          "name": "#237 mwgjuqim N1b",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "2857bea400424b3b"
+      }
+    },
+    {
+      "t": 2990,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG",
+      "ifMatch": null
+    },
+    {
+      "t": 2996,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA5AM5HHYCN3BVAG1GFANF",
+          "version": 2,
+          "status": "draft",
+          "name": "#237 mwgjuqim N1b",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "2857bea400424b3b"
+      }
+    },
+    {
+      "t": 3010,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N1b",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 3019,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7DA598V0PQ7HK1ZES9PJMXG/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    }
+  ],
+  "barriers": [
+    {
+      "t": 1367,
+      "barrier": "publish",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-response"
+    },
+    {
+      "t": 1383,
+      "barrier": "publish",
+      "ev": "gateway-answered",
+      "status": 200,
+      "body": {
+        "version": {
+          "id": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N1b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 2925,
+      "barrier": "publish",
+      "ev": "delivered-to-browser"
+    }
+  ],
+  "steps": [
+    {
+      "t": 1215,
+      "note": [
+        "A1 PUT",
+        200
+      ]
+    },
+    {
+      "t": 1383,
+      "note": [
+        "POST answered at gateway",
+        200,
+        {
+          "id": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N1b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      ]
+    },
+    {
+      "t": 1399,
+      "note": [
+        "other writer PUT B",
+        200
+      ]
+    },
+    {
+      "t": 2924,
+      "note": [
+        "editor PUT E before release",
+        "not sent during the hold"
+      ]
+    },
+    {
+      "t": 2945,
+      "note": [
+        "editor PUT E after release",
+        409
+      ]
+    },
+    {
+      "t": 4015,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\candidate\\attempt1\\screens\\publish-held-response-new-generation-after-release.png"
+    }
+  ],
+  "ui": {
+    "reloaded": {
+      "path": "/app/loops/01M7DA598V0PQ7HK1ZES9PJMXG/edit",
+      "heading": "#237 mwgjuqim N1b",
+      "header": "Loops / #237 mwgjuqim N1b published v1 All changes saved Undo Redo Open in Runs Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [],
+      "name": "#237 mwgjuqim N1b",
+      "description": "B by other writer",
+      "publishButton": "Publish"
+    },
+    "afterRelease": {
+      "path": "/app/loops/01M7DA598V0PQ7HK1ZES9PJMXG/edit",
+      "heading": "#237 mwgjuqim N1b",
+      "header": "Loops / #237 mwgjuqim N1b published v1 All changes saved Undo Redo Open in Runs Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [],
+      "name": "#237 mwgjuqim N1b",
+      "description": "B by other writer",
+      "publishButton": "Publish"
+    }
+  },
+  "rest": {
+    "final": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgjuqim N1b",
+          "description": "B by other writer",
+          "currentVersionId": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "draftVersionId": "01M7DA5AM5HHYCN3BVAG1GFANF"
+        },
+        "current": {
+          "id": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgjuqim N1b",
+          "description": "A1",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": {
+          "id": "01M7DA5AM5HHYCN3BVAG1GFANF",
+          "version": 2,
+          "status": "draft",
+          "name": "#237 mwgjuqim N1b",
+          "description": "B by other writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "2857bea400424b3b"
+      },
+      "versions": [
+        {
+          "id": "01M7DA5AM5HHYCN3BVAG1GFANF",
+          "version": 2,
+          "status": "draft"
+        },
+        {
+          "id": "01M7DA598V0PQ7HK1ZES9PJMXH",
+          "version": 1,
+          "status": "published"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgjuqim N1b",
+        "description": "B by other writer",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "D1 old publish feedback shown in a newer editor load": {
+      "expected": "no feedback from the earlier load’s attempt in the reloaded editor",
+      "observed": "",
+      "editorDescription": "B by other writer",
+      "reproduced": false
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ]
+}

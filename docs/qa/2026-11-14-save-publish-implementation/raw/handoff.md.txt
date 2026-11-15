@@ -1,0 +1,179 @@
+# #237 frontend implementation handoff (Claude)
+
+Implementation for **Part of #237**. This is not a formal review. It makes no claim of owner acceptance or of passing any gate outside the checks listed here. The runner owns `report.md`, `result.json` and `events.jsonl`. Everything below is under this directory unless a path says otherwise.
+
+## Identity, scope and what was not done
+
+- **Model and effort.** Runtime model `claude-opus-5-5` (runtime identity and `launch.json`). Requested effort `xhigh` (`launch.json`). Internal reasoning is not observable and is not reported.
+- **Checkout.** `C:/Users/98jak/.codex/worktrees/gg-20261114-save-publish/GraphGoblin`, branch `codex/gg-20261114-save-publish`.
+  - HEAD `700ce251bc4c3b7ad29e072d0764ad9a5ca9174e`, tree `b875d92a1f27bbffc3f621472ce15a5008c189e5`.
+  - It was clean at start (`logs/00-source-identity-before-install.txt`). My first `git status`, at 14:24, briefly listed staged deletions while the checkout was still being written; a re-check minutes later showed it clean.
+  - `origin/main` `7c6e635539e12c56b82f226f1ee734d83b985ad4` is an ancestor of HEAD.
+- **Not done.** No commit, index write (`git diff --cached` is empty), stash, push, merge, issue or PR write, or subagent. No owner service, owner store, ports 4747/4748, credentials or Mac. The original #209 and #273 checkouts and their retained artifacts were not modified. No live provider was used.
+- **Toolchain.** Node `v22.23.4` (project runtime) and `pnpm.cmd` 12.8.1.
+
+## Commands and results
+
+| Step | Command (from the checkout unless noted) | Result | Log |
+| --- | --- | --- | --- |
+| Install | `pnpm.cmd install --frozen-lockfile` | exit 0, 801 packages | `logs/01-install.log` |
+| First build | `pnpm.cmd build` | 12/12 passed, but 5 tasks were restored from Turbo's **shared** worktree cache (see Provenance) | `logs/02-baseline-build.log` |
+| Baseline build | `pnpm.cmd build --force --cache-dir=.turbo/local-cache` | 12/12 executed, 0 cached | `logs/03-baseline-build-forced.log` |
+| Native baseline | `node drivers/native-237.mjs <wt> 700ce251… evidence/baseline/attemptN clean …` | attempt 1: 7 completed, 7 driver failures; attempt 2: remaining 8 completed | `evidence/baseline/BASELINE.md` |
+| Existing focused suites, first run | `vitest run` on 9 editor files | 2 failed, 103 passed (expected; see Tests) | `logs/10-focused-existing-first.log` |
+| New tests against baseline production source | the same new test files, with HEAD's production files temporarily written into the working tree | 20 of 21 failed; the D6 test then corrected, and it fails on the baseline too | `logs/15-…`, `logs/16-…` |
+| Changed-source gates | `tsc -p tsconfig.json --noEmit`, ESLint on changed web files, Prettier `--check` on all changed files | all exit 0 | `logs/21-changed-source-gates-2.log` |
+| Focused units | `vitest run src/editor src/loops src/api src/runs/new` | 79 files, 866 tests passed | `logs/22-focused-units.log` |
+| Candidate build | `pnpm.cmd build --force --cache-dir=.turbo/local-cache` | 12/12 executed, 0 cached | `logs/30-candidate-build-1.log` |
+| Native candidate | `node drivers/native-237.mjs <wt> 700ce251… evidence/candidate/attempt1 dirty all` | 17 scenarios, no defect observed, guards hold | `evidence/candidate/attempt1/` |
+| Whole web coverage (the one allowed run) | `pnpm.cmd --filter @graphgoblin/web test:coverage` | 204 files, 2,529 tests passed. Statements 97.57%, branches 94.03%, functions 97.05%, lines 98.52% | `logs/40-web-coverage.log`, `logs/41-*` |
+| Affected repository e2e | `playwright test` on drafts, loop-lifecycle, loop-names, rename-references, device-first, editor-modal and qa specs (Edge) | 38 passed in 2.0 min; 0 failed or flaky | `logs/50-e2e-affected.log` |
+
+Coverage of the changed files (`logs/41-changed-file-coverage.txt`), as lines/branches:
+
+| File | Lines | Branches |
+| --- | --- | --- |
+| `usePublish.ts` | 100 | 97.58 |
+| `useAutosave.ts` | 98.05 | 92.41 |
+| `EditorPage.tsx` | 98.15 | 91.94 |
+| `queries.ts` | 100 | 97.8 |
+| `store.ts` | 99.5 | 99.15 |
+| `ConflictNotice.tsx`, `WebhookReceiver.tsx` | 100 | 100 |
+
+Unhit branches in `usePublish.ts`:
+- the editor load changing during the flush itself (line 128);
+- a check before resending that finds the draft not current, so the request is sent (143);
+- a conflict entered while unsaved later work exists, so no revision bump (187).
+
+## Native baseline: before any source change
+
+Full table, binding and cleanup are in `evidence/baseline/BASELINE.md`.
+
+**Setup**
+- Gateway (`drivers/gateway.mjs`): the checkout's built `apps/api/dist/main.js` as a separate Node process, on an ephemeral `127.0.0.1` port, with a file SQLite store in the run directory. Provider binaries were pointed at non-existent paths.
+- Browser: Edge 157.0.4341.46, headless, driven by the checkout's Playwright 1.63.0 library, with a fresh context per scenario. Service workers were blocked so that page routes see every API request.
+- Barriers:
+  - `hold-request`: the request is held in the browser until released (before server admission).
+  - `hold-response`: the gateway answers (commits), and delivery to the browser is held.
+  - `abort-after-commit`: the gateway answers, and the browser receives a network failure.
+- The "other writer" is a REST client.
+
+**Every asserted defect reproduced**
+- **D1, reply held after commit.** "Published version 1." appeared while the editor held A2. It also appeared in a newer editor load.
+- **D1/D2, request held before admission.** Another writer saved B into the same draft row and number. v1 stored B; the UI said "Published version 1."; a reload then dropped A1 silently.
+- **D2.** "Nothing to publish: there are no changes…" appeared while another writer's B was current.
+- **D3.** "Publish failed" was shown although the gateway had published.
+- **D4.** Held input typed during the held save; the POST was sent anyway.
+- **D5, all three orders.** No list read after the save reply. The stale row survived the old reply and converged only on the poll, about 6.6 s after commit. The control loop and run metadata were preserved.
+- **D6, two variants.** The earlier load's leaving save sent U with the other writer's or the reloaded draft's token and overwrote it.
+- **D7.** Two validation requests after publish.
+- **D8 (design hypothesis).** Confirmed: the re-entered editor showed older content as "All changes saved" while the server held U.
+
+**Guards held.** Release immutability, a provider-free run on that version ID, the #209 name refusal, and #273 `LOOP_INVALID`.
+
+**Retained first failures.** In attempt 1, 7 scenarios hit a driver locator ambiguity: two "Loops" links. Its held-input record also read the wrong header. Both are kept unchanged. The attempt-2 correction used ordinary gestures only. Driver revisions are kept as `drivers/native-237.attempt1.mjs` and `drivers/native-237.attempt2.mjs`, with hashes in `drivers/driver-sha256.txt`.
+
+## Implementation (apps/web, docs, CHANGELOG)
+
+`git diff --stat HEAD` covers 12 tracked files (+227/−118), plus 4 new files. The exact candidate source is in `evidence/candidate/source-manifest-1.txt` (per-file SHA-256 and the tracked diff hash `0927a70f…`).
+
+- **`src/editor/usePublish.ts` (new).** `usePublish` (hook), `publishAttempt` (one attempt), and the pure `sameDefinition`, `editorHolds`, `acknowledgedDraft` and `publishNotice`.
+  - **Attempt identity.** `{loopId, generation, checkFirst}` is captured at the click. A same-task double click is ignored through a ref, cleared on settle.
+  - **Before saving.** Held input refuses. Then `flush()` runs. If the load changed meanwhile, nothing is sent and nothing is shown. Otherwise the existing barriers are rechecked: held input, conflict, name refusal, unsaved.
+  - **Acknowledged copy.** It is captured once here. It is the PUT answer (`draft.definition`, `draftToken`) for `savedRevision`. When this load made no save, it is the loaded copy parsed with `LoopDefinitionSchema` plus `baseToken`, because the server stores exactly that parse (`packages/infrastructure/src/sqlite/loops.ts` saveDraft stores the route's parsed body unchanged). A later revision is never relabelled as this attempt's copy.
+  - **The request.** The POST is sent from `serializeSave(loopId, …)`. Inside that queued callback, immediately before the POST, it rechecks the same load and the held-input, conflict and name barriers. There is no recursive flush.
+  - **Outcomes.** `published`: the returned immutable version. `not-published`: `NO_DRAFT` plus a readback. `unknown`: network or 5xx, plus a readback. A definite 4xx such as `LOOP_INVALID` rethrows as "Publish failed".
+  - **Check before resending.** `checkFirst` is set when the previous outcome in this load was unknown and its check failed. The next attempt reads the server before sending. If the check fails again, nothing is sent. If the current version already holds the copy, nothing is sent and the notice names that version.
+  - **Comparison.** Full canonical content via `stableStringify`: absent defaults and key order are ignored. A row ID, version number, revision or hash alone is never evidence.
+  - **Mismatch recovery.** This happens when the server's next-save base no longer descends from the acknowledged copy: a different returned version, or a readback `draftToken` that differs. The editor then enters the **existing** conflict state, exactly as `useLoadEditor` does: revision bump when saved, `setConflict({serverToken: undefined})`, `setSaveState('conflict')`. It does so only for the same load, with `baseToken === acknowledged.token`, and not already in conflict. The publish answer is never used as a base.
+  - **Copy.** Neutral: "Version N holds a different stored draft from the draft saved for this publish." No writer is named. "Changes made after that are not published" is computed live from content and held input. "Version M has been published since" is added from a fresh detail read. The notice has no link.
+- **`src/api/queries.ts`.** `keys.triggers` and `refreshLoopAfterWrite(queryClient, loopId, {published})`.
+  - Exact list and detail keys, plus versions and triggers after a publish. It does a silent no-revert cancel, then invalidates, so a cancelled first load is replaced, not joined (TanStack 5.104 `query.ts:594-608`, `retryer.ts:116`).
+  - Other loops' validation is marked stale with `refetchType: 'none'`. Nothing is patched from write answers. Errors stay in query state; `refetchQueries` does not reject.
+- **`src/editor/useAutosave.ts`.**
+  - The global `latestTokens` map is replaced by a per-hook `chain` ref `{generation, token}`. It follows the store's `baseToken` for the load and is advanced only by that load's accepted saves, including after unmount.
+  - The leaving save is skipped when `chain.generation !== snapshot.generation`; otherwise it uses `chain.token`.
+  - `recordSaved` records the device copy first (its in-memory part is synchronous), then calls `refreshLoopAfterWrite`, for active and leaving saves. Successful saves pass the server answer as `acknowledged`.
+- **`src/editor/store.ts`.** An `acknowledged` field (`AcknowledgedSave`), set only together with `savedRevision`, and cleared by `load`/`reset` through `INITIAL`.
+- **`src/editor/EditorPage.tsx`.**
+  - The old mutation, `publishedRevision` and the prefix invalidation are replaced by `usePublish`.
+  - One notice slot, with dismissal (`announceDismissalAndRestoreFocus`).
+  - "Publish failed" is shown only to the attempt's own load.
+- **`ConflictNotice.tsx` / `CONFLICT_MESSAGE`.** The body and tooltip are now neutral: "The server now holds a different draft from the one this editor's changes are based on." The title "The draft changed on the server" is unchanged.
+- **`WebhookReceiver.tsx`.** Uses `keys.triggers`, with the same key value.
+- **Docs.** `docs/09-frontend-and-pwa.md`: new section "Publishing and the Loops list (#237)"; the Draft conflicts token rule; the outcome line; the Runs-link sentence. `docs/guide/03-run-and-observe.md`: the Runs link. `CHANGELOG.md`: Unreleased entries, with no upgrade note (no API, schema, stored-format or device-format change). No ADR: no decision changed.
+
+### Decisions a reviewer should check
+
+1. **The POST runs in the window's per-loop save queue.** An autosave typed while a publish request is slow now waits behind it; the device mirror is still immediate. Natively, A2's and E's PUTs were sent 32 ms and 21 ms after the held reply was released (`evidence/candidate/attempt1/scenarios/publish-held-response-*.json`). This is what prevents this editor's own later save from being stored before admission.
+2. **Conflict entry on a confirmed mismatch.** It reuses existing semantics. The candidate's reload after a mismatch keeps A1 as an unsynced device copy behind Reload/Overwrite. The baseline silently dropped A1.
+3. **The notice's Open in Runs link is removed** (root refinement 3). `EditorPage.test.tsx` "publishes, surfaces 422 issues…" now asserts exactly one toolbar link and follows it. All repository e2e specs use `.first()` or have a single link.
+4. **Neutral conflict copy** (refinement 2). The title is unchanged, so existing tests and e2e that match the title still pass.
+5. **Test fixtures.**
+   - `fake-api.ts`: PUT and `saveDraftElsewhere` now set or remove the summary `description` as the repository does; `publishElsewhere` was added.
+   - `useAutosave.test.tsx`: two held PUT answers changed from non-contract `{draftToken, issues}` bodies to the fake API's own held answer. The assertions are unchanged.
+   - The D6 component test overrides the detail's `updatedAt` as the real API stamps it. Without that, jsdom took the conflict path, and the test passed on the baseline (retained in `logs/15`).
+6. **Not changed (optional).** For an unknown outcome whose check finds the draft current, the title is "Publish not confirmed" and the body says the version holds the draft. A reviewer might prefer the title "No answer from the server". This is a copy preference, not an observed defect.
+7. **Not changed (transient only).** The chain effect pairs the rendered `baseToken` with `getState().generation`. A mismatch is transient and cannot be observed: React flushes the pending effect synchronously before the next render, so no save or unmount can interleave. Using the rendered `loadGeneration` would be equivalent and cleaner.
+
+## Tests
+
+- **New.**
+  - `usePublish.test.ts` (8): equal defaults and key order; same row/number with different content; held input; acknowledged-copy fallback; every notice row.
+  - `EditorPage.publish.test.tsx` (13): held reply after commit with newer work queued; newer load via set-aside restore; request held before admission with another save (same row/number); competing publish/`NO_DRAFT`; clean no-op; lost reply after commit; lost before admission then retry; 5xx after commit; failed readback with no blind retry; held input during the flush; the queued gap (held input, then a new load, between flush and POST); a newer publication since; a double click.
+  - `EditorPage.reconcile.test.tsx` (8): list convergence warm before debounce, warm in flight, and cold, with an old reply that cannot roll back and the control row and run summary kept; D8 re-entry; a failed refresh kept in its query; D6 leaving-save token; Reload-then-leave sends nothing; publish re-runs no own check and marks other loops' checks stale.
+- **Against baseline production source.** These are the HEAD versions of the six changed production files written into the working tree; the candidate copies were restored and verified identical by hash (`evidence/candidate-source-backup-1*`). Result: 20 of 21 component tests failed. The D6 test was then corrected, and it fails on the baseline (`If-Match` was B's token) and passes on the candidate.
+- **Tiers.** All of these are synthetic fake-API unit or component tests, not native evidence.
+
+## Native candidate verification
+
+Run on the rebuilt candidate: build digest `87d379a6135edf0602cc3258756565f481a5c041efbe77f96c7790e794acfc7d`, 1,117 files. It is bound to `source-manifest-1.txt`, and source and build were unchanged at gateway close (`evidence/candidate/attempt1/gateway*.json`). The same gateway, browser and barriers as the baseline were used.
+
+The driver changed only where the fix legitimately reorders requests. N1 and N1b no longer require the editor's PUT to complete during a held POST reply: they race it for 1.5 s, record whether it was sent, and continue. Three cases were added: clean-load no-op, lost reply with a failed readback, and a newer publication during the hold.
+
+| Scenario | Observed (candidate) |
+| --- | --- |
+| Held reply after commit; A2 typed | "Published version 1. It holds the draft saved for this publish; changes made after that are not published." A2's PUT was sent after release; v1 is A1 by ID. |
+| Held reply, then 409 and Reload server draft | The reloaded load shows no publish feedback (`notices: []`). |
+| Request held; other writer saved B into the same row | Conflict notice (neutral), plus "A different draft was published / Version 1 holds a different stored draft from the draft saved for this publish. This editor's draft is not published." After a reload: A1 restored from the device, "Draft changed elsewhere". |
+| Request held; other writer saved and published B | "Nothing was published / The server had no draft to publish. Its current version, version 1, holds a different stored draft…", plus the conflict. A1 was kept after reload. |
+| Reply lost after commit | "Publish not confirmed / The GraphGoblin API cannot be reached. A check of the server found that version 1, its current published version, holds the draft saved for this publish." Retry: `NO_DRAFT` gives "Nothing to publish: version 1 already holds this draft."; still one version. |
+| Reply lost and readback aborted ×2, then reachable | Unknown, then "…Nothing was sent…", then "Nothing to publish: version 1 already holds this draft." POST count 1, 1, 1; one version. |
+| Newer publication during the hold | "Published version 1. Version 2 has been published since."; toolbar `published v2`; no link in the notice. |
+| Clean-load no-op (approval loop, REST-published) | "Nothing to publish: version 1 already holds this draft."; "All changes saved"; 0 PUTs; no false mismatch. |
+| Held input during the held flush | 0 POSTs; "Publish failed / Some fields hold input…". |
+| List: warm before debounce, warm in flight, cold | A list read was issued 1–3 ms after the save reply. The row was renamed with the description removed before the old reply landed, and no rollback followed. Control B and A's run summary were kept. |
+| D6: re-entry with another writer | The leaving U was sent with `If-Match` T0 (its own load) and refused with 409; the server kept B. |
+| D6: Reload then leave 181 ms after the edit | No PUT of U; the server kept B. |
+| D8 | The re-entered editor shows U, "All changes saved"; the server draft is U. |
+| Normal release | "Published version 1."; 0 validation requests after publish; v1 = R1 by ID after a later R2 draft. The provider-free run succeeded on v1's ID. The no-op says "already holds this draft". |
+| #209 refusal / #273 `LOOP_INVALID` | The refused name never reached the list after a poll. "Publish failed / … (LOOP_INVALID) done: No decision gate defines gates.missing." |
+
+**Screenshots inspected.**
+- Baseline: `evidence/baseline/attempt1/screens/publish-held-request-other-save-after-release.png` and `evidence/baseline/attempt2/screens/reentry-detail-read-across-leaving-commit-final.png`.
+- Candidate: `evidence/candidate/attempt1/screens/publish-held-request-other-save-after-release.png`, `…/publish-lost-response-failed-readback-first.png` and `…/publish-held-response-after-commit-after-release.png`.
+- All notices render in the existing notice region; toolbar geometry is unchanged.
+
+## Evidence tiers
+
+- **Native public-interface evidence.** The tables above: a built gateway with a real HTTP and SQLite commit, and Edge with real request barriers.
+- **Synthetic.** Fake-API component and unit tests.
+- **No visual emulation.** Only 1280×800 dark headless captures. There were no 390×844, 320 px reflow, light-theme, focus-order or assistive-technology checks; no claim is made about screen-reader output.
+- **No actual provider behavior.** No provider was used; the run is a manual-trigger-to-exit loop.
+- **No owner acceptance.**
+
+## Provenance and cleanup
+
+- **Shared Turbo cache.** The first `pnpm.cmd build` used Turbo's shared worktree cache under the main repository checkout (`C:/Users/98jak/source/repos/GraphGoblin/.turbo/cache`, gitignored). It restored contracts, domain, engine, adapter-jev and adapter-codex from that cache. It executed the other 7 tasks: infrastructure, api, api-client, mcp and web were cache misses, so Turbo would have stored their outputs there under its normal behaviour, and plugin-codex and plugin-claude bypass the cache. A read-only directory listing of that cache also ran. Every later build used `--force --cache-dir=.turbo/local-cache` inside this checkout (gitignored). All native runs used artifacts produced by those forced builds: baseline digest `19d998c0…`, candidate digest `87d379a6…`.
+- **Leftovers in this checkout (ignored).** `node_modules`, `dist`, `dist-goblin`, `.turbo/local-cache`, `apps/web/coverage` and Playwright `apps/web/test-results`. Native gateway stores are under the evidence run directories.
+- **Processes.** Each native run's gateway exited 0 and `/healthz` was unreachable afterwards (`*/cleanup.json`). The browser was closed. After all runs, no node or Edge process referencing this checkout, evidence directory or Playwright profile remained (`logs/60-process-cleanup.txt`: `remaining=0`).
+- **Heavy slot.** It is free now: no build, coverage, native or e2e work is running.
+
+## Remaining gates
+
+- Independent GPT-6.1 Sol review.
+- Separate behavior QA. Suggested: visual emulation sizes and themes, focus after Dismiss, and the full e2e suite.
+- Exact-head full CI, including the whole e2e suite and the other packages' gates. Only web coverage and the 7 listed e2e specs ran here.
+- A fresh whole-PR Astra max audit, within the 3-scan cap.
+- Root integration with the pending #209 CI/reviews and #273 publication/CI/reviews.
+- Owner acceptance. PRs use "Part of #237" and never auto-close.

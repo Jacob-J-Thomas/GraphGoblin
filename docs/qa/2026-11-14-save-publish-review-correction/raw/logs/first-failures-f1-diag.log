@@ -1,0 +1,743 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-save-publish/GraphGoblin/apps/web
+
+stdout | src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > sends nothing when the check before a retry finds another draft, and keeps both copies
+DIAG-F1a 2 {"loop":{"id":"34YX7E2NBXT65AN03A0CWG8C8B","ownerId":"local","name":"mine","currentVersionId":"FBB7Y793JM1TZ2MR5PK8R995N5","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z","description":"B"},"current":{"id":"FBB7Y793JM1TZ2MR5PK8R995N5","loopId":"34YX7E2NBXT65AN03A0CWG8C8B","version":2,"status":"published","definition":{"schemaVersion":4,"name":"mine","description":"B","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":80},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":320,"y":80},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"history":[{"id":"KGGH13WZGHRP2TKGJP6JFBE5A5","loopId":"34YX7E2NBXT65AN03A0CWG8C8B","version":1,"status":"published","definition":{"schemaVersion":4,"name":"mine","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":80},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":320,"y":80},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},{"id":"FBB7Y793JM1TZ2MR5PK8R995N5","loopId":"34YX7E2NBXT65AN03A0CWG8C8B","version":2,"status":"published","definition":{"schemaVersion":4,"name":"mine","description":"B","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":80},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":320,"y":80},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"}],"draftToken":"81351e78d84197d8"} [
+  'A different draft was published',
+  'Version 2 holds a different stored draft from the draft saved for this publish.'
+]
+
+stdout | src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > keeps that evidence when held input arrives during the check
+DIAG-F1b-1 1 [
+  'Some fields hold input that is not a valid value yet; complete or discard it first.'
+]
+
+stdout | src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > keeps that evidence when held input arrives during the check
+DIAG-F1b-2 2 {"loop":{"id":"Y3ZDAF71K2ZY70FG8S5K2ZTJDK","ownerId":"local","name":"mine","currentVersionId":"T96T5DN4KR4J689W02T3S65Y3R","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z","description":"B"},"current":{"id":"T96T5DN4KR4J689W02T3S65Y3R","loopId":"Y3ZDAF71K2ZY70FG8S5K2ZTJDK","version":2,"status":"published","definition":{"schemaVersion":4,"name":"mine","description":"B","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":80},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":320,"y":80},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"history":[{"id":"W9QJNM2K8MW51MCR4BTR4ATD4K","loopId":"Y3ZDAF71K2ZY70FG8S5K2ZTJDK","version":1,"status":"published","definition":{"schemaVersion":4,"name":"mine","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":80},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":320,"y":80},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},{"id":"T96T5DN4KR4J689W02T3S65Y3R","loopId":"Y3ZDAF71K2ZY70FG8S5K2ZTJDK","version":2,"status":"published","definition":{"schemaVersion":4,"name":"mine","description":"B","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":80},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":320,"y":80},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"}],"draftToken":"81351e78d84197d8"} [
+  'A different draft was published',
+  'Version 2 holds a different stored draft from the draft saved for this publish.'
+]
+
+ ❯ src/editor/EditorPage.publish.test.tsx (31 tests | 3 failed | 27 skipped) 18979ms
+   ❯ Publish after an unknown outcome, when the server holds another draft (#237) (4)
+     × sends nothing when the check before a retry finds another draft, and keeps both copies 7898ms
+     × keeps that evidence when held input arrives during the check 9146ms
+     × points to the conflict choice when the check after a lost request finds another draft 892ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > sends nothing when the check before a retry finds another draft, and keeps both copies
+TestingLibraryElementError: Unable to find an element with the text: This Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. Its current version, version 1, does not hold the draft saved for this publish either. Choose Reload server draft or Overwrite with this copy before publishing again.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_0_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_0_"
+        >
+          <a
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+            data-discover="true"
+            href="/chat"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group-aria-[current=page]:after:glow-accent"
+            [3...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_0_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_0_"
+        >
+          <a
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+            data-discover="true"
+            href="/chat"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group-aria-[current=page]:after:glow-accent"
+            [3...
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/editor/EditorPage.publish.test.tsx:702:25
+    700|       document.body.textContent?.match(/(A different draft was publish…
+    701|     );
+    702|     expect(await screen.findByText(CHANGED)).toBeInTheDocument();
+       |                         ^
+    703|     expect(screen.getByText('Nothing was published')).toBeInTheDocumen…
+    704|     expect(posts(api, loop.id)).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > keeps that evidence when held input arrives during the check
+TestingLibraryElementError: Unable to find an element with the text: This Publish sent no request: a check found that the server holds a different draft from the draft saved for this publish. Its current version, version 1, does not hold the draft saved for this publish either. Choose Reload server draft or Overwrite with this copy before publishing again.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_7_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_7_"
+        >
+          <a
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+            data-discover="true"
+            href="/chat"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group-aria-[current=page]:after:glow-accent"
+            [3...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_7_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_7_"
+        >
+          <a
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+            data-discover="true"
+            href="/chat"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group-aria-[current=page]:after:glow-accent"
+            [3...
+ ❯ waitForWrapper ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/editor/EditorPage.publish.test.tsx:744:25
+    742|       document.body.textContent?.match(/(A different draft was publish…
+    743|     );
+    744|     expect(await screen.findByText(CHANGED)).toBeInTheDocument();
+       |                         ^
+    745|     expect(screen.getByText('The draft changed on the server')).toBeIn…
+    746|     expect(posts(api, loop.id)).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/editor/EditorPage.publish.test.tsx > Publish after an unknown outcome, when the server holds another draft (#237) > points to the conflict choice when the check after a lost request finds another draft
+TestingLibraryElementError: Unable to find an element with the text: The GraphGoblin API cannot be reached. A check of the server found that the draft saved for this publish is not its current published version, and that the server holds a different draft from it. Choose Reload server draft or Overwrite with this copy before publishing again.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="flex min-h-screen flex-col bg-surface-app text-default"
+    >
+      <header
+        class="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4"
+      >
+        <span
+          class="inline-flex items-center gap-2.5 font-display text-lg font-semibold tracking-[-0.015em] text-inverse"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-[30px] shrink-0"
+            focusable="false"
+            viewBox="0 0 32 32"
+          >
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M10.4 11.1 .3 3 6 17.4Z"
+            />
+            <path
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              d="M21.6 11.1 31.7 3 26 17.4Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M8.7 11.9 2.6 6.2l3.5 9.2Z"
+            />
+            <path
+              class="fill-mascot-shade"
+              d="M23.3 11.9 29.4 6.2l-3.5 9.2Z"
+            />
+            <rect
+              class="fill-mascot-skin stroke-mascot-ink stroke-[0.9] [stroke-linejoin:round]"
+              height="17.4"
+              rx="6.2"
+              width="22"
+              x="5"
+              y="8.8"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="5"
+              cy="20.2"
+              r="2.2"
+            />
+            <circle
+              class="fill-mascot-port stroke-mascot-ink stroke-[0.9]"
+              cx="27"
+              cy="20.2"
+              r="2.2"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[2.1] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M9.1 12.3 14.5 15M22.9 12.3 17.5 15"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M9.8 17.4q2.5-1.9 5-.1-2.5 1.5-5 .1Z"
+            />
+            <path
+              class="fill-mascot-ink"
+              d="M22.2 17.4q-2.5-1.9-5-.1 2.5 1.5 5 .1Z"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="13.3"
+              cy="17.2"
+              r=".7"
+            />
+            <circle
+              class="fill-mascot-glint"
+              cx="18.7"
+              cy="17.2"
+              r=".7"
+            />
+            <path
+              class="fill-none stroke-mascot-ink stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"
+              d="M11.4 21.1q3.8 1.7 7.3.5 1.6-.6 2.6-2.1"
+            />
+            <path
+              class="fill-mascot-tooth stroke-mascot-ink stroke-[0.45] [stroke-linejoin:round]"
+              d="M16.6 21.9l1.9-.5-.6 2.3Z"
+            />
+          </svg>
+          <span>
+            Graph
+            <span
+              class="text-accent"
+            >
+              Goblin
+            </span>
+          </span>
+        </span>
+        <button
+          aria-controls="_r_m_"
+          aria-expanded="false"
+          class="ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11 font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
+          type="button"
+        >
+          <svg
+            aria-hidden="true"
+            class="size-4 shrink-0"
+            data-icon="menu"
+            fill="none"
+            focusable="false"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+            />
+          </svg>
+          Menu
+        </button>
+        <nav
+          aria-label="Main"
+          class="flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3 max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3 max-sm:hidden"
+          id="_r_m_"
+        >
+          <a
+            class="group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised"
+            data-discover="true"
+            href="/chat"
+          >
+            <span
+              class="relative after:absolute after:inset-x-0 after:-bottom-[5px] after:h-[3px] after:rounded-full after:transition-colors group-aria-[current=page]:after:bg-accent group-aria-[current=page]:after:glow-accent"
+            [3...
+ ❯ Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/editor/EditorPage.publish.test.tsx:787:14
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed | 27 skipped (31)
+   Start at  13:18:48
+   Duration  27.62s (tests 69%, transform 11%, environment 9%, import 7%, setup 3%)
+

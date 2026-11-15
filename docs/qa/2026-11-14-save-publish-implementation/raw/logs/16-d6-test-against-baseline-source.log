@@ -1,0 +1,35 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-save-publish/GraphGoblin/apps/web
+
+ ❯ src/editor/EditorPage.reconcile.test.tsx (8 tests | 1 failed | 7 skipped) 1370ms
+   ❯ the save sent on leaving (#237) (2)
+     × stays on its own load’s token when a later load took another writer’s draft 1368ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/EditorPage.reconcile.test.tsx > the save sent on leaving (#237) > stays on its own load’s token when a later load took another writer’s draft
+AssertionError: expected '"81351e78d84197d8"' to be '"76a7d15251232c9a"' // Object.is equality
+
+Expected: ""76a7d15251232c9a""
+Received: ""81351e78d84197d8""
+
+ ❯ src/editor/EditorPage.reconcile.test.tsx:194:45
+    192|     const leaving = puts(api, loop.id)[1]!;
+    193|     expect(leaving.body).toMatchObject({ definition: { description: 'U…
+    194|     expect(leaving.headers.get('if-match')).toBe(`"${loaded}"`);
+       |                                             ^
+    195|     await tick();
+    196|     expect((await serverDraft(api, loop.id))?.description).toBe('B');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 skipped (8)
+   Start at  09:05:50
+   Duration  8.55s (transform 32%, environment 25%, import 18%, tests 16%, setup 8%)
+
+  Transform  transforming modules took 2.69s · 32% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

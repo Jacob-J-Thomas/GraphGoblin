@@ -1,0 +1,579 @@
+{
+  "name": "reentry-detail-read-across-leaving-commit",
+  "network": [
+    {
+      "t": 469,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 470,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 470,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6",
+      "ifMatch": null
+    },
+    {
+      "t": 470,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 470,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 470,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 471,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 471,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 472,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 473,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 473,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA6E85YYPS2XMAGMTVCYB7",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "86cd97b5c50b116e"
+      }
+    },
+    {
+      "t": 473,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 478,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 537,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 537,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 540,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 597,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 602,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 696,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 697,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 697,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6/draft",
+      "ifMatch": "\"86cd97b5c50b116e\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N9",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 707,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 16
+      }
+    },
+    {
+      "t": 729,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 838,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6",
+      "ifMatch": null
+    },
+    {
+      "t": 884,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6/draft",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA6E85YYPS2XMAGMTVCYB7",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N9",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "94d5e6908b6e3818"
+      }
+    },
+    {
+      "t": 885,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6",
+      "ifMatch": null
+    },
+    {
+      "t": 891,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA6E85YYPS2XMAGMTVCYB7",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N9",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "94d5e6908b6e3818"
+      }
+    },
+    {
+      "t": 905,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgjuqim N9",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 916,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1268,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7DA6E85YYPS2XMAGMTVCYB6",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA6E85YYPS2XMAGMTVCYB7",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "86cd97b5c50b116e"
+      }
+    }
+  ],
+  "barriers": [
+    {
+      "t": 697,
+      "barrier": "leaving-save",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-request"
+    },
+    {
+      "t": 838,
+      "barrier": "reentry-detail",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-response"
+    },
+    {
+      "t": 847,
+      "barrier": "reentry-detail",
+      "ev": "gateway-answered",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7DA6E85YYPS2XMAGMTVCYB7",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "86cd97b5c50b116e"
+      }
+    },
+    {
+      "t": 866,
+      "barrier": "leaving-save",
+      "ev": "released-to-gateway"
+    },
+    {
+      "t": 1199,
+      "barrier": "reentry-detail",
+      "ev": "delivered-to-browser"
+    }
+  ],
+  "steps": [
+    {
+      "t": 847,
+      "note": [
+        "re-entry detail answered pre-commit",
+        {
+          "id": "01M7DA6E85YYPS2XMAGMTVCYB7",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "86cd97b5c50b116e"
+      ]
+    },
+    {
+      "t": 885,
+      "note": [
+        "leaving save answered",
+        200
+      ]
+    },
+    {
+      "t": 2163,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\candidate\\attempt1\\screens\\reentry-detail-read-across-leaving-commit-final.png"
+    }
+  ],
+  "ui": {
+    "warm": {
+      "path": "/app/loops/01M7DA6E85YYPS2XMAGMTVCYB6/edit",
+      "heading": "#237 mwgjuqim N9",
+      "header": "Loops / #237 mwgjuqim N9 draft only Unsaved changes Undo Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "Unsaved changes",
+      "notices": [
+        "The editor is available. Checking the server and this device before saving changes.",
+        "Restored unsaved changes from this device."
+      ],
+      "name": "#237 mwgjuqim N9",
+      "description": "U",
+      "publishButton": "Publish"
+    },
+    "final": {
+      "path": "/app/loops/01M7DA6E85YYPS2XMAGMTVCYB6/edit",
+      "heading": "#237 mwgjuqim N9",
+      "header": "Loops / #237 mwgjuqim N9 draft only All changes saved Undo Redo Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish",
+      "saveState": "All changes saved",
+      "notices": [],
+      "name": "#237 mwgjuqim N9",
+      "description": "U",
+      "publishButton": "Publish"
+    }
+  },
+  "rest": {
+    "final": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgjuqim N9",
+          "description": "U",
+          "currentVersionId": null,
+          "draftVersionId": "01M7DA6E85YYPS2XMAGMTVCYB7"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7DA6E85YYPS2XMAGMTVCYB7",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgjuqim N9",
+          "description": "U",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "94d5e6908b6e3818"
+      },
+      "versions": [
+        {
+          "id": "01M7DA6E85YYPS2XMAGMTVCYB7",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgjuqim N9",
+        "description": "U",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "D8 re-entry reconciles to the older server read over the warm copy": {
+      "expected": "editor keeps U (the server holds U); no older content shown as saved",
+      "editor": {
+        "description": "U",
+        "saveState": "All changes saved",
+        "notices": []
+      },
+      "serverDraftDescription": "U",
+      "reproduced": false
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": []
+}

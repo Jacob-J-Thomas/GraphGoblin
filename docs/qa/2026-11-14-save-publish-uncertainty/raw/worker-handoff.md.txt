@@ -1,0 +1,266 @@
+# #237 · keep an unknown Publish outcome across local refusals · handoff
+
+**Status.** The confirmed defect is corrected in `usePublish.ts`. Before the fix, 4 new defect tests failed on the frozen 9e44 runtime. They pass on the corrected runtime, and 3 new controls pass on both. The 22 affected suites, web types, lint and format pass. A forced zero-cache build ran. The copied native refusal diagnostic now passes against the actual compiled gateway, file SQLite and Edge: the fresh Publish reads first (GET 200) and sends no POST. The held-input and new-load readback controls, plus the healthy control, also pass natively. Cleanup is complete.
+
+This is **not** a declaration that #237 is complete. Still open: independent broader QA, parent integration (main moved, see Identity), current CI, opposite-family and fresh Astra reviews, and owner acceptance.
+
+Model `claude-opus-5-5` (Claude Opus 5.5), from the runtime and `launch.json`. Requested effort is `xhigh` (`launch.json`). The actual internal reasoning level is not observable and is not claimed.
+
+Nothing was staged, committed, pushed or published. No GitHub writes. Git was used read-only (`rev-parse`, `status`, `show`, `diff`, `ls-files`, `hash-object`, `log`, `reflog`, `merge-base`, `check-ignore`). Not used: providers, the owner service or store, ports 4747/4748, credentials, other checkouts, a Mac, or subagents. The 4747 listener was only seen in a read-only `netstat` and never contacted. The **heavy slot is released**: no build, test, gateway, browser or CLI process of this task is running.
+
+## Identity
+
+| Item | Value |
+| --- | --- |
+| Worktree | `C:/Users/98jak/.codex/worktrees/gg-20261114-save-publish/GraphGoblin`, branch `codex/gg-20261114-save-publish` |
+| HEAD / tree | `9e44bd74bfc40adcc872f8f8a3724c2e2840f378` / `2d2b60b9a1ef9f8d015fe3758204715c86ea3288`, unchanged at start and end |
+| Parents | `e12b81ec…` + `2367b15b…`; no MERGE_HEAD |
+| Index | sha256 of `git ls-files -s` = `f78de1a0…bad1dd` at start and end (nothing staged) |
+| Start status | clean ([start-identity.txt](manifests/start-identity.txt)) |
+| End status | ` M` on exactly the 4 files below; no untracked files ([final-files.txt](manifests/final-files.txt)) |
+| Node / pnpm | v22.23.4 (project runtime first on PATH) / `pnpm.cmd` 12.8.1 |
+
+**`origin/main` moved during the task. Explained; not checkout drift.** At start it was `7c6e6355`. The shared remote-tracking ref then fast-forwarded at 17:09:10Z (`fetch origin main: fast-forward`) to `a817e5cc`, "Merge PR #470: Prevent duplicate loop names across authoring paths". Its parents are `7c6e6355` and `8fc8c0a5`; 9e44's second parent `2367b15b` is an ancestor, and 9e44 itself is not.
+
+My HEAD, tree, index and files did not change. My first binding attempt stopped on this. I recorded the reflog and ancestry in [origin-main-drift.txt](manifests/origin-main-drift.txt). The native binding now records `base` = current `origin/main` and `frozenBase` = `7c6e6355`, and asserts that the frozen base is an ancestor.
+
+All tests and builds here are on 9e44 plus this correction, **not** on the new main. Root's parent integration with `a817e5cc` remains.
+
+Root's later [root-main-update.md](root-main-update.md), read after the runs, confirms this was authorized lane progress: the #470 merge, fetched from the separate #273 checkout. It also asks for:
+
+- no merge and no index or ref change here
+- the before and after `origin/main` values kept apart from source and build identity
+- native results that name the exact tested source
+
+All three are met. Every native result here attests 9e44 plus the 4 working files above, built as `index-DhiNw4HL.js`, and no later merge.
+
+## Changed files (working tree only)
+
+| File | +/− | sha256 at 9e44 | final sha256 / blob |
+| --- | --- | --- | --- |
+| `apps/web/src/editor/usePublish.ts` | +32/−5 | `caa73998…` | `019bcb33…5d96d` / `7edb1b8b` |
+| `apps/web/src/editor/EditorPage.publish.test.tsx` | +321/−0 | `b571aab1…` | `d94b7f7e…df072d` / `527b3cd7` |
+| `docs/09-frontend-and-pwa.md` | +2/−2 | `63a12ac2…` | `f512a3df…5ed13b` / `3749a8b4` |
+| `CHANGELOG.md` | +2/−1 | `c0d34cba…` | `ac5c907e…442a14` / `7fa20d52` |
+
+Not changed: `usePublish.test.ts`, `useAutosave.ts` and `EditorPage.tsx` (each still equals its 9e44 blob), and the guide. The separately prepared guide paragraph was not applied. There are no API, contract, persistence, schema, dependency, threshold, timeout or exclusion changes, and no new product path. No path outside the allowlist was needed.
+
+- Diffs: [worktree-vs-9e44-HEAD.diff](diffs/worktree-vs-9e44-HEAD.diff) (sha256 `b7590ee2…`), [usePublish.ts.diff](diffs/usePublish.ts.diff), [stat](diffs/worktree-vs-9e44-HEAD.stat)
+- Copies: [backups/original/](backups/original/) (from `git show HEAD:`), [backups/corrected/](backups/corrected/), [backups/final/](backups/final/)
+
+## 1 · Cause and correction
+
+**Cause, confirmed in source and natively.** 9e44 derived `checkFirst` only from the latest mutation result: `outcome?.kind === 'unknown' && !outcome.readback.ok`. A refusal thrown by `publishAttempt` replaces `mutation.data`, so the next Publish lost the check. That covers three refusals:
+
+- held input before the flush
+- a failed flush
+- a refusal met when the queue reaches the attempt
+
+**Correction.** `usePublish` keeps one explicit piece of load-scoped state: `unresolved`, a `useRef<{ loopId, generation } | undefined>`. It is independent of the latest result and error. `start` sets `checkFirst` only when it equals the current loop and generation.
+
+`publishAttempt` gets a callback that records the outcome only where a read or an answer happens:
+
+| Event inside the attempt | Effect on `unresolved` for this load |
+| --- | --- |
+| Refusal before the flush, failed flush, refusal at the queue, load replaced | none (nothing read, nothing answered) |
+| Check-first read **failed** | stays set (`unresolved(true)`) |
+| Check-first read **answered** | cleared, even if a refusal then stops the POST |
+| POST answered (published, `NO_DRAFT`) | cleared |
+| POST unanswered/5xx, read back OK | cleared |
+| POST unanswered/5xx, read back failed | set |
+| Definite 4xx refusal (e.g. `LOOP_INVALID`) | none; a POST is only sent once the flag is clear for this load |
+
+Unchanged:
+
+- latest-attempt reporting and the `ours` filter (a refusal still shows as **Publish failed**)
+- `running` / `pending` (the unconfirmed pending-state hypothesis was not touched)
+- the `sendable()` checks at the queue turn and immediately before the POST after an awaited read
+- acknowledged-snapshot capture, divergence → conflict, refresh, notice wording, `useAutosave` and name-retry ownership
+
+Background reads (`refreshLoopAfterWrite`, query retries, the discard-time detail read) are deliberately **not** used to settle the flag. They are not compared with the attempt's acknowledged draft.
+
+Docs: the docs/09 **Publish not confirmed** bullet and Regression note, and the CHANGELOG #237 sentence, now say:
+
+- the outcome stays unknown in that editor load until a read answers
+- refusals and failed checks in between leave it unknown
+- a newer load starts without it
+
+## 2 · Tests (fake API + full app render; synthetic component tier)
+
+There are 7 new tests in `EditorPage.publish.test.tsx`, under "Publish after an unknown outcome and a refusal that sent nothing (#237)". They use public paths:
+
+- the Publish button
+- real CodeMirror text in **Variables value 1** (`setCode`, as other suites do)
+- **Discard the unparsed text** and **Reload server draft**
+
+The fixture `committedButUnconfirmed` follows the native sequence: the server commits v1 through the real fake route, the reply is lost, and exactly one detail read (the attempt's check) fails. The editor's background refresh then succeeds ("published v1"), which also shows that a background read does not settle the outcome.
+
+| # | Test | 9e44 runtime | corrected |
+| --- | --- | --- | --- |
+| 1 | held-input refusal → discard → Publish: first loop request is GET, no 2nd POST, "Nothing to publish: version 1 already holds this draft.", v1 unchanged, no draft | **FAIL**: first request was `POST` | pass |
+| 2 | refusal → check fails again ("…Nothing was sent") → refusal → check answers, never a 2nd POST | **FAIL**: showed "Nothing was published / The server had no draft to publish. Checking its current version failed" (blind 409 POST) | pass |
+| 3 | failed-save refusal (`PUT` 503) → later accepted save → Publish checks first (failed check, nothing sent) → check answers → exactly GET then POST, v2 = A3 | **FAIL**: "Published version 2." from a blind POST | pass |
+| 4 | refusal met at the queue turn (blocker job, held input) → no read/POST → Publish checks first | **FAIL**: "Published version 2." from a blind POST | pass |
+| 5 | control: known publication → refusal → Publish sends while reads are held | pass | pass |
+| 6 | control: lost request whose check answered → refusal → Publish sends while reads are held | pass | pass |
+| 7 | control: unresolved in one load → **Reload server draft** (new generation) → Publish sends while reads are held, v2 = server draft B | pass | pass |
+
+Controls 5–7 pass on both runtimes by design. They guard against over-arming the flag and against leaking it across loads. The flushed and queued refusals (tests 3 and 4) are covered at this tier only, not natively.
+
+| Run | Result | Log |
+| --- | --- | --- |
+| **First failures**: new tests on 9e44 `usePublish.ts` (`caa73998`), pre-Prettier test bytes `064c810a` | 4 fail / 21 pass (25) | [01](logs/01-first-failures-new-tests-on-9e44-runtime.log), full-DOM [01b](logs/01b-first-failures-9e44-fulldom.log) |
+| After fix: publish + usePublish | 33/33 | [02](logs/02-publish-suites-after-fix.log) |
+| **Proof**: final tests (`d94b7f7e`) on swapped-in 9e44 file | 4 fail / 29 pass; the same 4, same assertions | [08](logs/08-proof-final-tests-on-9e44-runtime.log) |
+| **Proof**: corrected file restored | 33/33 | [09](logs/09-proof-final-tests-on-corrected-runtime.log) |
+| Affected suites: same 22 files as the previous correction (publish, reconcile, usePublish, name-conflict, loop-names ×2, LoopsPage, TemplateGallery, useAutosave, EditorPage conflict/device/rename/undo/freshness/restore/voice/main, store.rename, useLoadEditor ×2, ValidationIndicator, save-status) | **262/262** (previous 255 + 7) | [10](logs/10-focused-affected-22-files.log), [list](manifests/focused-files.txt) |
+
+**Swap proof.**
+
+1. Corrected `usePublish.ts` and the test were backed up and hashed: [proof-corrected-before-swap.txt](manifests/proof-corrected-before-swap.txt).
+2. The 9e44 file was copied in, and its blob verified as `2ef506ea` = HEAD: [proof-original-swap.txt](manifests/proof-original-swap.txt).
+3. The corrected file was restored, and its sha256 `019bcb33…` verified **RESTORE OK**: [proof-restore-check.txt](manifests/proof-restore-check.txt).
+
+**Static checks.** The first Prettier check failed on one long line in the test file ([03](logs/03-prettier-check-1.log), pre-format copy in `backups/`). Prettier `--write` on that file reflowed only that `addLoop` call ([04](logs/04-prettier-write-test-file.log)). Final results:
+
+- Prettier `--check` on all 4 files: pass ([11](logs/11-prettier-check-final.log))
+- ESLint `--max-warnings=0` on `usePublish.ts`, `usePublish.test.ts` and `EditorPage.publish.test.tsx`: exit 0 ([12](logs/12-eslint-final.log))
+- web `tsc -p tsconfig.json --noEmit`: exit 0 ([13](logs/13-web-typecheck-final.log))
+
+No whole-web coverage or full-repository suites were run, per the brief.
+
+## 3 · Forced build
+
+**Command.** `pnpm.cmd build --force --cache-dir=.turbo/local-cache`, 17:19:27–17:19:43Z. 12/12 tasks executed, 0 cached, exit 0 ([14](logs/14-build-force.log), [meta](logs/14-build-force.meta)).
+
+**Builders read first.** Turbo outputs are `dist/**` and `dist-goblin/**`. Both plugin outputs carry their `.graphgoblin-plugin-output.json` ownership manifests, so there was no refusal. `.turbo/` and `dist/` are git-ignored.
+
+**Prebuild = the 9e44 build.** All 13 per-tree manifests, 1,227 files, are byte-identical to `ui-237-integration-correction/manifests/postbuild` ([prebuild/](manifests/prebuild/)).
+
+**Postbuild** ([postbuild/](manifests/postbuild/), 1,227 files):
+
+- `apps/web/dist/assets/index-DK8I-ydH.js` and its map were replaced by `index-DhiNw4HL.js` (sha256 `1274cf07…0cb7`) and its map (`22e35fd5…`).
+- Also changed: `index.html` (`7efd3715…`), `sw.js` (`c6a7e0b0…`), `sw.js.map`, and `dist-goblin/sw.js.map`.
+- The other 1,221 same-path files are byte-identical, including `apps/api/dist/main.js` `e011151e…`, MCP, plugins and every package.
+
+**Bundle.** Its source map embeds the corrected `usePublish.ts` (`019bcb33…`), and `EditorPage.tsx`, `EditorToolbar.tsx` and `useAutosave.ts` unchanged ([bundle-source-map-check.json](manifests/bundle-source-map-check.json)).
+
+**Limit.** Backend `tsc -b` is incremental. Unchanged backend outputs being byte-identical is not a from-scratch backend emit, and none is claimed.
+
+## 4 · Native verification (actual compiled `main.js`, file SQLite, Edge)
+
+**Tier.**
+
+- Windows Edge 157.0.4341.46, headless (`channel: msedge`), 1280×900, service workers blocked, isolated context.
+- The gateway is the built `apps/api/dist/main.js` (`e011151e…`) on Node 22.23.4 with a disposable file SQLite store under each run folder.
+- Each gateway listened on an ephemeral 127.0.0.1 port (59704 and 63604) with no API key.
+- Codex/Claude binaries point at nonexistent files, with empty config homes and Ollama disabled. No provider calls.
+- Not source-TS, not fake memory.
+
+**Driver copies.** These are fresh copies under [native/](native/). The originals are untouched and byte-copied to [native/originals/](native/originals/) ([originals.sha256](native/originals.sha256)), with the in-place sources re-verified unchanged at the end. Every change is in [modifications.diff](native/modifications.diff), and harness hashes are in [harness.sha256](native/harness.sha256) (`cleanup.mjs` `f14f9f69…`).
+
+- **`bind.mjs`** (from the refusal diagnostic). Dirty-candidate binding with:
+  - HEAD, tree, parents, root-proof changed files, index digest and exact 4-line porcelain
+  - all 25 sources: HEAD blob = root proof; working file = root proof, or [corrected-sources.json](native/corrected-sources.json) for the 4 changes
+  - all 1,227 built files against my postbuild manifests
+  - bundle `index-DhiNw4HL.js` and its map embedding the corrected source
+  - mapping id `237-uncertainty-corrected-held-refusal-v1`
+  - `origin/main` recorded, as described under Identity
+- **`gateway.mjs`** (from the refusal diagnostic; identical copy in both folders):
+  - The clean-status assertion becomes: status and index must equal the binding.
+  - The mapping is checked against working files instead of `git show`.
+  - The id is new, and `maxBuffer` is raised.
+  - Store, environment scrubbing, port refusal, provider stubs, served-byte checks and close-time re-assertion are unchanged.
+- **`refusal/run-native.mjs`** (CLI launcher): only the shared binding/source paths and the session name `gg237-uncertainty-refusal` changed. It ran the cached `@playwright/cli` 0.1.24 (`open` → `run-code` → `close`), as the original did.
+- **`refusal/verify-refusal.playwright.js`**: bundle path, suite id, and the final expectations changed. It now records the checkpoint and screenshot first, then **requires** all of:
+  - `finding === null`
+  - the first retry request is a detail GET with 200
+  - zero retry POSTs
+  - the **Nothing to publish: version 1 already holds this draft.** notice
+
+  The diagnostic's own barriers, aborts and earlier assertions are unchanged.
+- **`readback/run-native.mjs`** (library launcher from the integration correction): starts the adapted gateway with `origin/main` as base, uses the shared binding, and runs only the readback driver. **`readback/verify-readback.playwright.js`**: only the mapping label changed.
+- **U2 name retry/readiness was not rerun.** It is not affected: `useAutosave`, `EditorPage`, `refusal()` and the name-retry permit are byte-identical. Its Publish step is a refusal with no unknown outcome in the load, where old and new `checkFirst` are both false.
+
+**Harness first failures (kept; before any gateway or browser):**
+
+1. [bind-before-first-failure-trimmed-status.log](native/bind-before-first-failure-trimmed-status.log): the trimming `git()` helper stripped the first porcelain line's leading space. Fixed by reading porcelain untrimmed.
+2. [bind-before-second-failure-origin-main-moved.log](native/bind-before-second-failure-origin-main-moved.log): `origin/main` had moved (see Identity). Handled as recorded there.
+
+### Refusal diagnostic (copied), corrected build: PASS
+
+Run 17:25:48–17:25:58Z: driver exit 0, gateway exit 0, `failure: null`, `finding: null`, page errors 0, bundle seen `[200]`. Evidence: [observed.json](native/refusal/observed.json) (sha256 `a16a8fbe…`), [run.json](native/refusal/run.json), [browser-run.log](native/refusal/browser-run.log).
+
+Request order, relative to the first POST (the original 9e44 run is shown for comparison):
+
+| Corrected (this run) | Original 9e44 diagnostic |
+| --- | --- |
+| ambiguous POST: upstream 200, reply aborted after commit | same |
+| ambiguous GET aborted ×3 (+20, +24, **+1036 ms**) | GET aborted ×2 (+23, +26) |
+| discard: no request | discard GET 200 (**+1038 ms**) |
+| **retry: GET 200 (+1837), GET 200 (+1846), no POST** | retry: **POST 409 `NO_DRAFT`** (+1808), then GET 200 ×2 |
+
+What the run established:
+
+- **Versions.** Published history is exactly one v1. After the retry, v1 (current), the graph and the token equal the committed record. There is no draft, and the retry sent no PUT.
+- **Refusal.** The refused click sent no detail GET, draft PUT or publish POST (`refusedWire: []`). The typed text was `[` + the original Variables source, and Discard restored it exactly.
+- **Device.** The device-draft lookup was `null` at every checkpoint, as in the original (clean accepted draft).
+- **UI per checkpoint:**
+  1. "Publish not confirmed … Publish again checks the server first."
+  2. "Publish failed / Some fields hold input…"
+  3. Discard checkpoint: the same refusal, plus the existing "Cannot reach the GraphGoblin API" banner
+  4. Retry: only "Nothing to publish: version 1 already holds this draft."
+- **Timing difference, explained.** The third aborted GET at ~+1 s is the detail query's single automatic retry (`retry: 1` in `app/bootstrap.tsx`). In the original it landed just after the driver switched to the discard phase and got 200. Here it landed just before and was aborted, so the existing offline banner showed until the retry's reads succeeded. This is harness timing, not a product change. It also means this run had **no** successful read between the lost reply and the fresh Publish.
+- **Console.** The deliberate aborts (POST + 3 GET `net::ERR_FAILED`) and the configured service-worker warnings. Unlike the original, there is no HTTP 409.
+- **Screenshots, inspected:**
+  - [01-unknown](native/refusal/01-unknown.png): warning notice; the toolbar is still "draft only" because every read failed
+  - [02-local-refusal](native/refusal/02-local-refusal.png): Publish failed, "1 error", `[{` in Variables with the Invalid JSON message and Discard
+  - [03-fresh-retry](native/refusal/03-fresh-retry.png): "Nothing to publish: version 1 already holds this draft.", "published v1", Variables restored
+
+### Readback controls (copied), corrected build: PASS
+
+Run 17:27:02–17:27:11Z: 0 failures, 0 page errors, gateway exit 0. Evidence: [observed-readback.json](native/readback/observed-readback.json) (sha256 `42b1ce0b…`), [run-summary.json](native/readback/run-summary.json).
+
+Each variant loses its first POST before the gateway, fails its check, then holds the real retry GET (200: old v1 + accepted draft):
+
+- **Held input** (real `[` typed during the held GET): after release, 1 POST total, "Publish failed" with the held-input sentence, text kept, v1 and the draft unchanged. [Screenshot](native/readback/after-readback-held-input.png): "published v1", "1 error".
+- **New load** (another loop opened during the held GET): 1 POST, no feedback in the other editor. [Screenshot](native/readback/after-readback-new-load.png).
+- **Healthy:** exactly one more POST, sent after the delivered GET 200, published a distinct v2 with the accepted draft. Both immutable versions read back. [Screenshot](native/readback/after-readback-healthy.png): "published v2", "Published version 2."
+
+**Console.** 9 `net::ERR_FAILED` (3 per variant, the deliberate aborts) plus the service-worker warnings.
+
+The launcher process exited 30 s after finishing because of its inherited, un-`unref`'d 30 s shutdown timer (unchanged from the original harness).
+
+### Binding and cleanup
+
+- [binding-after.json](native/binding-after.json) is **byte-identical** to [binding-before.json](native/binding-before.json) (`15ef5afd…`): identity, index, status, 25 sources, 1,227 built files.
+- Both [gateway-closed.json](native/refusal/gateway-closed.json) records show `listening: false` with the candidate identity re-asserted.
+- [cleanup.json](native/cleanup.json):
+  - no recorded PID alive (orchestrators 30268/50732, gateways 36880/42480, CLI browser 32152)
+  - ports 59704/63604 not listening
+  - no `msedge`, Playwright or session process left
+  - each store holds only `graphgoblin.db` and the generated `master.key` (no WAL, SHM or lock)
+- The first cleanup query matched its own PowerShell process. It is kept as [cleanup-first-run-self-match.json](native/cleanup-first-run-self-match.json) and fixed by excluding `$PID`.
+- [processes-before.json](native/processes-before.json): 0 Edge processes before; the one node match was this session's runner.
+- **Do not publish** the `gateway-store-*` folders: they hold disposable databases and generated keys. As in earlier evidence, they stay outside any curated proposal.
+
+## 5 · Observations and limits (for root and reviewers)
+
+1. **What the user sees after a refusal.** After a refusal, the visible notice is only **Publish failed**. The earlier "Publish not confirmed… checks the server first" notice is replaced, as the latest-attempt rule requires. Behavior still reads first, but the screen no longer says the outcome is unknown. I did not change error UI, per the brief.
+2. **Load scope.** A newer editor load starts without the flag (test 7, same as 9e44). This covers reload, restore, any remount from navigating away, and switching loops. The next Publish there may send a POST that answers `409 NO_DRAFT`, then reads back. That is the original's harmless path, with no duplicate version in the fixtures. This follows "keep loop/generation isolation"; root may decide whether a load should inherit it.
+3. **A successful check settles the flag before a refusal stops the POST.** The next Publish then sends without another read. This matches the previous handoff's reasoning and the existing "check OK → Publish again" path; the existing held-input-during-check test and native control cover it.
+4. **Comment wording nit.** The `publishAttempt` comment says "A refusal, sending nothing, changes nothing", but a failed-save refusal did send its PUT (never a publish request). Fixing the wording changes the bound source and needs a rebuild and native rebind, so I left it.
+5. **Tiers.** The flushed and queued refusals are proven at the component tier (fake API) only. Native covered the early held-input refusal (the confirmed defect) and the three readback controls.
+6. **Parent integration.** `origin/main` is now `a817e5cc` (#470 merged). This candidate has not been integrated, tested or built against it.
+
+## Correction batches
+
+There was one implementation batch: the fix, the tests, and the docs/CHANGELOG wording. After it, only harness fixes followed: the binding's porcelain trimming, recording `origin/main`, and the cleanup self-match. None is a product change. No assertion, retry, timeout or coverage setting was weakened.
+
+## Remaining gates (not done here)
+
+- Root review and staging of these 4 working files. Commit and integration with current main `a817e5cc`.
+- Independent broader QA, including the copied corrected diagnostic, after root freeze.
+- Current exact-head CI, including whole-web coverage (no local coverage run here).
+- Opposite-family GPT UI review and a fresh Astra max audit.
+- Owner acceptance, as "Part of" #237, never auto-closed.

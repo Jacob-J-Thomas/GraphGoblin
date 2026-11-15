@@ -1,0 +1,214 @@
+{
+  "name": "reentry-detail-read-across-leaving-commit",
+  "network": [
+    {
+      "t": 423,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 423,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 423,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D7YBETPGAB4HAN0ZW3K02N",
+      "ifMatch": null
+    },
+    {
+      "t": 423,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 423,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 424,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 426,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 426,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 429,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 429,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 430,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D7YBETPGAB4HAN0ZW3K02N",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D7YBETPGAB4HAN0ZW3K02P",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgigd48 N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "2790d2907d7f442c"
+      }
+    },
+    {
+      "t": 430,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 431,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 432,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 436,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 492,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 542,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7YBETPGAB4HAN0ZW3K02N/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N9",
+          "description": "orig",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 546,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7YBETPGAB4HAN0ZW3K02N/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    }
+  ],
+  "barriers": [],
+  "steps": [],
+  "ui": {},
+  "rest": {},
+  "checks": {},
+  "pageErrors": [],
+  "consoleErrors": [],
+  "error": "locator.click: Error: strict mode violation: locator('header').getByRole('link', { name: 'Loops', exact: true }) resolved to 2 elements:\n    1) <a href=\"/app/loops\" aria-current=\"page\" data-discover=\"true\" class=\"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active\">…</a> aka getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Loops' })\n    2) <a href=\"/app/loops\" data-discover=\"true\" class=\"touch-target text-muted no-underline hover:text-default hover:underline\">Loops</a> aka getByRole('banner').filter({ hasText: 'Loops/#237 mwgigd48 N9draft' }).locator('a')\n\nCall log:\n\u001b[2m  - waiting for locator('header').getByRole('link', { name: 'Loops', exact: true })\u001b[22m\n\n    at toLoops (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\drivers\\native-237.mjs:275:82)\n    at scenarios.reentry-detail-read-across-leaving-commit (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\drivers\\native-237.mjs:646:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-237-claude-implementation/drivers/native-237.mjs:810:5"
+}

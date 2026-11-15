@@ -80,6 +80,16 @@ function nameKey(name: string): string {
   return name.trim().replace(/\s+/gu, ' ').toLowerCase();
 }
 
+/** The loop row after a draft save: its name and description follow the draft, as the API stores them. */
+function withSummary(loop: LoopRecord, definition: LoopDefinition): LoopRecord {
+  const { description: _previous, ...rest } = loop;
+  return {
+    ...rest,
+    name: definition.name,
+    ...(definition.description ? { description: definition.description } : {}),
+  };
+}
+
 /** 409 `LOOP_NAME_CONFLICT` with the API's suggestion: the first free "<name> copy[ N]". */
 export function loopNameConflictProblem(suggestedName: string): Response {
   return new Response(
@@ -371,7 +381,19 @@ export class FakeApi {
       definition: parsed,
       createdAt: TS,
     };
-    entry.loop = { ...entry.loop, draftVersionId: entry.draft.id, name: parsed.name };
+    entry.loop = { ...withSummary(entry.loop, parsed), draftVersionId: entry.draft.id };
+  }
+
+  /** Publish the loop's draft as another tab, device or API client would (`POST .../publish`). */
+  publishElsewhere(loopId: string): LoopVersionRecord {
+    const entry = this.loops.get(loopId)!;
+    const version: LoopVersionRecord = { ...entry.draft!, status: 'published', publishedAt: TS };
+    entry.current = version;
+    entry.history.push(version);
+    delete entry.draft;
+    const { draftVersionId: _d, ...loop } = entry.loop;
+    entry.loop = { ...loop, currentVersionId: version.id };
+    return version;
   }
 
   addRun(overrides: Partial<RunRecord> = {}, thread?: ContextThread): RunRecord {
@@ -747,7 +769,7 @@ export class FakeApi {
           createdAt: TS,
         };
         entry.draft = draft;
-        entry.loop = { ...entry.loop, draftVersionId: draft.id, name: parsed.data.name };
+        entry.loop = { ...withSummary(entry.loop, parsed.data), draftVersionId: draft.id };
         return json({
           draft,
           draftToken: stableHash(parsed.data),

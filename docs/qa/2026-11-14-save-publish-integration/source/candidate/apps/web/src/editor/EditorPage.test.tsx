@@ -1,0 +1,1339 @@
+import { kitchenSinkLoop, minimalLoop } from '@graphgoblin/contracts/testing';
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+  within,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { nextTask } from '../__fixtures__/dialog.js';
+import { FakeApi, problem } from '../__fixtures__/fake-api.js';
+import { renderApp, renderWith } from '../__fixtures__/render.js';
+import { renderNodeEditor } from '../__fixtures__/node-editor.js';
+import { pasteInto } from '../__fixtures__/user.js';
+import { App } from '../app/App.js';
+import {
+  loadLocalDraft,
+  loadSetAsideDraft,
+  saveLocalDraft,
+  saveSetAsideDraft,
+} from '../drafts/local-drafts.js';
+import { LOOP_PANEL_STORAGE_KEY } from './LoopPanel.js';
+import { KIND_MIME, newLoopDefinition } from './model.js';
+import { getCode, setCode } from '../__fixtures__/codemirror.js';
+import { useEditorStore } from './store.js';
+
+const SAVE_WAIT = { timeout: 4000 };
+
+/**
+ * A canvas node's issue badge, or null. jsdom never measures nodes, so xyflow keeps them
+ * `visibility: hidden`, which leaves their contents without accessible names: canvas badges and
+ * their popovers are found by their `aria-label` and text here (e2e/validation.spec.ts checks the
+ * accessible names in a browser).
+ */
+const nodeBadge = (id: string) =>
+  screen
+    .getByTestId(`node-${id}`)
+    .querySelector<HTMLButtonElement>(`button[aria-label$=" on ${id}"]`);
+
+/** The popover a badge or the indicator controls. */
+const popoverOf = (trigger: HTMLElement) =>
+  document.getElementById(trigger.getAttribute('aria-controls')!)!;
+
+/** The buttons of a canvas badge's popover whose label or text matches `name`. */
+const popoverButtons = (trigger: HTMLElement, name: RegExp | string) =>
+  [...popoverOf(trigger).querySelectorAll('button')].filter((button) => {
+    const label = button.getAttribute('aria-label') ?? button.textContent ?? '';
+    return typeof name === 'string' ? label === name : name.test(label);
+  });
+
+describe('EditorPage', () => {
+  // jsdom's window is 1024 px wide, where the loop panel starts collapsed; most tests read the
+  // loop settings in it, so they start with it expanded (the setup clears storage after each).
+  beforeEach(() => localStorage.setItem(LOOP_PANEL_STORAGE_KEY, 'expanded'));
+
+  it('describes valid pending JSON accurately and refuses Publish until applied or cancelled', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    // Loop/device loading precedes validation. Give that public phase its own observation
+    // window, within the unchanged 20 s test budget, before observing the server's checks.
+    await waitForElementToBeRemoved(screen.getByText('Loading loop…'), { timeout: 10_000 });
+    await screen.findByText('Ready to publish');
+    act(() =>
+      useEditorStore.getState().setFieldError('node:start', 'inputSchema', {
+        text: '{}',
+        message: 'Choose Apply JSON or Cancel JSON to finish this edit.',
+        input: 'unapplied JSON',
+      }),
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Publish' }));
+    expect(
+      await screen.findByText(/Some fields hold JSON not applied yet; apply or cancel it first/),
+    ).toBeVisible();
+    expect(api.calls.filter((call) => call.path.endsWith('/publish'))).toHaveLength(0);
+    const badge = nodeBadge('start')!;
+    fireEvent.click(badge);
+    expect(popoverOf(badge)).toHaveTextContent('This field holds JSON not applied yet.');
+  });
+
+  it('shows Harness in inference but not in the decision or loop settings', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('form', { name: 'Loop settings form' });
+    expect(screen.queryByLabelText('Harness')).not.toBeInTheDocument();
+    act(() => useEditorStore.getState().openNode('decide'));
+    expect(
+      within(screen.getByRole('dialog')).queryByRole('radiogroup', { name: 'Harness' }),
+    ).not.toBeInTheDocument();
+    act(() => useEditorStore.getState().openNode('infer'));
+    expect(within(screen.getByRole('dialog')).getByRole('radio', { name: 'codex' })).toBeChecked();
+  });
+
+  it('collapses and expands the loop panel from its own controls and remembers it', async () => {
+    const user = userEvent.setup();
+    localStorage.clear();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    const first = renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    // Below 1280 px nothing stored means collapsed: a rail with its Show button.
+    const rail = screen.getByRole('complementary', { name: 'Loop settings' });
+    expect(rail).toHaveAttribute('id', 'loop-panel');
+    expect(within(rail).getAllByRole('button')).toHaveLength(1);
+    const show = screen.getByRole('button', { name: 'Show loop settings' });
+    expect(show).toHaveAttribute('aria-expanded', 'false');
+    expect(show).toHaveAttribute('aria-controls', 'loop-panel');
+    expect(screen.queryByRole('button', { name: 'Loop settings' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Palette' })).toBeNull();
+    expect(screen.queryByLabelText('Name')).toBeNull();
+    // Validation lives in the toolbar now, whatever the panel's state.
+    expect(within(rail).queryByText('Ready to publish')).toBeNull();
+    expect(await screen.findByText('Ready to publish')).toBeVisible();
+
+    // Expanding moves focus into the panel; the choice is remembered for the next visit.
+    await user.click(show);
+    expect(screen.getByRole('heading', { name: 'Loop settings' })).toHaveFocus();
+    expect(screen.getByLabelText('Name')).toHaveValue('minimal');
+    expect(screen.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    // The panel holds only the loop's own configuration: no validation section.
+    expect(screen.queryByRole('region', { name: 'Validation' })).toBeNull();
+    expect(localStorage.getItem(LOOP_PANEL_STORAGE_KEY)).toBe('expanded');
+    first.unmount();
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByLabelText('Name')).toBeInTheDocument();
+
+    // The panel's own Hide button collapses it too, leaving focus on Show.
+    await user.click(screen.getByRole('button', { name: 'Hide loop settings' }));
+    expect(screen.getByRole('button', { name: 'Show loop settings' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Show loop settings' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    expect(localStorage.getItem(LOOP_PANEL_STORAGE_KEY)).toBe('collapsed');
+  });
+
+  it('starts with the loop panel expanded on wide windows, and counts issues beside Publish', async () => {
+    const user = userEvent.setup();
+    localStorage.clear();
+    const width = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1440);
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    expect(screen.getByRole('button', { name: 'Hide loop settings' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    width.mockRestore();
+    // The toolbar's indicator counts the merged list; each node's badge counts its own issues.
+    // An invalid return expression is an error.
+    await user.click(screen.getByRole('button', { name: 'Hide loop settings' }));
+    act(() =>
+      useEditorStore.getState().updateNode('done', {
+        config: { returns: '(' },
+      }),
+    );
+    expect(screen.getByRole('button', { name: '1 error' })).toHaveAttribute(
+      'data-severity',
+      'error',
+    );
+    expect(nodeBadge('done')).toHaveAttribute('aria-label', '1 issue on done');
+    expect(nodeBadge('done')).toHaveAttribute('data-severity', 'error');
+    expect(nodeBadge('start')).toBeNull();
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    // A new wait node brings two more errors (unconnected port, unreachable node).
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    expect(screen.getByRole('button', { name: '3 errors' })).toHaveAttribute(
+      'data-severity',
+      'error',
+    );
+    expect(nodeBadge('wait')).toHaveAttribute('aria-label', '2 issues on wait');
+    expect(nodeBadge('wait')).toHaveTextContent('2');
+    // Held settings text adds a loop-level error; another invalid exit adds an expression
+    // error and an unreachable-node error. The loop-level error has no node badge.
+    act(() => useEditorStore.getState().removeNode('wait'));
+    act(() =>
+      useEditorStore.getState().setFieldError('settings', 'x', { message: 'bad', text: '{' }),
+    );
+    expect(screen.getByRole('button', { name: '2 errors' })).toBeInTheDocument();
+    act(() => {
+      useEditorStore.getState().addNode('exit', { x: 0, y: 0 });
+      useEditorStore.getState().updateNode('exit', {
+        config: { returns: '(' },
+      });
+    });
+    // The new exit is also unreachable (an error).
+    const indicator = screen.getByRole('button', { name: '4 errors' });
+    expect(nodeBadge('done')).toHaveAttribute('aria-label', '1 issue on done');
+    expect(nodeBadge('exit')).toHaveAttribute('aria-label', '2 issues on exit');
+    // Its popover lists the loop-level issue in full and one row per node.
+    await user.click(indicator);
+    const popover = screen.getByRole('dialog', { name: 'Loop issues' });
+    expect(within(popover).getByRole('group', { name: 'Loop and connections' })).toHaveTextContent(
+      'settings.x',
+    );
+    expect(
+      within(within(popover).getByRole('group', { name: 'Nodes' }))
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['done: 1 issue', 'exit: 2 issues']);
+    await user.click(within(popover).getByRole('button', { name: 'exit: 2 issues' }));
+    expect(screen.getByRole('dialog', { name: 'Edit exit exit' })).toBeInTheDocument();
+  });
+
+  it('loads a draft, adds nodes from the palette, edits properties, and autosaves', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('my loop'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+
+    expect(await screen.findByRole('heading', { name: 'my loop' })).toBeInTheDocument();
+    expect(screen.getByText('draft only')).toBeInTheDocument();
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    expect(screen.getByTestId('node-start')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    expect(screen.getByTestId('node-wait')).toBeInTheDocument();
+    // The new node is selected but its editor stays closed; its port is unconnected.
+    expect(useEditorStore.getState().selectedNodeId).toBe('wait');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    const badge = nodeBadge('wait')!;
+    expect(badge).toHaveAttribute('aria-label', '2 issues on wait');
+    // A click on its badge opens only the popover, which names the problems. (Once the 200 ms pan
+    // to the new node is over: any move of the canvas closes issue popovers.)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
+    await user.click(badge);
+    const popover = popoverOf(badge);
+    expect(popover).toHaveAttribute('aria-label', 'Issues on wait');
+    expect(popover).toHaveTextContent('PORT_UNCONNECTED');
+    expect(popover).toHaveTextContent('NODE_UNREACHABLE');
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+    // Open, it renders in document.body (jsdom has no popover API), out of the scaled canvas.
+    expect(popover.parentElement).toBe(document.body);
+    await user.keyboard('{Escape}');
+    expect(popoverOf(badge)).toBeEmptyDOMElement();
+    expect(popoverOf(badge)).toHaveAttribute('hidden');
+    expect(badge).toHaveFocus();
+
+    // A click on the node opens its editor with the generated form.
+    fireEvent.click(screen.getByTestId('node-wait'));
+    const dialog = screen.getByRole('dialog', { name: 'Edit wait wait' });
+    expect(within(dialog).getByRole('form', { name: 'wait config' })).toBeInTheDocument();
+    await user.clear(within(dialog).getByLabelText('Label'));
+    await user.type(within(dialog).getByLabelText('Label'), 'Approval');
+    expect(within(screen.getByTestId('node-wait')).getByText('Approval')).toBeInTheDocument();
+
+    await waitFor(
+      () => expect(api.callsTo('PUT', `/loops/${loop.id}/draft`).length).toBeGreaterThan(0),
+      SAVE_WAIT,
+    );
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    const saved = api.callsTo('PUT', `/loops/${loop.id}/draft`).at(-1)!.body as {
+      definition: { nodes: { label: string }[] };
+    };
+    expect(saved.definition.nodes.map((n) => n.label)).toContain('Approval');
+    expect((await loadLocalDraft(loop.id))?.synced).toBe(true);
+  });
+
+  it('adds a node dropped from the palette and refuses bad connections', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('drop'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    const canvas = await screen.findByTestId('canvas');
+    const data = new Map<string, string>([[KIND_MIME, 'script']]);
+    const dataTransfer = {
+      getData: (k: string) => data.get(k) ?? '',
+      setData: () => undefined,
+      dropEffect: 'none',
+    };
+    fireEvent.dragOver(canvas, { dataTransfer });
+    fireEvent.drop(canvas, { dataTransfer, clientX: 100, clientY: 100 });
+    expect(screen.getByTestId('node-script')).toBeInTheDocument();
+    fireEvent.drop(canvas, { dataTransfer: { getData: () => 'nonsense' } });
+    expect(useEditorStore.getState().definition!.nodes).toHaveLength(3);
+    // Dropping selects the new node; it does not open its editor.
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    // A palette drag start carries the kind.
+    const set: Record<string, string> = {};
+    fireEvent.dragStart(screen.getByRole('button', { name: 'Add Exit node' }), {
+      dataTransfer: { setData: (k: string, v: string) => (set[k] = v), effectAllowed: '' },
+    });
+    expect(set[KIND_MIME]).toBe('exit');
+
+    useEditorStore
+      .getState()
+      .connect({ source: 'done', sourceHandle: 'loopBack', target: 'start' });
+    expect(
+      await screen.findByText(/Connection refused: triggers have no input/),
+    ).toBeInTheDocument();
+  });
+
+  it('opens the node editor’s Advanced group to focus an issue’s field inside it', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const definition = kitchenSinkLoop();
+    const loop = api.addLoop(definition);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    // An advanced field that does not validate.
+    const infer = definition.nodes.find((node) => node.id === 'infer')!;
+    act(() =>
+      useEditorStore
+        .getState()
+        .updateNode('infer', { config: { ...infer.config, timeoutSeconds: 0 } }),
+    );
+    const editor = () => screen.getByRole('dialog', { name: 'Edit inference infer' });
+    const advanced = () => within(editor()).getByRole('button', { name: /^Advanced/ });
+    const timeout = () => within(editor()).getByRole('spinbutton', { name: 'Timeout seconds' });
+
+    // From the node's badge on the canvas: the editor opens with Advanced open at the field.
+    await waitFor(() => expect(nodeBadge('infer')).not.toBeNull());
+    const badge = nodeBadge('infer')!;
+    await user.click(badge);
+    await user.click(popoverButtons(badge, /timeoutSeconds/)[0]!);
+    await waitFor(() => expect(timeout()).toHaveFocus());
+    expect(advanced()).toHaveAttribute('aria-expanded', 'true');
+
+    // Collapsed, the group says it holds the problem; the editor's own badge opens it again.
+    await user.click(advanced());
+    expect(advanced()).toHaveAttribute('aria-expanded', 'false');
+    expect(advanced()).toHaveAccessibleName(/1 error/);
+    const inEditor = within(editor()).getByRole('button', { name: '1 issue on infer' });
+    await user.click(inEditor);
+    const popover = screen.getByRole('dialog', { name: 'Issues on infer' });
+    await user.click(within(popover).getByRole('button', { name: /timeoutSeconds/ }));
+    expect(advanced()).toHaveAttribute('aria-expanded', 'true');
+    expect(timeout()).toHaveFocus();
+  });
+
+  it('flags a collapsed Advanced group or operation holding an expression that does not compile', async () => {
+    const api = new FakeApi();
+    const definition = kitchenSinkLoop();
+    const loop = api.addLoop(definition);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    const infer = definition.nodes.find((node) => node.id === 'infer')!;
+    const sub = definition.nodes.find((node) => node.id === 'sub')!;
+    // Schema-valid, so only the loop's validation finds them: EXPRESSION_INVALID at their paths.
+    act(() => {
+      useEditorStore.getState().updateNode('infer', {
+        config: { ...infer.config, input: [{ op: 'drop', target: 'messages', where: 'vars.' }] },
+      });
+      useEditorStore.getState().updateNode('sub', {
+        config: { ...sub.config, input: { mode: 'project', vars: { topic: 'vars.' } } },
+      });
+    });
+    act(() => useEditorStore.getState().openNode('infer'));
+    const advanced = () =>
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^Advanced/ });
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: /^Context.*1 error$/ })).toBeInTheDocument(),
+    );
+    await userEvent.setup().click(screen.getByRole('tab', { name: /^Context.*1 error$/ }));
+    expect(
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^Input 1 drop/ }),
+    ).toHaveAccessibleName('Input 1 drop messages 1 error');
+
+    act(() => useEditorStore.getState().openNode('sub'));
+    await waitFor(() => expect(advanced()).toHaveAccessibleName('Advanced 1 set 1 error'));
+  });
+
+  it('keeps schema-invalid drafts on the device and explains why', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('invalid'));
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
+    await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect(screen.getByText(/Fix the schema errors/)).toBeInTheDocument();
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+    const local = await loadLocalDraft(loop.id);
+    expect(local?.synced).toBe(false);
+    expect(local?.definition.nodes.map((n) => n.id)).toContain('subloop');
+    // Choosing a schema issue in the node's badge opens its node at the field.
+    act(() => useEditorStore.getState().select(undefined));
+    const badge = nodeBadge('subloop')!;
+    await user.click(badge);
+    await user.click(popoverButtons(badge, /SCHEMA/)[0]!);
+    expect(useEditorStore.getState().selectedNodeId).toBe('subloop');
+    const dialog = screen.getByRole('dialog', { name: 'Edit subloop subloop' });
+    expect(dialog.querySelector('[data-field="loopRef"]')).toContainElement(
+      document.activeElement as HTMLElement,
+    );
+
+    view.unmount();
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(
+      await screen.findByText('Restored unsaved changes from this device.'),
+    ).toBeInTheDocument();
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect((await loadLocalDraft(loop.id))?.definition.nodes.map((node) => node.id)).toContain(
+      'subloop',
+    );
+    expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(0);
+  });
+
+  it('shows a dismissed save notice again after the draft returns to the same invalid state', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('dismiss save notice'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    const addSubloop = await screen.findByRole('button', { name: 'Add Subloop node' });
+
+    await user.click(addSubloop);
+    expect(await screen.findByText(/Fix the schema errors/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+    );
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
+    expect(screen.queryByText(/Fix the schema errors/)).toBeNull();
+    expect(screen.getByTestId('save-state').querySelector('svg[data-icon="alert"]')).not.toBeNull();
+    await waitFor(() => expect(screen.getByTestId('save-state')).toHaveFocus());
+
+    act(() => useEditorStore.getState().updateMeta({ description: 'edited while still invalid' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Saved on this device only'),
+      SAVE_WAIT,
+    );
+    expect(screen.queryByText(/Fix the schema errors/)).toBeNull();
+
+    act(() => useEditorStore.getState().removeNode('subloop'));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    await user.click(addSubloop);
+    expect(await screen.findByText(/Fix the schema errors/)).toBeInTheDocument();
+  });
+
+  it('keeps a dismissed offline save notice hidden after an edit that remains offline', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('offline dismissal'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'offline dismissal' });
+    api.offline = true;
+    act(() => useEditorStore.getState().updateMeta({ description: 'first offline edit' }));
+
+    const offlineNotice = await screen.findByText(/Offline: the draft is kept on this device/);
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }));
+    expect(offlineNotice).not.toBeInTheDocument();
+
+    act(() => useEditorStore.getState().updateMeta({ description: 'second offline edit' }));
+    await waitFor(
+      () =>
+        expect(screen.getByTestId('save-state')).toHaveTextContent('Offline: saved on this device'),
+      SAVE_WAIT,
+    );
+    expect(screen.queryByText(/Offline: the draft is kept on this device/)).toBeNull();
+  });
+
+  it('keeps a newer server draft over an older unsynced local copy, and can switch', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('older local copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'server copy' })).toBeInTheDocument();
+    expect(screen.getByText('The server has a newer draft')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: "Use this device's copy instead" }));
+    expect(await screen.findByRole('heading', { name: 'older local copy' })).toBeInTheDocument();
+    expect(screen.queryByText('The server has a newer draft')).toBeNull();
+    expect(screen.getByText('Restored unsaved changes from this device.')).toBeInTheDocument();
+  });
+
+  it('restores an unsynced local draft and reports offline saves', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    const local = newLoopDefinition('local copy');
+    await saveLocalDraft({ loopId: loop.id, definition: local, savedAt: 'now', synced: false });
+    api.override('PUT /loops/:id/draft', () => {
+      throw new TypeError('Failed to fetch');
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'local copy' })).toBeInTheDocument();
+    expect(screen.getByText('Restored unsaved changes from this device.')).toBeInTheDocument();
+    await waitFor(
+      () =>
+        expect(screen.getByTestId('save-state')).toHaveTextContent('Offline: saved on this device'),
+      SAVE_WAIT,
+    );
+
+    // Back online: the retry saves.
+    api.override('PUT /loops/:id/draft', () => problem(500, 'INTERNAL_ERROR', 'disk full'));
+    window.dispatchEvent(new Event('online'));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('Save failed'),
+      SAVE_WAIT,
+    );
+    expect(screen.getByText(/disk full/)).toBeInTheDocument();
+  });
+
+  it('opens offline from the local draft, and shows offline or missing states without one', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('cached'));
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('cached'),
+      savedAt: 'now',
+      synced: true,
+    });
+    api.offline = true;
+    const first = renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'cached' })).toBeInTheDocument();
+    first.unmount();
+
+    renderApp('/loops/01UNKNOWN0000000000000000/edit', api);
+    expect(await screen.findByText('Offline')).toBeInTheDocument();
+  });
+
+  it('shows a missing loop as an error', async () => {
+    renderApp('/loops/01MISSING0000000000000000/edit');
+    expect(await screen.findByText(/Could not load loop/)).toBeInTheDocument();
+  });
+
+  it('publishes, surfaces 422 issues, and links to the New run flow once published', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    // Runs start only from Runs: before a publish the link is disabled and says why.
+    expect(screen.queryByRole('button', { name: 'Run' })).toBeNull();
+    const disabled = screen.getByRole('link', { name: 'Open in Runs' });
+    expect(disabled).toHaveAttribute('aria-disabled', 'true');
+    expect(disabled).not.toHaveAttribute('href');
+    expect(disabled).toHaveAccessibleDescription(/Publish the loop first/);
+    await user.click(disabled);
+    expect(screen.getByTestId('location')).toHaveTextContent(`/loops/${loop.id}/edit`);
+
+    // Structural error: the server refuses with 422 and the issues are listed.
+    await user.click(screen.getByRole('button', { name: 'Add Mutate node' }));
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText('Publish failed')).toBeInTheDocument();
+    expect(screen.getAllByText(/mutate/).length).toBeGreaterThan(0);
+
+    // Delete node, in the node's editor, removes it and closes the editor.
+    fireEvent.click(screen.getByTestId('node-mutate'));
+    await user.click(screen.getByRole('button', { name: 'Delete node' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.queryByTestId('node-mutate')).toBeNull();
+    expect(screen.getByTestId('canvas')).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText('Published version 1.')).toBeInTheDocument();
+    // The toolbar's link leads to the loop's New run flow (#237: the notice names an immutable
+    // version, which that loop-level flow does not pin, so the notice carries no link of its own).
+    // getByRole: exactly one such link.
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'Open in Runs' })).toHaveAttribute(
+        'href',
+        `/runs/new?loop=${loop.id}`,
+      ),
+    );
+    await user.click(screen.getByRole('link', { name: 'Open in Runs' }));
+    expect(await screen.findByRole('heading', { name: 'New run' })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Start run' }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(/^\/runs\/[0-9A-Z]{26}$/),
+    );
+  });
+
+  it('says there is nothing to publish when the loop has no changes, and hides it after an edit', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop(), { published: true });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText(/Nothing to publish/)).toBeInTheDocument();
+    expect(screen.queryByText('Publish failed')).toBeNull();
+    useEditorStore.getState().updateMeta({ description: 'changed' });
+    await waitFor(() => expect(screen.queryByText(/Nothing to publish/)).toBeNull());
+  });
+
+  it('waits for the server check before "Ready to publish", and says when it is unavailable', async () => {
+    const api = new FakeApi();
+    let release: () => void = () => undefined;
+    let fail = false;
+    api.override('POST /loops/:id/validate', async () => {
+      if (fail) throw new TypeError('Failed to fetch');
+      await new Promise<void>((resolve) => (release = resolve));
+      return new Response(JSON.stringify({ issues: [], publishable: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    const loop = api.addLoop(newLoopDefinition('checking'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    // Locally valid, but the server's checks (cron, subloops) have not answered yet.
+    expect(await screen.findByText('Checking…')).toBeInTheDocument();
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    // The checking indicator also covers device/server reconciliation; release only the
+    // validation request this test is holding, once it has actually started.
+    await waitFor(() => expect(api.callsTo('POST', `/loops/${loop.id}/validate`)).toHaveLength(1));
+    act(() => release());
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    // The next check fails (offline): not ready, not an error either.
+    fail = true;
+    act(() => useEditorStore.getState().updateMeta({ description: 'changed' }));
+    expect(await screen.findByText('Validation unavailable', {}, SAVE_WAIT)).toHaveClass(
+      'text-muted',
+    );
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+  });
+
+  it('shows the issues only the API finds on the node’s badge and in the counts', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.serverOnlyIssues = [
+      {
+        code: 'CRON_INVALID',
+        severity: 'error',
+        message: 'cron trigger "start": bad',
+        nodeId: 'start',
+      },
+    ];
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    // After the server's check: a badge on the trigger, and the counts beside Publish.
+    await waitFor(() =>
+      expect(nodeBadge('start')).toHaveAttribute('aria-label', '1 issue on start'),
+    );
+    const badge = nodeBadge('start')!;
+    expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
+    await user.click(badge);
+    const popover = popoverOf(badge);
+    expect(popover).toHaveTextContent('CRON_INVALID');
+    expect(popover).toHaveTextContent('cron trigger "start": bad');
+    // An issue without a field opens its node, with focus on the editor's heading.
+    await user.click(popoverButtons(badge, /CRON_INVALID/)[0]!);
+    const dialog = screen.getByRole('dialog', { name: 'Edit trigger start' });
+    expect(within(dialog).getByRole('heading', { name: 'Edit trigger start' })).toHaveFocus();
+    // The editor's own badge, beside its title, lists it too.
+    expect(within(dialog).getByRole('button', { name: '1 issue on start' })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('list', { name: 'Node issues' })).toBeNull();
+    // Publish refuses with the server's message, as before.
+    act(() => useEditorStore.getState().closeNodeDialog());
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText('Publish failed')).toBeInTheDocument();
+    expect(screen.getByText(/cron trigger "start": bad/)).toBeInTheDocument();
+  });
+
+  it('blocks readiness and publish when Monday 07:30 has no day chosen', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const definition = newLoopDefinition('incomplete cron');
+    definition.nodes[0]!.config = { type: 'cron', expression: '30 7 * * 1', timezone: 'UTC' };
+    const loop = api.addLoop(definition);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByText('Ready to publish');
+    act(() => useEditorStore.getState().openNode('start'));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit trigger start' });
+    await user.click(within(dialog).getByLabelText('Monday'));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Choose at least one day.');
+    expect(within(dialog).getByRole('button', { name: '1 issue on start' })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Done' }));
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    expect(screen.getByRole('button', { name: '1 error' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    await screen.findByText(/not a valid value yet; complete or discard it first/);
+    expect(api.callsTo('POST', `/loops/${loop.id}/publish`)).toHaveLength(0);
+    const badge = nodeBadge('start')!;
+    await user.click(badge);
+    const discard = popoverButtons(badge, 'Discard the incomplete schedule at expression')[0]!;
+    expect(discard).toHaveTextContent('Discard the incomplete schedule');
+    expect(discard.parentElement).toHaveTextContent('FIELD_INPUT_INVALID');
+    expect(discard.parentElement).toHaveTextContent(
+      'This field holds input that is not a valid value yet.',
+    );
+    await user.click(discard);
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+    act(() => useEditorStore.getState().undo());
+    expect(screen.queryByText('Ready to publish')).toBeNull();
+    act(() => useEditorStore.getState().undo());
+    expect(await screen.findByText('Ready to publish')).toBeInTheDocument();
+  });
+
+  // This whole-page integration deliberately checks every discard surface and both canvas and
+  // dialog focus, with no fixture typing to batch. It exceeded 20 s under coverage/CPU load;
+  // retain those real UI transitions with the API subprocess precedent's 60 s budget, here only.
+  it('blocks publishing on JSON that does not parse, and discards it from the badges', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'minimal' });
+    const onCanvas = () => nodeBadge('start');
+    const editor = () => screen.getByRole('dialog', { name: 'Edit trigger start' });
+
+    // The trigger's input schema editor holds text that is not JSON: the editor's badge says so.
+    act(() => useEditorStore.getState().openNode('start'));
+    await screen.findByRole('form', { name: 'start config' });
+    setCode('Input schema', '{"type": ');
+    const inEditor = await within(editor()).findByRole('button', { name: '1 issue on start' });
+    await user.click(inEditor);
+    const popover = screen.getByRole('dialog', { name: 'Issues on start' });
+    expect(popover).toHaveTextContent('FIELD_INPUT_INVALID');
+    expect(popover).toHaveTextContent('config.inputSchema');
+    // Esc closes the popover, not the editor around it.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Issues on start' })).toBeNull();
+    expect(editor()).toHaveAttribute('open');
+    expect(inEditor).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(
+      await screen.findByText(/not a valid value yet; complete or discard it first/),
+    ).toBeInTheDocument();
+    expect(api.callsTo('POST', `/loops/${loop.id}/publish`)).toHaveLength(0);
+
+    // Fixing the text clears the issue.
+    setCode('Input schema', '{"type": "object"}');
+    await waitFor(() => expect(onCanvas()).toBeNull());
+
+    // Closing the editor keeps the blocker and the text.
+    setCode('Input schema', '{"broken": ');
+    await within(editor()).findByRole('button', { name: '1 issue on start' });
+    await user.click(within(editor()).getByRole('button', { name: 'Done' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(onCanvas()).toHaveAttribute('aria-label', '1 issue on start');
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(
+      await screen.findByText(/not a valid value yet; complete or discard it first/),
+    ).toBeInTheDocument();
+
+    // Choosing the issue on the canvas opens the node with the field focused, text and all.
+    await user.click(onCanvas()!);
+    await user.click(popoverButtons(onCanvas()!, /FIELD_INPUT_INVALID/)[0]!);
+    await screen.findByRole('form', { name: 'start config' });
+    expect(getCode('Input schema')).toBe('{"broken": ');
+    expect(editor().querySelector('[data-field="inputSchema"] .cm-content')).toHaveFocus();
+
+    // Discarding in the field restores the last valid value and clears the blocker.
+    await user.click(screen.getByRole('button', { name: 'Discard the unparsed text' }));
+    await waitFor(() => expect(onCanvas()).toBeNull());
+    expect(getCode('Input schema')).toContain('"object"');
+
+    // Discarding from the editor's badge with the field mounted resets the field too; the badge
+    // goes with the issue, and focus goes to the editor's heading rather than the page.
+    setCode('Input schema', '{"mounted": ');
+    await user.click(await within(editor()).findByRole('button', { name: '1 issue on start' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Discard the unparsed text at inputSchema' }),
+    );
+    await waitFor(() => expect(onCanvas()).toBeNull());
+    expect(getCode('Input schema')).toContain('"object"');
+    expect(screen.queryByText(/Invalid JSON/)).toBeNull();
+    await waitFor(() =>
+      expect(within(editor()).getByRole('heading', { name: 'Edit trigger start' })).toHaveFocus(),
+    );
+
+    // Discarding from the canvas badge works when the field is gone; focus goes to the node.
+    setCode('Input schema', '[');
+    await waitFor(() => expect(onCanvas()).not.toBeNull());
+    act(() => useEditorStore.getState().closeNodeDialog());
+    await user.click(onCanvas()!);
+    await user.click(popoverButtons(onCanvas()!, 'Discard the unparsed text at inputSchema')[0]!);
+    await waitFor(() => expect(onCanvas()).toBeNull());
+    await waitFor(() =>
+      expect(screen.getByTestId('node-start').closest('.react-flow__node')).toHaveFocus(),
+    );
+  }, 60_000);
+
+  it('opens a node at an issue’s field from its badge, by pointer or keyboard', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const def = newLoopDefinition('fields');
+    const decision = {
+      kind: 'expression' as const,
+      jsonata: '"b"',
+      routes: [
+        {
+          id: 'a',
+          label: 'First',
+        },
+        {
+          id: 'b',
+          label: 'Second',
+        },
+      ],
+    };
+    def.nodes.push({ id: 'pick', kind: 'decision', label: 'Pick', config: decision });
+    const loop = api.addLoop(def);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'fields' });
+    // The first option loses its display label: a schema issue at config.routes.0.label.
+    act(() =>
+      useEditorStore.getState().updateNode('pick', {
+        config: {
+          ...decision,
+          routes: [{ ...decision.routes[0]!, label: '' }, decision.routes[1]!],
+        },
+      }),
+    );
+    const badge = nodeBadge('pick')!;
+    // Clicking the badge opens only its popover; choosing the issue opens the node at the field.
+    await user.click(badge);
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+    expect(popoverOf(badge)).toHaveAttribute('aria-label', 'Issues on pick');
+    await user.click(popoverButtons(badge, /config\.routes\.0\.label/)[0]!);
+    const dialog = screen.getByRole('dialog', { name: 'Edit decision pick' });
+    const optionLabel = dialog.querySelector('[data-field="routes.0.label"] input');
+    expect(optionLabel).toHaveFocus();
+    await waitFor(() => expect(useEditorStore.getState().nodeFocus).toBeUndefined());
+
+    // In the open editor, the badge beside the title focuses fields without reopening anything.
+    act(() => dialog.querySelector<HTMLInputElement>('#node-label')!.focus());
+    const header = within(dialog).getByRole('button', { name: /^\d+ issues? on pick$/ });
+    await user.click(header);
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Issues on pick' })).getByRole('button', {
+        name: /config\.routes\.0\.label/,
+      }),
+    );
+    expect(optionLabel).toHaveFocus();
+    expect(screen.getByRole('dialog', { name: 'Edit decision pick' })).toBe(dialog);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    // Keyboard: focus opens the badge's popover, ArrowDown moves in, Enter chooses.
+    act(() => badge.focus());
+    expect(badge).toHaveAttribute('aria-expanded', 'true');
+    await user.keyboard('{ArrowDown}');
+    expect(document.activeElement).toHaveTextContent(/config\.routes\.0\.label/);
+    await user.keyboard('{Enter}');
+    const reopened = screen.getByRole('dialog', { name: 'Edit decision pick' });
+    expect(reopened.querySelector('[data-field="routes.0.label"] input')).toHaveFocus();
+
+    // Once the schema holds, the graph's issues (no field) focus the heading instead.
+    act(() => useEditorStore.getState().updateNode('pick', { config: decision }));
+    await user.click(within(reopened).getByRole('button', { name: /^\d+ issues? on pick$/ }));
+    const rows = within(screen.getByRole('dialog', { name: 'Issues on pick' })).getAllByRole(
+      'button',
+    );
+    expect(rows[0]).not.toHaveTextContent('config.');
+    await user.click(rows[0]!);
+    expect(within(reopened).getByRole('heading', { name: 'Edit decision pick' })).toHaveFocus();
+
+    // A path with no field leaves focus on the heading; a node field takes it.
+    act(() => useEditorStore.getState().closeNodeDialog());
+    act(() => useEditorStore.getState().openNode('pick', { field: 'config.nothing' }));
+    expect(screen.getByRole('heading', { name: 'Edit decision pick' })).toHaveFocus();
+    act(() => useEditorStore.getState().openNode('pick', { field: 'label' }));
+    expect(screen.getByRole('dialog').querySelector('#node-label')).toHaveFocus();
+  });
+
+  it('opens a node at an issue whose path holds a newline, a quote, or a backslash', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const def = newLoopDefinition('odd keys');
+    const keys = ['bad\nkey', 'quote"back\\slash'];
+    const script = (value: string) => ({
+      command: 'node',
+      args: ['x.js'],
+      env: Object.fromEntries(keys.map((key) => [key, value])),
+    });
+    def.nodes.push({ id: 'run', kind: 'script', label: 'Run', config: script('ok') });
+    const loop = api.addLoop(def);
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'odd keys' });
+    // Values over the 8,192-character limit: schema issues at config.env.<key>.
+    act(() => useEditorStore.getState().updateNode('run', { config: script('x'.repeat(8193)) }));
+    const badge = nodeBadge('run')!;
+    await user.click(badge);
+    const rows = popoverButtons(badge, /config\.env\./);
+    expect(rows.map((row) => row.querySelectorAll('code')[0]!.textContent)).toEqual(
+      keys.map((key) => `config.env.${key}`),
+    );
+    for (const index of [0, 1]) {
+      if (index > 0) {
+        act(() => useEditorStore.getState().closeNodeDialog());
+        await user.click(badge);
+      }
+      await user.click(popoverButtons(badge, /config\.env\./)[index]!);
+      const dialog = screen.getByRole('dialog', { name: 'Edit script run' });
+      // No row per key carries a field path, so focus goes to the env record itself.
+      expect(dialog.querySelector('[data-field="env"]')).toContainElement(
+        document.activeElement as HTMLElement,
+      );
+    }
+  });
+
+  // Adding nodes, entering the modal from the canvas, connecting/removing an edge and opening a
+  // second full form are the integration behavior under test. With no setup strings to batch,
+  // keep these transitions and allow 60 s locally after a measured 20 s coverage/load timeout.
+  it('connects nodes from the keyboard and customizes a default list', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('keys'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'keys' });
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    // Enter on the focused node opens its editor, with focus on the dialog's heading.
+    const card = screen.getByTestId('node-wait').closest<HTMLElement>('.react-flow__node')!;
+    act(() => card.focus());
+    await user.keyboard('{Enter}');
+    const dialog = screen.getByRole('dialog', { name: 'Edit wait wait' });
+    expect(within(dialog).getByRole('heading', { name: 'Edit wait wait' })).toHaveFocus();
+    const form = within(dialog).getByRole('form', { name: 'Connect wait' });
+    await user.selectOptions(within(form).getByLabelText('To'), 'done');
+    await user.click(within(form).getByRole('button', { name: 'Connect' }));
+    expect(useEditorStore.getState().definition?.edges).toContainEqual(
+      expect.objectContaining({
+        from: { node: 'wait', port: 'out' },
+        to: { node: 'done', port: 'in' },
+      }),
+    );
+    // Its only port is now used, so the form is gone.
+    expect(screen.queryByRole('form', { name: 'Connect wait' })).toBeNull();
+    // Delete or Backspace in the dialog edits nothing on the canvas (WP-D2 D19).
+    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e2' }));
+    act(() => within(dialog).getByLabelText('Label').focus());
+    await user.keyboard('{Delete}{Backspace}');
+    act(() => within(dialog).getByRole('button', { name: 'Done' }).focus());
+    await user.keyboard('{Delete}{Backspace}');
+    expect(useEditorStore.getState().definition?.nodes.some((n) => n.id === 'wait')).toBe(true);
+    // Esc closes it; focus returns to the node, which stays selected.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(card).toHaveFocus();
+    expect(useEditorStore.getState()).toMatchObject({
+      selectedNodeId: 'wait',
+      nodeDialogOpen: false,
+    });
+
+    // A new exit's default return channels are shown as a default until customized.
+    await user.click(screen.getByRole('button', { name: 'Add Exit node' }));
+    act(() => useEditorStore.getState().openNode('exit'));
+    expect(await screen.findByText('[{"kind":"caller"}]')).toBeInTheDocument();
+    // Its help says that default receives nothing while Returns is None (#129).
+    expect(screen.getByRole('group', { name: 'Destinations' })).toHaveAccessibleDescription(
+      /^Returns is None, so this destination receives nothing\./,
+    );
+    await user.click(screen.getByRole('button', { name: 'Customize destinations' }));
+    await waitFor(() =>
+      expect(
+        (
+          useEditorStore.getState().definition?.nodes.find((n) => n.id === 'exit')?.config as {
+            destinations?: unknown;
+          }
+        ).destinations,
+      ).toEqual([{ kind: 'caller' }]),
+    );
+    expect(screen.queryByText(/expected object, received undefined/)).toBeNull();
+  }, 60_000);
+
+  it('shows the right node when the open editor is switched to another node of the same kind', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+    act(() => useEditorStore.getState().openNode('start'));
+    expect(await screen.findByRole('dialog', { name: 'Edit trigger start' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Expression')).toBeNull();
+    act(() => useEditorStore.getState().openNode('nightly'));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit trigger nightly' });
+    expect(within(dialog).getByLabelText('Cron expression')).toHaveValue('0 2 * * *');
+    expect(within(dialog).getByLabelText('Repeat')).toHaveValue('daily');
+    expect(within(dialog).getByLabelText('At time')).toHaveValue('02:00');
+    expect(within(dialog).getByLabelText('Node id')).toHaveValue('nightly');
+  });
+
+  it('keeps a node editor open under Strict Mode, as the dev server renders the app', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('strict'));
+    renderWith(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+      `/loops/${loop.id}/edit`,
+      api,
+    );
+    await screen.findByRole('heading', { name: 'strict' });
+    fireEvent.click(screen.getByTestId('node-done'));
+    expect(await screen.findByRole('dialog', { name: 'Edit exit done' })).toBeInTheDocument();
+    // The replayed effect's close event arrives as a task after the dialog reopened.
+    await act(nextTask);
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(true);
+    expect(screen.getByRole('dialog', { name: 'Edit exit done' })).toHaveAttribute('open');
+    await user.keyboard('{Escape}');
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+
+    // Opened at a field: the replayed effects still leave focus on the field.
+    act(() => useEditorStore.getState().openNode('done', { field: 'label' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit exit done' });
+    await act(nextTask);
+    expect(dialog.querySelector('#node-label')).toHaveFocus();
+    expect(useEditorStore.getState().nodeFocus).toBeUndefined();
+  });
+
+  it('says in the dialog why a connection was refused', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('refused'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'refused' });
+    await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    act(() => useEditorStore.getState().openNode('wait'));
+    const form = await screen.findByRole('form', { name: 'Connect wait' });
+    await user.selectOptions(within(form).getByLabelText('To'), 'done');
+    // The chosen target disappears before Connect is pressed (as another edit could do).
+    act(() => useEditorStore.getState().removeNode('done'));
+    act(() => useEditorStore.getState().openNode('wait'));
+    await user.click(within(form).getByRole('button', { name: 'Connect' }));
+    expect(within(form).getByRole('alert')).toHaveTextContent('Connection refused: unknown node');
+  });
+
+  it('never lets an older save land after a newer one', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('order'));
+    let inFlight = 0;
+    let maxInFlight = 0;
+    let calls = 0;
+    const landed: (string | undefined)[] = [];
+    api.override('PUT /loops/:id/draft', async (call) => {
+      calls += 1;
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      // The first request is slow: unserialized, the second would complete before it.
+      await new Promise((resolve) => setTimeout(resolve, calls === 1 ? 900 : 20));
+      inFlight -= 1;
+      const definition = (call.body as { definition: { description?: string } }).definition;
+      landed.push(definition.description);
+      return new Response(JSON.stringify({ draft: {}, issues: [] }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'order' });
+    act(() => useEditorStore.getState().updateMeta({ description: 'first' }));
+    await waitFor(() => expect(calls).toBe(1), SAVE_WAIT);
+    act(() => useEditorStore.getState().updateMeta({ description: 'second' }));
+    await waitFor(
+      () => expect(screen.getByTestId('save-state')).toHaveTextContent('All changes saved'),
+      SAVE_WAIT,
+    );
+    expect(maxInFlight).toBe(1);
+    expect(landed.at(-1)).toBe('second');
+    const local = await loadLocalDraft(loop.id);
+    expect(local).toMatchObject({ synced: true, definition: { description: 'second' } });
+  });
+
+  it('keeps a set-aside device copy across edits and reloads until restored or discarded', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('older local copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    const first = renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
+    // Editing the server copy overwrites the live mirror, not the set-aside copy.
+    act(() => useEditorStore.getState().updateMeta({ description: 'edited server copy' }));
+    await waitFor(async () =>
+      expect((await loadLocalDraft(loop.id))?.definition.description).toBe('edited server copy'),
+    );
+    first.unmount();
+
+    const second = renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: "Use this device's copy instead" }));
+    expect(await screen.findByRole('heading', { name: 'older local copy' })).toBeInTheDocument();
+    second.unmount();
+
+    // Restored: it is no longer offered. Discard works the same way.
+    await saveSetAsideDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('another copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Discard it' }));
+    // The click dispatch completes before the asynchronous device deletion necessarily does.
+    await waitFor(() => expect(screen.queryByText('The server has a newer draft')).toBeNull());
+    await waitFor(async () => expect(await loadSetAsideDraft(loop.id)).toBeUndefined());
+  });
+
+  it('keeps a restored device copy when leaving while an earlier save is in flight', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('server copy'));
+    await saveLocalDraft({
+      loopId: loop.id,
+      definition: newLoopDefinition('older local copy'),
+      savedAt: '2026-10-01T00:00:00.000Z',
+      synced: false,
+    });
+    let release: () => void = () => undefined;
+    let puts = 0;
+    api.override('PUT /loops/:id/draft', async () => {
+      puts += 1;
+      // The first save hangs until released; later ones fail, as on a dropped connection.
+      if (puts === 1) await new Promise<void>((resolve) => (release = resolve));
+      return problem(500, 'INTERNAL_ERROR', 'unavailable');
+    });
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('The server has a newer draft')).toBeInTheDocument();
+    act(() => useEditorStore.getState().updateMeta({ description: 'one edit' }));
+    await waitFor(() => expect(puts).toBe(1), SAVE_WAIT);
+    await user.click(screen.getByRole('button', { name: "Use this device's copy instead" }));
+    expect(await screen.findByRole('heading', { name: 'older local copy' })).toBeInTheDocument();
+    view.unmount();
+    release();
+    await waitFor(async () => expect(await loadSetAsideDraft(loop.id)).toBeUndefined());
+
+    // Reopening finds the restored copy, not the server's.
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByRole('heading', { name: 'older local copy' })).toBeInTheDocument();
+    expect(screen.getByText('Restored unsaved changes from this device.')).toBeInTheDocument();
+  });
+
+  it('loads the editor once an API key is entered after a 401', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    api.requiredKey = 'gg_good';
+    const loop = api.addLoop(newLoopDefinition('guarded'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    expect(await screen.findByText('API key required')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('API key', { selector: 'input' }), 'gg_good');
+    await user.click(screen.getByRole('button', { name: 'Use key' }));
+    expect(await screen.findByRole('heading', { name: 'guarded' })).toBeInTheDocument();
+  });
+
+  it('keeps an edit made just before leaving the editor', async () => {
+    const api = new FakeApi();
+    const loop = api.addLoop(newLoopDefinition('leave'));
+    const view = renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'leave' });
+    useEditorStore.getState().updateMeta({ description: 'typed then left' });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    view.unmount();
+    await waitFor(async () =>
+      expect((await loadLocalDraft(loop.id))?.definition.description).toBe('typed then left'),
+    );
+    await waitFor(() => expect(api.callsTo('PUT', `/loops/${loop.id}/draft`)).toHaveLength(1));
+  });
+
+  it('refuses to publish a draft that cannot be saved', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(minimalLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
+    await user.click(screen.getByRole('button', { name: 'Publish' }));
+    expect(await screen.findByText(/could not be saved/)).toBeInTheDocument();
+  });
+
+  it('edits loop settings, variables, node ids, and edges', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const loop = api.addLoop(kitchenSinkLoop());
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'kitchen-sink' });
+
+    // The loop panel (expanded) holds the loop's own settings.
+    const panel = screen.getByRole('complementary', { name: 'Loop settings' });
+    const name = within(panel).getByLabelText('Name');
+    await user.clear(name);
+    await pasteInto(user, name, 'sink');
+    expect(screen.getByRole('heading', { name: 'sink' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Description'), 'x');
+    await user.clear(screen.getByLabelText('Maximum node visits'));
+    await user.type(screen.getByLabelText('Maximum node visits'), '4');
+    expect(useEditorStore.getState().definition!.settings).toMatchObject({ maxNodeVisits: 4 });
+    await user.click(
+      within(panel.querySelector('[data-field="variables"]')!).getByRole('button', {
+        name: 'Add entry',
+      }),
+    );
+    expect(Object.keys(useEditorStore.getState().definition!.variables!)).toContain('key2');
+
+    act(() => useEditorStore.getState().openNode('check'));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit script check' });
+    await screen.findByRole('form', { name: 'check config' });
+    const idInput = within(dialog).getByLabelText('Node id');
+    await user.clear(idInput);
+    await pasteInto(user, idInput, '9bad');
+    await user.keyboard('{Enter}');
+    expect(screen.getByText(/Use a letter first/)).toBeInTheDocument();
+    expect(idInput).toHaveAttribute('aria-invalid', 'true');
+    await user.clear(idInput);
+    await pasteInto(user, idInput, 'infer');
+    await user.keyboard('{Enter}');
+    expect(screen.getByText(/"infer" is already used/)).toBeInTheDocument();
+    await user.clear(idInput);
+    await pasteInto(user, idInput, 'verify');
+    fireEvent.blur(idInput);
+    expect(useEditorStore.getState().selectedNodeId).toBe('verify');
+    // The dialog follows the rename and keeps focus where it was.
+    expect(screen.getByRole('dialog', { name: 'Edit script verify' })).toBe(dialog);
+    expect(screen.queryByText(/is already used/)).toBeNull();
+    fireEvent.blur(screen.getByLabelText('Node id'));
+
+    await user.click(screen.getByRole('button', { name: /Remove edge e5b/ }));
+    expect(useEditorStore.getState().definition!.edges.some((e) => e.id === 'e5b')).toBe(false);
+
+    act(() => useEditorStore.getState().removeEdge('e2'));
+    act(() => useEditorStore.getState().openNode('nightly'));
+    expect(await screen.findByText('No outgoing edges.')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Edit trigger nightly' })).toBeInTheDocument();
+    act(() => useEditorStore.getState().closeNodeDialog());
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(useEditorStore.getState().selectedNodeId).toBe('nightly');
+  });
+
+  it('applies an id typed in the dialog when it closes, and stops once for an id that cannot apply', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const definition = kitchenSinkLoop();
+    const loop = api.addLoop(definition);
+    // ID drafting/commit belongs to the dialog; unrelated canvas cards need not rerender per key.
+    renderNodeEditor(loop.id, definition, 'check', api);
+    act(() => useEditorStore.getState().openNode('check'));
+    const idInput = (await screen.findByRole('dialog')).querySelector<HTMLInputElement>(
+      '#node-id',
+    )!;
+    // A valid id still being typed applies when the dialog closes.
+    await user.clear(idInput);
+    await user.type(idInput, 'verify');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(useEditorStore.getState().definition!.nodes.some((n) => n.id === 'verify')).toBe(true);
+    expect(useEditorStore.getState().selectedNodeId).toBe('verify');
+
+    // An invalid one keeps the dialog open once, with the reason and focus on the field.
+    act(() => useEditorStore.getState().openNode('verify'));
+    const again = within(await screen.findByRole('dialog')).getByLabelText('Node id');
+    await user.clear(again);
+    await user.type(again, '1st');
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('dialog', { name: 'Edit script verify' })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(/Use a letter first/);
+    expect(again).toHaveFocus();
+    // Closing again drops it: the id is unchanged.
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(useEditorStore.getState().selectedNodeId).toBe('verify');
+
+    // Closed by the browser itself (a repeated Esc): it follows at once, dropping the bad id.
+    act(() => useEditorStore.getState().openNode('verify'));
+    const third = within(await screen.findByRole('dialog')).getByLabelText('Node id');
+    await user.clear(third);
+    await user.type(third, 'infer');
+    await act(async () => {
+      screen.getByRole<HTMLDialogElement>('dialog').close();
+      await nextTask();
+    });
+    expect(useEditorStore.getState().nodeDialogOpen).toBe(false);
+    expect(screen.queryByRole('dialog', { hidden: true })).toBeNull();
+    expect(useEditorStore.getState().definition!.nodes.some((n) => n.id === 'verify')).toBe(true);
+  });
+
+  it('picks a published subloop and shows its signature', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const child = api.addLoop(
+      {
+        ...minimalLoop(),
+        name: 'child',
+        nodes: [
+          {
+            id: 'start',
+            kind: 'trigger',
+            label: 'Start',
+            config: { type: 'manual', inputSchema: { type: 'object' } },
+          },
+          {
+            id: 'done',
+            kind: 'exit',
+            label: 'Done',
+            config: { returns: 'vars', destinations: [{ kind: 'caller' }] },
+          },
+        ],
+      },
+      { published: true },
+    );
+    api.addLoop({ ...minimalLoop(), name: 'unpublished' });
+    const loop = api.addLoop(newLoopDefinition('parent'));
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await user.click(await screen.findByRole('button', { name: 'Add Subloop node' }));
+    fireEvent.click(screen.getByTestId('node-subloop'));
+    await user.type(await screen.findByLabelText('Find a published loop'), 'chi');
+    const pick = screen.getByLabelText('Subloop');
+    expect(within(pick).queryByText('unpublished')).not.toBeInTheDocument();
+    await user.selectOptions(pick, child.id);
+    const signature = await screen.findByLabelText('Subloop signature');
+    expect(signature).toHaveTextContent('"type": "object"');
+    expect(signature).toHaveTextContent('done: vars');
+    const node = useEditorStore.getState().definition!.nodes.find((n) => n.id === 'subloop')!;
+    expect(node.config).toMatchObject({ loopRef: { loopId: child.id } });
+  });
+
+  it('shows when the picked subloop has no published version', async () => {
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const draftOnly = api.addLoop({ ...minimalLoop(), name: 'draft-only' });
+    const loop = api.addLoop({
+      ...newLoopDefinition('p'),
+      nodes: [
+        ...newLoopDefinition('p').nodes,
+        { id: 'sub', kind: 'subloop', label: 'Sub', config: { loopRef: { loopId: draftOnly.id } } },
+      ],
+    });
+    renderApp(`/loops/${loop.id}/edit`, api);
+    await screen.findByRole('heading', { name: 'p' });
+    act(() => useEditorStore.getState().openNode('sub'));
+    expect(await screen.findByText('This loop has no published version.')).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Subloop'), '');
+  });
+});

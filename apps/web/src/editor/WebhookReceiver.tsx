@@ -12,7 +12,7 @@ export function WebhookReceiver({ loopId, nodeId }: { loopId: string; nodeId: st
   const [revealed, setRevealed] = useState<string>();
   const [status, setStatus] = useState('');
   const query = useQuery({
-    queryKey: [...keys.loop(loopId), 'triggers'],
+    queryKey: keys.triggers(loopId),
     queryFn: async ({ signal }) =>
       unwrap(
         await client.GET('/loops/{id}/triggers', {

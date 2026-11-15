@@ -1,0 +1,3402 @@
+{
+  "suite": "237-readback-diagnostic",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "rawLogSha256": "0f9a92c1c226edab75c5356441b907c172436163373e21388b7f172e2705b961",
+  "cases": [
+    {
+      "active": "unknown retry readback in queue / held-input",
+      "before": {
+        "loop": {
+          "id": "01M7DCM3CNMBWFBYA0PSD9898P",
+          "ownerId": "local",
+          "name": "Retry fence held-input 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "currentVersionId": "01M7DCM3CNMBWFBYA0PSD9898Q",
+          "draftVersionId": "01M7DCM3E3N02SEADKVSSMNVF1",
+          "createdAt": "2026-11-14T16:00:37.269Z",
+          "updatedAt": "2026-11-14T16:00:37.315Z"
+        },
+        "current": {
+          "id": "01M7DCM3CNMBWFBYA0PSD9898Q",
+          "loopId": "01M7DCM3CNMBWFBYA0PSD9898P",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Retry fence held-input 70880a77",
+            "description": "An earlier immutable release",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"old pin\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T16:00:37.269Z",
+          "publishedAt": "2026-11-14T16:00:37.291Z"
+        },
+        "draft": {
+          "id": "01M7DCM3E3N02SEADKVSSMNVF1",
+          "loopId": "01M7DCM3CNMBWFBYA0PSD9898P",
+          "version": 2,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Retry fence held-input 70880a77",
+            "description": "Accepted current draft awaiting intentional publication",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"new pin\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T16:00:37.315Z"
+        },
+        "draftToken": "draft-token-1"
+      },
+      "capturedRead": {
+        "status": 200,
+        "body": {
+          "loop": {
+            "id": "01M7DCM3CNMBWFBYA0PSD9898P",
+            "ownerId": "local",
+            "name": "Retry fence held-input 70880a77",
+            "description": "Accepted current draft awaiting intentional publication",
+            "currentVersionId": "01M7DCM3CNMBWFBYA0PSD9898Q",
+            "draftVersionId": "01M7DCM3E3N02SEADKVSSMNVF1",
+            "createdAt": "2026-11-14T16:00:37.269Z",
+            "updatedAt": "2026-11-14T16:00:37.315Z"
+          },
+          "current": {
+            "id": "01M7DCM3CNMBWFBYA0PSD9898Q",
+            "loopId": "01M7DCM3CNMBWFBYA0PSD9898P",
+            "version": 1,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence held-input 70880a77",
+              "description": "An earlier immutable release",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"old pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:37.269Z",
+            "publishedAt": "2026-11-14T16:00:37.291Z"
+          },
+          "draft": {
+            "id": "01M7DCM3E3N02SEADKVSSMNVF1",
+            "loopId": "01M7DCM3CNMBWFBYA0PSD9898P",
+            "version": 2,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence held-input 70880a77",
+              "description": "Accepted current draft awaiting intentional publication",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"new pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:37.315Z"
+          },
+          "draftToken": "draft-token-1"
+        }
+      },
+      "delivery": {
+        "ok": true
+      },
+      "after": {
+        "loop": {
+          "id": "01M7DCM3CNMBWFBYA0PSD9898P",
+          "ownerId": "local",
+          "name": "Retry fence held-input 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "currentVersionId": "01M7DCM3E3N02SEADKVSSMNVF1",
+          "createdAt": "2026-11-14T16:00:37.269Z",
+          "updatedAt": "2026-11-14T16:00:37.997Z"
+        },
+        "current": {
+          "id": "01M7DCM3E3N02SEADKVSSMNVF1",
+          "loopId": "01M7DCM3CNMBWFBYA0PSD9898P",
+          "version": 2,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Retry fence held-input 70880a77",
+            "description": "Accepted current draft awaiting intentional publication",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"new pin\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T16:00:37.315Z",
+          "publishedAt": "2026-11-14T16:00:37.997Z"
+        },
+        "draftToken": "draft-token-1"
+      },
+      "currentUI": {
+        "path": "/app/loops/01M7DCM3CNMBWFBYA0PSD9898P/edit",
+        "title": "Retry fence held-input 70880a77",
+        "save": "All changes saved",
+        "description": "Accepted current draft awaiting intentional publication",
+        "notices": [
+          {
+            "role": "status",
+            "text": "Published version 2. It holds the draft saved for this publish; changes made after that are not published.",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          }
+        ]
+      },
+      "changed": "[{  \"type\": \"string\",  \"description\": \"Retain accepted variable metadata\"}",
+      "previousImmutable": {
+        "id": "01M7DCM3CNMBWFBYA0PSD9898Q",
+        "loopId": "01M7DCM3CNMBWFBYA0PSD9898P",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence held-input 70880a77",
+          "description": "An earlier immutable release",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"old pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-14T16:00:37.269Z",
+        "publishedAt": "2026-11-14T16:00:37.291Z"
+      },
+      "resultingImmutable": {
+        "id": "01M7DCM3E3N02SEADKVSSMNVF1",
+        "loopId": "01M7DCM3CNMBWFBYA0PSD9898P",
+        "version": 2,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence held-input 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"new pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-14T16:00:37.315Z",
+        "publishedAt": "2026-11-14T16:00:37.997Z"
+      },
+      "unexpectedResponse": {
+        "status": 200,
+        "body": {
+          "version": {
+            "id": "01M7DCM3E3N02SEADKVSSMNVF1",
+            "loopId": "01M7DCM3CNMBWFBYA0PSD9898P",
+            "version": 2,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence held-input 70880a77",
+              "description": "Accepted current draft awaiting intentional publication",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"new pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:37.315Z",
+            "publishedAt": "2026-11-14T16:00:37.997Z"
+          },
+          "issues": []
+        },
+        "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/publish"
+      },
+      "observedPostCount": 2
+    },
+    {
+      "active": "unknown retry readback in queue / new-load",
+      "before": {
+        "loop": {
+          "id": "01M7DCM47G1H160V162J1MCZ23",
+          "ownerId": "local",
+          "name": "Retry fence new-load 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "currentVersionId": "01M7DCM47G1H160V162J1MCZ24",
+          "draftVersionId": "01M7DCM48MYB9HG3YWXGQXWH3P",
+          "createdAt": "2026-11-14T16:00:38.128Z",
+          "updatedAt": "2026-11-14T16:00:38.164Z"
+        },
+        "current": {
+          "id": "01M7DCM47G1H160V162J1MCZ24",
+          "loopId": "01M7DCM47G1H160V162J1MCZ23",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Retry fence new-load 70880a77",
+            "description": "An earlier immutable release",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"old pin\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T16:00:38.128Z",
+          "publishedAt": "2026-11-14T16:00:38.143Z"
+        },
+        "draft": {
+          "id": "01M7DCM48MYB9HG3YWXGQXWH3P",
+          "loopId": "01M7DCM47G1H160V162J1MCZ23",
+          "version": 2,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Retry fence new-load 70880a77",
+            "description": "Accepted current draft awaiting intentional publication",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"new pin\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T16:00:38.164Z"
+        },
+        "draftToken": "draft-token-2"
+      },
+      "capturedRead": {
+        "status": 200,
+        "body": {
+          "loop": {
+            "id": "01M7DCM47G1H160V162J1MCZ23",
+            "ownerId": "local",
+            "name": "Retry fence new-load 70880a77",
+            "description": "Accepted current draft awaiting intentional publication",
+            "currentVersionId": "01M7DCM47G1H160V162J1MCZ24",
+            "draftVersionId": "01M7DCM48MYB9HG3YWXGQXWH3P",
+            "createdAt": "2026-11-14T16:00:38.128Z",
+            "updatedAt": "2026-11-14T16:00:38.164Z"
+          },
+          "current": {
+            "id": "01M7DCM47G1H160V162J1MCZ24",
+            "loopId": "01M7DCM47G1H160V162J1MCZ23",
+            "version": 1,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence new-load 70880a77",
+              "description": "An earlier immutable release",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"old pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:38.128Z",
+            "publishedAt": "2026-11-14T16:00:38.143Z"
+          },
+          "draft": {
+            "id": "01M7DCM48MYB9HG3YWXGQXWH3P",
+            "loopId": "01M7DCM47G1H160V162J1MCZ23",
+            "version": 2,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence new-load 70880a77",
+              "description": "Accepted current draft awaiting intentional publication",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"new pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:38.164Z"
+          },
+          "draftToken": "draft-token-2"
+        }
+      },
+      "delivery": {
+        "ok": true
+      },
+      "after": {
+        "loop": {
+          "id": "01M7DCM47G1H160V162J1MCZ23",
+          "ownerId": "local",
+          "name": "Retry fence new-load 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "currentVersionId": "01M7DCM48MYB9HG3YWXGQXWH3P",
+          "createdAt": "2026-11-14T16:00:38.128Z",
+          "updatedAt": "2026-11-14T16:00:38.940Z"
+        },
+        "current": {
+          "id": "01M7DCM48MYB9HG3YWXGQXWH3P",
+          "loopId": "01M7DCM47G1H160V162J1MCZ23",
+          "version": 2,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Retry fence new-load 70880a77",
+            "description": "Accepted current draft awaiting intentional publication",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"new pin\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T16:00:38.164Z",
+          "publishedAt": "2026-11-14T16:00:38.940Z"
+        },
+        "draftToken": "draft-token-2"
+      },
+      "currentUI": {
+        "path": "/app/loops/01M7DCM4PM3EA5KE9CZSJ9QW3C/edit",
+        "title": "Other load during readback 70880a77",
+        "save": "All changes saved",
+        "description": "Keep this unrelated UI",
+        "notices": [
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          }
+        ]
+      },
+      "changed": {
+        "id": "01M7DCM4PM3EA5KE9CZSJ9QW3C",
+        "before": {
+          "path": "/app/loops/01M7DCM4PM3EA5KE9CZSJ9QW3C/edit",
+          "title": "Other load during readback 70880a77",
+          "save": "All changes saved",
+          "description": "Keep this unrelated UI",
+          "notices": [
+            {
+              "role": "status",
+              "text": "",
+              "links": []
+            },
+            {
+              "role": "status",
+              "text": "",
+              "links": []
+            }
+          ]
+        }
+      },
+      "previousImmutable": {
+        "id": "01M7DCM47G1H160V162J1MCZ24",
+        "loopId": "01M7DCM47G1H160V162J1MCZ23",
+        "version": 1,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence new-load 70880a77",
+          "description": "An earlier immutable release",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"old pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-14T16:00:38.128Z",
+        "publishedAt": "2026-11-14T16:00:38.143Z"
+      },
+      "resultingImmutable": {
+        "id": "01M7DCM48MYB9HG3YWXGQXWH3P",
+        "loopId": "01M7DCM47G1H160V162J1MCZ23",
+        "version": 2,
+        "status": "published",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence new-load 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"new pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-14T16:00:38.164Z",
+        "publishedAt": "2026-11-14T16:00:38.940Z"
+      },
+      "unexpectedResponse": {
+        "status": 200,
+        "body": {
+          "version": {
+            "id": "01M7DCM48MYB9HG3YWXGQXWH3P",
+            "loopId": "01M7DCM47G1H160V162J1MCZ23",
+            "version": 2,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence new-load 70880a77",
+              "description": "Accepted current draft awaiting intentional publication",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"new pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:38.164Z",
+            "publishedAt": "2026-11-14T16:00:38.940Z"
+          },
+          "issues": []
+        },
+        "path": "/loops/01M7DCM47G1H160V162J1MCZ23/publish"
+      },
+      "observedPostCount": 2
+    },
+    {
+      "active": "unknown retry readback in queue / healthy",
+      "capturedRead": {
+        "status": 200,
+        "body": {
+          "loop": {
+            "id": "01M7DCM56AGB4RJR7M30VA6AB9",
+            "ownerId": "local",
+            "name": "Retry fence healthy 70880a77",
+            "description": "Accepted current draft awaiting intentional publication",
+            "currentVersionId": "01M7DCM56AGB4RJR7M30VA6ABA",
+            "draftVersionId": "01M7DCM57BA1NB19JTTTGPPT5X",
+            "createdAt": "2026-11-14T16:00:39.114Z",
+            "updatedAt": "2026-11-14T16:00:39.147Z"
+          },
+          "current": {
+            "id": "01M7DCM56AGB4RJR7M30VA6ABA",
+            "loopId": "01M7DCM56AGB4RJR7M30VA6AB9",
+            "version": 1,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence healthy 70880a77",
+              "description": "An earlier immutable release",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"old pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:39.114Z",
+            "publishedAt": "2026-11-14T16:00:39.127Z"
+          },
+          "draft": {
+            "id": "01M7DCM57BA1NB19JTTTGPPT5X",
+            "loopId": "01M7DCM56AGB4RJR7M30VA6AB9",
+            "version": 2,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence healthy 70880a77",
+              "description": "Accepted current draft awaiting intentional publication",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"new pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:39.147Z"
+          },
+          "draftToken": "draft-token-3"
+        }
+      },
+      "delivery": {
+        "ok": true
+      },
+      "newPublication": {
+        "status": 200,
+        "request": null,
+        "ifMatch": null,
+        "data": {
+          "version": {
+            "id": "01M7DCM57BA1NB19JTTTGPPT5X",
+            "loopId": "01M7DCM56AGB4RJR7M30VA6AB9",
+            "version": 2,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Retry fence healthy 70880a77",
+              "description": "Accepted current draft awaiting intentional publication",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"new pin\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T16:00:39.147Z",
+            "publishedAt": "2026-11-14T16:00:39.666Z"
+          },
+          "issues": []
+        }
+      },
+      "observedPostCount": 2
+    }
+  ],
+  "chronology": [
+    {
+      "seq": 1,
+      "type": "independent HTTP",
+      "wallMs": 1794672037284,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence held-input 70880a77",
+          "description": "An earlier immutable release",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"old pin\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "type": "independent HTTP",
+      "wallMs": 1794672037301,
+      "method": "POST",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/publish",
+      "status": 200
+    },
+    {
+      "seq": 3,
+      "type": "independent HTTP",
+      "wallMs": 1794672037306,
+      "method": "GET",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "status": 200
+    },
+    {
+      "seq": 4,
+      "type": "independent HTTP",
+      "wallMs": 1794672037323,
+      "method": "PUT",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/draft",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence held-input 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"new pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "draft-token-4"
+    },
+    {
+      "seq": 5,
+      "type": "independent HTTP",
+      "wallMs": 1794672037329,
+      "method": "GET",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "status": 200
+    },
+    {
+      "seq": 6,
+      "type": "browser request",
+      "wallMs": 1794672037433,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 7,
+      "type": "browser response",
+      "wallMs": 1794672037438,
+      "requestSeq": 6,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "method": "GET"
+    },
+    {
+      "seq": 8,
+      "type": "browser request",
+      "wallMs": 1794672037586,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence held-input 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"new pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 9,
+      "type": "browser response",
+      "wallMs": 1794672037592,
+      "requestSeq": 8,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 10,
+      "type": "browser request",
+      "wallMs": 1794672037761,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 11,
+      "type": "barrier intercepted",
+      "wallMs": 1794672037762,
+      "label": "retry readback held-input first POST dropped before gateway admission",
+      "order": "before",
+      "method": "POST",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/publish",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 12,
+      "type": "barrier dispatched",
+      "wallMs": 1794672037765,
+      "label": "retry readback held-input first POST dropped before gateway admission"
+    },
+    {
+      "seq": 13,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672037770,
+      "requestSeq": 10,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/publish"
+    },
+    {
+      "seq": 14,
+      "type": "browser request",
+      "wallMs": 1794672037771,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 15,
+      "type": "initial retry readback blocked",
+      "wallMs": 1794672037771,
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P"
+    },
+    {
+      "seq": 16,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672037772,
+      "requestSeq": 14,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P"
+    },
+    {
+      "seq": 17,
+      "type": "browser request",
+      "wallMs": 1794672037774,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 18,
+      "type": "initial retry readback blocked",
+      "wallMs": 1794672037774,
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P"
+    },
+    {
+      "seq": 19,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672037780,
+      "requestSeq": 17,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P"
+    },
+    {
+      "seq": 20,
+      "type": "independent HTTP",
+      "wallMs": 1794672037820,
+      "method": "GET",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "status": 200
+    },
+    {
+      "seq": 21,
+      "type": "independent HTTP",
+      "wallMs": 1794672037825,
+      "method": "GET",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/versions/01M7DCM3CNMBWFBYA0PSD9898Q",
+      "status": 200
+    },
+    {
+      "seq": 22,
+      "type": "browser request",
+      "wallMs": 1794672037849,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 23,
+      "type": "barrier intercepted",
+      "wallMs": 1794672037850,
+      "label": "retry readback held-input old-current proof withheld before actual send",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 24,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794672037855,
+      "label": "retry readback held-input old-current proof withheld before actual send",
+      "status": 200
+    },
+    {
+      "seq": 25,
+      "type": "barrier observer release",
+      "wallMs": 1794672037985,
+      "label": "retry readback held-input old-current proof withheld before actual send",
+      "drop": false
+    },
+    {
+      "seq": 26,
+      "type": "browser response",
+      "wallMs": 1794672037988,
+      "requestSeq": 22,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "method": "GET"
+    },
+    {
+      "seq": 27,
+      "type": "browser request",
+      "wallMs": 1794672037988,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 28,
+      "type": "browser response",
+      "wallMs": 1794672038007,
+      "requestSeq": 27,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/publish",
+      "method": "POST"
+    },
+    {
+      "seq": 29,
+      "type": "browser request",
+      "wallMs": 1794672038008,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 30,
+      "type": "browser response",
+      "wallMs": 1794672038015,
+      "requestSeq": 29,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "method": "GET"
+    },
+    {
+      "seq": 31,
+      "type": "independent HTTP",
+      "wallMs": 1794672038016,
+      "method": "GET",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P",
+      "status": 200
+    },
+    {
+      "seq": 32,
+      "type": "independent HTTP",
+      "wallMs": 1794672038024,
+      "method": "GET",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/versions/01M7DCM3CNMBWFBYA0PSD9898Q",
+      "status": 200
+    },
+    {
+      "seq": 33,
+      "type": "independent HTTP",
+      "wallMs": 1794672038029,
+      "method": "GET",
+      "path": "/loops/01M7DCM3CNMBWFBYA0PSD9898P/versions/01M7DCM3E3N02SEADKVSSMNVF1",
+      "status": 200
+    },
+    {
+      "seq": 34,
+      "type": "independent HTTP",
+      "wallMs": 1794672038138,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence new-load 70880a77",
+          "description": "An earlier immutable release",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"old pin\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 35,
+      "type": "independent HTTP",
+      "wallMs": 1794672038151,
+      "method": "POST",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/publish",
+      "status": 200
+    },
+    {
+      "seq": 36,
+      "type": "independent HTTP",
+      "wallMs": 1794672038155,
+      "method": "GET",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "status": 200
+    },
+    {
+      "seq": 37,
+      "type": "independent HTTP",
+      "wallMs": 1794672038171,
+      "method": "PUT",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/draft",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence new-load 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"new pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "draft-token-5"
+    },
+    {
+      "seq": 38,
+      "type": "independent HTTP",
+      "wallMs": 1794672038176,
+      "method": "GET",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "status": 200
+    },
+    {
+      "seq": 39,
+      "type": "browser request",
+      "wallMs": 1794672038345,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 40,
+      "type": "browser response",
+      "wallMs": 1794672038355,
+      "requestSeq": 39,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "method": "GET"
+    },
+    {
+      "seq": 41,
+      "type": "browser request",
+      "wallMs": 1794672038428,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence new-load 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"new pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 42,
+      "type": "browser response",
+      "wallMs": 1794672038438,
+      "requestSeq": 41,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 43,
+      "type": "browser request",
+      "wallMs": 1794672038494,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 44,
+      "type": "barrier intercepted",
+      "wallMs": 1794672038495,
+      "label": "retry readback new-load first POST dropped before gateway admission",
+      "order": "before",
+      "method": "POST",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/publish",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 45,
+      "type": "barrier dispatched",
+      "wallMs": 1794672038501,
+      "label": "retry readback new-load first POST dropped before gateway admission"
+    },
+    {
+      "seq": 46,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672038504,
+      "requestSeq": 43,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/publish"
+    },
+    {
+      "seq": 47,
+      "type": "browser request",
+      "wallMs": 1794672038505,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 48,
+      "type": "initial retry readback blocked",
+      "wallMs": 1794672038505,
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23"
+    },
+    {
+      "seq": 49,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672038509,
+      "requestSeq": 47,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23"
+    },
+    {
+      "seq": 50,
+      "type": "browser request",
+      "wallMs": 1794672038511,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 51,
+      "type": "initial retry readback blocked",
+      "wallMs": 1794672038512,
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23"
+    },
+    {
+      "seq": 52,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672038513,
+      "requestSeq": 50,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23"
+    },
+    {
+      "seq": 53,
+      "type": "independent HTTP",
+      "wallMs": 1794672038570,
+      "method": "GET",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "status": 200
+    },
+    {
+      "seq": 54,
+      "type": "independent HTTP",
+      "wallMs": 1794672038575,
+      "method": "GET",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/versions/01M7DCM47G1H160V162J1MCZ24",
+      "status": 200
+    },
+    {
+      "seq": 55,
+      "type": "browser request",
+      "wallMs": 1794672038601,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 56,
+      "type": "barrier intercepted",
+      "wallMs": 1794672038602,
+      "label": "retry readback new-load old-current proof withheld before actual send",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 57,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794672038607,
+      "label": "retry readback new-load old-current proof withheld before actual send",
+      "status": 200
+    },
+    {
+      "seq": 58,
+      "type": "independent HTTP",
+      "wallMs": 1794672038619,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Other load during readback 70880a77",
+          "description": "Keep this unrelated UI",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"seed release\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 59,
+      "type": "independent HTTP",
+      "wallMs": 1794672038623,
+      "method": "GET",
+      "path": "/loops/01M7DCM4PM3EA5KE9CZSJ9QW3C",
+      "status": 200
+    },
+    {
+      "seq": 60,
+      "type": "browser request",
+      "wallMs": 1794672038671,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 61,
+      "type": "browser response",
+      "wallMs": 1794672038684,
+      "requestSeq": 60,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 62,
+      "type": "browser request",
+      "wallMs": 1794672038862,
+      "tag": "primary",
+      "path": "/loops/01M7DCM4PM3EA5KE9CZSJ9QW3C",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 63,
+      "type": "browser response",
+      "wallMs": 1794672038872,
+      "requestSeq": 62,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM4PM3EA5KE9CZSJ9QW3C",
+      "method": "GET"
+    },
+    {
+      "seq": 64,
+      "type": "browser request",
+      "wallMs": 1794672038896,
+      "tag": "primary",
+      "path": "/loops/01M7DCM4PM3EA5KE9CZSJ9QW3C/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Other load during readback 70880a77",
+          "description": "Keep this unrelated UI",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 65,
+      "type": "browser response",
+      "wallMs": 1794672038912,
+      "requestSeq": 64,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM4PM3EA5KE9CZSJ9QW3C/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 66,
+      "type": "barrier observer release",
+      "wallMs": 1794672038930,
+      "label": "retry readback new-load old-current proof withheld before actual send",
+      "drop": false
+    },
+    {
+      "seq": 67,
+      "type": "browser response",
+      "wallMs": 1794672038933,
+      "requestSeq": 55,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "method": "GET"
+    },
+    {
+      "seq": 68,
+      "type": "browser request",
+      "wallMs": 1794672038934,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 69,
+      "type": "browser response",
+      "wallMs": 1794672038948,
+      "requestSeq": 68,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/publish",
+      "method": "POST"
+    },
+    {
+      "seq": 70,
+      "type": "independent HTTP",
+      "wallMs": 1794672038953,
+      "method": "GET",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23",
+      "status": 200
+    },
+    {
+      "seq": 71,
+      "type": "independent HTTP",
+      "wallMs": 1794672038958,
+      "method": "GET",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/versions/01M7DCM47G1H160V162J1MCZ24",
+      "status": 200
+    },
+    {
+      "seq": 72,
+      "type": "independent HTTP",
+      "wallMs": 1794672038962,
+      "method": "GET",
+      "path": "/loops/01M7DCM47G1H160V162J1MCZ23/versions/01M7DCM48MYB9HG3YWXGQXWH3P",
+      "status": 200
+    },
+    {
+      "seq": 73,
+      "type": "independent HTTP",
+      "wallMs": 1794672039121,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence healthy 70880a77",
+          "description": "An earlier immutable release",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"old pin\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 74,
+      "type": "independent HTTP",
+      "wallMs": 1794672039134,
+      "method": "POST",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/publish",
+      "status": 200
+    },
+    {
+      "seq": 75,
+      "type": "independent HTTP",
+      "wallMs": 1794672039138,
+      "method": "GET",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "status": 200
+    },
+    {
+      "seq": 76,
+      "type": "independent HTTP",
+      "wallMs": 1794672039160,
+      "method": "PUT",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/draft",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence healthy 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"new pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "draft-token-6"
+    },
+    {
+      "seq": 77,
+      "type": "independent HTTP",
+      "wallMs": 1794672039165,
+      "method": "GET",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "status": 200
+    },
+    {
+      "seq": 78,
+      "type": "browser request",
+      "wallMs": 1794672039352,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 79,
+      "type": "browser response",
+      "wallMs": 1794672039362,
+      "requestSeq": 78,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "method": "GET"
+    },
+    {
+      "seq": 80,
+      "type": "browser request",
+      "wallMs": 1794672039438,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Retry fence healthy 70880a77",
+          "description": "Accepted current draft awaiting intentional publication",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"new pin\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 81,
+      "type": "browser response",
+      "wallMs": 1794672039448,
+      "requestSeq": 80,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 82,
+      "type": "browser request",
+      "wallMs": 1794672039498,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 83,
+      "type": "barrier intercepted",
+      "wallMs": 1794672039498,
+      "label": "retry readback healthy first POST dropped before gateway admission",
+      "order": "before",
+      "method": "POST",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/publish",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 84,
+      "type": "barrier dispatched",
+      "wallMs": 1794672039502,
+      "label": "retry readback healthy first POST dropped before gateway admission"
+    },
+    {
+      "seq": 85,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672039505,
+      "requestSeq": 82,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/publish"
+    },
+    {
+      "seq": 86,
+      "type": "browser request",
+      "wallMs": 1794672039506,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 87,
+      "type": "initial retry readback blocked",
+      "wallMs": 1794672039506,
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9"
+    },
+    {
+      "seq": 88,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672039508,
+      "requestSeq": 86,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9"
+    },
+    {
+      "seq": 89,
+      "type": "browser request",
+      "wallMs": 1794672039510,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 90,
+      "type": "initial retry readback blocked",
+      "wallMs": 1794672039510,
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9"
+    },
+    {
+      "seq": 91,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794672039512,
+      "requestSeq": 89,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9"
+    },
+    {
+      "seq": 92,
+      "type": "independent HTTP",
+      "wallMs": 1794672039566,
+      "method": "GET",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "status": 200
+    },
+    {
+      "seq": 93,
+      "type": "independent HTTP",
+      "wallMs": 1794672039570,
+      "method": "GET",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/versions/01M7DCM56AGB4RJR7M30VA6ABA",
+      "status": 200
+    },
+    {
+      "seq": 94,
+      "type": "browser request",
+      "wallMs": 1794672039624,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 95,
+      "type": "barrier intercepted",
+      "wallMs": 1794672039625,
+      "label": "retry readback healthy old-current proof withheld before actual send",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 96,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794672039630,
+      "label": "retry readback healthy old-current proof withheld before actual send",
+      "status": 200
+    },
+    {
+      "seq": 97,
+      "type": "barrier observer release",
+      "wallMs": 1794672039631,
+      "label": "retry readback healthy old-current proof withheld before actual send",
+      "drop": false
+    },
+    {
+      "seq": 98,
+      "type": "browser response",
+      "wallMs": 1794672039658,
+      "requestSeq": 94,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "method": "GET"
+    },
+    {
+      "seq": 99,
+      "type": "browser request",
+      "wallMs": 1794672039660,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 100,
+      "type": "browser response",
+      "wallMs": 1794672039674,
+      "requestSeq": 99,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/publish",
+      "method": "POST"
+    },
+    {
+      "seq": 101,
+      "type": "browser request",
+      "wallMs": 1794672039675,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 102,
+      "type": "browser response",
+      "wallMs": 1794672039682,
+      "requestSeq": 101,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9",
+      "method": "GET"
+    },
+    {
+      "seq": 103,
+      "type": "independent HTTP",
+      "wallMs": 1794672039682,
+      "method": "GET",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/versions/01M7DCM57BA1NB19JTTTGPPT5X",
+      "status": 200
+    },
+    {
+      "seq": 104,
+      "type": "independent HTTP",
+      "wallMs": 1794672039689,
+      "method": "GET",
+      "path": "/loops/01M7DCM56AGB4RJR7M30VA6AB9/versions/01M7DCM56AGB4RJR7M30VA6ABA",
+      "status": 200
+    }
+  ],
+  "failures": [
+    {
+      "active": "unknown retry readback in queue / held-input",
+      "error": "Error: Retry sent a POST despite a newer load or held input\nExpected 1\nActual 2"
+    },
+    {
+      "active": "unknown retry readback in queue / new-load",
+      "error": "Error: Retry sent a POST despite a newer load or held input\nExpected 1\nActual 2"
+    }
+  ],
+  "pageErrors": []
+}

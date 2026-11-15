@@ -1,0 +1,312 @@
+--- originals/refusal-diagnostic.bind.mjs	2026-11-14 10:43:07.980818400 -0600
++++ bind.mjs	2026-11-14 11:23:42.145933400 -0600
+@@ -1,3 +1,8 @@
++// Copied from save-publish-237-refusal-diagnostic/bind.mjs (sha256 e24322fc...) and adapted to the
++// uncommitted #237 uncertainty-correction candidate: HEAD 9e44 plus exactly four modified working
++// files, rebuilt with `pnpm.cmd build --force --cache-dir=.turbo/local-cache`. Every change from the
++// original is in ../modifications.diff. Read-only toward the worktree.
++// Usage: node bind.mjs <worktree> binding-before.json|binding-after.json
+ import assert from 'node:assert/strict';
+ import { execFileSync } from 'node:child_process';
+ import { createHash } from 'node:crypto';
+@@ -9,35 +14,46 @@
+ const output = process.argv[3];
+ const label = dirname(fileURLToPath(import.meta.url));
+ assert(/^(?:binding-before|binding-after)\.json$/.test(output));
+-const batch = dirname(label);
++const correction = dirname(label);
++const batch = dirname(correction);
+ const rootProof = JSON.parse(await readFile(join(batch,'ui-237-integration-precommit-binding.json'),'utf8'));
+-const worker = join(batch,'ui-237-integration-correction');
+-const workerProof = JSON.parse(await readFile(join(worker,'native','binding-after.json'),'utf8'));
++const candidate = JSON.parse(await readFile(join(label,'corrected-sources.json'),'utf8')).changed;
+ const head = '9e44bd74bfc40adcc872f8f8a3724c2e2840f378';
+ const tree = '2d2b60b9a1ef9f8d015fe3758204715c86ea3288';
+ const base = '7c6e635539e12c56b82f226f1ee734d83b985ad4';
++const index = 'f78de1a019dae56a68f7476d966c828d886899019899f5d7a8c0a7a25ebad1dd';
+ const gitBytes = (...args) => execFileSync('git',args,{cwd:root,maxBuffer:48*1024*1024});
+ const git = (...args) => gitBytes(...args).toString('utf8').trim();
+ const hash = (value) => createHash('sha256').update(value).digest('hex');
+-const status = git('status','--porcelain=v1');
+-assert.equal(status,'');
++const expectedStatus = Object.keys(candidate).sort().map((file)=>' M '+file).join('\n');
++// Not trimmed: each porcelain line starts with its index column, a space here.
++const porcelain = () => gitBytes('status','--porcelain=v1').toString('utf8').replace(/\n$/,'');
++const status = porcelain();
++assert.equal(status.split('\n').sort().join('\n'),expectedStatus);
++assert.equal(hash(git('ls-files','-s')+'\n'),index,'index changed');
+ assert.equal(git('rev-parse','HEAD'),head);
+ assert.equal(git('rev-parse','HEAD^{tree}'),tree);
+-assert.equal(git('rev-parse','origin/main'),base);
++// origin/main is a shared remote-tracking ref: it fast-forwarded from `base` to the #470 merge at
++// 17:09:10Z during this task (../manifests/origin-main-drift.txt). Recorded, and required to
++// descend from the base the candidate was frozen against; the checkout itself is pinned above.
++const originMain = git('rev-parse','origin/main');
++execFileSync('git',['merge-base','--is-ancestor',base,originMain],{cwd:root});
+ assert.equal(git('show','-s','--format=%P',head),rootProof.head+' '+rootProof.mergeHead);
+ assert.deepEqual(git('diff',rootProof.head,head,'--name-only').split('\n').sort(),rootProof.expectedChangedFiles.toSorted());
+ assert.equal(process.version,'v22.23.4');
+ const sourceHashes = {};
+ for (const [file,expected] of Object.entries(rootProof.sourceHashes)) {
+   sourceHashes[file] = hash(await readFile(join(root,file)));
+-  assert.equal(sourceHashes[file],expected,file);
++  assert.equal(sourceHashes[file],candidate[file] ?? expected,file);
+   assert.equal(hash(gitBytes('show',head+':'+file)),expected,file);
+ }
++for (const file of Object.keys(candidate)) assert(file in sourceHashes,file);
+ for (const [file,expected] of Object.entries(rootProof.sourceBlobs)) {
+   assert.equal(git('rev-parse',head+':'+file),expected,file);
+ }
+ assert.equal(Object.keys(sourceHashes).length,25);
+-const distTrees = [...new Set(Object.keys(workerProof.built).map((path)=>path.split('/').slice(0,3).join('/')))].sort();
++const postbuild = join(correction,'manifests','postbuild');
++const distTrees = (await readdir(postbuild)).map((name)=>name.replace(/\.sha256$/,'').replace('_','/').replace('_','/')).sort();
+ async function files(directory) {
+   const out = [];
+   for (const entry of await readdir(directory,{withFileTypes:true})) {
+@@ -48,9 +64,10 @@
+   return out;
+ }
+ const manifests = {};
++const built = {};
+ let count = 0;
+ for (const dir of distTrees) {
+-  const bytes = await readFile(join(worker,'manifests','postbuild',dir.replaceAll('/','_')+'.sha256'));
++  const bytes = await readFile(join(postbuild,dir.replaceAll('/','_')+'.sha256'));
+   const listing = new Map(bytes.toString('utf8').trim().split(/\r?\n/).map((line)=>{
+     const parts = /^([a-f0-9]{64}) \*\.\/(.+)$/.exec(line);
+     assert(parts,line);
+@@ -63,7 +80,7 @@
+     const leaf = relative(dist,file).replaceAll('\\','/');
+     const actual = hash(await readFile(file));
+     assert.equal(actual,listing.get(leaf),dir+'/'+leaf);
+-    assert.equal(actual,workerProof.built[dir+'/'+leaf],dir+'/'+leaf);
++    built[dir+'/'+leaf] = actual;
+   }
+   count += observed.length;
+   manifests[dir] = { files:observed.length, sha256:hash(bytes) };
+@@ -71,21 +88,23 @@
+ assert.equal(distTrees.length,13);
+ assert.equal(count,1227);
+ const usePublish = 'apps/web/src/editor/usePublish.ts';
+-const bundle = 'apps/web/dist/assets/index-DK8I-ydH.js';
+-assert.equal(workerProof.built[bundle],'34d23072a825f542b3b3d52922be37afe825b07715e9ab30debf282eefb801fc');
++const bundle = 'apps/web/dist/assets/index-DhiNw4HL.js';
++assert.equal(built[bundle],'1274cf075e9324db55acf40c98fc735b98274709d964f899cf44479c6dab0cb7');
+ const map = JSON.parse(await readFile(join(root,bundle+'.map'),'utf8'));
+ const sourceIndex = map.sources.findIndex((file)=>file.endsWith('/editor/usePublish.ts'));
+ assert(sourceIndex >= 0);
+ assert.equal(hash(map.sourcesContent[sourceIndex]),sourceHashes[usePublish]);
+-const mapping = {id:'237-9e44-held-refusal-diagnostic-v1',sourceHashes:{
++assert.equal(sourceHashes[usePublish],candidate[usePublish]);
++const mapping = {id:'237-uncertainty-corrected-held-refusal-v1',sourceHashes:{
+   [usePublish]:sourceHashes[usePublish],
+   'apps/web/src/editor/EditorPage.tsx':sourceHashes['apps/web/src/editor/EditorPage.tsx'],
+   'apps/web/src/editor/EditorToolbar.tsx':sourceHashes['apps/web/src/editor/EditorToolbar.tsx'],
+ }};
+-assert.equal(git('status','--porcelain=v1'),'');
++assert.equal(porcelain(),status);
+ await writeFile(join(label,'source-paths.json'),JSON.stringify(Object.keys(sourceHashes),null,2)+'\n');
+ await writeFile(join(label,output),JSON.stringify({
+-  head,tree,base,status,node:process.version,sourceHashes,mapping,manifests,builtFiles:count,
+-  bundle,bundleSha256:workerProof.built[bundle],apiEntrySha256:workerProof.built['apps/api/dist/main.js'],
++  head,tree,base:originMain,frozenBase:base,status,index,node:process.version,sourceHashes,candidate,mapping,manifests,builtFiles:count,
++  bundle,bundleSha256:built[bundle],apiEntrySha256:built['apps/api/dist/main.js'],
++  builtManifestSha256:hash(Object.entries(built).map(([file,digest])=>digest+'  '+file).join('\n')),
+ },null,2)+'\n');
+-console.log('Verified 25 sources and 1227 files across 13 build trees.');
++console.log('Verified 25 sources (4 candidate changes) and 1227 files across 13 build trees.');
+--- originals/refusal-diagnostic.gateway.mjs	2026-11-14 10:45:04.268753300 -0600
++++ refusal/gateway.mjs	2026-11-14 11:24:24.655272700 -0600
+@@ -10,18 +10,23 @@
+ const expectedBase = process.argv[4];
+ const evidence = await realpath(dirname(fileURLToPath(import.meta.url)));
+ assert(relative(worktree, evidence).startsWith('..'));
+-const git = (...args) => execFileSync('git', args, { cwd: worktree, encoding: 'utf8' }).trim();
++const git = (...args) => execFileSync('git', args, { cwd: worktree, encoding: 'utf8', maxBuffer: 64*1024*1024 }).trim();
++// The uncommitted candidate: porcelain lines keep their leading index column, and the index digest
++// proves nothing was staged.
++const porcelain = () => execFileSync('git', ['status','--porcelain=v1'], { cwd: worktree, encoding: 'utf8' }).replace(/\n$/,'');
+ const identity = () => ({ head: git('rev-parse','HEAD'), tree: git('rev-parse','HEAD^{tree}'),
+-  base: git('rev-parse','origin/main'), status: git('status','--porcelain=v1') });
++  base: git('rev-parse','origin/main'), status: porcelain(),
++  index: createHash('sha256').update(git('ls-files','-s')+'\n').digest('hex') });
+ const start = identity();
+ assert.equal(start.head, expected);
+ assert.equal(start.base, expectedBase);
+-assert.equal(start.status, '');
+ const bound = JSON.parse(await readFile(process.argv[6], 'utf8'));
++assert.equal(start.status, bound.status, 'Candidate working tree changed since binding');
++assert.equal(start.index, bound.index, 'Index changed since binding');
+ assert.equal(bound.head, start.head, 'Preflight evidence is for another checkout');
+ assert.equal(bound.tree, start.tree, 'Preflight evidence is for another tree');
+ assert.equal(bound.base, start.base, 'Preflight evidence is for another base');
+-assert.equal(bound.mapping?.id, '237-9e44-held-refusal-diagnostic-v1');
++assert.equal(bound.mapping?.id, '237-uncertainty-corrected-held-refusal-v1');
+ const dist = join(worktree,'apps','web','dist');
+ const apiEntry = join(worktree,'apps','api','dist','main.js');
+ const sourceFields = JSON.parse(await readFile(process.argv[5], 'utf8'));
+@@ -29,8 +34,8 @@
+ for (const file of sourceFields) assert(!relative(worktree, join(worktree,file)).startsWith('..'));
+ const digest = (value) => createHash('sha256').update(value).digest('hex');
+ for (const [file, hash] of Object.entries(bound.mapping.sourceHashes)) {
+-  assert.equal(digest(execFileSync('git', ['show', expected+':'+file], {cwd: worktree})), hash,
+-    'Frozen candidate no longer matches the browser observation mapping: '+file);
++  assert.equal(digest(await readFile(join(worktree,file))), hash,
++    'Working candidate no longer matches the browser observation mapping: '+file);
+ }
+ const sourceHashes = Object.fromEntries(await Promise.all(sourceFields.map(async f => [f, digest(await readFile(join(worktree,f)))])));
+ assert.deepEqual(sourceHashes,bound.sourceHashes);
+--- originals/refusal-diagnostic.gateway.mjs	2026-11-14 10:45:04.268753300 -0600
++++ readback/gateway.mjs	2026-11-14 11:25:27.487835000 -0600
+@@ -10,18 +10,23 @@
+ const expectedBase = process.argv[4];
+ const evidence = await realpath(dirname(fileURLToPath(import.meta.url)));
+ assert(relative(worktree, evidence).startsWith('..'));
+-const git = (...args) => execFileSync('git', args, { cwd: worktree, encoding: 'utf8' }).trim();
++const git = (...args) => execFileSync('git', args, { cwd: worktree, encoding: 'utf8', maxBuffer: 64*1024*1024 }).trim();
++// The uncommitted candidate: porcelain lines keep their leading index column, and the index digest
++// proves nothing was staged.
++const porcelain = () => execFileSync('git', ['status','--porcelain=v1'], { cwd: worktree, encoding: 'utf8' }).replace(/\n$/,'');
+ const identity = () => ({ head: git('rev-parse','HEAD'), tree: git('rev-parse','HEAD^{tree}'),
+-  base: git('rev-parse','origin/main'), status: git('status','--porcelain=v1') });
++  base: git('rev-parse','origin/main'), status: porcelain(),
++  index: createHash('sha256').update(git('ls-files','-s')+'\n').digest('hex') });
+ const start = identity();
+ assert.equal(start.head, expected);
+ assert.equal(start.base, expectedBase);
+-assert.equal(start.status, '');
+ const bound = JSON.parse(await readFile(process.argv[6], 'utf8'));
++assert.equal(start.status, bound.status, 'Candidate working tree changed since binding');
++assert.equal(start.index, bound.index, 'Index changed since binding');
+ assert.equal(bound.head, start.head, 'Preflight evidence is for another checkout');
+ assert.equal(bound.tree, start.tree, 'Preflight evidence is for another tree');
+ assert.equal(bound.base, start.base, 'Preflight evidence is for another base');
+-assert.equal(bound.mapping?.id, '237-9e44-held-refusal-diagnostic-v1');
++assert.equal(bound.mapping?.id, '237-uncertainty-corrected-held-refusal-v1');
+ const dist = join(worktree,'apps','web','dist');
+ const apiEntry = join(worktree,'apps','api','dist','main.js');
+ const sourceFields = JSON.parse(await readFile(process.argv[5], 'utf8'));
+@@ -29,8 +34,8 @@
+ for (const file of sourceFields) assert(!relative(worktree, join(worktree,file)).startsWith('..'));
+ const digest = (value) => createHash('sha256').update(value).digest('hex');
+ for (const [file, hash] of Object.entries(bound.mapping.sourceHashes)) {
+-  assert.equal(digest(execFileSync('git', ['show', expected+':'+file], {cwd: worktree})), hash,
+-    'Frozen candidate no longer matches the browser observation mapping: '+file);
++  assert.equal(digest(await readFile(join(worktree,file))), hash,
++    'Working candidate no longer matches the browser observation mapping: '+file);
+ }
+ const sourceHashes = Object.fromEntries(await Promise.all(sourceFields.map(async f => [f, digest(await readFile(join(worktree,f)))])));
+ assert.deepEqual(sourceHashes,bound.sourceHashes);
+--- originals/refusal-diagnostic.run-native.mjs	2026-11-14 10:45:47.759009700 -0600
++++ refusal/run-native.mjs	2026-11-14 11:24:36.177931600 -0600
+@@ -8,14 +8,14 @@
+ const [worktree,cli] = process.argv.slice(2);
+ assert(existsSync(cli));
+ const here = dirname(fileURLToPath(import.meta.url));
+-const binding = JSON.parse(await readFile(join(here,'binding-before.json'),'utf8'));
++const binding = JSON.parse(await readFile(join(here,'..','binding-before.json'),'utf8'));
+ for (const name of ['gateway.json','gateway-closed.json']) {
+   if (existsSync(join(here,name))) await rename(join(here,name),join(here,'pre-browser-'+name));
+ }
+-const session = 'gg237-independent-refusal';
++const session = 'gg237-uncertainty-refusal';
+ const driver = 'verify-refusal.playwright.js';
+ const gateway = spawn(process.execPath,[join(here,'gateway.mjs'),worktree,binding.head,binding.base,
+-  join(here,'source-paths.json'),join(here,'binding-before.json')],{
++  join(here,'..','source-paths.json'),join(here,'..','binding-before.json')],{
+   cwd:here,windowsHide:true,stdio:['pipe','pipe','pipe'],
+ });
+ const gatewayExit = new Promise((done)=>gateway.once('exit',(code,signal)=>done({code,signal})));
+--- originals/refusal-diagnostic.verify-refusal.playwright.js	2026-11-14 10:44:39.466435500 -0600
++++ refusal/verify-refusal.playwright.js	2026-11-14 11:24:57.456311200 -0600
+@@ -11,7 +11,10 @@
+   const same = (actual, expected, reason) => check(canonical(actual)===canonical(expected),
+     reason+'\nExpected '+canonical(expected)+'\nActual '+canonical(actual));
+   const sleep = (ms) => new Promise((done)=>setTimeout(done,ms));
+-  const frozenBundle = '/app/assets/index-DK8I-ydH.js';
++  // Copied from save-publish-237-refusal-diagnostic (sha256 dbba1ce9...). Changed only: this bundle
++  // path (the corrected candidate's build), the suite id, and the fresh Publish's expectations,
++  // which now require the successful detail GET first, no POST, and the matching notice.
++  const frozenBundle = '/app/assets/index-DhiNw4HL.js';
+   const seenBundle = [];
+   page.on('pageerror',(error)=>pageErrors.push(String(error)));
+   page.on('response',(response)=>{
+@@ -182,12 +185,14 @@
+       finding = {type:'PRECHECK_LOST_AFTER_LOCAL_REFUSAL',
+         firstRetryMethod:retry[0].method,firstRetryPath:retry[0].path,browserRetryPosts:retryPosts.length,
+         browserRetryPostStatuses:retryPosts.map(({upstreamStatus})=>upstreamStatus),lateReads:retryReads.length};
+-    } else {
+-      check(readBeforePost,'Fresh Publish did not perform a successful detail readback');
+-      same(retryPosts,[],'Confirmed equivalent immutable publication must not send another POST');
+     }
++    // Recorded before the expectations, so a failure keeps the observed state.
+     checkpoints.push({step,retry,after,history,device:await readDevice(),ui:await snapshot(step),finding});
+     await picture('03-fresh-retry');
++    same(finding,null,'The fresh Publish lost its check of the server after the local refusal');
++    check(readBeforePost,'Fresh Publish did not begin with a successful detail readback');
++    same(retryPosts,[],'Confirmed equivalent immutable publication must not send another POST');
++    await notice('Nothing to publish: version 1 already holds this draft.').waitFor(wait);
+     same(seenBundle,[200],'Edge loaded exact independently bound app bundle');
+     same(pageErrors,[],'Uncaught browser page errors');
+   } catch (error) {
+@@ -196,5 +201,5 @@
+   } finally {
+     if (handler) await page.unroute(routePattern,handler).catch(()=>{});
+   }
+-  return {suite:'237-9e44-held-refusal-diagnostic-v1',id,origin,seenBundle,requests,checkpoints,pageErrors,finding,failure};
++  return {suite:'237-uncertainty-corrected-held-refusal-v1',id,origin,seenBundle,requests,checkpoints,pageErrors,finding,failure};
+ }
+--- originals/integration-correction.run-native.mjs	2026-11-14 10:32:29.714273100 -0600
++++ readback/run-native.mjs	2026-11-14 11:25:17.324635700 -0600
+@@ -1,5 +1,8 @@
+ // Orchestrates the bounded native verification of the dirty #237+#209 integration candidate.
+-// Usage (cwd anywhere): node run-native.mjs <worktree> <HEAD> <MERGE_HEAD>
++// Re-copied for the #237 uncertainty-correction candidate: it now starts the adapted refusal
++// gateway (../refusal/gateway.mjs, byte-identical copy here) with origin/main as its base, reads
++// the shared ../binding-before.json and ../source-paths.json, and runs only the readback driver.
++// Usage (cwd anywhere): node run-native.mjs <worktree> <HEAD> <origin/main>
+ // 1. Starts the copied gateway.mjs (built apps/api/dist/main.js, disposable file SQLite under this
+ //    directory, 127.0.0.1 port 0, no providers) and waits for GG_QA_READY.
+ // 2. For each copied driver, launches actual Microsoft Edge through the repository's Playwright
+@@ -15,7 +18,7 @@
+ import { dirname, join } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ 
+-const [worktree, head, mergeHead] = process.argv.slice(2);
++const [worktree, head, base] = process.argv.slice(2);
+ const native = dirname(fileURLToPath(import.meta.url));
+ process.chdir(native);
+ const digest = (value) => createHash('sha256').update(value).digest('hex');
+@@ -27,8 +30,8 @@
+ const summary = { startedAt: new Date().toISOString(), node: process.version, playwrightVersion,
+   orchestratorPid: process.pid, runs: [] };
+ 
+-const gateway = spawn(process.execPath, [join(native, 'gateway.mjs'), worktree, head, mergeHead,
+-  join(native, 'source-paths.json'), join(native, 'binding-before.json')], { stdio: ['pipe', 'pipe', 'pipe'] });
++const gateway = spawn(process.execPath, [join(native, 'gateway.mjs'), worktree, head, base,
++  join(native, '..', 'source-paths.json'), join(native, '..', 'binding-before.json')], { stdio: ['pipe', 'pipe', 'pipe'] });
+ summary.gatewayPid = gateway.pid;
+ const exited = new Promise((done) => gateway.once('exit', (code, signal) => done({ code, signal })));
+ gateway.stderr.pipe(log, { end: false });
+@@ -48,7 +51,6 @@
+ 
+ const drivers = [
+   ['verify-readback.playwright.js', 'readback-integration', 'observed-readback.json'],
+-  ['verify-u2-readiness.playwright.js', 'u2-readiness', 'observed-u2-readiness.json'],
+ ];
+ try {
+   for (const [file, group, out] of drivers) {
+--- originals/integration-correction.verify-readback.playwright.js	2026-11-14 10:30:33.165058300 -0600
++++ readback/verify-readback.playwright.js	2026-11-14 11:25:06.922940000 -0600
+@@ -5,7 +5,9 @@
+   // COPIED from save-publish-237-readback-diagnostic/diagnostic-attempt1.executed.playwright.js
+   // (sha256 940a197a...). Modified only: this mapping label, the admitted qa-group, and a
+   // screenshot after each variant's assertions. Assertions and barriers are unchanged.
+-  const mapping = 'integration-237-209-dirty-candidate';
++  // Re-copied from ui-237-integration-correction/native (sha256 17d40645...) for the #237
++  // uncertainty-correction candidate; only this mapping label differs from that copy.
++  const mapping = 'uncertainty-237-dirty-candidate';
+   const statusWith = (target, text) => target.getByRole('status').filter({ hasText: text });
+   const publishError = (target, text) => target.getByRole('alert')
+     .filter({ has: target.getByText('Publish failed', { exact: true }) }).filter({ hasText: text });

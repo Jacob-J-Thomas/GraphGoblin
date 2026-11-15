@@ -1,0 +1,646 @@
+{
+  "name": "list-warm-save-in-flight",
+  "network": [
+    {
+      "t": 619,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 620,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 620,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 620,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 621,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 622,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 626,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 5
+      }
+    },
+    {
+      "t": 643,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 766,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D80Z7QMV2AZM3KSBWVVHTW",
+      "ifMatch": null
+    },
+    {
+      "t": 766,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 767,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 767,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 767,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 768,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 772,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D80Z7QMV2AZM3KSBWVVHTW",
+      "status": 200,
+      "body": {
+        "loop": "#237 mwgiimen N5 warm-save-in-flight A",
+        "current": {
+          "id": "01M7D80Z7RMQRG5PSNS2P5TSYJ",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgiimen N5 warm-save-in-flight A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "88e48a60ff585ed2"
+      }
+    },
+    {
+      "t": 817,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 818,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 819,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 820,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 820,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 869,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D80Z7QMV2AZM3KSBWVVHTW/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N5 warm-save-in-flight A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 873,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D80Z7QMV2AZM3KSBWVVHTW/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 3746,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D80Z7QMV2AZM3KSBWVVHTW/draft",
+      "ifMatch": "\"88e48a60ff585ed2\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgiimen N5 warm-save-in-flight A renamed",
+          "description": null,
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 3790,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 3792,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 3816,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D80Z7QMV2AZM3KSBWVVHTW/draft",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D812YJCX3DPZSP7DV6SY05",
+          "version": 2,
+          "status": "draft",
+          "name": "#237 mwgiimen N5 warm-save-in-flight A renamed",
+          "description": null,
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "51d4fd91299636b2"
+      }
+    },
+    {
+      "t": 3827,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 5336,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 5
+      }
+    },
+    {
+      "t": 10342,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 10348,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 5
+      }
+    }
+  ],
+  "barriers": [
+    {
+      "t": 3747,
+      "barrier": "save",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-request"
+    },
+    {
+      "t": 3790,
+      "barrier": "list",
+      "ev": "issued-by-browser-held",
+      "mode": "hold-response"
+    },
+    {
+      "t": 3800,
+      "barrier": "list",
+      "ev": "gateway-answered",
+      "status": 200,
+      "body": {
+        "items": 5
+      }
+    },
+    {
+      "t": 3801,
+      "barrier": "save",
+      "ev": "released-to-gateway"
+    },
+    {
+      "t": 5335,
+      "barrier": "list",
+      "ev": "delivered-to-browser"
+    }
+  ],
+  "steps": [
+    {
+      "t": 41,
+      "note": [
+        "publish A",
+        200
+      ]
+    },
+    {
+      "t": 50,
+      "note": [
+        "provider-free run on A",
+        202,
+        "queued"
+      ]
+    },
+    {
+      "t": 3800,
+      "note": [
+        "list read answered pre-commit (held from browser)"
+      ]
+    },
+    {
+      "t": 3816,
+      "note": [
+        "save PUT answered",
+        200,
+        "at",
+        3816
+      ]
+    },
+    {
+      "t": 5857,
+      "screenshot": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\evidence\\baseline\\attempt2\\screens\\list-warm-save-in-flight-after-old-list-release.png"
+    }
+  ],
+  "ui": {
+    "listBefore": {
+      "a": "#237 mwgiimen N5 warm-save-in-flight A desc A Updated 11/14/2026, 8:40:16 AM published succeeded Edit Export Delete",
+      "b": "#237 mwgiimen N5 warm-save-in-flight B desc B Updated 11/14/2026, 8:40:16 AM draft only never run Edit Export Delete"
+    },
+    "rowBeforeOldRelease": "#237 mwgiimen N5 warm-save-in-flight A desc A Updated 11/14/2026, 8:40:16 AM published succeeded Edit Export Delete",
+    "rowAfterOldRelease": "#237 mwgiimen N5 warm-save-in-flight A desc A Updated 11/14/2026, 8:40:16 AM published succeeded Edit Export Delete",
+    "converged": {
+      "text": "#237 mwgiimen N5 warm-save-in-flight A renamed Updated 11/14/2026, 8:40:19 AM published, unpublished changes succeeded Edit Export Delete",
+      "t": 10454
+    },
+    "controlRow": "#237 mwgiimen N5 warm-save-in-flight B desc B Updated 11/14/2026, 8:40:16 AM draft only never run Edit Export Delete"
+  },
+  "rest": {
+    "before": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N5 warm-save-in-flight A",
+          "description": "desc A",
+          "currentVersionId": "01M7D80Z7RMQRG5PSNS2P5TSYJ",
+          "draftVersionId": null
+        },
+        "current": {
+          "id": "01M7D80Z7RMQRG5PSNS2P5TSYJ",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgiimen N5 warm-save-in-flight A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": null,
+        "draftToken": "88e48a60ff585ed2"
+      },
+      "versions": [
+        {
+          "id": "01M7D80Z7RMQRG5PSNS2P5TSYJ",
+          "version": 1,
+          "status": "published"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N5 warm-save-in-flight A",
+        "description": "desc A",
+        "runCount": 1,
+        "latestRun": "succeeded"
+      }
+    },
+    "controlBefore": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N5 warm-save-in-flight B",
+          "description": "desc B",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D80Z86A91HJBP2GH9VFFTB"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D80Z86A91HJBP2GH9VFFTB",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N5 warm-save-in-flight B",
+          "description": "desc B",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "7e00b8ae9bc17f6a"
+      },
+      "versions": [
+        {
+          "id": "01M7D80Z86A91HJBP2GH9VFFTB",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N5 warm-save-in-flight B",
+        "description": "desc B",
+        "runCount": 0,
+        "latestRun": null
+      }
+    },
+    "final": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N5 warm-save-in-flight A renamed",
+          "description": null,
+          "currentVersionId": "01M7D80Z7RMQRG5PSNS2P5TSYJ",
+          "draftVersionId": "01M7D812YJCX3DPZSP7DV6SY05"
+        },
+        "current": {
+          "id": "01M7D80Z7RMQRG5PSNS2P5TSYJ",
+          "version": 1,
+          "status": "published",
+          "name": "#237 mwgiimen N5 warm-save-in-flight A",
+          "description": "desc A",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draft": {
+          "id": "01M7D812YJCX3DPZSP7DV6SY05",
+          "version": 2,
+          "status": "draft",
+          "name": "#237 mwgiimen N5 warm-save-in-flight A renamed",
+          "description": null,
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "51d4fd91299636b2"
+      },
+      "versions": [
+        {
+          "id": "01M7D812YJCX3DPZSP7DV6SY05",
+          "version": 2,
+          "status": "draft"
+        },
+        {
+          "id": "01M7D80Z7RMQRG5PSNS2P5TSYJ",
+          "version": 1,
+          "status": "published"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N5 warm-save-in-flight A renamed",
+        "description": null,
+        "runCount": 1,
+        "latestRun": "succeeded"
+      }
+    },
+    "controlFinal": {
+      "detail": {
+        "status": 200,
+        "loop": {
+          "name": "#237 mwgiimen N5 warm-save-in-flight B",
+          "description": "desc B",
+          "currentVersionId": null,
+          "draftVersionId": "01M7D80Z86A91HJBP2GH9VFFTB"
+        },
+        "current": null,
+        "draft": {
+          "id": "01M7D80Z86A91HJBP2GH9VFFTB",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgiimen N5 warm-save-in-flight B",
+          "description": "desc B",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "7e00b8ae9bc17f6a"
+      },
+      "versions": [
+        {
+          "id": "01M7D80Z86A91HJBP2GH9VFFTB",
+          "version": 1,
+          "status": "draft"
+        }
+      ],
+      "listRow": {
+        "name": "#237 mwgiimen N5 warm-save-in-flight B",
+        "description": "desc B",
+        "runCount": 0,
+        "latestRun": null
+      }
+    }
+  },
+  "checks": {
+    "D5 list stays stale after an acknowledged leaving save": {
+      "expected": "a list read issued after the save reply; the row converges without the poll and the old reply cannot roll it back",
+      "listReadsIssuedWithin1500msOfCommit": [],
+      "rowBeforeOldRelease": "#237 mwgiimen N5 warm-save-in-flight A desc A Updated 11/14/2026, 8:40:16 AM published succeeded Edit Export Delete",
+      "rowAfterOldRelease": "#237 mwgiimen N5 warm-save-in-flight A desc A Updated 11/14/2026, 8:40:16 AM published succeeded Edit Export Delete",
+      "convergedMsAfterCommit": 6638,
+      "reproduced": true
+    }
+  },
+  "pageErrors": [],
+  "consoleErrors": []
+}

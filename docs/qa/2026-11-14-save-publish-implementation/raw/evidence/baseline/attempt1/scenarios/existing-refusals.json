@@ -1,0 +1,309 @@
+{
+  "name": "existing-refusals",
+  "network": [
+    {
+      "t": 394,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "ifMatch": null
+    },
+    {
+      "t": 394,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/storage",
+      "ifMatch": null
+    },
+    {
+      "t": 394,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null
+    },
+    {
+      "t": 395,
+      "ev": "request",
+      "method": "GET",
+      "path": "/templates",
+      "ifMatch": null
+    },
+    {
+      "t": 395,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/shutdown",
+      "status": 200,
+      "body": [
+        "phase",
+        "graceMs",
+        "activeRunIds",
+        "unconfirmedRunIds",
+        "choices",
+        "controlToken"
+      ]
+    },
+    {
+      "t": 396,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/storage",
+      "status": 200,
+      "body": [
+        "state",
+        "checkedAt",
+        "volumes",
+        "cleaning",
+        "deletedRuns",
+        "removedFileBytes",
+        "reusableDatabaseBytes",
+        "pendingResources"
+      ]
+    },
+    {
+      "t": 402,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops",
+      "status": 200,
+      "body": {
+        "items": 19
+      }
+    },
+    {
+      "t": 421,
+      "ev": "response",
+      "method": "GET",
+      "path": "/templates",
+      "status": 200,
+      "body": {
+        "items": 4
+      }
+    },
+    {
+      "t": 487,
+      "ev": "request",
+      "method": "GET",
+      "path": "/loops/01M7D7YHV3S17VJP9GNJQYQS28",
+      "ifMatch": null
+    },
+    {
+      "t": 487,
+      "ev": "request",
+      "method": "GET",
+      "path": "/model-catalog",
+      "ifMatch": null
+    },
+    {
+      "t": 487,
+      "ev": "request",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "ifMatch": null
+    },
+    {
+      "t": 488,
+      "ev": "request",
+      "method": "GET",
+      "path": "/settings",
+      "ifMatch": null
+    },
+    {
+      "t": 488,
+      "ev": "request",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "ifMatch": null
+    },
+    {
+      "t": 489,
+      "ev": "request",
+      "method": "GET",
+      "path": "/classifier-models",
+      "ifMatch": null
+    },
+    {
+      "t": 491,
+      "ev": "response",
+      "method": "GET",
+      "path": "/loops/01M7D7YHV3S17VJP9GNJQYQS28",
+      "status": 200,
+      "body": {
+        "draft": {
+          "id": "01M7D7YHV3S17VJP9GNJQYQS29",
+          "version": 1,
+          "status": "draft",
+          "name": "#237 mwgigd48 N11 mine",
+          "description": "mine",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        },
+        "draftToken": "03f7e855b1db03fc"
+      }
+    },
+    {
+      "t": 491,
+      "ev": "response",
+      "method": "GET",
+      "path": "/model-catalog",
+      "status": 200,
+      "body": {
+        "items": 13
+      }
+    },
+    {
+      "t": 551,
+      "ev": "response",
+      "method": "GET",
+      "path": "/system/model-defaults",
+      "status": 200,
+      "body": [
+        "byHarness"
+      ]
+    },
+    {
+      "t": 552,
+      "ev": "response",
+      "method": "GET",
+      "path": "/settings",
+      "status": 200,
+      "body": []
+    },
+    {
+      "t": 553,
+      "ev": "response",
+      "method": "GET",
+      "path": "/classifier-models",
+      "status": 200,
+      "body": {
+        "items": 1
+      }
+    },
+    {
+      "t": 553,
+      "ev": "response",
+      "method": "GET",
+      "path": "/harness/preflight",
+      "status": 200,
+      "body": {
+        "items": 3
+      }
+    },
+    {
+      "t": 582,
+      "ev": "request",
+      "method": "POST",
+      "path": "/loops/01M7D7YHV3S17VJP9GNJQYQS28/validate",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N11 mine",
+          "description": "mine",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 586,
+      "ev": "response",
+      "method": "POST",
+      "path": "/loops/01M7D7YHV3S17VJP9GNJQYQS28/validate",
+      "status": 200,
+      "body": [
+        "issues",
+        "publishable"
+      ]
+    },
+    {
+      "t": 1225,
+      "ev": "request",
+      "method": "PUT",
+      "path": "/loops/01M7D7YHV3S17VJP9GNJQYQS28/draft",
+      "ifMatch": "\"03f7e855b1db03fc\"",
+      "body": {
+        "definition": {
+          "name": "#237 mwgigd48 N11 taken",
+          "description": "mine",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          }
+        }
+      }
+    },
+    {
+      "t": 1231,
+      "ev": "response",
+      "method": "PUT",
+      "path": "/loops/01M7D7YHV3S17VJP9GNJQYQS28/draft",
+      "status": 409,
+      "body": {
+        "code": "LOOP_NAME_CONFLICT"
+      }
+    }
+  ],
+  "barriers": [],
+  "steps": [
+    {
+      "t": 1234,
+      "note": [
+        "name PUT",
+        409,
+        {
+          "code": "LOOP_NAME_CONFLICT"
+        }
+      ]
+    }
+  ],
+  "ui": {
+    "nameRefused": {
+      "path": "/app/loops/01M7D7YHV3S17VJP9GNJQYQS28/edit",
+      "heading": "#237 mwgigd48 N11 taken",
+      "header": "GraphGoblin Chat Loops Runs Events Settings",
+      "saveState": "Not saved: name in use",
+      "notices": [
+        "Another loop already has this nameThe name “#237 mwgigd48 N11 taken” matches another loop’s name, so this draft was not saved. Names that differ only in letter case or spacing count as the same name. Your changes are kept on this device, and the server keeps the previous name and draft until you choose a name no other loop has.Use “#237 mwgigd48 N11 taken copy”Edit nameTry again"
+      ],
+      "name": "#237 mwgigd48 N11 taken",
+      "description": "mine",
+      "publishButton": "Publish"
+    }
+  },
+  "rest": {},
+  "checks": {},
+  "pageErrors": [],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 409 (Conflict)"
+  ],
+  "error": "locator.click: Error: strict mode violation: locator('header').getByRole('link', { name: 'Loops', exact: true }) resolved to 2 elements:\n    1) <a href=\"/app/loops\" aria-current=\"page\" data-discover=\"true\" class=\"group relative inline-flex items-center gap-2 px-3.5 font-medium text-inverse-muted no-underline transition-colors hover:text-inverse aria-[current=page]:font-semibold aria-[current=page]:text-inverse focus-visible:rounded-md focus-visible:-outline-offset-[6px] max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg max-sm:aria-[current=page]:bg-surface-inverse-raised active\">…</a> aka getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Loops' })\n    2) <a href=\"/app/loops\" data-discover=\"true\" class=\"touch-target text-muted no-underline hover:text-default hover:underline\">Loops</a> aka getByRole('banner').filter({ hasText: 'Loops/#237 mwgigd48 N11' }).locator('a')\n\nCall log:\n\u001b[2m  - waiting for locator('header').getByRole('link', { name: 'Loops', exact: true })\u001b[22m\n\n    at toLoops (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\drivers\\native-237.mjs:275:82)\n    at scenarios.existing-refusals (C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\ui-237-claude-implementation\\drivers\\native-237.mjs:749:9)\n    at async file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-237-claude-implementation/drivers/native-237.mjs:810:5"
+}
