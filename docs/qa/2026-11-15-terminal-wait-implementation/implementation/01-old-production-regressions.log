@@ -1,0 +1,49 @@
+$ vitest run src/awaited-children.test.ts -t 'current wait during'
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine
+
+ ❯ src/awaited-children.test.ts (28 tests | 2 failed | 26 skipped) 246ms
+   ❯ awaiting a child across failures and restarts (#242) (16)
+     × clears the failed parent's current wait during live execution (#410) 121ms
+     × clears the failed parent's current wait during recovery (#410) 122ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > clears the failed parent's current wait during live execution (#410)
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > clears the failed parent's current wait during recovery (#410)
+AssertionError: expected { …(16) } to not have property "waiting"
+
+- Expected:
+undefined
+
++ Received:
+{
+  "childRunId": "00000000000000000000000003",
+  "kind": "child",
+  "nodeId": "sub",
+  "startedSeq": 5,
+  "waitId": "00000000000000000000000001:5",
+}
+
+ ❯ src/awaited-children.test.ts:752:28
+    750|         ]);
+    751|         expect(count(e, parent.id, started('after'))).toBe(0);
+    752|         expect(failed).not.toHaveProperty('waiting');
+       |                            ^
+    753|       } finally {
+    754|         e.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 26 skipped (28)
+   Start at  14:05:57
+   Duration  3.85s (import 51%, transform 42%, tests 7%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261115-runtime\GraphGoblin\packages\engine
+

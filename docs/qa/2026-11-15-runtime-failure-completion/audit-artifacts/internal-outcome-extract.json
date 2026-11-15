@@ -1,0 +1,745 @@
+[
+  {
+    "case": "historical-child-primary.json",
+    "outcomes": [
+      {
+        "observation": "rootPark",
+        "status": "waiting",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_ACTIVE",
+          "message": "This run is still active. Pause it before continuing with Resume."
+        }
+      },
+      {
+        "observation": "middlePark",
+        "status": "waiting",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_ACTIVE",
+          "message": "This run is still active. Pause it before continuing with Resume."
+        }
+      },
+      {
+        "observation": "leafPark",
+        "status": "waiting",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_ACTIVE",
+          "message": "This run is still active. Pause it before continuing with Resume."
+        }
+      },
+      {
+        "observation": "rootTerminal",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "subloop child 00000000000000000000000009 failed: subloop child 0000000000000000000000000B failed: An unexpected error interrupted the run. See the server logs for this run.",
+          "nodeId": "child",
+          "resumable": true,
+          "details": {
+            "childRunId": "00000000000000000000000009",
+            "childNodeId": "child",
+            "childDetails": {
+              "childRunId": "0000000000000000000000000B",
+              "childNodeId": "hold",
+              "childDetails": {}
+            }
+          }
+        },
+        "resume": {
+          "allowed": true
+        }
+      },
+      {
+        "observation": "middleTerminal",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "subloop child 0000000000000000000000000B failed: An unexpected error interrupted the run. See the server logs for this run.",
+          "nodeId": "child",
+          "resumable": true,
+          "details": {
+            "childRunId": "0000000000000000000000000B",
+            "childNodeId": "hold",
+            "childDetails": {}
+          }
+        },
+        "resume": {
+          "allowed": false,
+          "code": "PARENT_RECOVERY_REQUIRED",
+          "message": "Recovery belongs to parent run 00000000000000000000000007. Open that parent to review its recovery choices.",
+          "parentRunId": "00000000000000000000000007"
+        }
+      },
+      {
+        "observation": "leafTerminal",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/old-primary-private-message.ts",
+          "nodeId": "hold",
+          "resumable": true,
+          "details": {
+            "name": "Error",
+            "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/old-primary-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/old-primary-private-stack.ts:13:7)"
+          }
+        },
+        "resume": {
+          "allowed": false,
+          "code": "PARENT_RECOVERY_REQUIRED",
+          "message": "Recovery belongs to parent run 00000000000000000000000009. Open that parent to review its recovery choices.",
+          "parentRunId": "00000000000000000000000009"
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "subloop child failure contained internal diagnostics",
+        "runId": "00000000000000000000000009",
+        "nodeId": "child",
+        "childRunId": "0000000000000000000000000B",
+        "diagnostic": [
+          {
+            "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/old-primary-private-message.ts"
+          },
+          {
+            "name": "Error",
+            "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/old-primary-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/old-primary-private-stack.ts:13:7)"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "case": "historical-nested-recording.json",
+    "outcomes": [
+      {
+        "observation": "rootPark",
+        "status": "waiting",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_ACTIVE",
+          "message": "This run is still active. Pause it before continuing with Resume."
+        }
+      },
+      {
+        "observation": "middlePark",
+        "status": "waiting",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_ACTIVE",
+          "message": "This run is still active. Pause it before continuing with Resume."
+        }
+      },
+      {
+        "observation": "leafPark",
+        "status": "waiting",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_ACTIVE",
+          "message": "This run is still active. Pause it before continuing with Resume."
+        }
+      },
+      {
+        "observation": "rootTerminal",
+        "status": "failed",
+        "failure": {
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "subloop child 00000000000000000000000009 failed: subloop child 0000000000000000000000000B failed: Historical public provider failure R:/author-data-qa-381/keep-this-value.txt",
+          "nodeId": "child",
+          "resumable": true,
+          "details": {
+            "childRunId": "00000000000000000000000009",
+            "childNodeId": "child",
+            "childDetails": {
+              "childRunId": "0000000000000000000000000B",
+              "childNodeId": "hold",
+              "childDetails": {
+                "providerDetail": {
+                  "path": "R:/author-data-qa-381/keep-this-value.txt"
+                },
+                "recording": [
+                  {
+                    "operation": "harness.status"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "resume": {
+          "allowed": true
+        }
+      },
+      {
+        "observation": "middleTerminal",
+        "status": "failed",
+        "failure": {
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "subloop child 0000000000000000000000000B failed: Historical public provider failure R:/author-data-qa-381/keep-this-value.txt",
+          "nodeId": "child",
+          "resumable": true,
+          "details": {
+            "childRunId": "0000000000000000000000000B",
+            "childNodeId": "hold",
+            "childDetails": {
+              "providerDetail": {
+                "path": "R:/author-data-qa-381/keep-this-value.txt"
+              },
+              "recording": [
+                {
+                  "operation": "harness.status",
+                  "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/old-secondary-private-message.ts",
+                  "name": "Error",
+                  "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/old-secondary-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/old-secondary-private-stack.ts:13:7)"
+                }
+              ]
+            }
+          }
+        },
+        "resume": {
+          "allowed": false,
+          "code": "PARENT_RECOVERY_REQUIRED",
+          "message": "Recovery belongs to parent run 00000000000000000000000007. Open that parent to review its recovery choices.",
+          "parentRunId": "00000000000000000000000007"
+        }
+      },
+      {
+        "observation": "leafTerminal",
+        "status": "failed",
+        "failure": {
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "Historical public provider failure R:/author-data-qa-381/keep-this-value.txt",
+          "nodeId": "hold",
+          "resumable": true,
+          "details": {
+            "providerDetail": {
+              "path": "R:/author-data-qa-381/keep-this-value.txt"
+            },
+            "recording": [
+              {
+                "operation": "harness.status",
+                "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/old-secondary-private-message.ts",
+                "name": "Error",
+                "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/old-secondary-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/old-secondary-private-stack.ts:13:7)"
+              }
+            ]
+          }
+        },
+        "resume": {
+          "allowed": false,
+          "code": "PARENT_RECOVERY_REQUIRED",
+          "message": "Recovery belongs to parent run 00000000000000000000000009. Open that parent to review its recovery choices.",
+          "parentRunId": "00000000000000000000000009"
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "subloop child failure contained internal diagnostics",
+        "runId": "00000000000000000000000007",
+        "nodeId": "child",
+        "childRunId": "00000000000000000000000009",
+        "diagnostic": [
+          {
+            "operation": "harness.status",
+            "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/old-secondary-private-message.ts",
+            "name": "Error",
+            "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/old-secondary-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/old-secondary-private-stack.ts:13:7)"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "case": "invalid-final-thread.json",
+    "outcomes": [
+      {
+        "observation": "terminal",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "node mut produced an invalid patch",
+          "nodeId": "mut",
+          "resumable": false
+        },
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "node produced an invalid patch",
+        "runId": "00000000000000000000000003",
+        "nodeId": "mut",
+        "diagnostic": {
+          "message": "[\n  {\n    \"expected\": \"record\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"vars\"\n    ],\n    \"message\": \"Invalid input: expected record, received number\"\n  }\n]",
+          "name": "ZodError",
+          "stack": "ZodError: [\n  {\n    \"expected\": \"record\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"vars\"\n    ],\n    \"message\": \"Invalid input: expected record, received number\"\n  }\n]\n    at RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2194:46)"
+        }
+      }
+    ]
+  },
+  {
+    "case": "late-result-after-cancel.json",
+    "outcomes": [
+      {
+        "observation": "beforeLate",
+        "status": "cancelled",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_CANCELLED",
+          "message": "This run was cancelled; Resume is unavailable."
+        }
+      },
+      {
+        "observation": "afterLate",
+        "status": "cancelled",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_CANCELLED",
+          "message": "This run was cancelled; Resume is unavailable."
+        }
+      }
+    ],
+    "logs": []
+  },
+  {
+    "case": "late-result-after-repair-deadline.json",
+    "outcomes": [
+      {
+        "observation": "beforeLate",
+        "status": "failed",
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 1500 ms",
+          "nodeId": "mut",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 1500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "resume": {
+          "allowed": true
+        }
+      },
+      {
+        "observation": "afterLate",
+        "status": "failed",
+        "failure": {
+          "code": "STRUCTURED_COMPLETION_TIMEOUT",
+          "message": "Structured completion exceeded its configured deadline of 1500 ms",
+          "nodeId": "mut",
+          "resumable": true,
+          "details": {
+            "timeoutMs": 1500,
+            "provenance": {
+              "kind": "llm",
+              "provider": "codex",
+              "classifierId": null,
+              "model": "gpt-6-luna",
+              "effort": "low"
+            }
+          }
+        },
+        "resume": {
+          "allowed": true
+        }
+      }
+    ],
+    "logs": []
+  },
+  {
+    "case": "late-result-after-run-deadline.json",
+    "outcomes": [
+      {
+        "observation": "beforeLate",
+        "status": "failed",
+        "failure": {
+          "code": "RUN_DEADLINE_EXCEEDED",
+          "message": "The run exceeded its configured elapsed execution deadline",
+          "nodeId": "mut",
+          "resumable": false
+        },
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      },
+      {
+        "observation": "afterLate",
+        "status": "failed",
+        "failure": {
+          "code": "RUN_DEADLINE_EXCEEDED",
+          "message": "The run exceeded its configured elapsed execution deadline",
+          "nodeId": "mut",
+          "resumable": false
+        },
+        "resume": {
+          "allowed": false,
+          "code": "FAILURE_NOT_RESUMABLE",
+          "message": "This failure cannot be resumed. Inspect its cause or choose a reached Replay node for a new run."
+        }
+      }
+    ],
+    "logs": []
+  },
+  {
+    "case": "local-nonzero-script.json",
+    "outcomes": [
+      {
+        "observation": "terminal",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "script exited with code 7",
+          "nodeId": "script",
+          "resumable": true,
+          "details": {
+            "exitCode": 7,
+            "stderr": "QA-381 native stderr",
+            "stdout": ""
+          },
+          "script": {
+            "visitId": "00000000000000000000000003:5",
+            "dispatchId": "00000000000000000000000005",
+            "state": "completed",
+            "exitCode": 7
+          }
+        },
+        "resume": {
+          "allowed": true
+        }
+      }
+    ],
+    "logs": []
+  },
+  {
+    "case": "outer-repository.json",
+    "outcomes": [
+      {
+        "observation": "terminal",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "resumable": true
+        },
+        "resume": {
+          "allowed": true
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "executor crashed outside node execution",
+        "runId": "00000000000000000000000003",
+        "diagnostic": {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/outer-private-message.ts",
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/outer-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/outer-private-stack.ts:13:7)"
+        }
+      }
+    ]
+  },
+  {
+    "case": "script-dispatch-precedence.json",
+    "outcomes": [
+      {
+        "observation": "terminal",
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_OUTCOME_UNCERTAIN",
+          "message": "The previous script attempt may already have produced its effect. Its outcome was not recorded. Resume runs the script again and may repeat that effect; Replay starts a new run from this node.",
+          "nodeId": "script",
+          "resumable": true,
+          "script": {
+            "visitId": "00000000000000000000000003:5",
+            "dispatchId": "00000000000000000000000005",
+            "state": "outcome-uncertain"
+          }
+        },
+        "resume": {
+          "allowed": false,
+          "code": "SCRIPT_CONSENT_REQUIRED",
+          "message": "The script may already have produced its effect. Choose Recover script to explicitly retry."
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "node failed",
+        "runId": "00000000000000000000000003",
+        "nodeId": "script",
+        "diagnostic": {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/script-progress-private-message.ts",
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/script-progress-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/script-progress-private-stack.ts:13:7)"
+        }
+      }
+    ]
+  },
+  {
+    "case": "typed-inference-internal.json",
+    "outcomes": [
+      {
+        "observation": "terminal",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "cause": null,
+            "recording": [
+              {
+                "operation": "turn.intent.reconcile"
+              },
+              {
+                "operation": "harness.status"
+              }
+            ]
+          },
+          "inference": {
+            "visitId": "00000000000000000000000003:5",
+            "turnId": "00000000000000000000000006",
+            "submission": "definitely-not-submitted",
+            "promptKind": "repair",
+            "sessionId": "fake-session-1",
+            "retry": {
+              "harness": "codex",
+              "prompt": "Repair exactly: \"invalid\"",
+              "resumeSessionId": "fake-session-1"
+            }
+          }
+        },
+        "resume": {
+          "allowed": true
+        }
+      },
+      {
+        "observation": "resumed",
+        "status": "succeeded",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "inference recording failed",
+        "runId": "00000000000000000000000003",
+        "nodeId": "infer",
+        "turnId": "00000000000000000000000006",
+        "operation": "turn.intent.reconcile",
+        "diagnostic": {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/inference-reconcile-private-message.ts",
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/inference-reconcile-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/inference-reconcile-private-stack.ts:13:7)"
+        }
+      },
+      {
+        "level": "error",
+        "message": "inference execution failed",
+        "runId": "00000000000000000000000003",
+        "nodeId": "infer",
+        "turnId": "00000000000000000000000006",
+        "diagnostic": {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/inference-intent-private-message.ts",
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/inference-intent-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/inference-intent-private-stack.ts:13:7)"
+        }
+      },
+      {
+        "level": "error",
+        "message": "inference recording failed",
+        "runId": "00000000000000000000000003",
+        "nodeId": "infer",
+        "turnId": "00000000000000000000000006",
+        "operation": "harness.status",
+        "diagnostic": {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/inference-status-private-message.ts",
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/inference-status-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/inference-status-private-stack.ts:13:7)"
+        }
+      }
+    ]
+  },
+  {
+    "case": "typed-inference-provider.json",
+    "outcomes": [
+      {
+        "observation": "terminal",
+        "status": "failed",
+        "failure": {
+          "code": "HARNESS_TRANSPORT_FAILED",
+          "message": "Selected HARNESS_TRANSPORT_FAILED",
+          "nodeId": "infer",
+          "resumable": true,
+          "details": {
+            "cause": null,
+            "recording": [
+              {
+                "operation": "harness.submission"
+              },
+              {
+                "operation": "harness.status"
+              }
+            ]
+          },
+          "inference": {
+            "visitId": "00000000000000000000000003:5",
+            "turnId": "00000000000000000000000006",
+            "submission": "definitely-not-submitted",
+            "promptKind": "repair",
+            "sessionId": "fake-session-1"
+          }
+        },
+        "resume": {
+          "allowed": true
+        }
+      },
+      {
+        "observation": "resumed",
+        "status": "succeeded",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "inference recording failed",
+        "runId": "00000000000000000000000003",
+        "nodeId": "infer",
+        "turnId": "00000000000000000000000006",
+        "operation": "harness.submission",
+        "diagnostic": {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/provider-submission-private-message.ts",
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/provider-submission-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/provider-submission-private-stack.ts:13:7)"
+        }
+      },
+      {
+        "level": "error",
+        "message": "inference recording failed",
+        "runId": "00000000000000000000000003",
+        "nodeId": "infer",
+        "turnId": "00000000000000000000000006",
+        "operation": "harness.status",
+        "diagnostic": {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/provider-status-private-message.ts",
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/provider-status-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/provider-status-private-stack.ts:13:7)"
+        }
+      }
+    ]
+  },
+  {
+    "case": "typed-subloop-mapping.json",
+    "outcomes": [
+      {
+        "observation": "parent",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "nodeId": "child",
+          "resumable": true
+        },
+        "resume": {
+          "allowed": true
+        }
+      },
+      {
+        "observation": "child",
+        "status": "succeeded",
+        "failure": null,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "subloop output mapping failed",
+        "runId": "00000000000000000000000005",
+        "nodeId": "child",
+        "childRunId": "00000000000000000000000007",
+        "diagnostic": {
+          "message": "expression failed: qa-381-output-mapping",
+          "name": "ExpressionError",
+          "stack": "ExpressionError: expression failed: qa-381-output-mapping\n    at run (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/domain/dist/expression.js:123:15)\n    at async outputMapping (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/subloop.js:61:23)\n    at async finishWithChild (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/handlers/subloop.js:238:17)\n    at async RunManager.execute (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine/dist/run-manager.js:2085:26)"
+        }
+      }
+    ]
+  },
+  {
+    "case": "unexpected-repair.json",
+    "outcomes": [
+      {
+        "observation": "terminal",
+        "status": "failed",
+        "failure": {
+          "code": "INTERNAL_ERROR",
+          "message": "An unexpected error interrupted the run. See the server logs for this run.",
+          "nodeId": "mut",
+          "resumable": true
+        },
+        "resume": {
+          "allowed": true
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "error",
+        "message": "node failed",
+        "runId": "00000000000000000000000003",
+        "nodeId": "mut",
+        "diagnostic": {
+          "message": "QA failure at Q:/synthetic-graphgoblin-qa-381/repair-private-message.ts",
+          "name": "Error",
+          "stack": "Error: QA failure at Q:/synthetic-graphgoblin-qa-381/repair-private-message.ts\n    at qaFault (Q:/synthetic-graphgoblin-qa-381/repair-private-stack.ts:13:7)"
+        }
+      }
+    ]
+  }
+]

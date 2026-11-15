@@ -1,0 +1,163 @@
+{
+  "at": "2026-11-15 19:39:25 UTC",
+  "merge": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "sha": "154401c7b47c1e56b62a6daec50e2a3145ea967d",
+      "merged": true,
+      "message": "Pull Request successfully merged"
+    },
+    "isError": false
+  },
+  "postmerge": [
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/485",
+          "number": 485,
+          "state": "closed",
+          "merged": true,
+          "mergeable": false,
+          "draft": false,
+          "body": "An authored mutation error currently appears as a resumable internal fault. This change publishes nonresumable `MUTATION_ERROR` failures with the node, operation index/kind and a bounded author diagnostic. Authored Exit evaluation errors use `EXPRESSION_ERROR`. Unexpected failures keep their recovery behavior while newly published run records and events exclude private exception messages, paths and stacks; correlated server logs retain the diagnostic.\n\nThe handling preserves atomic mutations, repair and raw-fallback outcomes, cancellation/deadline precedence, script classification, inference recording order, and subloop recovery metadata. Historical rows and events are unchanged. ADR-0080, the numbered documentation, CHANGELOG and generated API types describe the new-record boundary.\n\nCloses #381. Incorporates the criteria consolidated from #414.\n\nValidation:\n\n- Focused candidate checks: 1,070 tests; final isolated domain coverage: 460 tests, 98.74% lines / 95.98% branches; final engine coverage: 1,812 tests, 96.94% lines / 91.22% branches. Types, lint, schema generation, templates, licences, documentation and contrast checks are recorded in the [implementation evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/5082bc176e92cf3518abb630a5afc0a59c444815/docs/qa/2026-11-15-runtime-failure-implementation/README.md).\n- Independent candidate QA: 18 functional and 13 internal cases on the frozen source/build, with explicit zero-exit receipts and owned-resource cleanup. This includes compiled REST/stdio MCP, real SQLite, the served Edge inspector, controlled fault ports and two native Node script controls. [Candidate evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/5082bc176e92cf3518abb630a5afc0a59c444815/docs/qa/2026-11-15-runtime-failure-candidate/README.md)\n- The original full local `pnpm check` failed during coverage. The packet preserves its complete outputs, later isolated results and unresolved causes in unrelated Windows suites; it does not claim a green full local run. Current publication-head CI remains a separate required gate.\n- The [unchanged-main baseline](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/5082bc176e92cf3518abb630a5afc0a59c444815/docs/qa/2026-11-15-runtime-failure-baseline/README.md) preserves the reproduced behavior and original fixture/supervisor failures, including the missing internal baseline harness exit value.\n\nCurrent publication head: `693ea3c9d05359f6ebee8822dd566c99c3e4973c`, tree `7e611f71ac8b3693d574b8f08869d68fed19af4b`, against main `f91bd69b79dc417a2997ddb9c7670cb33df7597c`. [CI run 43745479496](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43745479496) is now successful on this exact revision. Attempt 1 passed Browser (481 tests and one expected live-provider skip), Windows launcher (14 tests) and Template image. Its Gates job was cancelled at the configured 30-minute job limit after ten coverage groups, with later checks skipped. The original failure and partial artifact are retained. Exactly one unchanged-head [Gates-only retry](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43745479496/job/132918799467) passed all 32 steps and all 13 coverage groups: 9,605 tests passed / 41 skipped, with every package above 90% lines and branches. Licences, generated docs, contrast and the configured dependency audit passed. The successful Browser/Windows/Template outcomes are carried forward from their original executions; they did not rerun. No assertions, thresholds, time limits or workflow inputs changed. The exact tested synthetic merge is `955dccf755f5f34387f990ff47fa49c7bbf45f55`, with target/head parents and the same publication tree. The earlier failed 5082 run and green 656a run are retained with their exact identities and limitations in the [CI packet](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/693ea3c9d05359f6ebee8822dd566c99c3e4973c/docs/qa/2026-11-15-runtime-failure-ci/README.md); neither substitutes for this head's gates.\n\nClaude Opus 5.5 xhigh completed formal scan 1 with CHANGES REQUIRED for documentation only; it found no product or test blocker. GPT-6 Luna xhigh corrected the three affected documents, and separate GPT-6.1 Sol xhigh factual QA passed. F1 now accurately describes safe public diagnostics, correlated private logs and the named remaining authored evaluation boundaries; FU2 adds the current MUTATION_ERROR recovery instruction. Product, test and build inputs remain unchanged from source `615d50bc358d73bc55ad0591f4f625f1a46cb671`. Scoped formatting and diff checks passed. [Full review and dispositions](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/485#issuecomment-6898705327) · [Review and correction evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/693ea3c9d05359f6ebee8822dd566c99c3e4973c/docs/qa/2026-11-15-runtime-failure-review/README.md)\n\nBroader authored-error classification is parked in #486 outside this batch. Fresh independent GPT-6 Astra max scan 2 returned [SIGN-OFF](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/485#issuecomment-6900116835) for this exact head, target and tree. It independently closed F1 and FU2, checked all 32 bound inputs, seven published evidence inventories, 1,231 build outputs, candidate durable outcomes and complete current CI, and found no new actionable blocker. Root read the full report and verified its 19-file audit inventory. The shared three-scan budget used 2 scans. Engineering gates are complete; merge and issue closure are recorded separately, and this is not owner acceptance.\n\nThe evidence-only publication also records the already merged PR #484's [CI](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/5082bc176e92cf3518abb630a5afc0a59c444815/docs/qa/2026-11-15-poll-dedupe-current-ci/README.md) and [completion](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/5082bc176e92cf3518abb630a5afc0a59c444815/docs/qa/2026-11-15-poll-dedupe-completion/README.md). The delivery register keeps subsequent #410, #419 and launcher work separate.\n",
+          "title": "Classify authored failures and keep engine diagnostics private",
+          "base": "main",
+          "base_sha": "f91bd69b79dc417a2997ddb9c7670cb33df7597c",
+          "head": "codex/gg-20261115-mutation-failures",
+          "head_sha": "693ea3c9d05359f6ebee8822dd566c99c3e4973c",
+          "head_repo_id": 1403707890,
+          "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+          "merge_commit_sha": "154401c7b47c1e56b62a6daec50e2a3145ea967d",
+          "user": {
+            "login": "Jacob-J-Thomas",
+            "name": "Jacob-J-Thomas",
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+            "id": 92639671
+          },
+          "requested_reviewers": null,
+          "requested_team_reviewers": null,
+          "diff": null,
+          "comments": null,
+          "created_at": "2026-11-15T16:23:24Z",
+          "updated_at": "2026-11-15T19:38:38Z",
+          "closed_at": "2026-11-15T19:38:38Z",
+          "merged_at": "2026-11-15T19:38:38Z",
+          "commits": 4,
+          "changed_files": 764,
+          "additions": 324430,
+          "deletions": 208,
+          "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/485",
+          "display_title": "Classify authored failures and keep engine diagnostics private"
+        },
+        "isError": false
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Action completed."
+          }
+        ],
+        "structuredContent": {
+          "issue": {
+            "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/381",
+            "title": "Engine: a mutation evaluation error fails the run as resumable INTERNAL_ERROR instead of a typed, deterministic failure",
+            "issue_number": 381,
+            "body": "<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for the third lane, after I08 and the parallel Claude plugin lane. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\nObserved by the independent QA of WP-D1 #321 (PR #377, `docs/qa/2026-10-22-wp-d1-321-qa/report.md`, section 8, outside its scope). Pre-existing on `main`. Recorded in the I01-I07 delivery register (CP-33).\n\n## Observation\n\nAn ordinary error raised while a mutation node evaluates (for example an expression that throws on the current thread) fails the run with `INTERNAL_ERROR` marked resumable. The code says nothing about what went wrong at which node, and \"resumable\" suggests retrying will help although the same deterministic evaluation will fail again.\n\n## Expected\n\nA typed, deterministic failure for mutation evaluation errors (a `MUTATION_*` code naming the node and the failing expression or patch), non-resumable where the evaluation is deterministic, with the message carrying the evaluator's error; `INTERNAL_ERROR` reserved for unexpected engine faults.\n\n## Acceptance\n\n- A mutation whose expression throws fails the run with a typed code naming the node, and the inspector shows the evaluator's message.\n- Resumability reflects determinism.\n- Script and inference failures are unchanged.\n\n\n## 2026-11-13 refinement and dispatch\n\nThis issue is the canonical runtime item for #381 and #414. Through the mutation handler, distinguish recognized authored evaluation or patch validation failures from unexpected engine or infrastructure faults. The expected authored failures carry a typed, non-resumable classification, identify the node and the operation, and carry bounded useful author diagnostics. Do not infer determinism from an arbitrary exception. Durable run failures and REST, MCP and inspector projections must omit internal stack traces and absolute implementation paths. Keep genuine internal exception diagnostics in server logs. Preserve unrelated script and inference classifications, failure/resume semantics, and retained history. Reproduce on the current main and prove the stored record, REST/MCP projections, inspector and a separate unexpected-fault case through public or supported methods. The original observation above records the reported baseline.\n\n## Delivery — 2026-11-15\n\nDraft [PR #485](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/485) implements the bounded #381/#414 contract. GPT-6.1 Sol xhigh implemented source `615d50bc358d73bc55ad0591f4f625f1a46cb671`. Independent Sol xhigh QA established 18 functional and 13 internal cases, with zero-exit candidate harness/supervisor receipts, unchanged full source/build binding and owned cleanup. [Candidate QA](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/5082bc176e92cf3518abb630a5afc0a59c444815/docs/qa/2026-11-15-runtime-failure-candidate/README.md)\n\nFocused checks passed 1,070 tests; isolated domain and engine coverage passed 460 and 1,812 tests respectively, above both 90% floors. The original full local check failed, and its failures and later scoped results remain qualified in the [implementation packet](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/5082bc176e92cf3518abb630a5afc0a59c444815/docs/qa/2026-11-15-runtime-failure-implementation/README.md). The [unchanged-main baseline](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/5082bc176e92cf3518abb630a5afc0a59c444815/docs/qa/2026-11-15-runtime-failure-baseline/README.md) retains all original fixture failures and the missing internal baseline overall exit; it is separate from the candidate's verified zero-exit result.\n\nCurrent publication head: `693ea3c9d05359f6ebee8822dd566c99c3e4973c`, tree `7e611f71ac8b3693d574b8f08869d68fed19af4b`, against main `f91bd69b79dc417a2997ddb9c7670cb33df7597c`. [CI run 43745479496](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43745479496) is now successful on this exact revision. Attempt 1 passed Browser (481 tests and one expected live-provider skip), Windows launcher (14 tests) and Template image. Its Gates job was cancelled at the configured 30-minute job limit after ten coverage groups, with later checks skipped. The original failure and partial artifact are retained. Exactly one unchanged-head [Gates-only retry](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43745479496/job/132918799467) passed all 32 steps and all 13 coverage groups: 9,605 tests passed / 41 skipped, with every package above 90% lines and branches. Licences, generated docs, contrast and the configured dependency audit passed. The successful Browser/Windows/Template outcomes are carried forward from their original executions; they did not rerun. No assertions, thresholds, time limits or workflow inputs changed. The exact tested synthetic merge is `955dccf755f5f34387f990ff47fa49c7bbf45f55`, with target/head parents and the same publication tree. The earlier failed 5082 run and green 656a run are retained with their exact identities and limitations in the [CI packet](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/693ea3c9d05359f6ebee8822dd566c99c3e4973c/docs/qa/2026-11-15-runtime-failure-ci/README.md); neither substitutes for this head's gates.\n\nClaude Opus 5.5 xhigh completed formal scan 1 with CHANGES REQUIRED for documentation only; it found no product or test blocker. GPT-6 Luna xhigh corrected the three affected documents, and separate GPT-6.1 Sol xhigh factual QA passed. F1 now accurately describes safe public diagnostics, correlated private logs and the named remaining authored evaluation boundaries; FU2 adds the current MUTATION_ERROR recovery instruction. Product, test and build inputs remain unchanged from source `615d50bc358d73bc55ad0591f4f625f1a46cb671`. Scoped formatting and diff checks passed. [Full review and dispositions](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/485#issuecomment-6898705327) · [Review and correction evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/693ea3c9d05359f6ebee8822dd566c99c3e4973c/docs/qa/2026-11-15-runtime-failure-review/README.md)\n\nBroader authored-error classification is parked in #486 outside this batch. Fresh independent GPT-6 Astra max scan 2 returned [SIGN-OFF](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/485#issuecomment-6900116835) for this exact head, target and tree. It independently closed F1 and FU2, checked all 32 bound inputs, seven published evidence inventories, 1,231 build outputs, candidate durable outcomes and complete current CI, and found no new actionable blocker. Root read the full report and verified its 19-file audit inventory. The shared three-scan budget used 2 scans. Engineering gates are complete; merge and issue closure are recorded separately, and this is not owner acceptance.\n\n#410 and #419 remain later runtime work. No owner-only acceptance gate is assigned to #381/#414; the batch's other owner acceptance items remain separate.\n",
+            "state": "closed",
+            "user": {
+              "login": "Jacob-J-Thomas",
+              "name": "Jacob-J-Thomas",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+              "id": 92639671
+            },
+            "assignees": null,
+            "labels": [
+              {
+                "name": "aidlc-ready",
+                "color": "0E8A16",
+                "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+              },
+              {
+                "name": "qa:touched-systems",
+                "color": "FBCA04",
+                "description": "QA tests and catalogues every system the change touches, positive and negative"
+              },
+              {
+                "name": "impl:gpt-6.1-sol",
+                "color": "1D76DB",
+                "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+              },
+              {
+                "name": "review:claude-opus-5.5",
+                "color": "006B75",
+                "description": "Cross-vendor reviewer: Claude Opus 5.5"
+              },
+              {
+                "name": "type:bug",
+                "color": "D73A4A",
+                "description": "Something does not work as documented"
+              },
+              {
+                "name": "area:engine",
+                "color": "BFDADC",
+                "description": "Engine and run manager"
+              }
+            ],
+            "milestone": null,
+            "state_reason": "completed",
+            "comments": 2,
+            "created_at": "2026-10-22T05:55:53Z",
+            "updated_at": "2026-11-15T19:38:40Z",
+            "closed_at": "2026-11-15T19:38:39Z",
+            "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/381",
+            "display_title": "Engine: a mutation evaluation error fails the run as resumable INTERNAL_ERROR instead of a typed, deterministic failure"
+          },
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/381",
+          "title": "Engine: a mutation evaluation error fails the run as resumable INTERNAL_ERROR instead of a typed, deterministic failure",
+          "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/381",
+          "display_title": "Engine: a mutation evaluation error fails the run as resumable INTERNAL_ERROR instead of a typed, deterministic failure"
+        },
+        "isError": false
+      }
+    },
+    {
+      "status": "fulfilled",
+      "value": {
+        "chunk_id": "aec001",
+        "wall_time_seconds": 2.2277751,
+        "exit_code": 0,
+        "original_token_count": 89,
+        "output": "From https://github.com/Jacob-J-Thomas/GraphGoblin\n * branch              main       -> FETCH_HEAD\n   f91bd69b..154401c7  main       -> origin/main\n154401c7b47c1e56b62a6daec50e2a3145ea967d\n7e611f71ac8b3693d574b8f08869d68fed19af4b\nf91bd69b79dc417a2997ddb9c7670cb33df7597c 693ea3c9d05359f6ebee8822dd566c99c3e4973c\n154401c7b47c1e56b62a6daec50e2a3145ea967d\n"
+      }
+    }
+  ],
+  "expectedHead": "693ea3c9d05359f6ebee8822dd566c99c3e4973c",
+  "expectedTarget": "f91bd69b79dc417a2997ddb9c7670cb33df7597c",
+  "actualMain": "154401c7b47c1e56b62a6daec50e2a3145ea967d",
+  "tree": "7e611f71ac8b3693d574b8f08869d68fed19af4b",
+  "treeEqualsTestedReviewed": true,
+  "issue381": "closed completed",
+  "scanCount": 2,
+  "scanCap": 3,
+  "audit": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/485#issuecomment-6900116835",
+  "continuedWork": "#410 -> #419 -> #435 -> #436 -> #438 -> #456",
+  "protected": "OwnerresourcesandPR460unchanged; no overallbatchorowneracceptanceclaim"
+}

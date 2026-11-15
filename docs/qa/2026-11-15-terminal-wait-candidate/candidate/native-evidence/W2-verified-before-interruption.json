@@ -1,0 +1,377 @@
+{
+  "phase": "candidate",
+  "process": {
+    "pid": 52008,
+    "windowsCreationTime": "134392472670935730",
+    "origin": "http://127.0.0.1:53458",
+    "store": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-410-native-preparation\\evidence-candidate-review-01\\event-first-store"
+  },
+  "pair": {
+    "loopId": "01M7GDHQYF10CPXAM3ZN5SS355",
+    "parentId": "01M7GDHQZNG73Q04C8MV3KYQR3",
+    "childId": "01M7GDHR28V7W2N6AYBXA64R68",
+    "parentWait": {
+      "waitId": "01M7GDHQZNG73Q04C8MV3KYQR3:5",
+      "nodeId": "call",
+      "kind": "child",
+      "childRunId": "01M7GDHR28V7W2N6AYBXA64R68",
+      "startedSeq": 5
+    },
+    "childWait": {
+      "waitId": "01M7GDHR28V7W2N6AYBXA64R68:5",
+      "nodeId": "hold",
+      "kind": "input",
+      "prompt": "QA 410 release",
+      "startedSeq": 5
+    }
+  },
+  "gate": {
+    "type": "gate",
+    "pid": 52008,
+    "runId": "01M7GDHQZNG73Q04C8MV3KYQR3",
+    "childId": "01M7GDHR28V7W2N6AYBXA64R68",
+    "states": [
+      "queued",
+      "running",
+      "waiting",
+      "paused"
+    ],
+    "change": {
+      "status": "failed",
+      "failure": {
+        "code": "SCRIPT_EXIT_CODE",
+        "message": "subloop child 01M7GDHR28V7W2N6AYBXA64R68 failed: script exited with code 7",
+        "nodeId": "call",
+        "resumable": true,
+        "details": {
+          "childRunId": "01M7GDHR28V7W2N6AYBXA64R68",
+          "childNodeId": "work",
+          "childDetails": {
+            "exitCode": 7,
+            "stderr": "qa410-local-exit7",
+            "stdout": ""
+          }
+        },
+        "script": {
+          "visitId": "01M7GDHR28V7W2N6AYBXA64R68:11",
+          "dispatchId": "01M7GDHRHA4Q8Y7XV6QQCKBRZW",
+          "state": "completed",
+          "exitCode": 7
+        }
+      },
+      "finishedAt": "2026-11-15T20:14:32.635Z"
+    },
+    "ownsWaitingMember": true,
+    "delegateEntered": false
+  },
+  "landed": {
+    "parent": {
+      "row": {
+        "id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+        "owner_id": "local",
+        "loop_id": "01M7GDHQYF10CPXAM3ZN5SS355",
+        "version_id": "01M7GDHQYF10CPXAM3ZN5SS356",
+        "parent_run_id": null,
+        "invocation_id": "01M7GDHQZNG73Q04C8MV3KYQR4",
+        "status": "running",
+        "current_node_id": "call",
+        "iteration": 1,
+        "waiting": "{\"nodeId\":\"call\",\"kind\":\"child\",\"childRunId\":\"01M7GDHR28V7W2N6AYBXA64R68\",\"startedSeq\":5,\"waitId\":\"01M7GDHQZNG73Q04C8MV3KYQR3:5\"}",
+        "cancel_requested_at": null,
+        "paused_at": null,
+        "failure": null,
+        "outcome": null,
+        "result": null,
+        "created_at": "2026-11-15T20:14:31.924Z",
+        "started_at": "2026-11-15T20:14:31.952Z",
+        "finished_at": null,
+        "last_event_seq": 11,
+        "initial_thread": "{\"schemaVersion\":1,\"run\":{\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR3\",\"loopId\":\"01M7GDHQYF10CPXAM3ZN5SS355\",\"versionId\":\"01M7GDHQYF10CPXAM3ZN5SS356\",\"iteration\":1},\"invocation\":{\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR4\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-11-15T20:14:31.924Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+        "thread_snapshot": "{\"schemaVersion\":1,\"run\":{\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR3\",\"loopId\":\"01M7GDHQYF10CPXAM3ZN5SS355\",\"versionId\":\"01M7GDHQYF10CPXAM3ZN5SS356\",\"iteration\":1},\"invocation\":{\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR4\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-11-15T20:14:31.924Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:31.985Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:31.985Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1,\"call\":1},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+        "thread_snapshot_seq": 7,
+        "finalized_at": null,
+        "pinned": "{\"source\":\"published\",\"version\":1,\"name\":\"QA 410 event first parent\",\"label\":\"QA 410 event first parent v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}}",
+        "thread_snapshot_replay_state": "{\"strict\":true,\"openNodeId\":\"call\"}",
+        "deletion_approval": null,
+        "deletion_revision": 0,
+        "replay_source_run_id": null,
+        "replay_intent_node_id": null,
+        "replay_intent_observed_seq": null
+      },
+      "events": [
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 1,
+          "ts": "2026-11-15T20:14:31.924Z",
+          "type": "run.queued",
+          "node_id": null,
+          "payload": "{\"versionId\":\"01M7GDHQYF10CPXAM3ZN5SS356\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 410 event first parent\",\"label\":\"QA 410 event first parent v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR3\",\"loopId\":\"01M7GDHQYF10CPXAM3ZN5SS355\",\"versionId\":\"01M7GDHQYF10CPXAM3ZN5SS356\",\"iteration\":1},\"invocation\":{\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR4\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"user\",\"id\":\"local\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-11-15T20:14:31.924Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"subloopVersions\":{\"01M7GDHQWRMYNW6G9WXHM3M14M\":\"01M7GDHQWRMYNW6G9WXHM3M14N\"}}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 2,
+          "ts": "2026-11-15T20:14:31.957Z",
+          "type": "run.started",
+          "node_id": null,
+          "payload": "{\"attempt\":1}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 3,
+          "ts": "2026-11-15T20:14:31.977Z",
+          "type": "node.started",
+          "node_id": "start",
+          "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 4,
+          "ts": "2026-11-15T20:14:31.988Z",
+          "type": "node.finished",
+          "node_id": "start",
+          "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:31.985Z\"}},{\"op\":\"add\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:31.985Z\"}}],\"route\":\"out\",\"durationMs\":3}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 5,
+          "ts": "2026-11-15T20:14:32.001Z",
+          "type": "node.started",
+          "node_id": "call",
+          "payload": "{\"kind\":\"subloop\",\"attempt\":1,\"configHash\":\"aec1d82304920706\"}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 6,
+          "ts": "2026-11-15T20:14:32.008Z",
+          "type": "child_run.started",
+          "node_id": "call",
+          "payload": "{\"childRunId\":\"01M7GDHR28V7W2N6AYBXA64R68\"}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 7,
+          "ts": "2026-11-15T20:14:32.022Z",
+          "type": "run.waiting",
+          "node_id": "call",
+          "payload": "{\"wait\":{\"waitId\":\"01M7GDHQZNG73Q04C8MV3KYQR3:5\",\"nodeId\":\"call\",\"kind\":\"child\",\"childRunId\":\"01M7GDHR28V7W2N6AYBXA64R68\",\"startedSeq\":5}}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 8,
+          "ts": "2026-11-15T20:14:32.598Z",
+          "type": "run.woken",
+          "node_id": "call",
+          "payload": "{\"reason\":\"child\",\"payload\":{\"childRunId\":\"01M7GDHR28V7W2N6AYBXA64R68\",\"childFinishedSeq\":14,\"status\":\"failed\",\"outcome\":null}}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 9,
+          "ts": "2026-11-15T20:14:32.621Z",
+          "type": "node.started",
+          "node_id": "call",
+          "payload": "{\"kind\":\"subloop\",\"attempt\":2,\"configHash\":\"aec1d82304920706\"}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 10,
+          "ts": "2026-11-15T20:14:32.632Z",
+          "type": "child_run.finished",
+          "node_id": "call",
+          "payload": "{\"childRunId\":\"01M7GDHR28V7W2N6AYBXA64R68\",\"status\":\"failed\"}"
+        },
+        {
+          "run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+          "seq": 11,
+          "ts": "2026-11-15T20:14:32.632Z",
+          "type": "run.failed",
+          "node_id": null,
+          "payload": "{\"failure\":{\"code\":\"SCRIPT_EXIT_CODE\",\"message\":\"subloop child 01M7GDHR28V7W2N6AYBXA64R68 failed: script exited with code 7\",\"nodeId\":\"call\",\"resumable\":true,\"details\":{\"childRunId\":\"01M7GDHR28V7W2N6AYBXA64R68\",\"childNodeId\":\"work\",\"childDetails\":{\"exitCode\":7,\"stderr\":\"qa410-local-exit7\",\"stdout\":\"\"}},\"script\":{\"visitId\":\"01M7GDHR28V7W2N6AYBXA64R68:11\",\"dispatchId\":\"01M7GDHRHA4Q8Y7XV6QQCKBRZW\",\"state\":\"completed\",\"exitCode\":7}}}"
+        }
+      ]
+    },
+    "child": {
+      "row": {
+        "id": "01M7GDHR28V7W2N6AYBXA64R68",
+        "owner_id": "local",
+        "loop_id": "01M7GDHQWRMYNW6G9WXHM3M14M",
+        "version_id": "01M7GDHQWRMYNW6G9WXHM3M14N",
+        "parent_run_id": "01M7GDHQZNG73Q04C8MV3KYQR3",
+        "invocation_id": "01M7GDHR28V7W2N6AYBXA64R69",
+        "status": "failed",
+        "current_node_id": "work",
+        "iteration": 1,
+        "waiting": null,
+        "cancel_requested_at": null,
+        "paused_at": null,
+        "failure": "{\"code\":\"SCRIPT_EXIT_CODE\",\"message\":\"script exited with code 7\",\"nodeId\":\"work\",\"resumable\":true,\"details\":{\"exitCode\":7,\"stderr\":\"qa410-local-exit7\",\"stdout\":\"\"},\"script\":{\"visitId\":\"01M7GDHR28V7W2N6AYBXA64R68:11\",\"dispatchId\":\"01M7GDHRHA4Q8Y7XV6QQCKBRZW\",\"state\":\"completed\",\"exitCode\":7}}",
+        "outcome": null,
+        "result": null,
+        "created_at": "2026-11-15T20:14:32.008Z",
+        "started_at": "2026-11-15T20:14:32.031Z",
+        "finished_at": "2026-11-15T20:14:32.588Z",
+        "last_event_seq": 14,
+        "initial_thread": "{\"schemaVersion\":1,\"run\":{\"id\":\"01M7GDHR28V7W2N6AYBXA64R68\",\"loopId\":\"01M7GDHQWRMYNW6G9WXHM3M14M\",\"versionId\":\"01M7GDHQWRMYNW6G9WXHM3M14N\",\"parentRunId\":\"01M7GDHQZNG73Q04C8MV3KYQR3\",\"iteration\":1},\"invocation\":{\"id\":\"01M7GDHR28V7W2N6AYBXA64R69\",\"source\":\"subloop\",\"caller\":{\"kind\":\"run\",\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR3\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-11-15T20:14:32.008Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:31.985Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:31.985Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+        "thread_snapshot": "{\"schemaVersion\":1,\"run\":{\"id\":\"01M7GDHR28V7W2N6AYBXA64R68\",\"loopId\":\"01M7GDHQWRMYNW6G9WXHM3M14M\",\"versionId\":\"01M7GDHQWRMYNW6G9WXHM3M14N\",\"parentRunId\":\"01M7GDHQZNG73Q04C8MV3KYQR3\",\"iteration\":1},\"invocation\":{\"id\":\"01M7GDHR28V7W2N6AYBXA64R69\",\"source\":\"subloop\",\"caller\":{\"kind\":\"run\",\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR3\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-11-15T20:14:32.008Z\"}},\"messages\":[{\"id\":\"01M7GDHRGSXXQF9Q0B6RKZPVSH\",\"role\":\"user\",\"content\":\"{\\\"release\\\":\\\"qa410\\\"}\",\"nodeId\":\"hold\",\"ts\":\"2026-11-15T20:14:32.473Z\",\"tags\":[\"input\"]}],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:32.062Z\"},\"hold\":{\"nodeId\":\"hold\",\"value\":{\"release\":\"qa410\"},\"at\":\"2026-11-15T20:14:32.473Z\"}},\"lastOutput\":{\"nodeId\":\"hold\",\"value\":{\"release\":\"qa410\"},\"at\":\"2026-11-15T20:14:32.473Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1,\"hold\":2},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+        "thread_snapshot_seq": 10,
+        "finalized_at": "2026-11-15T20:14:32.603Z",
+        "pinned": "{\"source\":\"published\",\"version\":1,\"name\":\"QA 410 event first child\",\"label\":\"QA 410 event first child v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}}",
+        "thread_snapshot_replay_state": "{\"strict\":true}",
+        "deletion_approval": null,
+        "deletion_revision": 0,
+        "replay_source_run_id": null,
+        "replay_intent_node_id": null,
+        "replay_intent_observed_seq": null
+      },
+      "events": [
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 1,
+          "ts": "2026-11-15T20:14:32.008Z",
+          "type": "run.queued",
+          "node_id": null,
+          "payload": "{\"versionId\":\"01M7GDHQWRMYNW6G9WXHM3M14N\",\"pinned\":{\"source\":\"published\",\"version\":1,\"name\":\"QA 410 event first child\",\"label\":\"QA 410 event first child v1\",\"defaults\":{\"owner\":{\"byHarness\":{}},\"process\":{\"byHarness\":{\"codex\":{\"model\":\"gpt-6-luna\",\"effort\":\"low\"}}}},\"limits\":{\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null},\"classifiers\":{}},\"initialThread\":{\"schemaVersion\":1,\"run\":{\"id\":\"01M7GDHR28V7W2N6AYBXA64R68\",\"loopId\":\"01M7GDHQWRMYNW6G9WXHM3M14M\",\"versionId\":\"01M7GDHQWRMYNW6G9WXHM3M14N\",\"parentRunId\":\"01M7GDHQZNG73Q04C8MV3KYQR3\",\"iteration\":1},\"invocation\":{\"id\":\"01M7GDHR28V7W2N6AYBXA64R69\",\"source\":\"subloop\",\"caller\":{\"kind\":\"run\",\"id\":\"01M7GDHQZNG73Q04C8MV3KYQR3\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-11-15T20:14:32.008Z\"}},\"messages\":[],\"vars\":{},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:31.985Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:31.985Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}},\"subloopVersions\":{\"01M7GDHQWRMYNW6G9WXHM3M14M\":\"01M7GDHQWRMYNW6G9WXHM3M14N\"}}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 2,
+          "ts": "2026-11-15T20:14:32.039Z",
+          "type": "run.started",
+          "node_id": null,
+          "payload": "{\"attempt\":1}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 3,
+          "ts": "2026-11-15T20:14:32.055Z",
+          "type": "node.started",
+          "node_id": "start",
+          "payload": "{\"kind\":\"trigger\",\"attempt\":1,\"configHash\":\"527dee9c4254fe4e\"}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 4,
+          "ts": "2026-11-15T20:14:32.066Z",
+          "type": "node.finished",
+          "node_id": "start",
+          "payload": "{\"patch\":[{\"op\":\"replace\",\"path\":\"/outputs/start\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:32.062Z\"}},{\"op\":\"replace\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-11-15T20:14:32.062Z\"}}],\"route\":\"out\",\"durationMs\":3}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 5,
+          "ts": "2026-11-15T20:14:32.097Z",
+          "type": "node.started",
+          "node_id": "hold",
+          "payload": "{\"kind\":\"wait\",\"attempt\":1,\"configHash\":\"dad3e46e0489b6f4\"}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 6,
+          "ts": "2026-11-15T20:14:32.104Z",
+          "type": "run.waiting",
+          "node_id": "hold",
+          "payload": "{\"wait\":{\"waitId\":\"01M7GDHR28V7W2N6AYBXA64R68:5\",\"nodeId\":\"hold\",\"kind\":\"input\",\"prompt\":\"QA 410 release\",\"startedSeq\":5}}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 7,
+          "ts": "2026-11-15T20:14:32.443Z",
+          "type": "input.received",
+          "node_id": "hold",
+          "payload": "{\"payload\":{\"release\":\"qa410\"}}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 8,
+          "ts": "2026-11-15T20:14:32.443Z",
+          "type": "run.woken",
+          "node_id": "hold",
+          "payload": "{\"reason\":\"input\",\"payload\":{\"release\":\"qa410\"}}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 9,
+          "ts": "2026-11-15T20:14:32.469Z",
+          "type": "node.started",
+          "node_id": "hold",
+          "payload": "{\"kind\":\"wait\",\"attempt\":2,\"configHash\":\"dad3e46e0489b6f4\"}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 10,
+          "ts": "2026-11-15T20:14:32.476Z",
+          "type": "node.finished",
+          "node_id": "hold",
+          "payload": "{\"patch\":[{\"op\":\"add\",\"path\":\"/messages/-\",\"value\":{\"id\":\"01M7GDHRGSXXQF9Q0B6RKZPVSH\",\"role\":\"user\",\"content\":\"{\\\"release\\\":\\\"qa410\\\"}\",\"nodeId\":\"hold\",\"ts\":\"2026-11-15T20:14:32.473Z\",\"tags\":[\"input\"]}},{\"op\":\"add\",\"path\":\"/outputs/hold\",\"value\":{\"nodeId\":\"hold\",\"value\":{\"release\":\"qa410\"},\"at\":\"2026-11-15T20:14:32.473Z\"}},{\"op\":\"replace\",\"path\":\"/lastOutput\",\"value\":{\"nodeId\":\"hold\",\"value\":{\"release\":\"qa410\"},\"at\":\"2026-11-15T20:14:32.473Z\"}}],\"route\":\"out\",\"durationMs\":3}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 11,
+          "ts": "2026-11-15T20:14:32.486Z",
+          "type": "node.started",
+          "node_id": "work",
+          "payload": "{\"kind\":\"script\",\"attempt\":1,\"configHash\":\"55a3da5309c49a58\"}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 12,
+          "ts": "2026-11-15T20:14:32.490Z",
+          "type": "script.dispatched",
+          "node_id": "work",
+          "payload": "{\"visitId\":\"01M7GDHR28V7W2N6AYBXA64R68:11\",\"dispatchId\":\"01M7GDHRHA4Q8Y7XV6QQCKBRZW\"}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 13,
+          "ts": "2026-11-15T20:14:32.573Z",
+          "type": "node.progress",
+          "node_id": "work",
+          "payload": "{\"progress\":{\"exitCode\":7,\"stderr\":\"qa410-local-exit7\",\"stdoutBytes\":0}}"
+        },
+        {
+          "run_id": "01M7GDHR28V7W2N6AYBXA64R68",
+          "seq": 14,
+          "ts": "2026-11-15T20:14:32.583Z",
+          "type": "run.failed",
+          "node_id": null,
+          "payload": "{\"failure\":{\"code\":\"SCRIPT_EXIT_CODE\",\"message\":\"script exited with code 7\",\"nodeId\":\"work\",\"resumable\":true,\"details\":{\"exitCode\":7,\"stderr\":\"qa410-local-exit7\",\"stdout\":\"\"},\"script\":{\"visitId\":\"01M7GDHR28V7W2N6AYBXA64R68:11\",\"dispatchId\":\"01M7GDHRHA4Q8Y7XV6QQCKBRZW\",\"state\":\"completed\",\"exitCode\":7}}}"
+        }
+      ]
+    }
+  },
+  "failureEvent": {
+    "failure": {
+      "code": "SCRIPT_EXIT_CODE",
+      "message": "subloop child 01M7GDHR28V7W2N6AYBXA64R68 failed: script exited with code 7",
+      "nodeId": "call",
+      "resumable": true,
+      "details": {
+        "childRunId": "01M7GDHR28V7W2N6AYBXA64R68",
+        "childNodeId": "work",
+        "childDetails": {
+          "exitCode": 7,
+          "stderr": "qa410-local-exit7",
+          "stdout": ""
+        }
+      },
+      "script": {
+        "visitId": "01M7GDHR28V7W2N6AYBXA64R68:11",
+        "dispatchId": "01M7GDHRHA4Q8Y7XV6QQCKBRZW",
+        "state": "completed",
+        "exitCode": 7
+      }
+    },
+    "type": "run.failed",
+    "seq": 11
+  },
+  "script": {
+    "marker": {
+      "pid": 45940,
+      "ppid": 52008,
+      "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-410-native-preparation\\evidence-candidate-review-01\\event-first-store",
+      "exe": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "code": 7
+    },
+    "raw": "{\"pid\":45940,\"ppid\":52008,\"cwd\":\"C:\\\\Users\\\\98jak\\\\graphgoblin-qa\\\\2026-11-13-aidlc-batch\\\\runtime-410-native-preparation\\\\evidence-candidate-review-01\\\\event-first-store\",\"exe\":\"C:\\\\Users\\\\98jak\\\\.claude\\\\codex-runs\\\\GraphGoblin\\\\runtime\\\\node-v22.23.4-win-x64\\\\node.exe\",\"code\":7}\n",
+    "sha256": "1754385477fd829832095e726da861dd6fcf6e3ce94b4a771bd4c027ba6cefda"
+  }
+}

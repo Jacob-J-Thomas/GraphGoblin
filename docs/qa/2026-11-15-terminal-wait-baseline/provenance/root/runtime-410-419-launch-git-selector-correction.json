@@ -1,0 +1,66 @@
+{
+  "scope": "Preparation-only Git selector correction. No launcher, build, harness, product, fixture, Git executable or GitHub action ran.",
+  "observedAtUtc": "2026-11-15T18:39:52.1428159Z",
+  "powerShell": "7.6.9",
+  "selector": {
+    "beforeCount": 2,
+    "before": [
+      "C:\\Program Files\\Git\\cmd\\git.exe",
+      "C:\\Program Files\\WindowsApps\\OpenAI.CodexPrimaryRuntime.v26-1110-778-0_26.1110.778.0_x64__3k8sg7r9htsxt\\dependencies\\native\\git\\cmd\\git.exe"
+    ],
+    "afterCount": 1,
+    "after": "C:\\Program Files\\Git\\cmd\\git.exe"
+  },
+  "exactUnifiedDiff": [
+    "-$qaGit = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source",
+    "+$qaGit = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source"
+  ],
+  "packets": [
+    {
+      "issue": 410,
+      "originalPacket": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-410-launch-preparation-original",
+      "correctedPacket": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-410-launch-preparation",
+      "payloadFiles": 6,
+      "originalManifestSha256": "2eafdaf020d52190bea44114c9f2dc2444cf7ec17d527642c0741cc893981e24",
+      "correctedManifestSha256": "ed4badf92566e77316966c38e45c271c290425db1084a1fb616f3e1934321ae0",
+      "changes": {
+        "launch.ps1": {
+          "original": "bccbd28733b321d82e5ecfa279cf77de583f001d150d4ae04613a8f52ff471e8",
+          "corrected": "186c5d32ffc6e1a76ce7da203f86e893126e3e80d3cdd592011ed99cdaf27c1b"
+        }
+      },
+      "parserTokens": 4293,
+      "parserErrors": 0,
+      "selectorLine": 251,
+      "byteReverseCheck": true
+    },
+    {
+      "issue": 419,
+      "originalPacket": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-419-execution-preparation-original",
+      "correctedPacket": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-419-execution-preparation",
+      "payloadFiles": 10,
+      "originalManifestSha256": "0c043907a16ffdd9ac03ae8650ad1d66a9a618b09e67417dfb40e0c61ff6e0f6",
+      "correctedManifestSha256": "71491680388289a201bd656f15ce999cab5bbe15493292c03112e1ddc1e66a57",
+      "changes": {
+        "launch.ps1": {
+          "original": "70d90689874c92448a42bc5b22b195ac09d0f2be0436ba564d8a136cdc9adbb5",
+          "corrected": "bdc556d49b96be915c77a094a727d1379598d90220f3f6067fe61af03918547e"
+        },
+        "syntax-readback.json": {
+          "original": "63db3e8f95d3d6cecd989fd60ecc2ccc912172adaf21900ba18c04af5364b62f",
+          "corrected": "2bd0f6d829a939bc2b99a29e13daee3c7c65738b7b8b39e284900a2a3e186ac4"
+        }
+      },
+      "parserTokens": 6090,
+      "parserErrors": 0,
+      "selectorLine": 403,
+      "byteReverseCheck": true
+    }
+  ],
+  "reportingCorrection": {
+    "originalCompletionExit": 1,
+    "stage": "Assembling #410 receipt after its line and manifest were written and checked",
+    "firstError": "Method invocation failed because [System.String] does not contain a method named 'FindIndex'.",
+    "recovery": "#410 files were read and verified in place; only #419 still needed the bounded edit. Collector now computes the line from newline count."
+  }
+}
