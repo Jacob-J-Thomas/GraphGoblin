@@ -1,0 +1,240 @@
+diff --git "a/runtime-410-native-preparation-before-seed-correction\\owned-store.mjs" "b/runtime-410-native-preparation\\owned-store.mjs"
+index 72aedfa..260b36b 100644
+--- "a/runtime-410-native-preparation-before-seed-correction\\owned-store.mjs"
++++ "b/runtime-410-native-preparation\\owned-store.mjs"
+@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
+ import { spawn } from 'node:child_process';
+ import { createHash } from 'node:crypto';
+ import { constants } from 'node:fs';
+-import { copyFile, lstat, readFile, readdir, realpath, unlink } from 'node:fs/promises';
+-import { dirname, isAbsolute, join } from 'node:path';
++import { copyFile, lstat, mkdir, readFile, readdir, realpath, unlink } from 'node:fs/promises';
++import { basename, dirname, isAbsolute, join } from 'node:path';
+ import { setImmediate } from 'node:timers/promises';
+-import { bounded } from './resources.mjs';
++import { bounded, spawnOwned, windowsEnv } from './resources.mjs';
+ 
+ const ownedNames = ['graphgoblin.db', 'graphgoblin.db-wal', 'graphgoblin.db-shm', 'script-executions.ndjson'];
+ const program = Buffer.from(String.raw`
+@@ -49,7 +49,119 @@ export async function collectSQLiteHandles() {
+   await setImmediate();
+ }
+ 
+-export async function cleanOwnedStore(evidenceDir, storeDir, receipt, ownChild, historySeedDir) {
++// Only the private copy is writable. Process exit releases the native SQLite handles.
++const normalizeSeed = String.raw`
++import assert from 'node:assert/strict';
++import { createHash } from 'node:crypto';
++import { readFile, realpath } from 'node:fs/promises';
++import { basename, join } from 'node:path';
++import { pathToFileURL } from 'node:url';
++
++const [sqliteFile, sqliteHash, parentId, childId] = process.argv.slice(1);
++assert.equal(process.argv.length, 5);
++assert.equal(await realpath(sqliteFile), sqliteFile);
++assert.equal(createHash('sha256').update(await readFile(sqliteFile)).digest('hex'), sqliteHash);
++const stage = process.cwd();
++assert.equal(basename(stage), 'history-seed-staging');
++assert.equal(await realpath(stage), stage);
++const database = join(stage, 'graphgoblin.db');
++assert.equal(await realpath(database), database);
++const { openDatabase, openReadOnlyDatabaseClient } = await import(pathToFileURL(sqliteFile).href);
++const writable = openDatabase({ url: pathToFileURL(database).href });
++let checkpoint;
++let journalMode;
++try {
++  const before = await writable.client.execute('PRAGMA main.journal_mode');
++  assert.equal(before.rows[0]?.[0], 'wal');
++  const result = await writable.client.execute('PRAGMA main.wal_checkpoint(TRUNCATE)');
++  assert.equal(result.rows.length, 1);
++  const [busy, log, checkpointed] = [result.rows[0][0], result.rows[0][1], result.rows[0][2]];
++  checkpoint = { busy, log, checkpointed };
++  assert.equal(busy, 0);
++  assert.ok(Number.isInteger(log) && log >= 0);
++  assert.equal(checkpointed, log);
++  const mode = await writable.client.execute('PRAGMA main.journal_mode = DELETE');
++  journalMode = mode.rows[0]?.[0];
++  assert.equal(journalMode, 'delete');
++} finally {
++  writable.close();
++}
++const observer = openReadOnlyDatabaseClient(database);
++const witness = [];
++try {
++  for (const id of [parentId, childId]) {
++    const row = await observer.execute({ sql: 'SELECT * FROM runs WHERE id = ?', args: [id] });
++    assert.equal(row.rows.length, 1);
++    const events = await observer.execute({
++      sql: 'SELECT * FROM run_events WHERE run_id = ? ORDER BY seq', args: [id],
++    });
++    witness.push({ row: { ...row.rows[0] }, events: events.rows.map((event) => ({ ...event })) });
++  }
++} finally {
++  observer.close();
++}
++process.stdout.write(JSON.stringify({ database, checkpoint, journalMode, witness }) + '\n');
++`;
++
++async function hashFile(file) {
++  return createHash('sha256').update(await readFile(file)).digest('hex');
++}
++
++async function deriveStandaloneSeed(evidenceDir, db, history, receipt, ownChild) {
++  const stage = join(evidenceDir, 'history-seed-staging');
++  const stagedDb = join(stage, 'graphgoblin.db');
++  const bundle = [db, db + '-wal', db + '-shm'];
++  const derivation = { stage, inputs: [] };
++  receipt.seedDerivation = derivation;
++  await mkdir(stage);
++  assert.equal(await realpath(stage), stage);
++  for (const source of bundle) {
++    const copy = join(stage, basename(source));
++    const sha256 = await hashFile(source);
++    const input = { source, copy, sha256 };
++    derivation.inputs.push(input);
++    await copyFile(source, copy, constants.COPYFILE_EXCL);
++    input.copySha256 = await hashFile(copy);
++    assert.equal(input.copySha256, sha256);
++  }
++  assert.deepEqual(await inventory(evidenceDir, stage), bundle.map((source) => join(stage, basename(source))).sort());
++
++  const [parent, child] = history.witness;
++  const processRecords = [];
++  const handle = spawnOwned('history-seed-normalization', [
++    '--input-type=module', '--eval', normalizeSeed, history.sqliteBinding.file,
++    history.sqliteBinding.sha256, parent.row.id, child.row.id,
++  ], { cwd: stage, stdio: ['ignore', 'pipe', 'pipe'], env: windowsEnv() }, processRecords);
++  derivation.helper = handle.identity;
++  ownChild(handle.child);
++  handle.child.once('close', () => ownChild(undefined));
++  try {
++    await bounded('history seed normalization and pipe close', handle.closed, 8000);
++  } catch (error) {
++    if (handle.child.pid && handle.child.exitCode === null && handle.child.signalCode === null) handle.child.kill();
++    try {
++      await bounded('history seed helper exit', handle.closed, 2000);
++    } catch (cleanupError) {
++      derivation.helper.cleanupError = cleanupError;
++    }
++    throw error;
++  }
++  assert.equal(handle.identity.error, undefined);
++  assert.deepEqual(handle.identity.exit, { code: 0, signal: null });
++  assert.deepEqual(handle.identity.close, handle.identity.exit);
++  assert.equal(handle.identity.stderr, '');
++  const normalized = JSON.parse(handle.identity.stdout);
++  assert.equal(normalized.database, stagedDb);
++  derivation.checkpoint = normalized.checkpoint;
++  derivation.journalMode = normalized.journalMode;
++  assert.deepEqual(normalized.witness, history.witness);
++  derivation.exactRawWitness = true;
++  assert.deepEqual(await inventory(evidenceDir, stage), [stagedDb]);
++  for (const { source, sha256 } of derivation.inputs) assert.equal(await hashFile(source), sha256);
++  return stagedDb;
++}
++
++export async function cleanOwnedStore(evidenceDir, storeDir, receipt, ownChild, history) {
+   // Mirror the reviewed #381 cleanup. No sharing-check retry or force-remove.
+   await collectSQLiteHandles();
+   receipt.collectionPasses = 2;
+@@ -98,17 +210,27 @@ export async function cleanOwnedStore(evidenceDir, storeDir, receipt, ownChild,
+   assert.equal(probe.stderr, '');
+   assert.equal(probe.stdout.trim(), 'qa-exclusive-open-ok ' + files.length);
+   assert.deepEqual(await inventory(evidenceDir, storeDir), files);
+-  if (historySeedDir) {
++  if (history) {
++    const historySeedDir = history.directory;
+     assert.equal(historySeedDir, join(evidenceDir, 'private-history-seed'));
+     assert.equal(await realpath(historySeedDir), historySeedDir);
+     assert.deepEqual(await readdir(historySeedDir), []);
+-    assert.ok(!files.includes(db + '-wal') && !files.includes(db + '-shm'),
+-      'A closed historical seed requires one standalone SQLite file');
++    const hasWal = files.includes(db + '-wal');
++    const hasShm = files.includes(db + '-shm');
++    assert.equal(hasWal, hasShm, 'Historical seed requires a standalone database or a complete WAL bundle');
++    const source = hasWal ? await deriveStandaloneSeed(evidenceDir, db, history, receipt, ownChild) : db;
+     const target = join(historySeedDir, 'graphgoblin.db');
+-    await copyFile(db, target, constants.COPYFILE_EXCL);
+-    const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+-    const hash = sha(await readFile(db));
+-    assert.equal(sha(await readFile(target)), hash);
++    await copyFile(source, target, constants.COPYFILE_EXCL);
++    const hash = await hashFile(source);
++    assert.equal(await hashFile(target), hash);
++    assert.deepEqual(await readdir(historySeedDir), ['graphgoblin.db']);
++    if (hasWal) {
++      const derivation = receipt.seedDerivation;
++      derivation.normalizedSha256 = hash;
++      await unlink(source);
++      assert.deepEqual(await readdir(derivation.stage), []);
++      derivation.stageEmpty = true;
++    }
+     receipt.seed = { database: target, sha256: hash, sidecars: [] };
+   }
+   for (const file of files) await unlink(file);
+diff --git "a/runtime-410-native-preparation-before-seed-correction\\run.mjs" "b/runtime-410-native-preparation\\run.mjs"
+index a30ab34..4a3cc9c 100644
+--- "a/runtime-410-native-preparation-before-seed-correction\\run.mjs"
++++ "b/runtime-410-native-preparation\\run.mjs"
+@@ -410,12 +410,12 @@ async function scriptMarkers(store, writer) {
+   return { marker, raw, sha256: sha(raw) };
+ }
+ 
+-async function clean(store, name, historySeedDir) {
++async function clean(store, name, history) {
+   const record = { path: store };
+   report.cleanup[name] = record;
+   assert.equal(observers.size, 0, 'all independent SQLite observers must be closed first');
+   assert.equal(writers.size, 0, 'every owned gateway must be stopped first');
+-  await cleanOwnedStore(evidenceDir, store, record, (child) => { cleanupChild = child; }, historySeedDir);
++  await cleanOwnedStore(evidenceDir, store, record, (child) => { cleanupChild = child; }, history);
+ }
+ 
+ async function liveMatrix() {
+@@ -498,8 +498,12 @@ async function liveMatrix() {
+   await closeMcp(connection);
+   db.close();
+   await stop(writer);
+-  const historySeed = phase === 'baseline' ? await createStore('private-history-seed') : undefined;
+-  await clean(store, 'live', historySeed);
++  const history = phase === 'baseline' ? {
++    directory: await createStore('private-history-seed'),
++    sqliteBinding: report.runtimeBindings.sqlite,
++    witness: [report.W1.after.parent.raw, report.W1.after.rawChild],
++  } : undefined;
++  await clean(store, 'live', history);
+ }
+ 
+ async function sidecars(store) {
+diff --git "a/runtime-410-native-preparation-before-seed-correction\\README.md" "b/runtime-410-native-preparation\\README.md"
+index d92cb98..c4f79e7 100644
+--- "a/runtime-410-native-preparation-before-seed-correction\\README.md"
++++ "b/runtime-410-native-preparation\\README.md"
+@@ -34,7 +34,7 @@ An uncertain landing or unreachable gate leaves the matrix incomplete. The delib
+ 
+ ## W4 historical boundary
+ 
+-After genuine W1 baseline and W3 controls complete and writer and observers close, the harness makes a private seed from the exclusively probed standalone SQLite file. The seed already contains the finalized baseline parent and its stale wait. Baseline and candidate run W4 using separate SHA-verified copies of that seed. Both use real default gateway startup and compare the exact parent and child rows/events across reopen. W4 preserves the existing terminal projection. W1 and W2 exercise new transitions. No fixture writes a replacement historical failure row.
++After genuine W1 baseline and W3 controls complete and writer and observers close, the harness makes a private seed from the exclusively probed SQLite store. If WAL and SHM are present, the full closed bundle is copied into fresh history-seed-staging and its source and copy hashes must match. A bounded child of the bound Node executable uses only the staging database and the compiled SQLite entry. It requires a successful truncate checkpoint and DELETE journal mode, then reads back the exact W1 parent and child rows and ordered event payloads. Their recorded raw values must match. The database-file hash can change during checkpointing. The normalization receipt records helper exit and pipe close, checkpoint and mode, exact witness equality, input and output hashes, and the absence of staged sidecars. A partial bundle or helper, hash, witness or inventory disagreement retains evidence. The seed already contains the finalized baseline parent and its stale wait. Baseline and candidate run W4 using separate SHA-verified copies of that seed. Both use real default gateway startup and compare the exact parent and child rows/events across reopen. W4 preserves the existing terminal projection. W1 and W2 exercise new transitions. No fixture writes a replacement historical failure row.
+ 
+ The baseline keeps exactly closed `private-history-seed/graphgoblin.db` as the transfer input for candidate W4. It is outside the report packet. The harness checks its literal path, absence of sidecars and SHA-256 before copying and after use. The W4 run copy is cleaned with the other owned stores. After the last admitted W4 and first-evidence decision, the orchestrator verifies the original seed hash, exact owner-process exit and exclusive access before unlinking only that regular file under the resolved private-seed path. Keep the W1 and W4 receipts.
+ 
+@@ -51,4 +51,4 @@ $qaHarness = 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\runtime-410-n
+ 
+ MCP closes on stdin EOF. Ordinary gateways verify their health identity, absence of active fixture runs and shutdown-control token before drain. Cleanup checks process exit, pipe closure and former-port refusal. The verified W2 gate is the only fixture-authored abrupt gateway termination. After closing the owned clients, cleanup performs two fixed GC passes followed by one hidden Windows exclusivity probe holding the verified disposable SQLite and script-marker paths simultaneously. It unlinks the exact known files and verifies an empty run-store directory. Unrecognized entries, lock files or a sharing disagreement stop cleanup and retain first evidence. Read `summary.json`, both W2 receipts, or any `first-failure.json` before scoring the matrix.
+ 
+-The first admitted execution still needs to establish script marker and exit propagation, stdio EOF, route/repository equivalence, Windows lock and file-identity behavior, the WAL after interruption, and the W1/W2 red-before. Candidate admission must recheck the port seam and build binding. No runtime, browser or owner-acceptance result has been produced.
++The first admitted execution observed W1 and W3, then stopped at the standalone seed guard with an exclusively accessible DB, WAL and SHM. Those original files and first-failure receipt remain sealed. The revised seed path has received syntax checks only. A fresh admitted execution must establish the seed normalization and W2/W4 observations. Candidate admission must recheck the port seam and build binding. See the first baseline report for the native evidence already obtained.
+diff --git "a/runtime-410-native-preparation-before-seed-correction\\SHA256SUMS.txt" "b/runtime-410-native-preparation\\SHA256SUMS.txt"
+index 20e8bc2..21dedcb 100644
+--- "a/runtime-410-native-preparation-before-seed-correction\\SHA256SUMS.txt"
++++ "b/runtime-410-native-preparation\\SHA256SUMS.txt"
+@@ -1,5 +1,5 @@
+ aaaee20d9a92754def6babad59e77c633de30ebd99c30db1ab2d11984bcdc10a  gateway.mjs
+-333618fd6390691b3d31ba9c6077e603d9eda29c2a8e58804a839bc00f0f6385  owned-store.mjs
+-dd3a3713dc41a3ac7ec2fb3018c4ee50b3ed375f74cac2792fdbc5dd54b3aceb  README.md
++baf9b39ce39965a914a545dda00204f04489e239f1efc5761a8ed9224999dc63  owned-store.mjs
++9e023e1fc79b3914945f37af7da196e7778a6d528204c76bc09f2c5b7730c9ad  README.md
+ 88a7b15d8b6d85f81e8ca6e3be02d9d0b679bf602eee5f94494f08916b30604c  resources.mjs
+-6a15b89d758be504e2073b70ceadd219c117161951ac6857758e8d0127de1aca  run.mjs
++e3366f3e842197041d4662bd42971b90e4df4ea0bce3ab854c9b05bcbb54aa24  run.mjs

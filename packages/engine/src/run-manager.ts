@@ -2838,7 +2838,7 @@ export class RunManager {
       terminal.type === 'run.cancelled'
         ? { status: 'cancelled', waiting: undefined }
         : terminal.type === 'run.failed'
-          ? { status: 'failed', failure: terminal.failure }
+          ? { status: 'failed', failure: terminal.failure, waiting: undefined }
           : {
               status: terminal.status,
               outcome: terminal.outcome,
@@ -3070,6 +3070,7 @@ export class RunManager {
       status: 'failed',
       failure,
       finishedAt: this.now(),
+      waiting: undefined,
     });
     if (failed) await this.finalizeTerminal(runId);
   }

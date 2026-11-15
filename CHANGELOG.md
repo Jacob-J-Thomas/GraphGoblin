@@ -4,6 +4,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- A run clears its current wait when it moves to failed, including recovery after a failure
+  event was committed before the status write (#410). Park, wake and child events remain in
+  the log. Runs already marked failed by an older build can still carry a stale wait.
+
 - Authored context-mutation errors fail with `MUTATION_ERROR`, the node, the failed operation and
   a bounded evaluator or patch cause (#381, #414, ADR-0080). Authored Exit return evaluation
   errors use `EXPRESSION_ERROR`. Both failures refuse Resume.

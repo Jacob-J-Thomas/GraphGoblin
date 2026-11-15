@@ -1,0 +1,21 @@
+# #410 baseline launcher preflight refusal
+
+The one launcher invocation exited 1 before starting the project Node version probe or native fixture. I used the correct admission file and SHA-256 with a forward-slash Windows path. The sealed launcher requires canonical backslashes in its path-containment check. This was my invocation error.
+
+- **Tool execution** — `exec_command` chunk `1a67a3`, exit `1`, elapsed `1.4216887 s`. The invoked PowerShell executable was the explicitly requested 7.6.9 host. The admission argument was `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-410-native-baseline-admission-01.json`, verified against `8a46c3ee6f5b92fd93c5c9d46a315f2d480f276ac46acd7aabbebb329c8f33e1` before invoking PowerShell.
+- **Scope reached** — `Confirm-QaUnder` rejected the supplied literal before admission JSON parsing. The subsequent Node version probe, launch receipt directory creation and native supervisor spawn were unreachable. Independent readback immediately after exit reported that both the planned launcher receipt directory and the planned native evidence directory were absent. There was no child exit to record, no listener/store/PID to clean, and no W1–W4 observation.
+- **Bound inputs** — Actual main `154401c7b47c1e56b62a6daec50e2a3145ea967d`, tree `7e611f71ac8b3693d574b8f08869d68fed19af4b`, clean worktree and index `57ebeaea3dbcd1b2cc98ecd946603a48f5c9666b9a899577d6fcafff679862dc`. The admission, build-binding, build receipts, and all 11 native/launch manifest payload hashes matched. Build binding `121b25eae6c8784313649af2e057569d86bdee60edb3aae77cf8c90639066ac3` covers 28,329 tracked files, 1,231 outputs under 13 roots, 17 selected dependency files, and 22 workspace links. The earlier 01 build preflight refusal preceded the sole actual 02 build and is distinct from this launcher refusal.
+
+Original tool output, with terminal line breaks preserved.
+
+```text
+Exception: C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\runtime-410-launch-preparation\launch.ps1:43
+Line |
+  43 |      throw "Path must be under $Parent : $Path"
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Path must be under C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch :
+     | C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/runtime-410-native-baseline-admission-01.json
+```
+
+The canonical admission argument is `C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\runtime-410-native-baseline-admission-01.json`. A future invocation requires fresh root admission. The original launcher, fixture, admission and build bytes were preserved.
+

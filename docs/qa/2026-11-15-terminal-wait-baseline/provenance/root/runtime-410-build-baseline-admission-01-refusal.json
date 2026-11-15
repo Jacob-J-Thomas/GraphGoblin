@@ -1,0 +1,10 @@
+{
+  "at": "2026-11-15 19:40:35 UTC",
+  "outcome": "pre-spawn admission refusal",
+  "command": "ProjectNode runtime-410-build-preparation/build.mjs runtime-410-build-baseline-admission-01.json <SHA256>",
+  "exitCode": 1,
+  "error": "AssertionError [ERR_ASSERTION]: input 'runtime-410-build-baseline-01' does not match /^runtime-410-build-baseline-[a-z0-9-]{3,48}$/u",
+  "location": "common.mjs:87 readAdmission; build.mjs:11 before readIdentity/mkdir/spawn",
+  "cause": "Root chose two-character evidence suffix; accepted helper requires at least3. No build/test/native app was started.",
+  "disposition": "Keep original admission immutable. New admission uses reviewed example basename runtime-410-build-baseline-review-01; no helper/source changes."
+}

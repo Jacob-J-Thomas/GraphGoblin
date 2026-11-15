@@ -1,0 +1,79 @@
+{
+  "issue": 410,
+  "branch": "codex/gg-20261115-terminal-waits",
+  "baseCommit": "154401c7b47c1e56b62a6daec50e2a3145ea967d",
+  "baseTree": "7e611f71ac8b3693d574b8f08869d68fed19af4b",
+  "node": "v22.23.4",
+  "pnpm": "12.8.1",
+  "indexMatchesBase": true,
+  "diffWhitespaceExitCode": 0,
+  "productChange": "Clear waiting in live failRun and recovered run.failed status transitions. The existing SQLite repository writes SQL NULL for explicit waiting: undefined.",
+  "verification": "Tests drive the real RunManager over its public port contract using its in-memory fixture. The recovery case gates the parent failed status write after the terminal append and starts a new manager over the same fixture. Independent native QA is a separate stage.",
+  "historicalBoundary": "A run already marked failed under the old behavior can still show its stale wait.",
+  "changedFiles": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "d74f237a831d30d6bfc1503bd84372d4f0787647b369da1892b60a38fa548168",
+      "gitBlob": "3390f5d477bbdd6c87244762e061866e4cc151ce"
+    },
+    {
+      "path": "docs/05-execution-engine.md",
+      "sha256": "5b10ce6a821b37fa08dc40742843f1f84a7e42641a2cdca8f85fc8a8b9c1c377",
+      "gitBlob": "4081943ee18baf66d7b17cd5d2e89b36e5920b73"
+    },
+    {
+      "path": "packages/engine/src/awaited-children.test.ts",
+      "sha256": "ab4a78b5c1b827e298cc1d95aed4c33f1c8010a6efcba0906fd78db102fd214f",
+      "gitBlob": "5c024b63473cdcc2e3a878915c81107ef352c66e"
+    },
+    {
+      "path": "packages/engine/src/run-manager.ts",
+      "sha256": "fa218535f470283382e99c8cfb6ccf2f74e668b695ae77ef8fb0d7b179f2ada8",
+      "gitBlob": "cda770decf420af2ad3534628b86c58a940a2d5c"
+    }
+  ],
+  "checks": [
+    {
+      "log": "01-old-production-regressions.log",
+      "command": "pnpm.cmd --filter '@graphgoblin/engine' test src/awaited-children.test.ts -t 'current wait during'",
+      "exitCode": 1,
+      "result": "Both cases reached the missing waiting assertion and failed with the original parent child wait. 2 failed, 26 filtered.",
+      "logSha256": "4e5fae1c352ada4084ed7bac9cb59d9e9151fa6adc937512b7db31ce26b5192f"
+    },
+    {
+      "log": "02-focused-engine.log",
+      "command": "pnpm.cmd --filter '@graphgoblin/engine' test src/awaited-children.test.ts src/child-failure-parity.test.ts src/finalization.test.ts src/recovery.test.ts src/run-manager.test.ts src/handlers/waiting.test.ts",
+      "exitCode": 0,
+      "result": "197 tests across six files.",
+      "logSha256": "17d764ba1ec75ebf4b28c85f497a21d494f50d98479e10ce151b78fca81b3284"
+    },
+    {
+      "log": "03-engine-typecheck.log",
+      "command": "pnpm.cmd --filter '@graphgoblin/engine' typecheck",
+      "exitCode": 0,
+      "result": "Package build-mode and test-inclusive TypeScript checks.",
+      "logSha256": "46ca657a6855acabd4eeb66cde5accdb13936c536eb583d174a9b2b3a35479ca"
+    },
+    {
+      "log": "04-engine-lint.log",
+      "command": "pnpm.cmd --filter '@graphgoblin/engine' lint",
+      "exitCode": 0,
+      "result": "Engine ESLint.",
+      "logSha256": "cc5a0b39c7052d24c24888403c48018b4fcccc9d799f81be6c9c30c9e19c85fc"
+    },
+    {
+      "log": "05-format.log",
+      "command": "pnpm.cmd exec prettier --check CHANGELOG.md docs/05-execution-engine.md packages/engine/src/awaited-children.test.ts packages/engine/src/run-manager.ts",
+      "exitCode": 0,
+      "result": "All four changed files passed.",
+      "logSha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "log": "06-engine-coverage.log",
+      "command": "pnpm.cmd --filter '@graphgoblin/engine' test:coverage",
+      "exitCode": 0,
+      "result": "1,814 tests across 66 files. Lines 96.94% (3432/3540), branches 91.22% (3213/3522), statements 95.62% (3762/3934), functions 97.7% (681/697).",
+      "logSha256": "7c44d8737c92fdfa656cea2343859278c808219c9bca3356116dfcab8f094a7e"
+    }
+  ]
+}
