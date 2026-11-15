@@ -1,0 +1,125 @@
+# Space cards queued-fit correction: implementation report
+
+Checkout `C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin`, HEAD `daa43634c8a093f2cde8239a3501ae4b6b14c112` (unchanged), Node v22.23.4 for the whole shell, `pnpm.cmd`.
+Nothing staged, committed, pushed or merged; no issue change; no subdelegation; no native browser, API or provider run; ports 4747/4748, owner checkout/service/store, retained QA, the delivery register and dependency files untouched.
+
+## Identity check
+
+- HEAD `daa43634…` and a clean tree matched. `origin/main` is `177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd` (the brief's main) and is an ancestor of HEAD. The **local** `main` branch ref in the shared repository is stale (`b3b5e1874a82…`); that is not drift of this checkout and I did not touch it.
+- Original hashes (before any edit), in `original-source-sha256.txt`, `original-index-entries.txt`, `original-index-file-sha256.txt`, `original-tree.txt`, with copies of the four original sources in `original/`:
+  - `Canvas.tsx` `fbb3cb1c331c12b74212b2492b229540d534bfbb3b912da016124019566b0bf3`
+  - `Canvas.space-cards.test.tsx` `f00316c9051daa27a4c56deb80179b7b1fae8c6b8f1d7c581869ca6494979238`
+  - `Canvas.test.tsx` `1128ef6ec78f93cf6279f1cd9f32e67e86332779d94edc3cda40471304475d25`
+  - `docs/09-frontend-and-pwa.md` `147472b2fcd502be40227cb8639b64b0553a47439751ab979c31aad46ccfc01f`
+  - index file `8e3a655cc0330d7950d156184e2bd0e183e147232023c62cfb3ef24ac2939976`, tree `a3f55255f1309606e024171b9b3e4e943c004966`.
+- One side effect to disclose: to capture the tree hash I ran `git write-tree` once. It writes only the tree object HEAD already has (same id), and does not touch the index or any ref.
+
+## Final state (hashes)
+
+| path | sha256 |
+| --- | --- |
+| `apps/web/src/editor/Canvas.tsx` | `710aad916f36be3d055c06c7f242cef0cfc315034fba44424c5d0afe5f805015` |
+| `apps/web/src/editor/Canvas.space-cards.test.tsx` | `725774423d85c6cf6db7199abce9a0b5ccde4f39cf3e2df8f9c449cde7a0c4d1` |
+| `apps/web/src/editor/Canvas.test.tsx` | `c1ac17fea24ccbdc10c5d60aa81f5d110a2592b896e112cf81ac3db3f2f03736` |
+| `apps/web/src/editor/Canvas.space-cards.fit.test.tsx` (new) | `8bdf91eb9fd849c641d4b4012e6529d7353218d695a8cfac7474c02cd6ab8a38` |
+| `docs/09-frontend-and-pwa.md` | `f2f9f0f9e2f9f6ee11343fc7cf84ce1d48acacfca83e67ae4d021f4d95802706` |
+
+Index file after: `8e3a655cc0330d7950d156184e2bd0e183e147232023c62cfb3ef24ac2939976` (identical to before); the four tracked index entries are identical; `git diff --cached` is empty. `git status --porcelain`: four ` M` paths above plus `?? Canvas.space-cards.fit.test.tsx`, nothing else.
+Full diff: `final/full.diff` (sha256 `2fb69648f4842cf1fe87ec45598b9b1323aba51e11c6e8d633e8cd0da1fa41ab`, 1,331 lines: `final/tracked.diff` for the four modified files plus `final/new-fit-test.diff` from `git diff --no-index`, so no `git add -N` was needed). Copies of the five final files: `final/changed-files/`.
+Diffstat (tracked): `Canvas.space-cards.test.tsx` +403/-16, `Canvas.test.tsx` +3, `Canvas.tsx` +88/-15, `docs/09` +2/-2, plus the new 575-line test.
+
+## The correction (apps/web/src/editor/Canvas.tsx)
+
+- `FIT_PADDING` and `OPENING_MIN_ZOOM` constants; `FIT_VIEW_OPTIONS`, `INITIAL_FIT_VIEW_OPTIONS`, `fitOnOpen` and `<Controls fitViewOptions>` keep exactly their old values, so the opening fit and manual Fit View are unchanged.
+- Module helpers: `isLength` (finite and > 0), `paneMeasured(state)` (the selector, named so the mocks can find it) and `cardBounds(definition, measured)`, the union of the draft's own positions and Canvas's measured sizes, looked up with `Object.hasOwn`, `undefined` when any card has no size or a non-positive/non-finite one.
+- Hooks: `useReactFlow()` now supplies `setViewport` and the public `viewportInitialized`; `useStoreApi()` for the live pane size; `useStore(paneMeasured)` as the reactive retry trigger (no polling, no timer, no private state).
+- The pending record is `{ definition, generation, revision }`, captured right after `spaceCards()` returns `'applied'`.
+- The effect: nothing pending, return. Otherwise first drop the fit for good if the rendered `definition`/`generation` or the store's own live `definition`/`generation`/`revision` differ from the record. Then, if the viewport is not initialized, any card is not measured to a positive finite size or the live pane is not positive and finite, keep waiting (the effect runs again when `measured`, `viewportInitialized` or `paneReady` change). Otherwise clear the record and call `setViewport(getViewportForBounds(bounds, pane.width, pane.height, 0.5, 2, FIT_PADDING))` in the same synchronous turn as those checks. There is no `fitView`, no frame, timer, promise or private fit-state write, and nothing is left to clean up.
+- Documented in the code comment: why not `fitView`, why `revision` is in the record (undo+redo returns the same draft object), why `paneReady` is a retry trigger only.
+
+## Tests
+
+### New real-dependency regression, `Canvas.space-cards.fit.test.tsx` (8 tests)
+
+Real Canvas on the installed xyflow 12.12.0 and d3-zoom in jsdom, inside `StrictMode` and `ReactFlowProvider`. Fixture: card and pane sizes, a reporting `ResizeObserver`, a `checkVisibility` stub on the renderer element (a pane xyflow cannot measure yet), and one controlled intervention: `window.requestAnimationFrame` can be held and released (delegating to jsdom's own when not held). **This is a controlled component fixture, not native verification.** Oracle: `flow.getViewport()` and a read-only count of xyflow's transform changes.
+
+1. control: with frames held, manual Fit View waits for its frame and then fits (the hold really intercepts a queued fit).
+2. critical: from a zoomed-out view, hold frames, press Space cards, `store().undo()`: the viewport is unchanged across Undo and after release; Space cards set the spaced fit once and queued no xyflow fit callback; Redo leaves the view alone.
+3. control: unheld, Space cards fits the spaced draft once (also compared with hand-worked `{144, 280, 2}`), and Undo, Redo, an edit or a load never fit again; manual Fit View still fits.
+4. a pane xyflow has not measured: the fit is kept, lands once at the measured size, and is spent.
+5. the same pane wait is dropped by Undo+Redo returning the **same draft object** (the test asserts the identity premise and `revision + 2`).
+6. the same wait is dropped by an edit.
+7. the same wait is dropped by a load.
+8. unmount, with frames held and with a fit still waiting for the pane: no console error, no queued fit.
+
+### Evidence against exact old production (run once; `negative-old-production/`)
+
+`Canvas.tsx` hash was the original `fbb3cb1c…` before and after the run; test file as run `b863236162995cc8bdf3f6d4972bea26921bf90b73008c327b27a132d63415ff` (kept as `Canvas.space-cards.fit.test.tsx.as-run`); the full log is `vitest-run.log`, exit 1. Outcome: **6 failed, 2 passed**.
+
+- Passed on old production, as controls should: test 1 (hold control) and test 3 (unheld positive and manual Fit View).
+- **Test 2 failed exactly at the viewport oracle** (`expect(viewport()).toEqual(afterSpace)`, line 383): expected `{x: 446.667, y: 300, zoom: 1.667}` (the view Undo found), received `{x: 416, y: 280, zoom: 2}`, the restored pile's own fit. Everything before it (history, restored pile, offer back, Redo available) passed on old source. This is the product defect on real xyflow and d3.
+- Test 8 failed because old Space left one queued xyflow fit callback (`frames.matching()` 1, expected 0).
+- **Tests 4 to 7 stopped at my fixture's setup premise, not at an oracle.** My `checkVisibility` stub hid `.react-flow`, but xyflow measures its `.react-flow__renderer` element, so the pane was measured at 1200 and the premise `width === 0` failed. They say nothing about old production. I fixed the stub (`as-run-vs-final-fit-test.diff` is the entire delta: the stub's class name and header comment wording) and **did not re-run old production**. The old source has therefore not been run against the corrected pane tests; their sensitivity is shown by the mutation runs below instead.
+
+### Mocked suite, `Canvas.space-cards.test.tsx` (44 tests, was 27)
+
+Mocks gain a reactive fake pane/viewport (`useStore`, `useStoreApi`, `useReactFlow().viewportInitialized`, `setViewport`), the real `paneMeasured` selector running on it; `fitView` stays in the mock and is asserted never called. `owedView()` works the expected viewport independently from `store().definition` positions and measured sizes with the real `getViewportForBounds`. New or changed cases: exactly one `setViewport` with the owed view; set as the press is handled (sync `fireEvent`, no await); waits while a card is unmeasured, 0×h, w×0, negative, NaN or Infinity; `constructor` card id; pane with no width, no height, no size, negative, NaN and Infinity (each waits, then fits once at the measured size, then is spent); viewport not initialized; readiness changes then an edit drops it for good; Undo+Redo in one act (same object, revision +2); a canvas lagging the store (renders the spaced draft while the store is undone); a canvas rendering an older draft than the store holds; input between render and effect (a dirty load injected from a layout effect, whose revision equals the pending one); load; unmount while waiting; existing refusal/gate/result cases now assert `setViewport` instead of `fitView`.
+`Canvas.test.tsx`: one added mock entry, `useStoreApi: () => flowStoreStub`; no assertion changed.
+
+### Sensitivity (temporary one-line mutations of the final `Canvas.tsx`; `mutation-round3-final/`, runner `mutation/run-mutations.mjs`; the source hash was verified restored after every round)
+
+| mutation | result on the two Space-cards files |
+| --- | --- |
+| M1 drop `revision` check | 2 fail (mocked and real undo+redo identity) |
+| M2 drop all live checks | 4 fail |
+| M3 drop live definition/generation, keep revision | 1 fails (the render/effect intrusion with equal revision) |
+| M4 drop the rendered check | 1 fails (canvas rendering an older draft) |
+| M5 drop `viewportInitialized` | 1 fails |
+| M6 drop live pane check | 12 fail |
+| M7 drop `paneReady` from the effect dependencies | 7 fail (mocked and the real pane test) |
+| M8 plain size lookup instead of `Object.hasOwn` | **survives (0 fail)** |
+| M9 any size counts | 1 fails |
+| M10 fit never spent | 6 fail |
+
+M8 survives because `isLength` already rejects the prototype value (`Object` has no `width`); `Object.hasOwn` is explicit defence in depth, kept as the design asked. Round 1 (before the intrusion test) had M3 surviving too; its logs are in `mutation/`, round 2 in `mutation-round2/`.
+
+## Commands and results
+
+| # | command (all from the checkout, Node 22.23.4) | result | log |
+| --- | --- | --- | --- |
+| 0 | `pnpm.cmd --filter @graphgoblin/web exec vitest run src/editor/Canvas.space-cards.gate.test.tsx` (baseline, before edits) | pass, 10/10 | `logs/00-baseline-gate-test.log` |
+| 1 | `pnpm.cmd --filter @graphgoblin/web typecheck` (new test, old production) | exit 0 | `logs/02-…` |
+| 2 | new fit test vs exact old production | exit 1, 6 failed / 2 passed, see above | `negative-old-production/vitest-run.log` |
+| 3 | mocked suite, first run after the correction | 41 pass, 1 fail: my own test oracle indexed `heights['constructor']` through the prototype (NaN); production returned the right `{144, 300, 2}`; oracle fixed with `Object.hasOwn` | `logs/04-…` |
+| 4 | mocked suite again; new fit file | 42/42; 8/8 | `logs/05-…`, `logs/06-…` |
+| 5 | `pnpm.cmd --filter @graphgoblin/web typecheck` | exit 0 | `logs/07-typecheck-first.log` |
+| 6 | scoped `eslint` (5 Canvas files) | **first run exit 1**: `react-hooks/rules-of-hooks`, my mock called `useSyncExternalStore` conditionally (no rule relaxed; mock restructured to call it unconditionally) | `logs/08-…` |
+| 7 | scoped `eslint` again | exit 0, no output | `logs/09-…` |
+| 8 | affected set, first (21 files) | 21 files, 407 tests pass | `logs/10-…` |
+| 9 | final: `prettier --check` (5 files incl. docs) | exit 0 | `final/prettier-check.log` |
+| 10 | final: scoped `eslint` (Canvas.tsx, Canvas.test, space-cards test, fit test, gate test) | exit 0 | `final/eslint-scoped.log` |
+| 11 | final: `pnpm.cmd --filter @graphgoblin/web typecheck` | exit 0 | `final/typecheck.log` |
+| 12 | final affected set: Canvas.test, Canvas.space-cards (mocked), .fit, .gate, EditorPage.space-cards, EditorPage, EditorPage.undo, EditorPage.voice, viewport-gesture.contract, viewport-gesture, useUndoShortcuts, UndoRedo, UndoRedo.press, history, store.space-cards, store, space-cards, pointer-press, Palette, NodeCard, useAutosave | **21 files, 409 tests pass** | `final/affected-tests.log` |
+| 13 | stability: fit file ×5 (before the dead-guard removal), mocked+fit ×3 on the final hash | all pass (8/8; 52/52) | `stability/` |
+
+Not run, as directed: full build, `test:coverage`, full-repo lint, e2e/native browser. No threshold, exclusion, timeout or retry setting was changed.
+
+## Docs (`docs/09-frontend-and-pwa.md`, lines 277 and 283 only)
+
+The Space cards "Afterwards" bullet now says how the fit is set (measured bounds, `getViewportForBounds` + `setViewport`, opening padding and 50%/200% limits, not `fitView` and why, kept until readiness, dropped by edit/Undo/Redo/load/unmount with the live identity and revision read in the same turn, opening and Fit View unchanged). The "Regression" bullet describes the new mocked cases and the new file and says plainly that held frames are a jsdom fixture, not a native check. Line 264 (Fit View paragraph) still says Space cards "fits once more with the same options", which remains true, so it is unchanged. The history section, CHANGELOG, guide and `store.ts` comment are untouched.
+
+## Deviations from the accepted design
+
+1. Readiness is stricter, per the root disposition: the design only waited for an unmeasured or zero-size card; this also waits for a positive finite pane and `viewportInitialized`, reactively. The design read the pane only through `useStoreApi`; I added the boolean `useStore(paneMeasured)` as the retry trigger (Canvas does not re-render on every pane resize) and the public `useReactFlow().viewportInitialized`.
+2. Real-dependency file: added hidden-pane (readiness, ABA, edit, load) cases beyond the design's four. The design's "positive" case covers nothing automatic; I also added the manual Fit View control after Space. Presses use `fireEvent.click(…, {detail: 1})` rather than the gate test's `press` helper.
+3. Mocked suite: a reactive fake pane replaces the design's static stub for `Canvas.space-cards.test.tsx`; `Canvas.test.tsx` uses the design's one-entry stub (shaped `{getState}`).
+4. Removed an unreachable empty-draft guard from `cardBounds` (a spaced draft has at least two cards); documented in its comment.
+5. `Object.hasOwn` retained although M8 shows `isLength` alone suffices.
+
+## Limits and remaining QA (root)
+
+- Old production was run once; four hidden-pane tests stopped at my fixture premise there (above). The oracle test and both controls ran properly.
+- jsdom only: nothing here shows how often the queued-fit window opens in a browser, or what a browser paints. `getViewportForBounds` receives the pane size xyflow stores and Canvas's `measured` sizes, the same inputs the removed `fitView` used, so the native positive should still read `translate(72px, 303.5px) scale(1.57895)`, but that is for the compiled-build run to confirm.
+- Native plan (design 5C, root disposition): the corrected plan must not require the removed queued callback; the Space press should enqueue no matching callback, the viewport after Space should match the old uninterrupted control, and it should stay unchanged across trusted Ctrl+Z, release and Redo; opening should still be `translate(246px, 279.5px) scale(2)`.
+- Still to run by root: `pnpm test:coverage`, `pnpm check`, build, full lint, current CI; Luna's separate docs/changelog patch combination.
+- Design risk unchanged: the opening fit and the Fit View button remain on xyflow's queued `fitView`.

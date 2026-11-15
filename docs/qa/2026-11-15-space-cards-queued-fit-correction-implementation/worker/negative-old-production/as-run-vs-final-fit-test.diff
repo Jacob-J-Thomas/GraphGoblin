@@ -1,0 +1,37 @@
+--- /c/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-queued-fit-implementation/negative-old-production/Canvas.space-cards.fit.test.tsx.as-run	2026-11-15 02:06:00.598639000 -0600
++++ apps/web/src/editor/Canvas.space-cards.fit.test.tsx	2026-11-15 02:07:07.017250100 -0600
+@@ -1,11 +1,11 @@
+ /**
+  * The one view fit Space cards asks for, on the installed dependencies (#208, ADR-0077): the real
+  * Canvas on @xyflow/react and d3-zoom in jsdom, inside StrictMode and a provider, as the editor page
+- * renders it. No dependency or library timer is replaced. The fixture supplies the layout jsdom
+- * lacks (card and pane sizes, a ResizeObserver that reports them, and `checkVisibility`, which
+- * xyflow asks before it measures the pane) and one controlled scheduling intervention: while it
+- * holds animation frames, a callback requested through `window.requestAnimationFrame` is kept
+- * until the test releases it, and while it does not, every request goes to jsdom's own.
++ * renders it. No dependency module is replaced. The fixture supplies the layout jsdom lacks (card
++ * and pane sizes, a ResizeObserver that reports them, and `checkVisibility`, which xyflow asks of
++ * its renderer element before it measures the pane) and one controlled scheduling intervention:
++ * while it holds animation frames, a callback requested through `window.requestAnimationFrame` is
++ * kept until the test releases it, and while it does not, every request goes to jsdom's own.
+  *
+  * Why this file exists apart from `Canvas.space-cards.test.tsx`, whose `fitView` mock resolves at
+  * once and can only show that a fit was asked for: xyflow's `fitView` queues the fit and the
+@@ -41,7 +41,7 @@
+ const actEnvironment = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean | undefined };
+ const VIEW = { width: 1200, height: 800 };
+ 
+-/** What the fixture says is hidden: the flow's container, as in a tab that is not showing yet. */
++/** Whether the fixture hides the pane xyflow measures (its renderer), as in a tab not showing yet. */
+ const layout = { hidden: false };
+ 
+ /** jsdom has no layout: cards and the flow get their sizes; everything else stays 0 × 0. */
+@@ -153,7 +153,7 @@
+   Object.defineProperty(HTMLElement.prototype, 'checkVisibility', {
+     configurable: true,
+     value(this: HTMLElement) {
+-      return !(layout.hidden && this.classList.contains('react-flow'));
++      return !(layout.hidden && this.classList.contains('react-flow__renderer'));
+     },
+   });
+   frames.install();

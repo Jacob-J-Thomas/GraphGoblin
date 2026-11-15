@@ -1,0 +1,64 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\drivers\\run-case.mjs" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1\\drivers\\run-case.mjs"
+index 22e3b7b..0e698d3 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\final-native-preparation\\drivers\\run-case.mjs"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1\\drivers\\run-case.mjs"
+@@ -1,4 +1,4 @@
+-// #208 corrected Space cards. The previous coordinate fixture correction consumes batch 1 of 2.
++// #208 queued-fit targeted D1. Both original fixture corrections are spent.
+ // Requires root's exact source/build and exclusive native grant. Every run directory is immutable evidence.
+ // Usage: node run-case.mjs <admission.json> <cached-cli-entry> <group> <attempt>
+ import assert from 'node:assert/strict';
+@@ -12,14 +12,11 @@ import { fileURLToPath } from 'node:url';
+ 
+ 
+ const [admissionFile, cli, group, attempt] = process.argv.slice(2);
+-assert(admissionFile && cli && group && attempt, 'Usage: node run-case.mjs <admission.json> <cached-cli.js> <group> <initial|correction2>');
++assert(admissionFile && cli && group && attempt, 'Usage: node run-case.mjs <admission.json> <cached-cli.js> <group> initial');
+ const here = dirname(fileURLToPath(import.meta.url));
+ const base = dirname(here);
+ assert.equal(process.version, 'v22.23.4');
+-const matrix = {
+-  'apply-d1':'d1-fine-light','gestures-d1':'d1-fine-light',n768:'n768-fine-light',
+-  'touch-d2':'d2-coarse-dark','double-r512':'r512-reflow200','outside-d1':'d1-fine-light','device-d1':'d1-fine-light',
+-};
++const matrix = { 'queued-fit-d1': 'd1-fine-light' };
+ const admission = JSON.parse(await readFile(resolve(admissionFile), 'utf8'));
+ assert.equal(admission.status, 'authorized');
+ assert.equal(admission.schema, '208-space-corrected-native-admission/v1');
+@@ -29,10 +26,10 @@ if(admission.candidateScope==='actual-main')assert.equal(admission.base,admissio
+ assert.equal(admission.cliPath, resolve(cli), 'Exact admitted cached Playwright CLI required');
+ assert.equal(createHash('sha256').update(await readFile(resolve(cli))).digest('hex'), admission.cliSha256, 'Playwright CLI bytes differ');
+ assert(admission.nativeGrant && admission.authorizedGroups.includes(group), 'Missing root grant for the exact native group');
+-assert(/^(initial|correction2)$/.test(attempt) && matrix[group], 'Outside the bounded matrix');
+-const expectedManifest = attempt === 'initial' ? 'driver-manifest.json' : 'driver-' + attempt + '-manifest.json';
++assert(attempt === 'initial' && matrix[group], 'Only one initial queued-fit D1 run is admitted');
++const expectedManifest = 'driver-manifest.json';
+ assert.equal(admission.driverManifest, expectedManifest, 'Use the attempt-specific root-approved driver');
+-assert.equal(basename(here), attempt === 'initial' ? 'drivers' : 'drivers-' + attempt);
++assert.equal(basename(here), 'drivers');
+ const frozenBytes = await readFile(join(base, expectedManifest));
+ const frozen = JSON.parse(frozenBytes);
+ assert.equal(createHash('sha256').update(frozenBytes).digest('hex'), admission.driverManifestSha256);
+@@ -62,21 +59,8 @@ const ledgerBytes=await readFile(resolve(admission.fixtureLedgerPath));
+ assert.equal(createHash('sha256').update(ledgerBytes).digest('hex'),admission.fixtureLedgerSha256);
+ const corrections=JSON.parse(ledgerBytes);
+ const beforeLedger=JSON.parse(await readFile(join(base,'fixture-corrections-historical.json'),'utf8'));
+-assert(corrections.length===1||corrections.length===2,'Global Space fixture cap is two batches');
++assert.equal(corrections.length,2,'Both global Space fixture batches are already spent');
+ assert.deepEqual(corrections[0],beforeLedger[0],'The prior correction must remain exactly recorded');
+-if(attempt==='correction2'){
+-  const row=corrections[1];
+-  assert.equal(row?.attempt,'correction2');
+-  assert(row.rootApproved&&row.firstEvidence&&row.fixtureCause&&row.unchangedOracles===true&&row.groups.includes(group));
+-  const firstRunPath=join(base,'runs',group+'-initial','run.json');
+-  assert(existsSync(firstRunPath),'A pre-execution static admission failure is not an eligible native correction attempt');
+-  const first=JSON.parse(await readFile(firstRunPath,'utf8'));
+-  assert.equal(first.head,binding.head);
+-  assert.equal(first.scenario,group);
+-  assert.equal(first.label,group+'-initial');
+-  assert(first.failure||first.harnessError,'Completed cases must not be rerun in this admission');
+-  assert.notEqual(first.failure?.kind,'product','Product failures cannot be retried as fixture corrections');
+-}
+ const runs = join(base, 'runs');
+ await mkdir(runs, { recursive: true });
+ const output = join(runs, label);

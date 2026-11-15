@@ -1,0 +1,62 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1\\drivers\\run-case.mjs" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1-correction3\\drivers\\run-case.mjs"
+index 0e698d3..cf18065 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1\\drivers\\run-case.mjs"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1-correction3\\drivers\\run-case.mjs"
+@@ -1,4 +1,4 @@
+-// #208 queued-fit targeted D1. Both original fixture corrections are spent.
++// #208 queued-fit D1 fixture correction3 authorized separately under D-035.
+ // Requires root's exact source/build and exclusive native grant. Every run directory is immutable evidence.
+ // Usage: node run-case.mjs <admission.json> <cached-cli-entry> <group> <attempt>
+ import assert from 'node:assert/strict';
+@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
+ 
+ 
+ const [admissionFile, cli, group, attempt] = process.argv.slice(2);
+-assert(admissionFile && cli && group && attempt, 'Usage: node run-case.mjs <admission.json> <cached-cli.js> <group> initial');
++assert(admissionFile && cli && group && attempt, 'Usage: node run-case.mjs <admission.json> <cached-cli.js> <group> correction3');
+ const here = dirname(fileURLToPath(import.meta.url));
+ const base = dirname(here);
+ assert.equal(process.version, 'v22.23.4');
+@@ -26,7 +26,7 @@ if(admission.candidateScope==='actual-main')assert.equal(admission.base,admissio
+ assert.equal(admission.cliPath, resolve(cli), 'Exact admitted cached Playwright CLI required');
+ assert.equal(createHash('sha256').update(await readFile(resolve(cli))).digest('hex'), admission.cliSha256, 'Playwright CLI bytes differ');
+ assert(admission.nativeGrant && admission.authorizedGroups.includes(group), 'Missing root grant for the exact native group');
+-assert(attempt === 'initial' && matrix[group], 'Only one initial queued-fit D1 run is admitted');
++assert(attempt === 'correction3' && group === 'queued-fit-d1', 'Only the D1 correction3 attempt is admitted');
+ const expectedManifest = 'driver-manifest.json';
+ assert.equal(admission.driverManifest, expectedManifest, 'Use the attempt-specific root-approved driver');
+ assert.equal(basename(here), 'drivers');
+@@ -59,8 +59,31 @@ const ledgerBytes=await readFile(resolve(admission.fixtureLedgerPath));
+ assert.equal(createHash('sha256').update(ledgerBytes).digest('hex'),admission.fixtureLedgerSha256);
+ const corrections=JSON.parse(ledgerBytes);
+ const beforeLedger=JSON.parse(await readFile(join(base,'fixture-corrections-historical.json'),'utf8'));
+-assert.equal(corrections.length,2,'Both global Space fixture batches are already spent');
+-assert.deepEqual(corrections[0],beforeLedger[0],'The prior correction must remain exactly recorded');
++const priorLedgerBytes=await readFile(join(base,'fixture-corrections-correction2.json'));
++assert.equal(corrections.length,3,'One D-035 extension after the two spent fixture batches');
++assert.equal(createHash('sha256').update(priorLedgerBytes).digest('hex'),corrections[2].beforeLedgerSha256);
++assert.deepEqual(corrections.slice(0,2),JSON.parse(priorLedgerBytes));
++assert.deepEqual(corrections[0],beforeLedger[0],'The first correction must remain exactly recorded');
++const extension=corrections[2];
++assert.equal(extension.attempt,attempt);
++assert.deepEqual(extension.groups,[group]);
++assert.equal(extension.policy.id,'D-035');
++assert.equal(extension.unchangedOracles,true);
++assert.equal(extension.firstStopHead,binding.head);
++assert.equal(extension.firstStopTree,binding.tree);
++assert.equal(extension.firstStopBindingSha256,bindingHash);
++const firstEvidence=join(base,'..','target-d1');
++for (const {path,sha256} of extension.firstStop) {
++  assert(!isAbsolute(path) && !path.split('/').includes('..') && !path.includes(String.fromCharCode(92)), 'Invalid first-stop path');
++  assert.equal(createHash('sha256').update(await readFile(join(firstEvidence,path))).digest('hex'),sha256,'First-stop bytes differ: '+path);
++}
++const first=JSON.parse(await readFile(join(firstEvidence,'runs','queued-fit-d1-initial','run.json'),'utf8'));
++const terminal=JSON.parse(await readFile(join(firstEvidence,'cleanup-after-queued-fit-d1.json'),'utf8'));
++assert.equal(first.head,binding.head);
++assert.equal(first.label,'queued-fit-d1-initial');
++assert.equal(first.failure?.phase,'fit-trusted-rapid-undo');
++assert.match(first.failure.error,/No remaining Undo step/);
++assert(terminal.recorded.length===1 && terminal.recorded[0].resourceClean,'First-stop cleanup was not clean');
+ const runs = join(base, 'runs');
+ await mkdir(runs, { recursive: true });
+ const output = join(runs, label);

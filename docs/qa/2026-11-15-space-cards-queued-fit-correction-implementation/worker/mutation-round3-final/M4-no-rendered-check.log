@@ -1,0 +1,50 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.test.tsx (44 tests | 1 failed) 4637ms
+   ❯ Space cards on the canvas (#208) (24)
+     × drops a fit when the canvas still renders an older draft than the one the store spaced, and fits nothing of the draft it renders 59ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 51 passed (52)
+   Start at  02:27:50
+   Duration  10.98s (tests 44%, environment 27%, setup 10%, transform 10%, import 10%)
+
+
+--- stderr ---
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > drops a fit when the canvas still renders an older draft than the one the store spaced, and fits nothing of the draft it renders
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": 416,
+        "y": 300,
+        "zoom": 2,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:509:29
+    507|     // draft it asked for: the canvas is not rendering it, so what it …
+    508|     measure();
+    509|     expect(setViewport).not.toHaveBeenCalled();
+       |                             ^
+    510|     expect(fitView).not.toHaveBeenCalled();
+    511|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\web
+

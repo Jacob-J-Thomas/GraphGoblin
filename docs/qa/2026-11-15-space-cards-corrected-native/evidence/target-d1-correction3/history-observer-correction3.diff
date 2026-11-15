@@ -1,0 +1,45 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1\\drivers\\space.playwright.js" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1-correction3\\drivers\\space.playwright.js"
+index b904714..b612fe0 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1\\drivers\\space.playwright.js"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-space\\queued-fit-qa-preparation\\prepared-synchronous\\target-d1-correction3\\drivers\\space.playwright.js"
+@@ -1227,7 +1227,7 @@ async (page) => {
+         route:location.pathname,focus:document.activeElement?.getAttribute('data-testid')??document.activeElement?.tagName,
+         offer:!!document.querySelector('[data-testid="space-cards-offer"]'),
+         result:document.querySelector('[data-testid="space-cards-result"]')?.textContent.trim()??null,
+-        history:[...document.querySelectorAll('[data-history]')].map(el=>[el.dataset.history,el.title,el.disabled])};
++        history:[...document.querySelectorAll('[data-history]')].map(el=>[el.dataset.history,el.title,el.getAttribute('aria-disabled'),el.disabled])};
+     }
+     function record(type,details={}) {
+       if(!active)return;
+@@ -1350,8 +1350,8 @@ async (page) => {
+       const mutations=trace.rows.filter(row=>row.type==='viewport-style'&&row.styleViewportId===before.viewportId);
+       check(after.viewportId===before.viewportId&&mutations.length===1&&fitNear(mutations[0].from,fitZoomed)&&fitNear(mutations[0].to,fitSpaced)&&
+         fitNear(after.viewport,fitSpaced),'Exactly one actual Space fit to the established measured viewport');
+-      check(after.result==='Spaced 2 cards.'&&after.focus==='canvas'&&after.history.some(([dir,title,disabled])=>
+-        dir==='undo'&&title==='Undo space cards'&&!disabled),'Space preserves result, canvas focus and one named history step');
++      check(after.result==='Spaced 2 cards.'&&after.focus==='canvas'&&after.history.some(([dir,title,ariaDisabled])=>
++        dir==='undo'&&title==='Undo space cards'&&ariaDisabled!=='true'),'Space preserves result, canvas focus and one named history step');
+       const saved=await accepted('fit-positive-space',count,prior,expected);
+       positive={id:loopId,saved,after};
+     });
+@@ -1463,9 +1463,9 @@ async (page) => {
+       check(fitNear(input.viewport,fitZoomed)||fitNear(input.viewport,fitSpaced),'Undo landed at an unqualified viewport','unwitnessed');
+       fitHeld(trace,input,before.viewportId,input.viewport,'Undo');
+       same(fitCoords(after),[['start',[0,0]],['finish',[0,0]]],'Undo restores the original pile');
+-      check(after.offer&&!after.result&&after.history.some(([d,t,disabled])=>d==='redo'&&t==='Redo space cards'&&!disabled),
++      check(after.offer&&!after.result&&after.history.some(([d,t,ariaDisabled])=>d==='redo'&&t==='Redo space cards'&&ariaDisabled!=='true'),
+         'One Undo restores offer and named Redo');
+-      check(after.history.some(([d,,disabled])=>d==='undo'&&disabled),'No remaining Undo step');
++      check(after.history.some(([d,,ariaDisabled])=>d==='undo'&&ariaDisabled==='true'),'No remaining Undo step');
+       const wire=await until(()=>{
+         const rows=writes();
+         return rows.every(row=>row.responseText!==undefined)&&{rows};
+@@ -1519,7 +1519,7 @@ async (page) => {
+       const trace=await fitTrace('in-place-reload',{conflict,after,device,writes:writes()});
+       const input=trace.rows.find(row=>row.type==='click'&&row.action==='Reload server draft'&&row.trusted);
+       fitHeld(trace,input,conflict.viewportId,conflict.viewport,'Authoritative in-place reload');
+-      check(after.viewportId===conflict.viewportId&&after.history.every(([,,disabled])=>disabled)&&!after.result,
++      check(after.viewportId===conflict.viewportId&&after.history.every(([,,ariaDisabled])=>ariaDisabled==='true')&&!after.result,
+         'Actual in-place load retains viewport identity and retires abandoned history/result');
+       same(fitCoords(after),[['start',[0,0]],['finish',[0,0]]],'Authoritative reload restores server positions');
+       same([device?.synced,device?.baseToken,wireToCanonical(device?.definition??{nodes:[]})],

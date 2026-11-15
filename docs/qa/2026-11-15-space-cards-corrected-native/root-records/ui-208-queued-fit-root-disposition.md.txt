@@ -1,0 +1,11 @@
+# Root disposition: queued-fit correction design
+
+Accepted for bounded implementation after the complete scan1 review. Root read the full Claude Opus5.5 xhigh design and independently traced the installed React/system/d3 synchronous no-duration viewport path. This is a correction of the existing approved #208 behavior, with no new product choice or architecture layer.
+
+Use Canvas-owned measured bounds and the public getViewportForBounds + setViewport path, preserving opening padding, 0.5 floor and maximum2. Keep final rendered/live definition, generation and revision checks in the same synchronous turn as actual viewport mutation. No library fit queue, private state write, animation/frame delay or await before the mutation. Retain ordinary opening and manual Fit paths.
+
+Implementation refinement: do not discard the pending fit while the public viewport is uninitialized or pane/card dimensions are not finite and positive. Use the existing public reactive hooks/measurement seam to retry when readiness arrives; do not create a poll/timer or reach into private fit state. Ensure measurement/readiness waiting still drops stale identity/revision. The design's assumption that Space cannot be pressed before readiness is not by itself sufficient evidence; keep this inexpensive boundary explicit and tested.
+
+The real-dependency regression may hold scheduling within its isolated test file to expose the original bug, with an actual manual-Fit control; clearly distinguish that controlled component fixture from native verification. The native correction plan must not require the removed callback to exist or inject an artificial yield into an otherwise synchronous corrected commit. A real-dependency/native positive should retain the observed fitted transform from the old uninterrupted control. Existing seven-group native data and original negative stay immutable; global native fixture correction budget remains2/2.
+
+Full Sol scan1 report43de6ffdfe407edfb798916214dcf29810a2833bb07e3898e15790a6da9f0f84 has one FIX-IN-PR root cause, no other blockers. Minor eligibility/history wording will be prepared by Luna separately as an external patch. Source mutation is now admitted only for the bounded Claude implementation; root owns Git/publication and later independent QA, targeted review/current CI and fresh Astra max final gate.

@@ -1,0 +1,35 @@
+[
+  {
+    "attempt": "correction1",
+    "groups": [
+      "alternate-r512"
+    ],
+    "scope": "Global #208 fixture correction batch 1 of 2",
+    "authorizedBy": "/root",
+    "authorization": "Explicit root dispatch after reviewing the initial failure and driver patch",
+    "firstEvidence": "runs/alternate-r512-initial/observed.json",
+    "firstEvidenceSha256": "45d7c15e5da3101b339e724b2627bc199a942326057ec8a2f6dfe0897f779af9",
+    "firstCoordinateEvidence": "runs/alternate-r512-initial/raw/0006-alternate-single-healthy-coordinates.json",
+    "firstCoordinateSha256": "05becdcdb5643a0331283eab6b90438c21e552353e5f8c0a94423d0a377c9eae",
+    "fixtureCause": "Long diagnostic fixture title wrapped the toolbar and displaced the original (93,290) target by 29 CSS px before any input.",
+    "fixtureChange": "Use newFixture('double-r512') in both fresh loops; leave coordinate, gesture, viewport, draft and history gates intact.",
+    "inputSent": false
+  },
+  {
+    "attempt": "correction2",
+    "groups": [
+      "double-r512"
+    ],
+    "scope": "Global #208 fixture correction batch 2 of 2, only when native execution launches",
+    "rootApproved": "Root explicitly approved fixture-only preparation. Native execution requires separate root grant.",
+    "firstEvidence": "runs/double-r512-initial/raw/0066-failure-r512-shift-repeat-drag.json",
+    "firstEvidenceSha256": "2d2b713e8265be436f45e7e8faa728ec86fa93150806a9cc7c87e5e9b5b41278",
+    "failedRun": "runs/double-r512-initial/run.json",
+    "firstScreenshot": "runs/double-r512-initial/failure-r512-shift-repeat-drag.png",
+    "firstScreenshotSha256": "e0c104758e7ab6499edeb5dcbf0c4ca434709228a0499ec399296fbdc3c4973a",
+    "fixtureCause": "The already stacked node upper-body sample points at R512 sit beneath the offer. The keyboard node setup used these pointer hits only to obtain an ID, then refused before sending native selection or gesture input.",
+    "fixtureChange": "Use the attached, visible, focusable Router node for the existing focus plus native Space selection. Prove actual focus and Selected and preserve original viewport, offer, Space and Zoom Out geometry. Keep every product input, real-pointer helper, timing window and assertion.",
+    "unchangedOracles": true,
+    "originalProductInputsSentInFailedStage": false
+  }
+]

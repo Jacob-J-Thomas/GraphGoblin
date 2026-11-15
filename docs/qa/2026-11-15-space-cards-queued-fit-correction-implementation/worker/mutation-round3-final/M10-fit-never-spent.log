@@ -1,0 +1,44 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.test.tsx (44 tests | 6 failed) 4620ms
+   ❯ Space cards on the canvas (#208) (24)
+     × waits while xyflow’s pane has no width, and fits once, at that size, when it is measured 56ms
+     × waits while xyflow’s pane has no height, and fits once, at that size, when it is measured 68ms
+     × waits while xyflow’s pane has no size at all, and fits once, at that size, when it is measured 52ms
+     × waits while xyflow’s pane has a negative width, and fits once, at that size, when it is measured 59ms
+     × waits while xyflow’s pane has a width that is not a number, and fits once, at that size, when it is measured 59ms
+     × waits while xyflow’s pane has an infinite height, and fits once, at that size, when it is measured 62ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  6 failed | 46 passed (52)
+   Start at  02:29:05
+   Duration  10.98s (tests 44%, environment 27%, transform 11%, import 10%, setup 8%)
+
+
+--- stderr ---
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has no width, and fits once, at that size, when it is measured
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has no height, and fits once, at that size, when it is measured
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has no size at all, and fits once, at that size, when it is measured
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has a negative width, and fits once, at that size, when it is measured
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has a width that is not a number, and fits once, at that size, when it is measured
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > waits while xyflow’s pane has an infinite height, and fits once, at that size, when it is measured
+AssertionError: expected "vi.fn()" to be called 1 times, but got 2 times
+ ❯ src/editor/Canvas.space-cards.test.tsx:367:27
+    365|       act(() => flow$.set({ width: 1200, height: 800 }));
+    366|       measure({ prep: 410 });
+    367|       expect(setViewport).toHaveBeenCalledTimes(1);
+       |                           ^
+    368|       expect(fitView).not.toHaveBeenCalled();
+    369|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\web
+

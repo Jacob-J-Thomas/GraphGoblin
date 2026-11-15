@@ -1,0 +1,138 @@
+I've finished the design. Nothing was edited, built, run or tested, and nothing was committed. All evidence comes from reading the checkout at `daa43634`, the installed `@xyflow/react` 12.12.0 / `@xyflow/system` 0.0.83 / `d3-zoom` 3.0.0, and the four probe files.
+
+**The fix:** stop using `fitView` for Space cards. Work out the fitted view in Canvas and apply it with `setViewport` in the same step that checks the store still holds the spaced draft. Nothing is left queued for a later graph to consume. Opening Fit and the Fit View button stay as they are.
+
+# Space cards queued-fit correction: design
+
+## 1. Root cause in the installed library
+
+- **What `fitView` does** (`react/dist/esm/index.js` 1218–1226): it sets `fitViewQueued: true`, `fitViewOptions` and a resolver in xyflow's store, then pushes a no-op node update. It doesn't measure or fit anything yet.
+- **When the fit actually happens:** whichever of these runs first, using the graph that is current at that moment:
+  - the store's `setNodes`, once nodes are measured (3428–3455);
+  - `updateNodeInternals`, on a card resize (3482–3492);
+  - a deferred `requestAnimationFrame` callback (957–993). This is the callback the probe held.
+- **How Undo triggers it:** when Canvas's `nodes` prop changes, xyflow calls `setNodes` from a passive effect (281–328). Undo changes that prop.
+- **No way to cancel:** there is no public API to cancel a queued fit.
+
+This matches the held-callback run exactly. The viewport went to the pile's opening fit (`translate(246px, 279.5px) scale(2)`) during Undo, before release. When the held callback finally ran, it found `fitViewQueued` already false and did nothing.
+
+## 2. Public xyflow options considered
+
+| Option | Verdict |
+|---|---|
+| `fitView(opts)` (current), or with `nodes:` / `duration` | Rejected. Still queued, and the node ids survive Undo, so it would still fit the pile. |
+| `fitBounds(bounds, {padding})` | Applies immediately, but zoom can go down to the store's 0.1. docs/09 lines 264 and 277 promise "same options, never below 50%". That would be a product change. |
+| `setViewport(getViewportForBounds(bounds, w, h, 0.5, 2, padding))` | **Chosen.** Same calculation as `fitView`, with nothing queued. |
+| Writing `fitViewQueued` via `useStoreApi().setState` | Forbidden: it patches library state. |
+| A Canvas-owned rAF plus cancel | Rejected. It reopens the window it is meant to close. |
+
+**`setViewport` is synchronous; I checked rather than assumed.** The chain, with no duration:
+- `useReactFlow().setViewport` (527–538) calls `panZoom.setViewport` before its first `await`.
+- That calls `setTransform` (system 3103–3107, 3005–3012), whose Promise body runs immediately.
+- `getD3Transition` (2752–2758) returns the plain selection and resolves the promise immediately.
+- d3-zoom's `zoom.transform` on a plain selection (`zoom.js` 85–99, 190–216) runs start, zoom and end synchronously.
+- xyflow's zoom handler (2854–2863) then calls `onTransformChange`, which writes `store.setState({transform})` (react 1315–1319). The viewport is uncontrolled, since Canvas passes no `viewport` prop.
+
+So the transform is set before `setViewport` returns. The returned promise only reports completion.
+
+## 3. Changes to `apps/web/src/editor/Canvas.tsx`
+
+1. **Constants.** Add `FIT_PADDING = { top: '8%', right: '8%', bottom: '8%', left: '72px' } as const` and `OPENING_MIN_ZOOM = 0.5`. Build `FIT_VIEW_OPTIONS` and `INITIAL_FIT_VIEW_OPTIONS` from them, with the same values as today. `fitOnOpen` and `<Controls fitViewOptions>` don't change.
+2. **Imports.** Add `getViewportForBounds`, `useStoreApi` and `type Rect` from `@xyflow/react`. Line 548 becomes `const { screenToFlowPosition, setViewport } = useReactFlow();` and add `const flowStore = useStoreApi<FlowNode, Edge>();`. This adds no new runtime requirement: `useReactFlow` already needs the provider.
+3. **Bounds helper** (module scope, not exported). `measuredBounds(definition, measured)` returns the union of `node.ui ?? {x:0,y:0}` plus the measured size for every node in the draft. Look sizes up with `Object.hasOwn`, because node ids like `constructor` exist. It returns `undefined` if any card is unmeasured or has zero width or height, meaning "wait".
+4. **Pending fit record** (lines 1099/1122). Store `{ definition, generation, revision }`, captured from `useEditorStore.getState()` right after `spaceCards()` returns `'applied'`.
+5. **The effect** (replaces 1100–1110):
+   ```ts
+   useEffect(() => {
+     const pending = spacedFitRef.current;
+     if (!pending) return;
+     const live = useEditorStore.getState();
+     if (definition !== pending.definition || generation !== pending.generation ||
+         live.definition !== pending.definition || live.generation !== pending.generation ||
+         live.revision !== pending.revision) { spacedFitRef.current = undefined; return; }
+     const bounds = measuredBounds(definition, measured);
+     if (!bounds) return;                       // wait for measurement
+     spacedFitRef.current = undefined;
+     const { width, height } = flowStore.getState();
+     void setViewport(getViewportForBounds(bounds, width, height, OPENING_MIN_ZOOM, MAX_CANVAS_ZOOM, FIT_PADDING));
+   }, [definition, generation, measured, setViewport, flowStore]);
+   ```
+   Update the comment above it to say why `fitView` isn't used here.
+
+### Answers to the questions in the brief
+
+- **Where graph identity is checked.** At the top of the effect, in the same synchronous step as the viewport write, in two ways:
+  - *What rendered:* the `definition` prop and `generation` match the pending record.
+  - *What the store holds now:* definition, generation and revision all match. This catches rendering that lags the store, and Undo followed by Redo back to the same draft object. `revision` only increases within one load, on every edit, undo or redo that changes the draft (`store.ts` 510, 550, 870).
+
+  Any mismatch drops the fit permanently.
+- **How dimensions are captured.** Card sizes come from Canvas's `measured` state for the same render, i.e. the sizes xyflow reported through `onNodesChange`. Positions come from the spaced draft itself. Pane width and height are read from xyflow's store at the moment of fitting, which is what `fitView` reads too. The result should be identical to today's fit: the probe's pre-fix control gave `translate(72px, 303.5px) scale(1.57895)`.
+- **Animation frame.** None is needed. The bounds come from Canvas's own data, so there's no need to wait for xyflow to adopt the nodes. Adding a frame would reopen the window.
+- **Cleanup and repeated effects.** Nothing is scheduled, so there is nothing to clean up.
+  - Repeated runs (new measurements, re-renders) find the record already cleared, or drop it on a mismatch.
+  - StrictMode's double mount runs the effect with no pending fit.
+  - Unmount discards the ref with the component; a remount starts with none.
+  - A load drops it because the generation no longer matches.
+- **Can an issued operation act later?** No. Once `setViewport` returns, all that remains is:
+  - an already-settled promise, which is discarded;
+  - xyflow's zero-delay `onMoveEnd`/`onViewportChangeEnd` notification, which Canvas doesn't subscribe to and which never changes the transform;
+  - React re-rendering the transform that is already set.
+
+  Nothing later reads the graph.
+- **Input arriving between render and effect.** In either order this is safe. If the effect runs first, the fit lands and the later Undo doesn't refit. If the Undo lands first, the live-store check drops the fit.
+
+Everything else on your preserve list is untouched by this change: store, history and autosave, layout, first node identity, focus and announcements, the result panel, the gesture gate (programmatic moves are ignored by `gesture.move(null)`), user Fit, opening Fit, and Undo/Redo.
+
+## 4. Affected files
+
+- `apps/web/src/editor/Canvas.tsx`: the fix above.
+- `apps/web/src/editor/Canvas.space-cards.test.tsx`: mock updates and new cases (section 5).
+- `apps/web/src/editor/Canvas.test.tsx`: add one mock entry, `useStoreApi: () => STABLE_STUB`. It renders Canvas without a provider, so the real hook would throw. No assertions change.
+- `apps/web/src/editor/Canvas.space-cards.fit.test.tsx` (new): real-dependency tests. They belong in a new file because they replace `requestAnimationFrame`, which `Canvas.space-cards.gate.test.tsx` states it never does.
+- `docs/09-frontend-and-pwa.md`: reword line 277 to describe the fit mechanism and say nothing stays queued. Add the new test to the regression list on line 283.
+- ADR-0077, CHANGELOG, the guide, `store.ts`, `space-cards.ts`, `SpaceCardsOffer.tsx` and the gate test need no change.
+
+## 5. Verification
+
+**A. Mocked tests (`Canvas.space-cards.test.tsx`).**
+- Add `setViewport = vi.fn()` and a stable `useStoreApi` stub returning width 1200 and height 800. Keep the `fitView` mock and assert it is never called.
+- **Positive case:** exactly one `setViewport` call, with arguments equal to `getViewportForBounds(bounds computed independently from positions() and the measured sizes, 1200, 800, 0.5, 2, padding)`.
+- **Waiting on measurement:** no call until every card has a non-zero size.
+- **Undo and load before the fit:** keep the existing tests that drop it.
+- **New cases that fail on current source:**
+  - Undo and Redo in one `act` while unmeasured, then measure: no fit, because the revision changed.
+  - A wrapper that keeps rendering the spaced draft while the store is undone, then measure: no fit.
+- **Unmount with a fit still pending:** no call and no error.
+- Cover each branch of the condition to keep web coverage at or above 90%.
+
+**B. Real dependency (new file).** Reuse the gate test's jsdom setup (pane 1200×800, cards 184×120, `ReportingResizeObserver`), render inside `<StrictMode><ReactFlowProvider>`, and count transform changes through a read-only `flowStore.subscribe`.
+
+Expected viewports, worked by hand from xyflow's formula (confirm when the test first runs): opening `{416, 280, 2}`; after Zoom Out about `{446.67, 300, 1.667}`; spaced `{144, 280, 2}`.
+
+1. **Control: the hold works.** With all rAF callbacks held, press Fit View. The viewport is unchanged until the held callbacks are released, then it fits. This shows the hold really intercepts xyflow's queued fit, and that user Fit still works.
+2. **Stale boundary.**
+   - Hold rAF, press Space cards, and let microtasks plus two tasks run. Record the viewport.
+   - Call `store().undo()`. **Assert the viewport is unchanged across the Undo.** On current source this is the first assertion to fail: it becomes the pile's fit `{416, 280, 2}`.
+   - Release the held callbacks and let everything settle: still unchanged.
+   - Then assert: the recorded viewport equals the spaced fit, there was exactly one transform change, the pile is restored, the offer is back, and Redo is available.
+3. **Positive case, nothing automatic.** Without holding, the opening view equals the opening fit. Zoom out, press Space: exactly one change, to the spaced fit. Then Undo, Redo, `moveNode` and a `load`: no further change after several frames.
+4. **Unmount after Space** with frames held, then release them: no errors.
+
+The new file has to be run against unmodified `Canvas.tsx` first, to record that it fails at the Undo assertion. That's the evidence it catches the defect.
+
+**C. Compiled build (your independent QA).** An adapted version of the stale-fit probe. Use Fit View as the matcher control: it should enqueue one matching callback. Then:
+- Space cards enqueues **no** matching callback.
+- The viewport after Space is `translate(72px, 303.5px) scale(1.57895)`, the same as the pre-fix control.
+- The viewport is unchanged across a trusted Ctrl+Z, after release, and across Redo.
+- Opening still gives `translate(246px, 279.5px) scale(2)`.
+
+The original probe's `matchedSources.length === 1` check after Space will fail by design and has to be changed. You decide which groups of the original native matrix this affects; I didn't touch them.
+
+**D. Checks after implementation:** `pnpm.cmd typecheck`, `lint`, `test:coverage` and `check`, plus `build` before QA.
+
+## 6. Remaining risks and limits
+
+- **Same library behavior elsewhere, out of scope.** The opening fit (`onInit`, which runs after a 1 ms timer) and the Fit View button still use the queued `fitView`. An edit landing before their frame could still be fitted. This predates #208 and wasn't introduced by it, so I left it alone as the brief asks.
+- **A card that never gets a size** keeps the fit waiting. That's harmless: every later run re-checks identity and revision. xyflow's own fit would skip that card instead.
+- **`setViewport` before the pane is ready** (xyflow's `panZoom` missing) silently does nothing. Space can't be pressed before the pane exists, so I don't expect this in practice.
+- **Not a product change.** The zoom floor, padding, and the "fit once" timing ("after the spaced cards render") are all kept, so this stays within the accepted contract and needs no owner question.

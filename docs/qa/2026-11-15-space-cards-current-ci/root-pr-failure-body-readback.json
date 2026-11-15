@@ -1,0 +1,42 @@
+{
+  "at": "2026-11-15T08:05:42.217Z",
+  "exactBodyVerified": true,
+  "pr": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482",
+    "number": 482,
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "draft": true,
+    "body": "Part of #208. Owner product acceptance and closure remain on that issue.\n\nLoops created through an API, import or agent can open with every card at the origin. The editor now offers the owner's chosen **Space cards** action when at least two cards are at the origin and no connection has a saved manual route. Applying it spaces the cards in deterministic columns as one ordinary, undoable edit. Opening or editing a loop never arranges it implicitly, and intentionally positioned or routed graphs stay protected.\n\nOnly card positions change. The action rechecks the current draft, preserves edges and other content, uses normal autosave/history, restores canvas focus and fits once. Pointer activation leaves a visible result in the offer's measured box so a second click cannot activate covered controls; the first outside press clears it and continues normally. Keyboard activation leaves no result panel. Both offer buttons follow the existing pan/node-drag availability gate.\n\nClaude Opus 5.5 xhigh owned the design; Claude Sonnet 5.5 xhigh implemented the bounded helper, corrections and integration after GPT architecture review.\n\n## Candidate and verification\n\nHead `daa43634c8a093f2cde8239a3501ae4b6b14c112`, tree `a3f55255f1309606e024171b9b3e4e943c004966`, target main `177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd`. Final native source is `af583977ef1ace8fa086eb54b0b66c38f263b1ef`; publication adds only QA evidence and delivery metadata. The effective product/test/behavior-document diff has 14 paths. It includes the actual merged canvas and history predecessors.\n\n- Full web coverage passed **2,886 tests across 223 files**, with **98.60% lines and 94.27% branches**. Integration verification passed 327 focused tests across two executions: the first passed seven files while five suites failed to load because of an identical duplicate declaration; removing that declaration produced 122 passes in those five files. Types, scoped lint and formatting passed. The original failure is retained. [Integration](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/daa43634c8a093f2cde8239a3501ae4b6b14c112/docs/qa/2026-11-15-space-cards-history-integration/README.md) · [Coverage](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/daa43634c8a093f2cde8239a3501ae4b6b14c112/docs/qa/2026-11-15-space-cards-premerge-web-coverage/README.md)\n- A fresh Node 22.23.4 build passed 12 tasks with zero cache hits. Independent GPT-6.1 Sol xhigh native QA passed **all seven groups**, covering repeated input, first-outside actions, history/lifecycle, larger-text spacing, coarse touch and offline/conflict recovery. The completed groups recorded 310 checks and 46 accepted whole-graph/device/token save comparisons; the deliberate 409 and scoped 500 remained failed requests. The original R512 fixture stop is preserved, and both global fixture corrections are spent. [Native evidence and exact limitations](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/daa43634c8a093f2cde8239a3501ae4b6b14c112/docs/qa/2026-11-15-space-cards-final-native/README.md)\n- Final bindings match for 1,691 source inputs, 35 embedded web modules and 1,227 build outputs across 13 trees. All eight retained attempts closed without owned process, listener or database residue. Root read the full handoff, verified all 890 artifacts and inspected four screenshots.\n\nThe larger-text test uses a CSS root-size override and touch uses Chromium emulation. Physical input, real browser text-size preferences, other engines and screen-reader speech are not established. Readability claims concern the Space offer/result/cards; the unchanged global header overflows in the 24 px screenshot. Gesture refusal was exercised with trusted Enter while the browser mouse was held, without an unavailable synthetic pointer click or observable D3 listener bookkeeping.\n\nIndependent opposite-family Sol review **scan 1 of 3 requires a correction**: Undo can consume the queued Space fit and change the viewport after restoring the graph. [Full review and root FIX-IN-PR disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482#issuecomment-6891219300). The earlier seven native groups remain passing evidence for their cases; the controlled real-dependency probe establishes this additional failure. Claude is preparing the bounded correction. Original-head CI failed its web coverage test run: 2,883 tests passed and three existing Space cards viewport assertions failed. The browser suite passed 481 tests with one declared provider skip and zero retries; Windows, Template image and normal routing jobs passed. No CI retry was performed. [Failed Gates job](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43689861052/job/132738025821). Corrected-head verification, every required CI gate and fresh Astra max exact-head sign-off remain required. Existing #479/#481 follow-ups remain separate; this PR does not resolve them.\n\n## Post-merge owner acceptance\n\nAfter the combined build is installed, record the build and observations on #208:\n\n- The explicit suggestion and its result feel clear and predictable.\n- Spacing is useful at the owner's usual window and text sizes.\n- Undo/Redo and continuing ordinary editing feel natural.\n\nMachine-verifiable geometry, data preservation, persistence, interaction and lifecycle checks remain pipeline responsibilities. This PR does not complete owner acceptance or close #208.",
+    "title": "Offer explicit undoable spacing for stacked cards",
+    "base": "main",
+    "base_sha": "177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd",
+    "head": "codex/gg-20261114-space-cards",
+    "head_sha": "daa43634c8a093f2cde8239a3501ae4b6b14c112",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": "26c9f58bd903c1ea0b5c0a361c6b8ee1f1cce633",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-15T07:25:06Z",
+    "updated_at": "2026-11-15T08:05:40Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 9,
+    "changed_files": 1768,
+    "additions": 404608,
+    "deletions": 12,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482",
+    "display_title": "Offer explicit undoable spacing for stacked cards"
+  }
+}

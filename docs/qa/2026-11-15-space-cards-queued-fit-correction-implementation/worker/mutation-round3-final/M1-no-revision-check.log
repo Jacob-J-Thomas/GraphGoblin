@@ -1,0 +1,78 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.space-cards.test.tsx (44 tests | 1 failed) 4547ms
+   ❯ Space cards on the canvas (#208) (24)
+     × drops a fit that waits when an Undo and a Redo bring the same draft back, because it is a newer revision 68ms
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx (8 tests | 1 failed) 4775ms
+   ❯ the one fit Space cards asks for, on the installed xyflow and d3 (#208) (8)
+     × drops a fit that waits for the pane when Undo and Redo bring back the same draft object, because it is a newer revision 524ms
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 50 passed (52)
+   Start at  02:27:16
+   Duration  10.57s (tests 45%, environment 25%, import 10%, transform 10%, setup 8%)
+
+
+--- stderr ---
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.space-cards.fit.test.tsx > the one fit Space cards asks for, on the installed xyflow and d3 (#208) > drops a fit that waits for the pane when Undo and Redo bring back the same draft object, because it is a newer revision
+AssertionError: expected { x: 144, y: 280, zoom: 2 } to deeply equal { x: 26, y: -30, zoom: 0.5 }
+
+- Expected
++ Received
+
+  {
+-   "x": 26,
+-   "y": -30,
+-   "zoom": 0.5,
++   "x": 144,
++   "y": 280,
++   "zoom": 2,
+  }
+
+ ❯ src/editor/Canvas.space-cards.fit.test.tsx:494:24
+    492|     await showPane();
+    493|     await realFrames(3);
+    494|     expect(viewport()).toEqual(idle);
+       |                        ^
+    495|     expect(transforms.count()).toBe(0);
+    496|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/editor/Canvas.space-cards.test.tsx > Space cards on the canvas (#208) > drops a fit that waits when an Undo and a Redo bring the same draft back, because it is a newer revision
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "x": 60,
+        "y": 300,
+        "zoom": 0.5,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/Canvas.space-cards.test.tsx:419:29
+    417|     expect(store().revision).toBe(revision + 2);
+    418|     measure({ prep: 400 });
+    419|     expect(setViewport).not.toHaveBeenCalled();
+       |                             ^
+    420|     // And the same with the draft measured first, the pane the last t…
+    421|     act(() => store().load('L1', kitchenSinkLoop()));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\web
+
