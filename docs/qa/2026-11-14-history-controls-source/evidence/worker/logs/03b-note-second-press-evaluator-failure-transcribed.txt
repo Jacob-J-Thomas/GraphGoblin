@@ -1,0 +1,14 @@
+Transcribed note, NOT tool-captured bytes.
+
+After correction 1 of src/editor/UndoRedo.press.test.tsx (the test-local cascade evaluator accepted
+:focus-visible and :disabled), the next run failed again, in the same two tests, with:
+
+  Error: Unknown selector state:  svg
+
+cause: the icon's `[&_svg]:size-[15px]` utility compiles to a descendant selector, which styles the
+button's svg, not the button. The evaluator refuses selectors it does not understand by design.
+Correction 2 (test code only): a rule whose state contains a combinator is skipped as a
+descendant rule. This output was seen in the tool result but not written to a log file; the
+uncorrected first failure (:focus-visible) is preserved byte-for-byte in
+03-first-failure-press-evaluator-uncorrected.log. Production source was not changed by either
+correction.

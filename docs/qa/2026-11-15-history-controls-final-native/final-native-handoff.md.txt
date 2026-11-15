@@ -1,0 +1,37 @@
+# PR #480 final integrated native verification
+
+**All 11 groups passed on their initial attempts.** The fixture correction budget remains 0/2 on this integrated candidate. This was independent behavior QA by GPT-6.1 Sol xhigh. It consumed zero formal review scans.
+
+## Bound candidate
+
+History HEAD `6b0eae62ea98ae73b22903c9922bba198e219608`, tree `5996caf9f060c899b305553fc3e359bf86990847`. Actual main and the real merged Canvas predecessor were both `1cfca9bce3967c9d41950266c83aab636667e0ab`. The clean checkout and exact actual-main ref matched before and after. The reviewed history source anchor `c2cffebb7ca1bbea41ae72a37b9f232c90681906` remained reachable.
+
+Root's forced Node 22.23.4 build completed 12 tasks with zero cache hits. The before and after binding SHA-256 was `241e04ffe55ae4a9ab1af3586d61060039ca9e973fe19cd0d8c820885f275273`. The independent read-only binding remained `7cc5e70f4c96371fa0f9734594228d66368814ce4583276986912e5be5033f7b`. It bound 1,683 source paths, 27 embedded source modules and 1,227 outputs across 13 distribution trees. The domain-chain receipt `36a97407d92ee94f12d042ba45d62c733e8c9291171c2cb17aaa750567407b89` matched both times. That receipt links tracked TypeScript to the bound emitted JavaScript and proves that the browser source map embeds that emitted JavaScript. The domain map links the TypeScript path and does not embed the TypeScript content. [Approved admission](admission-native.json) · [Build receipt](forced-build-exit.json) · [Before binding](binding/binding-before.json) · [After binding](binding/binding-after.json) · [Domain chain](binding/domain-map-after.json)
+
+Each fresh browser session used its own compiled local gateway and disposable file SQLite. The live gateway proved its PID and checked served HTML, JavaScript and CSS before and after each run. The Edge entry bundle `/app/assets/index-ByzX4MH8.js` had SHA-256 `64d4e26a83e9710f6a92436e772900d9b98034d1cb0cee6a6a4181305ddb928f`. All final gate exits were zero. [Final gate exits](final-binding-cleanup-summary-exits.json)
+
+## Native matrix
+
+| Group | Verified result |
+| --- | --- |
+| [D1 fine/light](runs/h-d1-initial/raw/actions.json) | Full undo/redo lifecycle. Focus order, disabled and enabled fixed upper-row presses, shortcuts, held save and validation, publish and modal. The 1 px observer control detected motion and restored the exact baseline. |
+| [D2 coarse/dark](runs/h-d2-initial/raw/actions.json) | Full lifecycle with 44 px targets and trusted emulated touch Undo and Redo. Native mouse and keyboard histories also performed their exact intended edits. |
+| [768 px fine/light](runs/h-n768-initial/raw/actions.json) | Full lifecycle and stable upper history controls with a 120-character loop name, held save and held validation. |
+| [512 px reflow proxy](runs/h-r512-initial/raw/actions.json) | Full lifecycle at 512×384 CSS px and DPR 2, with measured toolbar height changes during Publish and fixed hits. Public Fit View exposed the clipped work card without a graph, token, history or write-count change. |
+| [360 px fine/light](runs/n360-initial/raw/actions.json) | Long name, visible focus and targets in order, held Publish, current-only API readback, no horizontal overflow and every toolbar action center hittable. |
+| [Offline during held Undo](runs/offline-initial/raw/actions.json) | One editor status below the toolbar during the actual held press. Release at the fixed target applied the exact device Undo without a draft PUT, kept the server unchanged and recovered with one acknowledged restore. |
+| [API transport unreachable](runs/unreachable-initial/raw/actions.json) | Browser remained online. One editor status, fixed-target Undo, exact device/server isolation and one acknowledged reconnect save. |
+| [PUT-only transport abort](runs/put-flash-initial/raw/actions.json) | Brief API-unreachable editor status was captured in two frames below the toolbar. Fixed hits and device Undo held, and a later ordinary edit persisted the earlier Undo. |
+| [Distinct HTTP 500 cases](runs/http500-initial/raw/actions.json) | Controlled validation POST and draft PUT returned HTTP 500 in distinct phases. Validation unavailable and Save failed appeared without a connectivity banner. The device-only edit recovered on a later ordinary save. |
+| [Status ownership D1](runs/ownership-d1-initial/raw/actions.json) | Shell ownership on Loops, held loading and Events, editor ownership on load and offline re-entry. Two real GET 404 responses settled the online missing-loop route. Then the native error and one shell status appeared together during offline, with no editor toolbar. |
+| [Status ownership R512](runs/ownership-r512-initial/raw/actions.json) | The same route, loading, re-entry and settled native-error ownership passed at the reflow proxy after the stored theme readback. |
+
+The raw evidence contains 88 sampling phases and 16,447 samples, including 13,430 layout samples in 77 qualified stationarity windows. Recorded history coordinates moved 0 CSS px, with zero fixed-point misses and zero exclusions in those windows. Replay verified 21 trusted same-target press sequences at approximately 252.8–1116.6 ms. The observer's deliberate 1 px movement belongs to its separate control, outside those product windows.
+
+All 66 accepted browser draft PUTs matched their exact prior If-Match token, expected whole graph, synced device and public API canonical graph. All four native 404 responses belonged to the two ownership cases. There were zero browser page errors. Saved browser console errors were the expected network abort, HTTP 500 and missing-loop HTTP 404 messages from the admitted fault scenarios. [Verified result summary](result-summary.json)
+
+## Cleanup and limits
+
+All owned browsers, gateways and sinks closed. The cleanup audit recorded zero resource failures, live fixture processes, listeners, scratch stores, SQLite files, locks or WAL/SHM sidecars. Numerical PID 26904 was recorded as the h-d2 browser PID and was reused by the cleanup PowerShell process itself, identified by `thisAudit=true`. No fixture process owned that PID at the audit. Ports 4747/4748 and owner runtime resources were outside the run. [Final cleanup](cleanup-final.json)
+
+Evidence comes from Windows Edge native browser automation. The 512 px configuration is a DPR-2 reflow proxy. Physical touch hold, actual browser text zoom, screen-reader speech and other browser engines were outside this run. Voice staging, auth, storage/shutdown notices, StrictMode and renderer-error claim cleanup retain their focused source/component coverage. The 821 and 899 historical attempts and budgets remain unchanged. CI, designated final review, merge and owner acceptance are separate.

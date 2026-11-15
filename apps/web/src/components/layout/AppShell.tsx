@@ -2,7 +2,10 @@ import type { ReactNode } from 'react';
 import { Icon, Logo } from '../icons/index.js';
 import { MainNav, type NavItem } from './MainNav.js';
 
-/** Shown under the header while the browser or API is unreachable. */
+/**
+ * Shown while the browser or API is unreachable: under the shell's header, or, for a loaded
+ * editor that claimed it (`connection-banner.ts`), under the editor's own toolbar.
+ */
 export function OfflineBanner({ apiUnreachable = false }: { apiUnreachable?: boolean }) {
   return (
     <div

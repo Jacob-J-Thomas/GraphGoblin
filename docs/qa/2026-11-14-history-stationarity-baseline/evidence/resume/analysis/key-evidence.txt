@@ -1,0 +1,48 @@
+--- CONTROLS: injected temporary offsets; frame sampler and snapshots must see them and removal must restore exactly
+d1: frame-sampler jumps -> c0: Undo dx-1 dy0 (Redo dx0 dy0) | c0: Undo dx1 dy0 (Redo dx0 dy0) | c1: Undo dx0 dy1 (Redo dx0 dy0) | c1: Undo dx0 dy-1 (Redo dx0 dy0) | cone-frame: Undo dx0 dy1 (Redo dx0 dy0) | cone-frame: Undo dx0 dy-1 (Redo dx0 dy0)
+    snapshots: margin-inline-end:1px on Und Undo -1,0; Redo 0,0 | position:relative;top:1px on Undo 0,1; Redo 0,0 | translate:0 1px on Undo Undo 0,1; Redo 0,0 | one-frame position:relative; (transient 1 frame)
+    removedExactly=true,true,true,true restoredBoxesEqualBaseline=true,true,true,true oneFrameSeenByRaf=true removalSeen=true
+d2: frame-sampler jumps -> c0: Undo dx-1 dy0 (Redo dx0 dy0) | c0: Undo dx1 dy0 (Redo dx0 dy0) | c1: Undo dx0 dy1 (Redo dx0 dy0) | c1: Undo dx0 dy-1 (Redo dx0 dy0) | cone-frame: Undo dx0 dy1 (Redo dx0 dy0) | cone-frame: Undo dx0 dy-1 (Redo dx0 dy0)
+    snapshots: margin-inline-end:1px on Und Undo -1,0; Redo 0,0 | position:relative;top:1px on Undo 0,1; Redo 0,0 | translate:0 1px on Undo Undo 0,1; Redo 0,0 | one-frame position:relative; (transient 1 frame)
+    removedExactly=true,true,true,true restoredBoxesEqualBaseline=true,true,true,true oneFrameSeenByRaf=true removalSeen=true
+n768: frame-sampler jumps -> c0: Undo dx-1 dy0 (Redo dx0 dy0) | c0: Undo dx1 dy0 (Redo dx0 dy0) | c1: Undo dx0 dy1 (Redo dx0 dy0) | c1: Undo dx0 dy-1 (Redo dx0 dy0) | cone-frame: Undo dx0 dy1 (Redo dx0 dy0) | cone-frame: Undo dx0 dy-1 (Redo dx0 dy0)
+    snapshots: margin-inline-end:1px on Und Undo -1,0; Redo 0,0 | position:relative;top:1px on Undo 0,1; Redo 0,0 | translate:0 1px on Undo Undo 0,1; Redo 0,0 | one-frame position:relative; (transient 1 frame)
+    removedExactly=true,true,true,true restoredBoxesEqualBaseline=true,true,true,true oneFrameSeenByRaf=true removalSeen=true
+r512: frame-sampler jumps -> c0: Undo dx-1 dy0 (Redo dx0 dy0) | c0: Undo dx1 dy0 (Redo dx0 dy0) | c1: Undo dx0 dy1 (Redo dx0 dy0) | c1: Undo dx0 dy-1 (Redo dx0 dy0) | cone-frame: Undo dx0 dy1 (Redo dx0 dy0) | cone-frame: Undo dx0 dy-1 (Redo dx0 dy0)
+    snapshots: margin-inline-end:1px on Und Undo -1,0; Redo 0,0 | position:relative;top:1px on Undo 0,1; Redo 0,0 | translate:0 1px on Undo Undo 0,1; Redo 0,0 | one-frame position:relative; (transient 1 frame)
+    removedExactly=true,true,true,true restoredBoxesEqualBaseline=true,true,true,true oneFrameSeenByRaf=true removalSeen=true
+--- RETENTION (h12): names, data-history, shortcuts, sizes, tab order, hit grid, keyboard, no-ops, focus
+d1: Undo ["Undo","undo","Control+Z","32pxx32px","tabIndex",0,"focusIdx",1,"domIdx",0,"ariaDisabled","true","disabledProp",false] Redo ["Redo","redo","Control+Shift+Z Control+Y","32pxx32px","focusIdx",2,"domIdx",1]
+    grid Undo 29/33 Redo 29/33; keys Control+z=>-1, Control+z=>-1, Control+Shift+z=>1, Control+y=>1; clicks off-button 0; missing click 0; no-ops w/o effect 2/2
+    no-op clicks: undo#6 aria-disabled=true nodeDelta=0 focusAfter=button[undo]:Undo ; redo#10 aria-disabled=true nodeDelta=0 focusAfter=button[redo]:Redo
+    focus after effective history clicks: button[undo]:Undo / button[redo]:Redo
+d2: Undo ["Undo","undo","Control+Z","44pxx44px","tabIndex",0,"focusIdx",1,"domIdx",0,"ariaDisabled","true","disabledProp",false] Redo ["Redo","redo","Control+Shift+Z Control+Y","44pxx44px","focusIdx",2,"domIdx",1]
+    grid Undo 29/33 Redo 29/33; keys Control+z=>-1, Control+z=>-1, Control+Shift+z=>1, Control+y=>1; clicks off-button 0; missing click 0; no-ops w/o effect 2/2
+    no-op clicks: undo#6 aria-disabled=true nodeDelta=0 focusAfter=button[undo]:Undo ; redo#10 aria-disabled=true nodeDelta=0 focusAfter=button[redo]:Redo
+    focus after effective history clicks: button[undo]:Undo / button[redo]:Redo
+n768: Undo ["Undo","undo","Control+Z","32pxx32px","tabIndex",0,"focusIdx",1,"domIdx",0,"ariaDisabled","true","disabledProp",false] Redo ["Redo","redo","Control+Shift+Z Control+Y","32pxx32px","focusIdx",2,"domIdx",1]
+    grid Undo 29/33 Redo 29/33; keys Control+z=>-1, Control+z=>-1, Control+Shift+z=>1, Control+y=>1; clicks off-button 0; missing click 0; no-ops w/o effect 2/2
+    no-op clicks: undo#6 aria-disabled=true nodeDelta=0 focusAfter=button[undo]:Undo ; redo#10 aria-disabled=true nodeDelta=0 focusAfter=button[redo]:Redo
+    focus after effective history clicks: button[undo]:Undo / button[redo]:Redo
+r512: Undo ["Undo","undo","Control+Z","32pxx32px","tabIndex",0,"focusIdx",1,"domIdx",0,"ariaDisabled","true","disabledProp",false] Redo ["Redo","redo","Control+Shift+Z Control+Y","32pxx32px","focusIdx",2,"domIdx",1]
+    grid Undo 29/33 Redo 29/33; keys Control+z=>-1, Control+z=>-1, Control+Shift+z=>1, Control+y=>1; clicks off-button 0; missing click 0; no-ops w/o effect 2/2
+    no-op clicks: undo#6 aria-disabled=true nodeDelta=0 focusAfter=button[undo]:Undo ; redo#10 aria-disabled=true nodeDelta=0 focusAfter=button[redo]:Redo
+    focus after effective history clicks: button[undo]:Undo / button[redo]:Redo
+--- D2 coarse touch taps (h12-d2)
+input=touch actions=12 effects=10 no-ops=2/2 clicksOffButton=0
+undo#3 input=touch down=button[undo]:U click->button[undo]:Und trDown=0px trUp=0px
+undo#4 input=touch down=button[undo]:U click->button[undo]:Und trDown=0px 0.689778px trUp=0px 0.689778px
+undo#5 input=touch down=button[undo]:U click->button[undo]:Und trDown=0px 0.48048px trUp=0px 0.48048px
+undo#6 input=touch down=button[undo]:U click->button[undo]:Und trDown=0px 0.480085px trUp=0px 0.480085px
+redo#7 input=touch down=button[redo]:R click->button[redo]:Red trDown=0px trUp=0px
+redo#8 input=touch down=button[redo]:R click->button[redo]:Red trDown=0px 0.685534px trUp=0px 0.685534px
+redo#9 input=touch down=button[redo]:R click->button[redo]:Red trDown=0px 0.936687px trUp=0px 0.936687px
+redo#10 input=touch down=button[redo]:R click->button[redo]:Red trDown=0px 0.47843px trUp=0px 0.47843px
+undo#11 input=touch down=button[undo]:U click->button[undo]:Und trDown=0px trUp=0px
+--- DIALOG
+m2-dialog-d1: modal=true ariaModal=true name="Edit mutate work" hit@Undo=dialog(in dialog) hit@Redo=dialog(in dialog) undoInInert=false
+    boxes rest->open: Undo [1003.891,68,32,32] -> [1003.891,68,32,32]; Tab x24 reachedHistoryButton=false allStopsInDialog=true
+    real click at Undo position: nodeDelta=0 dialog true->false; Ctrl+Z (focus on dialog heading): nodeDelta=-1 dialogStaysOpen=true focus=header:Edit mutate work Undo [1003.891,68,32,32] -> [971.188,68,32,32]; after Escape focus=div:Mutate Note (work) dialogOpen=false
+m2-dialog-r512: modal=true ariaModal=true name="Edit mutate work" hit@Undo=div(in dialog) hit@Redo=div(in dialog) undoInInert=false
+    boxes rest->open: Undo [75.891,100,32,32] -> [75.891,100,32,32]; Tab x24 reachedHistoryButton=false allStopsInDialog=true
+    real click at Undo position: nodeDelta=0 dialog true->true; Ctrl+Z (focus on dialog heading): nodeDelta=-1 dialogStaysOpen=true focus=dialog:Edit mutate workRequired fields are mark Undo [75.891,100,32,32] -> [43.188,100,32,32]; after Escape focus=div:Mutate Note (work) dialogOpen=false

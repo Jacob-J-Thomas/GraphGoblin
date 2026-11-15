@@ -1,0 +1,47 @@
+I implemented both A1 and A2 in source and verified them with focused unit and component tests, typecheck, lint and prettier. Nothing was built, run in a browser or staged, and no geometry was measured.
+
+**A1 (the leading history slot):**
+- Undo and Redo now sit in a fixed, top-aligned leading slot (`data-testid="history-actions"`), first in the DOM and on screen. The rest of the toolbar wraps beside it.
+- Both buttons lose the 1px press movement through an `!important` override on those two buttons only. The press now shows as a strong border on an enabled button.
+- Names, tooltips, shortcuts, `aria-disabled`, `data-history`, focus and history behaviour are unchanged.
+- Undo and Redo are now the first Tab stops of the bar, ahead of the Loops link. That is a deliberate behaviour change.
+
+**A2 (the connection banner):**
+- A loaded editor now claims the one connection banner and shows it under its own toolbar. The shell's `Layout` hides its copy while the claim is held.
+- Loading, error, blocked and voice-staging states, and every other route, keep the shell banner. The API key, shutdown and storage notices stay where they were.
+- Connectivity detection, grace and retry, and the HTTP 500 classification are unchanged.
+
+**Deviation from the approved design:** I put the claim in a small component (`EditorConnectionBanner`) that the loaded frame renders, instead of a hook in `EditorPage` before its early returns. The claim is held exactly while that component is mounted, and `EditorPage` gains no hook. Say so if you want the literal hook placement.
+
+**Checks:**
+
+| Check | Result |
+|---|---|
+| Existing focused tests, before | 6 files, 42 tests pass |
+| Broader focused run (50 files, includes all new tests) | 591 tests pass; no existing test needed changing |
+| Final run of new and related tests | 12 files, 96 tests pass |
+| New tests | 49 across 5 files |
+| `tsc --noEmit` (web) | clean |
+| ESLint, 13 changed code files, zero warnings | clean (after fixing one error) |
+| Prettier, all 18 changed files | clean |
+| `check:deps` | 0 errors, 4 existing orphan warnings in files I did not touch |
+
+I preserved the first failures and corrections. All were in my own test code or lint, none in production source.
+
+**Paired control:** I swapped the four old production files back in and reran the new tests.
+- **All four old files:** 31 of 37 new tests failed.
+- **A2 only (old `App.tsx` and `EditorPage.tsx`, new toolbar):** 9 of 13 connection tests failed. The 4 that passed are HTTP 500, 404, API-unreachable load failure and 401, which must not change.
+
+I restored the new bytes and the SHA-256 values match.
+
+**Docs:** `docs/09`, the user guide, `CHANGELOG.md`, and the new `ADR-0078-stationary-history-controls.md` plus its README index entry. ADR-0078 is free in this checkout, all refs, and the six sibling worktrees I listed read-only (the Space cards worktree only has 0077), and no gap was reused.
+
+**Not proved, left to native QA:**
+- Geometry, the lost top-row click, hit testing, paint and announcement delivery.
+- Whether `translate: none !important` wins in a real browser. I checked the cascade only against Tailwind 4.3.3's generated CSS.
+- Canvas height at small windows. At 512×384 the banner leaves roughly 54–98px for the canvas.
+- When Publish wraps to a second row, the first row is shorter than the slot. Its text sits a few px above the history buttons, which don't move.
+
+Still open: integration with the corrected #207 predecessor, opposite-family review, fresh Astra, exact-target CI and owner acceptance. `docs/09` and `CHANGELOG.md` will likely conflict with the Space cards PR, and ADR-0078 is provisional.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-history-source`. `complete.patch` applies cleanly to a pristine HEAD export and reproduces all 18 hashes; use `git -c core.autocrlf=false apply`, because this host's system `core.autocrlf=true` makes a plain apply write CRLF. Start with `handoff.md`; the control logs are in `control/`.

@@ -1,0 +1,57 @@
+{
+  "label": "h-d1-first",
+  "scenario": "h-d1",
+  "config": "d1-fine-light",
+  "driver": "history.playwright.js",
+  "startedAt": "2026-11-14T23:35:51.818Z",
+  "orchestratorPid": 12756,
+  "gatewayPid": 41068,
+  "sinkOrigin": "http://127.0.0.1:57723",
+  "session": "gg208h-h-d1-first",
+  "head": "8215514281fd84bf08839c5ad4875d018ccadd28",
+  "buildMain": "a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c",
+  "observedMain": "8fadcb0d44ac2caf80ff6279fe4648ce9398afd9",
+  "origin": "http://127.0.0.1:63572",
+  "browserPid": 16380,
+  "driverExit": 0,
+  "noStructuredResult": "### Result\n\"{\\\"suite\\\":\\\"208-history-independent\\\",\\\"group\\\":\\\"h-d1\\\",\\\"config\\\":\\\"d1-fine-light\\\",\\\"failure\\\":{\\\"kind\\\":\\\"fixture\\\",\\\"message\\\":\\\"No first-paint checking/ready transition in trace\\\",\\\"stack\\\":\\\"Error: No first-paint checking/ready transition in trace\\\\n    at check (evalmachine.<anonymous>:18:41)\\\\n    at normal (evalmachine.<anonymous>:502:5)\\\\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\\\\n    at async evalmachine.<anonymous>:762:33\\\\n    at async evalmachine.<anonymous>:3:20\\\\n    at async C:\\\\\\\\Users\\\\\\\\98jak\\\\\\\\AppData\\\\\\\\Local\\\\\\\\npm-cache\\\\\\\\_npx\\\\\\\\31e32ef8478fbf80\\\\\\\\node_modules\\\\\\\\playwright-core\\\\\\\\lib\\\\\\\\coreBundle.js:70181:13\\\\n    at async waitForCompletion (C:\\\\\\\\Users\\\\\\\\98jak\\\\\\\\AppData\\\\\\\\Local\\\\\\\\npm-cache\\\\\\\\_npx\\\\\\\\31e32ef8478fbf80\\\\\\\\node_modules\\\\\\\\playwright-core\\\\\\\\lib\\\\\\\\coreBundle.js:66323:15)\\\\n    at async _Tab._raceAgainstModalStates (C:\\\\\\\\Users\\\\\\\\98jak\\\\\\\\AppData\\\\\\\\Local\\\\\\\\npm-cache\\\\\\\\_npx\\\\\\\\31e32ef8478fbf80\\\\\\\\node_modules\\\\\\\\playwright-core\\\\\\\\lib\\\\\\\\coreBundle.js:67487:18)\\\\n    at async _Tab.waitForCompletion (C:\\\\\\\\Users\\\\\\\\98jak\\\\\\\\AppData\\\\\\\\Local\\\\\\\\npm-cache\\\\\\\\_npx\\\\\\\\31e32ef8478fbf80\\\\\\\\node_modules\\\\\\\\playwright-core\\\\\\\\lib\\\\\\\\coreBundle.js:67494:9)\\\\n    at async Object.handle (C:\\\\\\\\Users\\\\\\\\98jak\\\\\\\\AppData\\\\\\\\Local\\\\\\\\npm-cache\\\\\\\\_npx\\\\\\\\31e32ef8478fbf80\\\\\\\\node_modules\\\\\\\\playwright-core\\\\\\\\lib\\\\\\\\coreBundle.js:70177:11)\\\"},\\\"pageErrors\\\":[],\\\"summary\\\":{\\\"geometry\\\":[{\\\"label\\\":\\\"open\\\",\\\"start\\\":253.4,\\\"end\\\":276.3,\\\"epoch\\\":1794699358889.6,\\\"comparable\\\":3,\\\"excluded\\\":0,\\\"max\\\":[0,0,0,0],\\\"misses\\\":0,\\\"layoutSamples\\\":3,\\\"maxSampleGapMs\\\":14.900000000000006,\\\"headerHeights\\\":[57],\\\"validationWidths\\\":[87.359],\\\"validation\\\":[\\\"Checking…\\\"],\\\"publish\\\":[\\\"Publish\\\"]}],\\\"checkpoints\\\":[\\\"fixture-open\\\"],\\\"limits\\\":[]}}\"\n### Ran Playwright code\n```js\nawait (async (page) => {\n  const initial = new URL(page.url());\n  const read = (key) => initial.searchParams.get(key);\n  const origin = initial.origin;\n  const sink = read('qa-sink');\n  const group = read('qa-case');\n  const config = read('qa-config');\n  const out = { suite: '208-history-independent', group, config, settings: null, failure: null,\n    checkpoints: [], geometry: [], pageErrors: [], consoleErrors: [], limits: [] };\n  const notes = [];\n  const requests = [];\n  const phases = [];\n  const requestRecords = new Map();\n  const theme = config.startsWith('d2-') ? 'dark' : 'light';\n  const coarse = theme === 'dark';\n  const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));\n  const check = (condition, message, kind = 'product') => {\n    if (!condition) throw Object.assign(new Error(message), { kind });\n  };\n  const canonical = (value) => {\n    if (Array.isArray(value)) return value.map(canonical);\n    if (value === null || typeof value !== 'object') return value;\n    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])]));\n  };\n  const same = (a, b, message) => check(JSON.stringify(canonical(a)) === JSON.stringify(canonical(b)), message);\n  const button = (direction) => page.locator('[data-history=\"' + direction + '\"]');\n  const historySlot = page.getByTestId('history-actions');\n  const saveBadge = page.getByTestId('save-state');\n  const readyLabel = page.getByText('Ready to publish', { exact: true });\n  const edit = (id) => '/app/loops/' + id + '/edit';\n  const path = (id) => '/loops/' + id;\n  const draftPath = () => path(loopId) + '/draft';\n  const faultText = /^(You are offline|Cannot reach the GraphGoblin API)/;\n  const status = () => page.getByRole('status').filter({ hasText: faultText });\n  let loopId;\n  let baseline;\n  let knownAdd;\n  let control = 'pass';\n  let loadGate;\n  let validationGate;\n  let putGate;\n  let publishGate;\n  function gate() {\n    let release;\n    const promise = new Promise((done) => { release = done; });\n    return { wait: promise, release, used: false };\n  }\n\n  f",
+  "browserClose": 0,
+  "gatewayExit": {
+    "code": 0,
+    "signal": null
+  },
+  "sunk": [
+    {
+      "name": "frames-open.json",
+      "bytes": 9011
+    },
+    {
+      "name": "frames-first-failure.json",
+      "bytes": 29
+    },
+    {
+      "name": "actions.json",
+      "bytes": 4434
+    }
+  ],
+  "finishedAt": "2026-11-14T23:36:01.116Z",
+  "store": {
+    "scratch": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\history-208-independent\\runs\\h-d1-first\\gateway-store-CqNN2l",
+    "listing": [
+      {
+        "name": "graphgoblin.db",
+        "bytes": 487424,
+        "dir": false
+      },
+      {
+        "name": "master.key",
+        "bytes": 44,
+        "dir": false
+      }
+    ],
+    "residualLockWalShm": [],
+    "sqliteFilePresent": true,
+    "gatewayListening": false,
+    "removed": true
+  }
+}

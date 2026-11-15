@@ -32,6 +32,7 @@ import {
   UnpreservedDeviceCopy,
   UnsupportedDeviceDraft,
 } from './DeviceCopyNotices.js';
+import { EditorConnectionBanner } from './EditorConnectionBanner.js';
 import { EditorToolbar } from './EditorToolbar.js';
 import { unsupportedEffortIssues } from './effort-issues.js';
 import {
@@ -670,6 +671,9 @@ export function EditorPage() {
         onPublish={publish.start}
         saveStatusRef={saveStatusRef}
       />
+      {/* While the draft stages a voice preview the whole frame is inert, which hides this banner
+          from assistive technology: the shell shows the connection status then (#208). */}
+      {voiceStaging ? null : <EditorConnectionBanner />}
       {system ? (
         <SystemLoopNotice
           binding={system}

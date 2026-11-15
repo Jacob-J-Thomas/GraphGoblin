@@ -1,0 +1,285 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\history-208-escalation\\final-parent-v2b\\driver-v3\\history.playwright.js" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-history\\final-native-preparation\\driver\\history.playwright.js"
+index 651fcc88..9fdf24ba 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\history-208-escalation\\final-parent-v2b\\driver-v3\\history.playwright.js"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-208-history\\final-native-preparation\\driver\\history.playwright.js"
+@@ -5,7 +5,7 @@ async (page) => {
+   const sink = read('qa-sink');
+   const group = read('qa-case');
+   const config = read('qa-config');
+-  const out = { suite: '208-history-escalation-v1', group, config, settings: null, failure: null,
++  const out = { suite: '208-history-final-native-v1', group, config, settings: null, failure: null,
+     checkpoints: [], geometry: [], pageErrors: [], consoleErrors: [], limits: [] };
+   const notes = [];
+   const requests = [];
+@@ -16,6 +16,7 @@ async (page) => {
+   const requestRecords = new Map();
+   const theme = config.startsWith('d2-') ? 'dark' : 'light';
+   const coarse = theme === 'dark';
++  const autosaveMs = Number(read('qa-autosave-ms'));
+   const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+   const check = (condition, message, kind = 'product') => {
+     if (!condition) throw Object.assign(new Error(message), { kind });
+@@ -149,6 +150,7 @@ async (page) => {
+     check(response.ok, 'Evidence sink refused ' + name, 'fixture');
+   }
+   async function trace(label, verify = true) {
++    if (verify) await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+     const captured = await page.evaluate(() => window.__qa208.drain());
+     const rawFile = 'frames-' + String(++frameSerial).padStart(3, '0') + '-' + label + '.json';
+     await sinkPost(rawFile, captured);
+@@ -177,6 +179,8 @@ async (page) => {
+         validationWidths: [...new Set(comparable.map((f) => f.validationBox?.[2]))],
+         validation: [...new Set(comparable.map((f) => f.validation))], publish: [...new Set(comparable.map((f) => f.publish))],
+       });
++      check(comparable.length === frames.length, 'Viewport or page scroll changed in stationarity window ' + label);
++      check(layoutSamples > 0, 'No actual rAF layout sample in stationarity window ' + label, 'unwitnessed');
+       check(max.every((value) => value <= 0.02) && misses === 0,
+         'History lost fixed target at ' + label + ' max=' + max + ' misses=' + misses);
+     }
+@@ -340,7 +344,8 @@ async (page) => {
+       const value = await localDraft();
+       return value?.synced === true && value.baseToken === server.draftToken && value;
+     }, label + ' synced device row');
+-    await wait(780);
++    // Observe beyond a full bound autosave debounce for a duplicate accepted write.
++    await wait(autosaveMs + 180);
+     const acceptedWrites = writes().slice(count).filter((request) => request.status === 200);
+     check(acceptedWrites.length === 1, label + ' accepted PUT count ' + acceptedWrites.length);
+     same(accepted.ifMatch, '"' + prior.draftToken + '"', label + ' previous token precondition');
+@@ -379,7 +384,7 @@ async (page) => {
+     if (options.tap) return page.touchscreen.tap(position.x, position.y);
+     await page.mouse.move(position.x, position.y);
+     await page.mouse.down();
+-    try { await wait(options.hold ?? 40); } finally { await page.mouse.up(); }
++    try { if (options.hold) await wait(options.hold); } finally { await page.mouse.up(); }
+   }
+   async function addScript() {
+     const palette = page.getByRole('button', { name: 'Add Script node', exact: true }).first();
+@@ -484,7 +489,8 @@ async (page) => {
+     if (held) {
+       await until(() => publishGate.used, 'held POST publish');
+       await page.getByRole('button', { name: 'Publishing…', exact: true }).waitFor({ timeout: 10000 });
+-      await wait(130);
++      // Observe the pending label across an actual paint before releasing the request.
++      await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+       publishGate.release();
+     }
+     await page.getByText('published v1', { exact: true }).waitFor({ timeout: 12000 });
+@@ -553,7 +559,7 @@ async (page) => {
+     await page.keyboard.press('Control+z');
+     same(await field.inputValue(), textBefore, 'Text field owns native Ctrl+Z');
+     await restored(knownAdd, 'Text field owns Ctrl+Z');
+-    await wait(740);
++    await wait(autosaveMs + 140);
+     check(writes().length === textWrites, 'Text-local undo must not write graph history');
+     same(def(await get()), def(prior), 'Text-local undo kept complete server graph');
+     const heading = modal.getByRole('heading').first();
+@@ -568,24 +574,20 @@ async (page) => {
+     return undo;
+   }
+   async function normal() {
+-    const resumeD1 = group === 'h-d1';
+-    const first = await open(!resumeD1);
++    const first = await open(true);
+     await historyAttributes(true);
+-    if (!resumeD1) {
+-      check(first.some((f) => f.validation === 'Checking…') && first.some((f) => f.validation === 'Ready to publish'),
+-        'No first-paint checking/ready transition in trace', 'fixture');
+-      await focusOrder();
+-      await trace('focus-order');
+-      await mark('disabled-top-row');
+-      await hitHistory('undo', { top: true, hold: 250 });
+-      await wait(740);
+-      check(writes().length === 0 && (await snapshot()).focused === 'undo', 'Disabled control must keep focus without writer');
+-      await restored(def(baseline), 'Disabled case');
+-      await verifyPress('disabled-top-row', 'undo');
+-    }
+-    // D1's first paint, focus, disabled press, held Publish and 1px control already passed.
+-    // Ordinary publication establishes the exact current-only baseline needed for the remaining actions.
+-    await publish(!resumeD1);
++    check(first.some((f) => f.validation === 'Checking…') && first.some((f) => f.validation === 'Ready to publish'),
++      'No first-paint checking/ready transition in trace', 'fixture');
++    await focusOrder();
++    await trace('focus-order');
++    await mark('disabled-top-row');
++    await hitHistory('undo', { top: true, hold: 250 });
++    await wait(autosaveMs + 140);
++    check(writes().length === 0 && (await snapshot()).focused === 'undo', 'Disabled control must keep focus without writer');
++    await restored(def(baseline), 'Disabled case');
++    await verifyPress('disabled-top-row', 'undo');
++    if (group === 'h-d1') await samplerControl();
++    await publish(true);
+ 
+     let current = await apply('add Script', addScript, baseline);
+     recordAdd(baseline, current);
+@@ -661,6 +663,10 @@ async (page) => {
+       'Saving to Saved did not occur during the real hold', 'unwitnessed');
+     if (['h-d1','h-r512'].includes(group)) current = await dialog(current);
+     current = await heldValidation(current);
++    if (group === 'h-r512') {
++      const measuredWrap = out.geometry.some((window) => new Set(window.headerHeights).size > 1);
++      check(measuredWrap, 'No measured R512 toolbar height transition in a stationarity window', 'unwitnessed');
++    }
+     return current;
+   }
+ 
+@@ -718,19 +724,6 @@ async (page) => {
+     return undone;
+   }
+ 
+-  async function remainingR512() {
+-    // The first R512 run passed all normal history phases through held PUT. Preserve those.
+-    await open(false);
+-    await historyAttributes(true);
+-    await publish(false);
+-    let current=await apply('one distinctive step for remaining modal',addScript,baseline);
+-    recordAdd(baseline,current);
+-    await trace('remaining-modal-fixture');
+-    current=await dialog(current);
+-    await heldValidation(current);
+-    out.limits.push('R512 correction2 runs only remaining modal and held-validation phases; first-run history/keyboard/held-PUT/wrap passes retained');
+-  }
+-
+   async function inPageBanner(prefix, where) {
+     const found = await until(async () => {
+       const f = await snapshot();
+@@ -764,16 +757,33 @@ async (page) => {
+     const fixed = (await snapshot()).coords[0];
+     const count = writes().length;
+ 
+-    if (fail === 'offline') {
+-      await page.context().setOffline(true);
+-      await inPageBanner('You are offline', 'editor');
+-    } else if (fail === 'unreachable') control = 'abort-all';
++    if (fail === 'unreachable') control = 'abort-all';
+     else if (fail === 'put-flash') control = 'abort-put';
+-    else control = 'http500';
++    else if (fail === 'http500') control = 'http500';
+     await mark('fault-' + fail);
+-    await hitHistory('undo', { point: {x: fixed[0], y: fixed[1]} });
++    if (fail === 'offline') {
++      // The offline status appears during the same native press. Release at its original point.
++      await page.mouse.move(...fixed);
++      await page.mouse.down();
++      const hold = wait(250);
++      try {
++        await page.context().setOffline(true);
++        await inPageBanner('You are offline', 'editor');
++        await hold;
++      } finally {
++        await page.mouse.up();
++      }
++      const held = await verifyPress('held-offline-transition', 'undo');
++      const down = held.find((frame) => frame.type === 'mousedown' && frame.input.target === 'undo');
++      const up = held.find((frame) => frame.type === 'mouseup' && frame.t >= down.t);
++      check(held.some((frame) => frame.t > down.t && frame.t < up.t && !frame.online && frame.banners.some((banner) =>
++        banner.where === 'editor' && banner.visible && !banner.hidden)), 'Offline status was not witnessed during the same press', 'unwitnessed');
++    } else {
++      await hitHistory('undo', { point: { x: fixed[0], y: fixed[1] } });
++    }
+     await restored(def(baseline), 'History when fault is active');
+ 
++    if (fail === 'offline') check(writes().length === count, 'Browser-offline Undo attempted a draft PUT');
+     if (fail === 'unreachable') {
+       await inPageBanner('Cannot reach the GraphGoblin API', 'editor');
+       check((await snapshot()).online, 'Transport test must keep navigator online');
+@@ -818,6 +828,9 @@ async (page) => {
+       same({...after, nodes:after.nodes.filter((node) => node.id !== fresh[0].id)}, def(baseline), 'Later edit preserved device Undo');
+     }
+     await trace('recover');
++    if (fail === 'offline' || fail === 'unreachable') {
++      check((await snapshot()).banners.length === 0, 'Connection status remained after confirmed recovery');
++    }
+   }
+ 
+   async function nav(name) {
+@@ -826,9 +839,10 @@ async (page) => {
+     await page.getByRole('navigation', {name:'Main'}).getByRole('link', {name,exact:true}).click({timeout:10000});
+   }
+   async function ownership() {
+-    // Only the previously unreached native error subphase. Other ownership transitions passed.
+-    const name = 'QA missing escalation ' + crypto.randomUUID().slice(0,7);
++    const name = 'QA ownership ' + crypto.randomUUID().slice(0, 7);
++    const gone = 'QA missing ' + crypto.randomUUID().slice(0, 7);
+     loopId = await create(name);
++    const missingId = await create(gone);
+     await page.reload();
+     out.settings = await page.evaluate(() => ({cssViewport:[innerWidth,innerHeight],dpr:devicePixelRatio,
+       coarse:matchMedia('(pointer: coarse)').matches,theme:document.documentElement.dataset.theme,
+@@ -837,11 +851,45 @@ async (page) => {
+       'Ownership effective viewport/DPR');
+     check(!out.settings.coarse && out.settings.theme === 'light' && out.settings.rootFont === '16px',
+       'Ownership config mismatch','fixture');
+-    const entry = page.getByRole('link',{name:'Edit '+name,exact:true});
++    const entry = page.getByRole('link', {name:'Edit '+name,exact:true});
++    const missing = page.getByRole('link', {name:'Edit '+gone,exact:true});
+     await entry.waitFor({timeout:12000});
++    await missing.waitFor({timeout:12000});
++    await mark('ownership-list-offline');
++    await page.context().setOffline(true);
++    await inPageBanner('You are offline', 'shell');
++    await page.context().setOffline(false);
++    await until(async () => (await snapshot()).banners.length === 0, 'loop list recovery');
++
++    loadGate = { ...gate(), id: loopId };
++    await entry.click({timeout:12000});
++    await until(() => loadGate.fetched === 200, 'held real loop GET');
++    await page.getByText('Loading loop…', {exact:true}).waitFor({timeout:10000});
++    await mark('loading-offline');
++    await page.context().setOffline(true);
++    await inPageBanner('You are offline', 'shell');
++    loadGate.release();
++    await historySlot.waitFor({timeout:10000});
++    await inPageBanner('You are offline', 'editor');
++    await mark('loaded-offline');
++    await nav('Events');
++    await until(() => new URL(page.url()).pathname === '/app/events', 'SPA Events');
++    await inPageBanner('You are offline', 'shell');
++    await nav('Loops');
++    await entry.click({timeout:10000});
++    await historySlot.waitFor({timeout:10000});
++    await inPageBanner('You are offline', 'editor');
++    await trace('ownership-transfer', false);
++    out.checkpoints.push({ label: 'shell loading, editor loaded, other route, editor re-entry' });
++
++    // Let the missing loop and its configured retry settle online before setting browser offline.
++    await page.context().setOffline(false);
++    await nav('Loops');
++    await missing.waitFor({timeout:12000});
++    loopId = missingId;
+     await api('DELETE',path(loopId),204);
+     await mark('load-error-online-retry');
+-    await entry.click({timeout:10000});
++    await missing.click({timeout:10000});
+     await page.getByText('Could not load loop',{exact:true}).waitFor({timeout:10000});
+     const failed = requests.filter(req => req.method === 'GET' && req.path === path(loopId) && req.status === 404);
+     check(failed.length === 2, 'Expected first real GET404 and configured one online retry', 'fixture');
+@@ -853,8 +901,8 @@ async (page) => {
+     await page.getByText('Could not load loop',{exact:true}).waitFor({timeout:10000});
+     out.checkpoints.push({label:'native error owns one shell status after both 404s', failed, banner});
+     await trace('ownership-native-load-error',false);
+-    await page.context().setOffline(false);
+-    out.limits.push('Prior shell/loading/loaded/route/re-entry passes retained without rerun. Voice staging and unrelated notices remain source/component evidence only');
++    await page.screenshot({ path: 'settled-error.png' });
++    out.limits.push('Voice staging, auth, storage, shutdown and StrictMode remain source/component evidence.');
+   }
+ 
+   async function n360() {
+@@ -884,6 +932,7 @@ async (page) => {
+   try {
+     check(/^http:\/\/127\.0\.0\.1:\d+$/.test(origin) && /^http:\/\/127\.0\.0\.1:\d+$/.test(sink) &&
+       !/:474[78]$/.test(origin) && !/:474[78]$/.test(sink), 'Disposed gateway/sink only', 'fixture');
++    check(Number.isInteger(autosaveMs) && autosaveMs > 0, 'Missing source-bound autosave period', 'fixture');
+     const health = await page.request.get(origin + '/healthz');
+     check(health.ok() && health.headers()['x-graphgoblin-pid'] === read('qa-pid'), 'Gateway identity mismatch', 'fixture');
+     const asset = await page.request.get(origin + read('qa-bundle'));
+@@ -891,8 +940,7 @@ async (page) => {
+     await setupRequests();
+     await page.addInitScript(installProbe, theme);
+     await page.evaluate(installProbe, theme);
+-    if (group === 'h-r512') await remainingR512();
+-    else if (group.startsWith('h-')) await normal();
++    if (group.startsWith('h-')) await normal();
+     else if (group.startsWith('ownership-')) await ownership();
+     else if (group === 'n360') await n360();
+     else await connectivity();
