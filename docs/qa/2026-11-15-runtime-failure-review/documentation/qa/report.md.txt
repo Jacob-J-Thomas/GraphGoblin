@@ -1,0 +1,66 @@
+# PR #485 independent documentation QA
+
+**PASS.** The three frozen Markdown changes satisfy F1 and the scoped FU2
+guide correction. This is a read-only check of the known documentation
+criteria. The formal review remains Opus scan 1.
+
+The checked worktree was at `656a73214c5d59a25c22a4abf2d8b3bf17976959`, with
+target main `f91bd69b79dc417a2997ddb9c7670cb33df7597c`. The scoped diff and
+the worktree status showed exactly three unstaged Markdown paths. The opening
+and closing hashes match the admitted bytes for all three files and the
+index. Raw blobs at the reviewed head independently match Luna's pre-edit
+hashes. The live 15,501-byte diff exactly matches the retained final patch,
+SHA-256 `0042374ae059fa91edac8050578dd0126d6ff88ddc284f5244dbf922f9e8080f`.
+[Readback](readback.json)
+
+## Verified wording
+
+- **F1 public and private failure diagnostics.** The Bug row and ordinary
+  internal-defect paragraph in `docs/05-execution-engine.md` describe the safe
+  public `INTERNAL_ERROR`, node when known and existing resumability. In
+  `packages/engine/src/run-manager.ts:1979–1995,2641–2682,3039–3073`, the
+  manager logs the unexpected cause with run and available node identity and
+  writes the same projected failure to the durable event and failed run row.
+  Engine-owned safe summaries retain their established scope. At
+  `run-manager.ts:2824–2855`, recovery copies the stored terminal failure,
+  preserving historical content.
+- **Preserved decision-provider diagnostic.** The original sentence in
+  `docs/05-execution-engine.md` remains byte-identical. The manager's decider
+  branch calls `deciderFailure` and logs only the allowlisted fields returned
+  by `packages/engine/src/decider-errors.ts`, with fixed operator-facing text.
+- **F1 remaining authored paths.** The ADR-0080 consequences name Script
+  arguments, Heartbeat probes, deadline templates and `until`, Subloop input
+  and custom output mappings, and Inference prompt, context, files and
+  transforms. The named call sites are visible in `handlers/script.ts:40`,
+  `heartbeat.ts:18–51,138,153`, `subloop.ts:61,99,139,222,301–324`,
+  `inference.ts:307,315,364,699,773–879` and `inference-context.ts:58,67`
+  under the engine source. The public message and prior resumability apply
+  when those paths emit `INTERNAL_ERROR`. The ADR preserves cancellation,
+  script-outcome and inference-submission precedence. The generic message
+  matches `packages/engine/src/failure-publication.ts:12–13`.
+- **Child failure projection.** The revised paragraph describes the safe
+  copied child message and the recognized legacy diagnostics that go to the
+  log. `failure-publication.ts:48–129` limits traversal to canonical child
+  wrappers and projects recognized legacy fields, retaining unrelated
+  detail. `subloop.ts:265–298` logs the projected-out data with parent and
+  child identity, then forwards code, resumability and the projected failure.
+- **FU2 guide recovery.** The only guide-table addition is `MUTATION_ERROR`.
+  `handlers/mutate.ts:13–35` marks it nonresumable and names the operation.
+  `run-recovery.ts:108–122` refuses Resume. Ordinary run start reads the
+  published version by default in `apps/api/src/routes/runs.ts:91–107`.
+  Replay uses the source run's pinned definition in
+  `run-manager.ts:1777–1788,1817–1823`. The instruction to correct, publish
+  and start a new run matches that behavior.
+
+## Checks and limits
+
+Thirty relative Markdown file targets across the three files resolved on
+disk. The correction adds no links. Independently, `git diff --check`
+returned 0. Luna's retained final scoped Prettier check on Node v22.23.4
+returned 0 with empty stderr. The first read-only query and comparator
+failures and their corrections are recorded in the readback.
+
+This pass establishes the documentation at the frozen working-tree bytes.
+Exact corrected-head CI and fresh Astra max sign-off remain pending. No
+product test, build or provider was run, and no worktree, index or GitHub
+change was made in this pass.

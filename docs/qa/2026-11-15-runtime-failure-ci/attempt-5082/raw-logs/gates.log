@@ -1,0 +1,880 @@
+﻿2026-11-15T16:23:31.8176313Z Current runner version: '2.338.2'
+2026-11-15T16:23:31.8212818Z ##[group]Runner Image Provisioner
+2026-11-15T16:23:31.8214030Z Hosted Compute Agent
+2026-11-15T16:23:31.8214883Z Version: 20261103.629
+2026-11-15T16:23:31.8215976Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-15T16:23:31.8217107Z Build Date: 2026-11-03T17:26:59Z
+2026-11-15T16:23:31.8218146Z Worker ID: {2c542ae0-c306-4f49-9817-0f8978c6bac0}
+2026-11-15T16:23:31.8219142Z Region: eastus2
+2026-11-15T16:23:31.8220036Z Cloud: Azure
+2026-11-15T16:23:31.8220822Z ##[endgroup]
+2026-11-15T16:23:31.8223710Z ##[group]Operating System
+2026-11-15T16:23:31.8224742Z Ubuntu
+2026-11-15T16:23:31.8225813Z 26.04.1
+2026-11-15T16:23:31.8226564Z LTS
+2026-11-15T16:23:31.8227321Z ##[endgroup]
+2026-11-15T16:23:31.8228152Z ##[group]Runner Image
+2026-11-15T16:23:31.8229098Z Image: ubuntu-26.04
+2026-11-15T16:23:31.8229925Z Version: 20261111.196.1
+2026-11-15T16:23:31.8231821Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-15T16:23:31.8234333Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+2026-11-15T16:23:31.8236170Z ##[endgroup]
+2026-11-15T16:23:31.8237957Z ##[group]GITHUB_TOKEN Permissions
+2026-11-15T16:23:31.8241366Z Contents: read
+2026-11-15T16:23:31.8242228Z Metadata: read
+2026-11-15T16:23:31.8243014Z Packages: read
+2026-11-15T16:23:31.8243999Z ##[endgroup]
+2026-11-15T16:23:31.8247074Z Secret source: Actions
+2026-11-15T16:23:31.8248555Z Cache mode: write
+2026-11-15T16:23:31.8249869Z Prepare workflow directory
+2026-11-15T16:23:31.8714018Z Prepare all required actions
+2026-11-15T16:23:31.8786886Z Getting action download info
+2026-11-15T16:23:32.0988556Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-15T16:23:32.2116958Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-15T16:23:32.4324564Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-15T16:23:32.5082436Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-15T16:23:32.7376832Z Complete job name: Gates
+2026-11-15T16:23:32.8353499Z ##[group]Run actions/checkout@v4
+2026-11-15T16:23:32.8354581Z with:
+2026-11-15T16:23:32.8355497Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-15T16:23:32.8360390Z   token: ***
+2026-11-15T16:23:32.8360987Z   ssh-strict: true
+2026-11-15T16:23:32.8361516Z   ssh-user: git
+2026-11-15T16:23:32.8362040Z   persist-credentials: true
+2026-11-15T16:23:32.8362665Z   clean: true
+2026-11-15T16:23:32.8363193Z   sparse-checkout-cone-mode: true
+2026-11-15T16:23:32.8363843Z   fetch-depth: 1
+2026-11-15T16:23:32.8364367Z   fetch-tags: false
+2026-11-15T16:23:32.8364895Z   show-progress: true
+2026-11-15T16:23:32.8365614Z   lfs: false
+2026-11-15T16:23:32.8366250Z   submodules: false
+2026-11-15T16:23:32.8366823Z   set-safe-directory: true
+2026-11-15T16:23:32.8367470Z   allow-unsafe-pr-checkout: false
+2026-11-15T16:23:32.8368313Z ##[endgroup]
+2026-11-15T16:23:33.1810319Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-15T16:23:33.1813961Z ##[group]Getting Git version info
+2026-11-15T16:23:33.1816410Z Working directory is '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-15T16:23:33.1863435Z [command]/usr/bin/git version
+2026-11-15T16:23:33.1913151Z git version 2.56.1
+2026-11-15T16:23:33.1934524Z ##[endgroup]
+2026-11-15T16:23:33.1952859Z Temporarily overriding HOME='/home/runner/work/_temp/0b2d8422-f330-476f-bed7-5e73b9ccd2e3' before making global git config changes
+2026-11-15T16:23:33.1957943Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-15T16:23:33.1963079Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-15T16:23:33.2025598Z Deleting the contents of '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-15T16:23:33.2029518Z ##[group]Initializing the repository
+2026-11-15T16:23:33.2034455Z [command]/usr/bin/git init /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-15T16:23:33.2157732Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-15T16:23:33.2161020Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-15T16:23:33.2163575Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-15T16:23:33.2165895Z hint: call:
+2026-11-15T16:23:33.2166980Z hint:
+2026-11-15T16:23:33.2168649Z hint: 	git config --global init.defaultBranch <name>
+2026-11-15T16:23:33.2170877Z hint:
+2026-11-15T16:23:33.2172920Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-15T16:23:33.2176682Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-15T16:23:33.2179387Z hint:
+2026-11-15T16:23:33.2181440Z hint: 	git branch -m <name>
+2026-11-15T16:23:33.2183208Z hint:
+2026-11-15T16:23:33.2186189Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-15T16:23:33.2190307Z Initialized empty Git repository in /home/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-15T16:23:33.2195743Z [command]/usr/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-15T16:23:33.2254016Z ##[endgroup]
+2026-11-15T16:23:33.2257454Z ##[group]Disabling automatic garbage collection
+2026-11-15T16:23:33.2260291Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-15T16:23:33.2291980Z ##[endgroup]
+2026-11-15T16:23:33.2294364Z ##[group]Setting up auth
+2026-11-15T16:23:33.2298026Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-15T16:23:33.2334300Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-15T16:23:33.2860231Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-15T16:23:33.2892734Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-15T16:23:33.3114644Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-15T16:23:33.3146716Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-15T16:23:33.3369087Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-15T16:23:33.3409266Z ##[endgroup]
+2026-11-15T16:23:33.3411163Z ##[group]Fetching the repository
+2026-11-15T16:23:33.3419294Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +5db4567e252e503d44db79e1216f52312616b31f:refs/remotes/pull/485/merge
+2026-11-15T16:23:45.1441111Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-15T16:23:45.1442119Z  * [new ref]           5db4567e252e503d44db79e1216f52312616b31f -> pull/485/merge
+2026-11-15T16:23:45.1444911Z ##[endgroup]
+2026-11-15T16:23:45.1445849Z ##[group]Determining the checkout info
+2026-11-15T16:23:45.1449040Z ##[endgroup]
+2026-11-15T16:23:45.1454327Z [command]/usr/bin/git sparse-checkout disable
+2026-11-15T16:23:45.1518769Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-15T16:23:45.1550863Z ##[group]Checking out the ref
+2026-11-15T16:23:45.1555361Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/485/merge
+2026-11-15T16:23:46.1923463Z Updating files:  16% (4703/28255)
+2026-11-15T16:23:46.2567819Z Updating files:  17% (4804/28255)
+2026-11-15T16:23:46.3009499Z Updating files:  18% (5086/28255)
+2026-11-15T16:23:46.3373412Z Updating files:  19% (5369/28255)
+2026-11-15T16:23:46.3592465Z Updating files:  20% (5651/28255)
+2026-11-15T16:23:46.3720327Z Updating files:  21% (5934/28255)
+2026-11-15T16:23:46.3967620Z Updating files:  22% (6217/28255)
+2026-11-15T16:23:46.4265745Z Updating files:  23% (6499/28255)
+2026-11-15T16:23:46.4727960Z Updating files:  24% (6782/28255)
+2026-11-15T16:23:46.4827005Z Updating files:  25% (7064/28255)
+2026-11-15T16:23:46.4983700Z Updating files:  26% (7347/28255)
+2026-11-15T16:23:46.5520916Z Updating files:  27% (7629/28255)
+2026-11-15T16:23:46.5637975Z Updating files:  28% (7912/28255)
+2026-11-15T16:23:46.5846213Z Updating files:  29% (8194/28255)
+2026-11-15T16:23:46.6133857Z Updating files:  30% (8477/28255)
+2026-11-15T16:23:46.6447026Z Updating files:  31% (8760/28255)
+2026-11-15T16:23:46.6683592Z Updating files:  32% (9042/28255)
+2026-11-15T16:23:46.6864706Z Updating files:  33% (9325/28255)
+2026-11-15T16:23:46.7683979Z Updating files:  34% (9607/28255)
+2026-11-15T16:23:46.8340995Z Updating files:  35% (9890/28255)
+2026-11-15T16:23:46.8917516Z Updating files:  36% (10172/28255)
+2026-11-15T16:23:46.9335870Z Updating files:  37% (10455/28255)
+2026-11-15T16:23:46.9506870Z Updating files:  38% (10737/28255)
+2026-11-15T16:23:46.9702772Z Updating files:  39% (11020/28255)
+2026-11-15T16:23:47.0196136Z Updating files:  40% (11302/28255)
+2026-11-15T16:23:47.0665719Z Updating files:  41% (11585/28255)
+2026-11-15T16:23:47.0915206Z Updating files:  42% (11868/28255)
+2026-11-15T16:23:47.1218464Z Updating files:  43% (12150/28255)
+2026-11-15T16:23:47.1627453Z Updating files:  44% (12433/28255)
+2026-11-15T16:23:47.1806688Z Updating files:  45% (12715/28255)
+2026-11-15T16:23:47.2301417Z Updating files:  45% (12764/28255)
+2026-11-15T16:23:47.2810055Z Updating files:  46% (12998/28255)
+2026-11-15T16:23:47.2971472Z Updating files:  47% (13280/28255)
+2026-11-15T16:23:47.3104966Z Updating files:  48% (13563/28255)
+2026-11-15T16:23:47.3367616Z Updating files:  49% (13845/28255)
+2026-11-15T16:23:47.3680910Z Updating files:  50% (14128/28255)
+2026-11-15T16:23:47.3928170Z Updating files:  51% (14411/28255)
+2026-11-15T16:23:47.4164757Z Updating files:  52% (14693/28255)
+2026-11-15T16:23:47.4255742Z Updating files:  53% (14976/28255)
+2026-11-15T16:23:47.4528198Z Updating files:  54% (15258/28255)
+2026-11-15T16:23:47.5183495Z Updating files:  55% (15541/28255)
+2026-11-15T16:23:47.5481161Z Updating files:  56% (15823/28255)
+2026-11-15T16:23:47.5827043Z Updating files:  57% (16106/28255)
+2026-11-15T16:23:47.6237980Z Updating files:  58% (16388/28255)
+2026-11-15T16:23:47.6531580Z Updating files:  59% (16671/28255)
+2026-11-15T16:23:47.6818048Z Updating files:  60% (16953/28255)
+2026-11-15T16:23:47.7052134Z Updating files:  61% (17236/28255)
+2026-11-15T16:23:47.7227164Z Updating files:  62% (17519/28255)
+2026-11-15T16:23:47.7885802Z Updating files:  63% (17801/28255)
+2026-11-15T16:23:47.8457843Z Updating files:  64% (18084/28255)
+2026-11-15T16:23:47.8863616Z Updating files:  65% (18366/28255)
+2026-11-15T16:23:47.9131042Z Updating files:  66% (18649/28255)
+2026-11-15T16:23:47.9905471Z Updating files:  67% (18931/28255)
+2026-11-15T16:23:48.0078106Z Updating files:  68% (19214/28255)
+2026-11-15T16:23:48.0507943Z Updating files:  69% (19496/28255)
+2026-11-15T16:23:48.0854940Z Updating files:  70% (19779/28255)
+2026-11-15T16:23:48.1194557Z Updating files:  71% (20062/28255)
+2026-11-15T16:23:48.1408991Z Updating files:  72% (20344/28255)
+2026-11-15T16:23:48.1808457Z Updating files:  73% (20627/28255)
+2026-11-15T16:23:48.1808990Z Updating files:  73% (20905/28255)
+2026-11-15T16:23:48.1919664Z Updating files:  74% (20909/28255)
+2026-11-15T16:23:48.2210768Z Updating files:  75% (21192/28255)
+2026-11-15T16:23:48.2715819Z Updating files:  76% (21474/28255)
+2026-11-15T16:23:48.3133454Z Updating files:  77% (21757/28255)
+2026-11-15T16:23:48.3528226Z Updating files:  78% (22039/28255)
+2026-11-15T16:23:48.3720950Z Updating files:  79% (22322/28255)
+2026-11-15T16:23:48.4390529Z Updating files:  80% (22604/28255)
+2026-11-15T16:23:48.4715684Z Updating files:  81% (22887/28255)
+2026-11-15T16:23:48.5224197Z Updating files:  82% (23170/28255)
+2026-11-15T16:23:48.5531963Z Updating files:  83% (23452/28255)
+2026-11-15T16:23:48.5803514Z Updating files:  84% (23735/28255)
+2026-11-15T16:23:48.6072866Z Updating files:  85% (24017/28255)
+2026-11-15T16:23:48.6260936Z Updating files:  86% (24300/28255)
+2026-11-15T16:23:48.6702194Z Updating files:  87% (24582/28255)
+2026-11-15T16:23:48.6979557Z Updating files:  88% (24865/28255)
+2026-11-15T16:23:48.7293287Z Updating files:  89% (25147/28255)
+2026-11-15T16:23:48.7542013Z Updating files:  90% (25430/28255)
+2026-11-15T16:23:48.7662513Z Updating files:  91% (25713/28255)
+2026-11-15T16:23:48.7792580Z Updating files:  92% (25995/28255)
+2026-11-15T16:23:48.7946946Z Updating files:  93% (26278/28255)
+2026-11-15T16:23:48.8076820Z Updating files:  94% (26560/28255)
+2026-11-15T16:23:48.8310654Z Updating files:  95% (26843/28255)
+2026-11-15T16:23:48.8454464Z Updating files:  96% (27125/28255)
+2026-11-15T16:23:48.8597573Z Updating files:  97% (27408/28255)
+2026-11-15T16:23:48.8743617Z Updating files:  98% (27690/28255)
+2026-11-15T16:23:48.8891510Z Updating files:  99% (27973/28255)
+2026-11-15T16:23:48.8892380Z Updating files: 100% (28255/28255)
+2026-11-15T16:23:48.8893309Z Updating files: 100% (28255/28255), done.
+2026-11-15T16:23:48.9206511Z Note: switching to 'refs/remotes/pull/485/merge'.
+2026-11-15T16:23:48.9206782Z 
+2026-11-15T16:23:48.9207046Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-15T16:23:48.9207500Z changes and commit them, and you can discard any commits you make in this
+2026-11-15T16:23:48.9207950Z state without impacting any branches by switching back to a branch.
+2026-11-15T16:23:48.9208208Z 
+2026-11-15T16:23:48.9208389Z If you want to create a new branch to retain commits you create, you may
+2026-11-15T16:23:48.9208815Z do so (now or later) by using -c with the switch command. Example:
+2026-11-15T16:23:48.9209063Z 
+2026-11-15T16:23:48.9209181Z   git switch -c <new-branch-name>
+2026-11-15T16:23:48.9209353Z 
+2026-11-15T16:23:48.9209462Z Or undo this operation with:
+2026-11-15T16:23:48.9209611Z 
+2026-11-15T16:23:48.9209706Z   git switch -
+2026-11-15T16:23:48.9209824Z 
+2026-11-15T16:23:48.9210043Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-15T16:23:48.9210323Z 
+2026-11-15T16:23:48.9210893Z HEAD is now at 5db4567e Merge 5082bc176e92cf3518abb630a5afc0a59c444815 into f91bd69b79dc417a2997ddb9c7670cb33df7597c
+2026-11-15T16:23:48.9288262Z ##[endgroup]
+2026-11-15T16:23:48.9340131Z [command]/usr/bin/git log -1 --format=%H
+2026-11-15T16:23:48.9373352Z 5db4567e252e503d44db79e1216f52312616b31f
+2026-11-15T16:23:48.9621422Z ##[group]Run pnpm/action-setup@v4
+2026-11-15T16:23:48.9621691Z with:
+2026-11-15T16:23:48.9621904Z   dest: ~/setup-pnpm
+2026-11-15T16:23:48.9622130Z   run_install: null
+2026-11-15T16:23:48.9622342Z   cache: false
+2026-11-15T16:23:48.9622580Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-15T16:23:48.9622865Z   package_json_file: package.json
+2026-11-15T16:23:48.9623124Z   standalone: false
+2026-11-15T16:23:48.9623338Z ##[endgroup]
+2026-11-15T16:23:49.1071058Z ##[group]Running self-installer...
+2026-11-15T16:23:49.5246677Z (node:2418) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-15T16:23:49.5247675Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-15T16:23:49.6690629Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-15T16:23:49.7975876Z Packages: +3
+2026-11-15T16:23:49.7976462Z +++
+2026-11-15T16:23:50.5523513Z Progress: resolved 15, reused 0, downloaded 3, added 3, done
+2026-11-15T16:23:50.5691329Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-15T16:23:51.1622020Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-15T16:23:51.1626393Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-15T16:23:51.2044308Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-15T16:23:52.8216149Z 
+2026-11-15T16:23:52.8216842Z dependencies:
+2026-11-15T16:23:52.8217747Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-15T16:23:52.8218062Z 
+2026-11-15T16:23:52.8241724Z Done in 3.5s
+2026-11-15T16:23:52.8619907Z ##[endgroup]
+2026-11-15T16:23:52.8620354Z Installation Completed!
+2026-11-15T16:23:52.8810815Z ##[group]Run actions/setup-node@v4
+2026-11-15T16:23:52.8811098Z with:
+2026-11-15T16:23:52.8811313Z   node-version-file: .nvmrc
+2026-11-15T16:23:52.8811556Z   cache: pnpm
+2026-11-15T16:23:52.8811763Z   always-auth: false
+2026-11-15T16:23:52.8811997Z   check-latest: false
+2026-11-15T16:23:52.8814546Z   token: ***
+2026-11-15T16:23:52.8814736Z env:
+2026-11-15T16:23:52.8814987Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:23:52.8815456Z ##[endgroup]
+2026-11-15T16:23:53.0169515Z Resolved .nvmrc as 22
+2026-11-15T16:23:53.0244196Z Found in cache @ /opt/hostedtoolcache/node/22.23.4/x64
+2026-11-15T16:23:53.0257717Z (node:2450) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-15T16:23:53.0258929Z ##[group]Environment details
+2026-11-15T16:23:53.0259465Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-15T16:23:53.4819372Z node: v22.23.4
+2026-11-15T16:23:53.4819857Z npm: 10.9.9
+2026-11-15T16:23:53.4820144Z yarn: 1.22.22
+2026-11-15T16:23:53.4821495Z ##[endgroup]
+2026-11-15T16:23:53.4841365Z [command]/home/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-15T16:23:53.5019179Z /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-15T16:23:53.5864160Z Cache hit for: node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-15T16:23:53.5966320Z (node:2450) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-15T16:23:54.6615226Z Received 254364363 of 258558667 (98.4%), 242.3 MBs/sec
+2026-11-15T16:23:54.7033297Z Received 258558667 of 258558667 (100.0%), 235.7 MBs/sec
+2026-11-15T16:23:54.7033954Z Cache Size: ~247 MB (258558667 B)
+2026-11-15T16:23:54.7101142Z [command]/usr/bin/tar -xf /home/runner/work/_temp/36ecec99-04f9-4232-9536-8393e98872d1/cache.tzst -P -C /home/runner/work/GraphGoblin/GraphGoblin --use-compress-program unzstd
+2026-11-15T16:23:56.2495162Z Cache restored successfully
+2026-11-15T16:23:56.2586084Z Cache restored from key: node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-15T16:23:56.2910070Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-15T16:23:56.2910499Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-15T16:23:56.2955870Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:23:56.2956157Z env:
+2026-11-15T16:23:56.2956427Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:23:56.2956740Z ##[endgroup]
+2026-11-15T16:23:56.3474778Z Scope: all 14 workspace projects
+2026-11-15T16:23:56.3966225Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-15T16:23:56.5161326Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-11-15T16:23:56.5162465Z   Content-addressable store is at: /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-15T16:23:56.5163439Z   Virtual store is at:             node_modules/.pnpm
+2026-11-15T16:23:57.5733349Z Progress: resolved 534, reused 534, downloaded 0, added 526
+2026-11-15T16:24:01.7319565Z ✓ Lockfile passes supply-chain policies (931 entries in 5.3s)
+2026-11-15T16:24:01.7320316Z Lockfile is up to date, resolution step is skipped
+2026-11-15T16:24:01.7465751Z Packages: +801
+2026-11-15T16:24:01.7466378Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-15T16:24:01.8890410Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-15T16:24:02.1659796Z 
+2026-11-15T16:24:02.1660428Z devDependencies:
+2026-11-15T16:24:02.1660811Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-15T16:24:02.1661120Z + @eslint/js 10.0.1
+2026-11-15T16:24:02.1661618Z + @vitest/coverage-v8 5.0.3
+2026-11-15T16:24:02.1661904Z + dependency-cruiser 18.5.0
+2026-11-15T16:24:02.1662150Z + eslint 10.11.0
+2026-11-15T16:24:02.1662415Z + eslint-config-prettier 10.1.8
+2026-11-15T16:24:02.1662729Z + eslint-plugin-react-hooks 7.1.1
+2026-11-15T16:24:02.1662991Z + prettier 3.9.9
+2026-11-15T16:24:02.1663200Z + turbo 2.11.6
+2026-11-15T16:24:02.1663424Z + typescript 6.0.3
+2026-11-15T16:24:02.1663674Z + typescript-eslint 8.71.0
+2026-11-15T16:24:02.1663928Z + vitest 5.0.3
+2026-11-15T16:24:02.1664052Z 
+2026-11-15T16:24:02.1688367Z Done in 5.8s using pnpm v12.8.1
+2026-11-15T16:24:02.2143469Z ##[group]Run pnpm build
+2026-11-15T16:24:02.2143772Z [36;1mpnpm build[0m
+2026-11-15T16:24:02.2176322Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:24:02.2176610Z env:
+2026-11-15T16:24:02.2176879Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:24:02.2177190Z ##[endgroup]
+2026-11-15T16:24:02.2580297Z $ turbo run build
+2026-11-15T16:24:02.2943613Z 
+2026-11-15T16:24:02.2944604Z Attention:
+2026-11-15T16:24:02.2945616Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-15T16:24:02.2946315Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-15T16:24:02.2947288Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-15T16:24:02.2948110Z https://turborepo.dev/docs/telemetry
+2026-11-15T16:24:02.2948305Z 
+2026-11-15T16:24:02.3496281Z 
+2026-11-15T16:24:02.3499942Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-15T16:24:02.3502633Z    • Running build in 13 packages
+2026-11-15T16:24:02.3503448Z    • Remote caching disabled
+2026-11-15T16:24:02.3503931Z 
+2026-11-15T16:24:04.6791719Z ##[group]@graphgoblin/contracts:build
+2026-11-15T16:24:04.6792604Z cache miss, executing 3a79b06fa2e13b64
+2026-11-15T16:24:04.6793179Z $ tsc -b tsconfig.build.json
+2026-11-15T16:24:04.6793833Z ##[endgroup]
+2026-11-15T16:24:07.1698615Z ##[group]@graphgoblin/domain:build
+2026-11-15T16:24:07.1699128Z cache miss, executing 5e34dc8ad76dd4fe
+2026-11-15T16:24:07.1699449Z $ tsc -b tsconfig.build.json
+2026-11-15T16:24:07.1699868Z ##[endgroup]
+2026-11-15T16:24:10.8726371Z ##[group]@graphgoblin/engine:build
+2026-11-15T16:24:10.8727075Z cache miss, executing 5c2646c120209f77
+2026-11-15T16:24:10.8727689Z $ tsc -b tsconfig.build.json
+2026-11-15T16:24:10.8728341Z ##[endgroup]
+2026-11-15T16:24:13.5838959Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-15T16:24:13.5876491Z cache miss, executing 4e23c49c1d806326
+2026-11-15T16:24:13.5929183Z $ tsc -b tsconfig.build.json
+2026-11-15T16:24:13.5966405Z ##[endgroup]
+2026-11-15T16:24:14.0766005Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-15T16:24:14.0789287Z cache miss, executing a914124dc92ece14
+2026-11-15T16:24:14.0790064Z $ tsc -b tsconfig.build.json
+2026-11-15T16:24:14.0790957Z ##[endgroup]
+2026-11-15T16:24:19.2380495Z ##[group]@graphgoblin/infrastructure:build
+2026-11-15T16:24:19.2381047Z cache miss, executing 8fd63c6b3891f130
+2026-11-15T16:24:19.2381382Z $ tsc -b tsconfig.build.json
+2026-11-15T16:24:19.2381796Z ##[endgroup]
+2026-11-15T16:24:25.3830043Z ##[group]@graphgoblin/api:build
+2026-11-15T16:24:25.3831131Z cache miss, executing 384460d9c8401b81
+2026-11-15T16:24:25.3832073Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-15T16:24:25.3833071Z ##[endgroup]
+2026-11-15T16:24:28.1112872Z ##[group]@graphgoblin/api-client:build
+2026-11-15T16:24:28.1113435Z cache miss, executing 152941dc02473b6a
+2026-11-15T16:24:28.1113766Z $ tsc -b tsconfig.build.json
+2026-11-15T16:24:28.1114186Z ##[endgroup]
+2026-11-15T16:24:31.3590033Z ##[group]@graphgoblin/mcp:build
+2026-11-15T16:24:31.3590864Z cache miss, executing 30d786ae3a0aa113
+2026-11-15T16:24:31.3591737Z $ tsc -b tsconfig.build.json
+2026-11-15T16:24:31.3592429Z ##[endgroup]
+2026-11-15T16:24:32.9557665Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-15T16:24:32.9558690Z cache bypass, force executing 3ddc43e2b2b68af6
+2026-11-15T16:24:32.9586650Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-15T16:24:32.9588292Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-15T16:24:32.9616412Z ##[endgroup]
+2026-11-15T16:24:33.2394208Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-15T16:24:33.2394941Z cache bypass, force executing 4864b5b89d788bf5
+2026-11-15T16:24:33.2395724Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-15T16:24:33.2396498Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-15T16:24:33.2397708Z Install: codex plugin marketplace add "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-15T16:24:33.2398626Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-15T16:24:33.2399338Z ##[endgroup]
+2026-11-15T16:24:36.1366287Z ##[group]@graphgoblin/web:build
+2026-11-15T16:24:36.1367076Z cache miss, executing f541fb002f49ce7c
+2026-11-15T16:24:36.1367753Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-15T16:24:36.1368921Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-15T16:24:36.1369701Z transforming...
+2026-11-15T16:24:36.1370145Z ✓ 779 modules transformed.
+2026-11-15T16:24:36.1370674Z rendering chunks...
+2026-11-15T16:24:36.1371046Z computing gzip size...
+2026-11-15T16:24:36.1371523Z dist/manifest.webmanifest           0.47 kB
+2026-11-15T16:24:36.1372234Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-15T16:24:36.1372903Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-15T16:24:36.1373689Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-15T16:24:36.1374048Z 
+2026-11-15T16:24:36.1374534Z [32m✓ built in 2.53s[39m
+2026-11-15T16:24:36.1374941Z 
+2026-11-15T16:24:36.1375318Z [36mPWA v1.3.0[39m
+2026-11-15T16:24:36.1375714Z mode      [35mgenerateSW[39m
+2026-11-15T16:24:36.1376194Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-15T16:24:36.1376570Z files generated
+2026-11-15T16:24:36.1376891Z   [2mdist/sw.js.map[22m
+2026-11-15T16:24:36.1377214Z   [2mdist/sw.js[22m
+2026-11-15T16:24:36.1377574Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-15T16:24:36.1378020Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-15T16:24:36.1378544Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-15T16:24:36.1378915Z transforming...
+2026-11-15T16:24:36.1379192Z ✓ 284 modules transformed.
+2026-11-15T16:24:36.1379439Z rendering chunks...
+2026-11-15T16:24:36.1379674Z computing gzip size...
+2026-11-15T16:24:36.1379982Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-15T16:24:36.1380476Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-15T16:24:36.1381015Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-15T16:24:36.1381623Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-15T16:24:36.1381946Z 
+2026-11-15T16:24:36.1382103Z [32m✓ built in 536ms[39m
+2026-11-15T16:24:36.1382249Z 
+2026-11-15T16:24:36.1382387Z [36mPWA v1.3.0[39m
+2026-11-15T16:24:36.1382679Z mode      [35mgenerateSW[39m
+2026-11-15T16:24:36.1383062Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-15T16:24:36.1383368Z files generated
+2026-11-15T16:24:36.1383650Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-15T16:24:36.1383972Z   [2m../dist-goblin/sw.js[22m
+2026-11-15T16:24:36.1384325Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-15T16:24:36.1384705Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-15T16:24:36.1385883Z ##[endgroup]
+2026-11-15T16:24:36.1396758Z 
+2026-11-15T16:24:36.1396995Z  Tasks:    12 successful, 12 total
+2026-11-15T16:24:36.1397550Z Cached:    0 cached, 12 total
+2026-11-15T16:24:36.1397983Z   Time:    33.834s 
+2026-11-15T16:24:36.1398240Z 
+2026-11-15T16:24:36.2371694Z ##[group]Run pnpm test:reset
+2026-11-15T16:24:36.2371998Z [36;1mpnpm test:reset[0m
+2026-11-15T16:24:36.2404006Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:24:36.2404283Z env:
+2026-11-15T16:24:36.2404559Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:24:36.2404873Z ##[endgroup]
+2026-11-15T16:24:36.2672427Z $ node --test tooling/scripts/reset.acceptance.mjs
+2026-11-15T16:24:36.3075229Z TAP version 13
+2026-11-15T16:24:39.8879861Z # --- dry run output ---
+2026-11-15T16:24:39.8880651Z # GraphGoblin reset (dry run: nothing is removed)
+2026-11-15T16:24:39.8881646Z # Data directory: /tmp/gg-wp-b3-rid-acceptance-fT8deB/data
+2026-11-15T16:24:39.8882986Z # Database:       /tmp/gg-wp-b3-rid-acceptance-fT8deB/data/graphgoblin.db (format 3; this build requires format 4)
+2026-11-15T16:24:39.8883812Z # Removes:
+2026-11-15T16:24:39.8884702Z #   workspaces/01JRESETACCEPTANCEAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B
+2026-11-15T16:24:39.8885981Z #   artifacts                              artifacts                1 file, 2 directories, 13 B
+2026-11-15T16:24:39.8886632Z #   chat-audio                             private chat audio       3 files, 1 directory, 1 link, 16 B
+2026-11-15T16:24:39.8887308Z #   graphgoblin.db                         database                 1 file, 4.0 KB
+2026-11-15T16:24:39.8887913Z #   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 519.1 KB
+2026-11-15T16:24:39.8888607Z #   graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+2026-11-15T16:24:39.8889359Z #   graphgoblin.lock                       the reset's own lock     removed last, on release
+2026-11-15T16:24:39.8889869Z # Keeps:
+2026-11-15T16:24:39.8890494Z #   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+2026-11-15T16:24:39.8891231Z #   workspaces/my-notes                    not a stored run ID
+2026-11-15T16:24:39.8891760Z #   Browser device drafts stay in each browser; discard them from the loop editor.
+2026-11-15T16:24:39.8892274Z # Total removed: 8 files, 5 directories, 2 links, 555.1 KB in 6 items.
+2026-11-15T16:24:39.8892864Z # Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+2026-11-15T16:24:39.8893550Z #   node apps/api/dist/main.js --reset --yes --data-dir "/tmp/gg-wp-b3-rid-acceptance-fT8deB/data"
+2026-11-15T16:24:39.8894334Z # --- end ---
+2026-11-15T16:24:43.9617165Z # --- confirmed output ---
+2026-11-15T16:24:43.9617738Z # GraphGoblin reset
+2026-11-15T16:24:43.9618314Z # Data directory: /tmp/gg-wp-b3-rid-acceptance-fT8deB/data
+2026-11-15T16:24:43.9619414Z # Database:       /tmp/gg-wp-b3-rid-acceptance-fT8deB/data/graphgoblin.db (format 3; this build requires format 4)
+2026-11-15T16:24:43.9620218Z # Removes:
+2026-11-15T16:24:43.9621019Z #   workspaces/01JRESETACCEPTANCEAAAAAAAA  run workspace            1 file, 2 directories, 1 link, 10 B
+2026-11-15T16:24:43.9622080Z #   artifacts                              artifacts                1 file, 2 directories, 13 B
+2026-11-15T16:24:43.9623025Z #   chat-audio                             private chat audio       3 files, 1 directory, 1 link, 16 B
+2026-11-15T16:24:43.9623831Z #   graphgoblin.db                         database                 1 file, 4.0 KB
+2026-11-15T16:24:43.9624595Z #   graphgoblin.db-wal                     SQLite write-ahead log   1 file, 519.1 KB
+2026-11-15T16:24:43.9625595Z #   graphgoblin.db-shm                     SQLite shared memory     1 file, 32.0 KB
+2026-11-15T16:24:43.9626495Z #   graphgoblin.lock                       the reset's own lock     removed last, on release
+2026-11-15T16:24:43.9627088Z # Keeps:
+2026-11-15T16:24:43.9627620Z #   graphgoblin.db.graphgoblin.lock        not part of the store
+2026-11-15T16:24:43.9628466Z #   master.key                             secret-store key; kept so the secrets in a backup of this store stay readable
+2026-11-15T16:24:43.9629798Z #   workspaces/my-notes                    not a stored run ID
+2026-11-15T16:24:43.9630531Z #   Browser device drafts stay in each browser; discard them from the loop editor.
+2026-11-15T16:24:43.9631299Z # Total removed: 8 files, 5 directories, 2 links, 555.1 KB in 6 items.
+2026-11-15T16:24:43.9631820Z # Removing:
+2026-11-15T16:24:43.9632458Z #   removed workspaces/01JRESETACCEPTANCEAAAAAAAA (1 file, 2 directories, 1 link, 10 B)
+2026-11-15T16:24:43.9633232Z #   removed artifacts (1 file, 2 directories, 13 B)
+2026-11-15T16:24:43.9633842Z #   removed chat-audio (3 files, 1 directory, 1 link, 16 B)
+2026-11-15T16:24:43.9634417Z #   removed graphgoblin.db (1 file, 4.0 KB)
+2026-11-15T16:24:43.9634954Z #   removed graphgoblin.db-wal (1 file, 519.1 KB)
+2026-11-15T16:24:43.9635635Z #   removed graphgoblin.db-shm (1 file, 32.0 KB)
+2026-11-15T16:24:43.9636081Z #   removed graphgoblin.lock
+2026-11-15T16:24:43.9636887Z # Reset complete. The next start creates a new, empty format-4 store in /tmp/gg-wp-b3-rid-acceptance-fT8deB/data.
+2026-11-15T16:24:43.9637614Z # --- end ---
+2026-11-15T16:24:45.0206989Z # Subtest: the built API refuses an older store, lists and then performs an explicit reset, and starts fresh
+2026-11-15T16:24:45.0218161Z ok 1 - the built API refuses an older store, lists and then performs an explicit reset, and starts fresh
+2026-11-15T16:24:45.0219301Z   ---
+2026-11-15T16:24:45.0220005Z   duration_ms: 8672.040286
+2026-11-15T16:24:45.0238749Z   type: 'test'
+2026-11-15T16:24:45.0239122Z   ...
+2026-11-15T16:24:45.0541830Z 1..1
+2026-11-15T16:24:45.0546350Z # tests 1
+2026-11-15T16:24:45.0546658Z # suites 0
+2026-11-15T16:24:45.0546904Z # pass 1
+2026-11-15T16:24:45.0547161Z # fail 0
+2026-11-15T16:24:45.0547374Z # cancelled 0
+2026-11-15T16:24:45.0547597Z # skipped 0
+2026-11-15T16:24:45.0547803Z # todo 0
+2026-11-15T16:24:45.0548030Z # duration_ms 8756.316911
+2026-11-15T16:24:45.0668701Z ##[group]Run pnpm test:recovery-process
+2026-11-15T16:24:45.0669271Z [36;1mpnpm test:recovery-process[0m
+2026-11-15T16:24:45.0713722Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:24:45.0714088Z env:
+2026-11-15T16:24:45.0714401Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:24:45.0714733Z ##[endgroup]
+2026-11-15T16:24:45.0999341Z $ node --test apps/api/scripts/recovery-process.integration.mjs
+2026-11-15T16:24:45.1438062Z TAP version 13
+2026-11-15T16:24:47.1230637Z # healthy: waiting; run.waiting readable; damaged: 2 HISTORY_UNREADABLE; port 5600
+2026-11-15T16:24:48.4163804Z # manual column repair: both formerly damaged runs recover; diagnostics empty
+2026-11-15T16:24:48.4433329Z # disposable fixture removed
+2026-11-15T16:24:48.4451740Z # Subtest: built API recovers healthy work beside damaged event and run rows
+2026-11-15T16:24:48.4464842Z ok 1 - built API recovers healthy work beside damaged event and run rows
+2026-11-15T16:24:48.4466015Z   ---
+2026-11-15T16:24:48.4466559Z   duration_ms: 2684.587604
+2026-11-15T16:24:48.4467030Z   type: 'test'
+2026-11-15T16:24:48.4473001Z   ...
+2026-11-15T16:24:48.4631073Z 1..1
+2026-11-15T16:24:48.4631751Z # tests 1
+2026-11-15T16:24:48.4632741Z # suites 0
+2026-11-15T16:24:48.4633133Z # pass 1
+2026-11-15T16:24:48.4634054Z # fail 0
+2026-11-15T16:24:48.4634618Z # cancelled 0
+2026-11-15T16:24:48.4634888Z # skipped 0
+2026-11-15T16:24:48.4635359Z # todo 0
+2026-11-15T16:24:48.4645950Z # duration_ms 3330.756707
+2026-11-15T16:24:48.4726884Z ##[group]Run pnpm test:chat-restart
+2026-11-15T16:24:48.4727215Z [36;1mpnpm test:chat-restart[0m
+2026-11-15T16:24:48.4759187Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:24:48.4759459Z env:
+2026-11-15T16:24:48.4759733Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:24:48.4760051Z ##[endgroup]
+2026-11-15T16:24:48.5025520Z $ node --test apps/api/scripts/chat-restart.acceptance.mjs
+2026-11-15T16:24:48.5451636Z TAP version 13
+2026-11-15T16:24:53.0829146Z # {"acceptance":"chat-restart","admittedOnce":true,"lostAcknowledgement":true,"recovered":"same run; Script uncertainty held without replay","authenticated":"owner and paired device","audio":"canonical WAV private bytes retained beyond unused expiry; interrupted and expired unused files removed","uploadIdentity":"ready acknowledgement survived restart; scoped recovery, conflict and terminal no-recreation verified","malformedNormalizer":"rejected before external effect","explicitNewTurn":"exact native fixture reply"}
+2026-11-15T16:24:53.1144882Z # Subtest: native Chat admission, uncertain effects and private audio survive a real process restart without replay
+2026-11-15T16:24:53.1146368Z ok 1 - native Chat admission, uncertain effects and private audio survive a real process restart without replay
+2026-11-15T16:24:53.1147102Z   ---
+2026-11-15T16:24:53.1147416Z   duration_ms: 4301.765017
+2026-11-15T16:24:53.1147768Z   type: 'test'
+2026-11-15T16:24:53.1148063Z   ...
+2026-11-15T16:24:53.1287986Z 1..1
+2026-11-15T16:24:53.1288304Z # tests 1
+2026-11-15T16:24:53.1288577Z # suites 0
+2026-11-15T16:24:53.1290081Z # pass 1
+2026-11-15T16:24:53.1290408Z # fail 0
+2026-11-15T16:24:53.1290926Z # cancelled 0
+2026-11-15T16:24:53.1292196Z # skipped 0
+2026-11-15T16:24:53.1292723Z # todo 0
+2026-11-15T16:24:53.1293177Z # duration_ms 4595.003292
+2026-11-15T16:24:53.1383804Z ##[group]Run pnpm test:wait-restart
+2026-11-15T16:24:53.1384139Z [36;1mpnpm test:wait-restart[0m
+2026-11-15T16:24:53.1416553Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:24:53.1416832Z env:
+2026-11-15T16:24:53.1417112Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:24:53.1417429Z ##[endgroup]
+2026-11-15T16:24:53.1695728Z $ node apps/api/scripts/wait-restart.acceptance.mjs
+2026-11-15T16:24:53.2116668Z {"phase":"boot","poll":50,"port":5600,"dataDir":"/tmp/gg-c2-native-dIEfhY","at":"2026-11-15T16:24:53.210Z"}
+2026-11-15T16:24:54.2828503Z {"phase":"ready","poll":50,"pid":3649,"elapsedMs":1070.88238}
+2026-11-15T16:25:29.6951707Z {"phase":"boot","poll":50,"port":5600,"dataDir":"/tmp/gg-c2-native-dIEfhY","at":"2026-11-15T16:25:29.694Z"}
+2026-11-15T16:25:30.8386103Z {"phase":"ready","poll":50,"pid":3672,"elapsedMs":1143.300105000002}
+2026-11-15T16:25:30.8387654Z {"phase":"restarted","poll":50,"at":"2026-11-15T16:25:30.838Z"}
+2026-11-15T16:25:35.8304150Z {"poll":50,"dataDir":"/tmp/gg-c2-native-dIEfhY","inputIdentity":true,"timerWakes":1,"pausedWakes":1,"heartbeatCount":2}
+2026-11-15T16:25:35.8435361Z {"phase":"boot","poll":1000,"port":5600,"dataDir":"/tmp/gg-c2-native-bV5lrB","at":"2026-11-15T16:25:35.843Z"}
+2026-11-15T16:25:36.8719673Z {"phase":"ready","poll":1000,"pid":3690,"elapsedMs":1028.3181230000046}
+2026-11-15T16:26:12.9189999Z {"phase":"boot","poll":1000,"port":5600,"dataDir":"/tmp/gg-c2-native-bV5lrB","at":"2026-11-15T16:26:12.918Z"}
+2026-11-15T16:26:13.9966576Z {"phase":"ready","poll":1000,"pid":3716,"elapsedMs":1077.7219829999958}
+2026-11-15T16:26:13.9967741Z {"phase":"restarted","poll":1000,"at":"2026-11-15T16:26:13.996Z"}
+2026-11-15T16:26:20.9307719Z {"poll":1000,"dataDir":"/tmp/gg-c2-native-bV5lrB","inputIdentity":true,"timerWakes":1,"pausedWakes":1,"heartbeatCount":2}
+2026-11-15T16:26:20.9538433Z ##[group]Run pnpm test:prompt-restart
+2026-11-15T16:26:20.9538861Z [36;1mpnpm test:prompt-restart[0m
+2026-11-15T16:26:20.9570954Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:26:20.9571398Z env:
+2026-11-15T16:26:20.9571821Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:26:20.9572252Z ##[endgroup]
+2026-11-15T16:26:20.9844130Z $ node --test apps/api/scripts/prompt-restart.integration.mjs
+2026-11-15T16:26:21.0243080Z TAP version 13
+2026-11-15T16:26:23.5767748Z # {"dataDir":"/tmp/gg-wp-f4-restart-vGhTMp","port":5660,"runId":"01M7G0FZ8CF1XB59N0SB61MG4A","visitId":"01M7G0FZ8CF1XB59N0SB61MG4A:5","recovered":"same session, continuation only"}
+2026-11-15T16:26:23.5908840Z # Subtest: a real kill of the built API continues accepted work from durable visit evidence
+2026-11-15T16:26:23.5914073Z ok 1 - a real kill of the built API continues accepted work from durable visit evidence
+2026-11-15T16:26:23.5914844Z   ---
+2026-11-15T16:26:23.5915915Z   duration_ms: 2300.004261
+2026-11-15T16:26:23.5916509Z   type: 'test'
+2026-11-15T16:26:23.5916856Z   ...
+2026-11-15T16:26:25.8184606Z # {"dataDir":"/tmp/gg-wp-f4-restart-MdOpQR","port":5660,"runId":"01M7G0G1F1Q4Q1K0AWXMS5FS27","policy":"resume-previous","recovered":"blocked inherited conversation; no provider call"}
+2026-11-15T16:26:25.8309303Z # Subtest: a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+2026-11-15T16:26:25.8310874Z ok 2 - a real restart blocks unaccepted authored work with only an inherited resume-previous handle
+2026-11-15T16:26:25.8311839Z   ---
+2026-11-15T16:26:25.8312245Z   duration_ms: 2240.621441
+2026-11-15T16:26:25.8312681Z   type: 'test'
+2026-11-15T16:26:25.8313062Z   ...
+2026-11-15T16:26:28.0774122Z # {"dataDir":"/tmp/gg-wp-f4-restart-1wurwB","port":5660,"runId":"01M7G0G3MDE4J8NX4PBDZP85FF","policy":"resume-named","recovered":"blocked inherited conversation; no provider call"}
+2026-11-15T16:26:28.0898786Z # Subtest: a real restart blocks unaccepted authored work with only an inherited resume-named handle
+2026-11-15T16:26:28.0900274Z ok 3 - a real restart blocks unaccepted authored work with only an inherited resume-named handle
+2026-11-15T16:26:28.0901363Z   ---
+2026-11-15T16:26:28.0901871Z   duration_ms: 2258.917363
+2026-11-15T16:26:28.0902592Z   type: 'test'
+2026-11-15T16:26:28.0903161Z   ...
+2026-11-15T16:26:30.9671517Z # {"dataDir":"/tmp/gg-wp-f4-restart-fHUyxN","port":5660,"runId":"01M7G0G5Z9141QP6HYCFBRW1E3","policy":"resume-previous","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+2026-11-15T16:26:30.9853021Z # Subtest: a kill after Claude's result-only acceptance recovers resume-previous work
+2026-11-15T16:26:30.9854219Z ok 4 - a kill after Claude's result-only acceptance recovers resume-previous work
+2026-11-15T16:26:30.9854946Z   ---
+2026-11-15T16:26:30.9855698Z   duration_ms: 2895.411157
+2026-11-15T16:26:30.9856165Z   type: 'test'
+2026-11-15T16:26:30.9856605Z   ...
+2026-11-15T16:26:33.8800720Z # {"dataDir":"/tmp/gg-wp-f4-restart-MqnYRJ","port":5660,"runId":"01M7G0G8TDF5F3DYK4W0V9NSTW","policy":"resume-named","acceptanceBeforeKill":true,"recovered":"succeeded","calls":{"type":"calls","started":[],"resumed":[{"sessionId":"11111111-1111-4111-8111-111111111111","request":{"turn":{"prompt":"The previous turn was interrupted before GraphGoblin recorded its result. Continue the task from where you left off and finish it."}}}]}}
+2026-11-15T16:26:33.8976125Z # Subtest: a kill after Claude's result-only acceptance recovers resume-named work
+2026-11-15T16:26:33.8977440Z ok 5 - a kill after Claude's result-only acceptance recovers resume-named work
+2026-11-15T16:26:33.8978192Z   ---
+2026-11-15T16:26:33.8978787Z   duration_ms: 2912.099213
+2026-11-15T16:26:33.8979442Z   type: 'test'
+2026-11-15T16:26:33.8980362Z   ...
+2026-11-15T16:26:36.3838854Z # {"runId":"01M7G0GBHDBZ26HBCWCETTXXSJ","recovered":"own worker/reviewer handles, new process, authored feedback preserved"}
+2026-11-15T16:26:36.3951884Z # Subtest: a real restart preserves separate own handles across completed visits
+2026-11-15T16:26:36.3953450Z ok 6 - a real restart preserves separate own handles across completed visits
+2026-11-15T16:26:36.3954616Z   ---
+2026-11-15T16:26:36.3955877Z   duration_ms: 2497.776509
+2026-11-15T16:26:36.3956640Z   type: 'test'
+2026-11-15T16:26:36.3957153Z   ...
+2026-11-15T16:26:36.4067826Z 1..6
+2026-11-15T16:26:36.4068268Z # tests 6
+2026-11-15T16:26:36.4068661Z # suites 0
+2026-11-15T16:26:36.4069133Z # pass 6
+2026-11-15T16:26:36.4069538Z # fail 0
+2026-11-15T16:26:36.4069946Z # cancelled 0
+2026-11-15T16:26:36.4070397Z # skipped 0
+2026-11-15T16:26:36.4070777Z # todo 0
+2026-11-15T16:26:36.4071217Z # duration_ms 15394.320832
+2026-11-15T16:26:36.4166055Z ##[group]Run pnpm test:webhook-retry
+2026-11-15T16:26:36.4166629Z [36;1mpnpm test:webhook-retry[0m
+2026-11-15T16:26:36.4198657Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:26:36.4199031Z env:
+2026-11-15T16:26:36.4199527Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:26:36.4199978Z ##[endgroup]
+2026-11-15T16:26:36.4471362Z $ node apps/api/scripts/webhook-retry.acceptance.mjs
+2026-11-15T16:27:59.2808743Z {"failureRequests":5,"crashRequests":2,"matrix":[{"path":"/success","attempts":1,"delivery":{"id":"01M7G0HZTRCZQHBY8J9SJTCM99","channel":{"kind":"webhook","url":"http://127.0.0.1:36001/success"},"status":"delivered","attempts":1,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":false}},{"path":"/retry","attempts":2,"delivery":{"id":"01M7G0HZWVX35E96BNBYMWMC44","channel":{"kind":"webhook","url":"http://127.0.0.1:36001/retry"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"http","message":"Webhook returned HTTP 503.","retryable":true,"acknowledgement":"unknown","httpStatus":503}}},{"path":"/permanent","attempts":1,"delivery":{"id":"01M7G0HZYHP83XDT7AN948KM4F","channel":{"kind":"webhook","url":"http://127.0.0.1:36001/permanent"},"status":"failed","attempts":1,"maxAttempts":5,"inFlight":false,"acknowledgement":"rejected","effectMayHaveHappened":false,"acknowledgementUncertain":false,"lastError":{"code":"http","message":"Webhook returned HTTP 400.","retryable":false,"acknowledgement":"rejected","httpStatus":400}}},{"path":"/late","attempts":2,"delivery":{"id":"01M7G0J00JEJ8AMN0PFBFVHBSE","channel":{"kind":"webhook","url":"http://127.0.0.1:36001/late"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"timeout","message":"Webhook acknowledgement timed out; the effect may have happened.","retryable":true,"acknowledgement":"unknown"}}},{"path":"/drop","attempts":2,"delivery":{"id":"01M7G0J01RGCZTHZBTKG1XFKZ4","channel":{"kind":"webhook","url":"http://127.0.0.1:36001/drop"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"transport","message":"Webhook acknowledgement lost; the effect may have happened.","retryable":true,"acknowledgement":"unknown"}}}],"drain":[{"phase":"backoff","elapsedMs":14,"requestsDuringDrain":0,"resumed":{"id":"01M7G0JF0250GZ8ZCRM7M5D7MG","channel":{"kind":"webhook","url":"http://127.0.0.1:36001/drain-backoff"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"http","message":"Webhook returned HTTP 503.","retryable":true,"acknowledgement":"unknown","httpStatus":503}}},{"phase":"attempt","elapsedMs":10006,"requestsDuringDrain":0,"resumed":{"id":"01M7G0JJ4TTTS130HQQZGNKCB9","channel":{"kind":"webhook","url":"http://127.0.0.1:36001/drain-attempt"},"status":"delivered","attempts":2,"maxAttempts":5,"inFlight":false,"acknowledgement":"accepted","effectMayHaveHappened":true,"acknowledgementUncertain":true,"lastError":{"code":"timeout","message":"Webhook acknowledgement timed out; the effect may have happened.","retryable":true,"acknowledgement":"unknown"}}}]}
+2026-11-15T16:27:59.3066829Z ##[group]Run pnpm test:upgrade
+2026-11-15T16:27:59.3067288Z [36;1mpnpm test:upgrade[0m
+2026-11-15T16:27:59.3099391Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:27:59.3099828Z env:
+2026-11-15T16:27:59.3100205Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:27:59.3100682Z ##[endgroup]
+2026-11-15T16:27:59.3374256Z $ node --test tooling/scripts/upgrade.acceptance.mjs
+2026-11-15T16:27:59.3777403Z TAP version 13
+2026-11-15T16:28:04.0181684Z # Subtest: fresh and earlier current-format stores start; ordinary migrations preserve data and receipts
+2026-11-15T16:28:04.0207016Z ok 1 - fresh and earlier current-format stores start; ordinary migrations preserve data and receipts
+2026-11-15T16:28:04.0208397Z   ---
+2026-11-15T16:28:04.0208998Z   duration_ms: 4604.112561
+2026-11-15T16:28:04.0209478Z   type: 'test'
+2026-11-15T16:28:04.0209981Z   ...
+2026-11-15T16:28:06.9646251Z # Subtest: format-3 and unmarked stores refuse startup with exit 1 and the reset guidance
+2026-11-15T16:28:06.9649575Z ok 2 - format-3 and unmarked stores refuse startup with exit 1 and the reset guidance
+2026-11-15T16:28:06.9650589Z   ---
+2026-11-15T16:28:06.9651361Z   duration_ms: 2946.84131
+2026-11-15T16:28:06.9651962Z   type: 'test'
+2026-11-15T16:28:06.9652597Z   ...
+2026-11-15T16:28:06.9745365Z 1..2
+2026-11-15T16:28:06.9746062Z # tests 2
+2026-11-15T16:28:06.9746504Z # suites 0
+2026-11-15T16:28:06.9747196Z # pass 2
+2026-11-15T16:28:06.9747714Z # fail 0
+2026-11-15T16:28:06.9748157Z # cancelled 0
+2026-11-15T16:28:06.9748684Z # skipped 0
+2026-11-15T16:28:06.9749568Z # todo 0
+2026-11-15T16:28:06.9749947Z # duration_ms 7607.295649
+2026-11-15T16:28:06.9846594Z ##[group]Run pnpm typecheck
+2026-11-15T16:28:06.9847021Z [36;1mpnpm typecheck[0m
+2026-11-15T16:28:06.9878713Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:28:06.9879121Z env:
+2026-11-15T16:28:06.9879500Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:28:06.9879922Z ##[endgroup]
+2026-11-15T16:28:07.0154425Z $ turbo run typecheck
+2026-11-15T16:28:07.1143086Z 
+2026-11-15T16:28:07.1159227Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-15T16:28:07.1161744Z    • Running typecheck in 13 packages
+2026-11-15T16:28:07.1162471Z    • Remote caching disabled
+2026-11-15T16:28:07.1162944Z 
+2026-11-15T16:28:07.1416875Z ##[group]@graphgoblin/contracts:build
+2026-11-15T16:28:07.1418247Z cache hit, replaying logs 3a79b06fa2e13b64
+2026-11-15T16:28:07.1419191Z $ tsc -b tsconfig.build.json
+2026-11-15T16:28:07.1420370Z ##[endgroup]
+2026-11-15T16:28:07.1421795Z ##[group]@graphgoblin/domain:build
+2026-11-15T16:28:07.1422594Z cache hit, replaying logs 5e34dc8ad76dd4fe
+2026-11-15T16:28:07.1423451Z $ tsc -b tsconfig.build.json
+2026-11-15T16:28:07.1424559Z ##[endgroup]
+2026-11-15T16:28:07.1515288Z ##[group]@graphgoblin/engine:build
+2026-11-15T16:28:07.1557376Z cache hit, replaying logs 5c2646c120209f77
+2026-11-15T16:28:07.1560953Z $ tsc -b tsconfig.build.json
+2026-11-15T16:28:07.1562088Z ##[endgroup]
+2026-11-15T16:28:07.1563058Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-15T16:28:07.1564054Z cache hit, replaying logs 4e23c49c1d806326
+2026-11-15T16:28:07.1564787Z $ tsc -b tsconfig.build.json
+2026-11-15T16:28:07.1593283Z ##[endgroup]
+2026-11-15T16:28:07.1612826Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-15T16:28:07.1636170Z cache hit, replaying logs a914124dc92ece14
+2026-11-15T16:28:07.1652459Z $ tsc -b tsconfig.build.json
+2026-11-15T16:28:07.1653587Z ##[endgroup]
+2026-11-15T16:28:07.1654783Z ##[group]@graphgoblin/infrastructure:build
+2026-11-15T16:28:07.1655806Z cache hit, replaying logs 8fd63c6b3891f130
+2026-11-15T16:28:07.1656713Z $ tsc -b tsconfig.build.json
+2026-11-15T16:28:07.1657956Z ##[endgroup]
+2026-11-15T16:28:07.1696492Z ##[group]@graphgoblin/api:build
+2026-11-15T16:28:07.1697379Z cache hit, replaying logs 384460d9c8401b81
+2026-11-15T16:28:07.1698391Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-15T16:28:07.1699458Z ##[endgroup]
+2026-11-15T16:28:07.1717691Z ##[group]@graphgoblin/api-client:build
+2026-11-15T16:28:07.1736198Z cache hit, replaying logs 152941dc02473b6a
+2026-11-15T16:28:07.1756092Z $ tsc -b tsconfig.build.json
+2026-11-15T16:28:07.1757173Z ##[endgroup]
+2026-11-15T16:28:07.1758046Z ##[group]@graphgoblin/mcp:build
+2026-11-15T16:28:07.1758800Z cache hit, replaying logs 30d786ae3a0aa113
+2026-11-15T16:28:07.1759549Z $ tsc -b tsconfig.build.json
+2026-11-15T16:28:07.1760843Z ##[endgroup]
+2026-11-15T16:28:31.0657231Z ##[group]@graphgoblin/contracts:typecheck
+2026-11-15T16:28:31.0776396Z cache miss, executing 25196d5c9d22519c
+2026-11-15T16:28:31.0956504Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:28:31.1056672Z ##[endgroup]
+2026-11-15T16:28:37.3825450Z ##[group]@graphgoblin/domain:typecheck
+2026-11-15T16:28:37.3874776Z cache miss, executing 87ee61cf1a04a507
+2026-11-15T16:28:37.4018270Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:28:37.4042910Z ##[endgroup]
+2026-11-15T16:28:37.6716990Z ##[group]@graphgoblin/adapter-jev:typecheck
+2026-11-15T16:28:37.6803947Z cache miss, executing ebfc248824ddea38
+2026-11-15T16:28:37.6854600Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:28:37.6906855Z ##[endgroup]
+2026-11-15T16:28:41.6977710Z ##[group]@graphgoblin/adapter-codex:typecheck
+2026-11-15T16:28:41.7046548Z cache miss, executing b7f2b32208c1021a
+2026-11-15T16:28:41.7136524Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:28:41.7256575Z ##[endgroup]
+2026-11-15T16:28:49.6178022Z ##[group]@graphgoblin/plugin-claude:typecheck
+2026-11-15T16:28:49.6179259Z cache miss, executing d73d1246aeeb78ad
+2026-11-15T16:28:49.6251033Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:28:49.6366554Z ##[endgroup]
+2026-11-15T16:28:50.1107017Z ##[group]@graphgoblin/engine:typecheck
+2026-11-15T16:28:50.1136429Z cache miss, executing eb8d32ebc9870a86
+2026-11-15T16:28:50.1196339Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:28:50.1226584Z ##[endgroup]
+2026-11-15T16:29:02.3346886Z ##[group]@graphgoblin/infrastructure:typecheck
+2026-11-15T16:29:02.3376785Z cache miss, executing 7ca486826466b21a
+2026-11-15T16:29:02.3416693Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:29:02.3476365Z ##[endgroup]
+2026-11-15T16:29:06.7880874Z ##[group]@graphgoblin/mcp:typecheck
+2026-11-15T16:29:06.7956570Z cache miss, executing cfbcf0db24bea430
+2026-11-15T16:29:06.8016646Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:29:06.8066359Z ##[endgroup]
+2026-11-15T16:29:07.0932144Z ##[group]@graphgoblin/api-client:typecheck
+2026-11-15T16:29:07.0933679Z cache miss, executing 37aae020790a0d29
+2026-11-15T16:29:07.0956597Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:29:07.0976944Z ##[endgroup]
+2026-11-15T16:29:08.6211642Z ##[group]@graphgoblin/plugin-codex:typecheck
+2026-11-15T16:29:08.6214973Z cache miss, executing 288270ae41a6ac16
+2026-11-15T16:29:08.6216338Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:29:08.6217631Z ##[endgroup]
+2026-11-15T16:29:11.0309060Z ##[group]@graphgoblin/api:typecheck
+2026-11-15T16:29:11.0310009Z cache miss, executing f456f041478091bb
+2026-11-15T16:29:11.0310980Z $ tsc -b tsconfig.build.json && tsc -p tsconfig.json
+2026-11-15T16:29:11.0311986Z ##[endgroup]
+2026-11-15T16:29:22.3798031Z ##[group]@graphgoblin/web:typecheck
+2026-11-15T16:29:22.3798841Z cache miss, executing af1347d58e006bbf
+2026-11-15T16:29:22.3799544Z $ tsc -p tsconfig.json --noEmit
+2026-11-15T16:29:22.3800453Z ##[endgroup]
+2026-11-15T16:29:22.3800911Z 
+2026-11-15T16:29:22.3801976Z  Tasks:    21 successful, 21 total
+2026-11-15T16:29:22.3802670Z Cached:    9 cached, 21 total
+2026-11-15T16:29:22.3803259Z   Time:    1m15.321s 
+2026-11-15T16:29:22.3803704Z 
+2026-11-15T16:29:22.3958394Z ##[group]Run pnpm lint
+2026-11-15T16:29:22.3958756Z [36;1mpnpm lint[0m
+2026-11-15T16:29:22.3990725Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:29:22.3991091Z env:
+2026-11-15T16:29:22.3991543Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:29:22.3991985Z ##[endgroup]
+2026-11-15T16:29:22.4267430Z $ turbo run lint
+2026-11-15T16:29:22.5246590Z 
+2026-11-15T16:29:22.5263237Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-15T16:29:22.5266652Z    • Running lint in 13 packages
+2026-11-15T16:29:22.5267616Z    • Remote caching disabled
+2026-11-15T16:29:22.5268238Z 
+2026-11-15T16:29:37.3600688Z ##[group]@graphgoblin/tooling:lint
+2026-11-15T16:29:37.3643798Z cache miss, executing 1b3f4d6335ee3703
+2026-11-15T16:29:37.3816217Z $ eslint scripts/*.mjs perf/*.mjs *.mjs
+2026-11-15T16:29:37.3887829Z ##[endgroup]
+2026-11-15T16:29:50.1659925Z ##[group]@graphgoblin/adapter-jev:lint
+2026-11-15T16:29:50.1706422Z cache miss, executing c50d3ed4bd058405
+2026-11-15T16:29:50.1753832Z $ eslint .
+2026-11-15T16:29:50.1836615Z ##[endgroup]
+2026-11-15T16:30:00.5536877Z ##[group]@graphgoblin/adapter-codex:lint
+2026-11-15T16:30:00.5609010Z cache miss, executing 7dfc6759d0713372
+2026-11-15T16:30:00.5704219Z $ eslint .
+2026-11-15T16:30:00.5890767Z ##[endgroup]
+2026-11-15T16:30:08.3242860Z ##[group]@graphgoblin/contracts:lint
+2026-11-15T16:30:08.3336902Z cache miss, executing c27d61b05a09d933
+2026-11-15T16:30:08.3416635Z $ eslint .
+2026-11-15T16:30:08.3486613Z ##[endgroup]
+2026-11-15T16:30:11.9683425Z ##[group]@graphgoblin/api-client:lint
+2026-11-15T16:30:11.9916718Z cache miss, executing 757c783fb2a31476
+2026-11-15T16:30:12.0046481Z $ eslint .
+2026-11-15T16:30:12.0166839Z ##[endgroup]
+2026-11-15T16:30:16.9766870Z ##[group]@graphgoblin/domain:lint
+2026-11-15T16:30:16.9906564Z cache miss, executing 0d07505e75beeeb6
+2026-11-15T16:30:17.0006338Z $ eslint .
+2026-11-15T16:30:17.0026714Z ##[endgroup]
+2026-11-15T16:30:18.5927011Z ##[group]@graphgoblin/plugin-codex:lint
+2026-11-15T16:30:18.6056477Z cache miss, executing 60f675134e1ed5d8
+2026-11-15T16:30:18.6186101Z $ eslint .
+2026-11-15T16:30:18.6256855Z ##[endgroup]
+2026-11-15T16:30:21.0467030Z ##[group]@graphgoblin/plugin-claude:lint
+2026-11-15T16:30:21.0596338Z cache miss, executing 8771f0c50c0551ef
+2026-11-15T16:30:21.0626194Z $ eslint .
+2026-11-15T16:30:21.0686562Z ##[endgroup]
+2026-11-15T16:30:29.5317866Z ##[group]@graphgoblin/mcp:lint
+2026-11-15T16:30:29.5322840Z cache miss, executing 83f6a1c232e6b005
+2026-11-15T16:30:29.5346776Z $ eslint .
+2026-11-15T16:30:29.5376577Z ##[endgroup]
+2026-11-15T16:30:33.2077002Z ##[group]@graphgoblin/engine:lint
+2026-11-15T16:30:33.2117373Z cache miss, executing d4f869613a46f3c7
+2026-11-15T16:30:33.2135944Z $ eslint .
+2026-11-15T16:30:33.2178028Z ##[endgroup]
+2026-11-15T16:30:40.2159127Z ##[group]@graphgoblin/infrastructure:lint
+2026-11-15T16:30:40.2173323Z cache miss, executing fb3711f3fa0c836a
+2026-11-15T16:30:40.2174436Z $ eslint .
+2026-11-15T16:30:40.2175550Z ##[endgroup]
+2026-11-15T16:30:45.9593261Z ##[group]@graphgoblin/api:lint
+2026-11-15T16:30:45.9594069Z cache miss, executing 87e77539678481a1
+2026-11-15T16:30:45.9594770Z $ eslint .
+2026-11-15T16:30:45.9595633Z ##[endgroup]
+2026-11-15T16:31:12.8236638Z ##[group]@graphgoblin/web:lint
+2026-11-15T16:31:12.8237431Z cache miss, executing 75517cc22dd93740
+2026-11-15T16:31:12.8238225Z $ eslint .
+2026-11-15T16:31:12.8239036Z ##[endgroup]
+2026-11-15T16:31:12.8239472Z 
+2026-11-15T16:31:12.8256421Z  Tasks:    13 successful, 13 total
+2026-11-15T16:31:12.8256912Z Cached:    0 cached, 13 total
+2026-11-15T16:31:12.8258607Z   Time:    1m50.359s 
+2026-11-15T16:31:12.8258871Z 
+2026-11-15T16:31:12.8383744Z ##[group]Run pnpm format:check
+2026-11-15T16:31:12.8384142Z [36;1mpnpm format:check[0m
+2026-11-15T16:31:12.8417115Z shell: /usr/bin/bash -e {0}
+2026-11-15T16:31:12.8417595Z env:
+2026-11-15T16:31:12.8417957Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:31:12.8418344Z ##[endgroup]
+2026-11-15T16:31:12.8701809Z $ prettier --check .
+2026-11-15T16:31:12.9533905Z Checking formatting...
+2026-11-15T16:32:20.6494804Z [[33mwarn[39m] docs/qa/2026-11-15-runtime-failure-baseline/functional/attempt-2-evidence/a1-exit-depth/inspector-dom.html
+2026-11-15T16:32:20.6895172Z [[33mwarn[39m] docs/qa/2026-11-15-runtime-failure-baseline/functional/attempt-2-evidence/a1-explicit/inspector-dom.html
+2026-11-15T16:32:20.7497922Z [[33mwarn[39m] docs/qa/2026-11-15-runtime-failure-baseline/functional/attempt-2-evidence/a2-provider-error/inspector-dom.html
+2026-11-15T16:32:20.8754504Z [[33mwarn[39m] docs/qa/2026-11-15-runtime-failure-candidate/functional/corrected-attempt-1/a1-exit-depth/inspector-dom.html
+2026-11-15T16:32:20.9227986Z [[33mwarn[39m] docs/qa/2026-11-15-runtime-failure-candidate/functional/corrected-attempt-1/a1-explicit/inspector-dom.html
+2026-11-15T16:32:20.9637476Z [[33mwarn[39m] docs/qa/2026-11-15-runtime-failure-candidate/functional/corrected-attempt-1/a2-provider-error/inspector-dom.html
+2026-11-15T16:32:30.5224492Z [[33mwarn[39m] Code style issues found in 6 files. Run Prettier with --write to fix.
+2026-11-15T16:32:30.5648835Z [ELIFECYCLE] Command failed with exit code 1.
+2026-11-15T16:32:30.5673313Z ##[error]Process completed with exit code 1.
+2026-11-15T16:32:30.5793615Z ##[group]Run actions/upload-artifact@v4
+2026-11-15T16:32:30.5794020Z with:
+2026-11-15T16:32:30.5794381Z   name: coverage
+2026-11-15T16:32:30.5794994Z   path: packages/*/coverage/coverage-summary.json
+apps/*/coverage/coverage-summary.json
+tooling/coverage/coverage-summary.json
+
+2026-11-15T16:32:30.5795891Z   if-no-files-found: ignore
+2026-11-15T16:32:30.5796252Z   compression-level: 6
+2026-11-15T16:32:30.5796567Z   overwrite: false
+2026-11-15T16:32:30.5796878Z   include-hidden-files: false
+2026-11-15T16:32:30.5797224Z env:
+2026-11-15T16:32:30.5797596Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-15T16:32:30.5797975Z ##[endgroup]
+2026-11-15T16:32:30.7420818Z (node:5948) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-15T16:32:30.7422120Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-15T16:32:30.7549380Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-15T16:32:30.7553287Z The least common ancestor is /home/runner/work/GraphGoblin/GraphGoblin. This will be the root directory of the artifact
+2026-11-15T16:32:30.7555221Z No files were found with the provided path: packages/*/coverage/coverage-summary.json
+2026-11-15T16:32:30.7556275Z apps/*/coverage/coverage-summary.json
+2026-11-15T16:32:30.7557325Z tooling/coverage/coverage-summary.json. No artifacts will be uploaded.
+2026-11-15T16:32:30.7732447Z Post job cleanup.
+2026-11-15T16:32:30.9260204Z Pruning is unnecessary.
+2026-11-15T16:32:30.9421980Z Post job cleanup.
+2026-11-15T16:32:31.0307522Z [command]/usr/bin/git version
+2026-11-15T16:32:31.0348849Z git version 2.56.1
+2026-11-15T16:32:31.0384320Z Temporarily overriding HOME='/home/runner/work/_temp/20712044-511b-49bb-a932-71621c89e929' before making global git config changes
+2026-11-15T16:32:31.0386158Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-15T16:32:31.0389699Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-15T16:32:31.0429583Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-15T16:32:31.0471624Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-15T16:32:31.0792352Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-15T16:32:31.0819070Z http.https://github.com/.extraheader
+2026-11-15T16:32:31.0830154Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-15T16:32:31.0867233Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-15T16:32:31.1180036Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-15T16:32:31.1213861Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-15T16:32:31.1635943Z Cleaning up orphan processes
+2026-11-15T16:32:31.1951140Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

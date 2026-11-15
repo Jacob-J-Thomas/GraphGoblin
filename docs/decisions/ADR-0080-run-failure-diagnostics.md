@@ -42,3 +42,13 @@ Existing recovery policy reads `resumable` and `FAILURE_NOT_RESUMABLE` is the sa
 REST and MCP. The inspector can render the operation and cause with its ordinary failure display.
 The stored format remains readable under [ADR-0062](ADR-0062-stored-data-corrected-by-hand-before-1.0.md).
 Historical rows and events retain their existing content, including any earlier engine diagnostics.
+
+Authored template and expression failures at these remaining boundaries still use their existing
+`INTERNAL_ERROR` path: script arguments; heartbeat probe/deadline templates and `until` predicates;
+subloop input and custom output mappings; and inference prompt, context and file templates plus
+input/output transforms. When one of these failures is emitted as `INTERNAL_ERROR`, it keeps its
+existing resumability, while a new public failure uses the safe message `An unexpected error
+interrupted the run. See the server logs for this run.` The evaluator cause is recorded in server
+logs correlated by run and node when available. Existing higher-priority cancellation, script-outcome
+and inference submission classifications remain in effect. Historical rows and events are not
+rewritten.

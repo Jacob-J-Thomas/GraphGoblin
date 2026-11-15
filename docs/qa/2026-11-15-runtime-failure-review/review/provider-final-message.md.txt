@@ -1,0 +1,52 @@
+# #381 / #414 formal scan 1 of 3 — CHANGES REQUIRED
+
+**Verdict: CHANGES REQUIRED.** One documentation fix is needed. The code itself has no correctness, security, recovery or test blocker, and no product or test change is needed.
+
+The full report is at `review-381-opus-scan1/full-report.md` (31,361 bytes, SHA-256 `44491862135f923290c7223ea593a8e27ae6294f43577eb3d704d641d25f9fc1`). I made no repository, index, commit, push or GitHub writes, made no provider calls, and ran no product tests or builds. The checkout was clean before and after.
+
+## Admission check
+The admission file exists and is consistent with the checkout and CI:
+- **PR #485:** head `656a73214c5d59a25c22a4abf2d8b3bf17976959`, tree `d6c3dc2f3ebf265133fc3761c775ed37b2077388`, target `f91bd69b79dc417a2997ddb9c7670cb33df7597c`, source commit `615d50bc358d73bc55ad0591f4f625f1a46cb671`.
+- **Hashes:** all 12 bound inputs and all 9 CI files match their recorded sizes and SHA-256 values.
+- **Tested merge:** `7c8cf9f2b8b099351a9ac138cab43d86ec5ad23f` has the same tree as the head, with parents target then head. All four job logs check out that merge.
+- **CI run 43737977820, attempt 1:** all four jobs passed, 9,605 tests passed and 41 skipped (the package totals add up to that).
+- **Source binding:** all 29 changed files match the accepted manifest at both `615d50bc` and `656a7321`. The two later commits change only evidence, the register and `.prettierignore`.
+
+## Finding F1 (must fix; documentation only, introduced by this PR)
+- **Stale text in a Decided doc.** `docs/05-execution-engine.md` lines 477 and 479 still say internal failures are recorded "with full diagnostics" and that "ordinary internal defects retain their full diagnostics." That contradicts the new paragraph this PR added at lines 103–111. New internal failures now carry only a safe message, and the raw details go to server logs.
+- **Missing disclosure.** None of the new ADR, docs or CHANGELOG text says what happens to authored template and expression errors outside Context Mutation and Exit. Those nodes are script args, heartbeat, subloop mappings, and inference prompts, context, files and transforms. Their errors stay `INTERNAL_ERROR`, but the public message is now "An unexpected error interrupted the run. See the server logs for this run." The author's own error text no longer appears in the inspector, REST or MCP.
+- **Evidence.** The internal QA subloop output-mapping case (`typed-subloop-mapping`) shows exactly this. The error text appears only in the private log.
+- **Minimum fix:**
+  1. Correct docs/05 lines 477 and 479.
+  2. In ADR-0080 or docs/05, name the node kinds whose authored errors now show only the generic text, with the cause in server logs.
+  3. Optionally, correct the subloop message wording at docs/05 line 225.
+
+## Requirements that are met
+- **Mutation errors:** they get `MUTATION_ERROR`, nonresumable, with the correct zero-based index (kept across a repair pause), the operation kind and a one-based number in the message. The cause is capped at 1,000 characters. ID, clock and serialization failures stay unexpected. The failed node commits no partial patch, and repair outcomes are unchanged.
+- **Provider and resolver errors:** exceptions of the same class from the completion provider or model resolver stay unexpected `INTERNAL_ERROR`.
+- **Invalid final thread:** it still fails as nonresumable `INTERNAL_ERROR` with no operation attribution.
+- **Exit:** only an expression error in the return evaluation becomes nonresumable `EXPRESSION_ERROR`, with no invented mutation identity. The depth limit still applies, and the wide literal still succeeds.
+- **Public versus private diagnostics:** the only place that writes `run.failed` is the run manager's `failRun`, and the event and run row get the same failure. Only engine-created failures can supply public text; that class is not exported from the engine package, so adapters can't forge it. Raw message and stack are logged with run and node identity before script evidence can change the classification.
+- **Preserved behaviour:** code, node, resumability, script and inference provenance, and stop/deadline/cancel order are unchanged.
+- **Decision provider:** it keeps its fixed safe text and safe-only warning. An existing manager test checks that the raw marker appears in neither the public record nor any log line, and it passed in CI.
+- **Inference recording:** recording-failure entries keep their order and carry only `{operation}`. The raw error is logged privately with run, node, turn and operation.
+- **Subloop forwarding:** only exact parent/child wrapper shapes are traversed, and old diagnostic fields are removed. Unrelated authored or provider fields are kept, and historical rows and events are untouched.
+
+## Follow-up candidates (not blockers)
+- **Typed errors for other nodes:** typed authored-error classification for those other node kinds would restore the in-product cause, but it is outside #381's scope.
+- **Guide table:** the guide's failure-code table has no `MUTATION_ERROR` row. It already omitted 10 other codes, so this continues existing drift.
+- **Evaluator timeouts:** an expression timeout (2-second default budget) is now nonresumable at Mutation and Exit, as the spec requires. Under heavy host load that could be environmental rather than an authoring error; Replay still works.
+- **Broken links:** `delivery-register-append.md` has three links that only work from `docs/delivery/`.
+- **Message wording:** patch-error messages read "operation 4 … operation 0" because they include the JSON Patch's own index. The stored details are correct; this is optional polish.
+
+## Evidence limitations
+- **Checks run:** my checks were read-only (git queries, hash verification, packet checksum and link checks, raw-file spot reads). I ran no product tests, because CI already passed on the exact tree and nothing open needed them.
+- **Two corrected parsing mistakes of mine:**
+  - The checksum files use Windows line endings, so my first check reported every file as failing. With carriage returns stripped, all five packets verify.
+  - My first parser misread the checksum separator. After correcting it, nothing is missing or unlisted.
+- **Local full check:** the local `pnpm check` failed. Root's readbacks attribute the engine part to old expectations later corrected in test files only; the voice, Codex probe and plugin timeout failures have no known cause. CI is the only full-suite pass.
+- **Test tiers:** historical-child cases use made-up rows seeded into real SQLite. The composed cases use a controlled completion provider, and there were no live provider turns.
+- **Curation still open:** the current CI packet still lacks the manifest and checksum files its README names. The failed first CI attempt (run 43735208367, at commit `5082bc17`) is kept only outside the repository so far and must appear in the eventual completion record.
+- **Inherited PR #484 packets:** their records match their raw logs and git.
+
+Owner acceptance is separate from this review. This is scan 1 of 3. Root decides whether F1 needs another formal scan or can be handled as a known-cause correction. The final Astra max sign-off is still required.

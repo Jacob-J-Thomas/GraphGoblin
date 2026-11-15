@@ -1,0 +1,232 @@
+# #381 / #414 opposite-family review — formal scan 1 of 3
+
+Reviewer: Claude Opus 5.5 (`claude-opus-5-5`), xhigh effort. This was a read-only adversarial review of GPT-implemented backend work. I made no repository, index, commit, push or GitHub writes, ran no provider turns and touched no owner resources. I executed no product test, build or fixture, so the heavy slot was not used.
+
+## Verdict: CHANGES REQUIRED
+
+The code has no blocker. One in-scope documentation root cause (F1) must be corrected. A Decided numbered document still says new internal failures publish "full diagnostics", which contradicts the behaviour this PR introduces. The docs also do not disclose the author-facing effect on authored template and expression faults outside Context Mutation and Exit. The fix is documentation-only. No product or test change is required.
+
+I found no correctness, security, recovery, concurrency, layering or test-adequacy blocker in the effective source. Durable follow-up candidates and non-blocking notes are listed separately below; none of them blocks this PR.
+
+## Exact identities
+
+| Item | Value |
+| --- | --- |
+| PR | #485 (draft, open, target `main`) |
+| Reviewed head | `656a73214c5d59a25c22a4abf2d8b3bf17976959` |
+| Head tree | `d6c3dc2f3ebf265133fc3761c775ed37b2077388` |
+| Target (actual main) | `f91bd69b79dc417a2997ddb9c7670cb33df7597c` |
+| Accepted source commit | `615d50bc358d73bc55ad0591f4f625f1a46cb671` (parent `f91bd69b`) |
+| Commits in PR | `615d50bc` (source), `5082bc17` (QA/delivery evidence), `656a7321` (`.prettierignore` only) |
+| Current-head CI | run `43737977820`, attempt 1, conclusion success, all four jobs success |
+| Tested synthetic merge | `7c8cf9f2b8b099351a9ac138cab43d86ec5ad23f`, tree `d6c3dc2f…` (equals head tree), parents `[f91bd69b, 656a7321]` |
+
+## Admission verification (performed before any review)
+
+I read `runtime-381-opus-admission.json` (8,398 bytes, `state: root-admitted`, `at 2026-11-15T17:30:59Z`). It binds the PR number, head, tree, target, source, model, effort, scan 1 of 3, CI run/attempt/result/tested merge, raw CI logs and artifact, candidate QA acceptance, local-check readback and the brief/spec/runner. I checked each binding independently:
+
+- The checkout is at `HEAD = 656a7321…`, `HEAD^{tree} = d6c3dc2f…`, with a clean worktree and index (`git status --porcelain` printed 0 lines before and after the review). The merge-base with the target is `f91bd69b`. `615d50bc^ = f91bd69b`.
+- `git cat-file -p 7c8cf9f2…` gives tree `d6c3dc2f…` and parents `f91bd69b` then `656a7321`.
+- All 12 `boundInputs` match their admitted byte counts and SHA-256 values. These are the functional, internal and source root acceptances, the build binding, the post-binding readback, the full-check readback, the two runtime-485 readbacks, the CI terminal file, the brief, the spec and the runner.
+- All 8 raw CI files and the coverage zip match their admitted bytes and SHA-256 values.
+- All four decoded job logs show `HEAD is now at 7c8cf9f2 Merge 656a7321… into f91bd69b…`.
+- `terminal-snapshot.json` shows the run `completed/success` at head `656a7321`, attempt 1. Template image, Windows launcher, Browser and Gates are each `completed/success`.
+- The Gates log package totals sum to 9,605 passed and 41 skipped, matching the admission. The engine suite passed 1,812 tests. That includes `mutation-failures.test.ts` (12), `exit.test.ts` (6), `child-failure-parity.test.ts` (14), `awaited-children.test.ts` (26) and `inference-evidence-matrix.test.ts` (874).
+
+The admission is complete and consistent, so the review proceeded.
+
+## Paths read
+
+**Governance:** `AGENTS.md`; `docs/README.md`; `docs/15-issue-workflow.md`; `docs/delivery/2026-11-13-four-intents-register.md` (complete).
+
+**External batch:** `runtime-contract.md`; `runtime-381-implementation-brief.md`; `runtime-381-boundary-refinement-20261115.md`; `runtime-381-opus-brief.md`; `runtime-381-opus-spec.json`; `runtime-381-opus-admission.json`.
+
+**Candidate and source receipts:** `runtime-381-functional-candidate-root-acceptance.json`; `runtime-381-internal-candidate-root-acceptance.json`; `runtime-381-source-root-acceptance.json`; `runtime-381-internal-candidate-post-binding-root-readback.json`; `runtime-381-full-check-readback.md`.
+
+**CI and correction receipts:** `runtime-485-first-ci-root-readback.json`; `runtime-485-format-correction-root-readback.json`; `review-381/current-ci-656a/{README.md, identity-readback.json, synthetic-merge-identity.json, jobs-snapshot-165808Z.json, terminal-snapshot.json, job-logs/*.steps.json}`; targeted greps of all four decoded job logs.
+
+**Full effective source diff `f91bd69b..656a7321`, excluding `docs/qa`:**
+- Domain and contracts: `packages/domain/src/mutations.ts`, `packages/contracts/src/run.ts`.
+- Generated API surface: `packages/api-client/openapi.json`, `packages/api-client/src/generated/schema.ts`.
+- Engine source: `packages/engine/src/failure-publication.ts` (new), `run-manager.ts`, and `handlers/{common,exit,mutate,subloop,inference}.ts`.
+- Engine tests: `mutation-failures.test.ts` (new), `exit.test.ts`, `adversarial.test.ts`, `awaited-children.test.ts`, `child-failure-parity.test.ts`, `edge-cases.test.ts`, `finalization.test.ts`, `handlers/claude.test.ts`, `handlers/flow.test.ts`, `handlers/inference-boundaries.test.ts`, `handlers/inference-evidence-matrix.test.ts`, `prompt-provenance.test.ts`, `prompt-recovery.test.ts`.
+- Docs and config: `CHANGELOG.md`, `docs/04-node-catalog.md`, `docs/05-execution-engine.md`, `docs/decisions/ADR-0080-run-failure-diagnostics.md`, `docs/decisions/README.md`, the register, `.prettierignore`.
+
+**Surrounding code:**
+- Engine: `packages/engine/src/{errors.ts, decider-errors.ts, event-validation.ts, index.ts}`; `handlers/script-dispatch.ts` (`classifyScriptFailure`); `handlers/inference-turn.ts` (`recoveryFailure`, `missingFailure`, `submission`, history reconstruction); `handlers/inference-failure.ts` (evidence rank and merge).
+- Run manager: the outer `tick` catch, node catch, invalid-patch, no-edge, all `failRun` call sites and `completeFromLog`.
+- Baseline comparison: `f91bd69b:packages/engine/src/handlers/inference.ts` (old catch, consume and submission paths).
+- Domain: `packages/domain/src/{errors.ts, template.ts, expression.ts, pointer.ts, patch.ts, json-schema.ts}`.
+- Handlers still using authored evaluation: `handlers/{script,heartbeat}.ts`, `inference-context.ts`.
+- Contracts: `RunFailureSchema` and the ID schemas.
+- Tests and docs: `run-manager.test.ts` (decider manager guard) and `decider-errors.test.ts`; `docs/guide/03-run-and-observe.md` (failure-code table); `docs/guide/07-troubleshooting.md`; diagnostics greps of docs/03, 07, 09 and 11; `apps/api/src/main.ts` (logger config).
+
+**In-repo QA packets:**
+- Candidate: README, `SHA256SUMS.txt`, functional `execution-1/report.md.txt`, internal `execution-1/report.md.txt`, and raw cases. Those raw cases are the `before-recovery.json` failures for a1-explicit, a1-exit-depth, a2-final-thread, a2-after-repair and a2-repaired-target; `a2-provider-error/unexpected-repair-private.json`; and `internal/evidence-candidate-first/{historical-nested-recording, historical-child-primary, script-dispatch-precedence, typed-subloop-mapping}{.json,.private.json}`.
+- Implementation: README, `handoff.md.txt`, `changed-source.json`, and the `pre-heavy`, `pre-isolated-coverage` and `post-test-correction` captures.
+- Baseline: README.
+- PR #484 (inherited): `docs/qa/2026-11-15-poll-dedupe-current-ci/README.md` and its raw logs; `docs/qa/2026-11-15-poll-dedupe-completion/README.md`.
+
+## Commands run and first results
+
+Every command was read-only. Bash ran from the checkout unless noted. The first outputs are recorded as observed.
+
+1. `git rev-parse HEAD HEAD^{tree}`, `git status --porcelain`, `git log --oneline -5`, `git cat-file -t …`, `git merge-base HEAD f91bd69b`. Result: identities as above, clean worktree.
+2. `wc -c` and `sha256sum` over all admission-bound files and CI raw files. Result: all matched.
+3. `git cat-file -p 7c8cf9f2…` and `git rev-parse 615d50bc^ 5082bc17^ 656a7321^`. Result: merge parents and tree as admitted; linear commit chain.
+4. Grep of the four decoded CI logs for the merge SHA and `HEAD is now at`, plus a Node read of `terminal-snapshot.json`. Result: all four jobs checked out `7c8cf9f2`; run and jobs success.
+5. Grep of Gates log `Tests … passed`. Result: the 13 groups sum to 9,605 passed and 41 skipped; the new engine test files are present.
+6. `git diff f91bd69b 656a7321 -- <each product, test and doc path>`. Read in full.
+7. Source greps for `InternalRunFailureError`, `INTERNAL_ERROR`, `run.failed`, `status: 'failed'`, `failRun(`, the evaluation call sites, `repairValue` and `isWellFormed`. Results are reflected in the analysis below.
+8. A Node script compared contract `RunErrorCodeSchema` against the guide table. The contract has 50 codes. The guide table omits 11: `RUN_INTERRUPTED_BY_STOP`, `SCRIPT_TERMINATION_UNCONFIRMED`, `INFERENCE_CONTEXT_LIMIT`, `INFERENCE_CONTEXT_UNSUPPORTED`, `DECISION_NO_ROUTE`, five `TEMPLATE_*` codes and `MUTATION_ERROR`. Only `MUTATION_ERROR` is new.
+9. First attempt: `sha256sum -c --quiet SHA256SUMS.txt` in the candidate packet. It reported every file as `FAILED open or read` because the sums file has CRLF line endings. Corrected attempt: `tr -d '\r' < SHA256SUMS.txt | sha256sum -c --quiet`. Result: no failures in the candidate (204 entries), baseline (250), implementation (112), poll-dedupe-completion (53) and poll-dedupe-current-ci (33 entries, `SHA256SUMS`).
+10. Listed-versus-present comparison. My first parser assumed a two-space separator and wrongly reported every file unlisted. I corrected it for the binary-mode ` *` separator. The remaining differences were only nested `SHA256SUMS.txt` files that my `find` had excluded. No file is missing or unlisted.
+11. Spot-check of the PR #484 packet against its raw logs. Result: the 13 group totals equal the README table (9,588/41), all four logs contain `98d2bc2c…`, and Browser shows `481 passed (22.3m)`. `git cat-file -p f91bd69b` gives tree `c5d6d7f5…` and parents `15ce9a1d`, `08651317`, matching the completion packet and register.
+12. Node comparisons of implementation snapshots:
+    - `pre-heavy` to `pre-isolated` changed only the two generated API-client files.
+    - `pre-isolated` to `post-correction` changed only six engine test files: adversarial, finalization, claude, inference-boundaries, prompt-provenance and prompt-recovery.
+    - `post-correction` equals the final `changed-source.json`.
+13. A Node script hashed the 29 `changed-source.json` paths at `615d50bc` and at `656a7321` via `git show`. Result: 29/29 matched at both commits.
+14. `git diff --stat 615d50bc 656a7321 -- packages apps tooling CHANGELOG.md docs/0*.md docs/decisions` printed empty output, so there is no product or narrative delta after the source commit. `git diff --stat 5082bc17 656a7321` shows only `.prettierignore` (+4).
+15. A Node link check over the new packet READMEs, the register, ADR, docs 04/05, the ADR index and the CHANGELOG. Result: 280 relative links checked, 3 broken, all in `docs/qa/2026-11-15-runtime-failure-candidate/delivery-register-append.md`.
+16. `git log --format=… f91bd69b..656a7321` grepped for assistant attribution. Result: none; all three commits are authored by the owner identity.
+
+**No executable product probe was run.** Exact-tree CI passed every gate, including 1,812 engine tests and the decider manager guard. The one finding is documentation, and its reachability is already established by the source and by the retained internal QA raw case `typed-subloop-mapping`. Re-running suites would duplicate green evidence without an unresolved question.
+
+## Requirement-by-requirement assessment
+
+### 1. Authored mutation failures map to MUTATION_ERROR (met)
+
+- **Narrow wrapping.** `mutations.ts` wraps only the authored calls: `assertMutablePath`, `getAtPointer`, `renderTemplate`, `evaluateExpression`, `evaluatePredicate`, `compileRegex` and `validateJson` (via `authored()` or `.catch(rethrow)`), plus `applyPatch` inside `applyMutations` (`mutations.ts:161-306`, `313-336`). `makeMessage` (`ctx.newId`/`ctx.now`) and `asJson` are outside the wrappers, so ID, clock and serialization faults stay unexpected.
+- **Class filter.** The mapper in `mutate.ts` maps only `ExpressionError`, `TemplateError`, `MutationError` and `PatchError`. Anything else is returned unchanged.
+- **Repair path.** `runMutations` (`common.ts:266-313`) maps only `TemplateError` from the repair-prompt render (`onPromptFailure`, `common.ts:225-231`) and `PatchError` from the authored target write (`common.ts:307`). `resolveModel` and `structured.complete` errors never reach the mapper, so same-class and same-name provider or resolver exceptions stay unexpected. Tests cover `TemplateError` from both the completion and the resolver, and the functional case `a2-provider-template` covers it natively. Because `repairValue` validates before returning, `completeRepair` cannot raise a provider-result `MutationError` that would then be mapped.
+- **Index and message.** `operationIndex` is the absolute loop index `i`. `startAt = pending.opIndex + 1` preserves the authored index across a repair pause; tested at index 2 and observed natively in `a2-after-repair` (`operationIndex 3`). The visible message uses `index + 1`, and the cause is bounded to 1,000 UTF-16 units.
+- **Atomicity.** The handler throws before returning a patch, so the manager commits nothing for the failed node. Tests assert this, and functional cases show no partial patch and no downstream Exit.
+- **Repair policies.** Unavailable (`DECIDER_UNAVAILABLE`), `OUTPUT_SCHEMA_MISMATCH`, `continue-raw` and the structured timeout are unchanged. They are observed in `a2-no-provider`, `a2-schema-mismatch`, `a2-continue-raw` and the internal late-result-after-repair-deadline case.
+
+### 2. Final invalid ContextThread (met)
+
+There is no per-operation restriction. `/vars` set to a scalar passes RFC 6902 and fails at `ContextThreadSchema.parse` (`run-manager.ts:2730-2747`). The result is `InternalRunFailureError("node <id> produced an invalid patch")`: nonresumable, with no details or operation attribution, and the Zod text goes only to the private log. A later operation that restores a valid thread succeeds (tested).
+
+Shared inference transforms keep calling `runMutations` without a mapper (`inference.ts:307`, `699`), so they stay INTERNAL_ERROR.
+
+### 3. Exit evaluation (met)
+
+`exit.ts` catches only `ExpressionError` from `evaluateExpression(mapping, view)` and converts it to `RunFailureError('EXPRESSION_ERROR', bounded message, { nodeId, resumable: false })`. `threadView` and `toJson` stay outside the catch, and no mutation identity is attached.
+
+The depth guard still throws `ExpressionError` (`expression.ts:167-183`). The 230-level case is tested and was observed natively (`a1-exit-depth`: `"expression exceeded max depth 200"`, no details). The wide-literal success case was observed natively (`a1-exit-width`, 211 rows).
+
+### 4. Public failure projection and private diagnostics (met in code)
+
+- **Single sink.** `failRun` (`run-manager.ts:3039-3075`) is the only producer of `run.failed`. `completeFromLog` only copies an existing terminal event.
+- **Projection.** Script classification runs first. Then any INTERNAL_ERROR not supplied as an `InternalRunFailureError` loses `details` and gets `INTERNAL_FAILURE_MESSAGE`. The event and the row receive the same object.
+- **No forgery.** `InternalRunFailureError` is not exported from `packages/engine/src/index.ts`. Adapters, ports and stored data therefore cannot forge engine-owned public copy. No plain `RunFailureError('INTERNAL_ERROR', …)` producer remains in package source.
+- **Raw logging comes first.** Raw diagnostics are logged before `failRun`, and so before script evidence can replace the classification:
+  - outer `tick` catch (`errorDiagnostic` with message, name and stack; `run-manager.ts:1979-2003`);
+  - node catch (`2666-2677`);
+  - invalid patch (`2733-2736`);
+  - no-edge route (`2796-2799`);
+  - inference conversion (`inference.ts:773-793`);
+  - subloop mapping (`subloop.ts:312-320`).
+- **Script precedence.** `classifyScriptFailure` builds the uncertainty failure fresh, so no INTERNAL details carry over. It is observed in the internal `script-dispatch-precedence` case: public `SCRIPT_OUTCOME_UNCERTAIN` without markers, raw cause in the private log.
+- **Code, node and resumability preserved per producer:**
+  - Outer generic: resumable true, no node (as before).
+  - Decider: `InternalRunFailureError` with `{nodeId, details:{code,strategy}}`, default resumable true (as before).
+  - Version/node invariants: resumable false, no node (as before).
+  - Invalid patch and no-edge: node, resumable false.
+  - Subloop mapping: explicit node, default resumable true. Before, the node came from the manager's `toFailure(nodeId)`.
+  - Inference: `options.nodeId ?? ctx.node.id`; the existing resumability formula is unchanged.
+- **Stop, deadline and cancel.** Order in the node catch is unchanged: forcing → deadline → abort → classification.
+- **Production logger.** `apps/api/src/main.ts:21` uses plain `pino({level})` with no redaction. The functional gateway log shows the private message and stack (`a2-provider-error/unexpected-repair-private.json`, PID 46704, run/node correlated).
+
+### 5. Decider path (met)
+
+The manager still routes `isDeciderError` through `deciderFailure`, with fixed public text, `{code, strategy}` details and a `warn` carrying only the safe diagnostic. It never logs `errorDiagnostic` on that branch.
+
+The existing manager test (`run-manager.test.ts:32-66`) asserts that `private-marker` is absent from the public run, its events and every logger line. It passed in CI on this tree.
+
+Historical children are handled in `failure-publication.ts:73-86`, which reconstructs fixed copy only when `details` is exactly `{code, strategy?}` and the code is allowlisted. A historical message is never reused, and arbitrary details fall back to the generic text.
+
+### 6. Secondary inference recording (met)
+
+- Public entries are `{operation}` only, in capture order, typed as one of the three stable identifiers.
+- `recordingFault` logs `{runId, nodeId, turnId, operation, error}` (`inference.ts:140-158`).
+- `acceptanceFailure` and the raw rethrow (`requireAcceptanceRecording`), the retry gate on `failures.recording.length`, cancellation precedence and the existing primary code are unchanged.
+- Tests cover order and cardinality, both after-commit and before-commit, with private correlation. The internal QA covers typed-inference-provider and typed-inference-internal with exact resume, turn and prompt continuity.
+
+### 7. Subloop forwarding of historical children (met)
+
+`childFailureForPublication` recurses only through exact canonical wrappers: `childRunId` must be a ULID, `childNodeId` a Slug, and no other keys may be present. That matches every real chain, since `RunFailure.nodeId` is `SlugSchema` and run IDs are ULIDs.
+
+- On an INTERNAL chain it strips the leaf's `name`/`stack`.
+- On any code it replaces exact legacy recording entries with `{operation}`.
+- It keeps unrelated authored or provider fields, child IDs, `script`, resumability and the `records` ordering (`child_run.finished` before `run.failed`).
+- It logs projected-out material privately with run, node, child and child-node correlation.
+- No broad JSON scrub exists, and old child rows and events are not rewritten.
+
+Internal QA confirms seeded-history byte equality and correct nested projection. Raw `historical-nested-recording.json` keeps `providerDetail.path` and drops the recording `message`/`stack` on the new root only.
+
+I checked one residual shape: could an old build store `{name, stack}` under HARNESS_SESSION_MISSING? Rank-5 session-missing evidence always replaces an internal error first (`f91bd69b:inference.ts` catch and `inference-failure.ts` rank), so I found no reachable path.
+
+### 8. Contracts, generated surfaces and constraints (met)
+
+`MUTATION_ERROR` was added once to `RunErrorCodeSchema`. The OpenAPI document (2 occurrences) and the generated client types (2 unions) were regenerated; CI's "Generated docs are current" passed. There is no new dependency or package, migration, converter or compatibility path, and no UI code change. Layer and dependency-cruiser gates passed in CI.
+
+### 9. Narrative docs (not met; see F1)
+
+ADR-0080, docs/04 (mutation and Exit paragraphs), the new docs/05 bullet and the CHANGELOG are accurate in what they say, and they do distinguish historical records. The problems are in what docs/05 still says elsewhere and what the docs omit.
+
+## Findings
+
+### F1 — Documentation contradicts the new public INTERNAL_ERROR projection and omits its author-facing consequence (in-scope, required)
+
+**Classification.** In-scope documentation blocker under AGENTS.md ("a behaviour change updates the relevant numbered doc") and the brief's criterion that numbered docs accurately distinguish new records from retained history.
+
+**Source.**
+- `docs/05-execution-engine.md:477` (Decided resiliency model, "Bug" row): "Run moves to `failed` with full diagnostics."
+- `docs/05-execution-engine.md:479`: "Ordinary internal defects retain their full diagnostics." This contrasts with the decider sanitisation of stored failures, so it describes the persisted record.
+
+Both lines predate the PR and were not updated. They now contradict the bullet this PR added at `docs/05-execution-engine.md:103-111`, and `failRun` (`run-manager.ts:3061-3067`).
+
+There is also an omission. ADR-0080 (`:21-24`, `:39-44`), docs/04 (`:193-199`), the new docs/05 bullet and the CHANGELOG (`:7-14`) describe the new projection as applying to "unexpected faults" and "internal run failures". None of them says what happens to authored template and expression errors outside Context Mutation and Exit. Script `args` (`script.ts:40`), heartbeat probe/deadline templates and `until` (`heartbeat.ts`), subloop input mappings and custom output mapping (`subloop.ts:61`, `99`, `139`, `222`), inference prompt/context/file templates (`inference.ts:315`, `364`; `inference-context.ts:58`, `67`) and inference input/output transforms (`inference.ts:307`, `699`) still raise raw `TemplateError`/`ExpressionError`. They remain INTERNAL_ERROR, and new records now publish only "An unexpected error interrupted the run. See the server logs for this run." in place of the author's evaluator cause.
+
+**Reachability.** Every new INTERNAL failure. For the authored-elsewhere consequence, the retained internal QA raw case shows it directly. In `docs/qa/2026-11-15-runtime-failure-candidate/internal/evidence-candidate-first/typed-subloop-mapping.json`, an authored `$error("qa-381-output-mapping")` in a subloop custom output mapping publishes the generic text. The cause `expression failed: qa-381-output-mapping` appears only in `typed-subloop-mapping.private.json`.
+
+**Impact.** An operator or author reading the Decided resiliency model expects the inspector, REST and MCP failure to contain full diagnostics. New records do not, and the docs do not point them to the server log. Authors of non-mutation nodes lose the in-product cause they previously saw, with no documented explanation. This is not data loss or a security defect; the projection itself is the intended, safer behaviour.
+
+**Introducedness.** Introduced by this PR's behaviour change. The text was accurate at `f91bd69b`.
+
+**Minimum required outcome (documentation only, no product or test change):**
+1. Update `docs/05-execution-engine.md:477` and `:479`. They should say that newly recorded internal failures carry the safe `INTERNAL_ERROR` message and node/resumability, with raw diagnostics in the server log correlated by run and node. Historical records keep what older builds stored. Keep the decider sentence as is.
+2. State in ADR-0080 *Consequences* (or the docs/05 bullet) that authored template and expression failures outside Context Mutation and Exit stay `INTERNAL_ERROR` with their existing resumability. Their new public message is the generic safe text, and the evaluator cause is available in the server log. Name the affected paths at least by node kind: script args, heartbeat, subloop mappings, inference prompts/context/files and transforms. This is the "document affected paths" requirement in `runtime-contract.md`.
+3. Optional precision, same edit: `docs/05-execution-engine.md:225` describes the parent message as `subloop child <id> failed: <child message>`. Note that for an INTERNAL child the copied message is the projected safe text. Recognised legacy name/stack and recording diagnostics are not republished.
+
+## Durable follow-up candidates (non-blocking)
+
+- **FU1 — Typed authored failures for other evaluation boundaries.** Script args, heartbeat templates/predicates, subloop input/output mappings and inference prompt/context/file templates and transforms could map recognised `TemplateError`/`ExpressionError` to typed `TEMPLATE_ERROR`/`EXPRESSION_ERROR` with a bounded cause. That would restore in-product author diagnostics now hidden by the safe projection. It is explicitly outside #381 ("not a new general expression overhaul"; inference transforms keep their classification), so it is a candidate issue, not a blocker.
+- **FU2 — User guide failure-code table.** `docs/guide/03-run-and-observe.md:298-335` lacks a `MUTATION_ERROR` row. It also lacks 10 pre-existing codes, so the omission continues existing drift. Adding a `MUTATION_ERROR` row is cheap and could ride with F1: correct the operation named in the message and start a replay or new run, since Resume is refused. The guide is not a numbered doc.
+- **FU3 — Evaluator deadline versus deterministic error (observation).** `ExpressionError("expression exceeded <n>ms")` (2 s default budget) is now nonresumable in Context Mutation and Exit, like other authored errors. Under severe host contention this could be environmental. Replay remains available, and the spec mandates nonresumable for every recognised `ExpressionError` at these boundaries, so this is recorded for owner awareness only.
+
+## Non-blocking notes
+
+- `docs/qa/2026-11-15-runtime-failure-candidate/delivery-register-append.md` contains three links written relative to `docs/delivery/` (`../qa/2026-11-15-runtime-failure-{candidate,implementation,baseline}/README.md`). They do not resolve from the snippet's own location. The canonical register copy resolves correctly.
+- Patch-cause wording repeats the noun "operation" for the RFC 6902 index, as in `"Mutation operation 4 (coerce) failed: Patch error: operation 0 (add /vars/qaScalar/leaf): …"` (raw `a2-repaired-target`). The data is correct (`details.operationIndex: 3`), and the `Patch error:` prefix plus the op/path disambiguate it. A wording tweak would be optional polish.
+- Forwarding a new child's INTERNAL failure also replaces engine-owned child text with the generic copy, such as inference uncertainty guidance or "node X produced an invalid patch". This is conservative and the child run keeps its own message; no change is needed.
+- An old build's `run.failed` event whose row status write was lost, then completed by the new build's `completeFromLog`, will copy the historical failure verbatim into the row. That is correct historical fidelity, not a new emission.
+
+## Evidence assessment and limitations
+
+- **Source reasoning.** This review covers the whole effective product diff and its call graph. The 29 changed paths are byte-identical to the accepted manifest at both `615d50bc` and `656a7321`. Commits after the source change only evidence, register and `.prettierignore`.
+- **Deterministic tests.** These run at the engine level against fake ports, in-memory stores and the real handlers. They assert public absence and private presence with run/node/turn/operation correlation, and include same-class provider and resolver controls, repair continuation, the final ContextThread boundary and nested historical chains. One change replaces a previously asserted public message: `edge-cases.test.ts` now asserts that the message does not contain `boom`. That is a direct and intended assertion of the new contract, not a weakened assertion. No timeout, retry, threshold or exclusion changed.
+- **Controlled engine ports and physical SQLite.** The internal QA has 13 cases on the compiled RunManager with per-case SQLite. Historical children are synthetic seeded rows and events in genuine SQLite, not a running historical binary or provider. Two actual local Node scripts were used. The QA supervisor exited 0 with an exact binding.
+- **Native gateway, REST, stdio MCP and served Edge inspector.** The functional QA has 8 native and 10 composed cases. The composed cases use a controlled structured port, so no live provider turn was made. I independently read the raw failures of five cases and the private diagnostic for one; they agree with the report.
+- **CI.** Exact head and tree on GitHub-hosted runners: Gates (32 steps), Browser (481 passed plus 1 LIVE skip, 0 retries), Windows launcher 14/14 (no artifact uploaded), Template image. The dependency audit passed its high threshold with 8 low and 13 moderate advisories. Routing frame p95 values are observed only; strict routing perf was off.
+- **Local full check.** `pnpm check` (receipt 08) failed during coverage on pre-correction tests. Domain ADV-007 failed and five engine assertions failed, explained as old-policy expectations that were later corrected in six test files only. Unaffected voice, chat-audio, Codex probe and plugin timeouts remain unexplained. No local full-suite pass is claimed; CI is the full-suite evidence.
+- **Baseline limitations** are retained and acknowledged: V3 Edge failed before the inspector; the V4 cleanup decoder failed; internal attempt 1 failed pre-spawn; attempt 2 has no harness-zero-exit claim. They do not establish candidate correctness. The candidate receipts are independent and show exit 0.
+- **Curation still in progress.** The CI packet `review-381/current-ci-656a/README.md` references `evidence-manifest.json` and `SHA256SUMS.txt`, which are not yet present; the admission states narrative curation is ongoing and not a review prerequisite. The failed first CI attempt (run `43735208367` at `5082bc17`, format check on raw inspector HTML) is retained externally in `review-381/current-ci-5082`. It must appear in the eventual in-repo completion record. The in-repo register currently says only "Current-head CI … remain[s] pending".
+- **Inherited PR #484 packets.** Their documentation is faithful to their own raw logs and to local git (checked in commands 11 and 13). I did not reopen PR #484's source.
+- **Owner acceptance** is separate. These tests and this review do not substitute for it. #410 stale waits, #419 abandoned history reads and launcher changes remain later work and were not assessed as blockers.
+
+## Scan accounting
+
+This is formal scan 1 of the shared cap of 3. F1 is a known-cause documentation correction with no product or test delta. Whether it needs another formal scan or can be closed under the batch's D-035/D-042 known-cause procedure is a root decision. Final fresh Astra max sign-off remains required.
