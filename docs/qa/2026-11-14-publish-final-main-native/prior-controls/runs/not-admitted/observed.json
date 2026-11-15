@@ -1,0 +1,1397 @@
+{
+  "suite": "237-corrected-uncertainty-independent-v1",
+  "variant": "not-admitted",
+  "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+  "origin": "http://127.0.0.1:65359",
+  "seenBundle": [
+    200
+  ],
+  "requests": [
+    {
+      "phase": "setup",
+      "method": "GET",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+      "at": 1794700411965,
+      "upstreamStatus": 200,
+      "delivery": "actual gateway response",
+      "deliveredAt": 1794700411996
+    },
+    {
+      "phase": "ambiguous",
+      "method": "POST",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/publish",
+      "at": 1794700412348,
+      "delivery": "aborted before reaching upstream"
+    },
+    {
+      "phase": "ambiguous",
+      "method": "GET",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+      "at": 1794700412356,
+      "delivery": "aborted before reaching upstream (readback or refresh)"
+    },
+    {
+      "phase": "ambiguous",
+      "method": "GET",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+      "at": 1794700412364,
+      "delivery": "aborted before reaching upstream (readback or refresh)"
+    },
+    {
+      "phase": "ambiguous",
+      "method": "GET",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+      "at": 1794700413393,
+      "delivery": "aborted before reaching upstream (readback or refresh)"
+    },
+    {
+      "phase": "failed-precheck",
+      "method": "GET",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+      "at": 1794700414190,
+      "delivery": "aborted before reaching upstream (readback or refresh)"
+    },
+    {
+      "phase": "failed-precheck",
+      "method": "GET",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+      "at": 1794700414196,
+      "delivery": "aborted before reaching upstream (readback or refresh)"
+    },
+    {
+      "phase": "retry",
+      "method": "GET",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+      "at": 1794700414257,
+      "upstreamStatus": 200,
+      "body": {
+        "loop": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "ownerId": "local",
+          "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+          "description": "Immutable known intended graph",
+          "draftVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "updatedAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draft": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Finish",
+                "ui": {
+                  "x": 310,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"exact graph after one admission\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-done",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draftToken": "d027f035d3b05ed6"
+      },
+      "delivery": "released true detail GET",
+      "deliveredAt": 1794700414268
+    },
+    {
+      "phase": "retry",
+      "method": "POST",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/publish",
+      "at": 1794700414278,
+      "upstreamStatus": 200,
+      "body": {
+        "version": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Finish",
+                "ui": {
+                  "x": 310,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"exact graph after one admission\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-done",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "publishedAt": "2026-11-14T23:53:34.286Z"
+        },
+        "issues": []
+      },
+      "delivery": "actual gateway response",
+      "deliveredAt": 1794700414296
+    },
+    {
+      "phase": "retry",
+      "method": "GET",
+      "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+      "at": 1794700414299,
+      "upstreamStatus": 200,
+      "body": {
+        "loop": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "ownerId": "local",
+          "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+          "description": "Immutable known intended graph",
+          "currentVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "updatedAt": "2026-11-14T23:53:34.286Z"
+        },
+        "current": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Finish",
+                "ui": {
+                  "x": 310,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"exact graph after one admission\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-done",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "publishedAt": "2026-11-14T23:53:34.286Z"
+        },
+        "draftToken": "d027f035d3b05ed6"
+      },
+      "delivery": "actual gateway response",
+      "deliveredAt": 1794700414305
+    }
+  ],
+  "checkpoints": [
+    {
+      "step": "lose publication response in not-admitted variant and fail readback",
+      "initial": {
+        "loop": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "ownerId": "local",
+          "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+          "description": "Immutable known intended graph",
+          "draftVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "updatedAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draft": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Finish",
+                "ui": {
+                  "x": 310,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"exact graph after one admission\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-done",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draftToken": "d027f035d3b05ed6"
+      },
+      "initialDevice": null,
+      "afterFirst": {
+        "loop": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "ownerId": "local",
+          "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+          "description": "Immutable known intended graph",
+          "draftVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "updatedAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draft": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Finish",
+                "ui": {
+                  "x": 310,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"exact graph after one admission\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-done",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draftToken": "d027f035d3b05ed6"
+      },
+      "ui": {
+        "label": "lose publication response in not-admitted variant and fail readback",
+        "path": "/app/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/edit",
+        "save": "All changes saved",
+        "messages": [
+          "Publish not confirmedThe GraphGoblin API cannot be reached. Checking the server failed too: The GraphGoblin API cannot be reached. It is not known whether the draft saved for this publish was published. Publish again checks the server first.",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "step": "refuse deliberate Publish while native Variables input is invalid",
+      "typed": "[{  \"type\": \"string\"}",
+      "device": null,
+      "ui": {
+        "label": "refuse deliberate Publish while native Variables input is invalid",
+        "path": "/app/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/edit",
+        "save": "All changes saved",
+        "messages": [
+          "Publish failedSome fields hold input that is not a valid value yet; complete or discard it first.",
+          "",
+          ""
+        ]
+      },
+      "refusedWire": []
+    },
+    {
+      "step": "discard held text while preserving the full previously accepted graph",
+      "beforeRetry": {
+        "loop": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "ownerId": "local",
+          "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+          "description": "Immutable known intended graph",
+          "draftVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "updatedAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draft": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Finish",
+                "ui": {
+                  "x": 310,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"exact graph after one admission\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-done",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draftToken": "d027f035d3b05ed6"
+      },
+      "device": null,
+      "ui": {
+        "label": "discard held text while preserving the full previously accepted graph",
+        "path": "/app/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/edit",
+        "save": "All changes saved",
+        "messages": [
+          "Cannot reach the GraphGoblin APIThe app keeps working with what it has; saving, running, and live updates resume when the API is reachable again.",
+          "Publish failedSome fields hold input that is not a valid value yet; complete or discard it first.",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "step": "one repeated explicit readback failure retains uncertainty",
+      "attempts": [
+        {
+          "phase": "failed-precheck",
+          "method": "GET",
+          "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "at": 1794700414190,
+          "delivery": "aborted before reaching upstream (readback or refresh)"
+        },
+        {
+          "phase": "failed-precheck",
+          "method": "GET",
+          "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "at": 1794700414196,
+          "delivery": "aborted before reaching upstream (readback or refresh)"
+        }
+      ],
+      "server": {
+        "loop": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "ownerId": "local",
+          "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+          "description": "Immutable known intended graph",
+          "draftVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "updatedAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draft": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Finish",
+                "ui": {
+                  "x": 310,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"exact graph after one admission\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-done",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:53:31.715Z"
+        },
+        "draftToken": "d027f035d3b05ed6"
+      },
+      "ui": {
+        "label": "one repeated explicit readback failure retains uncertainty",
+        "path": "/app/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/edit",
+        "save": "All changes saved",
+        "messages": [
+          "Cannot reach the GraphGoblin APIThe app keeps working with what it has; saving, running, and live updates resume when the API is reachable again.",
+          "Publish not confirmedChecking the server before publishing again failed: The GraphGoblin API cannot be reached. This Publish sent no request, and the outcome of the earlier Publish request is still not known. Publish again checks the server first.",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "step": "fresh explicit Publish after discarding the held buffer",
+      "heldReadback": {
+        "phase": "retry",
+        "method": "GET",
+        "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+        "at": 1794700414257,
+        "upstreamStatus": 200,
+        "body": {
+          "loop": {
+            "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+            "ownerId": "local",
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "draftVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+            "createdAt": "2026-11-14T23:53:31.715Z",
+            "updatedAt": "2026-11-14T23:53:31.715Z"
+          },
+          "draft": {
+            "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+            "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+            "version": 1,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+              "description": "Immutable known intended graph",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Finish",
+                  "ui": {
+                    "x": 310,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"exact graph after one admission\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "start-done",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T23:53:31.715Z"
+          },
+          "draftToken": "d027f035d3b05ed6"
+        },
+        "delivery": "held after true detail GET"
+      },
+      "ui": {
+        "label": "fresh explicit Publish after discarding the held buffer",
+        "path": "/app/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/edit",
+        "save": "All changes saved",
+        "messages": [
+          "Cannot reach the GraphGoblin APIThe app keeps working with what it has; saving, running, and live updates resume when the API is reachable again.",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "step": "fresh explicit Publish after discarding the held buffer",
+      "retry": [
+        {
+          "phase": "retry",
+          "method": "GET",
+          "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "at": 1794700414257,
+          "upstreamStatus": 200,
+          "body": {
+            "loop": {
+              "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+              "ownerId": "local",
+              "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+              "description": "Immutable known intended graph",
+              "draftVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+              "createdAt": "2026-11-14T23:53:31.715Z",
+              "updatedAt": "2026-11-14T23:53:31.715Z"
+            },
+            "draft": {
+              "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+              "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+              "version": 1,
+              "status": "draft",
+              "definition": {
+                "schemaVersion": 4,
+                "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+                "description": "Immutable known intended graph",
+                "settings": {
+                  "workingDirectory": {
+                    "kind": "temp"
+                  },
+                  "defaults": {
+                    "byHarness": {}
+                  },
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null,
+                  "subloopDepthLimit": 8
+                },
+                "variables": {
+                  "key": {
+                    "type": "string"
+                  }
+                },
+                "nodes": [
+                  {
+                    "id": "start",
+                    "label": "Start",
+                    "ui": {
+                      "x": 0,
+                      "y": 80
+                    },
+                    "kind": "trigger",
+                    "config": {
+                      "type": "manual",
+                      "exposeTo": [
+                        "ui",
+                        "api",
+                        "mcp"
+                      ]
+                    }
+                  },
+                  {
+                    "id": "done",
+                    "label": "Finish",
+                    "ui": {
+                      "x": 310,
+                      "y": 80
+                    },
+                    "kind": "exit",
+                    "config": {
+                      "outcome": "success",
+                      "returns": "\"exact graph after one admission\"",
+                      "destinations": [
+                        {
+                          "kind": "caller"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "edges": [
+                  {
+                    "id": "start-done",
+                    "from": {
+                      "node": "start",
+                      "port": "out"
+                    },
+                    "to": {
+                      "node": "done",
+                      "port": "in"
+                    }
+                  }
+                ]
+              },
+              "createdAt": "2026-11-14T23:53:31.715Z"
+            },
+            "draftToken": "d027f035d3b05ed6"
+          },
+          "delivery": "released true detail GET",
+          "deliveredAt": 1794700414268
+        },
+        {
+          "phase": "retry",
+          "method": "POST",
+          "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/publish",
+          "at": 1794700414278,
+          "upstreamStatus": 200,
+          "body": {
+            "version": {
+              "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+              "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+              "version": 1,
+              "status": "published",
+              "definition": {
+                "schemaVersion": 4,
+                "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+                "description": "Immutable known intended graph",
+                "settings": {
+                  "workingDirectory": {
+                    "kind": "temp"
+                  },
+                  "defaults": {
+                    "byHarness": {}
+                  },
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null,
+                  "subloopDepthLimit": 8
+                },
+                "variables": {
+                  "key": {
+                    "type": "string"
+                  }
+                },
+                "nodes": [
+                  {
+                    "id": "start",
+                    "label": "Start",
+                    "ui": {
+                      "x": 0,
+                      "y": 80
+                    },
+                    "kind": "trigger",
+                    "config": {
+                      "type": "manual",
+                      "exposeTo": [
+                        "ui",
+                        "api",
+                        "mcp"
+                      ]
+                    }
+                  },
+                  {
+                    "id": "done",
+                    "label": "Finish",
+                    "ui": {
+                      "x": 310,
+                      "y": 80
+                    },
+                    "kind": "exit",
+                    "config": {
+                      "outcome": "success",
+                      "returns": "\"exact graph after one admission\"",
+                      "destinations": [
+                        {
+                          "kind": "caller"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "edges": [
+                  {
+                    "id": "start-done",
+                    "from": {
+                      "node": "start",
+                      "port": "out"
+                    },
+                    "to": {
+                      "node": "done",
+                      "port": "in"
+                    }
+                  }
+                ]
+              },
+              "createdAt": "2026-11-14T23:53:31.715Z",
+              "publishedAt": "2026-11-14T23:53:34.286Z"
+            },
+            "issues": []
+          },
+          "delivery": "actual gateway response",
+          "deliveredAt": 1794700414296
+        },
+        {
+          "phase": "retry",
+          "method": "GET",
+          "path": "/loops/01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "at": 1794700414299,
+          "upstreamStatus": 200,
+          "body": {
+            "loop": {
+              "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+              "ownerId": "local",
+              "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+              "description": "Immutable known intended graph",
+              "currentVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+              "createdAt": "2026-11-14T23:53:31.715Z",
+              "updatedAt": "2026-11-14T23:53:34.286Z"
+            },
+            "current": {
+              "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+              "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+              "version": 1,
+              "status": "published",
+              "definition": {
+                "schemaVersion": 4,
+                "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+                "description": "Immutable known intended graph",
+                "settings": {
+                  "workingDirectory": {
+                    "kind": "temp"
+                  },
+                  "defaults": {
+                    "byHarness": {}
+                  },
+                  "maxNodeVisits": 10,
+                  "runDeadlineSeconds": null,
+                  "structuredTimeoutMs": null,
+                  "subloopDepthLimit": 8
+                },
+                "variables": {
+                  "key": {
+                    "type": "string"
+                  }
+                },
+                "nodes": [
+                  {
+                    "id": "start",
+                    "label": "Start",
+                    "ui": {
+                      "x": 0,
+                      "y": 80
+                    },
+                    "kind": "trigger",
+                    "config": {
+                      "type": "manual",
+                      "exposeTo": [
+                        "ui",
+                        "api",
+                        "mcp"
+                      ]
+                    }
+                  },
+                  {
+                    "id": "done",
+                    "label": "Finish",
+                    "ui": {
+                      "x": 310,
+                      "y": 80
+                    },
+                    "kind": "exit",
+                    "config": {
+                      "outcome": "success",
+                      "returns": "\"exact graph after one admission\"",
+                      "destinations": [
+                        {
+                          "kind": "caller"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "edges": [
+                  {
+                    "id": "start-done",
+                    "from": {
+                      "node": "start",
+                      "port": "out"
+                    },
+                    "to": {
+                      "node": "done",
+                      "port": "in"
+                    }
+                  }
+                ]
+              },
+              "createdAt": "2026-11-14T23:53:31.715Z",
+              "publishedAt": "2026-11-14T23:53:34.286Z"
+            },
+            "draftToken": "d027f035d3b05ed6"
+          },
+          "delivery": "actual gateway response",
+          "deliveredAt": 1794700414305
+        }
+      ],
+      "after": {
+        "loop": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "ownerId": "local",
+          "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+          "description": "Immutable known intended graph",
+          "currentVersionId": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "updatedAt": "2026-11-14T23:53:34.286Z"
+        },
+        "current": {
+          "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+          "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+            "description": "Immutable known intended graph",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Finish",
+                "ui": {
+                  "x": 310,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"exact graph after one admission\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "start-done",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:53:31.715Z",
+          "publishedAt": "2026-11-14T23:53:34.286Z"
+        },
+        "draftToken": "d027f035d3b05ed6"
+      },
+      "history": {
+        "items": [
+          {
+            "id": "01M7E7P0T4WK4DJ7VFMC51BEPA",
+            "loopId": "01M7E7P0T4WK4DJ7VFMC51BEP9",
+            "version": 1,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Unknown-outcome refusal not-admitted 3dd9ea4c",
+              "description": "Immutable known intended graph",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Finish",
+                  "ui": {
+                    "x": 310,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"exact graph after one admission\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "start-done",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T23:53:31.715Z",
+            "publishedAt": "2026-11-14T23:53:34.286Z"
+          }
+        ]
+      },
+      "device": null,
+      "ui": {
+        "label": "fresh explicit Publish after discarding the held buffer",
+        "path": "/app/loops/01M7E7P0T4WK4DJ7VFMC51BEP9/edit",
+        "save": "All changes saved",
+        "messages": [
+          "Published version 1.",
+          "",
+          ""
+        ]
+      },
+      "finding": null
+    }
+  ],
+  "pageErrors": [],
+  "finding": null,
+  "failure": null
+}
