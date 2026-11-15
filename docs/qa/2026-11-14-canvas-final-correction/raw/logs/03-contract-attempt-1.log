@@ -1,0 +1,120 @@
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+ ❯ src/editor/viewport-gesture.contract.test.tsx (5 tests | 5 failed) 697ms
+   ❯ the pan gate on the installed xyflow and d3 (#207) (5)
+     × shows Remove unavailable while d3 cancels the next click, and delivers the first available click once 346ms
+     × settles a middle-button pan the same way 111ms
+     × lets a new pan invalidate an earlier release that has not settled 88ms
+     × is not stranded when a programmatic or wheel move replaces the pan’s end callback 85ms
+     × leaves nothing behind when the canvas unmounts while a release settles 62ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > shows Remove unavailable while d3 cancels the next click, and delivers the first available click once
+TypeError: Failed to construct 'MouseEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new MouseEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/MouseEvent-impl.js:9:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:61:16
+ ❯ new MouseEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:116:22
+ ❯ mouse src/editor/viewport-gesture.contract.test.tsx:132:10
+    130| const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
+    131| function mouse(type: string, x: number, y: number, button = 0, buttons…
+    132|   return new MouseEvent(type, {
+       |          ^
+    133|     bubbles: true,
+    134|     cancelable: true,
+ ❯ src/editor/viewport-gesture.contract.test.tsx:231:26
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > settles a middle-button pan the same way
+TypeError: Failed to construct 'MouseEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new MouseEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/MouseEvent-impl.js:9:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:61:16
+ ❯ new MouseEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:116:22
+ ❯ mouse src/editor/viewport-gesture.contract.test.tsx:132:10
+    130| const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
+    131| function mouse(type: string, x: number, y: number, button = 0, buttons…
+    132|   return new MouseEvent(type, {
+       |          ^
+    133|     bubbles: true,
+    134|     cancelable: true,
+ ❯ src/editor/viewport-gesture.contract.test.tsx:319:26
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > lets a new pan invalidate an earlier release that has not settled
+TypeError: Failed to construct 'MouseEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new MouseEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/MouseEvent-impl.js:9:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:61:16
+ ❯ new MouseEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:116:22
+ ❯ mouse src/editor/viewport-gesture.contract.test.tsx:132:10
+    130| const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
+    131| function mouse(type: string, x: number, y: number, button = 0, buttons…
+    132|   return new MouseEvent(type, {
+       |          ^
+    133|     bubbles: true,
+    134|     cancelable: true,
+ ❯ src/editor/viewport-gesture.contract.test.tsx:345:26
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > is not stranded when a programmatic or wheel move replaces the pan’s end callback
+TypeError: Failed to construct 'WheelEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new WheelEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/WheelEvent-impl.js:7:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/WheelEvent.js:60:16
+ ❯ new WheelEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/WheelEvent.js:115:22
+ ❯ src/editor/viewport-gesture.contract.test.tsx:381:9
+    379|       // A wheel zoom alone never makes the toolbar unavailable.
+    380|       pane.dispatchEvent(
+    381|         new WheelEvent('wheel', {
+       |         ^
+    382|           bubbles: true,
+    383|           cancelable: true,
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > leaves nothing behind when the canvas unmounts while a release settles
+TypeError: Failed to construct 'MouseEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new MouseEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/MouseEvent-impl.js:9:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:61:16
+ ❯ new MouseEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:116:22
+ ❯ mouse src/editor/viewport-gesture.contract.test.tsx:132:10
+    130| const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
+    131| function mouse(type: string, x: number, y: number, button = 0, buttons…
+    132|   return new MouseEvent(type, {
+       |          ^
+    133|     bubbles: true,
+    134|     cancelable: true,
+ ❯ src/editor/viewport-gesture.contract.test.tsx:427:24
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+Vitest caught 5 unhandled errors during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'width')
+ ❯ XYPanZoom.extentResizeObserver [as callback] ../../node_modules/.pnpm/@xyflow+system@0.0.83/node_modules/@xyflow/system/dist/esm/index.mjs:2983:40
+ ❯ src/editor/viewport-gesture.contract.test.tsx:45:31
+     43|     // xyflow reads only `target` from an entry.
+     44|     const entries = [{ target }] as unknown as ResizeObserverEntry[];
+     45|     queueMicrotask(() => this.callback(entries, this as unknown as Res…
+       |                               ^
+     46|   }
+     47|   unobserve(): void {}
+ ❯ node:internal/process/task_queues:149:7
+ ❯ AsyncResource.runInAsyncScope node:async_hooks:214:14
+ ❯ AsyncResource.runMicrotask node:internal/process/task_queues:146:8
+This error originated in "src/editor/viewport-gesture.contract.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "shows Remove unavailable while d3 cancels the next click, and delivers the first available click once". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.
+⎯⎯⎯⎯⎯ Uncaught Exception ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'width')
+ ❯ XYPanZoom.extentResizeObserver [as callback] ../../node_modules/.pnpm/@xyflow+system@0.0.83/node_modules/@xyflow/system/dist/esm/index.mjs:2983:40
+ ❯ src/editor/viewport-gesture.contract.test.tsx:45:31
+     43|     // xyflow reads only `target` from an entry.
+     44|     const entries = [{ target }] as unknown as ResizeObserverEntry[];
+     45|     queueMicrotask(() => this.callback(entries, this as unknown as Res…
+       |                               ^
+     46|   }
+     47|   unobserve(): void {}
+ ❯ node:internal/process/task_queues:149:7
+ ❯ AsyncResource.runInAsyncScope node:async_hooks:214:14
+ ❯ AsyncResource.runMicrotask node:internal/process/task_queues:146:8
+This error originated in "src/editor/viewport-gesture.contract.test.tsx" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The last test to run before this error was "settles a middle-button pan the same way". This means either:
+- the error was thrown while Vitest was running this test, or
+- the error was thrown after the test completed, and this was the most recent test at that point.

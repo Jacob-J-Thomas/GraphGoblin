@@ -1,0 +1,187 @@
+# Read-only comparisons of the driver bytes each native run executed (from retained run-*.js wrappers) against the final driver files.
+# Product behaviour is not compared here; this shows what the scripts asserted in each run.
+
+## lib.js executed in candidate-a vs final lib.js ('<' executed in candidate-a, '>' final)
+182c182,184
+<     const order = [0.5, 0.4, 0.6, 0.3, 0.7, 0.25, 0.75, 0.2, 0.8, 0.15, 0.85, 0.35, 0.65, 0.45, 0.55];
+---
+>     const order = [];
+>     for (let i = 1; i < 50; i++) order.push(i / 50);
+>     order.sort((a, b) => Math.abs(a - 0.5) - Math.abs(b - 0.5));
+187c189,197
+<         return { x: p.x, y: p.y, fraction: f };
+---
+>         return { x: p.x, y: p.y, fraction: f, part: 'path' };
+>     }
+>     // The edge's own label pill (inside its xyflow group) selects it too.
+>     const label = group.querySelector('.react-flow__edge-textwrapper');
+>     if (label) {
+>       const r = label.getBoundingClientRect();
+>       const x = r.left + r.width / 2, y = r.top + r.height / 2;
+>       const hit = document.elementFromPoint(x, y);
+>       if (hit && group.contains(hit)) return { x, y, part: 'label' };
+297a308,309
+>   // Never leave the wait dangling: a rejection after this run would abort the next CLI call.
+>   response.catch(() => {});
+327a340,341
+>     deviceDraft: local,
+>     putBody: req.postDataJSON(),
+372c386,395
+<   const p = await pointerSelect(id);
+---
+>   // Pointer selection where the edge has an unobstructed point (path or own label); otherwise the
+>   // keyboard selection (focus + Enter). The removal itself is always the visible button's click.
+>   let p;
+>   try {
+>     p = await pointerSelect(id);
+>   } catch (error) {
+>     if (!String(error).includes('No hittable visible point')) throw error;
+>     await keyboardSelect(id);
+>     p = { part: 'keyboard selection (no unobstructed pointer point)' };
+>   }
+
+## lib.js executed in candidate-b vs final lib.js
+339a340,341
+>     deviceDraft: local,
+>     putBody: req.postDataJSON(),
+
+## lib.js executed in candidate-c vs final lib.js
+339a340,341
+>     deviceDraft: local,
+>     putBody: req.postDataJSON(),
+
+## kinds.js executed in candidate-b vs final kinds.js (final adds the modal Connections-region check; never run natively)
+26a27,37
+>   // The modal Connections section is still present in this phase (it is retired only later).
+>   for (const nid of ['start', 'done']) {
+>     await card(nid).click({ position: { x: 60, y: 14 } });
+>     const dlg = page.getByRole('dialog');
+>     await dlg.waitFor({ timeout: 9000 });
+>     const region = await dlg.getByRole('region', { name: 'Connections' }).count();
+>     observe('modal Connections region on ' + nid, region);
+>     check(region === 1, 'the modal Connections region is missing on ' + nid);
+>     await dlg.getByRole('button', { name: 'Done', exact: true }).click();
+>     await dlg.waitFor({ state: 'hidden' });
+>   }
+135d145
+< 
+
+## recovery.js executed in candidate-b vs final (final adds Script row removal + named dialog)
+123a124,153
+>     // Remove a connected exit-code row (code 3, label retry, edge e3 -> m) in the normal form.
+>     await card('run').click({ position: { x: 60, y: 14 } });
+>     const scriptDialog = page.getByRole('dialog', { name: 'Edit script run', exact: true });
+>     await scriptDialog.waitFor({ timeout: 9000 });
+>     observe('dialogs open', await page.getByRole('dialog').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label') ?? e.querySelector('h2')?.textContent ?? e.tagName)));
+>     const advanced2 = scriptDialog.getByRole('button', { name: /^Advanced\b/ });
+>     if ((await advanced2.getAttribute('aria-expanded')) === 'false') await advanced2.click();
+>     const retryEdge = loop.draft.definition.edges.find((e) => e.id === 'e3');
+>     r = await act(id, loop, 'remove Script exit-code row 3 (retry) in the form', () =>
+>       scriptDialog.getByRole('button', { name: 'Remove exit code routes 3', exact: true }).click(), { declaration: true });
+>     observe('row removal delta', r.d);
+>     same(r.d.removed, [], 'the row removal kept the stored edge');
+>     loop = r.after;
+>     same(loop.draft.definition.nodes.find((n) => n.id === 'run').config.exitCodeRoutes, { 0: 'out', 5: 'summary' }, 'row removed');
+>     if (await scriptDialog.isVisible()) {
+>       await scriptDialog.getByRole('button', { name: 'Done', exact: true }).click();
+>       await scriptDialog.waitFor({ state: 'hidden' });
+>     }
+>     check((await edgeEl('e3').count()) === 0, 'e3 still drawn without its label');
+>     pop = await popover();
+>     observe('popover after row removal', await pop.ariaSnapshot());
+>     same(await pop.getByRole('button', { name: 'Remove edge e3', exact: true }).count(), 1, 'one action for e3');
+>     await shot('popover-script-row-removed');
+>     r = await act(id, loop, 'R1: remove e3 left by the removed row', async () => {
+>       const b = await center(pop.getByRole('button', { name: 'Remove edge e3', exact: true }), 'Remove edge e3');
+>       await page.mouse.click(b.x, b.y);
+>       return b;
+>     });
+>     same(r.d.removed, [retryEdge], 'removed exactly e3');
+>     loop = r.after;
+133d162
+< 
+
+## recovery.js executed in candidate-d vs candidate-e (the candidate-d failure was an unscoped dialog locator)
+126,127c126,129
+<     await dialog.waitFor({ timeout: 9000 });
+<     const advanced2 = dialog.getByRole('button', { name: /^Advanced/ });
+---
+>     const scriptDialog = page.getByRole('dialog', { name: 'Edit script run', exact: true });
+>     await scriptDialog.waitFor({ timeout: 9000 });
+>     observe('dialogs open', await page.getByRole('dialog').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label') ?? e.querySelector('h2')?.textContent ?? e.tagName)));
+>     const advanced2 = scriptDialog.getByRole('button', { name: /^Advanced\b/ });
+131c133
+<       dialog.getByRole('button', { name: 'Remove exit code routes 3', exact: true }).click(), { declaration: true });
+---
+>       scriptDialog.getByRole('button', { name: 'Remove exit code routes 3', exact: true }).click(), { declaration: true });
+136,138c138,140
+<     if (await dialog.isVisible()) {
+<       await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+<       await dialog.waitFor({ state: 'hidden' });
+---
+>     if (await scriptDialog.isVisible()) {
+>       await scriptDialog.getByRole('button', { name: 'Done', exact: true }).click();
+>       await scriptDialog.waitFor({ state: 'hidden' });
+
+## refusals.js executed in candidate-b vs final (final adds the freed-ID reuse + two undos)
+122c122
+<   const final = await get(id);
+---
+>   let final = await get(id);
+123a124,147
+>   // A freed id reused from a different port: draw dz.ok, remove it, draw dz.no; the reused id is the
+>   // new port's, with no geometry; two undos restore the old record exactly.
+>   loop = final;
+>   r = await act(id, loop, 'reuse: draw dz.ok -> done', () => drawGesture('dz', 'ok', 'done'));
+>   const first = r.d.added[0];
+>   loop = r.after;
+>   r = await act(id, loop, 'reuse: remove ' + first.id, () => (CFG.mode === 'candidate' ? toolbarRemove(first.id) : keyboardRemove(first.id)));
+>   loop = r.after;
+>   r = await act(id, loop, 'reuse: draw dz.no -> alt', () => drawGesture('dz', 'no', 'alt'));
+>   const second = r.d.added[0];
+>   r.step.rendered = await edgeEvidence(second.id);
+>   observe('reuse', { first, second, rendered: r.step.rendered });
+>   check(second.id === first.id, 'expected the freed id to be reused (' + first.id + ' / ' + second.id + ')');
+>   check(second.from.port === 'no' && second.ui === undefined, 'reused id carries the new port only');
+>   check(r.step.rendered.ariaLabel === 'dz No (no) to alt', 'reused id rendered as the new port: ' + r.step.rendered.ariaLabel);
+>   loop = r.after;
+>   r = await act(id, loop, 'reuse: undo 1', () => undoButton().first().click());
+>   same(r.d.removed, [second], 'undo 1 removed the new record');
+>   loop = r.after;
+>   r = await act(id, loop, 'reuse: undo 2', () => undoButton().first().click());
+>   same(r.d.added, [first], 'undo 2 restored the old record');
+>   r.step.rendered = await edgeEvidence(first.id);
+>   check(r.step.rendered.ariaLabel === 'dz OK (ok) to done', 'restored record renders its own port');
+>   final = r.after;
+126d149
+< 
+
+## chat.js executed in candidate-b vs final (final adds the protected stranded-edge check)
+60a61,85
+>   // A protected voice-step edge the canvas cannot draw (public conditional draft write, then a fresh
+>   // load): its Loop issues row must not remove it.
+>   const strandedDef = structuredClone(after.draft.definition);
+>   strandedDef.edges.push({ id: 'qa-stranded', from: { node: 'chat-normalize', port: 'nope' }, to: { node: valid.to.node, port: 'in' } });
+>   const put = await page.request.fetch(origin + draftPath(chat.id), {
+>     method: 'PUT',
+>     data: { definition: strandedDef },
+>     headers: { 'if-match': '"' + after.draftToken + '"' },
+>   });
+>   observe('stage protected stranded edge', { status: put.status(), body: (await put.text()).slice(0, 600) });
+>   if (put.status() === 200) {
+>     await open(chat.id, loop.draft.definition.name);
+>     check((await edgeEl('qa-stranded').count()) === 0, 'the stranded protected edge is drawn');
+>     await page.getByRole('button', { name: /\d+ (error|warning)/ }).first().click();
+>     const pop = page.getByRole('dialog', { name: 'Loop issues' });
+>     await pop.waitFor({ timeout: 5000 });
+>     observe('popover with protected stranded edge', await pop.ariaSnapshot());
+>     const b = pop.getByRole('button', { name: 'Remove edge qa-stranded', exact: true });
+>     const state = (await b.count()) ? { count: await b.count(), disabled: await b.isDisabled(), title: await b.getAttribute('title') } : { count: 0 };
+>     observe('protected stranded edge action', state);
+>     if (CFG.mode === 'candidate') check(state.count === 1 && state.disabled && state.title === VOICE, 'protected stranded edge action not guarded');
+>     await shot('chat-protected-stranded');
+>     await page.keyboard.press('Escape');
+>     same((await get(chat.id)).draft.definition.edges, strandedDef.edges, 'protected stranded edge stays stored');
+>   }
+62d86
+< 

@@ -1,0 +1,2825 @@
+{
+  "origin": "http://127.0.0.1:49910",
+  "mapping": "237-corrected-independent-v1",
+  "scenario": "list",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "outcomes": [
+    {
+      "active": "cold list / active save before navigation",
+      "original": {
+        "id": "01M7DV4W2E00SHKHS03JXKCA9V",
+        "ownerId": "local",
+        "name": "Summary target cold 78c68bbc",
+        "description": "Description to remove",
+        "currentVersionId": "01M7DV4W2E00SHKHS03JXKCA9W",
+        "createdAt": "2026-11-14T20:14:26.894Z",
+        "updatedAt": "2026-11-14T20:14:26.928Z",
+        "latestRun": {
+          "id": "01M7DV4W4J79RS46PX5FF53XW8",
+          "status": "succeeded",
+          "createdAt": "2026-11-14T20:14:26.962Z"
+        },
+        "runCount": 1
+      },
+      "untouched": {
+        "id": "01M7DV4W2Z5W5WSXB01AAJ82WE",
+        "ownerId": "local",
+        "name": "Summary control cold 78c68bbc",
+        "description": "Unchanged description",
+        "currentVersionId": "01M7DV4W2Z5W5WSXB01AAJ82WF",
+        "createdAt": "2026-11-14T20:14:26.911Z",
+        "updatedAt": "2026-11-14T20:14:26.948Z",
+        "latestRun": {
+          "id": "01M7DV4WB9H8PH2VQDC537FSYN",
+          "status": "succeeded",
+          "createdAt": "2026-11-14T20:14:27.177Z"
+        },
+        "runCount": 1
+      },
+      "ackRow": {
+        "seq": 23,
+        "type": "browser response",
+        "wallMs": 1794687268757,
+        "requestSeq": 16,
+        "status": 200,
+        "tag": "cold Loops surface",
+        "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/draft",
+        "method": "PUT"
+      },
+      "refreshed": {
+        "seq": 24,
+        "type": "browser request",
+        "wallMs": 1794687268758,
+        "tag": "cold Loops surface",
+        "path": "/loops",
+        "method": "GET",
+        "ifMatch": null,
+        "body": null
+      },
+      "acceptedEvent": {
+        "seq": 25,
+        "type": "observed accepted PUT",
+        "wallMs": 1794687268759,
+        "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/draft"
+      },
+      "accepted": {
+        "status": 200,
+        "request": {
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Summary reconciled cold 78c68bbc",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          }
+        },
+        "ifMatch": "\"7426d116e0cd2e5b\"",
+        "data": {
+          "draft": {
+            "id": "01M7DV4XWCGMF707HF7GKE4KV3",
+            "loopId": "01M7DV4W2E00SHKHS03JXKCA9V",
+            "version": 2,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Summary reconciled cold 78c68bbc",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"seed release\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T20:14:28.748Z"
+          },
+          "draftToken": "e7fbd52c9323c241",
+          "issues": []
+        }
+      },
+      "staleResult": {
+        "ok": true
+      },
+      "changed": {
+        "id": "01M7DV4W2E00SHKHS03JXKCA9V",
+        "ownerId": "local",
+        "name": "Summary reconciled cold 78c68bbc",
+        "currentVersionId": "01M7DV4W2E00SHKHS03JXKCA9W",
+        "draftVersionId": "01M7DV4XWCGMF707HF7GKE4KV3",
+        "createdAt": "2026-11-14T20:14:26.894Z",
+        "updatedAt": "2026-11-14T20:14:28.748Z",
+        "latestRun": {
+          "id": "01M7DV4W4J79RS46PX5FF53XW8",
+          "status": "succeeded",
+          "createdAt": "2026-11-14T20:14:26.962Z"
+        },
+        "runCount": 1
+      },
+      "visibleOrder": [
+        "/app/loops/01M7DV4W2E00SHKHS03JXKCA9V/edit",
+        "/app/loops/01M7DV4W2Z5W5WSXB01AAJ82WE/edit",
+        "/app/loops/01M7DV4SAVEE3YSGVAK25DPCZS/edit"
+      ]
+    },
+    {
+      "active": "warm list / pending save on unmount",
+      "original": {
+        "id": "01M7DV4YYQY9X8KNBWKBQ0K005",
+        "ownerId": "local",
+        "name": "Summary target warm 78c68bbc",
+        "description": "Description to remove",
+        "currentVersionId": "01M7DV4YYQY9X8KNBWKBQ0K006",
+        "createdAt": "2026-11-14T20:14:29.847Z",
+        "updatedAt": "2026-11-14T20:14:29.869Z",
+        "latestRun": {
+          "id": "01M7DV4Z03JQD9K56MXF8E3N5H",
+          "status": "succeeded",
+          "createdAt": "2026-11-14T20:14:29.891Z"
+        },
+        "runCount": 1
+      },
+      "untouched": {
+        "id": "01M7DV4YZ0B325NY6AMXFTV3XE",
+        "ownerId": "local",
+        "name": "Summary control warm 78c68bbc",
+        "description": "Unchanged description",
+        "currentVersionId": "01M7DV4YZ0B325NY6AMXFTV3XF",
+        "createdAt": "2026-11-14T20:14:29.856Z",
+        "updatedAt": "2026-11-14T20:14:29.882Z",
+        "latestRun": {
+          "id": "01M7DV4Z5DTZ7AN0M4PKF38933",
+          "status": "succeeded",
+          "createdAt": "2026-11-14T20:14:30.061Z"
+        },
+        "runCount": 1
+      },
+      "ackRow": {
+        "seq": 58,
+        "type": "browser response",
+        "wallMs": 1794687276082,
+        "requestSeq": 47,
+        "status": 200,
+        "tag": "warm Loops surface",
+        "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/draft",
+        "method": "PUT"
+      },
+      "refreshed": {
+        "seq": 60,
+        "type": "browser request",
+        "wallMs": 1794687276085,
+        "tag": "warm Loops surface",
+        "path": "/loops",
+        "method": "GET",
+        "ifMatch": null,
+        "body": null
+      },
+      "acceptedEvent": {
+        "seq": 59,
+        "type": "observed accepted PUT",
+        "wallMs": 1794687276084,
+        "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/draft"
+      },
+      "accepted": {
+        "status": 200,
+        "request": {
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Summary reconciled warm 78c68bbc",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          }
+        },
+        "ifMatch": "\"f6fb05300b855eb0\"",
+        "data": {
+          "draft": {
+            "id": "01M7DV5518VVE33GTXCAEQHVFY",
+            "loopId": "01M7DV4YYQY9X8KNBWKBQ0K005",
+            "version": 2,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Summary reconciled warm 78c68bbc",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"seed release\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T20:14:36.072Z"
+          },
+          "draftToken": "6dfbeca2d790637e",
+          "issues": []
+        }
+      },
+      "staleResult": {
+        "ok": true
+      },
+      "changed": {
+        "id": "01M7DV4YYQY9X8KNBWKBQ0K005",
+        "ownerId": "local",
+        "name": "Summary reconciled warm 78c68bbc",
+        "currentVersionId": "01M7DV4YYQY9X8KNBWKBQ0K006",
+        "draftVersionId": "01M7DV5518VVE33GTXCAEQHVFY",
+        "createdAt": "2026-11-14T20:14:29.847Z",
+        "updatedAt": "2026-11-14T20:14:36.072Z",
+        "latestRun": {
+          "id": "01M7DV4Z03JQD9K56MXF8E3N5H",
+          "status": "succeeded",
+          "createdAt": "2026-11-14T20:14:29.891Z"
+        },
+        "runCount": 1
+      },
+      "visibleOrder": [
+        "/app/loops/01M7DV4YYQY9X8KNBWKBQ0K005/edit",
+        "/app/loops/01M7DV4YZ0B325NY6AMXFTV3XE/edit",
+        "/app/loops/01M7DV4W2E00SHKHS03JXKCA9V/edit",
+        "/app/loops/01M7DV4W2Z5W5WSXB01AAJ82WE/edit",
+        "/app/loops/01M7DV4SAVEE3YSGVAK25DPCZS/edit"
+      ]
+    },
+    {
+      "active": "same-loop detail read crosses a leaving save",
+      "held": {
+        "status": 200,
+        "body": {
+          "loop": {
+            "id": "01M7DV563CSA6YGWYFQZPE43SF",
+            "ownerId": "local",
+            "name": "Re-entry detail 78c68bbc",
+            "description": "Previously published description",
+            "currentVersionId": "01M7DV563CSA6YGWYFQZPE43SG",
+            "createdAt": "2026-11-14T20:14:37.164Z",
+            "updatedAt": "2026-11-14T20:14:37.179Z"
+          },
+          "current": {
+            "id": "01M7DV563CSA6YGWYFQZPE43SG",
+            "loopId": "01M7DV563CSA6YGWYFQZPE43SF",
+            "version": 1,
+            "status": "published",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Re-entry detail 78c68bbc",
+              "description": "Previously published description",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"seed release\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T20:14:37.164Z",
+            "publishedAt": "2026-11-14T20:14:37.179Z"
+          },
+          "draftToken": "81ed7e18c02650c0"
+        }
+      },
+      "accepted": {
+        "status": 200,
+        "request": {
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Re-entry detail 78c68bbc",
+            "description": "Persisted on leaving",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          }
+        },
+        "ifMatch": "\"81ed7e18c02650c0\"",
+        "data": {
+          "draft": {
+            "id": "01M7DV56QB54W967E446TPQ2ZY",
+            "loopId": "01M7DV563CSA6YGWYFQZPE43SF",
+            "version": 2,
+            "status": "draft",
+            "definition": {
+              "schemaVersion": 4,
+              "name": "Re-entry detail 78c68bbc",
+              "description": "Persisted on leaving",
+              "settings": {
+                "workingDirectory": {
+                  "kind": "temp"
+                },
+                "defaults": {
+                  "byHarness": {}
+                },
+                "maxNodeVisits": 10,
+                "runDeadlineSeconds": null,
+                "structuredTimeoutMs": null,
+                "subloopDepthLimit": 8
+              },
+              "variables": {
+                "key": {
+                  "type": "string",
+                  "description": "Retain accepted variable metadata"
+                }
+              },
+              "nodes": [
+                {
+                  "id": "start",
+                  "label": "Start",
+                  "ui": {
+                    "x": 0,
+                    "y": 80
+                  },
+                  "kind": "trigger",
+                  "config": {
+                    "type": "manual",
+                    "exposeTo": [
+                      "ui",
+                      "api",
+                      "mcp"
+                    ]
+                  }
+                },
+                {
+                  "id": "done",
+                  "label": "Done",
+                  "ui": {
+                    "x": 300,
+                    "y": 80
+                  },
+                  "kind": "exit",
+                  "config": {
+                    "outcome": "success",
+                    "returns": "\"seed release\"",
+                    "destinations": [
+                      {
+                        "kind": "caller"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "edges": [
+                {
+                  "id": "connect",
+                  "from": {
+                    "node": "start",
+                    "port": "out"
+                  },
+                  "to": {
+                    "node": "done",
+                    "port": "in"
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T20:14:37.803Z"
+          },
+          "draftToken": "62f2f09826fe4130",
+          "issues": []
+        }
+      },
+      "staleRead": {
+        "ok": true
+      },
+      "persisted": {
+        "loop": {
+          "id": "01M7DV563CSA6YGWYFQZPE43SF",
+          "ownerId": "local",
+          "name": "Re-entry detail 78c68bbc",
+          "description": "Persisted on leaving",
+          "currentVersionId": "01M7DV563CSA6YGWYFQZPE43SG",
+          "draftVersionId": "01M7DV56QB54W967E446TPQ2ZY",
+          "createdAt": "2026-11-14T20:14:37.164Z",
+          "updatedAt": "2026-11-14T20:14:37.803Z"
+        },
+        "current": {
+          "id": "01M7DV563CSA6YGWYFQZPE43SG",
+          "loopId": "01M7DV563CSA6YGWYFQZPE43SF",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Re-entry detail 78c68bbc",
+            "description": "Previously published description",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:14:37.164Z",
+          "publishedAt": "2026-11-14T20:14:37.179Z"
+        },
+        "draft": {
+          "id": "01M7DV56QB54W967E446TPQ2ZY",
+          "loopId": "01M7DV563CSA6YGWYFQZPE43SF",
+          "version": 2,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Re-entry detail 78c68bbc",
+            "description": "Persisted on leaving",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"seed release\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:14:37.803Z"
+        },
+        "draftToken": "62f2f09826fe4130"
+      },
+      "synced": {
+        "loopId": "01M7DV563CSA6YGWYFQZPE43SF",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Re-entry detail 78c68bbc",
+          "description": "Persisted on leaving",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:14:37.813Z",
+        "synced": true,
+        "baseToken": "62f2f09826fe4130"
+      }
+    }
+  ],
+  "chronology": [
+    {
+      "seq": 1,
+      "type": "independent HTTP",
+      "wallMs": 1794687266905,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary target cold 78c68bbc",
+          "description": "Description to remove",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"seed release\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "type": "independent HTTP",
+      "wallMs": 1794687266919,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary control cold 78c68bbc",
+          "description": "Unchanged description",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"control pin\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 3,
+      "type": "independent HTTP",
+      "wallMs": 1794687266942,
+      "method": "POST",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/publish",
+      "status": 200
+    },
+    {
+      "seq": 4,
+      "type": "independent HTTP",
+      "wallMs": 1794687266957,
+      "method": "POST",
+      "path": "/loops/01M7DV4W2Z5W5WSXB01AAJ82WE/publish",
+      "status": 200
+    },
+    {
+      "seq": 5,
+      "type": "independent HTTP",
+      "wallMs": 1794687266983,
+      "method": "POST",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/runs",
+      "status": 202,
+      "body": {
+        "versionId": "01M7DV4W2E00SHKHS03JXKCA9W"
+      }
+    },
+    {
+      "seq": 6,
+      "type": "independent HTTP",
+      "wallMs": 1794687267016,
+      "method": "GET",
+      "path": "/runs/01M7DV4W4J79RS46PX5FF53XW8",
+      "status": 200
+    },
+    {
+      "seq": 7,
+      "type": "independent HTTP",
+      "wallMs": 1794687267172,
+      "method": "GET",
+      "path": "/runs/01M7DV4W4J79RS46PX5FF53XW8",
+      "status": 200
+    },
+    {
+      "seq": 8,
+      "type": "independent HTTP",
+      "wallMs": 1794687267191,
+      "method": "POST",
+      "path": "/loops/01M7DV4W2Z5W5WSXB01AAJ82WE/runs",
+      "status": 202,
+      "body": {
+        "versionId": "01M7DV4W2Z5W5WSXB01AAJ82WF"
+      }
+    },
+    {
+      "seq": 9,
+      "type": "independent HTTP",
+      "wallMs": 1794687267211,
+      "method": "GET",
+      "path": "/runs/01M7DV4WB9H8PH2VQDC537FSYN",
+      "status": 200
+    },
+    {
+      "seq": 10,
+      "type": "independent HTTP",
+      "wallMs": 1794687267366,
+      "method": "GET",
+      "path": "/runs/01M7DV4WB9H8PH2VQDC537FSYN",
+      "status": 200
+    },
+    {
+      "seq": 11,
+      "type": "independent HTTP",
+      "wallMs": 1794687267375,
+      "method": "GET",
+      "path": "/loops",
+      "status": 200
+    },
+    {
+      "seq": 12,
+      "type": "browser request",
+      "wallMs": 1794687267748,
+      "tag": "cold Loops surface",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 13,
+      "type": "browser response",
+      "wallMs": 1794687267751,
+      "requestSeq": 12,
+      "status": 200,
+      "tag": "cold Loops surface",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V",
+      "method": "GET"
+    },
+    {
+      "seq": 14,
+      "type": "browser request",
+      "wallMs": 1794687267967,
+      "tag": "cold Loops surface",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary target cold 78c68bbc",
+          "description": "Description to remove",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 15,
+      "type": "browser response",
+      "wallMs": 1794687267972,
+      "requestSeq": 14,
+      "status": 200,
+      "tag": "cold Loops surface",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 16,
+      "type": "browser request",
+      "wallMs": 1794687268665,
+      "tag": "cold Loops surface",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/draft",
+      "method": "PUT",
+      "ifMatch": "\"7426d116e0cd2e5b\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary reconciled cold 78c68bbc",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 17,
+      "type": "barrier intercepted",
+      "wallMs": 1794687268665,
+      "label": "cold list / active save before navigation request not admitted yet",
+      "order": "before",
+      "method": "PUT",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/draft",
+      "ifMatch": "\"7426d116e0cd2e5b\"",
+      "data": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary reconciled cold 78c68bbc",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 18,
+      "type": "browser request",
+      "wallMs": 1794687268709,
+      "tag": "cold Loops surface",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 19,
+      "type": "barrier intercepted",
+      "wallMs": 1794687268709,
+      "label": "cold list / active save before navigation precommit list snapshot",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 20,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794687268725,
+      "label": "cold list / active save before navigation precommit list snapshot",
+      "status": 200
+    },
+    {
+      "seq": 21,
+      "type": "independent HTTP",
+      "wallMs": 1794687268736,
+      "method": "GET",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V",
+      "status": 200
+    },
+    {
+      "seq": 22,
+      "type": "barrier dispatched",
+      "wallMs": 1794687268737,
+      "label": "cold list / active save before navigation request not admitted yet"
+    },
+    {
+      "seq": 23,
+      "type": "browser response",
+      "wallMs": 1794687268757,
+      "requestSeq": 16,
+      "status": 200,
+      "tag": "cold Loops surface",
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/draft",
+      "method": "PUT"
+    },
+    {
+      "seq": 24,
+      "type": "browser request",
+      "wallMs": 1794687268758,
+      "tag": "cold Loops surface",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 25,
+      "type": "observed accepted PUT",
+      "wallMs": 1794687268759,
+      "path": "/loops/01M7DV4W2E00SHKHS03JXKCA9V/draft"
+    },
+    {
+      "seq": 26,
+      "type": "browser response",
+      "wallMs": 1794687268766,
+      "requestSeq": 24,
+      "status": 200,
+      "tag": "cold Loops surface",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 27,
+      "type": "barrier observer release",
+      "wallMs": 1794687268807,
+      "label": "cold list / active save before navigation precommit list snapshot",
+      "drop": false
+    },
+    {
+      "seq": 28,
+      "type": "browser response",
+      "wallMs": 1794687268811,
+      "requestSeq": 18,
+      "status": 200,
+      "tag": "cold Loops surface",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 29,
+      "type": "independent HTTP",
+      "wallMs": 1794687269823,
+      "method": "GET",
+      "path": "/loops",
+      "status": 200
+    },
+    {
+      "seq": 30,
+      "type": "independent HTTP",
+      "wallMs": 1794687269853,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary target warm 78c68bbc",
+          "description": "Description to remove",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"seed release\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 31,
+      "type": "independent HTTP",
+      "wallMs": 1794687269864,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary control warm 78c68bbc",
+          "description": "Unchanged description",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"control pin\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 32,
+      "type": "independent HTTP",
+      "wallMs": 1794687269875,
+      "method": "POST",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/publish",
+      "status": 200
+    },
+    {
+      "seq": 33,
+      "type": "independent HTTP",
+      "wallMs": 1794687269888,
+      "method": "POST",
+      "path": "/loops/01M7DV4YZ0B325NY6AMXFTV3XE/publish",
+      "status": 200
+    },
+    {
+      "seq": 34,
+      "type": "independent HTTP",
+      "wallMs": 1794687269899,
+      "method": "POST",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/runs",
+      "status": 202,
+      "body": {
+        "versionId": "01M7DV4YYQY9X8KNBWKBQ0K006"
+      }
+    },
+    {
+      "seq": 35,
+      "type": "independent HTTP",
+      "wallMs": 1794687269912,
+      "method": "GET",
+      "path": "/runs/01M7DV4Z03JQD9K56MXF8E3N5H",
+      "status": 200
+    },
+    {
+      "seq": 36,
+      "type": "independent HTTP",
+      "wallMs": 1794687270058,
+      "method": "GET",
+      "path": "/runs/01M7DV4Z03JQD9K56MXF8E3N5H",
+      "status": 200
+    },
+    {
+      "seq": 37,
+      "type": "independent HTTP",
+      "wallMs": 1794687270069,
+      "method": "POST",
+      "path": "/loops/01M7DV4YZ0B325NY6AMXFTV3XE/runs",
+      "status": 202,
+      "body": {
+        "versionId": "01M7DV4YZ0B325NY6AMXFTV3XF"
+      }
+    },
+    {
+      "seq": 38,
+      "type": "independent HTTP",
+      "wallMs": 1794687270082,
+      "method": "GET",
+      "path": "/runs/01M7DV4Z5DTZ7AN0M4PKF38933",
+      "status": 200
+    },
+    {
+      "seq": 39,
+      "type": "independent HTTP",
+      "wallMs": 1794687270229,
+      "method": "GET",
+      "path": "/runs/01M7DV4Z5DTZ7AN0M4PKF38933",
+      "status": 200
+    },
+    {
+      "seq": 40,
+      "type": "independent HTTP",
+      "wallMs": 1794687270237,
+      "method": "GET",
+      "path": "/loops",
+      "status": 200
+    },
+    {
+      "seq": 41,
+      "type": "browser request",
+      "wallMs": 1794687270605,
+      "tag": "warm Loops surface",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 42,
+      "type": "browser response",
+      "wallMs": 1794687270628,
+      "requestSeq": 41,
+      "status": 200,
+      "tag": "warm Loops surface",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 43,
+      "type": "browser request",
+      "wallMs": 1794687270741,
+      "tag": "warm Loops surface",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 44,
+      "type": "browser response",
+      "wallMs": 1794687270744,
+      "requestSeq": 43,
+      "status": 200,
+      "tag": "warm Loops surface",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005",
+      "method": "GET"
+    },
+    {
+      "seq": 45,
+      "type": "browser request",
+      "wallMs": 1794687270882,
+      "tag": "warm Loops surface",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary target warm 78c68bbc",
+          "description": "Description to remove",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 46,
+      "type": "browser response",
+      "wallMs": 1794687270887,
+      "requestSeq": 45,
+      "status": 200,
+      "tag": "warm Loops surface",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 47,
+      "type": "browser request",
+      "wallMs": 1794687271040,
+      "tag": "warm Loops surface",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/draft",
+      "method": "PUT",
+      "ifMatch": "\"f6fb05300b855eb0\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary reconciled warm 78c68bbc",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 48,
+      "type": "barrier intercepted",
+      "wallMs": 1794687271040,
+      "label": "warm list / pending save on unmount request not admitted yet",
+      "order": "before",
+      "method": "PUT",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/draft",
+      "ifMatch": "\"f6fb05300b855eb0\"",
+      "data": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Summary reconciled warm 78c68bbc",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 49,
+      "type": "browser request",
+      "wallMs": 1794687271307,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 50,
+      "type": "browser response",
+      "wallMs": 1794687271313,
+      "requestSeq": 49,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 51,
+      "type": "browser request",
+      "wallMs": 1794687273780,
+      "tag": "cold Loops surface",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 52,
+      "type": "browser response",
+      "wallMs": 1794687273788,
+      "requestSeq": 51,
+      "status": 200,
+      "tag": "cold Loops surface",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 53,
+      "type": "browser request",
+      "wallMs": 1794687276053,
+      "tag": "warm Loops surface",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 54,
+      "type": "barrier intercepted",
+      "wallMs": 1794687276053,
+      "label": "warm list / pending save on unmount precommit list snapshot",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 55,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794687276059,
+      "label": "warm list / pending save on unmount precommit list snapshot",
+      "status": 200
+    },
+    {
+      "seq": 56,
+      "type": "independent HTTP",
+      "wallMs": 1794687276063,
+      "method": "GET",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005",
+      "status": 200
+    },
+    {
+      "seq": 57,
+      "type": "barrier dispatched",
+      "wallMs": 1794687276064,
+      "label": "warm list / pending save on unmount request not admitted yet"
+    },
+    {
+      "seq": 58,
+      "type": "browser response",
+      "wallMs": 1794687276082,
+      "requestSeq": 47,
+      "status": 200,
+      "tag": "warm Loops surface",
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/draft",
+      "method": "PUT"
+    },
+    {
+      "seq": 59,
+      "type": "observed accepted PUT",
+      "wallMs": 1794687276084,
+      "path": "/loops/01M7DV4YYQY9X8KNBWKBQ0K005/draft"
+    },
+    {
+      "seq": 60,
+      "type": "browser request",
+      "wallMs": 1794687276085,
+      "tag": "warm Loops surface",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 61,
+      "type": "browser response",
+      "wallMs": 1794687276093,
+      "requestSeq": 60,
+      "status": 200,
+      "tag": "warm Loops surface",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 62,
+      "type": "barrier observer release",
+      "wallMs": 1794687276118,
+      "label": "warm list / pending save on unmount precommit list snapshot",
+      "drop": false
+    },
+    {
+      "seq": 63,
+      "type": "browser response",
+      "wallMs": 1794687276120,
+      "requestSeq": 53,
+      "status": 200,
+      "tag": "warm Loops surface",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 64,
+      "type": "browser request",
+      "wallMs": 1794687276317,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 65,
+      "type": "browser response",
+      "wallMs": 1794687276322,
+      "requestSeq": 64,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 66,
+      "type": "independent HTTP",
+      "wallMs": 1794687277138,
+      "method": "GET",
+      "path": "/loops",
+      "status": 200
+    },
+    {
+      "seq": 67,
+      "type": "independent HTTP",
+      "wallMs": 1794687277174,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Re-entry detail 78c68bbc",
+          "description": "Previously published description",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"seed release\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 68,
+      "type": "independent HTTP",
+      "wallMs": 1794687277188,
+      "method": "POST",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF/publish",
+      "status": 200
+    },
+    {
+      "seq": 69,
+      "type": "independent HTTP",
+      "wallMs": 1794687277193,
+      "method": "GET",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "status": 200
+    },
+    {
+      "seq": 70,
+      "type": "browser request",
+      "wallMs": 1794687277329,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 71,
+      "type": "browser response",
+      "wallMs": 1794687277339,
+      "requestSeq": 70,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "method": "GET"
+    },
+    {
+      "seq": 72,
+      "type": "browser request",
+      "wallMs": 1794687277491,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Re-entry detail 78c68bbc",
+          "description": "Previously published description",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 73,
+      "type": "browser response",
+      "wallMs": 1794687277498,
+      "requestSeq": 72,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 74,
+      "type": "browser request",
+      "wallMs": 1794687277631,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 75,
+      "type": "browser request",
+      "wallMs": 1794687277632,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF/draft",
+      "method": "PUT",
+      "ifMatch": "\"81ed7e18c02650c0\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Re-entry detail 78c68bbc",
+          "description": "Persisted on leaving",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 76,
+      "type": "barrier intercepted",
+      "wallMs": 1794687277633,
+      "label": "leaving save before gateway admission",
+      "order": "before",
+      "method": "PUT",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF/draft",
+      "ifMatch": "\"81ed7e18c02650c0\"",
+      "data": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Re-entry detail 78c68bbc",
+          "description": "Persisted on leaving",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 77,
+      "type": "browser response",
+      "wallMs": 1794687277641,
+      "requestSeq": 74,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops",
+      "method": "GET"
+    },
+    {
+      "seq": 78,
+      "type": "browser request",
+      "wallMs": 1794687277789,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 79,
+      "type": "barrier intercepted",
+      "wallMs": 1794687277789,
+      "label": "re-entry detail captured before leaving save commits",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 80,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794687277794,
+      "label": "re-entry detail captured before leaving save commits",
+      "status": 200
+    },
+    {
+      "seq": 81,
+      "type": "barrier dispatched",
+      "wallMs": 1794687277794,
+      "label": "leaving save before gateway admission"
+    },
+    {
+      "seq": 82,
+      "type": "browser response",
+      "wallMs": 1794687277813,
+      "requestSeq": 75,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF/draft",
+      "method": "PUT"
+    },
+    {
+      "seq": 83,
+      "type": "barrier observer release",
+      "wallMs": 1794687277814,
+      "label": "re-entry detail captured before leaving save commits",
+      "drop": false
+    },
+    {
+      "seq": 84,
+      "type": "browser request",
+      "wallMs": 1794687277815,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 85,
+      "type": "browser response",
+      "wallMs": 1794687277817,
+      "requestSeq": 78,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "method": "GET"
+    },
+    {
+      "seq": 86,
+      "type": "browser response",
+      "wallMs": 1794687277822,
+      "requestSeq": 84,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "method": "GET"
+    },
+    {
+      "seq": 87,
+      "type": "browser request",
+      "wallMs": 1794687277844,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Re-entry detail 78c68bbc",
+          "description": "Persisted on leaving",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"seed release\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 88,
+      "type": "browser response",
+      "wallMs": 1794687277854,
+      "requestSeq": 87,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 89,
+      "type": "independent HTTP",
+      "wallMs": 1794687277895,
+      "method": "GET",
+      "path": "/loops/01M7DV563CSA6YGWYFQZPE43SF",
+      "status": 200
+    }
+  ],
+  "checkpoints": [],
+  "pageErrors": [],
+  "failures": []
+}

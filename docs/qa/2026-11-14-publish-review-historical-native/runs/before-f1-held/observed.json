@@ -1,0 +1,935 @@
+{
+  "origin": "http://127.0.0.1:54915",
+  "mapping": "237-review-correction-independent-v1",
+  "phase": "before",
+  "scenario": "f1",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "outcomes": [
+    {
+      "active": "F1 held",
+      "variant": "held",
+      "finding": "KNOWN_DIVERGENCE_ADMITTED_OTHER_WRITER_DRAFT",
+      "oldOutcome": {
+        "failedReads": [
+          {
+            "seq": 16,
+            "type": "deliberately failed browser detail read",
+            "wallMs": 1794686095225,
+            "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T"
+          },
+          {
+            "seq": 19,
+            "type": "deliberately failed browser detail read",
+            "wallMs": 1794686095237,
+            "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T"
+          }
+        ]
+      },
+      "count": 2,
+      "conflict": true,
+      "server": {
+        "loop": {
+          "id": "01M7DT131A5WQZRPB5J2MB4Z5T",
+          "ownerId": "local",
+          "name": "Divergent retry held 847b209f",
+          "description": "B from independent writer",
+          "currentVersionId": "01M7DT134JNRPBPPM9V2MN5NSN",
+          "createdAt": "2026-11-14T19:54:54.378Z",
+          "updatedAt": "2026-11-14T19:54:55.910Z"
+        },
+        "current": {
+          "id": "01M7DT134JNRPBPPM9V2MN5NSN",
+          "loopId": "01M7DT131A5WQZRPB5J2MB4Z5T",
+          "version": 2,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry held 847b209f",
+            "description": "B from independent writer",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"Separate B graph\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T19:54:54.482Z",
+          "publishedAt": "2026-11-14T19:54:55.910Z"
+        },
+        "draftToken": "722315d19d94d59b"
+      },
+      "publishedHistory": [
+        {
+          "id": "01M7DT134JNRPBPPM9V2MN5NSN",
+          "loopId": "01M7DT131A5WQZRPB5J2MB4Z5T",
+          "version": 2,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry held 847b209f",
+            "description": "B from independent writer",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"Separate B graph\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T19:54:54.482Z",
+          "publishedAt": "2026-11-14T19:54:55.910Z"
+        },
+        {
+          "id": "01M7DT131A5WQZRPB5J2MB4Z5V",
+          "loopId": "01M7DT131A5WQZRPB5J2MB4Z5T",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry held 847b209f",
+            "description": "Exact older version",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"v1\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T19:54:54.378Z",
+          "publishedAt": "2026-11-14T19:54:54.435Z"
+        }
+      ],
+      "state": {
+        "path": "/app/loops/01M7DT131A5WQZRPB5J2MB4Z5T/edit",
+        "title": "Divergent retry held 847b209f",
+        "save": "Draft changed elsewhere",
+        "description": "A1 acknowledged by the original editor",
+        "notices": [
+          {
+            "role": "status",
+            "text": "The draft changed on the serverThe server now holds a different draft from the one this editor’s changes are based on. Your changes are kept on this device and nothing was overwritten. Reload server draftOverwrite with this copy",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "A different draft was publishedVersion 2 holds a different stored draft from the draft saved for this publish. This editor’s draft is not published.",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          }
+        ]
+      }
+    }
+  ],
+  "chronology": [
+    {
+      "seq": 1,
+      "type": "independent HTTP",
+      "wallMs": 1794686094399,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry held 847b209f",
+          "description": "Exact older version",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"v1\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "type": "independent HTTP",
+      "wallMs": 1794686094455,
+      "method": "POST",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/publish",
+      "status": 200
+    },
+    {
+      "seq": 3,
+      "type": "independent HTTP",
+      "wallMs": 1794686094465,
+      "method": "GET",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "status": 200
+    },
+    {
+      "seq": 4,
+      "type": "independent HTTP",
+      "wallMs": 1794686094500,
+      "method": "PUT",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/draft",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry held 847b209f",
+          "description": "A1 acknowledged by the original editor",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"v1\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"80514fe7b279e653\""
+    },
+    {
+      "seq": 5,
+      "type": "bound browser entry",
+      "wallMs": 1794686094565,
+      "tag": "primary",
+      "path": "/app/assets/index-DhiNw4HL.js",
+      "status": 200
+    },
+    {
+      "seq": 6,
+      "type": "browser request",
+      "wallMs": 1794686094667,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 7,
+      "type": "browser response",
+      "wallMs": 1794686094676,
+      "requestSeq": 6,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "method": "GET"
+    },
+    {
+      "seq": 8,
+      "type": "browser request",
+      "wallMs": 1794686094945,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry held 847b209f",
+          "description": "A1 acknowledged by the original editor",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"v1\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 9,
+      "type": "browser response",
+      "wallMs": 1794686094987,
+      "requestSeq": 8,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 10,
+      "type": "browser validation result",
+      "wallMs": 1794686094996,
+      "requestSeq": 8,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/validate",
+      "issues": []
+    },
+    {
+      "seq": 11,
+      "type": "browser request",
+      "wallMs": 1794686095198,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 12,
+      "type": "barrier intercepted",
+      "wallMs": 1794686095199,
+      "label": "The first browser POST never reaches the gateway",
+      "order": "before",
+      "method": "POST",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/publish",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 13,
+      "type": "barrier dispatched",
+      "wallMs": 1794686095218,
+      "label": "The first browser POST never reaches the gateway"
+    },
+    {
+      "seq": 14,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794686095223,
+      "requestSeq": 11,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/publish"
+    },
+    {
+      "seq": 15,
+      "type": "browser request",
+      "wallMs": 1794686095224,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 16,
+      "type": "deliberately failed browser detail read",
+      "wallMs": 1794686095225,
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T"
+    },
+    {
+      "seq": 17,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794686095236,
+      "requestSeq": 15,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T"
+    },
+    {
+      "seq": 18,
+      "type": "browser request",
+      "wallMs": 1794686095236,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 19,
+      "type": "deliberately failed browser detail read",
+      "wallMs": 1794686095237,
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T"
+    },
+    {
+      "seq": 20,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794686095249,
+      "requestSeq": 18,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T"
+    },
+    {
+      "seq": 21,
+      "type": "independent HTTP",
+      "wallMs": 1794686095332,
+      "method": "GET",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "status": 200
+    },
+    {
+      "seq": 22,
+      "type": "independent HTTP",
+      "wallMs": 1794686095360,
+      "method": "PUT",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/draft",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry held 847b209f",
+          "description": "B from independent writer",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"Separate B graph\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"b4080a8b1b5696e4\""
+    },
+    {
+      "seq": 23,
+      "type": "independent HTTP",
+      "wallMs": 1794686095371,
+      "method": "GET",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "status": 200
+    },
+    {
+      "seq": 24,
+      "type": "browser request",
+      "wallMs": 1794686095421,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 25,
+      "type": "barrier intercepted",
+      "wallMs": 1794686095421,
+      "label": "Known actual retry readback is held for observation",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 26,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794686095432,
+      "label": "Known actual retry readback is held for observation",
+      "status": 200
+    },
+    {
+      "seq": 27,
+      "type": "barrier observer release",
+      "wallMs": 1794686095706,
+      "label": "Known actual retry readback is held for observation",
+      "drop": false
+    },
+    {
+      "seq": 28,
+      "type": "browser response",
+      "wallMs": 1794686095715,
+      "requestSeq": 24,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "method": "GET"
+    },
+    {
+      "seq": 29,
+      "type": "browser request",
+      "wallMs": 1794686095894,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 30,
+      "type": "browser response",
+      "wallMs": 1794686095931,
+      "requestSeq": 29,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/publish",
+      "method": "POST"
+    },
+    {
+      "seq": 31,
+      "type": "browser request",
+      "wallMs": 1794686095936,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 32,
+      "type": "browser response",
+      "wallMs": 1794686095970,
+      "requestSeq": 31,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "method": "GET"
+    },
+    {
+      "seq": 33,
+      "type": "independent HTTP",
+      "wallMs": 1794686095981,
+      "method": "GET",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T",
+      "status": 200
+    },
+    {
+      "seq": 34,
+      "type": "independent HTTP",
+      "wallMs": 1794686096019,
+      "method": "GET",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/versions/01M7DT131A5WQZRPB5J2MB4Z5V",
+      "status": 200
+    },
+    {
+      "seq": 35,
+      "type": "independent HTTP",
+      "wallMs": 1794686096029,
+      "method": "GET",
+      "path": "/loops/01M7DT131A5WQZRPB5J2MB4Z5T/versions",
+      "status": 200
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "Completed F1 held",
+      "path": "/app/loops/01M7DT131A5WQZRPB5J2MB4Z5T/edit",
+      "title": "Divergent retry held 847b209f",
+      "save": "Draft changed elsewhere",
+      "description": "A1 acknowledged by the original editor",
+      "notices": [
+        {
+          "role": "status",
+          "text": "The draft changed on the serverThe server now holds a different draft from the one this editor’s changes are based on. Your changes are kept on this device and nothing was overwritten. Reload server draftOverwrite with this copy",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "A different draft was publishedVersion 2 holds a different stored draft from the draft saved for this publish. This editor’s draft is not published.",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "failures": []
+}

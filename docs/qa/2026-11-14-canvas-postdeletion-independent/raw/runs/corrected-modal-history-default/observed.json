@@ -1,0 +1,499 @@
+{
+  "suite": "207-final-canvas-independent",
+  "mode": "after",
+  "action": "modal-history",
+  "origin": "http://127.0.0.1:57184",
+  "loaded": [
+    200,
+    200
+  ],
+  "checkpoints": [
+    {
+      "label": "Rename complete graph while retaining unrelated held JSON",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY86XQNBRNAAFKR6FE5VM2",
+          "ownerId": "local",
+          "name": "Canvas held input and retained rename 62538ddc",
+          "draftVersionId": "01M7DY86XQNBRNAAFKR6FE5VM3",
+          "createdAt": "2026-11-14T21:08:42.039Z",
+          "updatedAt": "2026-11-14T21:08:44.903Z"
+        },
+        "draft": {
+          "id": "01M7DY86XQNBRNAAFKR6FE5VM3",
+          "loopId": "01M7DY86XQNBRNAAFKR6FE5VM2",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas held input and retained rename 62538ddc",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "visits": {
+                "type": "integer"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "worker",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "coerce",
+                      "source": "/counters/nodeVisits/worker",
+                      "jsonSchema": {
+                        "type": "integer"
+                      },
+                      "repair": {
+                        "enabled": false,
+                        "maxAttempts": 1,
+                        "onFailure": "fail-run"
+                      },
+                      "target": "/vars/visits"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "worker",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "configured-output",
+                "from": {
+                  "node": "worker",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:08:42.039Z"
+        },
+        "draftToken": "a20c3d676f4b3df7"
+      },
+      "local": {
+        "loopId": "01M7DY86XQNBRNAAFKR6FE5VM2",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas held input and retained rename 62538ddc",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "worker",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/worker",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "worker",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "configured-output",
+              "from": {
+                "node": "worker",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:08:44.936Z",
+        "synced": true,
+        "baseToken": "a20c3d676f4b3df7"
+      },
+      "ifMatch": "\"3e6f501a47be6b39\""
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7DY86XQNBRNAAFKR6FE5VM2/draft",
+      "at": 1794690524897,
+      "ifMatch": "\"3e6f501a47be6b39\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas held input and retained rename 62538ddc",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "visits": {
+              "type": "integer"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "worker",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "coerce",
+                    "source": "/counters/nodeVisits/worker",
+                    "jsonSchema": {
+                      "type": "integer"
+                    },
+                    "repair": {
+                      "enabled": false,
+                      "maxAttempts": 1,
+                      "onFailure": "fail-run"
+                    },
+                    "target": "/vars/visits"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "worker",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "configured-output",
+              "from": {
+                "node": "worker",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": null,
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+}

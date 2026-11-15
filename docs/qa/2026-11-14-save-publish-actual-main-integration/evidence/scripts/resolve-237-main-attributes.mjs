@@ -1,0 +1,12 @@
+import {readFileSync,writeFileSync} from 'node:fs';import {execFileSync} from 'node:child_process';import {createHash} from 'node:crypto';
+const root='C:/Users/98jak/.codex/worktrees/gg-20261114-save-publish/GraphGoblin',first='35bb3fbdc724a82064d0d9e65b551608542c6b22',second='8fadcb0d44ac2caf80ff6279fe4648ce9398afd9';
+const git=(...a)=>execFileSync('git',['-C',root,...a],{encoding:'utf8',maxBuffer:20e6,env:{...process.env,GIT_OPTIONAL_LOCKS:'0'}}).trim();
+if(git('rev-parse','HEAD')!==first||git('rev-parse','MERGE_HEAD')!==second||git('diff','--name-only','--diff-filter=U')!=='docs/qa/.gitattributes')throw Error('Unexpected merge');
+const file=root+'/docs/qa/.gitattributes',original=readFileSync(file,'utf8');
+const pattern=/^<<<<<<< HEAD\r?\n([\s\S]*?)^=======\r?\n([\s\S]*?)^>>>>>>> 8fadcb0d44ac2caf80ff6279fe4648ce9398afd9\r?\n/gm;
+let count=0;const corrected=original.replace(pattern,(_m,left,right)=>{count++;return left+'\n'+right;});
+if(count!==1||/^(<<<<<<<|=======|>>>>>>>)/m.test(corrected))throw Error('Unexpected conflict markers');
+for(const head of [first,second])for(const line of git('show',head+':docs/qa/.gitattributes').split(/\r?\n/).filter(l=>l.trim()&&!l.startsWith('#')))if(!corrected.split(/\r?\n/).includes(line))throw Error('Lost attribute '+line);
+writeFileSync(file,corrected);git('add','--','docs/qa/.gitattributes');
+const result={at:new Date().toISOString(),first,second,path:'docs/qa/.gitattributes',conflicts:count,preservedBoth:true,sha256:createHash('sha256').update(readFileSync(file)).digest('hex')};
+writeFileSync('C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-237/main-attributes-resolution.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));

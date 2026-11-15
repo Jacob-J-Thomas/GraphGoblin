@@ -1,0 +1,60 @@
+# Independent native QA for the corrected #207 stack
+
+The corrected viewport-pan and blank-route recovery behaviors passed at exact stacked head `bc9094fd426fe1c1a4b81b0e490e3887f977dbc7`. Both affected repository tests passed on their first exact scoped execution. A Control node drag can leave an enabled selected-edge Remove reachable while D3 has its own short click blocker. The two observed follow-up clicks reached the target after the blocker cleared. The overlap question remains open for the formal reviewer.
+
+## Source and execution boundary
+
+- Clean candidate tree `c8841e39d83bf292553d840de4bf3cadc6097824`, parent `64a955887962f72287e532824be1b8cb32c5f055`, stack base `35bb3fbdc724a82064d0d9e65b551608542c6b22`, actual main `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`.
+- All 18 approved changed blobs and 85 source paths matched immutable Git. The previous 64a build's 1,227 file paths/hashes across 13 trees matched before overwrite. The prior failed native and CI evidence remains intact.
+- Node 22.23.4 forced build completed 12/12 with zero cache hits and disabled remote cache in 17.814 seconds. The candidate's entire 1,227-file set and 18 embedded sources matched the new source, including `viewport-gesture.ts`. Web bundle `index-CUg_Ndm3.js` SHA-256 `c330c03ba5d877919fb722693d0fb5b7ad476ad0f0ab881ef44a3f5373ccf0dc`, map `23b1857e061ea63acd8d39b303d9d88d4a18d153067ee3b66769fd1d02aacb67`, compiled API main `e011151e143f07f29181c03f616b6d8e5b7c04e1f136f001b508e9a480c8cc98`. Each native fixture served exact bound assets from the actual compiled API with disposable file SQLite.
+- Binding reports before/after match byte-for-byte at `f44fa2c8377b3d6b29debb5441db5dfc3e94857b20431e946ca18e8ccc41cdae`. The prior 64a SHA and complete listing sets are in the pre-overwrite evidence. No product source, index or remote change.
+
+[Exact source admission](exact-source-admission.json) · [Pre-overwrite retained build](retained-64a-before-overwrite.json) · [Candidate artifact delta](corrected-build-artifact-delta.json)
+
+## Native viewport and toolbar checks
+
+| Case | Observed |
+| --- | --- |
+| Mouse pan availability | Actual moved pane sets `data-gesture=panning` and `aria-disabled=true` while Remove remains a focusable real button. A genuine focused Space click while unavailable has no effect. On released mouseup, the rendered gate is `settling`. The generated trusted pane click sees actual D3 `click.drag` and remains suppressed. The same selected edge and control survive. |
+| First enabled Remove | The next scripted interaction after observed readiness is one real mouse click, with no fixed sleep to reach readiness. Its actual event path hits the target, no suppressor is present and the click is uncanceled. One exact conditional PUT removes only the intended edge, and one Undo restores the whole graph. This records the first enabled automation action, without claiming a minimum physical reaction time. |
+| Repeated pan and real wheel/Fit | A second actual mouse pan arms independently. A trusted wheel at 20,312.1 ms changes zoom while the second primary press is still active. Mouseup and a suppressed pane click follow, then the gate becomes ready. Public Fit click occurs at 20,347.9 ms after readiness. Native ordering shows real mouse/wheel overlap and ordinary Fit integration. It does not show old/new mouse barrier overlap or Fit dispatch during the D3 capture window. The focused installed-dependency test covers the displaced-end boundary separately. |
+| Keyboard | Actual Enter and Space each activate the live selected-edge Remove once after readiness and each Undo restores the exact prior graph. |
+| Manual Reset | One native route nudge establishes the manual path. Focused, unavailable Space leaves that exact route alone. After gate readiness, one genuine Reset click and conditional PUT change only geometry. One Undo restores the exact manual route. |
+| Coarse and protected Chat | A 146.578125 × 44 CSS-pixel target accepts a real emulated coarse tap. Protected voice deletion gestures retain the original graph and refusal. Ordinary continuation remains editable and the published Chat version is unchanged. Physical touch hardware and a screen reader were outside this run. |
+
+The historical pane release overlaps the same translating empty area. It did not physically release on the moving toolbar in this fixture. The trace keeps actual pane and action hit targets separate and uses no artificial viewport or listener constraints.
+
+On the accepted pan run, first pan release occurred at 9,820.6 ms. Its generated pane click at 9,821.4 ms was suppressed with the unavailable control and D3 capture in place. The earliest recorded release sample at 9,824.0 ms already found the listener absent and control ready. The genuine first tested click at 9,983.9 ms was uncanceled. That measured automation gap is not a proposed product delay. [Event projection](pan-event-projection.json)
+
+## Node-drag reachability for formal review
+
+- Ordinary native node drag moves a real node, records D3's suppressed drag click, and deselects the previously selected edge. No Remove target remained. The exact node geometry PUT and Undo succeeded.
+- Shift was a real modifier interaction but did not move the node. It did not expose the selected toolbar or send a PUT. The first fixture's failed requirement that Shift must move the node is preserved.
+- Control is the installed Windows multi-selection modifier. A genuine Control node drag preserves the selected edge. The visible Remove button stays enabled and hittable. The regular follow-up click reached the target after D3 cleared and removed only that edge.
+- The one bounded immediate Control-held follow-up also hit the actual same button after raw browser down/up. Relative to actual drag mouseup, D3 `click.drag` was present at its own generated click at +4.5 ms. It was absent by the actual next pointerdown at +8.2 ms, mouseup at +11.8 ms and click at +12.1 ms. The latter click worked. The graph contained just the moved node and intended removal, in one debounced PUT, with separate Undo operations. The toolbar was enabled when the drag's own click was suppressed. The later formal reviewer must consider whether a genuinely reachable subsequent click can overlap that active listener. These two native sequences do not establish clearance for simultaneous overlap or a general post-node-drag fix.
+
+[Immediate Control trace](runs/corrected-node-drag-immediate-control/observed.json) · [Modifier cases](runs/corrected-node-drag-modifier-model/observed.json)
+
+## Blank Decision ID ownership and recovery
+
+1. The native connection owns the exact stored edge. Clearing `routes.2.id` displays an invalid blank, removes the drawable handle/path and sends no invalid PUT. The actual local draft retains the whole prior topology, stable DecisionRoutes row key and owned edge ID, with the exact prior draft token. Reload preserves the blank and ownership. Repair to `route-4` renders and saves the same edge with its new real handle. Restoring `route-3` and reloading preserves the full original stable graph.
+2. While the blank remains device-only, the actual **Loop issues** group **Connections the canvas cannot draw** identifies one exact edge and endpoints. One action removes only `e2` and its owner association, without changing the remaining graph, invalid field or server token. One Undo restores the entire graph, ownership key 2 and manual route `[510]` with no invalid server PUT. A disposable public fixture PUT staged that exact manual route after the natively drawn edge, before the browser-only recovery behavior.
+
+The native blank cases used actual API/IndexedDB boundaries. The two affected repository tests use the regular repository Playwright setup, source API with provider fakes and in-memory SQLite, and the candidate's exact built web bytes from an externally copied 28-file distribution. Both listeners explicitly request ephemeral loopback ports. The overridden external temp and test-output directories isolate all stores and browser data. The copied service-worker file and full dist returned to exact bytes. The repository's two tests were:
+
+- `decision-routes.spec.ts:356` — option IDs stay connected when numeric display labels change, save, and reload, including the real fixture publication/run assertion.
+- `decision-routes.spec.ts:487` — Loop issues remove the edge a blank route ID owns, and one Undo restores the whole draft.
+
+Passed 2/2 in 25.6 seconds, one worker, zero retries, Edge. The exact command, output, isolation and final termination readback are retained. The original CI Browser failure remains historical.
+
+[Repository command/output](repository-two-e2e-first/stdio.log) · [Repository execution](repository-two-e2e-first/execution.json) · [Native summary](corrected-native-summary.json)
+
+## Preserved first outcomes and cleanup
+
+The first pan run passed the core gate, first enabled click and keyboard checks, with 11 conditional PUTs. Its final Fit sequence clipped the toolbar center behind the header. The inspected screenshot and raw report remain. The bounded updated fixture checked that the gate was ready before using ordinary zoom to put the target fully inside the viewport. The first modifier witness rejected nonmoving Shift before continuing to the actual Control path. The corrected fixture records both kinds accurately. The first artifact mapping reader also rejected a field missing from the reduced historical binding. Reading the original full UI mapping resolved that evidence issue, while preserving the first attempt's already generated listing bytes.
+
+Ten native fixtures closed with exit code 0 for gateways and browser closes. Eight successful fixtures recorded 36 accepted browser PUTs, all ten recorded 50 attempted writes and zero page errors. The first cleanup saw a newer unrelated `conhost.exe` with a historical numerical PID. No process was terminated. The terminal repeat matched no recorded fixture PID, connection listener or residual lock/WAL/SHM. Repo E2E teardown left no source server; the isolated temp tree contains only tooling caches/logs. Verify the before/after source and build binding separately from process cleanup. Original owner ports/resources stayed untouched. No additional native probe was made.
+
+[First cleanup](corrected-cleanup.json) · [Terminal cleanup](corrected-cleanup-final.json) · [Native case index](corrected-native-summary.json)
+
+The verified scope is the corrected stack. Final-main predecessor integration, full current-target CI/coverage, opposite-family review, final fresh Astra and owner acceptance remain pending. This packet does not consume a formal review slot.

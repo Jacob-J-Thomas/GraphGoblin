@@ -1,0 +1,212 @@
+$ vitest run src/node-references.test.ts src/source-analysis.test.ts src/syntax.test.ts src/graph.test.ts --maxWorkers=1 --no-cache --reporter=verbose --reporter=json --outputFile.json=C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/domain-273-final-correction/focused-before.json
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-node-references-native/GraphGoblin/packages/domain
+
+ ✓ src/node-references.test.ts > known node references > reports known missing local identities and preserves foreign outputs as warnings 16ms
+ ✓ src/node-references.test.ts > known node references > allows direct presence probes without making the probed identity mandatory 9ms
+ ✓ src/node-references.test.ts > known node references > rewrites structural edges, static JSONata and Liquid together, retaining other bytes 9ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs.start.value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in $.outputs.start.value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs. "st\u0061rt".value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs /* start */ . 'start'.value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs.`start` 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows.($.outputs.start.value) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows.($$.outputs.start.value) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows[$$.outputs.start.value] 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows[outputs.start.value] 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows^(outputs.start.value) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in (function(){outputs.start.value})() 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows.(function(){outputs.start.value})() 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in rows^($$.outputs.start.value) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in $lookup(outputs,"st\u0061rt").value 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in ($lookup := function($x,$key){ $key }; $lookup(vars,"start")) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in ($$ := $fixture; $$.outputs.start.value) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in trigger.nodeId = "start" 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > rewrites only a parsed local reference in outputs.starting.value 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists(gates.missing.passes) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in gates.missing ~> $exists() 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists($lookup(gates,"missing")) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists($lookup(gates,"missing").passes) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists((gates.missing)) 2ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists((gates.missing; 1)) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in ($exists := function($x){false}; $exists(gates.missing)) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in $exists(gates.missing[$which]) 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in gates.missing ~> $exists(gates.other) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in gates.missing ? gates.missing.passes : 0 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in gates.start.passes 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > classifies the actual identity use in counters.nodeVisits.done 0ms
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs nested thread references in a computed lookup key $lookup(outputs, outputs./* key source */start.value).value 10ms
+   → expected '$lookup(outputs, outputs./* key sourc…' to be '$lookup(outputs, outputs./* key sourc…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > repairs nested thread references in a computed lookup key rows[$lookup($$.outputs, outputs.start.value & $$.outputs.start.value).value = "chosen"].id 1ms
+   → expected 'rows[$lookup($$.outputs, outputs.star…' to be 'rows[$lookup($$.outputs, outputs.star…' // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > blocks publication for a required read inside a lookup key $lookup(outputs, $string(counters.nodeVisits.missing)) 2ms
+   → expected true to be false // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > blocks publication for a required read inside a lookup key $exists($lookup(outputs, gates.missing.passes)) 1ms
+   → expected true to be false // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > blocks publication for a required read inside a lookup key $lookup(outputs, "start"[$$.gates.missing]) 1ms
+   → expected true to be false // Object.is equality
+ × src/node-references.test.ts > reference scopes and source boundaries > keeps an explicit presence probe inside a computed lookup key optional 4ms
+   → expected [ { nodeId: 'done', …(4) } ] to match object [ { …(5) }, { …(2) } ]
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > keeps a vars-based lookup key dynamic and non-blocking 2ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > uses the message item and $thread in the decide decision selector 6ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > uses the message item and $thread in the classifier-decision decision selector 3ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > uses the parent thread for a child variable named where and binds selectors to their own thread 6ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves item scope in mutate operations and inference transforms 5ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows)[id = $$.outputs.start.value].id 2ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows)[outputs.start.value = $$.outputs.start.value].id 4ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows ~> $distinct())[id = $$.outputs.start.value].id 2ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows.$distinct($)[id = $$.outputs.start.value].id 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows.($distinct($))[id = $$.outputs.start.value].id 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows){"k": $$.outputs.start.value, "local": $sum($.outputs.start.value)} 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in (rows){"k": $$.outputs.start.value, "local": $sum(outputs.start.value)} 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in [rows]{"k": $$.outputs.start.value} 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in rows^(id)[id = $$.outputs.start.value].id 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs each evaluated filter or group key once in $distinct(rows)[id = ($$.outputs /* keep */ .start.value ?? 0)].id 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows)[$$.gates.missing.passes > 1] 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows){"k": $$.counters.nodeVisits.missing} 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $distinct(rows)[$exists($$.gates.missing)] 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $exists((gates.missing)[$$.gates.other]) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > enforces the publication rule for $exists($lookup(gates,"missing")[$$.gates.other]) 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > warns about a shadowed original root within an evaluated filter 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > warns on references in decorations skipped by JSONata function application rows ~> $distinct()[$$.gates.missing and $$.outputs.start] 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > warns on references in decorations skipped by JSONata function application rows ~> $distinct(){"k": $$.gates.missing, "value": $$.outputs.start} 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs evaluated function arguments while warning on its skipped filter 2ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > keeps an applied presence probe optional when its function has a skipped predicate 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > explains dynamic and opaque identity use without editing source, literals or provenance comparisons 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > identifies the runtime-supplied thread only in signal predicates and heartbeat 4ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > uses typed pointer slots and preserves unrelated decoded segments and arbitrary JSON 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves ambiguous output references when an authored operation can own the slot /outputs/start 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves ambiguous output references when an authored operation can own the slot /outputs/changed 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves ambiguous output references when an authored operation can own the slot /outputs 0ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > preserves Liquid locals and dynamic keys while repairing supported filters and escaped keys 4ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > repairs a typed source in a discriminated editor branch with another invalid field 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > warns on a Liquid loop else which can fall back to a shadowed global 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > does not treat a dynamic access as a direct Liquid presence probe 1ms
+ ✓ src/node-references.test.ts > reference scopes and source boundaries > returns refusal without mutating invalid identity, and retains syntax issues for malformed source 4ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > parses each distinct template once cold and only the changed source on a warm edit 25ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > rechecks output ownership and missing IDs across loops using the same analyzed source 8ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > keeps the language and the actual JSONata scope distinct for identical source 1ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > preserves out-of-scope syntax errors before locally actionable reference issues 13ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > uses the same facts for different rename targets and keeps uncertainty and escaping 3ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > evicts least recently reused facts at both the entry and retained size bounds 38ms
+ ✓ src/source-analysis.test.ts > source-only analysis reuse > analyzes oversized text and oversized span lists without retaining them or evicting small facts 22ms
+ ✓ src/syntax.test.ts > syntax checks > allows empty and whitespace required templates ("") 39ms
+ ✓ src/syntax.test.ts > syntax checks > allows empty and whitespace required templates (" ") 4ms
+ ✓ src/syntax.test.ts > syntax checks > rejects a whitespace required expression with an expression-specific message 4ms
+ ✓ src/syntax.test.ts > syntax checks > rejects blank expressions before execution (" "), without changing contracts parsing 4ms
+ ✓ src/syntax.test.ts > syntax checks > rejects blank expressions before execution ("\t\n"), without changing contracts parsing 1ms
+ ✓ src/syntax.test.ts > syntax checks > rejects blank expressions before execution (" "), without changing contracts parsing 1ms
+ ✓ src/syntax.test.ts > syntax checks > finds no problems in the kitchen-sink loop 20ms
+ ✓ src/syntax.test.ts > syntax checks > reports templates and expressions that do not parse, wherever they are nested 27ms
+ ✓ src/syntax.test.ts > syntax checks > skips absent values and union branches that do not match 1ms
+ ✓ src/graph.test.ts > outputPorts > derives ports per kind 24ms
+ ✓ src/graph.test.ts > validateLoop > accepts the fixtures 13ms
+ ✓ src/graph.test.ts > validateLoop > reports duplicates, missing endpoints, bad ports, and triggers as targets 1ms
+ ✓ src/graph.test.ts > validateLoop > requires a trigger and an exit 1ms
+ ✓ src/graph.test.ts > validateLoop > reports unconnected ports and unreachable nodes 1ms
+ ✓ src/graph.test.ts > validateLoop > reports undeclared decision variables 6ms
+ ✓ src/graph.test.ts > graph helpers > finds nodes, edges, and reachability 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs nested thread references in a computed lookup key $lookup(outputs, outputs./* key source */start.value).value
+AssertionError: expected '$lookup(outputs, outputs./* key sourc…' to be '$lookup(outputs, outputs./* key sourc…' // Object.is equality
+
+Expected: "$lookup(outputs, outputs./* key source */"true".value).value"
+Received: "$lookup(outputs, outputs./* key source */start.value).value"
+
+ ❯ src/node-references.test.ts:186:26
+    184|       const result = renamed(returning(before));
+    185|       const expression = expressionOf(result.definition);
+    186|       expect(expression).toBe(after);
+       |                          ^
+    187|       expect(result.repairedReferences).toBe(2);
+    188|       expect(result.warnings).toMatchObject([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > repairs nested thread references in a computed lookup key rows[$lookup($$.outputs, outputs.start.value & $$.outputs.start.value).value = "chosen"].id
+AssertionError: expected 'rows[$lookup($$.outputs, outputs.star…' to be 'rows[$lookup($$.outputs, outputs.star…' // Object.is equality
+
+Expected: "rows[$lookup($$.outputs, outputs.start.value & $$.outputs."true".value).value = "chosen"].id"
+Received: "rows[$lookup($$.outputs, outputs.start.value & $$.outputs.start.value).value = "chosen"].id"
+
+ ❯ src/node-references.test.ts:186:26
+    184|       const result = renamed(returning(before));
+    185|       const expression = expressionOf(result.definition);
+    186|       expect(expression).toBe(after);
+       |                          ^
+    187|       expect(result.repairedReferences).toBe(2);
+    188|       expect(result.warnings).toMatchObject([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > blocks publication for a required read inside a lookup key $lookup(outputs, $string(counters.nodeVisits.missing))
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > blocks publication for a required read inside a lookup key $exists($lookup(outputs, gates.missing.passes))
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > blocks publication for a required read inside a lookup key $lookup(outputs, "start"[$$.gates.missing])
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/node-references.test.ts:212:67
+    210|   ])('blocks publication for a required read inside a lookup key %s', …
+    211|     const definition = returning(source);
+    212|     expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe…
+       |                                                                   ^
+    213|     expect(referenceIssues(definition)).toMatchObject([
+    214|       {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/node-references.test.ts > reference scopes and source boundaries > keeps an explicit presence probe inside a computed lookup key optional
+AssertionError: expected [ { nodeId: 'done', …(4) } ] to match object [ { …(5) }, { …(2) } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "code": "NODE_REFERENCE_OPTIONAL_MISSING",
+-     "message": StringContaining "gates.missing",
++     "code": "NODE_REFERENCE_UNCERTAIN",
++     "message": "A dynamic or scoped expression may use a node ID. Review the reference manually.",
+      "nodeId": "done",
+      "path": "config.returns",
+-     "severity": "warning",
+-   },
+-   {
+-     "code": "NODE_REFERENCE_UNCERTAIN",
+      "severity": "warning",
+    },
+  ]
+
+ ❯ src/node-references.test.ts:229:41
+    227|     const definition = returning(source);
+    228|     expect(isPublishable(LoopDefinitionSchema.parse(definition))).toBe…
+    229|     expect(referenceIssues(definition)).toMatchObject([
+       |                                         ^
+    230|       {
+    231|         code: 'NODE_REFERENCE_OPTIONAL_MISSING',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  6 failed | 92 passed (98)
+   Start at  15:09:43
+   Duration  5.10s (import 67%, transform 21%, tests 10%, worker 1%)
+
+    Isolate  4 workers spawned · ~279ms startup each (spawn + environment, per file)
+             at least ~837ms faster with isolate: false — reuses workers across files instead of one per file
+
+JSON report written to C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/domain-273-final-correction/focused-before.json
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-node-references-native\GraphGoblin\packages\domain
+

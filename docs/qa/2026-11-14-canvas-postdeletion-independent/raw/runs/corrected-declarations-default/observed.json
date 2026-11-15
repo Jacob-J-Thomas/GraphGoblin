@@ -1,0 +1,4203 @@
+{
+  "suite": "207-final-canvas-independent",
+  "mode": "after",
+  "action": "declarations",
+  "origin": "http://127.0.0.1:59711",
+  "loaded": [
+    200,
+    200
+  ],
+  "checkpoints": [
+    {
+      "label": "draw subject.accept → done",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "ownerId": "local",
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "draftVersionId": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "createdAt": "2026-11-14T21:06:05.173Z",
+          "updatedAt": "2026-11-14T21:06:06.884Z"
+        },
+        "draft": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas declaration ownership 6e5fa57c",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Take this route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback"
+                    },
+                    {
+                      "id": "defer",
+                      "label": "Decide later"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:06:05.173Z"
+        },
+        "draftToken": "c3563bca5eb9d7ec"
+      },
+      "local": {
+        "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:06:06.902Z",
+        "synced": true,
+        "baseToken": "c3563bca5eb9d7ec"
+      },
+      "ifMatch": "\"db93f37bd209728c\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e2",
+      "accessibleName": "subject Take this route (accept) to done",
+      "d": "M536 164L556 164L 607.5,164Q 617.5,164 617.5,154L 617.5,91Q 617.5,81 627.5,81L679 81L699 81"
+    },
+    {
+      "label": "draw subject.decline → other",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "ownerId": "local",
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "draftVersionId": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "createdAt": "2026-11-14T21:06:05.173Z",
+          "updatedAt": "2026-11-14T21:06:08.815Z"
+        },
+        "draft": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas declaration ownership 6e5fa57c",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Take this route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback"
+                    },
+                    {
+                      "id": "defer",
+                      "label": "Decide later"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:06:05.173Z"
+        },
+        "draftToken": "996c5298cb17d0b9"
+      },
+      "local": {
+        "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:06:08.826Z",
+        "synced": true,
+        "baseToken": "996c5298cb17d0b9"
+      },
+      "ifMatch": "\"c3563bca5eb9d7ec\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e3",
+      "accessibleName": "subject Use fallback (decline) to other",
+      "d": "M536 184L556 184L 607.5,184Q 617.5,184 617.5,194L 617.5,269Q 617.5,279 627.5,279L679 279L699 279"
+    },
+    {
+      "label": "draw subject.defer → spent",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "ownerId": "local",
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "draftVersionId": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "createdAt": "2026-11-14T21:06:05.173Z",
+          "updatedAt": "2026-11-14T21:06:10.627Z"
+        },
+        "draft": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas declaration ownership 6e5fa57c",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Take this route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback"
+                    },
+                    {
+                      "id": "defer",
+                      "label": "Decide later"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "defer"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:06:05.173Z"
+        },
+        "draftToken": "61b7b6b5782e97df"
+      },
+      "local": {
+        "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:06:10.639Z",
+        "synced": true,
+        "baseToken": "61b7b6b5782e97df"
+      },
+      "ifMatch": "\"996c5298cb17d0b9\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e4",
+      "accessibleName": "subject Decide later (defer) to spent",
+      "d": "M536 204L556 204L 607.5,204Q 617.5,204 617.5,214L 617.5,461Q 617.5,471 627.5,471L679 471L699 471"
+    },
+    {
+      "label": "Change route label only",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "ownerId": "local",
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "draftVersionId": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "createdAt": "2026-11-14T21:06:05.173Z",
+          "updatedAt": "2026-11-14T21:06:12.258Z"
+        },
+        "draft": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas declaration ownership 6e5fa57c",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Keep exact chosen route"
+                    },
+                    {
+                      "id": "decline",
+                      "label": "Use fallback"
+                    },
+                    {
+                      "id": "defer",
+                      "label": "Decide later"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "defer"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:06:05.173Z"
+        },
+        "draftToken": "99efa4546cf662ee"
+      },
+      "local": {
+        "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Keep exact chosen route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:06:12.271Z",
+        "synced": true,
+        "baseToken": "99efa4546cf662ee"
+      },
+      "ifMatch": "\"61b7b6b5782e97df\""
+    },
+    {
+      "label": "Reorder connected declarations",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "ownerId": "local",
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "draftVersionId": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "createdAt": "2026-11-14T21:06:05.173Z",
+          "updatedAt": "2026-11-14T21:06:13.878Z"
+        },
+        "draft": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas declaration ownership 6e5fa57c",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "decline",
+                      "label": "Use fallback"
+                    },
+                    {
+                      "id": "accept",
+                      "label": "Keep exact chosen route"
+                    },
+                    {
+                      "id": "defer",
+                      "label": "Decide later"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "defer"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:06:05.173Z"
+        },
+        "draftToken": "56a01234992aeafa"
+      },
+      "local": {
+        "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "accept",
+                    "label": "Keep exact chosen route"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:06:13.891Z",
+        "synced": true,
+        "baseToken": "56a01234992aeafa"
+      },
+      "ifMatch": "\"99efa4546cf662ee\""
+    },
+    {
+      "label": "Rename the connected declaration",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "ownerId": "local",
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "draftVersionId": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "createdAt": "2026-11-14T21:06:05.173Z",
+          "updatedAt": "2026-11-14T21:06:15.494Z"
+        },
+        "draft": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas declaration ownership 6e5fa57c",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "decline",
+                      "label": "Use fallback"
+                    },
+                    {
+                      "id": "new-accept",
+                      "label": "Keep exact chosen route"
+                    },
+                    {
+                      "id": "defer",
+                      "label": "Decide later"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "new-accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "defer"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:06:05.173Z"
+        },
+        "draftToken": "ec786d372242bc4e"
+      },
+      "local": {
+        "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "new-accept",
+                    "label": "Keep exact chosen route"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "new-accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:06:15.518Z",
+        "synced": true,
+        "baseToken": "ec786d372242bc4e"
+      },
+      "ifMatch": "\"56a01234992aeafa\""
+    },
+    {
+      "label": "Confirm removal of the connected declaration",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "ownerId": "local",
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "draftVersionId": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "createdAt": "2026-11-14T21:06:05.173Z",
+          "updatedAt": "2026-11-14T21:06:18.315Z"
+        },
+        "draft": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas declaration ownership 6e5fa57c",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "decline",
+                      "label": "Use fallback"
+                    },
+                    {
+                      "id": "defer",
+                      "label": "Decide later"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "defer"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:06:05.173Z"
+        },
+        "draftToken": "d732c0efff6e26d8"
+      },
+      "local": {
+        "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:06:18.330Z",
+        "synced": true,
+        "baseToken": "d732c0efff6e26d8"
+      },
+      "ifMatch": "\"ec786d372242bc4e\""
+    },
+    {
+      "label": "undo declaration and its owned edge together",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "ownerId": "local",
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "draftVersionId": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "createdAt": "2026-11-14T21:06:05.173Z",
+          "updatedAt": "2026-11-14T21:06:19.871Z"
+        },
+        "draft": {
+          "id": "01M7DY3DQNR648GNEA4D7GNQF5",
+          "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas declaration ownership 6e5fa57c",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "decline",
+                      "label": "Use fallback"
+                    },
+                    {
+                      "id": "new-accept",
+                      "label": "Keep exact chosen route"
+                    },
+                    {
+                      "id": "defer",
+                      "label": "Decide later"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "new-accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "decline"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "defer"
+                },
+                "to": {
+                  "node": "spent",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:06:05.173Z"
+        },
+        "draftToken": "ec786d372242bc4e"
+      },
+      "local": {
+        "loopId": "01M7DY3DQNR648GNEA4D7GNQF4",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "new-accept",
+                    "label": "Keep exact chosen route"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "new-accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:06:19.882Z",
+        "synced": true,
+        "baseToken": "ec786d372242bc4e"
+      },
+      "ifMatch": "\"d732c0efff6e26d8\""
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7DY3DQNR648GNEA4D7GNQF4/draft",
+      "at": 1794690366873,
+      "ifMatch": "\"db93f37bd209728c\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY3DQNR648GNEA4D7GNQF4/draft",
+      "at": 1794690368809,
+      "ifMatch": "\"c3563bca5eb9d7ec\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY3DQNR648GNEA4D7GNQF4/draft",
+      "at": 1794690370620,
+      "ifMatch": "\"996c5298cb17d0b9\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Take this route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY3DQNR648GNEA4D7GNQF4/draft",
+      "at": 1794690372250,
+      "ifMatch": "\"61b7b6b5782e97df\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "accept",
+                    "label": "Keep exact chosen route"
+                  },
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY3DQNR648GNEA4D7GNQF4/draft",
+      "at": 1794690373870,
+      "ifMatch": "\"99efa4546cf662ee\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "accept",
+                    "label": "Keep exact chosen route"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY3DQNR648GNEA4D7GNQF4/draft",
+      "at": 1794690375479,
+      "ifMatch": "\"56a01234992aeafa\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "new-accept",
+                    "label": "Keep exact chosen route"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "new-accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY3DQNR648GNEA4D7GNQF4/draft",
+      "at": 1794690378309,
+      "ifMatch": "\"ec786d372242bc4e\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY3DQNR648GNEA4D7GNQF4/draft",
+      "at": 1794690379866,
+      "ifMatch": "\"d732c0efff6e26d8\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas declaration ownership 6e5fa57c",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "decline",
+                    "label": "Use fallback"
+                  },
+                  {
+                    "id": "new-accept",
+                    "label": "Keep exact chosen route"
+                  },
+                  {
+                    "id": "defer",
+                    "label": "Decide later"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "new-accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "decline"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "defer"
+              },
+              "to": {
+                "node": "spent",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": null,
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+}

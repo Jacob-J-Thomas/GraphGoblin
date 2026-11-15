@@ -1,0 +1,19 @@
+import jsonata from 'jsonata';
+const sources = [
+  '$lookup(outputs, outputs.start.value).value',
+  '$lookup(outputs, "choice"[$$.gates.missing])',
+  '$lookup(outputs, "choice"[$$.gates.present])',
+  '$exists($lookup(outputs, gates.missing.passes))',
+  '$lookup(outputs, $exists(gates.missing) ? "start" : "choice").value',
+  'rows[$lookup($$.outputs, outputs.start.value & $$.outputs.start.value).value = "chosen"].id',
+];
+const input = {
+  rows: [{id: 1, outputs: {start: {value: 'a-'}}}, {id: 2, outputs: {start: {value: 'b-'}}}],
+  outputs: {start: {value: 'choice'}, choice: {value:'chosen'}, 'b-choice': {value: 'chosen'}},
+  gates: {present: true}
+};
+for (const source of sources) {
+  const compiled = jsonata(source);
+  try { console.log(JSON.stringify({source, ast: compiled.ast(), result: await compiled.evaluate(input)})); }
+  catch (error) { console.log(JSON.stringify({source, ast: compiled.ast(), error: error.message})); }
+}

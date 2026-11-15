@@ -1,0 +1,47 @@
+Both corrections are implemented and pass every check I was allowed to run. The changes are uncommitted in the canvas-repair checkout (HEAD still `64a95588…`). Browser e2e, native, CI, coverage and review have not run, so this is not ready.
+
+**One process slip, already undone:** I briefly marked the three new files intent-to-add (`git add -N`), which changed the index. I reverted it with `git reset` and confirmed the index matches HEAD again. I made no commits, pushes or stashes, and touched no other checkout.
+
+**1. The first Remove after a pan being swallowed**
+- **Fix:** a new per-canvas gate (`viewport-gesture.ts`), wired into `Canvas.tsx`, `route-editing.ts` and `OrthogonalEdge.tsx`. A mouse pan's first move makes Remove connection and Reset route unavailable. They stay focusable but dimmed (`aria-disabled`, plus `data-gesture` naming the stage), and their click handlers refuse.
+- **How it re-enables:** the gate listens for mouse releases on the window from the moment the canvas mounts, so it sees the release before d3 does. After a release it waits two zero-delay tasks; the second one always runs after d3 has removed its click blocker. A newer mouse move or an unmount cancels the wait.
+- **What it leaves alone:** wheel, touch and programmatic moves never touch the gate. A protected Chat edge keeps its own disabled reason.
+- **Contract test:** this runs the real `Canvas` on the installed xyflow and d3 in jsdom with real timers. It passed 5/5 on five sequential runs.
+  - At the first moment Remove shows as available, d3's blocker is gone and the click removes the edge exactly once.
+  - A programmatic viewport change right after the release replaces xyflow's pending mouse end callback, and the gate still settles.
+- **Run against the old code:** Remove looks available while d3's blocker is registered, the click is cancelled before it reaches the button, and nothing is removed.
+- **Getting the contract test to run:** it took two fixture corrections, because jsdom accepts only `jsdom.window` as an event's view and xyflow needs `contentRect`. One reading also had to change, because Remove's own `stopPropagation` hides the window bubble phase. Each attempt's failure log is kept.
+
+**2. No recovery for an edge whose route ID is blank**
+- **Fix:** `strandedEdges(definition)` now finds undrawable edges from the draft itself rather than from the issue list. Loop issues shows them in one group, "Connections the canvas cannot draw", for example `e5 from pick output route-3 to branch`, with exactly one **Remove edge** each.
+- **What stays the same:** issue rows only inform, the counts are unchanged, and the stale-edge, unique-id and protected-Chat checks are as before. `IssuePopover.tsx` is back to its stack-base bytes.
+- **Old code:** in the blank-ID state the popover shows only the schema error and offers no recovery.
+- **E2E (written, not executed):**
+  - The failing CI test now asserts the blank state as it really is: no handle, no drawn edge, and an exact device copy whose blank row still owns the edge. That survives a reload with no draft save sent. It then checks the same edge on the `route-4` handle, the exact original topology after restoring `route-3`, and the existing save, reload and publish steps.
+  - A new scenario uses the actual Loop issues Remove while the ID is blank, then one Undo, which must restore the whole draft and its ownership exactly.
+
+**Final checks**
+
+| Check | Result |
+|---|---|
+| Baseline focused tests on HEAD | 82/82 passed |
+| Final focused tests (12 files) | 203/203 passed |
+| `tsc --noEmit` (includes e2e) | exit 0 |
+| ESLint on the 14 changed web files | exit 0 |
+| Prettier on changed source and docs | clean |
+| `git diff --check` | clean |
+
+The only stderr is a "Received NaN" warning in two `EditorPage` tests, and it occurs on HEAD as well.
+
+I updated docs/09, ADR-0076, guide 02 and the #207 CHANGELOG entry. There is no new dependency, schema, format or migration.
+
+**Still open**
+- **E2E assumptions to confirm on first run:** the ownership rows `['yes','no','']`, the error-count button and Undo button names, and the timing of IndexedDB writes (handled by polling).
+- **Native N1–N8:** the jsdom test does not cover trusted-input timing. Natively, "first enabled" can be detected as Remove losing `aria-disabled`. N2 should see Remove marked unavailable with zero PUTs. Touch, wheel and Controls fit must never set `data-gesture`.
+- **Documented but not observed natively:** if a mouse release never reaches the page, the toolbar stays unavailable until the next release there.
+- **Unchanged and out of scope:** clicks on xyflow's zoom controls and after a node drag still meet d3's blocker.
+- **For root:** review against the two causes, freeze and transfer, exact-target CI and coverage, native verification, opposite-family review and the Astra gate.
+
+Metadata: model `claude-opus-5-5`, effort `xhigh`, from the runner's `launch.json`; Node v22.23.4, pnpm 12.8.1.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-final-correction/`. The full handoff, with per-step results, is in `handoff.md`. File hashes are in `changed-files.sha256`, the patches in `patches/`, logs in `logs/`, and the old-code runs (with byte-identical restore checks) in `old-code-run/`.

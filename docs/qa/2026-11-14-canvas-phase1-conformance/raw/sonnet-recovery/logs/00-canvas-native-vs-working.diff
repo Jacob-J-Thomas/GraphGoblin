@@ -1,0 +1,30 @@
+--- /c/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1-root-capture/native-source/apps/web/src/editor/Canvas.tsx	2026-11-14 13:51:30.788213000 -0600
++++ apps/web/src/editor/Canvas.tsx	2026-11-14 13:46:46.091651300 -0600
+@@ -139,7 +139,7 @@
+   });
+ }
+ 
+-const connectionKey = (source: string, port: string | null, target: string) =>
++const connectionKey = (source: string, port: string | null | undefined, target: string) =>
+   JSON.stringify([source, port ?? 'out', target]);
+ 
+ /** The port handle a click landed on, read from xyflow's handle element. */
+@@ -695,7 +695,8 @@
+         removeEdge(edgeId);
+         // Refused (a protected Chat voice step): the store's notice says why; the selection stays.
+         if (useEditorStore.getState().definition === before) return;
+-        setSelectedEdge((current) => (current === edgeId ? undefined : current));
++        // The toolbar belongs to the selected edge, so the selection goes with it.
++        setSelectedEdge(undefined);
+         removalFocusTarget()?.focus();
+       },
+     };
+@@ -837,7 +838,7 @@
+     const to = clickedEnd(event.target);
+     if (!from || !to || from.type === to.type) return;
+     const [source, target] = from.type === 'source' ? [from, to] : [to, from];
+-    const made = connectionKey(source.nodeId, source.id ?? null, target.nodeId);
++    const made = connectionKey(source.nodeId, source.id, target.nodeId);
+     if (connectedRef.current === made) {
+       connectedRef.current = undefined;
+       return;

@@ -3,7 +3,7 @@
  * app and the real API in Edge: the Starter's sibling Liquid and Exit, one undo step saved once with
  * its draft token and device copy, a reload, an immutable earlier version and pinned runs on both
  * versions; uncertain, optional and known-missing references with their notice rows, badges and
- * Publish; focus and unfinished input through the forms' remount; a stale tab; and the protected
+ * Publish; focus and unfinished input through repaired forms; a stale tab; and the protected
  * voice steps of a system Chat loop. Every loop name is unique on the shared gateway (#209).
  */
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
@@ -594,7 +594,7 @@ test('uncertain, optional and known-missing references: notice rows, badges and 
   expect(nodeOf(v1Now.definition, 'work').id).toBe('work');
 });
 
-test('focus follows the remounted form, and unfinished input elsewhere survives the rename', async ({
+test('focus stays in the repaired form, and unfinished input elsewhere survives the rename', async ({
   page,
   request,
 }) => {
@@ -677,7 +677,7 @@ test('focus follows the remounted form, and unfinished input elsewhere survives 
   expect(accepted.nodes.map((n) => n.id)).toEqual(['start', 'work', 'gate', 'done']);
   expect(saves).toHaveLength(0);
 
-  // Click: the id applies as focus leaves, and focus lands in the remounted form's field.
+  // Click: the id applies as focus leaves, and focus lands in the repaired form's field.
   let gate = await openNode(page, 'gate');
   const passes = () => gate.getByLabel('Maximum passes', { exact: true });
   await gate.getByLabel('Node id').fill('check');

@@ -1,0 +1,290 @@
+# #207 phase 1: Canvas restoration and evidence handoff
+
+Worker: Claude Sonnet 5.5, model ID `claude-sonnet-5-5`. Requested effort: `xhigh`, as recorded in the runner's `launch.json`. The effort actually applied is not observable to me. This is a bounded mechanical recovery and handoff. It is not design, an adversarial review or independent QA, and it does not accept conformance or grant modal removal.
+
+Written 2026-11-14 about 20:10 UTC, after my verification runs at 19:54–19:56 UTC. All paths below are relative to `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/` unless they start with `apps/`. Native result files live under `ui-207-phase1/native/<run>/`. Retained logs for this assignment are in `ui-207-handoff-recovery/logs/`. A SHA-256 index of the retained native artifacts and phase-1 logs cited here is `ui-207-handoff-recovery/evidence-index.json`.
+
+## 1. Outcome
+
+| Item | Result |
+| --- | --- |
+| Canvas.tsx hash before restoration | `487ab3dc6e0e5bfac770c53eb8a505586fe78d80cc03d9b22dbb569e175bad7c` (39,200 bytes). It equalled the captured `working-source` hash and the `identity.json` record, so the precondition held. |
+| Canvas.tsx restored byte-for-byte from `ui-207-phase1-root-capture/native-source/apps/web/src/editor/Canvas.tsx` | Done. New hash `34f33d1fdfe2f1e314837b8241d2988b6697027f779b23d8a092e7ec75da6fd0` (39,158 bytes). `cmp` is identical. The restoration log is `logs/01-restore.log`. |
+| Delta removed | Exactly the three optional changes. `connectionKey`'s port type was widened and its call's null conversion dropped. The selected-edge ownership conditional became an unconditional clear. The full diff is `logs/00-canvas-native-vs-working.diff`. The tested conditional is retained again. |
+| Other production or test code touched | None. The five test files are byte-identical to `working-source`. No index edits, no commits, and HEAD is still `1dcee36b16cc4662e8acb691e9166aff52949ad9` (tree `2936f795e624932fd7d42747f8316066fa4af7ec`). There are 14 dirty paths: 12 modified and 2 untracked, the same set as before (`logs/07-checkout-state.log`). |
+| Nine focused test files, no coverage arguments | PASS: 9 files, 133 tests, 72.62 s. Log `logs/02-focused-nine.log`. |
+| Web no-emit types | PASS, exit 0 (`logs/03-…`) |
+| ESLint, 14 changed web files | PASS, exit 0, no warnings (`logs/04-…`) |
+| Prettier check, same 14 files | PASS (`logs/05-…`) |
+| Nine product modules equal captured native source | PASS for all nine. Each equals the captured native copy, the `identity.json` hash and a fresh re-extraction from the retained main source map (`logs/06-restoration-verification.json`). |
+| 13 compiled trees against the retained candidate-build manifests | PASS: 1,227 files, no missing, extra or changed file. Each tree's listing hash equals `identity.json` (same log). `index-DauABcWi.js` and its map hash match the recorded values. |
+| NodeConnections and every modal control | Untouched. `NodeConnections.tsx` is identical in the checkout, in git HEAD and in the built main source map (`logs/08-nodeconnections-untouched.json`). `NodeEditorDialog.tsx` is not in the dirty list. |
+
+Not done, by instruction: no builds, no coverage of any kind, no browser, native, API or service launch, no broad suite. I started no background processes. Every command I ran has exited.
+
+### My own first failure, retained
+
+My read-only verifier script first failed with a `SyntaxError`: a backslash literal was collapsed when the file was written. This was an error in my script, not a product or test failure. The log is `logs/06a-verifier-script-syntax-failure.log`. I fixed the script (`scripts/verify-restoration.mjs`) and reran it once (`logs/06-restoration-verification.log`). No test, lint, type or format run needed a retry.
+
+### Normal editor unit-run provenance
+
+The 70-file/796-test run, `phase1/logs/24-editor-dir-final.log`, ran 19:35:12–19:43:06 UTC. That was after the no-cache candidate build (19:20:28–19:21:06) and before the optional Canvas cleanup. Root states the restored native Canvas is the source it tested, and I rely on that statement. The logs themselves record no file hashes.
+
+`apps/web/src/editor/Canvas.test.tsx` was last modified at 19:46:06 UTC, after that run. Its content differs from the version every candidate gateway recorded, so the 796 count does not describe today's `Canvas.test.tsx`. Only today's nine-file run (133 tests) does. I did not rerun the whole editor directory, because broad suites are out of scope. Section 4 explains the binding.
+
+## 2. Evidence tiers and limits
+
+| Tier | Meaning in this handoff |
+| --- | --- |
+| N | Native implementer evidence. Headless Microsoft Edge (Playwright CLI `run-code`) drives an isolated compiled gateway with fresh file SQLite, using real `page.mouse`, `page.keyboard` and `page.touchscreen` input. It is not independent QA. |
+| P | Public-API readback inside an N run. Every drawable step re-reads the draft and the device copy (see B1). |
+| C | Controlled component or unit test (jsdom/Vitest). It is not a physical gesture. |
+| S | Static source gate (types, lint, format). |
+| A | Root/QA admission, cited only. I did not observe it. |
+
+Limits that apply to everything below:
+
+- The N runs are implementer-run, not independent QA. Independent GPT behaviour QA is still required.
+- Desktop runs used Edge at 1440×900. The coarse run used a Playwright touch context (`hasTouch: true`, 1024×768, `(pointer: coarse)` matched, `maxTouchPoints` 1). It is emulated touch, not a physical touch device.
+- Windows and Edge only. No Mac, no screen reader, no provider or harness. Provider-dependent kinds were draft-only topology fixtures. Only the provider-free Expression repeat graph was run.
+- Native evidence is bound to the candidate build `index-DauABcWi.js`, whose Canvas.tsx is the native one (`34f33d1f…`). It says nothing about later source.
+- I read structured result JSON, the driver scripts and the orchestrator. I did not view any screenshot. Root inspected the six candidate-b screenshots it names. Every other screenshot is uninspected by me, and no claim below rests on a screenshot.
+- Admission, cited and not observed by me: root/QA verified all 13 prior gateway close records and 17 Edge session PIDs, plus the five stopped worker processes, with no live recorded process or fixture-port listener, before taking the heavy slot. The `run.json` files agree on the gateway side: every run records `gatewayExit {code:0}`, no `harnessError`, and session `close` 0. That is a recorded value, not my observation.
+- I did not read credentials, stores, `gateway.json`, `gateway-closed.json`, `chat-seed.json` or any generated key. The evidence index deliberately omits them.
+- Rejected diagnostics are excluded from every gate claim. See section 7.
+
+## 3. Native run inventory
+
+Every run's `run.json` records `harnessError: null` and gateway exit code 0 (`ui-207-phase1/native/<run>/run.json`).
+
+| Run | Build served | Scenarios and result |
+| --- | --- | --- |
+| baseline-a1 | `index-DhiNw4HL.js` (unmodified HEAD, 0 dirty paths) | kinds PASS |
+| baseline-a2 | same | decisions, repeat, keyboard, refusals and coarse PASS. **geometry FAIL**: `Target not hittable: segment handle hit=gg-route-handle-dot`. **recovery FAIL**: `A topology action changed the definition outside its edge list`. **chat FAIL**: `protected removal not explained: null` (the first protected keyboard Delete showed no notice). |
+| baseline-b | same | kinds, decisions, repeat, geometry, keyboard, refusals, recovery and coarse PASS. **chat FAIL**: `Target not hittable: respond/in` (a card overlapped the input handle). |
+| baseline-c | same | chat PASS (fixture moved `respond` clear) |
+| explore-1, explore-2, probe-1 | same | Early probes. explore-1 first failed (`Fit view` click timeout); explore-2 and probe-1 passed. These are not criterion evidence. |
+| candidate-a | `index-DauABcWi.js` (14 dirty paths) | kinds, repeat, recovery, chat and coarse PASS. **decisions FAIL**: `No hittable visible point on edge e3`. **geometry and refusals FAIL**, no structured result (`page.waitForResponse: Timeout 12000ms`). **keyboard FAIL**, no structured result (`SyntaxError: Identifier 'r' has already been declared`). |
+| **candidate-b** | same | **All nine scenarios PASS**: kinds, decisions, repeat, geometry, keyboard, refusals, recovery, chat, coarse. Nine result files, `failure: null`, zero page errors and zero console errors in each, 31+27+3+9+7+12+8+7+1 = 105 recorded steps. I tallied these from the nine JSON files. Across candidate-b, -c and -e the tally is 139 steps and 105 draft PUTs, with no failure, page error or console error. |
+| candidate-c | same | refusals PASS (17 steps) and chat PASS (7 steps, adds the protected stranded edge). Both are newer than candidate-b's versions. |
+| candidate-d | same | **recovery FAIL**: `TimeoutError: locator.getAttribute … getByRole('dialog').getByRole('button', {name:/^Advanced/})` |
+| candidate-e | same | recovery PASS (10 steps, adds Script exit-code row removal, retained node dialog and `Remove edge e3`) |
+
+Preserved first failures, with the causes I can and cannot support:
+
+- **baseline-a2 geometry, recovery and chat; baseline-b chat.** Only the error strings are retained. I did not diagnose them. The later reruns pass on the same unmodified build (baseline-b, baseline-c).
+- **explore-1.** Only the error string is retained. It was not diagnosed.
+- **candidate-a.** `logs/10-driver-diffs.txt` shows that the driver changed before candidate-b: `edgePoint` gained a label-pill fallback, `toolbarRemove` gained a keyboard-selection fallback, and a dangling `waitForResponse` got `.catch(() => {})`. The geometry and refusals timeouts are probably leftovers of the earlier decisions failure rather than product behaviour. That is my inference from the driver diff and the lib comment ("Never leave the wait dangling…"). It is unconfirmed. The keyboard `SyntaxError` is a driver bug: `r` was declared twice.
+- **candidate-d.** The failing locator is an unscoped `getByRole('dialog')`. candidate-e names the dialog (`Edit script run`) and otherwise runs the same scenario. The build is the same bytes. I treat it as a driver defect, but I did not prove that.
+
+## 4. Source, build and driver binding (what each native run actually ran)
+
+- Each candidate gateway wrote its source identity before listening (`gateway.json`, fields `head`, `tree`, `changed`, `buildHashes` only). Every candidate run (a–e) recorded: HEAD `1dcee36b…`, 14 dirty paths, and **Canvas.tsx `34f33d1f…`, which is the native Canvas now restored**. The served bundle was `/app/assets/index-DauABcWi.js`, with the SHA-256 of `be2b0a6b…`.
+- After my restoration, 13 of the 14 dirty-path hashes bound by each candidate gateway equal the current checkout. This includes all nine product modules. The one path that differs is `apps/web/src/editor/Canvas.test.tsx`. It was edited at 19:46:06 UTC, after the native runs, and the earlier version is not retained (only its hash). Test files are not part of the build. The comparison is `logs/09-native-source-binding-vs-restored-checkout.json`. The current `apps/web/dist/assets/index-DauABcWi.js` and `apps/web/dist/index.html` still equal the hashes each candidate gateway recorded for them (the only two dist files I compared in that log).
+- The exact driver bytes each run executed are retained as the `run-<scenario>.js` wrappers in each run folder. `logs/10-driver-diffs.txt` compares them to the final driver files:
+  - **candidate-b and candidate-c** ran a `lib.js` that is identical to the final one except that the final also records `deviceDraft` and `putBody` in each step. Every assertion in `act()` ran in b, c and e.
+  - **candidate-b ran older bodies than the final driver for kinds, refusals, chat and recovery.** The newer behaviour is covered by candidate-c (refusals and chat) and candidate-e (recovery). Nothing newer covers kinds. See L and section 9, item 1.
+  - candidate-e's recovery wrapper equals the final driver.
+
+## 5. Criterion and evidence matrix
+
+Statuses:
+
+- **N-PASS**: asserted by a passing native scenario.
+- **C**: controlled component or unit evidence only.
+- **PARTIAL**: some of the criterion is shown, and the gap is named.
+- **MISSING**: no proof exists in retained evidence.
+
+"Assertion" means a line in the driver that throws on failure. Where I cite an observation instead, I say so. File names are in `ui-207-phase1/native/<run>/` unless stated.
+
+### A. Baseline and binding
+
+| # | Criterion | Evidence | Status |
+| --- | --- | --- | --- |
+| A1 | Baseline of the unmodified HEAD against an isolated compiled gateway with file SQLite, actual gestures | baseline-a1 kinds; baseline-b all but chat; baseline-c chat. All served `index-DhiNw4HL.js` with 0 dirty paths. Full definitions, tokens and device state are asserted by `act()` in the same way as for the candidate. | N-PASS. The first failures are retained (section 3). |
+| A2 | Existing drawable create, change and remove work at baseline (so no #221-style defect blocks) | baseline-b kinds (31 steps), decisions (27), repeat (3), geometry (9), keyboard, refusals, recovery and coarse: zero failures, zero page errors. | N-PASS |
+| A3 | Baseline contrast for the new behaviour | baseline-b kinds: occupied refusal alert `null` (no reason). Edge description is xyflow's default. baseline-b coarse: `Remove connection present after tap: 0`. baseline-b recovery: `Remove edge e6/e4 buttons in popover: 0`, with the modal Connections listing `e6`. | N-PASS (before-state recorded) |
+| A4 | Candidate bound to source and build | Section 4. | N-PASS |
+
+### B. Full graph, tokens, device, reload
+
+| # | Criterion | Evidence | Status |
+| --- | --- | --- | --- |
+| B1 | Every create, remove, change and undo/redo step is verified with full graph readback, not an edge count | `act()` in `lib.js`, executed in b, c and e. For each draft PUT it asserts all of the following. The public draft equals the PUT reply. The browser's PUT body equals the full durable definition. `If-Match` equals the prior public token. There is exactly one PUT, with no second PUT within the 900 ms debounce window. The IndexedDB device copy has `synced: true` and `baseToken` equal to the new token, and its definition equals the durable draft. Everything except the edge list is canonically equal to before, unless the step is a declared declaration edit. The count is 85 asserted PUT steps in b, 9 in c and 10 in e, which makes 104. One further PUT in the keyboard scenario (node A selected, then edge, then Delete twice) is recorded, not asserted by `act()`. | N-PASS + P |
+| B2 | Unaffected node configs, endpoint IDs, manual routes and control edges stay exact | Same `delta()` check on every step, plus kinds: control edge `c1` (manual route `[420]`) equals the original record and its rendered path is unchanged after all edits and after reload. geometry: control edges equal the original records. | N-PASS |
+| B3 | Multiple inputs converge; one output cannot take a second edge | candidate-b kinds: six sources converge on `fail` (observation `converged into fail`, asserted). kinds steps 19–20: the occupied `start.out` is refused to another target and to the same target, with no PUT, no change to the draft, and the reason shown (assertion). | N-PASS |
+| B4 | Save/reload, synced device copy | Reload re-renders the same edge IDs and the same accessible names in kinds, decisions, geometry, coarse and recovery (assertion in each). Device copy `synced` is asserted per step (B1). | N-PASS |
+
+### C. All nine node kinds (not to be confused with candidate-b's nine scenarios)
+
+The kinds were not exercised in one scenario. This is where each kind's proof sits.
+
+| Kind | Native evidence | Status |
+| --- | --- | --- |
+| Trigger (manual, plus webhook, cron, event, poll) | candidate-b kinds: `start` has no input handle (count 0, assertion) and one `out`. Draw, remove and redraw `start.out` (steps 1–3). Variants fixture: all four other trigger types have an output and no input (assertions), and each output was drawn (steps 25–28, create only). | N-PASS. The variants were drawn but not removed and redrawn. |
+| Inference | kinds steps 4–6 (draw, remove, redraw); steps 23–24 (remove, then reverse drag from `done`'s input to `infer.out`) | N-PASS |
+| Mutate | kinds steps 7–9 | N-PASS |
+| Wait (input mode; duration, until, signal variants) | kinds steps 10–12 (input mode); variants steps 29–31 (create only). Handle inventories asserted for all modes. | N-PASS. Variants were not removed and redrawn. |
+| Heartbeat | kinds steps 13–15 | N-PASS |
+| Subloop | kinds steps 16–18; steps 21–22 (remove, then click-connect to `spent`). The child loop was published through the public API first. | N-PASS |
+| Decision | Section D. | N-PASS |
+| Script | candidate-e recovery step 8 draws `run.summary → alt`. Steps 7 and 10 remove stranded `e4` and `e3` through Loop issues. | **PARTIAL.** No native step removes a drawable Script edge from the toolbar and redraws it to change its target. |
+| Exit | Handle inventories assert no output on `done`, `fail`, `spent` (kinds). All three outcomes (success, failure, exhausted) are targets. | N-PASS |
+
+All node configs here are fixtures. The gateway started with no provider binaries or credentials (`gateway.mjs` header) and no Chat turn was started. The only run started in the candidate scenarios is the provider-free Expression repeat run (section E).
+
+### D. Five Decision declaration families
+
+| Criterion | Evidence | Status |
+| --- | --- | --- |
+| Expression, LLM, Choice, Noul and Score all expose the right stable outputs | candidate-b decisions: handle inventories asserted: `dx` accept/decline; `dl` accept/decline/limit-reached; `dc` confirmed/review; `dn` approved/returned/limit-reached; `ds` low/middle/high/limit-reached. | N-PASS |
+| Each stable port can be drawn, and each edge's accessible name carries label and stable ID | Steps 1–14, each with an asserted aria-label of the form `dx Take this route (accept) to t1` and `ds Review lower band (low) to t1`. | N-PASS |
+| Change a mapping by remove then draw again, for each family | Steps 15–24: five families, each first port removed and redrawn to a different target. Removals alternate the visible Remove connection action and the keyboard (`gesture` field). | N-PASS |
+| The conditional Limit reached output exists only where the declaration has a limit, and can be drawn and removed | Present on `dl`, `dn`, `ds`, absent on `dx` and `dc` (inventory). Drawn at steps 5, 10 and 14, removed at steps 25–27. | N-PASS |
+| Freed-ID reuse from a different port | **The decisions scenario's reuse block did not run.** No `reuse` observation exists, because no edge named `e<edgeCount>` existed at that point. Different-port reuse is covered instead by candidate-c refusals (the `dz` fixture); geometry covers reuse of an ID on the same port with a new target. See H2 and H3. | MISSING in decisions. Covered elsewhere. |
+
+### E. Limit reached, immutable versions and pinned runs
+
+| Criterion | Evidence (candidate-b repeat) | Status |
+| --- | --- | --- |
+| Provider-free Expression repeat graph drawn on canvas | Steps 1–3: `gate.again → work`, `gate.finish → done`, `gate.limit-reached → spent`. The Limit edge's aria-label is `gate Limit reached (limit-reached) to spent` (assertion). | N-PASS |
+| Publication | Native Publish click, response 200, version 1. Published edges and nodes equal the acknowledged draft (assertion). | N-PASS |
+| Exhausted target reached, run pinned to the published version | A run was started from the published version ID. `run.pinned.source = published, version = 1`. Events show `decision.made` for `gate` with `portId: again` (pass 1 of 2), then `portId: limit-reached` with `gate.limit: max-passes`. Then `exit.evaluated` on `spent` with outcome `exhausted`, then `run.finished` with status and outcome `exhausted`. | N-PASS (readback observations. The driver only asserts the response codes, so this is evidence from the recorded body, not a driver assertion.) |
+| Published version immutable after later draft edits | Chat only: the candidate-b and candidate-c chat scenarios assert `after.current == publishedBefore` after draft edits. The repeat loop is not edited after publishing, so there is no immutability assertion for it. | PARTIAL |
+
+### F. Actual click, drag, reverse and refusal behaviour (D1)
+
+| Criterion | Evidence | Status |
+| --- | --- | --- |
+| Actual drag to create | 21 forward drags in kinds, 19 in decisions, 3 in repeat, and others, all through `page.mouse` on rendered handles. Handles are hit-tested with `elementFromPoint` before use (`center()`). | N-PASS |
+| Click-connect | candidate-b kinds step 22: output click, then `Spent` input click, creates `sub.out → spent`. candidate-b and candidate-c refusals step 9: the occupied click-connect is refused. | N-PASS |
+| Reverse drag resolves the real tuple | kinds step 24: dragging from `done`'s input to `infer.out` creates `infer.out → done`. refusals step 8: reverse onto occupied `m1.out` is refused naming `port "out" of "m1"`. Step 10: reverse valid creates `m2.out → alt`. | N-PASS |
+| Reason shown for an applicable invalid drop (occupied output) | Drag, reverse and click-connect all show `Connection refused: port "out" of "m1" is already connected. To connect it elsewhere, select its connection and choose Remove connection (or press Delete or Backspace), then draw it again.` No PUT, draft unchanged. kinds also asserts it for `start`. | N-PASS |
+| Invalid Decision route ID | refusals steps 11–12: the `Bad ID` handle exists in the DOM (count 1), is dragged, shows `Finish a unique, valid route ID before connecting it`, and writes nothing. | N-PASS |
+| Protected Chat drop | candidate-b and candidate-c chat steps 5–6: drops into the protected inputs show `Voice steps stay. Use Turn off voice messages.` | N-PASS |
+| Empty-pane and same-type drops stay inert, with no stale reason | refusals steps 1–5 on a fresh page: empty pane, source-to-source, target-to-target, Trigger body, and hover over an occupied target then release on the pane. Each is inert with `alert = null`, asserted. | N-PASS |
+| A later pane drop does not replace an earlier reason | Step 7 asserts the alert is unchanged after a pane drop (`s.alert === prior`). The check proves the pane drop did not change the notice. It cannot tell a persisted notice from a re-raised one. The source comment documents that a pane or same-type drop "leaves an earlier notice as it was". See O1. | PARTIAL, by design in source |
+
+### G. Missing handle: DOM absence versus controlled stale events
+
+| Criterion | Evidence | Status |
+| --- | --- | --- |
+| A handle that cannot exist is absent from the DOM | Native, assertions in kinds: `start`'s input handle count is 0; `done`, `fail` and `spent` have no source handle. The Trigger body drop is inert (refusals step 4). Native evidence stops at absence. It does not claim a physical gesture on a missing handle. | N-PASS |
+| A defensive stale or unknown end reports its reason | `Canvas.test.tsx` › `a refused drop says why (#207)` › `reports a stale or unknown end the canvas offers no handle for (controlled callback)`. Its `drop` helper calls the canvas's `onConnectEnd` callback directly. An unknown node yields the notice `unknown node`, and a Trigger input yields `triggers have no input`. The test's own comment says no rendered handle exists for these. | C only. It is not physical. |
+| `says nothing for the pane, a port of the same type, or a drop that connected`; click-connect reasons from handle elements | Same describe block. | C |
+
+### H. Geometry versus topology, undo, ID reuse
+
+| # | Criterion | Evidence | Status |
+| --- | --- | --- | --- |
+| H1 | Geometry-only editing is separate from topology | candidate-b geometry step 1: a real segment-handle drag changes only `ui.route` of `e3`. The new record minus `ui` equals the old record, and the controls are unchanged. The history label is `Undo reroute a to done`. Steps 8–9: drag `e2`, then `Reset route` restores the automatic record (`Undo reset route of b to alt`). | N-PASS |
+| H2 | Remove and draw-again are two undo steps; undo restores the old geometry; a replacement never inherits it | Steps 2–7: remove the routed `e3` (`Undo remove edge a to done`), draw `a.out → alt` (it reuses `e3`, with no `ui`, asserted). Undo 1 removes only the new edge. Undo 2 restores the old record with `route [591]`, byte for byte. Redo 1 and 2 return the replacement without geometry. History labels are recorded. | N-PASS |
+| H3 | A freed ID reused from a different port belongs to the new port only | candidate-c refusals steps 13–17: `dz.ok → done` is drawn as `e4`, removed, then `dz.no → alt` reuses `e4` with no `ui` and renders as `dz No (no) to alt`. Two undos restore `dz.ok → done` (`dz OK (ok) to done`). This is asserted. The older candidate-b refusals did not include it. | N-PASS (candidate-c). Not in decisions (D). |
+
+### I. Selection, removal ownership, focus, coarse action (D2/D3)
+
+| # | Criterion | Evidence | Status |
+| --- | --- | --- | --- |
+| I1 | Visible Remove connection action | 10 toolbar removals in candidate-b used pointer selection on the drawn path, then a click on the visible button (`gesture.select.part = path`; none used the keyboard-selection fallback). kinds, decisions, geometry, keyboard and chat each removed one or more edges through it, and each is asserted by `act()`. | N-PASS |
+| I2 | Keyboard Delete and Backspace preserved; accessible description | 5 + 4 keyboard `Enter` + `Delete` removals in kinds and decisions. The candidate's edge description is asserted verbatim: `Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection. To connect its output elsewhere, remove the connection and draw from the output again.` | N-PASS |
+| I3 | Delete or Backspace from a toolbar button removes nothing | keyboard step 1: with `Undo` focused, Delete and Backspace are inert (no PUT, draft unchanged). Step 5: after a toolbar removal with node A still selected, Delete and Backspace are inert and node A survives. | N-PASS |
+| I4 | One-edge ownership: edge removal does not take a selected node | keyboard step 3: node A, then an edge, then Delete twice: the first Delete removes only `e2`, the second removes nothing, nodes unchanged, one PUT. Step 4: with node A selected, the toolbar removes only `e2`. | N-PASS |
+| I5 | Keyboard-only path to the action; focus after removal | Step 6: `e3` Enter, Tab to `Remove connection`, Enter removes it, and focus lands on the `Undo remove edge nb to done` button (`data-history=undo`, asserted). Step 4 (pointer): focus also lands on Undo (asserted). Step 7: Enter on the focused Undo restores exactly the removed record. | N-PASS |
+| I6 | Real coarse tap on the visible target | candidate-b coarse: `(pointer: coarse)` is true in the touch context. `page.touchscreen.tap` on the edge selects it. `Remove connection` is present, **146.6 × 44 CSS px**, inside the viewport (asserted ≥ 44 × 44 and hit at its centre). A tap removes one edge with one PUT, and the edge set matches after reload. The baseline had no such action (A3). | N-PASS, emulated touch only |
+| I7 | Plain keyboard Delete's focus after removal | The scenario only records it: focus is `BODY`. baseline-b records the same `BODY`, so it is unchanged behaviour. It is not asserted. | OBSERVED, not asserted |
+
+### J. Non-drawable edge recovery (R1)
+
+| # | Criterion | Evidence | Status |
+| --- | --- | --- | --- |
+| J1 | A schema-valid missing-target edge staged through the public draft API is discoverable and removable from the canvas | candidate-b and candidate-e recovery step 1: `e6` (`orphan.nope → ghost-node`) is not drawn. The popover lists two issues for it (`EDGE_PORT_MISSING`, `EDGE_TO_MISSING`) and offers **one** `Remove edge e6` action (dedup, asserted). The click removes exactly `e6` (asserted). Focus lands on the `2 errors` indicator (observed; the driver asserts only `≠ BODY`). Undo restores `e6` (asserted) and redo removes it again (asserted). After the undo the history label falls back to plain `Undo`, which indicates one history item. That is an observation, not an assertion. The one-step claim is also covered by the unit test in J6. | N-PASS |
+| J2 | Script label rename leaves a stored non-drawable edge that is discoverable and removable | Steps 4–7: rename `report → summary` through the normal form. The delta is `removed: [], added: []`, so the stale `e4` stays stored. The popover offers one `Remove edge e4`. Removal takes exactly `e4` and leaves the Script labels untouched. The same-run step 8 draws the renamed `run.summary → alt`. | N-PASS |
+| J3 | Script exit-code row removal in the normal form | candidate-e only, step 9: removing row 3 (`retry`) keeps stored `e3` (`removed: []`). The popover then shows `Remove edge e3`. Step 10 removes exactly `e3` (`candidate-e` recovery, screenshot `recovery-popover-script-row-removed.png`). The node dialog in use is `Edit script run`. | N-PASS |
+| J4 | Drawable edges get no action; a repaired edge loses its action | Observation `drawable edge actions in popover: 0` (assertion). Steps 5–6: restoring the label makes `e4` drawable, and the popover then shows no `Remove edge e4` (assertion). | N-PASS |
+| J5 | A stale action does not remove a now-drawable, gone or recycled-ID edge | `stranded-edges.test.ts` › `removes nothing for a stale action: repaired, gone, recycled id, protected, or no draft`. | C only. **MISSING natively:** no native step clicks a stale popover action. |
+| J6 | One undo item; manual route restored on undo | Native: one undo item (J1). The manual-route claim is `stranded-edges.test.ts` › `removes exactly the expected edge as one undo step; undo restores it with its route`. The native stranded edges carry no manual route. | PARTIAL (route restoration is C only) |
+| J7 | Deliberate focus | J1: the driver asserts focus is not on `BODY` after removal, and the recorded focus is the `2 errors` indicator button. | N-PASS |
+
+### K. Chat protection
+
+| Criterion | Evidence | Status |
+| --- | --- | --- |
+| Protected voice-step edges refuse keyboard removal with the reason | candidate-b and candidate-c chat steps 1–3: Delete on `chat-start`, `chat-normalize-checked` and `chat-normalize-rejected` is inert, with `Connection refused: Voice steps stay. Use Turn off voice messages.` | N-PASS |
+| The visible Remove connection is disabled on those edges, saying why | Observation `toolbar Remove on protected …`: `disabled: true`, `title: "Voice steps stay. Use Turn off voice messages."`. The driver asserts `isDisabled()`. | N-PASS |
+| Protected inputs refuse drops; the ordinary `valid` continuation can be removed and redrawn; the published version is unchanged | Steps 4–7. `same(after.current, publishedBefore)` is asserted. | N-PASS |
+| A protected stranded Chat edge is not removable from Loop issues | candidate-c chat only: public draft write stages `qa-stranded`; the popover shows `Remove edge qa-stranded` as `[disabled]` with the voice title (asserted `count 1, disabled, title`); the stored edge remains. `stranded-edges.test.ts` covers the same guard as a unit test. | N-PASS |
+| Disposable fixture only | The scenario uses the fresh store's own gateway Chat, with no Chat turn and no provider. By script: `gateway.mjs` starts each gateway on an OS-assigned `127.0.0.1` port with a fresh file SQLite directory inside the evidence folder, and `run-native.mjs` asserts the origin is not port 4747 or 4748. I read those scripts. I did not observe the processes, and I did not read the store. | N-PASS, scope per scripts and admission |
+
+### L. Existing modal controls retained (phase 1 boundary)
+
+| Criterion | Evidence | Status |
+| --- | --- | --- |
+| NodeConnections and modal controls untouched | Section 1: source-level identity with HEAD and the built map. | Source-verified |
+| The retained modal's Connections region is present in the candidate build | The final `kinds.js` adds this check (`region === 1` on `start` and `done`). It was written after candidate-b and **never executed natively**. No retained result file has the observation. Candidate-e's `dialogs open: ["Edit script run"]` shows the node dialog still exists and works for form editing. It does not show the Connections section. | **MISSING natively** (source-level only) |
+
+### M. Component and static evidence for the new behaviour
+
+| Item | Evidence | Status |
+| --- | --- | --- |
+| Added unit and component tests (titles from `git diff HEAD`; each file's count of new titles is in brackets) | `Canvas.test.tsx` [8 titles]: the `a refused drop says why (#207)` block (four tests, including the controlled stale-end one), toolbar removal then focus on Undo, keeping the selection when the store refuses, and forgetting a selection whose connection is gone. `OrthogonalEdge.test.tsx` [2]: `offers Remove connection on every selected edge…` and `disables Remove connection on a protected Chat voice step…`. `ValidationIndicator.test.tsx` [2]: `removes an edge the canvas cannot draw from its issue row…` and `keeps a protected Chat voice step that the canvas cannot draw…`. `model.test.ts` [2]: `says how to free an occupied output…` and `tells which stored edges the canvas can draw`. `stranded-edges.test.ts` [3, new file]. All pass in my nine-file run (133 tests, together with `UndoRedo`, `IssueBadge`, `chat-protection` and `EditorPage`). | C |
+| Static | Types, lint and Prettier pass on the restored source (section 1). | S |
+| Whole-package coverage gate | **Not established.** | MISSING (section 8) |
+
+### N. Declaration editing and other preserved behaviour
+
+Declaration edits in the retained runs did what the brief required. Script label edits go through the normal form. Renames and row removals change only the node config and leave stored edges (`removed: []`). Recovery then removes edges explicitly. The same `delta()` check proves node, settings and variables bytes are equal everywhere else. #209, #273 and #237 behaviours were not specifically re-exercised in these scenarios beyond the save, publish and readback paths that `act()` and the repeat publication use. I make no claim about them.
+
+## 6. Observations for root. None is an acceptance claim or a decision.
+
+- **O1. Stale notice after an unrelated step.** In candidate-b kinds, the occupied-refusal notice from steps 19–20 was still displayed after the unrelated keyboard removal in step 21. It cleared at the next successful connect (step 22). In candidate-c refusals step 12, the `Bad ID` notice was still displayed after the ID was restored through the form. It cleared at the next connect (step 13). The source comment says a pane or same-type drop "leaves an earlier notice as it was". The retained scripts assert neither persistence nor clearing for these cases.
+- **O2. Two wordings.** The refusal notice says `select its connection and choose Remove connection (or press Delete or Backspace)`. The edge description says `Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection`. Both are asserted verbatim. I make no judgement about the wording.
+- **O3. Plain keyboard Delete leaves focus on `BODY`.** This matches the baseline (I7), so it is not a regression. The toolbar paths move focus to Undo.
+- **O4. Several candidate-b scenario bodies are older than the final driver** (section 4). The final kinds check for the retained modal was never run.
+- **O5. The decisions scenario's freed-ID reuse block silently did not run** (D). Other scenarios cover reuse.
+
+## 7. Rejected diagnostic provenance (excluded from every gate claim)
+
+Root's disposition is `ui-207-phase1-diagnostic-disposition.md`. The zero-threshold coverage diagnostics are not coverage evidence and are not repeated here:
+
+- `phase1/logs/25-diagnostic-coverage-changed-files` (19:43:24–19:44:07, exit 0): eight coverage includes, all four thresholds set to 0 on the command line.
+- `phase1/logs/26-diagnostic-coverage-json.log`, `27-added-line-coverage.log` and `29-added-line-coverage-2.log`: output from the same diagnostic family. They have no `.meta` file, and I did not read them.
+- `phase1/logs/28-focused-fourth` (19:46:06–19:46:36, exit 0): same zero thresholds.
+- `phase1/logs/33-focused-final` (19:47:54–19:49:11, "exit 0", 9 files/133 tests): same zero thresholds (`--coverage.thresholds.* = 0`). Its meta records `end` 19:49:11Z, which is later than the recorded worker exit `19:48:52.904Z` (`exit.json`, code 4294967295). I did not investigate that gap.
+- The report directories `coverage-diagnostic-2`, `-3` and `-json` sit under `ui-207-phase1/`, outside the checkout. I did not read their contents. The interrupted worker's process tree at the stop is `ui-207-phase1/root-stopped-process-tree.json`.
+
+The nine focused files I ran in `logs/02-focused-nine.log` are the same nine files as in `33-focused-final.meta`, with no coverage argument of any kind. Their counts happen to match (133). That run is the normal-mode one.
+
+The normal (non-coverage) gates retained from the interrupted worker (`phase1/logs/12`, `13`, `22`, `24`, `30–32`) are not re-claimed. Only my own runs from this assignment support the claims in section 1. The earlier ones show the first failures the worker met: the OrthogonalEdge toolbar test (log 10), ESLint on `model.test.ts` and a `Canvas.tsx` `set-state-in-effect` warning (logs 14 and 16), Prettier on five files (log 15), and a `tsc` TS2345 in `model.test.ts` (log 18). Each was fixed by the time of the passing runs in logs 11, 17, 19, 20 and 21. All are preserved in `ui-207-phase1/logs/`.
+
+## 8. Still pending, and nothing here substitutes for them
+
+- Required package coverage (the repository gate, all thresholds and scope unchanged).
+- Independent final native QA on the restored source.
+- Actual-parent integration (stacked on PR475, which is based on PR474, neither merged).
+- Exact-head and current-target CI.
+- GPT opposite-family review.
+- Fresh Astra max audit, under the three-scan cap.
+- Root acceptance of conformance, and the separate grant for removing the modal.
+- Owner product acceptance (separate).
+
+## 9. Missing-proof list (in one place)
+
+1. **L**: native presence of the modal Connections region on the candidate build. The check exists in the final `kinds.js` and was never executed.
+2. **D**: freed-ID reuse in the decisions scenario did not run. Different-port reuse is covered in candidate-c refusals, and same-port reuse in geometry.
+3. **C**: a native create, toolbar-remove and redraw cycle for a drawable Script edge.
+4. **E**: published-version immutability after a later draft edit for the repeat loop (asserted for Chat only).
+5. **J5 and J6**: a stale Loop-issues action clicked natively, and manual-route restoration on undo for a stranded edge. Both are unit evidence only.
+6. **Hardware**: physical touch device, Mac, screen reader. Emulated touch only.
+7. **Version**: the pre-edit `Canvas.test.tsx` that the candidate gateways bound is not retained (only its hash), so the 796-test run cannot be tied to a file.
+8. **The whole editor directory** was not rerun after restoration (only the nine focused files).
+9. **Required coverage** and every item in section 8.
+
+## 10. Files written by this assignment (all under `ui-207-handoff-recovery/` except the Canvas.tsx restoration)
+
+- `handoff.md` (this file), `evidence-index.json` (SHA-256 of cited native artifacts and phase-1 logs).
+- `logs/00`–`logs/10`: the Canvas delta, the restoration log, the focused run, the type, lint and format runs, the restoration verification (and my verifier's first failure), checkout state, NodeConnections identity, source binding against the restored checkout, and the driver diffs.
+- `scripts/verify-restoration.mjs` and `scripts/summarize-native.mjs`: read-only helpers. The first writes only the JSON path I give it. The second prints to standard output.
+- `summaries/`: compact text extracts of the candidate-b, candidate-c and candidate-e structured results that this matrix was built from.
+- `events.jsonl`, `latest.md`, `launch.json`: runner-owned. `report.md` and `result.json` will be written by the runner.
+
+The only file outside this directory that I changed is `apps/web/src/editor/Canvas.tsx` in the checkout.

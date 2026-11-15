@@ -1,0 +1,3586 @@
+{
+  "suite": "207-final-canvas-independent",
+  "mode": "after",
+  "action": "recovery",
+  "origin": "http://127.0.0.1:62449",
+  "loaded": [
+    200,
+    200,
+    200,
+    200
+  ],
+  "checkpoints": [
+    {
+      "label": "stored but undrawable",
+      "bad": {
+        "id": "orphaned",
+        "from": {
+          "node": "subject",
+          "port": "gone"
+        },
+        "to": {
+          "node": "missing",
+          "port": "in"
+        },
+        "ui": {
+          "route": [
+            495,
+            302,
+            590
+          ]
+        }
+      },
+      "diagnoses": [
+        {
+          "code": "EDGE_PORT_MISSING",
+          "severity": "error",
+          "message": "edge \"orphaned\" leaves node \"subject\" through unknown port \"gone\"",
+          "edgeId": "orphaned"
+        },
+        {
+          "code": "EDGE_TO_MISSING",
+          "severity": "error",
+          "message": "edge \"orphaned\" ends at unknown node \"missing\"",
+          "edgeId": "orphaned"
+        }
+      ],
+      "view": "- dialog \"Loop issues\":\n  - group \"Loop and connections\":\n    - paragraph: Loop and connections\n    - list:\n      - listitem:\n        - text: Error EDGE_PORT_MISSING edge \"orphaned\" leaves node \"subject\" through unknown port \"gone\"\n        - code: edge orphaned\n        - button \"Remove edge orphaned\"\n      - listitem:\n        - text: Error EDGE_TO_MISSING edge \"orphaned\" ends at unknown node \"missing\"\n        - code: edge orphaned\n  - group \"Nodes\":\n    - paragraph: Nodes\n    - list:\n      - listitem:\n        - 'button \"subject: 2 issues\"':\n          - code: subject\n          - text: \": 2 issues\"\n      - listitem:\n        - 'button \"other: 1 issue\"':\n          - code: other\n          - text: \": 1 issue\"\n      - listitem:\n        - 'button \"spent: 1 issue\"':\n          - code: spent\n          - text: \": 1 issue\""
+    },
+    {
+      "label": "Remove an exact undrawable edge",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+          "ownerId": "local",
+          "name": "Canvas missing target 596b6d21",
+          "draftVersionId": "01M7DY66MQSRVKE9EJHY2MDPQ4",
+          "createdAt": "2026-11-14T21:07:36.215Z",
+          "updatedAt": "2026-11-14T21:07:37.740Z"
+        },
+        "draft": {
+          "id": "01M7DY66MQSRVKE9EJHY2MDPQ4",
+          "loopId": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas missing target 596b6d21",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:07:36.215Z"
+        },
+        "draftToken": "d66a81380fb6ae32"
+      },
+      "local": {
+        "loopId": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas missing target 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:07:37.753Z",
+        "synced": true,
+        "baseToken": "d66a81380fb6ae32"
+      },
+      "ifMatch": "\"2dbcdd59b7322ddf\""
+    },
+    {
+      "label": "Undo exact recovery",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+          "ownerId": "local",
+          "name": "Canvas missing target 596b6d21",
+          "draftVersionId": "01M7DY66MQSRVKE9EJHY2MDPQ4",
+          "createdAt": "2026-11-14T21:07:36.215Z",
+          "updatedAt": "2026-11-14T21:07:39.262Z"
+        },
+        "draft": {
+          "id": "01M7DY66MQSRVKE9EJHY2MDPQ4",
+          "loopId": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas missing target 596b6d21",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "orphaned",
+                "from": {
+                  "node": "subject",
+                  "port": "gone"
+                },
+                "to": {
+                  "node": "missing",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    495,
+                    302,
+                    590
+                  ]
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:07:36.215Z"
+        },
+        "draftToken": "2dbcdd59b7322ddf"
+      },
+      "local": {
+        "loopId": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas missing target 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "orphaned",
+              "from": {
+                "node": "subject",
+                "port": "gone"
+              },
+              "to": {
+                "node": "missing",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:07:39.273Z",
+        "synced": true,
+        "baseToken": "2dbcdd59b7322ddf"
+      },
+      "ifMatch": "\"d66a81380fb6ae32\""
+    },
+    {
+      "label": "Redo exact recovery",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+          "ownerId": "local",
+          "name": "Canvas missing target 596b6d21",
+          "draftVersionId": "01M7DY66MQSRVKE9EJHY2MDPQ4",
+          "createdAt": "2026-11-14T21:07:36.215Z",
+          "updatedAt": "2026-11-14T21:07:40.791Z"
+        },
+        "draft": {
+          "id": "01M7DY66MQSRVKE9EJHY2MDPQ4",
+          "loopId": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas missing target 596b6d21",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:07:36.215Z"
+        },
+        "draftToken": "d66a81380fb6ae32"
+      },
+      "local": {
+        "loopId": "01M7DY66MQSRVKE9EJHY2MDPQ3",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas missing target 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:07:40.804Z",
+        "synced": true,
+        "baseToken": "d66a81380fb6ae32"
+      },
+      "ifMatch": "\"2dbcdd59b7322ddf\""
+    },
+    {
+      "label": "draw subject.retry → done",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "ownerId": "local",
+          "name": "Canvas stale Script port 596b6d21",
+          "draftVersionId": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "createdAt": "2026-11-14T21:07:42.059Z",
+          "updatedAt": "2026-11-14T21:07:43.478Z"
+        },
+        "draft": {
+          "id": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas stale Script port 596b6d21",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "0": "out",
+                    "7": "retry",
+                    "23": "report"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "retry"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:07:42.059Z"
+        },
+        "draftToken": "0089664a435c9754"
+      },
+      "local": {
+        "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "7": "retry",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:07:43.488Z",
+        "synced": true,
+        "baseToken": "0089664a435c9754"
+      },
+      "ifMatch": "\"d539699225abae8e\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e2",
+      "accessibleName": "subject retry to done",
+      "d": "M536 184L556 184L 607.5,184Q 617.5,184 617.5,174L 617.5,91Q 617.5,81 627.5,81L679 81L699 81"
+    },
+    {
+      "label": "Remove one label without rewriting stored Script edges",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "ownerId": "local",
+          "name": "Canvas stale Script port 596b6d21",
+          "draftVersionId": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "createdAt": "2026-11-14T21:07:42.059Z",
+          "updatedAt": "2026-11-14T21:07:45.148Z"
+        },
+        "draft": {
+          "id": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas stale Script port 596b6d21",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "0": "out",
+                    "23": "report"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "retry"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:07:42.059Z"
+        },
+        "draftToken": "0d18ae2f9fc0f4e5"
+      },
+      "local": {
+        "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:07:45.160Z",
+        "synced": true,
+        "baseToken": "0d18ae2f9fc0f4e5"
+      },
+      "ifMatch": "\"0089664a435c9754\""
+    },
+    {
+      "label": "port inventory",
+      "subject": "subject",
+      "handles": [
+        {
+          "direction": "target",
+          "id": "in",
+          "label": "subject input"
+        },
+        {
+          "direction": "source",
+          "id": "out",
+          "label": "subject output out (out)"
+        },
+        {
+          "direction": "source",
+          "id": "report",
+          "label": "subject output report (report)"
+        }
+      ]
+    },
+    {
+      "label": "stored but undrawable",
+      "bad": {
+        "id": "e2",
+        "from": {
+          "node": "subject",
+          "port": "retry"
+        },
+        "to": {
+          "node": "done",
+          "port": "in"
+        }
+      },
+      "diagnoses": [
+        {
+          "code": "EDGE_PORT_MISSING",
+          "severity": "error",
+          "message": "edge \"e2\" leaves node \"subject\" through unknown port \"retry\"",
+          "edgeId": "e2"
+        }
+      ],
+      "view": "- dialog \"Loop issues\":\n  - group \"Loop and connections\":\n    - paragraph: Loop and connections\n    - list:\n      - listitem:\n        - text: Error EDGE_PORT_MISSING edge \"e2\" leaves node \"subject\" through unknown port \"retry\"\n        - code: edge e2\n        - button \"Remove edge e2\"\n  - group \"Nodes\":\n    - paragraph: Nodes\n    - list:\n      - listitem:\n        - 'button \"subject: 2 issues\"':\n          - code: subject\n          - text: \": 2 issues\"\n      - listitem:\n        - 'button \"other: 1 issue\"':\n          - code: other\n          - text: \": 1 issue\"\n      - listitem:\n        - 'button \"spent: 1 issue\"':\n          - code: spent\n          - text: \": 1 issue\""
+    },
+    {
+      "label": "Remove an exact undrawable edge",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "ownerId": "local",
+          "name": "Canvas stale Script port 596b6d21",
+          "draftVersionId": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "createdAt": "2026-11-14T21:07:42.059Z",
+          "updatedAt": "2026-11-14T21:07:46.880Z"
+        },
+        "draft": {
+          "id": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas stale Script port 596b6d21",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "0": "out",
+                    "23": "report"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:07:42.059Z"
+        },
+        "draftToken": "016609bd9c944a5f"
+      },
+      "local": {
+        "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:07:46.891Z",
+        "synced": true,
+        "baseToken": "016609bd9c944a5f"
+      },
+      "ifMatch": "\"0d18ae2f9fc0f4e5\""
+    },
+    {
+      "label": "Undo exact recovery",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "ownerId": "local",
+          "name": "Canvas stale Script port 596b6d21",
+          "draftVersionId": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "createdAt": "2026-11-14T21:07:42.059Z",
+          "updatedAt": "2026-11-14T21:07:48.409Z"
+        },
+        "draft": {
+          "id": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas stale Script port 596b6d21",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "0": "out",
+                    "23": "report"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "subject",
+                  "port": "retry"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:07:42.059Z"
+        },
+        "draftToken": "0d18ae2f9fc0f4e5"
+      },
+      "local": {
+        "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:07:48.423Z",
+        "synced": true,
+        "baseToken": "0d18ae2f9fc0f4e5"
+      },
+      "ifMatch": "\"016609bd9c944a5f\""
+    },
+    {
+      "label": "Redo exact recovery",
+      "persisted": {
+        "loop": {
+          "id": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "ownerId": "local",
+          "name": "Canvas stale Script port 596b6d21",
+          "draftVersionId": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "createdAt": "2026-11-14T21:07:42.059Z",
+          "updatedAt": "2026-11-14T21:07:49.934Z"
+        },
+        "draft": {
+          "id": "01M7DY6CBCKQBB02M9PC2JTC3Y",
+          "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Canvas stale Script port 596b6d21",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 257
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Topology subject",
+                "ui": {
+                  "x": 345,
+                  "y": 70
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "0": "out",
+                    "23": "report"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Success terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 35
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"first\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Failure terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 233
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "\"second\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spent",
+                "label": "Exhausted terminal",
+                "ui": {
+                  "x": 705,
+                  "y": 425
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "exhausted",
+                  "returns": "\"spent\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    250
+                  ]
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T21:07:42.059Z"
+        },
+        "draftToken": "016609bd9c944a5f"
+      },
+      "local": {
+        "loopId": "01M7DY6CBB7DVVKTCJ34RA3RBR",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T21:07:49.945Z",
+        "synced": true,
+        "baseToken": "016609bd9c944a5f"
+      },
+      "ifMatch": "\"0d18ae2f9fc0f4e5\""
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7DY66MQSRVKE9EJHY2MDPQ3/draft",
+      "at": 1794690457732,
+      "ifMatch": "\"2dbcdd59b7322ddf\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas missing target 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY66MQSRVKE9EJHY2MDPQ3/draft",
+      "at": 1794690459256,
+      "ifMatch": "\"d66a81380fb6ae32\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas missing target 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "orphaned",
+              "from": {
+                "node": "subject",
+                "port": "gone"
+              },
+              "to": {
+                "node": "missing",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY66MQSRVKE9EJHY2MDPQ3/draft",
+      "at": 1794690460784,
+      "ifMatch": "\"2dbcdd59b7322ddf\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas missing target 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY6CBB7DVVKTCJ34RA3RBR/draft",
+      "at": 1794690463473,
+      "ifMatch": "\"d539699225abae8e\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "7": "retry",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY6CBB7DVVKTCJ34RA3RBR/draft",
+      "at": 1794690465140,
+      "ifMatch": "\"0089664a435c9754\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY6CBB7DVVKTCJ34RA3RBR/draft",
+      "at": 1794690466873,
+      "ifMatch": "\"0d18ae2f9fc0f4e5\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY6CBB7DVVKTCJ34RA3RBR/draft",
+      "at": 1794690468401,
+      "ifMatch": "\"016609bd9c944a5f\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DY6CBB7DVVKTCJ34RA3RBR/draft",
+      "at": 1794690469927,
+      "ifMatch": "\"0d18ae2f9fc0f4e5\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Canvas stale Script port 596b6d21",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 257
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Topology subject",
+              "ui": {
+                "x": 345,
+                "y": 70
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "23": "report"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Success terminal",
+              "ui": {
+                "x": 705,
+                "y": 35
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"first\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Failure terminal",
+              "ui": {
+                "x": 705,
+                "y": 233
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "\"second\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spent",
+              "label": "Exhausted terminal",
+              "ui": {
+                "x": 705,
+                "y": 425
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "exhausted",
+                "returns": "\"spent\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  250
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "pageErrors": [],
+  "failure": null,
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+}

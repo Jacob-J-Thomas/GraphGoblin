@@ -1,0 +1,337 @@
+{
+  "scenario": "recovery",
+  "mode": "before",
+  "startedAt": "2026-11-14T18:54:09.859Z",
+  "steps": [],
+  "observations": [
+    {
+      "label": "staged missing-target edge",
+      "value": {
+        "token": "99a9d8156c2b7568",
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "run",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "run",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e3",
+            "from": {
+              "node": "run",
+              "port": "retry"
+            },
+            "to": {
+              "node": "m",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e4",
+            "from": {
+              "node": "run",
+              "port": "report"
+            },
+            "to": {
+              "node": "alt",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e5",
+            "from": {
+              "node": "m",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e6",
+            "from": {
+              "node": "orphan",
+              "port": "nope"
+            },
+            "to": {
+              "node": "ghost-node",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "at": "2026-11-14T18:54:09.887Z"
+    },
+    {
+      "label": "popover with ghost",
+      "value": "- dialog \"Loop issues\":\n  - group \"Loop and connections\":\n    - paragraph: Loop and connections\n    - list:\n      - listitem:\n        - text: Error EDGE_PORT_MISSING edge \"e6\" leaves node \"orphan\" through unknown port \"nope\"\n        - code: edge e6\n      - listitem:\n        - text: Error EDGE_TO_MISSING edge \"e6\" ends at unknown node \"ghost-node\"\n        - code: edge e6\n  - group \"Nodes\":\n    - paragraph: Nodes\n    - list:\n      - listitem:\n        - 'button \"orphan: 2 issues\"':\n          - code: orphan\n          - text: \": 2 issues\"",
+      "at": "2026-11-14T18:54:10.229Z"
+    },
+    {
+      "label": "Remove edge e6 buttons in popover",
+      "value": 0,
+      "at": "2026-11-14T18:54:10.283Z"
+    },
+    {
+      "label": "drawable edge actions in popover",
+      "value": 0,
+      "at": "2026-11-14T18:54:10.285Z"
+    },
+    {
+      "label": "orphan modal Connections lists e6",
+      "value": 1,
+      "at": "2026-11-14T18:54:10.349Z"
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7DPHVYA704HE45MY2KW8J3X/draft",
+      "at": 1794682451110,
+      "ifMatch": "\"99a9d8156c2b7568\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery bgsgnj",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "orphan",
+                "port": "nope"
+              },
+              "to": {
+                "node": "ghost-node",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "responses": [
+    {
+      "method": "POST",
+      "path": "/loops/01M7DPHVYA704HE45MY2KW8J3X/validate",
+      "at": 1794682450029
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DPHVYA704HE45MY2KW8J3X/draft",
+      "at": 1794682451110
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DPHVYA704HE45MY2KW8J3X/validate",
+      "at": 1794682451135
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "shots": [
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/baseline-a2/recovery-popover-ghost.png",
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/baseline-a2/recovery-first-failure.png"
+  ],
+  "failure": {
+    "error": "Error: A topology action changed the definition outside its edge list\nExpected {\"name\":\"Recovery bgsgnj\",\"nodes\":[{\"config\":{\"exposeTo\":[\"ui\",\"api\",\"mcp\"],\"type\":\"manual\"},\"id\":\"start\",\"kind\":\"trigger\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0}},{\"config\":{\"args\":[],\"command\":\"never-execute-this-fixture\",\"cwd\":\"workspace\",\"exitCodeRoutes\":{\"0\":\"out\",\"3\":\"retry\",\"5\":\"report\"},\"stdin\":\"none\",\"stdout\":\"ignore\"},\"id\":\"run\",\"kind\":\"script\",\"label\":\"Run\",\"ui\":{\"x\":300,\"y\":0}},{\"config\":{\"operations\":[{\"content\":\"m\",\"op\":\"append-message\",\"role\":\"note\"}]},\"id\":\"m\",\"kind\":\"mutate\",\"label\":\"Mend\",\"ui\":{\"x\":640,\"y\":120}},{\"config\":{\"operations\":[{\"content\":\"orphan\",\"op\":\"append-message\",\"role\":\"note\"}]},\"id\":\"orphan\",\"kind\":\"mutate\",\"label\":\"Orphan\",\"ui\":{\"x\":300,\"y\":300}},{\"config\":{\"destinations\":[{\"kind\":\"caller\"}],\"outcome\":\"success\",\"returns\":\"none\"},\"id\":\"done\",\"kind\":\"exit\",\"label\":\"Done\",\"ui\":{\"x\":980,\"y\":-40}},{\"config\":{\"destinations\":[{\"kind\":\"caller\"}],\"outcome\":\"failure\",\"returns\":\"none\"},\"id\":\"alt\",\"kind\":\"exit\",\"label\":\"Alt\",\"ui\":{\"x\":980,\"y\":260}}],\"schemaVersion\":4,\"settings\":{\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8,\"workingDirectory\":{\"kind\":\"temp\"}},\"variables\":{}}\nActual   {\"name\":\"Recovery bgsgnj\",\"nodes\":[{\"config\":{\"exposeTo\":[\"ui\",\"api\",\"mcp\"],\"type\":\"manual\"},\"id\":\"start\",\"kind\":\"trigger\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0}},{\"config\":{\"args\":[],\"command\":\"never-execute-this-fixture\",\"cwd\":\"workspace\",\"exitCodeRoutes\":{\"0\":\"out\",\"3\":\"retry\",\"5\":\"summary\"},\"stdin\":\"none\",\"stdout\":\"ignore\"},\"id\":\"run\",\"kind\":\"script\",\"label\":\"Run\",\"ui\":{\"x\":300,\"y\":0}},{\"config\":{\"operations\":[{\"content\":\"m\",\"op\":\"append-message\",\"role\":\"note\"}]},\"id\":\"m\",\"kind\":\"mutate\",\"label\":\"Mend\",\"ui\":{\"x\":640,\"y\":120}},{\"config\":{\"operations\":[{\"content\":\"orphan\",\"op\":\"append-message\",\"role\":\"note\"}]},\"id\":\"orphan\",\"kind\":\"mutate\",\"label\":\"Orphan\",\"ui\":{\"x\":300,\"y\":300}},{\"config\":{\"destinations\":[{\"kind\":\"caller\"}],\"outcome\":\"success\",\"returns\":\"none\"},\"id\":\"done\",\"kind\":\"exit\",\"label\":\"Done\",\"ui\":{\"x\":980,\"y\":-40}},{\"config\":{\"destinations\":[{\"kind\":\"caller\"}],\"outcome\":\"failure\",\"returns\":\"none\"},\"id\":\"alt\",\"kind\":\"exit\",\"label\":\"Alt\",\"ui\":{\"x\":980,\"y\":260}}],\"schemaVersion\":4,\"settings\":{\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8,\"workingDirectory\":{\"kind\":\"temp\"}},\"variables\":{}}",
+    "stack": "Error: A topology action changed the definition outside its edge list\nExpected {\"name\":\"Recovery bgsgnj\",\"nodes\":[{\"config\":{\"exposeTo\":[\"ui\",\"api\",\"mcp\"],\"type\":\"manual\"},\"id\":\"start\",\"kind\":\"trigger\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0}},{\"config\":{\"args\":[],\"command\":\"never-execute-this-fixture\",\"cwd\":\"workspace\",\"exitCodeRoutes\":{\"0\":\"out\",\"3\":\"retry\",\"5\":\"report\"},\"stdin\":\"none\",\"stdout\":\"ignore\"},\"id\":\"run\",\"kind\":\"script\",\"label\":\"Run\",\"ui\":{\"x\":300,\"y\":0}},{\"config\":{\"operations\":[{\"content\":\"m\",\"op\":\"append-message\",\"role\":\"note\"}]},\"id\":\"m\",\"kind\":\"mutate\",\"label\":\"Mend\",\"ui\":{\"x\":640,\"y\":120}},{\"config\":{\"operations\":[{\"content\":\"orphan\",\"op\":\"append-message\",\"role\":\"note\"}]},\"id\":\"orphan\",\"kind\":\"mutate\",\"label\":\"Orphan\",\"ui\":{\"x\":300,\"y\":300}},{\"config\":{\"destinations\":[{\"kind\":\"caller\"}],\"outcome\":\"success\",\"returns\":\"none\"},\"id\":\"done\",\"kind\":\"exit\",\"label\":\"Done\",\"ui\":{\"x\":980,\"y\":-40}},{\"config\":{\"destinations\":[{\"kind\":\"caller\"}],\"outcome\":\"failure\",\"returns\":\"none\"},\"id\":\"alt\",\"kind\":\"exit\",\"label\":\"Alt\",\"ui\":{\"x\":980,\"y\":260}}],\"schemaVersion\":4,\"settings\":{\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8,\"workingDirectory\":{\"kind\":\"temp\"}},\"variables\":{}}\nActual   {\"name\":\"Recovery bgsgnj\",\"nodes\":[{\"config\":{\"exposeTo\":[\"ui\",\"api\",\"mcp\"],\"type\":\"manual\"},\"id\":\"start\",\"kind\":\"trigger\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":0}},{\"config\":{\"args\":[],\"command\":\"never-execute-this-fixture\",\"cwd\":\"workspace\",\"exitCodeRoutes\":{\"0\":\"out\",\"3\":\"retry\",\"5\":\"summary\"},\"stdin\":\"none\",\"stdout\":\"ignore\"},\"id\":\"run\",\"kind\":\"script\",\"label\":\"Run\",\"ui\":{\"x\":300,\"y\":0}},{\"config\":{\"operations\":[{\"content\":\"m\",\"op\":\"append-message\",\"role\":\"note\"}]},\"id\":\"m\",\"kind\":\"mutate\",\"label\":\"Mend\",\"ui\":{\"x\":640,\"y\":120}},{\"config\":{\"operations\":[{\"content\":\"orphan\",\"op\":\"append-message\",\"role\":\"note\"}]},\"id\":\"orphan\",\"kind\":\"mutate\",\"label\":\"Orphan\",\"ui\":{\"x\":300,\"y\":300}},{\"config\":{\"destinations\":[{\"kind\":\"caller\"}],\"outcome\":\"success\",\"returns\":\"none\"},\"id\":\"done\",\"kind\":\"exit\",\"label\":\"Done\",\"ui\":{\"x\":980,\"y\":-40}},{\"config\":{\"destinations\":[{\"kind\":\"caller\"}],\"outcome\":\"failure\",\"returns\":\"none\"},\"id\":\"alt\",\"kind\":\"exit\",\"label\":\"Alt\",\"ui\":{\"x\":980,\"y\":260}}],\"schemaVersion\":4,\"settings\":{\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8,\"workingDirectory\":{\"kind\":\"temp\"}},\"variables\":{}}\n    at check (evalmachine.<anonymous>:23:18)\n    at same (evalmachine.<anonymous>:33:3)\n    at delta (evalmachine.<anonymous>:277:3)\n    at act (evalmachine.<anonymous>:315:13)\n    at async evalmachine.<anonymous>:656:11\n    at async finish (evalmachine.<anonymous>:385:5)\n    at async evalmachine.<anonymous>:3:20\n    at async C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70181:13\n    at async waitForCompletion (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:66323:15)\n    at async _Tab._raceAgainstModalStates (C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:67487:18)"
+  },
+  "finishedAt": "2026-11-14T18:54:12.119Z"
+}

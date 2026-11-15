@@ -1,0 +1,191 @@
+{
+  "scenario": "geometry",
+  "mode": "before",
+  "startedAt": "2026-11-14T18:53:37.767Z",
+  "steps": [],
+  "observations": [
+    {
+      "label": "fixture",
+      "value": {
+        "id": "01M7DPGWKB8FH41NT3HP00VK4T",
+        "token": "1868df4a32a1725f",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Geometry by8kqs",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "a",
+              "label": "Alpha",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "a"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "b",
+              "label": "Beta",
+              "ui": {
+                "x": 300,
+                "y": 260
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "b"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 640,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 640,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "a",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "b",
+                "port": "out"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "a",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "at": "2026-11-14T18:53:37.781Z"
+    },
+    {
+      "label": "selected e3 at",
+      "value": {
+        "x": 916.0607299804688,
+        "y": 340.08740234375,
+        "fraction": 0.5
+      },
+      "at": "2026-11-14T18:53:38.079Z"
+    },
+    {
+      "label": "segment handles",
+      "value": 3,
+      "at": "2026-11-14T18:53:38.081Z"
+    }
+  ],
+  "writes": [],
+  "responses": [
+    {
+      "method": "POST",
+      "path": "/loops/01M7DPGWKB8FH41NT3HP00VK4T/validate",
+      "at": 1794682417900
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "shots": [
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/baseline-a2/geometry-first-failure.png"
+  ],
+  "failure": {
+    "error": "Error: locator.evaluate: Error: Target not hittable: segment handle hit=gg-route-handle-dot\n    at eval (eval at evaluate (:370:30), <anonymous>:7:13)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+    "stack": "locator.evaluate: Error: Target not hittable: segment handle hit=gg-route-handle-dot\n    at eval (eval at evaluate (:370:30), <anonymous>:7:13)\n    at UtilityScript.evaluate (<anonymous>:372:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at center (evalmachine.<anonymous>:165:18)\n    at async evalmachine.<anonymous>:610:14\n    at async finish (evalmachine.<anonymous>:385:5)\n    at async evalmachine.<anonymous>:3:20\n    at async C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70181:13"
+  },
+  "finishedAt": "2026-11-14T18:53:38.134Z"
+}

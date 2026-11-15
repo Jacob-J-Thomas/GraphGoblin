@@ -1,0 +1,5447 @@
+{
+  "scenario": "recovery",
+  "mode": "candidate",
+  "startedAt": "2026-11-14T19:33:04.166Z",
+  "steps": [
+    {
+      "label": "R1: remove e6 from Loop issues",
+      "gesture": {
+        "x": 1128.5859375,
+        "y": 252.65625,
+        "width": 127.171875,
+        "height": 32
+      },
+      "tokenBefore": "8e876a3df3fd21b6",
+      "tokenAfter": "71cda462f5d25d78",
+      "ifMatch": "\"8e876a3df3fd21b6\"",
+      "removed": [
+        {
+          "id": "e6",
+          "from": {
+            "node": "orphan",
+            "port": "nope"
+          },
+          "to": {
+            "node": "ghost-node",
+            "port": "in"
+          }
+        }
+      ],
+      "added": [],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "run",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "run",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "run",
+            "port": "retry"
+          },
+          "to": {
+            "node": "m",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e4",
+          "from": {
+            "node": "run",
+            "port": "report"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e5",
+          "from": {
+            "node": "m",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo remove edge orphan nope to ghost-node",
+      "redo": "Redo",
+      "alert": null,
+      "deviceSynced": true,
+      "deviceDraft": {
+        "loopId": "01M7DRS3J4E9WDQ5FPVGH7JRHE",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:33:06.058Z",
+        "synced": true,
+        "baseToken": "71cda462f5d25d78"
+      },
+      "putBody": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "focusAfter": {
+        "tag": "BUTTON",
+        "text": "2 errors"
+      }
+    },
+    {
+      "label": "undo R1 removal",
+      "gesture": null,
+      "tokenBefore": "71cda462f5d25d78",
+      "tokenAfter": "8e876a3df3fd21b6",
+      "ifMatch": "\"71cda462f5d25d78\"",
+      "removed": [],
+      "added": [
+        {
+          "id": "e6",
+          "from": {
+            "node": "orphan",
+            "port": "nope"
+          },
+          "to": {
+            "node": "ghost-node",
+            "port": "in"
+          }
+        }
+      ],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "run",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "run",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "run",
+            "port": "retry"
+          },
+          "to": {
+            "node": "m",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e4",
+          "from": {
+            "node": "run",
+            "port": "report"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e5",
+          "from": {
+            "node": "m",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e6",
+          "from": {
+            "node": "orphan",
+            "port": "nope"
+          },
+          "to": {
+            "node": "ghost-node",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo",
+      "redo": "Redo remove edge orphan nope to ghost-node",
+      "alert": null,
+      "deviceSynced": true,
+      "deviceDraft": {
+        "loopId": "01M7DRS3J4E9WDQ5FPVGH7JRHE",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "orphan",
+                "port": "nope"
+              },
+              "to": {
+                "node": "ghost-node",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:33:07.690Z",
+        "synced": true,
+        "baseToken": "8e876a3df3fd21b6"
+      },
+      "putBody": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "orphan",
+                "port": "nope"
+              },
+              "to": {
+                "node": "ghost-node",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "redo R1 removal",
+      "gesture": null,
+      "tokenBefore": "8e876a3df3fd21b6",
+      "tokenAfter": "71cda462f5d25d78",
+      "ifMatch": "\"8e876a3df3fd21b6\"",
+      "removed": [
+        {
+          "id": "e6",
+          "from": {
+            "node": "orphan",
+            "port": "nope"
+          },
+          "to": {
+            "node": "ghost-node",
+            "port": "in"
+          }
+        }
+      ],
+      "added": [],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "run",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "run",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "run",
+            "port": "retry"
+          },
+          "to": {
+            "node": "m",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e4",
+          "from": {
+            "node": "run",
+            "port": "report"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e5",
+          "from": {
+            "node": "m",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo remove edge orphan nope to ghost-node",
+      "redo": "Redo",
+      "alert": null,
+      "deviceSynced": true,
+      "deviceDraft": {
+        "loopId": "01M7DRS3J4E9WDQ5FPVGH7JRHE",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:33:09.302Z",
+        "synced": true,
+        "baseToken": "71cda462f5d25d78"
+      },
+      "putBody": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "rename Script label report -> summary in the form",
+      "gesture": null,
+      "tokenBefore": "71cda462f5d25d78",
+      "tokenAfter": "29990853df050b4e",
+      "ifMatch": "\"71cda462f5d25d78\"",
+      "removed": [],
+      "added": [],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "run",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "run",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "run",
+            "port": "retry"
+          },
+          "to": {
+            "node": "m",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e4",
+          "from": {
+            "node": "run",
+            "port": "report"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e5",
+          "from": {
+            "node": "m",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo edit config of run",
+      "redo": "Redo",
+      "alert": null,
+      "deviceSynced": true,
+      "deviceDraft": {
+        "loopId": "01M7DRS3J4E9WDQ5FPVGH7JRHE",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:33:11.052Z",
+        "synced": true,
+        "baseToken": "29990853df050b4e"
+      },
+      "putBody": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "declaration": true
+    },
+    {
+      "label": "restore Script label report (e4 drawable again)",
+      "gesture": null,
+      "tokenBefore": "29990853df050b4e",
+      "tokenAfter": "71cda462f5d25d78",
+      "ifMatch": "\"29990853df050b4e\"",
+      "removed": [],
+      "added": [],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "run",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "run",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "run",
+            "port": "retry"
+          },
+          "to": {
+            "node": "m",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e4",
+          "from": {
+            "node": "run",
+            "port": "report"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e5",
+          "from": {
+            "node": "m",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo edit config of run",
+      "redo": "Redo",
+      "alert": null,
+      "deviceSynced": true,
+      "deviceDraft": {
+        "loopId": "01M7DRS3J4E9WDQ5FPVGH7JRHE",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:33:13.111Z",
+        "synced": true,
+        "baseToken": "71cda462f5d25d78"
+      },
+      "putBody": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "declaration": true
+    },
+    {
+      "label": "rename Script label to summary again",
+      "gesture": null,
+      "tokenBefore": "71cda462f5d25d78",
+      "tokenAfter": "29990853df050b4e",
+      "ifMatch": "\"71cda462f5d25d78\"",
+      "removed": [],
+      "added": [],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "run",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "run",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "run",
+            "port": "retry"
+          },
+          "to": {
+            "node": "m",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e4",
+          "from": {
+            "node": "run",
+            "port": "report"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e5",
+          "from": {
+            "node": "m",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo edit config of run",
+      "redo": "Redo",
+      "alert": null,
+      "deviceSynced": true,
+      "deviceDraft": {
+        "loopId": "01M7DRS3J4E9WDQ5FPVGH7JRHE",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:33:14.903Z",
+        "synced": true,
+        "baseToken": "29990853df050b4e"
+      },
+      "putBody": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "declaration": true
+    },
+    {
+      "label": "R1: remove stale e4 from Loop issues",
+      "gesture": {
+        "x": 1132.5390625,
+        "y": 235.109375,
+        "width": 127.171875,
+        "height": 32
+      },
+      "tokenBefore": "29990853df050b4e",
+      "tokenAfter": "bd731c73130800c2",
+      "ifMatch": "\"29990853df050b4e\"",
+      "removed": [
+        {
+          "id": "e4",
+          "from": {
+            "node": "run",
+            "port": "report"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        }
+      ],
+      "added": [],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "run",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "run",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "run",
+            "port": "retry"
+          },
+          "to": {
+            "node": "m",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e5",
+          "from": {
+            "node": "m",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo remove edge run report to alt",
+      "redo": "Redo",
+      "alert": null,
+      "deviceSynced": true,
+      "deviceDraft": {
+        "loopId": "01M7DRS3J4E9WDQ5FPVGH7JRHE",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:33:16.606Z",
+        "synced": true,
+        "baseToken": "bd731c73130800c2"
+      },
+      "putBody": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "draw the renamed summary output to alt",
+      "gesture": {
+        "from": {
+          "x": 604.3333740234375,
+          "y": 453.13575744628906,
+          "width": 12.08251953125,
+          "height": 12.082489013671875
+        },
+        "to": {
+          "x": 1102.7354125976562,
+          "y": 626.31787109375,
+          "width": 12.0823974609375,
+          "height": 12.08251953125
+        },
+        "reverse": false,
+        "click": false
+      },
+      "tokenBefore": "bd731c73130800c2",
+      "tokenAfter": "d82d742ef023fd38",
+      "ifMatch": "\"bd731c73130800c2\"",
+      "removed": [],
+      "added": [
+        {
+          "id": "e6",
+          "from": {
+            "node": "run",
+            "port": "summary"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        }
+      ],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "run",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e2",
+          "from": {
+            "node": "run",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "run",
+            "port": "retry"
+          },
+          "to": {
+            "node": "m",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e5",
+          "from": {
+            "node": "m",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e6",
+          "from": {
+            "node": "run",
+            "port": "summary"
+          },
+          "to": {
+            "node": "alt",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo connect run summary to alt",
+      "redo": "Redo",
+      "alert": null,
+      "deviceSynced": true,
+      "deviceDraft": {
+        "loopId": "01M7DRS3J4E9WDQ5FPVGH7JRHE",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "run",
+                "port": "summary"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T19:33:18.516Z",
+        "synced": true,
+        "baseToken": "d82d742ef023fd38"
+      },
+      "putBody": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "run",
+                "port": "summary"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "observations": [
+    {
+      "label": "staged missing-target edge",
+      "value": {
+        "token": "8e876a3df3fd21b6",
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "run",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "run",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e3",
+            "from": {
+              "node": "run",
+              "port": "retry"
+            },
+            "to": {
+              "node": "m",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e4",
+            "from": {
+              "node": "run",
+              "port": "report"
+            },
+            "to": {
+              "node": "alt",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e5",
+            "from": {
+              "node": "m",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e6",
+            "from": {
+              "node": "orphan",
+              "port": "nope"
+            },
+            "to": {
+              "node": "ghost-node",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "at": "2026-11-14T19:33:04.260Z"
+    },
+    {
+      "label": "popover with ghost",
+      "value": "- dialog \"Loop issues\":\n  - group \"Loop and connections\":\n    - paragraph: Loop and connections\n    - list:\n      - listitem:\n        - text: Error EDGE_PORT_MISSING edge \"e6\" leaves node \"orphan\" through unknown port \"nope\"\n        - code: edge e6\n        - button \"Remove edge e6\"\n      - listitem:\n        - text: Error EDGE_TO_MISSING edge \"e6\" ends at unknown node \"ghost-node\"\n        - code: edge e6\n  - group \"Nodes\":\n    - paragraph: Nodes\n    - list:\n      - listitem:\n        - 'button \"orphan: 2 issues\"':\n          - code: orphan\n          - text: \": 2 issues\"",
+      "at": "2026-11-14T19:33:05.284Z"
+    },
+    {
+      "label": "Remove edge e6 buttons in popover",
+      "value": 1,
+      "at": "2026-11-14T19:33:05.375Z"
+    },
+    {
+      "label": "drawable edge actions in popover",
+      "value": 0,
+      "at": "2026-11-14T19:33:05.379Z"
+    },
+    {
+      "label": "focus after R1 removal",
+      "value": {
+        "tag": "BUTTON",
+        "text": "2 errors"
+      },
+      "at": "2026-11-14T19:33:07.013Z"
+    },
+    {
+      "label": "rename delta",
+      "value": {
+        "removed": [],
+        "added": []
+      },
+      "at": "2026-11-14T19:33:12.026Z"
+    },
+    {
+      "label": "popover with stale script edge",
+      "value": "- dialog \"Loop issues\":\n  - group \"Loop and connections\":\n    - paragraph: Loop and connections\n    - list:\n      - listitem:\n        - text: Error EDGE_PORT_MISSING edge \"e4\" leaves node \"run\" through unknown port \"report\"\n        - code: edge e4\n        - button \"Remove edge e4\"\n  - group \"Nodes\":\n    - paragraph: Nodes\n    - list:\n      - listitem:\n        - 'button \"run: 1 issue\"':\n          - code: run\n          - text: \": 1 issue\"\n      - listitem:\n        - 'button \"orphan: 2 issues\"':\n          - code: orphan\n          - text: \": 2 issues\"",
+      "at": "2026-11-14T19:33:12.128Z"
+    },
+    {
+      "label": "Remove edge e4 buttons",
+      "value": 1,
+      "at": "2026-11-14T19:33:12.259Z"
+    },
+    {
+      "label": "popover after e4 became drawable",
+      "value": "- dialog \"Loop issues\":\n  - group \"Nodes\":\n    - paragraph: Nodes\n    - list:\n      - listitem:\n        - 'button \"orphan: 2 issues\"':\n          - code: orphan\n          - text: \": 2 issues\"",
+      "at": "2026-11-14T19:33:14.149Z"
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684786034,
+      "ifMatch": "\"8e876a3df3fd21b6\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684787653,
+      "ifMatch": "\"71cda462f5d25d78\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "orphan",
+                "port": "nope"
+              },
+              "to": {
+                "node": "ghost-node",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684789272,
+      "ifMatch": "\"8e876a3df3fd21b6\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684791031,
+      "ifMatch": "\"71cda462f5d25d78\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684793080,
+      "ifMatch": "\"29990853df050b4e\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "report"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684794884,
+      "ifMatch": "\"71cda462f5d25d78\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "run",
+                "port": "report"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684796587,
+      "ifMatch": "\"29990853df050b4e\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684798498,
+      "ifMatch": "\"bd731c73130800c2\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Recovery cguz5a",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "run",
+              "label": "Run",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "0": "out",
+                  "3": "retry",
+                  "5": "summary"
+                }
+              }
+            },
+            {
+              "id": "m",
+              "label": "Mend",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "m"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "orphan",
+              "label": "Orphan",
+              "ui": {
+                "x": 300,
+                "y": 300
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "orphan"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 980,
+                "y": -40
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alt",
+              "label": "Alt",
+              "ui": {
+                "x": 980,
+                "y": 260
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "run",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "run",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "run",
+                "port": "retry"
+              },
+              "to": {
+                "node": "m",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e5",
+              "from": {
+                "node": "m",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e6",
+              "from": {
+                "node": "run",
+                "port": "summary"
+              },
+              "to": {
+                "node": "alt",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "responses": [
+    {
+      "method": "POST",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/validate",
+      "at": 1794684784620
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684786035
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/validate",
+      "at": 1794684786066
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684787653
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684789272
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684791032
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/validate",
+      "at": 1794684791063
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684793080
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684794884
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684796587
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/validate",
+      "at": 1794684796611
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/draft",
+      "at": 1794684798498
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DRS3J4E9WDQ5FPVGH7JRHE/validate",
+      "at": 1794684798522
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "shots": [
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/candidate-d/recovery-popover-ghost.png",
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/candidate-d/recovery-popover-script-stale.png",
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/candidate-d/recovery-first-failure.png"
+  ],
+  "failure": {
+    "error": "TimeoutError: locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('dialog').getByRole('button', { name: /^Advanced\b/ })\u001b[22m\n",
+    "stack": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('dialog').getByRole('button', { name: /^Advanced\b/ })\u001b[22m\n\n    at evalmachine.<anonymous>:742:26\n    at async finish (evalmachine.<anonymous>:409:5)\n    at async evalmachine.<anonymous>:3:20\n    at async C:\\Users\\98jak\\AppData\\Local\\npm-cache\\_npx\\31e32ef8478fbf80\\node_modules\\playwright-core\\lib\\coreBundle.js:70181:13"
+  },
+  "finishedAt": "2026-11-14T19:33:49.640Z"
+}

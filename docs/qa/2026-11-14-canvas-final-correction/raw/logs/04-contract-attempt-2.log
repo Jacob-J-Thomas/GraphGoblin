@@ -1,0 +1,87 @@
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+ ❯ src/editor/viewport-gesture.contract.test.tsx (5 tests | 5 failed) 656ms
+   ❯ the pan gate on the installed xyflow and d3 (#207) (5)
+     × shows Remove unavailable while d3 cancels the next click, and delivers the first available click once 343ms
+     × settles a middle-button pan the same way 94ms
+     × lets a new pan invalidate an earlier release that has not settled 78ms
+     × is not stranded when a programmatic or wheel move replaces the pan’s end callback 80ms
+     × leaves nothing behind when the canvas unmounts while a release settles 57ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > shows Remove unavailable while d3 cancels the next click, and delivers the first available click once
+TypeError: Failed to construct 'MouseEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new MouseEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/MouseEvent-impl.js:9:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:61:16
+ ❯ new MouseEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:116:22
+ ❯ mouse src/editor/viewport-gesture.contract.test.tsx:143:10
+    141| const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
+    142| function mouse(type: string, x: number, y: number, button = 0, buttons…
+    143|   return new MouseEvent(type, {
+       |          ^
+    144|     bubbles: true,
+    145|     cancelable: true,
+ ❯ src/editor/viewport-gesture.contract.test.tsx:242:26
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > settles a middle-button pan the same way
+TypeError: Failed to construct 'MouseEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new MouseEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/MouseEvent-impl.js:9:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:61:16
+ ❯ new MouseEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:116:22
+ ❯ mouse src/editor/viewport-gesture.contract.test.tsx:143:10
+    141| const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
+    142| function mouse(type: string, x: number, y: number, button = 0, buttons…
+    143|   return new MouseEvent(type, {
+       |          ^
+    144|     bubbles: true,
+    145|     cancelable: true,
+ ❯ src/editor/viewport-gesture.contract.test.tsx:330:26
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > lets a new pan invalidate an earlier release that has not settled
+TypeError: Failed to construct 'MouseEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new MouseEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/MouseEvent-impl.js:9:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:61:16
+ ❯ new MouseEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:116:22
+ ❯ mouse src/editor/viewport-gesture.contract.test.tsx:143:10
+    141| const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
+    142| function mouse(type: string, x: number, y: number, button = 0, buttons…
+    143|   return new MouseEvent(type, {
+       |          ^
+    144|     bubbles: true,
+    145|     cancelable: true,
+ ❯ src/editor/viewport-gesture.contract.test.tsx:356:26
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > is not stranded when a programmatic or wheel move replaces the pan’s end callback
+TypeError: Failed to construct 'WheelEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new WheelEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/WheelEvent-impl.js:7:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/WheelEvent.js:60:16
+ ❯ new WheelEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/WheelEvent.js:115:22
+ ❯ src/editor/viewport-gesture.contract.test.tsx:392:9
+    390|       // A wheel zoom alone never makes the toolbar unavailable.
+    391|       pane.dispatchEvent(
+    392|         new WheelEvent('wheel', {
+       |         ^
+    393|           bubbles: true,
+    394|           cancelable: true,
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > the pan gate on the installed xyflow and d3 (#207) > leaves nothing behind when the canvas unmounts while a release settles
+TypeError: Failed to construct 'MouseEvent': member view is not of type Window.
+ ❯ new UIEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/UIEvent-impl.js:14:15
+ ❯ new MouseEventImpl ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/jsdom/living/events/MouseEvent-impl.js:9:1
+ ❯ exports.setup ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:61:16
+ ❯ new MouseEvent ../../node_modules/.pnpm/jsdom@30.1.1/node_modules/jsdom/lib/generated/idl/MouseEvent.js:116:22
+ ❯ mouse src/editor/viewport-gesture.contract.test.tsx:143:10
+    141| const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
+    142| function mouse(type: string, x: number, y: number, button = 0, buttons…
+    143|   return new MouseEvent(type, {
+       |          ^
+    144|     bubbles: true,
+    145|     cancelable: true,
+ ❯ src/editor/viewport-gesture.contract.test.tsx:438:24
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  16:35:02
+   Duration  6.17s (environment 42%, transform 19%, import 15%, setup 14%, tests 11%)

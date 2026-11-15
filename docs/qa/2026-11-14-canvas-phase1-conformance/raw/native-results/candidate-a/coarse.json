@@ -1,0 +1,386 @@
+{
+  "scenario": "coarse",
+  "mode": "candidate",
+  "startedAt": "2026-11-14T19:24:55.154Z",
+  "steps": [
+    {
+      "label": "tap Remove connection on e2",
+      "gesture": {
+        "tap": {
+          "x": 654.9169616699219,
+          "y": 353.3373718261719,
+          "width": 146.57818603515625,
+          "height": 44
+        }
+      },
+      "tokenBefore": "9620469ff4c8af3e",
+      "tokenAfter": "475de63d17398523",
+      "ifMatch": "\"9620469ff4c8af3e\"",
+      "removed": [
+        {
+          "id": "e2",
+          "from": {
+            "node": "na",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "added": [],
+      "edgesAfter": [
+        {
+          "id": "e1",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "na",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "nb",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        }
+      ],
+      "undo": "Undo remove edge na to done",
+      "redo": "Redo",
+      "alert": null,
+      "deviceSynced": true,
+      "focusAfter": {
+        "tag": "BUTTON",
+        "dataId": null,
+        "testid": null
+      }
+    }
+  ],
+  "observations": [
+    {
+      "label": "pointer media",
+      "value": {
+        "coarse": true,
+        "touch": 1
+      },
+      "at": "2026-11-14T19:24:55.162Z"
+    },
+    {
+      "label": "viewport",
+      "value": {
+        "width": 1024,
+        "height": 768
+      },
+      "at": "2026-11-14T19:24:55.799Z"
+    },
+    {
+      "label": "zoom",
+      "value": "translate(72px, 141.801px) scale(0.956311)",
+      "at": "2026-11-14T19:24:55.806Z"
+    },
+    {
+      "label": "tapped edge point",
+      "value": {
+        "x": 654.9247436523438,
+        "y": 393.3373718261719,
+        "fraction": 0.5
+      },
+      "at": "2026-11-14T19:24:55.836Z"
+    },
+    {
+      "label": "Remove connection present after tap",
+      "value": 1,
+      "at": "2026-11-14T19:24:55.839Z"
+    },
+    {
+      "label": "Remove connection box",
+      "value": {
+        "x": 654.9169616699219,
+        "y": 353.3373718261719,
+        "width": 146.57818603515625,
+        "height": 44
+      },
+      "at": "2026-11-14T19:24:55.893Z"
+    },
+    {
+      "label": "final",
+      "value": {
+        "schemaVersion": 4,
+        "name": "Coarse c9jmwj",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "na",
+            "label": "Node A",
+            "ui": {
+              "x": 300,
+              "y": 0
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "append-message",
+                  "role": "note",
+                  "content": "a"
+                }
+              ]
+            }
+          },
+          {
+            "id": "nb",
+            "label": "Node B",
+            "ui": {
+              "x": 300,
+              "y": 240
+            },
+            "kind": "mutate",
+            "config": {
+              "operations": [
+                {
+                  "op": "append-message",
+                  "role": "note",
+                  "content": "b"
+                }
+              ]
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 640,
+              "y": 120
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "na",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e3",
+            "from": {
+              "node": "nb",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "at": "2026-11-14T19:24:57.947Z"
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7DRA60BHZXK5R0N17JWKV6G/draft",
+      "at": 1794684296518,
+      "ifMatch": "\"9620469ff4c8af3e\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Coarse c9jmwj",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "na",
+              "label": "Node A",
+              "ui": {
+                "x": 300,
+                "y": 0
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "a"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "nb",
+              "label": "Node B",
+              "ui": {
+                "x": 300,
+                "y": 240
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "b"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 640,
+                "y": 120
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "na",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "nb",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "responses": [
+    {
+      "method": "POST",
+      "path": "/loops/01M7DRA60BHZXK5R0N17JWKV6G/validate",
+      "at": 1794684295469
+    },
+    {
+      "method": "PUT",
+      "path": "/loops/01M7DRA60BHZXK5R0N17JWKV6G/draft",
+      "at": 1794684296518
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DRA60BHZXK5R0N17JWKV6G/validate",
+      "at": 1794684296542
+    },
+    {
+      "method": "POST",
+      "path": "/loops/01M7DRA60BHZXK5R0N17JWKV6G/validate",
+      "at": 1794684297686
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "shots": [
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/candidate-a/coarse-selected.png",
+    "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-phase1/native/candidate-a/coarse-removed.png"
+  ],
+  "failure": null,
+  "finishedAt": "2026-11-14T19:24:57.947Z"
+}

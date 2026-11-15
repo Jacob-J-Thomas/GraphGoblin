@@ -1,0 +1,41 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (14 tests | 1 failed) 565ms
+   ❯ OrthogonalEdge (14)
+     × offers Remove connection on every selected edge, keeping its keys from the edge and canvas (#207) 38ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > offers Remove connection on every selected edge, keeping its keys from the edge and canvas (#207)
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      MouseEvent {
+        "isTrusted": false,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:437:25
+    435|     fireEvent.click(remove);
+    436|     expect(editing.remove).toHaveBeenCalledWith('return');
+    437|     expect(onClick).not.toHaveBeenCalled();
+       |                         ^
+    438|     // A manual route that crosses a card: the note, Reset route, then…
+    439|     view.rerender(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 81 passed (82)
+   Start at  13:09:06
+   Duration  18.29s (environment 47%, setup 18%, tests 14%, import 13%, transform 8%)
+

@@ -160,9 +160,11 @@ export interface EditorState {
   historyEpoch: number;
   /**
    * Bumped per form scope ("node:<id>", "settings") when an edit made outside that form replaced
-   * values it holds: a rename that repaired references in its fields. The node editor's config form
-   * and the loop settings form include their scope's count in their keys, so only the forms whose
-   * source changed remount; other forms keep their state and unfinished input. Not undo history.
+   * values it holds: a rename that repaired references in its fields. The loop settings form
+   * includes its count in its key and remounts. The node editor's config form takes the repair in
+   * place (`SchemaFormHandle.applyRepair`) and leaves those bumps out of its key, so it remounts
+   * only for a repair it could not take. Other forms keep their state and unfinished input. Not
+   * undo history.
    */
   formEpochs: Readonly<Record<string, number>>;
   /**
@@ -744,8 +746,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
       // Unparsed field text follows the node to its new id; other forms' text stays as typed.
       const { [`node:${nodeId}`]: moved, ...otherErrors } = s.fieldErrors;
       const fieldErrors = moved ? { ...otherErrors, [`node:${nextId}`]: moved } : s.fieldErrors;
-      // Forms holding a repaired source remount with it, so a field still showing the old text
-      // cannot write it back. The renamed node's own count moves with it.
+      // Forms holding a repaired source take it in place or remount with it, so a field still
+      // showing the old text cannot write it back. The renamed node's own count moves with it.
       const { [`node:${nodeId}`]: ownEpoch, ...formEpochs } = s.formEpochs as Record<
         string,
         number
