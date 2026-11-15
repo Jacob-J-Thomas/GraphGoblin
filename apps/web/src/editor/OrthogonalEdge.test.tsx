@@ -1027,3 +1027,169 @@ describe('Reset route keeps its toolbar where it was clicked (#207)', () => {
     expect(placed(view.container)).toBe(above(manual.label));
   });
 });
+
+/**
+ * Remove connection acts on a click the browser counts as 0 (Enter, Space, element.click()) or 1
+ * (a separate click), and not on a later click of a double or triple click (#207): that click may
+ * continue the press that selected the connection and so drew this button under the pointer. These
+ * tests set the click count explicitly, since a bare `fireEvent.click` always sends 0. They drive
+ * the real component and assert what it does with the count, never what a browser would count.
+ */
+describe('Remove connection ignores the later clicks of a double click (#207)', () => {
+  const manual: RoutedEdge = { ...route, manual: true };
+  /** The click counts the edge wrapper's ancestors saw, and the wrapper's own click handler. */
+  function setup(routed: RoutedEdge, editing: ReturnType<typeof editor> = editor()) {
+    const counts: number[] = [];
+    // xyflow's edge wrapper selects its edge in a React click handler on an ancestor.
+    const onClick = vi.fn();
+    const view = render(
+      <div onClick={onClick} onClickCapture={(event) => counts.push(event.detail)}>
+        {inFlow(<OrthogonalEdge {...props} data={data(routed)} selected />, editing)}
+      </div>,
+    );
+    return { view, editing, onClick, counts };
+  }
+  const removeButton = () => screen.getByRole('button', { name: 'Remove connection' });
+
+  beforeEach(() => {
+    useEditorStore.setState({ definition: undefined, systemChat: false });
+  });
+
+  it.each([
+    ['an automatic route', route],
+    ['a manual route', manual],
+  ])(
+    'removes nothing on a click counted 2 or 3 on %s, leaves the connection focused, and removes on one counted 1',
+    (_, routed) => {
+      const { editing, onClick, counts } = setup(routed);
+      const remove = removeButton();
+      const edge = screen.getByTestId('edge');
+      for (const detail of [2, 3]) {
+        // The second press moved focus to the button, as a browser's mousedown does.
+        remove.focus();
+        expect(remove).toHaveFocus();
+        fireEvent.click(remove, { detail });
+        expect(counts.at(-1)).toBe(detail);
+        expect(editing.remove).not.toHaveBeenCalled();
+        expect(editing.reset).not.toHaveBeenCalled();
+        // The wrapper never sees the click, so it cannot select the connection again.
+        expect(onClick).not.toHaveBeenCalled();
+        // Focus returns to the connection, as after a click on its line; Remove stays available.
+        expect(edge).toHaveFocus();
+        expect(remove).toBeInTheDocument();
+        expect(remove).toBeEnabled();
+        expect(remove).not.toHaveAttribute('aria-disabled');
+        expect(remove).not.toHaveAttribute('data-gesture');
+      }
+      // The browser's `dblclick` that follows the second click does nothing either.
+      fireEvent.doubleClick(remove, { detail: 2 });
+      expect(editing.remove).not.toHaveBeenCalled();
+      expect(editing.reset).not.toHaveBeenCalled();
+
+      // A separate click, counted 1, removes once.
+      fireEvent.click(remove, { detail: 1 });
+      expect(editing.remove).toHaveBeenCalledTimes(1);
+      expect(editing.remove).toHaveBeenCalledWith('return');
+      expect(editing.reset).not.toHaveBeenCalled();
+      expect(onClick).not.toHaveBeenCalled();
+    },
+  );
+
+  it('ends a refused click on the button for every modifier, so Control or Meta cannot select the connection again', () => {
+    const { editing, onClick } = setup(route);
+    const remove = removeButton();
+    for (const modifier of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, {}]) {
+      for (const detail of [2, 3]) fireEvent.click(remove, { detail, ...modifier });
+    }
+    expect(onClick).not.toHaveBeenCalled();
+    expect(editing.remove).not.toHaveBeenCalled();
+    // An accepted click ends on the button the same way.
+    fireEvent.click(remove, { detail: 1, ctrlKey: true });
+    expect(editing.remove).toHaveBeenCalledTimes(1);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('still removes on Enter, on Space and on element.click(), which the browser counts 0', async () => {
+    const { editing, counts } = setup(route);
+    const remove = removeButton();
+    const user = userEvent.setup();
+    remove.focus();
+    await user.keyboard('{Enter}');
+    expect(counts).toEqual([0]);
+    expect(editing.remove).toHaveBeenCalledTimes(1);
+    await user.keyboard(' ');
+    expect(counts).toEqual([0, 0]);
+    expect(editing.remove).toHaveBeenCalledTimes(2);
+    remove.click();
+    expect(counts).toEqual([0, 0, 0]);
+    expect(editing.remove).toHaveBeenCalledTimes(3);
+    // A pointer click through user-event is counted 1.
+    await user.click(remove);
+    expect(counts).toEqual([0, 0, 0, 1]);
+    expect(editing.remove).toHaveBeenCalledTimes(4);
+    expect(editing.remove).toHaveBeenLastCalledWith('return');
+  });
+
+  it('keeps refusing a click counted 1 while a pan settles, and a later click counted 2 once it is ready', async () => {
+    const gate = createViewportGestureGate();
+    const detach = gate.attach(window);
+    try {
+      const { editing } = setup(route, editor(gate));
+      const remove = removeButton();
+      const edge = screen.getByTestId('edge');
+      act(() => gate.move(new MouseEvent('mousemove')));
+      expect(remove).toHaveAttribute('data-gesture', 'panning');
+      // The existing refusal: nothing is removed, and focus stays where it was.
+      remove.focus();
+      fireEvent.click(remove, { detail: 1 });
+      expect(editing.remove).not.toHaveBeenCalled();
+      expect(remove).toHaveFocus();
+      act(() => {
+        window.dispatchEvent(new MouseEvent('mouseup', { button: 0 }));
+      });
+      await waitFor(() => expect(remove).not.toHaveAttribute('aria-disabled'));
+      // Ready: a click counted 2 is refused and returns focus to the connection; a click counted 1
+      // removes.
+      remove.focus();
+      fireEvent.click(remove, { detail: 2 });
+      expect(editing.remove).not.toHaveBeenCalled();
+      expect(edge).toHaveFocus();
+      fireEvent.click(remove, { detail: 1 });
+      expect(editing.remove).toHaveBeenCalledTimes(1);
+      expect(editing.remove).toHaveBeenCalledWith('return');
+    } finally {
+      detach();
+    }
+  });
+
+  it('leaves the store’s own refusal alone: a protected or shared-id connection stays disabled with its reason', () => {
+    useEditorStore.setState({
+      systemChat: true,
+      definition: {
+        schemaVersion: 4,
+        name: 'Chat',
+        nodes: [
+          { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
+          { id: 'chat-normalize', kind: 'mutate', label: 'Norm', config: { operations: [] } },
+        ],
+        edges: [
+          {
+            id: 'return',
+            from: { node: 'chat-input', port: 'out' },
+            to: { node: 'chat-normalize' },
+          },
+        ],
+      } as unknown as LoopDefinitionInput,
+    });
+    try {
+      const { editing } = setup(route);
+      const remove = removeButton();
+      for (const detail of [0, 1, 2, 3]) fireEvent.click(remove, { detail });
+      expect(remove).toBeDisabled();
+      expect(remove).toHaveAttribute('title', VOICE_STEP_MESSAGE);
+      expect(editing.remove).not.toHaveBeenCalled();
+    } finally {
+      useEditorStore.setState({ definition: undefined, systemChat: false });
+    }
+  });
+});

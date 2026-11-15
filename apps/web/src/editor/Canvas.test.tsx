@@ -2098,4 +2098,48 @@ describe('the selected connection is the one the user selected (#207)', () => {
       },
     );
   });
+
+  describe('Remove connection ignores the later clicks of a double click (#207)', () => {
+    it.each<[string, () => LoopDefinitionInput, string, string]>([
+      ['an automatic forward connection', simpleLoop, 'start-work', 'remove edge start to work'],
+      ['a manual loop-back', routed, 'return', 'remove edge done repeat to work'],
+    ])(
+      'keeps the draft, history, selection and announcement on a click counted 2 or 3 on %s, then removes once on one counted 1, in one Undo step',
+      (_, build, id, label) => {
+        const definition = load(build());
+        render(<Live />);
+        select(id);
+        const remove = screen.getByRole('button', { name: 'Remove connection' });
+        const wrapper = document.querySelector<SVGGElement>(`.react-flow__edge[data-id="${id}"]`)!;
+        const spoken = said();
+        for (const detail of [2, 3]) {
+          // The press before this click moved focus to the button, as a browser's mousedown does.
+          remove.focus();
+          expect(remove).toHaveFocus();
+          fireEvent.click(remove, { detail });
+          // Exactly the loaded draft: no edit, no undo step, nothing to save.
+          untouched(definition);
+          expect(selected()).toEqual([id]);
+          // Focus is on the connection, as after a click on its line, and not on Undo.
+          expect(wrapper).toHaveFocus();
+          expect(undo).not.toHaveFocus();
+          expect(said()).toBe(spoken);
+          expect(screen.getByRole('button', { name: 'Remove connection' })).toBe(remove);
+          expect(remove).toBeEnabled();
+          expect(remove).not.toHaveAttribute('aria-disabled');
+        }
+
+        // A separate click, counted 1, removes once in a step of its own and moves focus to Undo.
+        fireEvent.click(remove, { detail: 1 });
+        expect(labels()).toEqual([label]);
+        expect(store().definition!.edges.some((e) => e.id === id)).toBe(false);
+        expect(selected()).toEqual([]);
+        expect(undo).toHaveFocus();
+        // One Undo restores the exact definition.
+        act(() => store().undo());
+        expect(store().definition).toEqual(definition);
+        expect(labels()).toEqual([]);
+      },
+    );
+  });
 });

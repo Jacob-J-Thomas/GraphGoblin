@@ -95,10 +95,11 @@ const ARROWS: Record<string, ['x' | 'y', -1 | 1]> = {
 /**
  * One edge's path from ordered orthogonal points: a backward route from the router (#18), a manual
  * route (#44), or, for a forward edge without one, xyflow's own smoothstep. Selected, it shows a
- * handle on each segment and a toolbar: Remove connection (#207) and, for a manual route, Reset
- * route, which stays where it was clicked, unavailable, until the route is drawn by hand again or
- * the connection is deselected. xyflow's wrapper keeps the hit target, keyboard selection, and edge
- * change and delete events.
+ * handle on each segment and a toolbar: Remove connection (#207), which ignores a later click of a
+ * double or triple click (a browser click count above one) and keeps focus on the connection, and,
+ * for a manual route, Reset route, which stays where it was clicked, unavailable, until the route is
+ * drawn by hand again or the connection is deselected. xyflow's wrapper keeps the hit target,
+ * keyboard selection, and edge change and delete events.
  */
 export const OrthogonalEdge = memo(function OrthogonalEdge({
   id,
@@ -420,6 +421,15 @@ function RouteHandles({
               onClick={(event) => {
                 // The edge wrapper would select this (now removed) edge again on the same click.
                 event.stopPropagation();
+                // A later click of a double or triple click (the browser's count above one) goes on
+                // from the press before it, which may have selected this connection and so drawn
+                // this button under the pointer (#207). It removes nothing and leaves focus on the
+                // connection, as that press did. Enter, Space and element.click() report 0, and a
+                // separate click 1: both go on to remove.
+                if (event.detail > 1) {
+                  edgeElement()?.focus();
+                  return;
+                }
                 if (settling) return;
                 editing.remove(edgeId);
               }}

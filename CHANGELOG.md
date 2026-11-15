@@ -28,7 +28,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   route**, the toolbar stays where it was clicked and the button stays in its place, dimmed, so the
   second click of a double click no longer lands on **Remove connection**; both go when the
   connection is deselected, and the toolbar follows its label again once the route is moved by hand
-  or the reset is undone. Removing a
+  or the reset is undone. The first click of a double click on a line selects the connection and
+  draws its toolbar under the pointer; **Remove connection** ignores the later click of that double
+  or triple click, as the browser counts it, and leaves the connection selected. A separate click
+  still removes it. Removing a
   connection takes exactly one stored record: an ID that more than one stored connection holds is
   refused with its reason, on the button and from the keyboard, instead of removing them all. A
   connection stays selected only while it is the one selected in the loaded draft: **Reload

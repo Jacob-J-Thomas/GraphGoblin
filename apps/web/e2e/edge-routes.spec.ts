@@ -592,6 +592,140 @@ test('selecting and deleting a rerouted edge, and undoing it, keeps its route', 
   expect(await storedRoute(request, loopId, 'return')).toEqual([1176, 330, 600]);
 });
 
+test('a double click on a connection’s line, where its toolbar then puts Remove connection, selects it and removes nothing; a separate click removes it once (#207)', async ({
+  page,
+  request,
+}) => {
+  // start -> work with its ports far apart vertically: selected, its toolbar is drawn above the
+  // middle of the vertical trunk, over the line. The other cards are out of the trunk's way.
+  const definition = crossingLoop();
+  const spots: Record<string, [number, number]> = {
+    start: [0, 0],
+    work: [400, 330],
+    side: [800, 0],
+    done: [1100, 330],
+    success: [1400, 0],
+    exhausted: [1400, 330],
+  };
+  for (const node of definition.nodes) node.ui = { x: spots[node.id]![0], y: spots[node.id]![1] };
+  const loopId = await createLoop(request, definition);
+  const puts: string[] = [];
+  page.on('request', (sent) => {
+    if (sent.method() === 'PUT' && /\/loops\/[^/]+\/draft$/.test(new URL(sent.url()).pathname))
+      puts.push(sent.url());
+  });
+  await openLoop(page, loopId);
+  const original = await draft(request, loopId);
+  const connection = edge(page, 'start-work');
+  const remove = connection.getByRole('button', { name: 'Remove connection', exact: true });
+  const undo = page.locator('button[data-history="undo"]');
+  const viewport = () => page.locator('.react-flow__viewport').getAttribute('style');
+  /** What the browser hits at a point: which connection, whether selected, its line or a button. */
+  const hitAt = (at: { x: number; y: number }) =>
+    page.evaluate(({ x, y }) => {
+      const hit = document.elementFromPoint(x, y);
+      const owner = hit?.closest('.react-flow__edge');
+      return {
+        edge: owner?.getAttribute('data-id') ?? null,
+        selected: owner?.classList.contains('selected') ?? false,
+        line: hit?.classList.contains('react-flow__edge-interaction') ?? false,
+        button: hit?.closest('button')?.textContent?.trim() ?? null,
+      };
+    }, at);
+
+  // Where the selected connection draws Remove connection: select it, measure the button, deselect.
+  await select(page, 'start-work');
+  const box = (await remove.boundingBox())!;
+  expect(box).not.toBeNull();
+  await page.keyboard.press('Escape');
+  await expect(connection).not.toHaveClass(/selected/);
+  await expect(remove).toHaveCount(0);
+
+  // A point of the unselected line, on its vertical trunk, that the browser hits as the line and
+  // that lies inside that box (nearest the box's centre).
+  const point = await path(page, 'start-work').evaluate((line, rect) => {
+    const curve = line as SVGPathElement;
+    const matrix = curve.getScreenCTM();
+    if (!matrix) return null;
+    const step = curve.getTotalLength() / 600;
+    const at = (distance: number) => curve.getPointAtLength(distance).matrixTransform(matrix);
+    const middle = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+    let best: { x: number; y: number } | null = null;
+    for (let i = 2; i < 599; i += 1) {
+      const here = at(i * step);
+      const back = at((i - 1) * step);
+      const forward = at((i + 1) * step);
+      const vertical = Math.abs(forward.x - back.x) < 0.1 && Math.abs(forward.y - back.y) > 1;
+      const inside =
+        here.x > rect.x + 3 &&
+        here.x < rect.x + rect.width - 3 &&
+        here.y > rect.y + 3 &&
+        here.y < rect.y + rect.height - 3;
+      if (!vertical || !inside) continue;
+      const hit = document.elementFromPoint(here.x, here.y);
+      const owner = hit?.closest('.react-flow__edge');
+      if (!hit?.classList.contains('react-flow__edge-interaction')) continue;
+      if (owner?.getAttribute('data-id') !== 'start-work') continue;
+      if (
+        !best ||
+        Math.hypot(here.x - middle.x, here.y - middle.y) <
+          Math.hypot(best.x - middle.x, best.y - middle.y)
+      )
+        best = { x: here.x, y: here.y };
+    }
+    return best;
+  }, box);
+  expect(
+    point,
+    'a hit-tested point of the unselected line inside the future Remove box',
+  ).not.toBeNull();
+  const at = point!;
+  const onTheLine = { edge: 'start-work', selected: false, line: true, button: null };
+  expect(await hitAt(at)).toEqual(onTheLine);
+
+  // One ordinary click selects the connection, and the same point is then Remove connection.
+  await page.mouse.click(at.x, at.y);
+  await expect(connection).toHaveClass(/selected/);
+  expect(await hitAt(at)).toEqual({
+    edge: 'start-work',
+    selected: true,
+    line: false,
+    button: 'Remove connection',
+  });
+  await expect(undo).toHaveAttribute('aria-disabled', 'true');
+  await connection.focus();
+  await page.keyboard.press('Escape');
+  await expect(connection).not.toHaveClass(/selected/);
+  expect(await hitAt(at)).toEqual(onTheLine);
+
+  // An ordinary double click there: its first click selects the connection and draws Remove
+  // connection under the pointer, and its second click lands on it. Nothing is removed; the
+  // connection stays selected, focused and available, and the viewport stays as it was. (The click
+  // counts here are the ones Playwright's mouse gives the browser.)
+  const settled = await viewport();
+  const writes = puts.length;
+  await page.mouse.dblclick(at.x, at.y);
+  await expect(connection).toHaveClass(/selected/);
+  await expect(connection).toBeFocused();
+  await expect(remove).toBeEnabled();
+  await expect(connection).toHaveCount(1);
+  await expect(undo).toHaveAttribute('aria-disabled', 'true');
+  await saved(page);
+  expect(await viewport()).toBe(settled);
+  expect(puts).toHaveLength(writes);
+  expect(await draft(request, loopId)).toEqual(original);
+
+  // A separate click on Remove connection removes it once, and one Undo restores it.
+  await remove.click();
+  await expect(connection).toHaveCount(0);
+  await saved(page);
+  expect((await draft(request, loopId)).edges.some((e) => e.id === 'start-work')).toBe(false);
+  await page.getByRole('button', { name: 'Undo remove edge start to work', exact: true }).click();
+  await expect(connection).toHaveCount(1);
+  await saved(page);
+  expect(await draft(request, loopId)).toEqual(original);
+});
+
 test('forced colours keep the handles and their focus ring visible', async ({ page, request }) => {
   await page.emulateMedia({ forcedColors: 'active' });
   const loopId = await createLoop(request);
