@@ -1,0 +1,203 @@
+# GraphGoblin PR #487 / issue #410 — independent final audit
+
+**SIGN-OFF.** Fresh independent GPT-6 Astra at max effort, formal scan **2 of the shared maximum of 3**. I found no actionable in-scope blocker in the effective change or its integration context. The two failure projections now clear the current wait while preserving the failure, child identity, durable history, recovery policy and terminal finalization. This is the exact-head engineering sign-off, not a claim of merge, broader-batch completion or owner acceptance.
+
+## Exact identity and admission
+
+| Item | Independently verified value |
+| --- | --- |
+| PR | [#487, Clear stale waits when runs fail](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487), open, draft and mergeable at readback |
+| Head | `0d1b935988c4ff06f5091b645210b0cd88703a16` |
+| Head / tested tree | `9439a500040aa4763613549cca6235023916de58` |
+| Actual target/main | `154401c7b47c1e56b62a6daec50e2a3145ea967d` |
+| Target tree | `7e611f71ac8b3693d574b8f08869d68fed19af4b` |
+| Product/test source | `4e4501bd92953794bb733a746f7c24d1bcc2452a`, tree `8f19c61271418529ff96e8e204c18010ce088c5e` |
+| Tested synthetic merge | `89fa84597f5aa124cf02d2fdebe27e4656ef1516` |
+| Synthetic parents, in order | `154401c7b47c1e56b62a6daec50e2a3145ea967d`, `0d1b935988c4ff06f5091b645210b0cd88703a16` |
+| Current CI | [run 43758754651](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43758754651), attempt 2, completed/success |
+| Gates job | [132958879679](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43758754651/job/132958879679), all 32 reported steps successful |
+| Checkout | `C:\Users\98jak\.codex\worktrees\gg-20261115-runtime\GraphGoblin`; clean index/worktree |
+| Admission | `runtime-410-astra-admission.json`, SHA-256 `8c13a5d536316dfafaa57b82bf4aadef7fbbee6b029d7590280f66c3392d1a28` |
+
+The target is the merge of PR #485, so #381/#414 are inherited context. The source commit is directly based on that target. The second commit adds only material under `docs/`; no production, test, workflow, dependency or build configuration changed between the source candidate used by native QA and the publication head. The merge base is the actual target. Local Git object inspection, remote PR metadata, `git ls-remote`, the GitHub Git-commit endpoint, current run metadata and the CI checkout line all agree.
+
+The closing remote snapshot and exact UTC readback time are in `final-remote-readback.json` and `final-pr-connector-readback.json`. This sign-off is limited to the identities above. A changed head, target or integration tree requires confirmation from this auditor under the existing scan budget.
+
+## Scope and independence
+
+I read AGENTS.md, `docs/README.md`, the relevant implementation-plan context, `docs/15-issue-workflow.md`, the four-intent register, issue #410 and its dispatch comment, the admitted runtime contract, implementation brief, Opus brief and Astra brief. The current issue has `aidlc-ready`, `qa:touched-systems`, GPT implementation and Claude review routing; it has no owner-only acceptance gate. The batch separately requires this fresh exact-head Astra audit.
+
+This audit used read-only source, Git and GitHub inspection plus external evidence-analysis files. I did not implement, stage, commit, push, publish, merge, open the owner application/store, connect to ports 4747/4748, call a model provider, run the native fixture, repeat a green test/build/browser suite, or take the heavy test slot. No model substitution or extra formal scan occurred. Root retains all integration authority.
+
+The completed opposite-family gate was independently verified as Claude Opus 5.5 xhigh: launch/spec identity, provider `modelUsage` with only `claude-opus-5-5`, successful non-error result, and actual process exit 0. Its 26,620-byte full report has SHA-256 `84ef54e854a3258f5987bff88fd2e49a2e2eb7851502e8c9d89826ce28a1bba5`. A fresh GitHub read of [comment 6901983201](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6901983201) contains that entire report exactly. I formed the conclusions below from the code and raw evidence, rather than treating READY as proof.
+
+## Effective diff and artifact integrity
+
+The target-to-head diff has 229 files: five outside `docs/qa/`, plus 224 QA-related files. The meaningful changes are:
+
+| Paths | Review outcome |
+| --- | --- |
+| `packages/engine/src/run-manager.ts` | Two explicit wait clears: live `failRun` and the `run.failed` reconstruction branch. No other production change. |
+| `packages/engine/src/awaited-children.test.ts` | 99 added lines implement two public-manager regressions for live and event-first failure. |
+| `docs/05-execution-engine.md`, `CHANGELOG.md` | Correctly describe new terminal projection behavior and the unchanged historical-row boundary. |
+| Four-intent register | Records the prior #485 completion and #410 candidate checkpoint, with distinct delivery/acceptance states. The old-source test wording needs the evidence qualification discussed below. |
+| `docs/qa/.gitattributes` | Adds `-text -whitespace` only for the five evidence packet subtrees, preserving raw evidence bytes. It does not change product gating. |
+| Three #410 evidence packets | Baseline 80 files, implementation 11, candidate 25. |
+| Two inherited #381 completion/CI packets | Completion 31 files, final CI 76. These archive already-merged work and are not substitute gates for #487. |
+
+I recomputed all **40 admitted payload sizes and SHA-256 values**: 35 bound inputs, four current CI decoded logs and the coverage ZIP. All match. The admission digest itself also matches.
+
+All five packet inventories validate: **218 checksum-covered payloads**, with no unlisted files. There are 223 packet files including their five checksum manifests, plus `docs/qa/.gitattributes`. External source copies were compared as well. The implementation packet uses a different `entries/sourceRelativePath` map shape; its eight source copies all match. Two completion-map origins are explicitly GitHub/API-derived descriptions rather than local filenames. Their destination hashes match; the captured API comment body equals the retained published-comment text exactly. These are not missing source evidence.
+
+`packet-integrity.json`, `implementation-map-verification.json`, `publication-provenance-readback.json` and the input inventories retain the exact paths and hashes. The original staging refusal from ignored raw `.log`/coverage files remains in the admitted evidence. Final publication contains those paths and matches their accepted bytes. The narrowly formatted implementation README has the recorded final hash; sealed raw reports and logs are unchanged.
+
+## Production correctness and recovery
+
+### Live failure
+
+At `run-manager.ts:3039`, `failRun` reads the current run, refuses terminal rows, and first completes any terminal event already in the log. Otherwise it performs the existing failure classification and bounded-publication steps, appends the failure and any associated records, then uses the existing `ACTIVE_STATUSES` compare-and-set to write failed status, the same failure and finish time. The new `waiting: undefined` member is part of that same write (`:3073`). Finalization is still called only after a successful transition.
+
+This covers ordinary node failures and callers such as deadline/stop interruption, missing definition or cursor faults and invalid results without recategorizing them. The parent failure still names the subloop node and child, carries the child's effective code/resumability/script identity, and preserves `currentNodeId`, pins and invocation identity. The inherited #381 classification/redaction code is not modified.
+
+### Failure already durable before projection
+
+`completeFromLog` (`:2824`) obtains the terminal event from the journal, restores the thread checkpoint, and applies the recorded outcome. Its failed branch now includes `waiting: undefined` (`:2841`). The spread into the transition preserves that own-but-undefined member. The status write and finalization remain the existing ones.
+
+Startup routes a nonterminal recovery candidate with a terminal journal event through `execute` and `completeFromLog` before new node execution or a new `run.started`. `terminalEvent` treats a later resume/start as a boundary, so it does not mistakenly reapply an earlier failure after accepted resume. The native W2 witness independently confirms that no event is added and no child visit repeats during this reconstruction.
+
+### Storage, API and MCP semantics
+
+The `RunRecordChanges` port explicitly defines undefined as field clearing (`ports.ts:90`). `SqliteRunRepository.toColumns` iterates actual object entries and converts present undefined values to SQL NULL (`runs.ts:19–49`). Omitting a member leaves its column unchanged. `transition` validates the prospective record and writes through the same transaction and status/optional observation guards as before. `runRecordFromRow` omits a NULL waiting field. The in-memory repository deletes fields for present undefined values, matching the decoded SQLite shape.
+
+The fix therefore clears persisted state, rather than merely suppressing a field in serializers. REST detail/list and compiled MCP detail/list prove the intended omission. The failure remains identical in SQLite, its terminal event and the full detail surfaces. MCP `list_runs` deliberately uses the existing compact `summarizeRun` failure representation (`apps/mcp/src/describe.ts:127–156`), so equality there means agreement with that defined projection, not retention of every detail field.
+
+### Resume and other consumers
+
+I traced the newly absent wait through its meaningful consumers:
+
+- Input, signal, timer and child wake decisions require an active waiting/paused state and observed wait identity. They did not act on terminal stale waits. The existing compare-and-set guards still prevent delayed wakes from clobbering a later wait.
+- Finalization cancels timers, preserves child-cancellation policy, delivers applicable authored returns, notifies the parent and marks finalization. It does not need the failed run's old current wait.
+- `reviewedChildRecovery` reads `failure.details.childRunId` and the recorded child wake; resume authorization remains bound to the observed child failure/sequence, not to the waiting projection.
+- `completeResume` retains the failed node cursor. On resumed subloop execution, the handler now reaches `childOfThisVisit` when `previousWait` is absent. That lookup finds the same `child_run.started` for the current unfinished visit and stops at the visit's `node.finished`. The SQLite admission transaction commits child creation and the parent's link together; a valid durable park cannot name a child without that journal link. It does not start a duplicate child or change pins.
+- The other handler consuming `previousWait` is heartbeat. Its fallback computes the maximum `heartbeat.beat` from the current visit. The beat is journaled before the park, so removing the redundant wait does not reset its count.
+
+The existing public-manager child-failure parity tests assert resume of the same child, exactly one child-start record, matching pins, parent-actor authorization and continuation after repair. The mapping-retry test asserts reuse of the recorded child completion. They run against the new projection behavior in both the 197-test focused result and current CI. This is adequate direct public-method evidence under `docs/15`; it is not a claim that native W1–W4 separately resumed a newly failed parent.
+
+### Historical boundary and unaffected outcomes
+
+A fully projected old terminal row is not reconstructed. `listRecoveryCandidates` includes active or unfinalized rows; terminal finalization itself does not clear old wait content. `completeFromLog` also returns without rewriting an already-terminal record. W4 confirms the genuine finalized baseline rows and events remain unchanged. An old failure event whose status was never projected does take the completion path and is cleared. This distinction matches the docs and includes no migration or converter.
+
+Success, cancellation and authored exits already clear waits in their terminal writes and are untouched. Authored Failure is still `run.finished` with outcome `failure`, distinct from an execution `run.failed`. No schema, dependency, layering boundary, license, authentication surface, external input or privilege is added. The change reduces misleading public state without broadening failure diagnostics. I found no introduced security or concurrency issue.
+
+## Regression evidence
+
+The added `it.each` cases first create an actual child input wait and a parent child wait through `RunManager`. Firing the child timeout produces a resumable `WAIT_TIMEOUT`. In the live case the test settles the manager. In the recovery case it withholds only the parent's failed transition, verifies the parent is still running with its original wait and no finalization, and verifies `run.failed` is already the last event. It restores the port and starts a fresh manager over the same fixture.
+
+Both cases require a finalized failed parent with the preserved code, parent node, child linkage and resumability; ordered park, child wake, child completion and failure history; no continuation into the following node; and no current `waiting` property. Recovery additionally compares the entire event list before/after. The fixture exercises the public manager and port contract; it is not SQLite/native-process proof by itself.
+
+The original literal-old-production log was produced using an earlier test draft: the stale-wait assertion is at line 752 there and line 760 in the committed test. I do not assume formatting alone explains the difference. That log establishes the earlier draft's failure, not byte-identical execution of the final committed tests on old source.
+
+The independent Opus probe uses the committed test and removes only an own `waiting: undefined` member from failed transitions on the existing in-memory run repository. That exactly reproduces the old arguments at the two changed call sites. Both cases reach and fail the stale-wait assertion; the same configuration without the shim passes both. I inspected both probe source files and complete logs. This establishes final-test sensitivity together with the genuine baseline native reproduction; **it is not a literal old-source rebuild**. The current PR body and full published review make this qualification explicit. The sealed old log remains intact.
+
+The accepted local results are 197 focused tests, 1,814 engine tests, 96.94% engine line coverage and 91.22% branch coverage, plus package typecheck, lint, formatting and diff checks. Current CI independently reran the 28 awaited-child tests, 14 child-failure-parity tests and all 1,814 engine tests. No added regression is skipped. I did not repeat these already-green suites because no unresolved source hypothesis justified doing so.
+
+## Independent native W1–W4 audit
+
+I inspected the native gateway/supervisor/owned-store source and the raw summaries, W2 proof/crash receipts, launcher exits and build bindings. I also wrote a separate read-only comparison of the recorded data; its corrected result has **16/16 checks passing** in `native-independent-readback.json`.
+
+| Case | Raw evidence and independent conclusion |
+| --- | --- |
+| Baseline W1/W2 | Both new failure paths retain a stale parent child wait in SQL and all four public surfaces. This is an actual old-product reproduction, not synthetic terminal-row seeding. |
+| Candidate W1 | Parent `01M7GDHGXPMCNVW7SVKT3B1QK6` and child `01M7GDHH0MNXA74T7DTG2F6GT1` fail/finalize after the actual local Node script exits 7. Parent SQL wait is NULL; REST get/list and MCP get/list omit it. The failure and event history agree. |
+| Candidate W2 landing | Parent `01M7GDHQZNG73Q04C8MV3KYQR3` has one durable `run.failed` at seq 11 while still `running`, retaining exact original wait bytes, snapshot seq 7, and NULL failure/finish/finalization columns. The gate holds before delegating the failed projection. |
+| Candidate W2 restart | Ordinary compiled startup of the same database finalizes that parent, sets SQL wait NULL and checkpoint seq 11, preserves every parent event and exact child row/event value, and exposes no wait in all four public surfaces. |
+| W3 | Active parent/child raw rows/events remain unchanged; success completes once and clears waits; stale consumed input returns 409 `WAIT_MISMATCH`; cancellation clears both waits and finalizes; authored failure remains `run.finished`, outcome `failure`, without an execution failure object. |
+| W4 | Candidate restart of a verified copy retains the baseline finalized parent's and child's exact raw row values and ordered event payloads, including the historical stale wait still exposed publicly. |
+
+W1/W2 parent history is park seq 7, wake seq 8 identifying the child's terminal result, child completion seq 10 and failure seq 11. The child terminal failure is seq 14 with completed local script dispatch provenance. Preserving this history is part of the acceptance condition, not an incidental assertion.
+
+### W2 boundary and evidence tiers
+
+The initial W2 gateway is a real compiled container and Fastify server with a controlled `RunRepository` proxy. The proxy intercepts exactly the armed parent's failed transition, reports `ownsWaitingMember: true` and `delegateEntered: false`, and holds a promise. The independent file-SQLite reader then proves the durable landing. The supervisor saves `W2-verified-before-interruption.json` before calling `kill('SIGKILL')` on the exact owned child handle. I checked that sequencing in `run.mjs:527–610` and compared the saved proof with the raw summary.
+
+The held process is PID 52008, Windows creation `134392472670935730`; exit and pipe-close both report SIGKILL. A former-port refusal is recorded. The pre-reopen receipt records the database and its sidecars, including a 1,351,392-byte WAL. The database device/file ID is `2894493802` / `4222124659380113`.
+
+The restart is ordinary mode using `apps/api/dist/main.js` and its production `main()`, PID 34208 with a different creation identity. The store and instance identity agree. The harness explicitly checks the reopened file's same device/file ID. The raw parent journal and child's row/events equal the pre-interruption values. The successful harness also checks that the single script marker is unchanged after recovery; the raw journal has no second child dispatch. These establish recovery after a committed failure before its projection, not a crash after success or a replacement seeded row.
+
+Ordinary live/restart REST, compiled stdio MCP, actual file SQLite and local exit-7 Node script are native evidence. The W2 promise barrier is controlled port instrumentation. Public-manager regression/parity tests use fakes. Source tracing establishes additional route equivalence. CI browser work is a separate hosted Linux tier. No live-provider judgment, owner store, physical-device behavior or native failed-parent resume is claimed.
+
+### Builds, first failures and cleanup
+
+The native candidate build is source `4e4501bd...` on target `154401c7...`. Its 4,293,619-byte binding has SHA-256 `cbf6bbd47aa7c556443e31afad40d39ea7425bc5b6b073c4754bfef393c3a38a`. The baseline binding is 4,293,614 bytes, SHA-256 `121b25eae6c8784313649af2e057569d86bdee60edb3aae77cf8c90639066ac3`. Both are retained externally and their build receipt/log/exit hashes match.
+
+The two binding source maps differ in exactly the four source-commit paths: run-manager, its awaited-child tests, execution docs and CHANGELOG. The current candidate matches all **1,231 outputs under 13 roots**, **1,533 non-doc source files**, **17 selected dependency files**, **22 workspace links**, **six declared runtime entries**, the Node executable, and **five harness files**. The recorded complete source inventory is 28,329 files; I did not label hashing just the 1,533 non-doc files as re-reading all 28,329. Opening and closing launcher build/harness bindings agree. The forced build reported 12 successful tasks and zero Turbo cache hits; this is not an assertion that every TypeScript incremental output was regenerated from scratch.
+
+The first baseline remains incomplete: its supervisor exited 1 after W1/W3 at the standalone seed guard because closed WAL/SHM sidecars remained. W2/W4 were not reached. The earlier path-spelling launcher refusal remains separate. The reviewed fixture correction copied the complete closed DB/WAL/SHM bundle to a fresh stage, checked input/copy hashes, checkpointed only the copy, and compared the genuine witnessed parent/child rows/events. It did not seed a fabricated failure or rewrite the original incomplete attempt. The second baseline supervisor exited 0 and completed W1–W4. The prior root offline-comparison mistake and correction are also retained separately.
+
+Candidate supervisor PID 47204 exited 0 without a deadline; the separately recorded PowerShell wrapper exit is 0. The launcher result says assertions-met and has empty stdout/stderr hashes. Raw owned-gateway/MCP exits and listener closure receipts agree. Root/independent-QA cleanup observed all 15 candidate owned PID slots absent, four ports closed/refusing, zero writers/MCP/observers and empty candidate run stores. I independently confirmed the three candidate store directories remain empty. For the baseline cleanup, helper numeric PID 53056 had been reused by a later Chrome process with a different creation identity; the unrelated process was left untouched, not killed as if it were the helper.
+
+The genuine private history seed remains a standalone 552,960-byte synthetic file with no sidecars, SHA-256 `07147c5fc50b1ac4f9ef2c2629d89396a7a3ed60ce4e7631bb7743a12cd8f7a5`. I hashed it without opening it as a database. It remains external for this audit, as admitted. Disposal is a separate root-owned cleanup decision; it is neither an owner-store migration nor a missing #410 product fix.
+
+## Current CI and artifact verification
+
+Fresh connector reads confirm the current PR/run/jobs and the live coverage artifact. The connector summarizes job steps but omits attempt timing/parent detail, so I additionally used read-only `gh api` calls for the run, both attempts' jobs, Git commit and main ref. All identify the admitted head/target and attempt 2. I fetched all four current decoded job logs independently through the GitHub connector and compared their UTF-8 bytes with the admitted copies. **All four exactly match**, not merely their outcome text.
+
+| Current log | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Gates retry | 395,572 | `bced24e9f21912c7aa05640c7c81beaa43e92b27ac55baa8f51a6154c827c89e` |
+| Browser | 178,475 | `f9d8567b0b7224a5df3bd94f9ec5797fe9de6fda2607d38bef9000de5502d6a9` |
+| Windows launcher | 46,108 | `7e0ec93f860f1350e58bd736fec9c78ab2491a0927c89ff7be08f9a9acfc85fa` |
+| Template image | 40,636 | `9807be070a72f910cc530e4c6a7fbcf78dc6c1816bedcc0f93a31378e1e7fc6b` |
+
+The retry ran Gates from 21:09:19 to 21:34:05 UTC and completed all 32 reported steps. These include real built-app reset/recovery/chat/wait/prompt restart, webhook retry and migration acceptance, typecheck, lint, formatting, layers, no-op migration generation, design tokens, dependency rules, shipped templates, coverage, licenses, generated docs, contrast and the configured dependency audit.
+
+The raw log sums to **9,607 tests passed / 41 skipped across 13 groups**. Engine has 1,814 passes with no skips. Coverage artifact **14181289134** is live, belongs to this run/head, is 22,026 bytes and has SHA-256 `ad666ea32d8ba6b67544a3d644a4dfa9d6ae1642ad7e801bc0981b2258513775`, identical to GitHub's artifact digest. I opened all 13 ZIP members in place, hashed their uncompressed bytes and read the numeric metrics:
+
+| Package | Lines | Branches |
+| --- | ---: | ---: |
+| adapter-jev | 98.80% | 96.77% |
+| api-client | 100.00% | 97.30% |
+| adapter-codex | 99.23% | 95.41% |
+| contracts | 99.40% | 94.73% |
+| domain | 98.74% | 95.98% |
+| engine | 96.94% | 91.22% |
+| infrastructure | 97.80% | 93.18% |
+| api | 95.78% | 90.61% |
+| mcp | 96.95% | 94.23% |
+| plugin-claude | 95.00% | 95.23% |
+| plugin-codex | 95.58% | 91.66% |
+| web | 98.60% | 94.29% |
+| tooling | 96.89% | 91.74% |
+
+Every package meets both 90% floors. No threshold, exclusion, retry policy, time budget or workflow file changes are in this PR.
+
+The original #487 Gates job **132948548834** timed out at the 30-minute job budget. It happened to complete all 13 coverage groups (9,607/41), but license, generated-doc, contrast and dependency-audit steps were skipped, so that attempt was not a passing complete gate. One unchanged-head Gates-only retry completed those requirements. The 22,023-byte first-attempt coverage artifact is distinct and remains retained. The root failure readback and parked #488 preserve the unresolved timing cause.
+
+The companion jobs are carried successes with their original 20:33:34 start timestamps, even though attempt 2 has new IDs: Windows **132958881577**, Template image **132958913419**, Browser **132958928293**. Browser passed **481**, skipped the declared LIVE provider test, used zero retries/one worker, and ran Linux Edge 157.0.4341.60; Windows user-agent metadata in performance output is not native Windows evidence. Optional strict routing performance was off. Windows passed **14/14**, but its upload warning says no native artifact files existed. Browser's failure-artifact upload was skipped after success. The image check loaded four installed templates with network disabled and read-only storage.
+
+The dependency audit passed its configured high-severity threshold with **8 low / 13 moderate advisories**, not zero advisories. Build had 12 tasks/zero Turbo hits; coverage had 22 tasks with nine cached dependency builds. Product tasks used Node **22.23.4**; the Actions warning about its own JavaScript runtime 24 does not mean the application ran on Node 24.
+
+## Publication fidelity and dispositions
+
+The execution docs and CHANGELOG correctly restrict the guarantee to terminal projection writes. They preserve original park/wake/child history and say that already-failed older rows can retain a stale wait. No upgrade SQL or format converter is needed for this bounded fix.
+
+The register and packet wrappers preserve their historical checkpoint times: at publication, CI/review/audit were pending. The now-current PR body records completed CI and scan 1 while awaiting this audit. That is a temporal update, not a discrepancy in source identity. The unqualified old-source sentence in the original issue/register/implementation checkpoint should be read with the explicit final-test qualification in this report and current PR body; I have not retroactively promoted the earlier draft log into byte-identical committed-test evidence.
+
+The inherited #485 packets accurately preserve its earlier Opus CHANGES REQUIRED, subsequent documentation correction and Astra SIGN-OFF, rather than relabeling the first review READY. GitHub confirms #485 merged at 19:38:38 UTC as the current target. Git confirms the recorded target/head parents and equal audited/actual/synthetic trees. The captured comment body exactly equals the retained published text. Its first CI attempt completed only ten coverage groups, unlike #487's first attempt; the packet keeps those separate. The 31-manifest-record/32-checksum-row clarification and prior curation reports remain explicit. No #381 source review is being reopened here.
+
+| Prior observation | Independent disposition |
+| --- | --- |
+| O1, old-source draft vs committed test | Evidence qualification accepted. Real old-product native reproduction plus the exact failed-transition argument emulation establish sensitivity. Preserve both first logs; do not call the emulation a literal old-source build. No product correction or rerun required. |
+| O2, resumed parent uses journal fallback | Equivalent under atomic child/link admission and current unfinished-visit boundary; public parity/mapping tests directly exercise it. The existing comment describes a valid crash case and creates no blocking ambiguity. |
+| O3, no native resume of newly cleared failed parent | Explicit tier limitation; public-method coverage meets this criterion under the repository workflow. It is not an unavailable owner QA prerequisite. |
+| O4, private history seed retained | Intentional external audit input with verified unchanged hash and no sidecars. Disposal remains root-owned. |
+
+No current contract blocker was found. No new follow-up issue is required by this audit. #486 and #488 remain parked; PR #460 retains its owner hold. #419 and #435/#436/#438/#456 remain later work. This sign-off does not change those states or imply acceptance of the broader four-intent batch.
+
+## Audit artifacts, commands and limitations
+
+`commands.md` records exact verification commands/tool parameters, source-reading scope and outcomes. `audit-input-inventory.json` consolidates exact inspected/hash-checked inputs, while the detailed binding report distinguishes content review from bulk integrity checks. `effective-full-diff.patch` captures the entire target-to-head change, and `effective-diff.patch` contains the non-QA production/test/narrative change and the QA attribute addition; the full 229-path list is `effective-changed-paths.txt`. `SHA256SUMS.txt` seals this report and the external audit outputs.
+
+Two mistakes in my external readback code are preserved rather than hidden: the first native comparator wrongly required the deliberately compact MCP list failure to equal full REST detail, and the first CI parser did not strip ANSI sequences around Vitest counts. I corrected the comparator to the inspected `summarizeRun` contract and stripped ANSI only for parsing. The first scripts/outputs remain as `*-first-verifier-error*` and `*-first-ci-parser-error*`; source, raw evidence, CI and assertions under test were not altered or rerun. The corrected native comparison passes 16/16, and the CI parser independently totals 9,607/41. These are inspection-tool corrections, not product regressions or retries into product green.
+
+This review does not claim a new live native execution, native failed-parent resume, live-provider testing, physical devices or owner acceptance. It signs off on inspected source, genuine bound native evidence, direct public-method tests and the successful exact current-head CI. Fully projected historical stale rows remain unchanged by design. With those explicit limits, the #410 engineering outcome is established at the exact head, target and tree named above.

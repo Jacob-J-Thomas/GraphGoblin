@@ -1,0 +1,156 @@
+{
+  "at": "2026-11-15T22:03:16.670Z",
+  "checks": [
+    {
+      "name": "Both accepted raw matrices completed and have no remaining sessions",
+      "pass": true
+    },
+    {
+      "name": "Baseline W1 stale wait in SQL and all four public surfaces",
+      "pass": true
+    },
+    {
+      "name": "Baseline W2 stale wait after event-first restart in all surfaces",
+      "pass": true
+    },
+    {
+      "name": "Candidate W1 wait clear with exact public and event agreement",
+      "pass": true
+    },
+    {
+      "name": "Candidate W2 wait clear with exact public and event agreement",
+      "pass": true
+    },
+    {
+      "name": "W2 independently saved proof binds the held transition and landed raw records",
+      "pass": true
+    },
+    {
+      "name": "W2 landing is nonterminal, not projected, with prior wait and a committed failure",
+      "pass": true
+    },
+    {
+      "name": "W2 restart preserved all parent events, child row/events and failure identity",
+      "pass": true
+    },
+    {
+      "name": "W2 exact owned process was interrupted and ordinary process reused store/instance",
+      "pass": true
+    },
+    {
+      "name": "W3 active parent and child raw rows/events did not change",
+      "pass": true
+    },
+    {
+      "name": "W3 success clears waits and performs one subloop completion and exit",
+      "pass": true
+    },
+    {
+      "name": "W3 cancellation clears both waits and finalized both runs",
+      "pass": true
+    },
+    {
+      "name": "W3 authored failure is run.finished, no failure object, no wait",
+      "pass": true
+    },
+    {
+      "name": "W4 exact historical parent/child bytes match baseline live and restart witnesses",
+      "pass": true
+    },
+    {
+      "name": "Private seed remains original standalone file without sidecars",
+      "pass": true
+    },
+    {
+      "name": "Candidate stores remain empty; captured process cleanup is complete",
+      "pass": true
+    }
+  ],
+  "summaryDigests": {
+    "candidate": {
+      "path": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\docs\\qa\\2026-11-15-terminal-wait-candidate\\candidate\\native-evidence\\summary.json",
+      "bytes": 1114359,
+      "sha256": "efef6685c7800c80b2513898f1d8083b8113faef641e2b389d74704bd5eac70c"
+    },
+    "baseline": {
+      "path": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\docs\\qa\\2026-11-15-terminal-wait-baseline\\baseline-02\\raw\\summary.json",
+      "bytes": 1146824,
+      "sha256": "24e69b653c4574f82de8316666a7137088f4d3114974a49f1f15d8e4d8ec43ad"
+    }
+  },
+  "W2": {
+    "gate": {
+      "type": "gate",
+      "pid": 52008,
+      "runId": "01M7GDHQZNG73Q04C8MV3KYQR3",
+      "childId": "01M7GDHR28V7W2N6AYBXA64R68",
+      "states": [
+        "queued",
+        "running",
+        "waiting",
+        "paused"
+      ],
+      "change": {
+        "status": "failed",
+        "failure": {
+          "code": "SCRIPT_EXIT_CODE",
+          "message": "subloop child 01M7GDHR28V7W2N6AYBXA64R68 failed: script exited with code 7",
+          "nodeId": "call",
+          "resumable": true,
+          "details": {
+            "childRunId": "01M7GDHR28V7W2N6AYBXA64R68",
+            "childNodeId": "work",
+            "childDetails": {
+              "exitCode": 7,
+              "stderr": "qa410-local-exit7",
+              "stdout": ""
+            }
+          },
+          "script": {
+            "visitId": "01M7GDHR28V7W2N6AYBXA64R68:11",
+            "dispatchId": "01M7GDHRHA4Q8Y7XV6QQCKBRZW",
+            "state": "completed",
+            "exitCode": 7
+          }
+        },
+        "finishedAt": "2026-11-15T20:14:32.635Z"
+      },
+      "ownsWaitingMember": true,
+      "delegateEntered": false
+    },
+    "proofProcess": {
+      "pid": 52008,
+      "windowsCreationTime": "134392472670935730",
+      "origin": "http://127.0.0.1:53458",
+      "store": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-410-native-preparation\\evidence-candidate-review-01\\event-first-store"
+    },
+    "crashFiles": {
+      "graphgoblin.db": {
+        "present": true,
+        "bytes": 4096,
+        "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa",
+        "device": "2894493802",
+        "fileId": "4222124659380113"
+      },
+      "graphgoblin.db-wal": {
+        "present": true,
+        "bytes": 1351392,
+        "sha256": "201e026a05b368a45bf5b62078b64b222f39f4542c9380c0b2e208495baef75d",
+        "device": "2894493802",
+        "fileId": "3659174705958802"
+      },
+      "graphgoblin.db-shm": {
+        "present": true,
+        "bytes": 32768,
+        "sha256": "52d759fdf2c58b5530461266c54c0cc82f40b3ffac400af85a34c8ad01df1f09",
+        "device": "2894493802",
+        "fileId": "3940649682669461"
+      }
+    }
+  },
+  "privateSeed": {
+    "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-410-native-preparation\\evidence-baseline-review-02\\private-history-seed\\graphgoblin.db",
+    "bytes": 552960,
+    "sha256": "07147c5fc50b1ac4f9ef2c2629d89396a7a3ed60ce4e7631bb7743a12cd8f7a5"
+  }
+}

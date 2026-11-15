@@ -1,0 +1,42 @@
+## #410 review, formal scan 1 of 3 (Claude Opus 5.5 xhigh): **READY**
+
+There are no blockers. The production change is correct and contained, the new tests fail on the old behavior and pass on the new, the native W1–W4 evidence covers what the brief requires, and the docs describe the historical limit correctly. The full report is at `review-410-opus-scan1/full-report.md` (SHA-256 `84ef54e8…`). It is separate from `provider-final-message.md`.
+
+**Identity**
+- PR #487 (open, draft, mergeable).
+- Head `0d1b9359`, tree `9439a500`, target `154401c7` (the merged #381 parent).
+- Source change `4e4501bd`; the second commit only touches `docs/`.
+- Tested merge `89fa8459` has the same tree as the head.
+- CI run `43758754651` attempt 2 passed on that exact merge.
+- All 26 admitted inputs match their recorded hashes. Refs and the admission file were unchanged when I finished.
+
+**What I checked**
+- **The fix:** both places that mark a run failed now clear its wait: `failRun` (live) and the rebuild from the event log in `completeFromLog`. These are the only two code paths that ever write a failed status. The explicit `waiting: undefined` is written to SQLite as NULL.
+- **Effect on other code:** I traced every reader of a failed run's `waiting` (parent wake, timers, drain, input/signal, recovery, web wait panel, MCP). None changes behavior.
+- **Effect on Resume (the important one):** a resumed failed subloop parent now finds its child from the event log instead of the old stale wait. The two give the same answer because a child and its start event are written together (#320). The existing #251 tests and the mapping-retry test already exercise this path and pass; the heartbeat beat count is also unchanged.
+- **W2:** the gate held the parent's failed write before it reached SQLite. An independent reader confirmed `run.failed` was committed while the parent was still `running` with its original wait. Only then was the exact process killed. A normal restart of the same physical database (same file ID) finalized the parent with the wait cleared, one unchanged failure event and a single script marker (no rerun).
+- **W4:** the genuinely old finalized baseline rows came through a restart byte-identical, stale wait included, so nothing was migrated.
+- **CI:** 9,607 passed and 41 skipped. The engine ran 1,814 tests with none skipped, and none of the skips are in the engine or the SQLite run storage. Coverage is 96.94% lines and 91.22% branches. The browser job passed 481 with 1 skipped, and the Windows launcher passed 14 of 14.
+
+**Non-blocking observations**
+1. **Old-source test log came from an earlier draft.** It shows the failing assertion at line 752, but the committed test has it at line 760. I closed this with a light probe, with all probe files and cache outside the checkout. With the old behavior simulated exactly, the committed test fails both cases at line 760 and every earlier assertion passes. With the simulation off, it passes. The checkout stayed clean. Nothing needs to change before merge.
+2. **Resume now always uses the event-log lookup** for new failed subloop parents (see above). This is safe and covered by tests. The comment in `subloop.ts` still gives only the crash case as the reason for that lookup.
+3. **The native matrix never resumes a newly cleared failed parent.** The public-method tests cover it, which is enough under the issue workflow.
+4. **The private history seed is still kept outside the repository, unchanged** (SHA-256 `07147c5f…`). The candidate stores are empty. Deleting the seed is an orchestrator decision.
+
+**Limitations**
+- I did not rerun builds, full suites, the browser job or native QA; I relied on the raw logs and receipts, all hash-checked.
+- The probe simulates the old code through the test fake rather than checking out `154401c7`.
+- These CI caveats carry forward:
+  - Gates passed on a single retry after the first attempt hit the 30-minute limit; the time-limit issue is parked as #488.
+  - The other three jobs were carried over from attempt 1.
+  - The browser job ran Edge on Linux, not native Windows.
+  - Live provider tests were skipped.
+  - No Windows artifact was uploaded.
+  - The dependency audit passed its threshold but reported 8 low and 13 moderate advisories.
+
+**Out of scope**
+- Older failed rows keep their stale wait; no migration is authorized.
+- #488 and #486 stay parked, and PR #460 stays on hold.
+- #419 and the launcher work come later.
+- The Astra max final audit and merge are still pending, and this review does not close #410.

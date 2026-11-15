@@ -1,0 +1,119 @@
+{
+  "duration_api_ms": 826398,
+  "stop_reason": "end_turn",
+  "session_id": "034a496a-e9f8-4808-9408-fa685dd88cb3",
+  "total_cost_usd": 6.8245826,
+  "usage": {
+    "input_tokens": 178,
+    "cache_creation_input_tokens": 281630,
+    "cache_read_input_tokens": 14318553,
+    "output_tokens": 85356,
+    "output_tokens_details": {
+      "thinking_tokens": 44901
+    },
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 281630,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "global",
+    "iterations": [
+      {
+        "input_tokens": 2,
+        "output_tokens": 1638,
+        "cache_read_input_tokens": 281262,
+        "cache_creation_input_tokens": 368,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 368
+        },
+        "type": "message"
+      }
+    ],
+    "speed": "standard",
+    "fallback_credit": null
+  },
+  "modelUsage": {
+    "claude-opus-5-5": {
+      "inputTokens": 178,
+      "outputTokens": 85356,
+      "cacheReadInputTokens": 14318553,
+      "cacheCreationInputTokens": 281630,
+      "webSearchRequests": 0,
+      "costUSD": 6.8245826,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 44901,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 281630,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "permission_denials": [],
+  "terminal_reason": "completed",
+  "fast_mode_state": "off",
+  "fast_mode_disabled_reason": "sdk_opt_in_required",
+  "subagent_stats": {
+    "spawned": 0,
+    "requested": {
+      "background": 0,
+      "foreground": 0,
+      "unset": 0
+    },
+    "started_in_background": 0,
+    "max_depth": 0,
+    "spawned_by_subagents": 0,
+    "completed": 0,
+    "failed": 0,
+    "killed": {
+      "parent": 0,
+      "user": 0,
+      "system": 0
+    },
+    "refused": {
+      "depth_limit": 0,
+      "concurrency_limit": 0,
+      "budget": 0
+    },
+    "by_type": {}
+  },
+  "safety_stops": 0,
+  "is_error": false,
+  "num_turns": 122,
+  "subtype": "success",
+  "api_error_status": null,
+  "result": "## #410 review, formal scan 1 of 3 (Claude Opus 5.5 xhigh): **READY**\n\nThere are no blockers. The production change is correct and contained, the new tests fail on the old behavior and pass on the new, the native W1–W4 evidence covers what the brief requires, and the docs describe the historical limit correctly. The full report is at `review-410-opus-scan1/full-report.md` (SHA-256 `84ef54e8…`). It is separate from `provider-final-message.md`.\n\n**Identity**\n- PR #487 (open, draft, mergeable).\n- Head `0d1b9359`, tree `9439a500`, target `154401c7` (the merged #381 parent).\n- Source change `4e4501bd`; the second commit only touches `docs/`.\n- Tested merge `89fa8459` has the same tree as the head.\n- CI run `43758754651` attempt 2 passed on that exact merge.\n- All 26 admitted inputs match their recorded hashes. Refs and the admission file were unchanged when I finished.\n\n**What I checked**\n- **The fix:** both places that mark a run failed now clear its wait: `failRun` (live) and the rebuild from the event log in `completeFromLog`. These are the only two code paths that ever write a failed status. The explicit `waiting: undefined` is written to SQLite as NULL.\n- **Effect on other code:** I traced every reader of a failed run's `waiting` (parent wake, timers, drain, input/signal, recovery, web wait panel, MCP). None changes behavior.\n- **Effect on Resume (the important one):** a resumed failed subloop parent now finds its child from the event log instead of the old stale wait. The two give the same answer because a child and its start event are written together (#320). The existing #251 tests and the mapping-retry test already exercise this path and pass; the heartbeat beat count is also unchanged.\n- **W2:** the gate held the parent's failed write before it reached SQLite. An independent reader confirmed `run.failed` was committed while the parent was still `running` with its original wait. Only then was the exact process killed. A normal restart of the same physical database (same file ID) finalized the parent with the wait cleared, one unchanged failure event and a single script marker (no rerun).\n- **W4:** the genuinely old finalized baseline rows came through a restart byte-identical, stale wait included, so nothing was migrated.\n- **CI:** 9,607 passed and 41 skipped. The engine ran 1,814 tests with none skipped, and none of the skips are in the engine or the SQLite run storage. Coverage is 96.94% lines and 91.22% branches. The browser job passed 481 with 1 skipped, and the Windows launcher passed 14 of 14.\n\n**Non-blocking observations**\n1. **Old-source test log came from an earlier draft.** It shows the failing assertion at line 752, but the committed test has it at line 760. I closed this with a light probe, with all probe files and cache outside the checkout. With the old behavior simulated exactly, the committed test fails both cases at line 760 and every earlier assertion passes. With the simulation off, it passes. The checkout stayed clean. Nothing needs to change before merge.\n2. **Resume now always uses the event-log lookup** for new failed subloop parents (see above). This is safe and covered by tests. The comment in `subloop.ts` still gives only the crash case as the reason for that lookup.\n3. **The native matrix never resumes a newly cleared failed parent.** The public-method tests cover it, which is enough under the issue workflow.\n4. **The private history seed is still kept outside the repository, unchanged** (SHA-256 `07147c5f…`). The candidate stores are empty. Deleting the seed is an orchestrator decision.\n\n**Limitations**\n- I did not rerun builds, full suites, the browser job or native QA; I relied on the raw logs and receipts, all hash-checked.\n- The probe simulates the old code through the test fake rather than checking out `154401c7`.\n- These CI caveats carry forward:\n  - Gates passed on a single retry after the first attempt hit the 30-minute limit; the time-limit issue is parked as #488.\n  - The other three jobs were carried over from attempt 1.\n  - The browser job ran Edge on Linux, not native Windows.\n  - Live provider tests were skipped.\n  - No Windows artifact was uploaded.\n  - The dependency audit passed its threshold but reported 8 low and 13 moderate advisories.\n\n**Out of scope**\n- Older failed rows keep their stale wait; no migration is authorized.\n- #488 and #486 stay parked, and PR #460 stays on hold.\n- #419 and the launcher work come later.\n- The Astra max final audit and merge are still pending, and this review does not close #410.",
+  "ttft_ms": 914,
+  "type": "result",
+  "duration_ms": 896727,
+  "uuid": "8cdfef18-1859-4afe-acdd-55bce1145357",
+  "ttft_stream_ms": 573,
+  "time_to_request_ms": 99,
+  "first_content_frame_ms": 573,
+  "queued_turn_count": 0,
+  "result_index": 0,
+  "model_usage_since_last_result": {
+    "claude-opus-5-5": {
+      "inputTokens": 178,
+      "outputTokens": 85356,
+      "cacheReadInputTokens": 14318553,
+      "cacheCreationInputTokens": 281630,
+      "webSearchRequests": 0,
+      "costUSD": 6.8245826,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 128000,
+      "thinkingTokens": 44901,
+      "cacheCreationEphemeral5mInputTokens": 0,
+      "cacheCreationEphemeral1hInputTokens": 281630,
+      "canonicalModel": "claude-opus-5-5",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  }
+}

@@ -1,0 +1,134 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/apps/api
+
+ ❯ src/routes/thread-disconnect.test.ts (10 tests | 9 failed) 124109ms
+   ❯ historical thread response lifetime (10)
+     × stops at an abandoned before handler boundary 40ms
+     × stops at an abandoned ownership boundary 20007ms
+     × stops at an abandoned initial boundary 20012ms
+     × stops at an abandoned checkpoint boundary 20002ms
+     × stops at an abandoned boundary boundary 20007ms
+     × stops after an abandoned page while unrelated health and current reads complete 20014ms
+     × handles the same abandoned read rejection 20003ms
+     × completes bodyless requests and reuses the connection after a full historical response 15ms
+     × preserves missing-thread, validation and authorization errors 63ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned before handler boundary
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/routes/thread-disconnect.test.ts:211:31
+    209|     await abandon(stage);
+    210|     expect(observation.operations).toEqual(operations);
+    211|     expect(observation.sends).toBe(0);
+       |                               ^
+    212|   });
+    213|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned ownership boundary
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned initial boundary
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned checkpoint boundary
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned boundary boundary
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/routes/thread-disconnect.test.ts:208:14
+    206|     ['checkpoint', ['ownership', 'initial', 'checkpoint']],
+    207|     ['boundary', ['ownership', 'initial', 'checkpoint', 'boundary']],
+    208|   ] as const)('stops at an abandoned %s boundary', async (stage, opera…
+       |              ^
+    209|     await abandon(stage);
+    210|     expect(observation.operations).toEqual(operations);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops after an abandoned page while unrelated health and current reads complete
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/routes/thread-disconnect.test.ts:214:3
+    212|   });
+    213|
+    214|   it('stops after an abandoned page while unrelated health and current…
+       |   ^
+    215|     await abandon('page', async () => {
+    216|       expect(await read(base + '/healthz')).toMatchObject({ status: 20…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > handles the same abandoned read rejection
+Error: Test timed out in 20000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/routes/thread-disconnect.test.ts:223:47
+    221|   });
+    222|
+    223|   it.each(['connected', 'abandoned'] as const)('handles the same %s re…
+       |                                               ^
+    224|     const { events } = test.container.repos;
+    225|     const readEvents = events.read;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > completes bodyless requests and reuses the connection after a full historical response
+AssertionError: expected { status: 500, …(2) } to match object { status: 200, …(1) }
+(34 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "body": "{\"schemaVersion\":1,\"run\":{\"id\":\"01M3Y7RKG0JXPRTXNMCD2PNP9Y\",\"loopId\":\"01M3Y7RKG0JXPRTXNMCD2PNP9W\",\"versionId\":\"01M3Y7RKG0JXPRTXNMCD2PNP9X\",\"iteration\":1},\"invocation\":{\"id\":\"01M3Y7RKG0JXPRTXNMCD2PNP9Z\",\"source\":\"manual.api\",\"caller\":{\"kind\":\"api-key\",\"id\":\"01M3Y7RKG0JXPRTXNMCD2PNP9V\"},\"trigger\":{\"nodeId\":\"start\",\"kind\":\"manual\",\"payload\":null,\"receivedAt\":\"2026-10-02T12:00:00.000Z\"}},\"messages\":[],\"vars\":{\"count\":129},\"artifacts\":[],\"outputs\":{\"start\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"}},\"lastOutput\":{\"nodeId\":\"start\",\"value\":null,\"at\":\"2026-10-02T12:00:00.000Z\"},\"gates\":{},\"counters\":{\"nodeVisits\":{\"start\":1,\"done\":1,\"work\":130},\"usage\":{\"inputTokens\":0,\"outputTokens\":0,\"cachedInputTokens\":0,\"reasoningOutputTokens\":0}}}",
+-   "status": 200,
++   "body": "{\"type\":\"https://graphgoblin.dev/problems/internal-error\",\"title\":\"internal error\",\"status\":500,\"code\":\"INTERNAL_ERROR\",\"detail\":\"something went wrong on the server\"}",
++   "status": 500,
+  }
+
+ ❯ src/routes/thread-disconnect.test.ts:251:21
+    249|     try {
+    250|       const first = await read(history, observedHeaders(), agent);
+    251|       expect(first).toMatchObject({ status: 200, body: expectedBody });
+       |                     ^
+    252|       expect(observation.inputEnded).toBe(true);
+    253|       expect(await observation.settled.promise).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > preserves missing-thread, validation and authorization errors
+AssertionError: expected [] to deeply equal [ 'ownership' ]
+
+- Expected
++ Received
+
+- [
+-   "ownership",
+- ]
++ []
+
+ ❯ src/routes/thread-disconnect.test.ts:281:36
+    279|       expect(JSON.parse(response.body)).toMatchObject({ code });
+    280|     }
+    281|     expect(observation.operations).toEqual(['ownership']);
+       |                                    ^
+    282|     const getInitialThread = runs.getInitialThread;
+    283|     runs.getInitialThread = async () => undefined;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 1 passed (10)
+   Start at  16:35:37
+   Duration  132.30s (tests 94%, import 4%, transform 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261115-runtime\GraphGoblin\apps\api
+

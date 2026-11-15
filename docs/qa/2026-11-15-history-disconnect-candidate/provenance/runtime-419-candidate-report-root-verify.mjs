@@ -1,0 +1,23 @@
+import {readFileSync,readdirSync,writeFileSync} from 'node:fs';
+import {join,isAbsolute} from 'node:path';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+const batch='C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch';
+const dir=join(batch,'runtime-419-native-candidate-first-report');
+const hash=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
+assert.equal(hash(join(dir,'README.md')),'8e95c2cb458fcf2545ddd7f9d16863f0df6eb192ab9047e816ccc2d346b3d088');
+assert.equal(hash(join(dir,'SHA256SUMS.txt')),'96919fc03fd0af45866a69f9ffc9b1f15b335ec864e34f7a896d1220187855f7');
+const rows=readFileSync(join(dir,'SHA256SUMS.txt'),'utf8').trim().split(/\r?\n/).map(line=>{const m=/^([a-f0-9]{64}) [ *](.+)$/.exec(line);assert(m);return{hash:m[1],path:m[2]};});
+assert.equal(rows.length,8);assert.equal(readdirSync(dir).length,9);
+for(const r of rows)assert.equal(hash(join(dir,r.path)),r.hash,r.path);
+const inv=JSON.parse(readFileSync(join(dir,'input-and-receipt-checksums.json'),'utf8'));
+let immutable=0,historical=0;
+for(const [p,r] of Object.entries(inv.observedInputAndReceiptChecksums)){if(isAbsolute(p)){historical++;continue;}const full=join(batch,p);assert.equal(readFileSync(full).length,r.size,p);assert.equal(hash(full),r.sha256,p);immutable++;}
+assert.equal(immutable,44);assert.equal(historical,33);
+const verify=JSON.parse(readFileSync(join(dir,'verify-first.stdout.json'),'utf8'));
+assert.equal(JSON.parse(readFileSync(join(dir,'verify-first-exit.json'),'utf8')).exitCode,0);
+const process=JSON.parse(readFileSync(join(dir,'process-listener-current-readback.json'),'utf8'));
+assert(process.queries.every(p=>p.exists===false));assert.equal(process.matchingTcpRows.length,0);
+const receipt={state:'accepted-independent-candidate-report',at:new Date().toISOString(),reportFullyRead:true,reportSha256:hash(join(dir,'README.md')),manifestSha256:hash(join(dir,'SHA256SUMS.txt')),manifestRowsVerified:rows.length,immutableExternalReferencesVerified:immutable,absoluteFrozenSnapshotReferences:historical,qualification:'Independent QA completed clean source/output readback before root copied publication evidence. Absolute references are the retained frozen observations; root verifies immutable external receipts without misrepresenting the now-dirty publication checkout.',outcome:'Eight closes stop further repository calls and writes; eleven successful wires equal baseline; ten negatives and history/cleanup established. Full current-head CI and both formal reviews remain required.',head:inv.head,tree:inv.tree,actualMain:inv.actualMain,independentAgent:'/root/runtime_419_native_qa',offlineDisposition:verify.disposition};
+writeFileSync(join(batch,'runtime-419-candidate-report-root-acceptance.json'),JSON.stringify(receipt,null,2)+'\n',{flag:'wx'});
+console.log(JSON.stringify(receipt,null,2));

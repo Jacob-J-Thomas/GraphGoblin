@@ -1,0 +1,23 @@
+{
+  "state": "root-admitted-one-job-retry",
+  "at": "2026-11-15T21:09:13.978Z",
+  "pr": 487,
+  "head": "0d1b935988c4ff06f5091b645210b0cd88703a16",
+  "tree": "9439a500040aa4763613549cca6235023916de58",
+  "target": "154401c7b47c1e56b62a6daec50e2a3145ea967d",
+  "run": 43758754651,
+  "failedJob": 132948548834,
+  "retriesBefore": 0,
+  "retriesAdmitted": 1,
+  "cause": "Official check annotation: The job has exceeded the maximum execution time of 30m0s",
+  "firstLogSha256": "1049ac0f837e9da13649eaa572f3fcba31588a2aa5bb30f84954293b99b59909",
+  "evidence": "All 13 coverage groups completed, 22 successful Turbo tasks. Coverage step canceled and four subsequent mandatory checks skipped. No suite assertion failure found. Workflow deadline and all CI semantics unchanged from target. Native W1-W4 and targeted engine regression separately accepted.",
+  "constraints": [
+    "Same immutable head, target and workflow; no code/test/timeout/coverage edits",
+    "Rerun only Gates; three other passed jobs retained at original attempt",
+    "Preserve original canceled attempt, full raw logs, coverage artifact, annotations",
+    "Require entire Gates job success before either formal review; repeat failure requires diagnosis, no automatic additional retry",
+    "Park repeated job-budget reliability follow-up, no implementation dispatch"
+  ],
+  "remoteReadback": "PR connector plus git ls-remote head/main exact; local index/worktree clean"
+}

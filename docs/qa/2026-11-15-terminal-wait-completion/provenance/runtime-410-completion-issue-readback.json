@@ -1,0 +1,61 @@
+{
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/410",
+    "title": "A parent failed at its subloop node keeps a stale waiting field",
+    "issue_number": 410,
+    "body": "<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for the third lane, after I08 and the parallel Claude plugin lane. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\nObserved by the independent behaviour QA of PR #375 (#320, #321) on head `32ae4b8b`; the same code is on `main`, so it is recorded here rather than fixed in that PR.\n\n## What happens\n\nA parent run that fails at its subloop node (its child failed, or the child's failure surfaced through the parent) keeps `waiting` with `kind: child` on its run record after it is `failed`. `GET /runs/{id}` and the MCP `list_runs` summary show the stale wait next to the failed status.\n\n## Where\n\n`failRun` (around `packages/engine/src/run-manager.ts:2673` on the #375 head) and the failed branch of `completeFromLog` (around line 2457) never clear the run's `waiting` field when they move the run to `failed`.\n\n## Expected\n\nA failed (or otherwise terminal) run carries no current wait; the park remains visible in the event history only.\n\n## Reproduce\n\n`docs/qa/2026-10-25-wp-d1-final-qa/probe-stale-waiting.mjs` on PR #375's branch (once merged, on `main`): a parent with a subloop whose child fails; read the parent's run record after it fails.\n\nLow severity: nothing acts on the stale field for a terminal run, but it is misleading in the API and MCP.\n\n## Delivery — completed 2026-11-15\n\n[PR #487](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487) merged at 22:21:44 UTC as `98692c8a8c7b519e8c83e585e026d595cedc0550`. Its tree `9439a500040aa4763613549cca6235023916de58` equals the audited head and tested synthetic merge; actual parents are reviewed main `154401c7b47c1e56b62a6daec50e2a3145ea967d` and head `0d1b935988c4ff06f5091b645210b0cd88703a16`. Live failure and journal-based failure projection now clear the current wait while preserving failure, child linkage, event history and finalization. Already-finalized historical rows are unchanged; no migration or historical rewrite was added.\n\nImplementation: GPT-6.1 Sol xhigh. Independent native behavior QA: a separate GPT-6.1 Sol xhigh agent. [Claude Opus 5.5 xhigh scan 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6901983201) returned READY; [fresh GPT-6 Astra max scan 2](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6902325285) returned SIGN-OFF at the exact head/target. Two of three formal scans were used. No owner-only acceptance gate applies to #410.\n\nThe merged [baseline packet](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/98692c8a8c7b519e8c83e585e026d595cedc0550/docs/qa/2026-11-15-terminal-wait-baseline/README.md) reproduces both stale-wait paths on old product code. The first matrix stopped at its historical-seed guard after live reproduction and controls. The reviewed fixture correction checkpointed only a verified closed-store copy and compared original row/event values; the complete second baseline and original failure remain retained. The original old-source unit log used an earlier test draft. The independent committed-test sensitivity probe emulates exactly the old failed-transition arguments and is not a literal old-source rebuild.\n\nThe [implementation packet](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/98692c8a8c7b519e8c83e585e026d595cedc0550/docs/qa/2026-11-15-terminal-wait-implementation/README.md) records 197 focused tests, 1,814 engine tests, 96.94% line / 91.22% branch coverage, typecheck, lint and formatting. The [candidate packet](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/98692c8a8c7b519e8c83e585e026d595cedc0550/docs/qa/2026-11-15-terminal-wait-candidate/README.md) establishes W1–W4 through actual local processes, file SQLite, REST and compiled MCP. W2 uses a controlled repository-port barrier before interruption, then ordinary compiled startup of the same physical database. Active wait/success/cancel/authored-exit controls and genuine finalized historical records remain correct. Both supervisor and wrapper exited 0, with owned processes/listeners/run stores cleaned up. Failed-parent resume is covered by direct public-manager tests, not a separate native W1–W4 resume.\n\n[CI run 43758754651 attempt 2](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43758754651) passed: 9,607 tests / 41 skips, all 13 coverage groups above both 90% floors, Browser 481 passes / one declared live-provider skip, Windows 14/14 and four template catalogs. The first Gates job reached its 30-minute limit; one unchanged-head Gates-only retry passed all 32 steps. Successful companion results were carried forward. [#488](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/488) retains the unresolved reliability follow-up. The configured high-severity dependency gate passed with 8 low / 13 moderate advisories, and Windows uploaded no native artifact.\n\nThis completes #410 engineering delivery only. #419 and the launcher lane remain subsequent work; other owner acceptance and PR #460's separate hold remain intact.\n",
+    "state": "closed",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "aidlc-ready",
+        "color": "0E8A16",
+        "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+      },
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:gpt-6.1-sol",
+        "color": "1D76DB",
+        "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+      },
+      {
+        "name": "review:claude-opus-5.5",
+        "color": "006B75",
+        "description": "Cross-vendor reviewer: Claude Opus 5.5"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:engine",
+        "color": "BFDADC",
+        "description": "Engine and run manager"
+      }
+    ],
+    "milestone": null,
+    "state_reason": "completed",
+    "comments": 1,
+    "created_at": "2026-10-26T04:29:16Z",
+    "updated_at": "2026-11-15T22:22:34Z",
+    "closed_at": "2026-11-15T22:21:46Z",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/410",
+    "display_title": "A parent failed at its subloop node keeps a stale waiting field"
+  },
+  "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/410",
+  "title": "A parent failed at its subloop node keeps a stale waiting field",
+  "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/410",
+  "display_title": "A parent failed at its subloop node keeps a stale waiting field"
+}

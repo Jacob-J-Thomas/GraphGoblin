@@ -1,0 +1,327 @@
+{
+  "freshReadback": {
+    "issue": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/489",
+      "title": "Investigate Windows reset-test directory rename EPERM",
+      "issue_number": 489,
+      "body": "During #419 validation on integrated main `98692c8a8c7b519e8c83e585e026d595cedc0550` plus the isolated historical-request cancellation candidate, the local Windows API coverage command failed during setup of an unchanged reset test.\n\nCommand: `pnpm.cmd test:coverage --filter=@graphgoblin/api --concurrency=1`, project Node v22.23.4. Started 2026-11-15 22:43:46 UTC; exit 1 after 343.063 seconds. Result: 1,952 passed, 14 skipped, one failed. The suite emitted no coverage totals.\n\nThe only failure was `src/reset/tree.test.ts:56`, case “refuses a root replaced by a link”: Windows returned `EPERM` while renaming the disposable `%TEMP%\\gg-wp-b3-rid-tree-bU8r7k\\data` directory to its sibling `original`. This happens before creating the junction or invoking the reset refusal assertions. This fixture writes ordinary bytes; it does not open a SQLite connection. The reset source has no difference from the admitted main. A single isolated run of the unchanged reset-tree suite then passed 7/7.\n\nThe original coverage failure remains a failure. This evidence does not identify the filesystem cause, establish a sharing violation or antivirus involvement, or demonstrate a #419 regression. Full current-head CI coverage remains required for #419. No retry loop, timeout relaxation, test skip, source change or filesystem-permission change was made.\n\nEvidence is retained externally pending the #419 PR archive: `runtime-419-implementation/api-coverage.log` SHA-256 `a2774416c6bff3a7ba0ae41414e6bec1b55a01cb33fa51c8b40f2b7751e7a043`; adjacent command/exit receipt, isolated diagnostic, source comparison, and source manifest. A repository-relative evidence link will be added when that packet is published.\n\nRelated #471 concerns unlinking an ownership reclaim marker during competing gateway startup, a distinct operation and fixture. #488 concerns a hosted CI job deadline, also distinct. Searches across open and closed issues found no existing ticket for this reset-test rename failure.\n\nAcceptance for a later diagnostic dispatch:\n\n- Preserve the first failing setup, exact Node/Windows environment, operation and owned path identities; capture bounded evidence of the actual failing rename without exposing credentials or touching an owner store.\n- Reproduce or characterize the failure on disposable native Windows fixtures and distinguish setup interference from reset-product behavior.\n- If a correction is warranted, preserve the replacement-directory/junction and foreign-file assertions. Do not turn an unexplained filesystem refusal into a skipped check or an unrestricted retry.\n- Verify the unchanged or corrected reset matrix and required coverage with explicit first-attempt/retry provenance.\n\nDisposition: parked follow-up under `backlog`, not implementation dispatch.",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:chore",
+          "color": "CFD3D7",
+          "description": "Maintenance, tooling, or docs"
+        },
+        {
+          "name": "area:api",
+          "color": "BFDADC",
+          "description": "Fastify API"
+        },
+        {
+          "name": "backlog",
+          "color": "9E9E9E",
+          "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 0,
+      "created_at": "2026-11-15T22:52:57Z",
+      "updated_at": "2026-11-15T22:53:16Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/489",
+      "display_title": "Investigate Windows reset-test directory rename EPERM"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/489",
+    "title": "Investigate Windows reset-test directory rename EPERM",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/489",
+    "display_title": "Investigate Windows reset-test directory rename EPERM"
+  },
+  "duplicateSearches": [
+    {
+      "query": "repo:Jacob-J-Thomas/GraphGoblin is:issue EPERM reset",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "issues": [
+              {
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/209",
+                "title": "[I08/U23/B65] Prevent duplicate loop names",
+                "issue_number": 209,
+                "body": "<!-- graphgoblin-delivery:2026-11-14 -->\n**Engineering delivered (2026-11-14):** [PR #470](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/470) merged as `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`. The merge tree is exactly the audited tree `af0e9f76b750ecbd308b3e12c589fb729b3ebf23`; its parents are the reviewed main `7c6e6355` and head `8fc8c0a5`.\n\nAll three adversarial scans are complete. Opus backend review returned READY; Sol's two UI findings were fixed and independently reproduced before/verified after; [fresh Astra max final sign-off](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/470#issuecomment-6881200714) covers the whole exact PR. [CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43614498888) and [routing](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43614498893) passed first attempts: web 2,491 tests/199 files, 22 coverage tasks, Browser 474 plus one expected skip/no retries, Windows 14/14.\n\nIndependent native correction QA used the compiled gateway, real HTTP, file SQLite and Edge. Both late import schedules preserved the selected file's exact graph; an invalid rename retry settled without a PUT, repair alone sent no PUT, and only a fresh retry sent one conditional PUT. All source/build fingerprints and served assets were bound. Original failures, nine effective negative cases, the passing stale-token control, and cleanup evidence remain retained. [Correction evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/8fc8c0a5240c304dfe4f309caad8bd1ebf540948/docs/qa/2026-11-14-loop-name-review-correction-independent/README.md)\n\n**Owner product acceptance remains open.** This issue is parked in backlog to prevent repeat engineering pickup. On an installed build containing the merge, judge whether the naming guidance, editable suggestions and recovery controls are clear across create/import/template/edit. Collision correctness and preservation are pipeline responsibilities and are verified above. No owner acceptance or whole-I08 completion is inferred from the merge.\n\nNonblocking follow-ups #472/#473 and historical Windows EPERM #471 remain unresolved. Broader save/publish lifecycle work is #237. Earlier dispatch/plan prose below remains historical.\n<!-- /graphgoblin-delivery:2026-11-14 -->\n\n<!-- graphgoblin-routing:2026-11-14 -->\n**Owner routing update (2026-11-14):** GPT owns architecture and backend/domain implementation; Claude owns any UI design and implementation. Keep those surfaces in bounded delivery slices with independent adversarial review from the opposite family at the selected effort, separate behavior QA, and the preserved fresh Astra max exact-head audit. The primary GPT routing label covers the architecture/backend scope; any UI delivery slice is explicitly assigned to Claude. This changes implementation ownership, not the approved behavior or scope.\n<!-- /graphgoblin-routing:2026-11-14 -->\n\nPart of #312\n\n<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for I08, the first lane, alongside the Claude plugin. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\n<!-- graphgoblin-approved-roadmap:2026-10-17:B65 -->\n\n<!-- graphgoblin-approved-revision:2026-10-18 -->\n\n**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.\n\nAuthority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.\n\n## Bounded change\n\nPrevent duplicate loop names\n\n## Acceptance criteria\n\n- [x] Create/rename/import/copy consistently reject case/whitespace-equivalent duplicate names with useful guidance; concurrent requests cannot produce duplicates, and copy/import can suggest a unique name.\n\n- [x] Enforce equivalent-name uniqueness transactionally for create/import/copy/rename/draft-save paths, including concurrent requests. Existing development duplicates use explicit reset/manual repair, not automatic suffixing or conversion.\n\n## Verification\n\nAPI race plus browser paths; existing loop IDs remain unchanged.\n\n## Dependencies\n\n- #280 — X-CUT\n- #279 — implementation dispatch remains held.\n\n## Scope limits\n\nOnly the described behavior and its necessary tests/contracts/docs.\n\n## Delivery and closure\n\nApproved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.\n\n**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.\n\nThe owner approved this bounded architecture/cutover plan. A materially different design, or a diagnostic result requiring broader scope, returns for explicit review before implementation.\n\nNo implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.\n\n## Source requirements\n\n#209\n\n## Specific owner feedback\n\n- Prevent equivalent duplicate names consistently on create, rename, import and copying, including concurrent requests. Importing an exported loop unchanged must not create a confusing duplicate; suggest a unique copy name and keep existing loop IDs stable.\n",
+                "state": null,
+                "user": null,
+                "assignees": null,
+                "labels": null,
+                "milestone": null,
+                "state_reason": null,
+                "comments": null,
+                "created_at": null,
+                "updated_at": null,
+                "closed_at": null,
+                "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/209",
+                "display_title": "[I08/U23/B65] Prevent duplicate loop names"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "query": "repo:Jacob-J-Thomas/GraphGoblin is:issue \"tree.test.ts\"",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "issues": []
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "query": "repo:Jacob-J-Thomas/GraphGoblin is:issue \"gg-wp-b3-rid-tree\"",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "issues": []
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "query": "repo:Jacob-J-Thomas/GraphGoblin is:issue reset rename Windows",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "issues": [
+              {
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/209",
+                "title": "[I08/U23/B65] Prevent duplicate loop names",
+                "issue_number": 209,
+                "body": "<!-- graphgoblin-delivery:2026-11-14 -->\n**Engineering delivered (2026-11-14):** [PR #470](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/470) merged as `a817e5ccb4fd598ca56089b97b4ce55e9cb6f58c`. The merge tree is exactly the audited tree `af0e9f76b750ecbd308b3e12c589fb729b3ebf23`; its parents are the reviewed main `7c6e6355` and head `8fc8c0a5`.\n\nAll three adversarial scans are complete. Opus backend review returned READY; Sol's two UI findings were fixed and independently reproduced before/verified after; [fresh Astra max final sign-off](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/470#issuecomment-6881200714) covers the whole exact PR. [CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43614498888) and [routing](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43614498893) passed first attempts: web 2,491 tests/199 files, 22 coverage tasks, Browser 474 plus one expected skip/no retries, Windows 14/14.\n\nIndependent native correction QA used the compiled gateway, real HTTP, file SQLite and Edge. Both late import schedules preserved the selected file's exact graph; an invalid rename retry settled without a PUT, repair alone sent no PUT, and only a fresh retry sent one conditional PUT. All source/build fingerprints and served assets were bound. Original failures, nine effective negative cases, the passing stale-token control, and cleanup evidence remain retained. [Correction evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/8fc8c0a5240c304dfe4f309caad8bd1ebf540948/docs/qa/2026-11-14-loop-name-review-correction-independent/README.md)\n\n**Owner product acceptance remains open.** This issue is parked in backlog to prevent repeat engineering pickup. On an installed build containing the merge, judge whether the naming guidance, editable suggestions and recovery controls are clear across create/import/template/edit. Collision correctness and preservation are pipeline responsibilities and are verified above. No owner acceptance or whole-I08 completion is inferred from the merge.\n\nNonblocking follow-ups #472/#473 and historical Windows EPERM #471 remain unresolved. Broader save/publish lifecycle work is #237. Earlier dispatch/plan prose below remains historical.\n<!-- /graphgoblin-delivery:2026-11-14 -->\n\n<!-- graphgoblin-routing:2026-11-14 -->\n**Owner routing update (2026-11-14):** GPT owns architecture and backend/domain implementation; Claude owns any UI design and implementation. Keep those surfaces in bounded delivery slices with independent adversarial review from the opposite family at the selected effort, separate behavior QA, and the preserved fresh Astra max exact-head audit. The primary GPT routing label covers the architecture/backend scope; any UI delivery slice is explicitly assigned to Claude. This changes implementation ownership, not the approved behavior or scope.\n<!-- /graphgoblin-routing:2026-11-14 -->\n\nPart of #312\n\n<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for I08, the first lane, alongside the Claude plugin. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\n<!-- graphgoblin-approved-roadmap:2026-10-17:B65 -->\n\n<!-- graphgoblin-approved-revision:2026-10-18 -->\n\n**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.\n\nAuthority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.\n\n## Bounded change\n\nPrevent duplicate loop names\n\n## Acceptance criteria\n\n- [x] Create/rename/import/copy consistently reject case/whitespace-equivalent duplicate names with useful guidance; concurrent requests cannot produce duplicates, and copy/import can suggest a unique name.\n\n- [x] Enforce equivalent-name uniqueness transactionally for create/import/copy/rename/draft-save paths, including concurrent requests. Existing development duplicates use explicit reset/manual repair, not automatic suffixing or conversion.\n\n## Verification\n\nAPI race plus browser paths; existing loop IDs remain unchanged.\n\n## Dependencies\n\n- #280 — X-CUT\n- #279 — implementation dispatch remains held.\n\n## Scope limits\n\nOnly the described behavior and its necessary tests/contracts/docs.\n\n## Delivery and closure\n\nApproved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.\n\n**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.\n\nThe owner approved this bounded architecture/cutover plan. A materially different design, or a diagnostic result requiring broader scope, returns for explicit review before implementation.\n\nNo implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.\n\n## Source requirements\n\n#209\n\n## Specific owner feedback\n\n- Prevent equivalent duplicate names consistently on create, rename, import and copying, including concurrent requests. Importing an exported loop unchanged must not create a confusing duplicate; suggest a unique copy name and keep existing loop IDs stable.\n",
+                "state": null,
+                "user": null,
+                "assignees": null,
+                "labels": null,
+                "milestone": null,
+                "state_reason": null,
+                "comments": null,
+                "created_at": null,
+                "updated_at": null,
+                "closed_at": null,
+                "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/209",
+                "display_title": "[I08/U23/B65] Prevent duplicate loop names"
+              },
+              {
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/17",
+                "title": "Undo and redo in the loop editor (Ctrl+Z, Ctrl+Shift+Z)",
+                "issue_number": 17,
+                "body": "Part of #2\n\n## Context\n\nThe owner: \"an undo/redo command would be nice to add as well, and should support ctrl + z and ctrol + shift + z as shortcuts.\"\n\nToday there is no undo (docs/09 deviations; docs/12 product gaps).\n- Every definition change goes through one helper, `edit(fn)` in `apps/web/src/editor/store.ts`, which bumps `revision` and sets `saveState` to `pending`.\n- Autosave (`useAutosave.ts`) debounces 600 ms, mirrors to IndexedDB, and saves with `If-Match` on the draft token (`baseToken`); a 409 `DRAFT_CONFLICT` stops autosave.\n- Forms are react-hook-form instances that keep their own field state, remounted by keys: `PropertyPanel` uses node id plus a local epoch; `LoopSettingsPanel` uses `settingsEpoch`. Unparsed field text lives in `fieldErrors`.\n- `Canvas.tsx` handles Delete and Backspace only while focus is on the canvas.\n\n## Goal\n\nUndo and redo every editor change with keyboard shortcuts and toolbar buttons, without breaking drafts or native text undo.\n\n## Scope\n\nIn scope:\n- A history in the store covering graph edits (add, move, connect, remove edge, remove node, rename id) and field edits (node label and config, loop name and description, settings, variables), with coalescing: continuous typing in one field is one step; a drag is one step.\n- Shortcuts: Ctrl+Z, Ctrl+Shift+Z, and Ctrl+Y on Windows and Linux; Cmd+Z and Cmd+Shift+Z on macOS.\n- Toolbar Undo and Redo buttons with disabled states and names that say what will change (for example \"Undo move node\").\n- Forms resynchronise after undo or redo (bump the form keys).\n- Native undo inside inputs, textareas, selects, and CodeMirror is untouched: the shortcuts are ignored while focus is in an editable element.\n- Undo and redo create normal edits, so autosave, the IndexedDB mirror, and `If-Match` apply.\n- Defaults (proposed): history is not persisted across reloads; it resets on load and on \"Reload server draft\"; selection changes are not undo steps; the history holds at most 100 steps.\n\nOut of scope: server-side history, undo across devices.\n\n## Acceptance criteria\n\n- [ ] Shortcuts work with focus on the canvas, toolbar, or page, and do nothing inside editable fields (where native undo still works).\n- [ ] Each edit type undoes and redoes exactly (unit test per store action); a new edit after an undo clears redo.\n- [ ] Coalescing: typing a label then pressing Ctrl+Z outside the field restores the previous label in one step; one drag is one step.\n- [ ] Undoing a node delete restores the node, its edges, and an exit's loop-back target.\n- [ ] After undo, autosave sends the restored definition with `If-Match`; a 409 conflict still stops autosave and shows the banner; unparsed field text is handled consistently.\n- [ ] Toolbar buttons are keyboard operable with visible focus, named, expose `aria-keyshortcuts`, and meet WCAG AA contrast.\n- [ ] docs/09 (remove \"There is no undo\"), docs/12 product gaps, and guide 02 updated.\n- [ ] Gates: typecheck, lint, `check:layers`, `check:deps`, coverage at or above 90% on all four metrics in every changed package, `check:licenses`, `check:docs`, `format:check`, and Edge E2E after `pnpm build`.\n\n## Code pointers\n\n- `apps/web/src/editor/store.ts` (`edit`, `load`, `reset`, every action), `apps/web/src/editor/store.test.ts`\n- `apps/web/src/editor/useAutosave.ts`\n- `apps/web/src/editor/EditorPage.tsx` (toolbar, `settingsEpoch`), `apps/web/src/editor/PropertyPanel.tsx` (form epoch), `apps/web/src/editor/LoopSettingsPanel.tsx`\n- `apps/web/src/editor/Canvas.tsx` (`onKeyDown`, `endDrag`), `apps/web/src/forms/SchemaForm.tsx`\n- `apps/web/src/editor/EditorPage.conflict.test.tsx`, `apps/web/e2e/drafts.spec.ts`\n\n## QA plan\n\nTouched systems, results catalogued (pass, fail, evidence) in the PR and this issue: the editor store and every edit action; form resynchronisation for all nine kinds and loop settings; autosave, IndexedDB mirror, flush on leave; draft conflict and set-aside copy flows; publish after undo; keyboard handling (Delete scope from WP-D2 D19, keyboard-only build from D18); native undo in inputs and CodeMirror; two tabs editing one loop.\n\n| Scenario | Input | Expected |\n| --- | --- | --- |\n| Undo and redo | add a node, Ctrl+Z, Ctrl+Shift+Z | node removed, then restored |\n| New edit after undo | Ctrl+Z, then edit a label | redo disabled; Ctrl+Shift+Z does nothing |\n| Redo after a new edit | Ctrl+Z, edit, Ctrl+Shift+Z | no change |\n| Nothing to undo | Ctrl+Z on a freshly loaded loop | no change; Undo button disabled |\n| Drag | drag a node, Ctrl+Z | position restored in one step |\n| Delete with links | delete a node with edges that an exit loops back to, Ctrl+Z | node, edges, and loop-back target restored |\n| Rename | rename a node id used by edges, Ctrl+Z | id and edges restored |\n| Typing coalesced | type \"hello\" in Label, blur, Ctrl+Z | previous label restored in one step |\n| Native text undo | Ctrl+Z inside the Label input or a CodeMirror field | only that field's text undoes; editor history unchanged |\n| Saved after undo | Ctrl+Z, wait for autosave | `PUT` with `If-Match`; draft matches the undone state |\n| Conflict refusal | another tab saves, then Ctrl+Z here | 409 banner; autosave stops; nothing overwritten |\n| Reload server draft | resolve a conflict by reloading, then Ctrl+Z | no change (history cleared) |\n| Platform keys | Ctrl+Y on Windows; Cmd+Z and Cmd+Shift+Z on macOS (emulated) | redo; undo and redo |\n| History cap | 101 edits, then 101 undos | the first edit stays; 100 steps undone |\n\n## Delivery\n\n- Gate `human-in-the-loop`: an agent implements; a human reviews the running product before merge.\n- Implementer: Claude Opus 5.5, reasoning xhigh.\n- Cross-vendor reviewer: GPT-6.1 Sol (Codex), reasoning xhigh.\n- QA agent: GPT-6.1 Sol.\n- Human checkpoint: use undo and redo on the running build before merge.\n- Dependencies: none. Coordinate with #13: whichever lands second adapts the form keys and toolbar.\n",
+                "state": null,
+                "user": null,
+                "assignees": null,
+                "labels": null,
+                "milestone": null,
+                "state_reason": null,
+                "comments": null,
+                "created_at": null,
+                "updated_at": null,
+                "closed_at": null,
+                "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/17",
+                "display_title": "Undo and redo in the loop editor (Ctrl+Z, Ctrl+Shift+Z)"
+              },
+              {
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/28",
+                "title": "Ship template loops: bundled templates, \"New from template\" gallery, prerequisite checks",
+                "issue_number": 28,
+                "body": "Part of #4\n\n## Context\n\nThe owner: \"we should ship a default set of template loops that users can use to get acquainted with the system.\" Templates are generic product features that any GraphGoblin user runs against their own repository.\n\nToday:\n- No templates exist. The Loops page offers Create (a blank `newLoopDefinition` from `apps/web/src/editor/model.ts`) and Import (a file input posting to `POST /loops/import`).\n- Import (`apps/api/src/routes/loops.ts`) parses with `importLoop` (`packages/domain/src/loop-io.ts`), creates a loop with a draft, and returns the shared validation issues.\n- A subloop's `loopRef.loopId` is a ULID that must name a published loop of the owner, otherwise `SUBLOOP_NOT_FOUND` or `SUBLOOP_NOT_PUBLISHED` is reported (`subloopIssues`). A template whose parent calls a child loop therefore cannot carry a fixed id.\n- The `Dockerfile` copies only the root manifests, `tooling/`, `packages/`, and `apps/`. The image receives the API through `pnpm --filter @graphgoblin/api deploy`, which carries only the package `files` (`[\"dist\"]` in `apps/api/package.json`).\n- The model catalog (`GET /model-catalog`) lists models per harness; harness preflight (`GET /harness/preflight`) reports whether each harness is installed and logged in.\n\n## Goal\n\nBundled, CI-validated templates with typed settings, and a \"New from template\" gallery that validates those settings, shows prerequisites, and creates drafts.\n\n## Scope\n\nIn scope:\n- A template format: one or more loop exports plus metadata (id, title, description, tags, prerequisites, required secrets) and typed settings. Settings include the repository (path, owner and name, base branch), label names such as the trigger label (default `ready-for-implementation`), and the harness and model per role (implementer, reviewer, QA agent, adversarial reviewer).\n- Role defaults: Codex models from the catalog. Settings are validated against the catalog and harness preflight. A missing, disabled, or unavailable configured harness or model fails instantiation clearly; the same check runs again when a run starts, and fails the run with a typed reason. Claude becomes selectable once #26 lands.\n- Bundles: create and publish child loops first, then rewrite the parent's `loopRef.loopId`.\n- Location inside a package that the image receives (proposed: `apps/api/templates/`, added to the API package `files` or copied into `dist` at build).\n- API (proposed): `GET /templates` and `POST /templates/{id}/instantiate` with settings, added to the route and scope table in `apps/api/src/adversarial.test.ts`.\n- Gallery on the Loops page: cards with description and prerequisite status (`gh` found and authenticated, repository path present, configured harnesses ready, secrets present), a settings form, then the editor opens on the new draft.\n- A CI check in `pnpm check` that validates every template with `LoopExportSchema` or `LoopDefinitionSchema` and `validateLoop`, plus the API-level checks against a fake.\n- Proposed (agent addition): one small non-GitHub starter template for first-time users.\n\nOut of scope: the three repository templates themselves (#30 to #32) and GitHub triggers (#29).\n\n## Acceptance criteria\n\n- [ ] The template format and settings are documented; the CI check fails on a deliberately broken template.\n- [ ] The gallery lists templates with descriptions; each prerequisite shows ok or missing with remediation text.\n- [ ] Role settings default to catalog Codex models. Choosing a model missing from the catalog, a disabled model, or a harness whose preflight fails refuses instantiation with a clear message (tests); a run whose configured harness has since become unavailable fails with a typed reason.\n- [ ] Instantiating creates drafts and never publishes the parent; bundle children resolve, so the parent has no subloop issues; settings are substituted.\n- [ ] Instantiating twice creates separate loops with distinct names.\n- [ ] The container image contains the templates (checked in the image build).\n- [ ] Gallery cards and the settings form are keyboard operable and named; WCAG AA.\n- [ ] A user guide page, docs/09 (Loops screen), and docs/07 (new routes) updated; `pnpm check:docs` passes with the regenerated API reference.\n- [ ] Gates: typecheck, lint, `check:layers`, `check:deps`, coverage at or above 90% on all four metrics in every changed package, `check:licenses`, `check:docs`, `format:check`, and Edge E2E after `pnpm build`.\n\n## Code pointers\n\n- `apps/web/src/loops/LoopsPage.tsx` (`CreateLoop`, `ImportLoop`), `apps/web/src/editor/model.ts` (`newLoopDefinition`)\n- `apps/api/src/routes/loops.ts` (`/loops/import`, `publishIssues`, `subloopIssues`), `apps/api/src/adversarial.test.ts`\n- `packages/domain/src/loop-io.ts` (`importLoop`, `exportLoop`), `packages/contracts/src/loop.ts` (`LoopExportSchema`)\n- `apps/api/src/routes/settings.ts` (`/model-catalog`), `apps/api/src/preflight.ts`, `apps/api/src/routes/system.ts`\n- `apps/api/package.json` (`files`), `Dockerfile`, `.dockerignore`, root `package.json` (`check`), `tooling/scripts/`\n\n## QA plan\n\nTouched systems, each tested positive and negative, results catalogued in the PR and this issue: loop import and create; the template routes; settings validation against the catalog and preflight; subloop reference validation and publishing of bundle children; the Loops page and gallery; the editor loading new drafts; prerequisite checks; the CI check; the container image contents. Negative: missing `gh`, an unavailable or disabled configured model, a harness not logged in, missing secrets, invalid settings, a name collision, instantiating while offline.\n\n## Delivery\n\n- Gate `human-in-the-loop`: an agent implements; a human reviews the running product before merge.\n- Implementer: GPT-6.1 Sol (Codex), reasoning xhigh.\n- Cross-vendor reviewer: Claude Opus 5.5, reasoning xhigh.\n- QA agent: Claude Opus 5.5.\n- Human checkpoint: instantiate templates with default and changed settings on the running build before merge.\n- Dependencies: none. Blocks #30, #31, #32. Related: #26 (Claude as a role option).\n\n## Open questions for the owner\n\n- Should instantiation publish a bundle's child loops automatically (needed for the parent to validate)? Default: yes for children, the parent stays a draft.\n",
+                "state": null,
+                "user": null,
+                "assignees": null,
+                "labels": null,
+                "milestone": null,
+                "state_reason": null,
+                "comments": null,
+                "created_at": null,
+                "updated_at": null,
+                "closed_at": null,
+                "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/28",
+                "display_title": "Ship template loops: bundled templates, \"New from template\" gallery, prerequisite checks"
+              },
+              {
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/164",
+                "title": "Decisions and exits: answer types only for classifiers; LLM instructions; expression snippets (format 4)",
+                "issue_number": 164,
+                "body": "Part of #2\r\n\r\n## Owner report\r\n\r\n\"answer types should only be an option for Jev style classifier models. LLMs should have freeform instructions for choosing their decision, and expressions should be little code snippets/scripts that have no configuration.\"\r\n\r\nThe tooltip change lands before merge through #161. The semantic change is deferred because it crosses stored contracts, runtime, authoring and history conversion; the investigation estimates 3–5 worker days.\r\n\r\n## Findings\r\n\r\nReferences are against commit `5f7b5b1` of `codex/aidlc-foundations`.\r\n\r\nThe current schema combines an answer specification with an evaluator: Choice and Noul support expression/classifier/LLM; Score supports classifiers only (`packages/contracts/src/evaluation.ts:234`, `packages/contracts/src/evaluation.ts:292`, `packages/contracts/src/evaluation.ts:323`). LLM evaluation currently uses Codex. Exactly one evaluator runs (`packages/engine/src/primitive-evaluator.ts:116`).\r\n\r\nExpressions already validate JSONata and declared IDs (`packages/domain/src/expression.ts:49`). Codex already forces structured route output (`packages/adapter-codex/src/decider.ts:43`, `packages/adapter-codex/src/decider.ts:83`). Exit predicates share primitive/evaluation controls (`packages/contracts/src/nodes.ts:649`, `packages/contracts/src/nodes.ts:667`). The current stored definition is format 3 (`packages/contracts/src/loop.ts:51`), composed through frozen earlier conversion stages (`packages/domain/src/upgrade-current.ts:96`).\r\n\r\n## Desired behavior\r\n\r\n| Evaluator | Decision authoring and result |\r\n| --- | --- |\r\n| Expression | One JSONata snippet returning a declared stable route ID, plus graph wiring. No answer-type selector, criteria, thresholds or provider/context controls. |\r\n| LLM | Freeform Liquid instructions, declared route IDs/readable labels, supported harness/model/effort controls and selected context. Force a structured route enum and validate membership. No classifier-style answer selector or mandatory option criteria. |\r\n| Classifier | Choice/Noul/Score, criteria or rubric, compatible catalogue model, question/context and applicable thresholds. Support Jev and compatible HTTP classifiers. |\r\n\r\n\"No configuration\" for expressions means no evaluator configuration beyond the snippet; graph routes still need stable identities. Retain JSONata's validation and limits. LLM confidence remains informational; unsupported evaluator/provider combinations fail precisely without fallback.\r\n\r\nExits use fixed boolean predicates for expression and LLM evaluation, with instructions for LLMs. Only classifiers expose primitive selection and comparisons. #167 decides loop-back semantics before the exit plan is approved; this issue must not silently remove loop-back.\r\n\r\nThe approved change inventory must cover:\r\n\r\n- Contracts/exports: evaluation, route declarations, exit predicates/matching, request/result types, fresh emissions, definition/export version and generated schemas.\r\n- Domain: route/port mapping, graph validation, expression syntax, exit matching, import/export and conversion/history logic.\r\n- Engine/adapters: evaluator separation, decision/exit handlers, ports/fakes, Codex prompts/response validation, evidence/output and recovery; retain Jev/HTTP primitive behavior.\r\n- API/editor/inspector: admission/publication, template prerequisites, model/classifier controls, kind switching, stable edge wiring, validation focus, undo and understandable route/predicate evidence.\r\n- Data/assets/docs: offline upgrades, device drafts, examples and retained templates, fixtures/goldens, API client/plugin guidance, numbered docs 03–07/09, affected guides, generated references, ADR and CHANGELOG.\r\n\r\nUse a clean format-4 contract with a frozen format-3 source schema and one-off converter; keep earlier frozen stages intact. Preserve route IDs, edges and return configuration. Inventory Noul expression/LLM decisions, Choice LLM decisions and exit predicates; require reviewed conversions where instructions, matching or old confidence gates cannot be preserved automatically. Trace downstream reads of `answer.holds`, whole outputs and subloop results.\r\n\r\nKeep historical answers factual; do not fabricate route judgments. Verify event/patch/snapshot replay parity, refuse nonterminal conversion, and require explicit replay-only disposition for affected failed runs. Coordinate #165 and #168 through an approved integration/cutover plan so the owner receives one stored-data cutover where feasible.\r\n\r\n## Acceptance\r\n\r\n- [ ] An owner-approved plan specifies schemas, routes/predicates, result/evidence semantics, conversion resolutions and #167's exit decision before implementation.\r\n- [ ] Each editor exposes only its evaluator's controls. Expression invalid syntax, non-string/undeclared routes and LLM malformed/undeclared output fail clearly.\r\n- [ ] LLM instructions and structured route enums work without classifier criteria. Existing supported provider scope and explicit no-fallback behavior remain intact.\r\n- [ ] Classifier Noul truth/confidence thresholds, Choice criteria/stable IDs and fractional Score bands/boundaries remain correct for Jev and compatible HTTP transports.\r\n- [ ] Switching kinds, renaming/reordering routes, save/reload, edges, undo and validation focus retain authored meaning. Exit predicate UI and inspected evidence agree with the approved model.\r\n- [ ] Format-3 inventory/conversion, device-draft preservation, hashed approval, backup, transactional apply, audit and replay cover ambiguity, downstream output references and affected failed runs. Old shapes are not accepted by the new runtime.\r\n- [ ] Contracts/domain/engine/adapters/API/upgrade/editor checks include positive and negative cases; relevant decision, exit, classifier and draft browser scenarios pass. Record finite-budget live provider evidence without credentials.\r\n- [ ] Docs, ADR, CHANGELOG and generated clients/references agree. Repository gates and existing package coverage thresholds pass; the owner accepts the running behavior before merge.\r\n\r\n## Delivery\r\n\r\nImplementer: GPT-6 Astra, xhigh. Reviewer: Claude Opus 5.5, xhigh, in a Claude cloud session reviewing code and evidence without needing the owner's local instance. QA: a separate GPT-6.1 Sol xhigh agent, `qa:touched-systems`, covering every inventory boundary above, migration/replay, live providers and browser authoring/inspection.\r\n\r\nInitial gates: `needs-plan-approval` and `human-in-the-loop`. After human plan approval: `plan-approved` and `human-in-the-loop`. Milestone: `After merge: evaluate and stabilise`. Follows PR #151, #97/#98/#99 and #161; uses owner-reviewed #163/#166 findings and depends on #167 for the exit portion. This is the first semantic build item after merge once prerequisites are satisfied. Coordinate #165/#168 before finalizing upgrade order; #170 follows the new form shape.\r\n",
+                "state": null,
+                "user": null,
+                "assignees": null,
+                "labels": null,
+                "milestone": null,
+                "state_reason": null,
+                "comments": null,
+                "created_at": null,
+                "updated_at": null,
+                "closed_at": null,
+                "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/164",
+                "display_title": "Decisions and exits: answer types only for classifiers; LLM instructions; expression snippets (format 4)"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    },
+    {
+      "query": "repo:Jacob-J-Thomas/GraphGoblin is:issue \"filesystem\" \"EPERM\"",
+      "result": {
+        "status": "fulfilled",
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Action completed."
+            }
+          ],
+          "structuredContent": {
+            "issues": [
+              {
+                "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/471",
+                "title": "Diagnose Windows reclaim-marker EPERM during concurrent startup",
+                "issue_number": 471,
+                "body": "Observed during PR #470 at head `0d2fad63c448bc5591c530d087dd05c9af7821cc`, [Windows launcher CI job](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43603766841/job/132473871972). Related to #457's concurrent stale-owner recovery and #409's startup diagnostics; neither existing issue tracks this exact native filesystem failure.\n\nThe native five-process stale-PID contention test passed its first two trials. Trial 3 recorded one acquired/live owner and four refused contenders, then failed the expected ownership-diagnostic assertion: one refused process returned `EPERM: operation not permitted, unlink …graphgoblin.lock.reclaim/<uuid>.json`. Thirteen other native cases passed. The later trial-3 lock-record PID assertion did not execute, so the log does not prove that final readback. The upload step found no artifacts; the raw job log is retained with SHA-256 `5fc2616b1d49dc339b1a4a8ef5f87ac1212aa16837be86fffa360d70c1b6bc95`.\n\nThe ownership implementation, WMI helper, workflow and acceptance source are unchanged from #470's main target `7c6e635539e12c56b82f226f1ee734d83b985ad4`; the preceding two CI candidates passed this native job. This is not evidence of a loop-name regression.\n\nSource analysis narrows the UUID-marker unlink to stale-marker removal or own recovery-guard release in `apps/api/src/data-dir-lock.ts`. A release error can mask another refusal. The precise syscall site and filesystem cause are unresolved without the seeded marker token, child stack or filesystem evidence. Do not label it a confirmed sharing violation or waive the ownership checks.\n\nAcceptance:\n\n- Capture enough bounded, non-secret failure evidence to distinguish stale-marker removal, own-guard release and cleanup errors, including the seeded/observed identities and all live owner/record checks.\n- Reproduce or characterize the actual Windows permission/deletion race through separate native processes and disposable stores.\n- Preserve fail-closed ownership, exactly one serving writer, replacement-owner markers, unrelated files and cleanup. Do not retry deletion of a replacement acquisition or weaken the native assertion to accept arbitrary errors.\n- If expected contention causes the error, return an accurate bounded ownership/refusal diagnostic; preserve genuine filesystem failures distinctly. Verify that cleanup errors cannot hide a retained acquisition.\n- Ensure failure artifacts are actually retained by CI; never include owner keys, real stores or raw credential-bearing command lines.\n- Run the existing native contention/liveness/record checks plus focused regression and full required gates, with independent cross-family review and separate behavior QA.\n\nDisposition: DEFER-ISSUE, P2 operability/diagnostic follow-up. Parked under backlog; this ticket is not implementation dispatch. PR #470 may receive one unchanged Windows-job retry after source/identity triage, preserving the original failure. A repeat or any owner-count/liveness/record failure requires investigation before its gate can pass; reruns are not a substitute for this follow-up.",
+                "state": null,
+                "user": null,
+                "assignees": null,
+                "labels": null,
+                "milestone": null,
+                "state_reason": null,
+                "comments": null,
+                "created_at": null,
+                "updated_at": null,
+                "closed_at": null,
+                "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/471",
+                "display_title": "Diagnose Windows reclaim-marker EPERM during concurrent startup"
+              }
+            ]
+          },
+          "isError": false
+        }
+      }
+    }
+  ],
+  "related471": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/471",
+    "title": "Diagnose Windows reclaim-marker EPERM during concurrent startup",
+    "issue_number": 471,
+    "body": "Observed during PR #470 at head `0d2fad63c448bc5591c530d087dd05c9af7821cc`, [Windows launcher CI job](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43603766841/job/132473871972). Related to #457's concurrent stale-owner recovery and #409's startup diagnostics; neither existing issue tracks this exact native filesystem failure.\n\nThe native five-process stale-PID contention test passed its first two trials. Trial 3 recorded one acquired/live owner and four refused contenders, then failed the expected ownership-diagnostic assertion: one refused process returned `EPERM: operation not permitted, unlink …graphgoblin.lock.reclaim/<uuid>.json`. Thirteen other native cases passed. The later trial-3 lock-record PID assertion did not execute, so the log does not prove that final readback. The upload step found no artifacts; the raw job log is retained with SHA-256 `5fc2616b1d49dc339b1a4a8ef5f87ac1212aa16837be86fffa360d70c1b6bc95`.\n\nThe ownership implementation, WMI helper, workflow and acceptance source are unchanged from #470's main target `7c6e635539e12c56b82f226f1ee734d83b985ad4`; the preceding two CI candidates passed this native job. This is not evidence of a loop-name regression.\n\nSource analysis narrows the UUID-marker unlink to stale-marker removal or own recovery-guard release in `apps/api/src/data-dir-lock.ts`. A release error can mask another refusal. The precise syscall site and filesystem cause are unresolved without the seeded marker token, child stack or filesystem evidence. Do not label it a confirmed sharing violation or waive the ownership checks.\n\nAcceptance:\n\n- Capture enough bounded, non-secret failure evidence to distinguish stale-marker removal, own-guard release and cleanup errors, including the seeded/observed identities and all live owner/record checks.\n- Reproduce or characterize the actual Windows permission/deletion race through separate native processes and disposable stores.\n- Preserve fail-closed ownership, exactly one serving writer, replacement-owner markers, unrelated files and cleanup. Do not retry deletion of a replacement acquisition or weaken the native assertion to accept arbitrary errors.\n- If expected contention causes the error, return an accurate bounded ownership/refusal diagnostic; preserve genuine filesystem failures distinctly. Verify that cleanup errors cannot hide a retained acquisition.\n- Ensure failure artifacts are actually retained by CI; never include owner keys, real stores or raw credential-bearing command lines.\n- Run the existing native contention/liveness/record checks plus focused regression and full required gates, with independent cross-family review and separate behavior QA.\n\nDisposition: DEFER-ISSUE, P2 operability/diagnostic follow-up. Parked under backlog; this ticket is not implementation dispatch. PR #470 may receive one unchanged Windows-job retry after source/identity triage, preserving the original failure. A repeat or any owner-count/liveness/record failure requires investigation before its gate can pass; reruns are not a substitute for this follow-up.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:gpt-6.1-sol",
+        "color": "1D76DB",
+        "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+      },
+      {
+        "name": "review:claude-opus-5.5",
+        "color": "006B75",
+        "description": "Cross-vendor reviewer: Claude Opus 5.5"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:api",
+        "color": "BFDADC",
+        "description": "Fastify API"
+      },
+      {
+        "name": "area:installer",
+        "color": "BFDADC",
+        "description": "Installers and setup"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 1,
+    "created_at": "2026-11-14T14:20:50Z",
+    "updated_at": "2026-11-14T14:56:25Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/471",
+    "display_title": "Diagnose Windows reclaim-marker EPERM during concurrent startup"
+  },
+  "disposition": "Separate parked issue. area:harness was removed immediately because it describes model adapters, not these reset tests."
+}

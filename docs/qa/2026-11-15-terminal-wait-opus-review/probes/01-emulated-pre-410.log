@@ -1,0 +1,49 @@
+$ PROBE_EMULATE_PRE_410=1 ./node_modules/.bin/vitest run --config C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-410-opus-scan1/probe-old-source/probe.config.mjs --root /c/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine src/awaited-children.test.ts -t 'current wait during'
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/packages/engine
+
+[probe] setup loaded; emulate pre-#410 failed projection = true
+[probe] stripped explicit waiting member from failed transition of 00000000000000000000000003
+[probe] stripped explicit waiting member from failed transition of 00000000000000000000000001
+[probe] stripped explicit waiting member from failed transition of 00000000000000000000000003
+[probe] stripped explicit waiting member from failed transition of 00000000000000000000000001
+ ❯ src/awaited-children.test.ts (28 tests | 2 failed | 26 skipped) 220ms
+   ❯ awaiting a child across failures and restarts (#242) (16)
+     × clears the failed parent's current wait during live execution (#410) 106ms
+     × clears the failed parent's current wait during recovery (#410) 112ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > clears the failed parent's current wait during live execution (#410)
+ FAIL  src/awaited-children.test.ts > awaiting a child across failures and restarts (#242) > clears the failed parent's current wait during recovery (#410)
+AssertionError: expected { …(16) } to not have property "waiting"
+
+- Expected:
+undefined
+
++ Received:
+{
+  "childRunId": "00000000000000000000000003",
+  "kind": "child",
+  "nodeId": "sub",
+  "startedSeq": 5,
+  "waitId": "00000000000000000000000001:5",
+}
+
+ ❯ src/awaited-children.test.ts:760:28
+    758|         ]);
+    759|         expect(count(e, parent.id, started('after'))).toBe(0);
+    760|         expect(failed).not.toHaveProperty('waiting');
+       |                            ^
+    761|       } finally {
+    762|         e.manager.stop();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 26 skipped (28)
+   Start at  15:46:31
+   Duration  7.19s (setup 72%, transform 23%, tests 3%, import 1%, worker 1%)
+
+exit=1
