@@ -1,5 +1,6 @@
 /**
- * The pan gate's contract with the installed dependencies (#207): the real Canvas on
+ * The pan gate's contract with the installed dependencies (#207), for a mouse pan (d3-zoom) and a
+ * mouse drag of a card (xyflow's XYDrag on d3-drag): the real Canvas on
  * @xyflow/react 12.12.0, @xyflow/system 0.0.83, d3-zoom 3.0.0 and d3-drag 3.0.0 in jsdom, on real
  * timers. No dependency, window listener or timer is replaced. The fixture supplies only the layout
  * jsdom lacks (card and pane sizes, and a ResizeObserver that reports them), so xyflow measures the
@@ -152,7 +153,7 @@ function observeWindow() {
 }
 
 const BUTTONS: Record<number, number> = { 0: 1, 1: 4 };
-function mouse(type: string, x: number, y: number, button = 0, buttons = 0) {
+function mouse(type: string, x: number, y: number, button = 0, buttons = 0, init?: MouseEventInit) {
   return new MouseEvent(type, {
     bubbles: true,
     cancelable: true,
@@ -163,6 +164,7 @@ function mouse(type: string, x: number, y: number, button = 0, buttons = 0) {
     button,
     buttons,
     detail: type === 'click' ? 1 : 0,
+    ...init,
   });
 }
 
@@ -177,12 +179,14 @@ function queuedTask<T>(read: () => T): Promise<T> {
 }
 
 let flow: ReactFlowInstance | undefined;
+let xyflow: ReturnType<typeof useStoreApi> | undefined;
 const ends: (string | null)[] = [];
 
 /** The public `onMoveEnd` slot of xyflow's store, used here only to observe its end callbacks. */
 function Observe() {
   flow = useReactFlow();
   const store = useStoreApi();
+  xyflow = store;
   useEffect(() => {
     store.setState({ onMoveEnd: (event) => ends.push(event?.type ?? null) });
   }, [store]);
@@ -204,8 +208,7 @@ const remove = () => screen.getByRole('button', { name: 'Remove connection' });
 const stored = () => store().definition!.edges.map((edge) => edge.id);
 
 /** The canvas with start → done drawn and its connection `e1` selected, as a click selects it. */
-async function selectedConnection() {
-  const definition: LoopDefinitionInput = newLoopDefinition('Contract');
+async function selectedConnection(definition: LoopDefinitionInput = newLoopDefinition('Contract')) {
   store().load('L1', definition);
   const view = render(<Live />);
   const wrapper = await waitFor(() => {
@@ -488,5 +491,191 @@ describe('the pan gate on the installed xyflow and d3 (#207)', () => {
     // A fresh canvas starts ready.
     await selectedConnection();
     expect(remove()).not.toHaveAttribute('aria-disabled');
+  });
+});
+
+/** The contract draft with a card `other` that no connection touches, to drag aside. */
+function withOther(): LoopDefinitionInput {
+  const definition = newLoopDefinition('Contract');
+  definition.nodes.push({
+    id: 'other',
+    kind: 'exit',
+    label: 'Other',
+    config: {},
+    ui: { x: 0, y: 360 },
+  });
+  return definition;
+}
+
+/**
+ * Hold xyflow's multi-selection key (Control off macOS), which it reads from the window's keys. A
+ * card drag then keeps the selected connection, and its toolbar, instead of selecting the card alone.
+ */
+async function holdControl() {
+  window.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Control', code: 'ControlLeft', ctrlKey: true }),
+  );
+  await waitFor(() => expect(xyflow!.getState().multiSelectionActive).toBe(true));
+}
+const releaseControl = () =>
+  window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlLeft' }));
+const CONTROL: MouseEventInit = { ctrlKey: true };
+
+describe('the card-drag gate on the installed xyflow and d3 (#207)', () => {
+  beforeEach(() => {
+    ends.length = 0;
+    flow = undefined;
+    xyflow = undefined;
+  });
+
+  it('shows Remove unavailable from a Control drag of a card while d3 cancels the next click, and delivers the first available click once', async () => {
+    const definition = withOther();
+    const { view: rendered } = await selectedConnection(definition);
+    const button = remove();
+    const card = rendered.container.querySelector<HTMLElement>(
+      '.react-flow__node[data-id="other"]',
+    )!;
+    await holdControl();
+    const windowEvents = observeWindow();
+    try {
+      // The drag: press on the card, move past the click distance (xyflow's XYDrag on d3-drag).
+      card.dispatchEvent(mouse('mousedown', 100, 500, 0, 1, CONTROL));
+      // A listener added after the press runs after d3-drag's, which stops the release.
+      const late: Event[] = [];
+      const lateListener = (event: Event) => late.push(event);
+      window.addEventListener('mouseup', lateListener, { capture: true });
+      await microtasks();
+      // XYDrag starts the drag on the move past the click distance and moves the card from the next.
+      card.dispatchEvent(mouse('mousemove', 120, 510, 0, 1, CONTROL));
+      card.dispatchEvent(mouse('mousemove', 160, 540, 0, 1, CONTROL));
+      await microtasks();
+      const duringDrag = {
+        ariaDisabled: button.getAttribute('aria-disabled'),
+        gesture: button.getAttribute('data-gesture'),
+        connected: button.isConnected,
+      };
+
+      // The release, and the click the browser dispatches with it on the card.
+      const up = mouse('mouseup', 160, 540, 0, 0, CONTROL);
+      card.dispatchEvent(up);
+      const dragClick = click(card, windowEvents.readings, 160, 540);
+      window.removeEventListener('mouseup', lateListener, { capture: true });
+      // The capture listener added after the gate's at mount, before the press, saw the release
+      // with d3-drag's per-press listeners registered and no blocker yet; the later one never ran.
+      expect(windowEvents.readings.get(up)).toEqual({
+        type: 'mouseup',
+        cancelledAtCapture: false,
+        d3: expect.arrayContaining(['mousemove.drag', 'mouseup.drag']) as string[],
+        bubbled: false,
+      });
+      expect(windowEvents.readings.get(up)!.d3).not.toContain('click.drag');
+      expect(late).toEqual([]);
+      // d3-drag cancelled the drag's own click.
+      expect(dragClick).toMatchObject({
+        delivered: false,
+        reachedTarget: false,
+        cancelledAtCapture: false,
+        bubbled: false,
+      });
+      expect(dragClick.d3).toContain('click.drag');
+
+      // A click on Remove while d3-drag's blocker is registered: it is cancelled before it reaches
+      // the button (the native failure, where Remove looked available), and Remove says so.
+      await microtasks();
+      const immediate = {
+        ariaDisabled: button.getAttribute('aria-disabled'),
+        gesture: button.getAttribute('data-gesture'),
+        blocker: clickBlocker(),
+        ...click(button, windowEvents.readings),
+        stored: stored(),
+      };
+      expect({ duringDrag, immediate }).toEqual({
+        duringDrag: { ariaDisabled: 'true', gesture: 'panning', connected: true },
+        immediate: {
+          ariaDisabled: 'true',
+          gesture: 'settling',
+          blocker: true,
+          delivered: false,
+          reachedTarget: false,
+          type: 'click',
+          cancelledAtCapture: false,
+          d3: expect.arrayContaining(['click.drag']) as string[],
+          bubbled: false,
+          stored: ['e1'],
+        },
+      });
+
+      // The first moment Remove is shown available, the blocker is gone and the click acts once.
+      const first = await whenFirstAvailable(button, () => ({
+        blocker: clickBlocker(),
+        ...click(button, windowEvents.readings),
+      }));
+      expect(first).toMatchObject({ blocker: false, delivered: true, reachedTarget: true });
+      expect(stored()).toEqual([]);
+      // Two edits, two steps: the move, then the removal. Undo takes back each exactly.
+      expect(store().past.map((step) => step.label)).toEqual([
+        'move other',
+        'remove edge start to done',
+      ]);
+      const moved = store().definition!.nodes.find((node) => node.id === 'other')!.ui;
+      expect(moved).not.toEqual({ x: 0, y: 360 });
+      store().undo();
+      expect(store().definition).toEqual({
+        ...definition,
+        nodes: definition.nodes.map((node) =>
+          node.id === 'other' ? { ...node, ui: moved } : node,
+        ),
+      });
+      store().undo();
+      expect(store().definition).toEqual(withOther());
+    } finally {
+      windowEvents.stop();
+      releaseControl();
+    }
+  });
+
+  it('gates a card drag exactly when xyflow starts it, which is exactly when d3-drag blocks the click after it', async () => {
+    const { view: rendered } = await selectedConnection(withOther());
+    const button = remove();
+    const card = rendered.container.querySelector<HTMLElement>(
+      '.react-flow__node[data-id="other"]',
+    )!;
+    await holdControl();
+    try {
+      /** Press, move by (dx, dy) and release on the card; what the gate and d3 did. */
+      const press = async (dx: number, dy: number) => {
+        card.dispatchEvent(mouse('mousedown', 100, 500, 0, 1, CONTROL));
+        card.dispatchEvent(mouse('mousemove', 100 + dx, 500 + dy, 0, 1, CONTROL));
+        await microtasks();
+        const moving = button.getAttribute('data-gesture');
+        card.dispatchEvent(mouse('mouseup', 100 + dx, 500 + dy, 0, 0, CONTROL));
+        await microtasks();
+        const released = {
+          moving,
+          gesture: button.getAttribute('data-gesture'),
+          blocker: clickBlocker(),
+        };
+        // Past the blocker's zero-delay cleanup and the gate's two tasks.
+        await queuedTask(() => undefined);
+        await queuedTask(() => undefined);
+        await microtasks();
+        return released;
+      };
+      // Exactly the click distance (3 px) is still a click: xyflow starts no drag and d3-drag adds
+      // no blocker, so the gate stays ready.
+      expect(await press(3, 0)).toEqual({ moving: null, gesture: null, blocker: false });
+      expect(store().past).toEqual([]);
+      // Just past it (√10 px): xyflow starts the drag on that move and d3-drag blocks the click.
+      expect(await press(3, 1)).toEqual({
+        moving: 'panning',
+        gesture: 'settling',
+        blocker: true,
+      });
+      // Both settle: the blocker's cleanup and then the gate's second task have run.
+      expect(clickBlocker()).toBe(false);
+      expect(button).not.toHaveAttribute('aria-disabled');
+    } finally {
+      releaseControl();
+    }
   });
 });

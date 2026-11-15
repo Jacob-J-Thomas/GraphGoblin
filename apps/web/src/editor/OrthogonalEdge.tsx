@@ -32,8 +32,7 @@ import { LABEL_CHARACTER_WIDTH, LABEL_HEIGHT, LABEL_PADDING } from './routing-la
 import { roundedPath } from './routing.js';
 import { followEdgeLabel } from './edge-label-placement.js';
 import { edgeLabelText } from './edge-label-text.js';
-import { isProtectedVoiceEdge, VOICE_STEP_MESSAGE } from './chat-protection.js';
-import { useEditorStore } from './store.js';
+import { edgeRemovalRefusal, useEditorStore } from './store.js';
 
 export interface OrthogonalEdgeData extends Record<string, unknown> {
   /** The edge's routed geometry, published by the canvas without rebuilding xyflow's edges. */
@@ -236,18 +235,19 @@ function RouteHandles({
     [points],
   );
   const segments = useMemo(() => segmentsOf(base.route, base.from, base.to), [base]);
-  // A protected Chat voice step keeps its connection (as the store refuses its removal).
-  const removalBlocked = useEditorStore((s) => {
-    const edge = s.definition?.edges.find((e) => e.id === edgeId);
-    return !!edge && !!s.definition && isProtectedVoiceEdge(s.definition, s.systemChat, edge);
-  });
-  // From a mouse pan's first move until its release settles, d3 may cancel the next click (#207).
-  // Reset route and Remove connection then say they are unavailable, keeping their hit target and
-  // focus (aria-disabled, not disabled), and their handlers refuse on the same rendered state.
+  // The store's own reason for refusing this removal, if it has one (#207): a protected Chat voice
+  // step keeps its connection, and an id more than one stored connection holds names no single one.
+  const refusal = useEditorStore((s) =>
+    s.definition ? edgeRemovalRefusal(s.definition, s.systemChat, edgeId) : undefined,
+  );
+  // From a mouse pan's first move, or a mouse node drag's start, until its release settles, d3 may
+  // cancel the next click (#207). Reset route and Remove connection then say they are unavailable,
+  // keeping their hit target and focus (aria-disabled, not disabled), and their handlers refuse on
+  // the same rendered state.
   const gesture = useSyncExternalStore(editing.viewport.subscribe, editing.viewport.state);
   const settling = gesture === 'ready' ? undefined : gesture;
-  // The voice-step reason wins: that button stays disabled with its message.
-  const removeSettling = removalBlocked ? undefined : settling;
+  // The store's reason wins: that button stays disabled with its message.
+  const removeSettling = refusal ? undefined : settling;
   // After a nudge, keep focus on the moved segment even when a split renumbered it: once the
   // stored route comes back with that segment, focus its handle.
   const focusTargetRef = useRef<RouteSegment>(undefined);
@@ -350,8 +350,9 @@ function RouteHandles({
                 data-gesture={settling}
                 onClick={() => {
                   if (settling) return;
-                  editing.reset(edgeId);
+                  // Focus first: a reset refused for a stale selection moves focus on to Undo.
                   edgeElement()?.focus();
+                  editing.reset(edgeId);
                 }}
                 onKeyDown={toolbarKeys}
               >
@@ -362,10 +363,10 @@ function RouteHandles({
               size="sm"
               variant="outline"
               className="nodrag nopan nokey pointer-coarse:h-11"
-              disabled={removalBlocked}
+              disabled={!!refusal}
               aria-disabled={removeSettling ? true : undefined}
               data-gesture={removeSettling}
-              title={removalBlocked ? VOICE_STEP_MESSAGE : undefined}
+              title={refusal}
               onClick={(event) => {
                 // The edge wrapper would select this (now removed) edge again on the same click.
                 event.stopPropagation();

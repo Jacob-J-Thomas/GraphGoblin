@@ -1,6 +1,10 @@
-import { EdgeRouteSchema, LoopDefinitionSchema } from '@graphgoblin/contracts';
+import {
+  EdgeRouteSchema,
+  LoopDefinitionSchema,
+  type LoopDefinitionInput,
+} from '@graphgoblin/contracts';
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Position, type ReactFlowProps } from '@xyflow/react';
 import { createPortal } from 'react-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,6 +24,7 @@ import { ForwardEdge } from './ForwardEdge.js';
 import type { RoutingGeometry } from './useRouting.js';
 import type { RoutingNode } from './routing.js';
 import { drawnPoints, crossesCards, moveSegment, normalize } from './manual-route.js';
+import { strandedEdges } from './stranded-edges.js';
 
 let props: ReactFlowProps<FlowNode> | undefined;
 const geometryOf = (nodes: readonly RoutingNode[]): RoutingGeometry => ({
@@ -1451,5 +1456,445 @@ describe('manual edge routes (#44)', () => {
     expect(route('return')).toEqual(dragged);
     act(() => store().undo());
     expect(route('return')).toBeUndefined();
+  });
+});
+
+describe('the selected connection is the one the user selected (#207)', () => {
+  const STALE = 'That connection changed since it was selected; nothing changed.';
+  let undo: HTMLButtonElement;
+  beforeEach(() => {
+    // jsdom does not lay out SVG text; xyflow measures label pills with getBBox.
+    Object.defineProperty(SVGElement.prototype, 'getBBox', {
+      configurable: true,
+      value: () => ({ x: 0, y: 0, width: 56, height: 11 }),
+    });
+    drawEdges = true;
+    vi.useFakeTimers({ toFake: ['performance'] });
+    // The editor toolbar's Undo, where focus goes after a removal or a refused stale action.
+    undo = document.body.appendChild(document.createElement('button'));
+    undo.dataset['history'] = 'undo';
+  });
+  afterEach(() => {
+    undo.remove();
+    drawEdges = false;
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  /** The canvas as the editor page renders it: on the store's current definition. */
+  function Live({ issues = [] }: { issues?: EditorIssue[] }) {
+    const definition = useEditorStore((s) => s.definition)!;
+    return <Canvas definition={definition} issues={issues} />;
+  }
+  /** Load `definition` with the geometry its cards measure, as the editor loads a draft. */
+  const load = (definition: LoopDefinitionInput) => {
+    geometry = geometryOf(routingInput(definition).nodes);
+    store().load('L1', definition);
+    return definition;
+  };
+  /** xyflow's selection of a connection (a click on it, or Enter or Space on it). */
+  const select = (id: string) =>
+    act(() => flow().onEdgesChange!([{ type: 'select', id, selected: true }]));
+  /** xyflow's Control-click on a card: selects it, keeps the selected connection, opens it. */
+  const controlClick = (id: string) =>
+    act(() => {
+      flow().onNodesChange!([{ type: 'select', id, selected: true }]);
+      const card = flow().nodes!.find((n) => n.id === id)!;
+      flow().onNodeClick!({ target: document.createElement('div') } as never, card);
+    });
+  const selected = () =>
+    flow()
+      .edges!.filter((e) => e.selected)
+      .map((e) => e.id);
+  const removes = () => screen.queryAllByRole('button', { name: 'Remove connection' });
+  const labels = () => store().past.map((entry) => entry.label);
+  const edge = (id: string) => flow().edges!.find((e) => e.id === id)!;
+  const canvas = () => screen.getByTestId('canvas');
+  const press = (key: string) => fireEvent.keyDown(canvas(), { key });
+  /** What the canvas last said in its polite live region. */
+  const said = () => canvas().querySelector('[aria-live="polite"]')!.textContent;
+  /** The draft is exactly `definition` as loaded: no edit, no undo step, nothing to save. */
+  const untouched = (definition: LoopDefinitionInput) => {
+    expect(store().definition).toBe(definition);
+    expect(store()).toMatchObject({ revision: 0, saveState: 'saved', past: [], future: [] });
+  };
+  /** `definition` after Delete on its selected card `id`: the card and its connections go. */
+  const withoutNode = (definition: LoopDefinitionInput, id: string) => ({
+    ...definition,
+    nodes: definition.nodes.filter((n) => n.id !== id),
+    edges: definition.edges.filter((e) => e.from.node !== id && e.to.node !== id),
+  });
+  /** A Simple loop whose loop-back `return` has a manual route, so its toolbar has Reset route. */
+  function routed() {
+    const definition = simpleLoop();
+    definition.edges.find((e) => e.id === 'return')!.ui = { route: [1116, 290, 268] };
+    return definition;
+  }
+  /** A Simple loop whose script `check` also sends exit code 3 back to `work` through `again`. */
+  function scripted() {
+    const definition = simpleLoop();
+    definition.nodes.find((n) => n.id === 'check')!.config = {
+      command: 'node',
+      args: ['check.js'],
+      exitCodeRoutes: { '3': 'again' },
+    };
+    definition.edges.push({
+      id: 'again',
+      from: { node: 'check', port: 'again' },
+      to: { node: 'work' },
+    });
+    return definition;
+  }
+  /** The gate `done` with its first route's ID set to `id` (typing in that row, or a rename). */
+  const gateRouteId = (id: string) => {
+    const gate = simpleLoop().nodes.find((n) => n.id === 'done')!;
+    const config = gate.config as { routes: { id: string }[] };
+    return () =>
+      store().updateNode(
+        'done',
+        {
+          config: { ...config, routes: config.routes.map((r, i) => (i === 0 ? { ...r, id } : r)) },
+        },
+        { path: 'routes.0.id', kind: 'typing', id: 1 },
+      );
+  };
+
+  it('refuses an id two connections hold from every Remove and from the keyboard, changing nothing', () => {
+    const definition = simpleLoop();
+    // An imported or API-written draft can give two connections one id: start → work, work → check.
+    definition.edges.find((e) => e.id === 'work-check')!.id = 'start-work';
+    expect(LoopDefinitionSchema.safeParse(definition).success).toBe(true);
+    load(definition);
+    const ownership = store().decisionRoutes;
+    render(<Live />);
+    act(() => store().select('check'));
+    select('start-work');
+    const message =
+      'More than one connection uses the ID "start-work"; this action cannot choose just one.';
+    // xyflow marks every edge of the id selected, so each draws a toolbar; each Remove is disabled
+    // with the store's own reason.
+    expect(removes()).toHaveLength(2);
+    for (const remove of removes()) {
+      expect(remove).toBeDisabled();
+      expect(remove).toHaveAttribute('title', message);
+      fireEvent.click(remove);
+    }
+    expect(store().connectionError).toBeUndefined();
+    press('Delete');
+    press('Backspace');
+    untouched(definition);
+    expect(store().decisionRoutes).toBe(ownership);
+    expect(store().connectionError).toBe(message);
+    // The keys were the connection's alone: the selected card and the selection both stay.
+    expect(store().selectedNodeId).toBe('check');
+    expect(selected()).toEqual(['start-work', 'start-work']);
+
+    // A unique connection is removed alone, in one step, and Undo restores the draft exactly. (The
+    // stand-in edge layer keys edges by id, as xyflow does, so React may keep a stale toolbar for
+    // the shared id: use the one on `return` itself.)
+    select('return');
+    fireEvent.click(
+      within(canvas().querySelector<HTMLElement>('.react-flow__edge[data-id="return"]')!).getByRole(
+        'button',
+        { name: 'Remove connection' },
+      ),
+    );
+    expect(store().definition!.edges).toEqual(definition.edges.filter((e) => e.id !== 'return'));
+    expect(labels()).toEqual(['remove edge done repeat to work']);
+    expect(undo).toHaveFocus();
+    act(() => store().undo());
+    expect(store().definition).toEqual(definition);
+  });
+
+  it.each<[string, (definition: LoopDefinitionInput) => LoopDefinitionInput, string]>([
+    ['the same ends', (definition) => definition, 'work'],
+    [
+      'other ends',
+      (definition) => ({
+        ...definition,
+        edges: definition.edges.map((e) =>
+          e.id === 'start-work' ? { ...e, to: { node: 'check' } } : e,
+        ),
+      }),
+      'check',
+    ],
+  ])(
+    'does not carry the selection into a loaded draft whose connection has %s',
+    (_, replace, target) => {
+      load(simpleLoop());
+      render(<Live />);
+      select('start-work');
+      expect(removes()).toHaveLength(1);
+      // Reload server draft, a device restore or a reconcile loads into the mounted canvas.
+      const replacement = replace(simpleLoop());
+      act(() => store().load('L1', replacement, { baseToken: 'server-2' }));
+      expect(selected()).toEqual([]);
+      expect(removes()).toEqual([]);
+      press('Delete');
+      press('Backspace');
+      untouched(replacement);
+      // Selected afresh, it is removed in one step; Undo restores the loaded draft exactly.
+      select('start-work');
+      fireEvent.click(screen.getByRole('button', { name: 'Remove connection' }));
+      expect(labels()).toEqual([`remove edge start to ${target}`]);
+      expect(undo).toHaveFocus();
+      act(() => store().undo());
+      expect(store().definition).toEqual(replacement);
+    },
+  );
+
+  it.each<[string, () => LoopDefinitionInput, string, string, (id: string) => void, () => void]>([
+    [
+      'a Script exit-code label removed, its card Control-clicked',
+      scripted,
+      'again',
+      'check',
+      controlClick,
+      () => store().updateNode('check', { config: { command: 'node', args: ['check.js'] } }),
+    ],
+    [
+      'a Decision route ID left blank, its card Control-clicked',
+      simpleLoop,
+      'return',
+      'done',
+      controlClick,
+      gateRouteId(''),
+    ],
+    [
+      'a Decision route ID left blank, its node opened from Loop issues',
+      simpleLoop,
+      'return',
+      'done',
+      (id) => act(() => store().openNode(id)),
+      gateRouteId(''),
+    ],
+  ])(
+    'forgets a selection whose port is gone (%s); Delete then removes the selected card, never the hidden connection',
+    (_, fixture, edgeId, nodeId, open, edit) => {
+      load(fixture());
+      render(<Live />);
+      select(edgeId);
+      open(nodeId);
+      expect(store()).toMatchObject({ selectedNodeId: nodeId, nodeDialogOpen: true });
+      expect(selected()).toEqual([edgeId]);
+      act(edit);
+      // Still stored with its ends, but no longer drawn: nothing shows it selected.
+      const edited = store().definition!;
+      expect(edited.edges.find((e) => e.id === edgeId)).toEqual(
+        fixture().edges.find((e) => e.id === edgeId),
+      );
+      expect(strandedEdges(edited).map((e) => e.id)).toEqual([edgeId]);
+      expect(selected()).toEqual([]);
+      expect(removes()).toEqual([]);
+      // Undo draws it again, unselected: a forgotten selection does not come back.
+      act(() => store().undo());
+      expect(strandedEdges(store().definition!)).toEqual([]);
+      expect(selected()).toEqual([]);
+      act(() => store().redo());
+      // The dialog closes onto the selected card; Delete is that card's ordinary removal.
+      act(() => store().closeNodeDialog());
+      press('Delete');
+      expect(labels()).toEqual([`edit config of ${nodeId}`, `delete ${nodeId}`]);
+      expect(store().definition).toEqual(withoutNode(edited, nodeId));
+    },
+  );
+
+  it.each<[string, () => void, string, string]>([
+    [
+      'its source card renamed',
+      () => store().renameNode('start', 'begin'),
+      'start-work',
+      'rename start to begin',
+    ],
+    ['its Decision route ID renamed', gateRouteId('again'), 'return', 'edit config of done'],
+  ])(
+    'forgets a selection whose stored ends change in the same draft: %s',
+    (_, change, edgeId, label) => {
+      load(simpleLoop());
+      render(<Live />);
+      select(edgeId);
+      // xyflow measures a renamed port's handle with the edit that renames it.
+      const measured = (edit: () => void) =>
+        act(() => {
+          edit();
+          geometry = geometryOf(routingInput(store().definition!).nodes);
+        });
+      measured(change);
+      expect(labels()).toEqual([label]);
+      // The id is still stored and drawn, with other ends: not the connection that was selected.
+      const now = store().definition!;
+      expect(now.edges.find((e) => e.id === edgeId)).not.toEqual(
+        simpleLoop().edges.find((e) => e.id === edgeId),
+      );
+      expect(strandedEdges(now)).toEqual([]);
+      expect(selected()).toEqual([]);
+      expect(removes()).toEqual([]);
+      measured(() => store().undo());
+      expect(store().definition).toEqual(simpleLoop());
+      expect(selected()).toEqual([]);
+    },
+  );
+
+  it.each<[string, (ui: Record<'remove' | 'reset' | 'lane', HTMLElement>) => void]>([
+    ['Remove connection', (ui) => fireEvent.click(ui.remove)],
+    ['Reset route', (ui) => fireEvent.click(ui.reset)],
+    ['an arrow-key nudge', (ui) => fireEvent.keyDown(ui.lane, { key: 'ArrowDown' })],
+    ['Delete', () => press('Delete')],
+  ])(
+    'refuses %s rendered for a connection that a load replaced before the canvas rendered again',
+    (_, action) => {
+      load(routed());
+      render(<Live />);
+      select('return');
+      const ui = {
+        remove: screen.getByRole('button', { name: 'Remove connection' }),
+        reset: screen.getByRole('button', { name: 'Reset route' }),
+        lane: screen.getByRole('button', { name: 'Route segment 3 of 5, horizontal' }),
+      };
+      // The same draft again (same id, ends and route), but a new load. The action runs on the
+      // render from before it, in the same batch, with a card selected in the new load.
+      const replacement = routed();
+      act(() => {
+        store().load('L1', replacement, { baseToken: 'server-2' });
+        store().select('work');
+        action(ui);
+      });
+      untouched(replacement);
+      // Only the guard on the stale render says this: the action reached it and changed nothing.
+      expect(said()).toBe(STALE);
+      expect(selected()).toEqual([]);
+      expect(store().selectedNodeId).toBe('work');
+      expect(undo).toHaveFocus();
+      // Rendered again, the canvas has no connection selected: Delete removes the selected card.
+      press('Delete');
+      expect(labels()).toEqual(['delete work']);
+      expect(store().definition).toEqual(withoutNode(replacement, 'work'));
+    },
+  );
+
+  it.each([
+    ['the pointer moves on', false],
+    ['the same connection is selected again before the release', true],
+  ])('writes no route for a drag held while a load replaced its draft: %s', (_, reselect) => {
+    load(simpleLoop());
+    render(<Live />);
+    select('return');
+    fireEvent.pointerDown(
+      screen.getByRole('button', { name: 'Route segment 3 of 5, horizontal' }),
+      {
+        button: 0,
+        clientX: 0,
+        clientY: 0,
+      },
+    );
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 40 });
+    expect(edge('return').ariaLabel).toBe('done Repeat (repeat) to work, manual route');
+    const replacement = simpleLoop();
+    act(() => store().load('L1', replacement, { baseToken: 'server-2' }));
+    if (reselect) {
+      select('return');
+      expect(selected()).toEqual(['return']);
+    } else fireEvent.pointerMove(window, { clientX: 0, clientY: 60 });
+    fireEvent.pointerUp(window);
+    untouched(replacement);
+    expect(said()).toBe(STALE);
+    expect(edge('return').ariaLabel).toBe('done Repeat (repeat) to work');
+    expect(selected()).toEqual([]);
+    expect(undo).toHaveFocus();
+    // The drag is over: a later move and release of the pointer change nothing.
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 90 });
+    fireEvent.pointerUp(window);
+    untouched(replacement);
+  });
+
+  it('keeps a drag when xyflow selects its connection again under the multi-selection key', () => {
+    load(simpleLoop());
+    render(<Live />);
+    select('return');
+    fireEvent.pointerDown(
+      screen.getByRole('button', { name: 'Route segment 3 of 5, horizontal' }),
+      {
+        button: 0,
+        clientX: 0,
+        clientY: 0,
+      },
+    );
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 40 });
+    // With Control held xyflow reports the selected connection selected again: the same selection.
+    select('return');
+    fireEvent.pointerMove(window, { clientX: 0, clientY: 44 });
+    fireEvent.pointerUp(window);
+    expect(labels()).toEqual(['reroute done repeat to work']);
+    expect(said()).toMatch(/^Route changed\./);
+    expect(selected()).toEqual(['return']);
+  });
+
+  it('keeps the selection through moves, route, label and config edits that keep the ports, issue refreshes and Undo, then removes once', () => {
+    const definition = load(simpleLoop());
+    const view = render(<Live />);
+    select('start-work');
+    const kept = () => expect(selected()).toEqual(['start-work']);
+    act(() => store().moveNode('work', { x: 320, y: 120 }));
+    kept();
+    act(() => store().setEdgeRoute('start-work', [200]));
+    kept();
+    act(() => store().updateNode('work', { label: 'Labour' }));
+    kept();
+    act(() => store().updateNode('check', { config: { command: 'node', args: ['verify.js'] } }));
+    kept();
+    view.rerender(
+      <Live issues={[{ code: 'X', severity: 'warning', message: 'm', nodeId: 'work' }]} />,
+    );
+    kept();
+    expect(labels()).toEqual([
+      'move work',
+      'reroute start to work',
+      'edit label of work',
+      'edit config of check',
+    ]);
+    for (let step = 0; step < 4; step += 1) {
+      act(() => store().undo());
+      kept();
+    }
+    expect(store().definition).toEqual(definition);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove connection' }));
+    expect(labels()).toEqual(['remove edge start to work']);
+    expect(store().definition!.edges).toEqual(
+      definition.edges.filter((e) => e.id !== 'start-work'),
+    );
+    expect(undo).toHaveFocus();
+    act(() => store().undo());
+    expect(store().definition).toEqual(definition);
+  });
+
+  it('makes the toolbar unavailable from a mouse drag of a card until its release settles; a touch drag never does', async () => {
+    load(simpleLoop());
+    render(<Live />);
+    select('start-work');
+    const remove = screen.getByRole('button', { name: 'Remove connection' });
+    const card = flow().nodes!.find((n) => n.id === 'check')!;
+    // A touch drag, and a start without a mouse event, add no click blocker.
+    act(() => {
+      flow().onNodeDragStart!(new TouchEvent('touchmove'), card, [card]);
+      flow().onNodeDragStart!({} as never, card, [card]);
+    });
+    expect(remove).not.toHaveAttribute('aria-disabled');
+    act(() => store().moveNode('check', { x: 600, y: 120 }));
+    expect(store().openStep).toBeDefined();
+    // xyflow starts a mouse drag on the move past the click distance.
+    act(() => flow().onNodeDragStart!(new MouseEvent('mousemove'), card, [card]));
+    // The drag start still closes the open step, as before.
+    expect(store().openStep).toBeUndefined();
+    expect(remove).toHaveAttribute('aria-disabled', 'true');
+    expect(remove).toHaveAttribute('data-gesture', 'panning');
+    fireEvent.click(remove);
+    expect(store().definition!.edges.some((e) => e.id === 'start-work')).toBe(true);
+    act(() => {
+      window.dispatchEvent(new MouseEvent('mouseup'));
+    });
+    expect(remove).toHaveAttribute('data-gesture', 'settling');
+    await waitFor(() => expect(remove).not.toHaveAttribute('aria-disabled'));
+    fireEvent.click(remove);
+    expect(labels()).toEqual(['move check', 'remove edge start to work']);
   });
 });

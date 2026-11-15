@@ -571,6 +571,60 @@ describe('OrthogonalEdge', () => {
     }
   });
 
+  it.each([
+    ['an ordinary draft', false, false],
+    ['a Chat draft, the voice step stored first', true, true],
+    ['a Chat draft, the voice step stored second', true, false],
+  ])(
+    'disables Remove connection for an id two stored connections hold, saying so, in %s (#207)',
+    (_, system, voiceFirst) => {
+      const voice = {
+        id: 'return',
+        from: { node: 'chat-input', port: 'out' },
+        to: { node: 'chat-normalize' },
+      };
+      const plain = { id: 'return', from: { node: 'respond', port: 'out' }, to: { node: 'done' } };
+      const definition = {
+        schemaVersion: 4,
+        name: 'Shared id',
+        nodes: [
+          { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
+          { id: 'chat-normalize', kind: 'mutate', label: 'Norm', config: { operations: [] } },
+          { id: 'respond', kind: 'mutate', label: 'Respond', config: { operations: [] } },
+          { id: 'done', kind: 'exit', label: 'Done', config: {} },
+        ],
+        edges: voiceFirst ? [voice, plain] : [plain, voice],
+      } as unknown as LoopDefinitionInput;
+      useEditorStore.setState({ systemChat: system, definition });
+      const message =
+        'More than one connection uses the ID "return"; this action cannot choose just one.';
+      const gate = createViewportGestureGate();
+      const editing = editor(gate);
+      try {
+        render(inFlow(<OrthogonalEdge {...props} selected />, editing));
+        const remove = screen.getByRole('button', { name: 'Remove connection' });
+        expect(remove).toBeDisabled();
+        expect(remove).toHaveAttribute('title', message);
+        fireEvent.click(remove);
+        expect(editing.remove).not.toHaveBeenCalled();
+        // The store's reason outranks a pan in progress, as the voice step's does.
+        act(() => gate.move(new MouseEvent('mousemove')));
+        expect(remove).toBeDisabled();
+        expect(remove).toHaveAttribute('title', message);
+        expect(remove).not.toHaveAttribute('aria-disabled');
+        expect(remove).not.toHaveAttribute('data-gesture');
+        // One holder again: an ordinary connection may go; the voice step keeps its own reason.
+        act(() => useEditorStore.setState({ definition: { ...definition, edges: [plain] } }));
+        expect(remove).toBeEnabled();
+        expect(remove).not.toHaveAttribute('title');
+        act(() => useEditorStore.setState({ definition: { ...definition, edges: [voice] } }));
+        expect(remove.getAttribute('title')).toBe(system ? VOICE_STEP_MESSAGE : null);
+      } finally {
+        useEditorStore.setState({ definition: undefined, systemChat: false });
+      }
+    },
+  );
+
   it('keeps a protected voice step’s own reason while a pan settles (#207)', () => {
     useEditorStore.setState({
       systemChat: true,

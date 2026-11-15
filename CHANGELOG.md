@@ -22,10 +22,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   Script exit-code label, from an imported draft, or while a connected Decision route's ID is
   blank, are listed by their ends under **Connections the canvas cannot draw** in the loop's
   issues beside **Publish**, and removed there with **Remove edge**, one **Undo** step each.
-  Right after a mouse pan, **Remove connection** and **Reset route** are briefly shown
-  unavailable and do nothing, until the pan's own click blocker is gone; before, they looked
-  available while a click on them was silently swallowed. No stored or exported data changes,
-  so there is no upgrade note.
+  Right after a mouse pan or a mouse drag of a card, **Remove connection** and **Reset route**
+  are briefly shown unavailable and do nothing, until the drag's own click blocker is gone;
+  before, they looked available while a click on them was silently swallowed. Removing a
+  connection takes exactly one stored record: an ID that more than one stored connection holds is
+  refused with its reason, on the button and from the keyboard, instead of removing them all. A
+  connection stays selected only while it is the one selected in the loaded draft: **Reload
+  server draft**, a renamed end or a port that no longer exists forgets the selection, and a
+  removal, route edit or key left over from before changes nothing. No stored or exported data
+  changes, so there is no upgrade note.
 - Publish reports the version the server actually stored (#237). The editor publishes from its
   queue of saves, after rechecking held input and conflicts, and checks them again right before
   the request when it first reads the server back. It then compares the returned immutable

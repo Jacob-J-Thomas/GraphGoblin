@@ -1,3 +1,4 @@
+import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { createSystemChatDefinition, enableChatAudio } from '@graphgoblin/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
@@ -6,7 +7,7 @@ import {
   isProtectedVoiceNode,
   VOICE_STEP_MESSAGE,
 } from './chat-protection.js';
-import { useEditorStore } from './store.js';
+import { edgeRemovalRefusal, useEditorStore } from './store.js';
 const seed = () => createSystemChatDefinition({ name: 'Gateway chat', harness: 'codex' });
 const audio = () =>
   enableChatAudio(seed(), {
@@ -66,6 +67,40 @@ describe('voice protocol editor protection', () => {
         .connect({ source: 'chat-normalize-check', sourceHandle: 'valid', target: 'respond' }),
     ).toBeNull();
   });
+  it.each([true, false])(
+    'refuses an id a protected voice step shares with the valid continuation, whichever is stored first (voice step first: %s)',
+    (voiceFirst) => {
+      const definition = audio();
+      const voice = definition.edges.find(
+        (edge) => edge.from.node === 'chat-normalize-check' && edge.from.port === 'invalid',
+      )!;
+      const valid = definition.edges.find(
+        (edge) => edge.from.node === 'chat-normalize-check' && edge.from.port === 'valid',
+      )!;
+      expect(isProtectedVoiceEdge(definition, true, voice)).toBe(true);
+      expect(isProtectedVoiceEdge(definition, true, valid)).toBe(false);
+      // The editable continuation carries the voice step's id: one id, two stored connections.
+      const twin = { ...valid, id: voice.id };
+      const rest = definition.edges.filter((edge) => edge !== voice && edge !== valid);
+      const shared = {
+        ...definition,
+        edges: voiceFirst ? [voice, twin, ...rest] : [twin, voice, ...rest],
+      };
+      expect(LoopDefinitionSchema.safeParse(shared).success).toBe(true);
+      useEditorStore.getState().load('gateway', shared);
+      useEditorStore.setState({ systemChat: true });
+      const before = useEditorStore.getState();
+      useEditorStore.getState().removeEdge(voice.id);
+      const message = `More than one connection uses the ID "${voice.id}"; this action cannot choose just one.`;
+      // Both records stay, in either order, and the reason is the shared id, not which came first.
+      expect(useEditorStore.getState()).toEqual({ ...before, connectionError: message });
+      expect(useEditorStore.getState().definition).toBe(shared);
+      expect(edgeRemovalRefusal(shared, true, voice.id)).toBe(message);
+      // Without the twin, the voice step keeps its own reason and the continuation has none.
+      expect(edgeRemovalRefusal(definition, true, voice.id)).toBe(VOICE_STEP_MESSAGE);
+      expect(edgeRemovalRefusal(definition, true, valid.id)).toBeUndefined();
+    },
+  );
   it('prevents internal rewiring through every canvas connection path', () => {
     const definition = audio();
     useEditorStore.getState().load('gateway', definition);
