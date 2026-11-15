@@ -93,3 +93,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0077 — Explicit Space cards for loops stacked in one spot](ADR-0077-explicit-space-cards.md) records the owner decision that a loop whose cards all sit in one spot is spaced only by an explicit, undoable action that writes node positions alone, and the rejected implicit layout and preview (#208).
 
 [ADR-0078 — Stationary history controls and a one-owner connection banner](ADR-0078-stationary-history-controls.md) records the fixed leading Undo and Redo slot, their non-moving press, and the loaded editor owning the one connection banner under its toolbar, with the baseline causes and the shell fallback for every other state (#208).
+
+[ADR-0079 - Refuse malformed poll dedupe keys before lookup](ADR-0079-poll-dedupe-key-identities.md) refines D-020 for exact poll identities and candidate-local refusal (#361).

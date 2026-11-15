@@ -12,6 +12,7 @@ import {
   PollItemsError,
   evaluateExpression,
   evaluatePredicate,
+  isPollKeyWellFormed,
   nodesOfKind,
   renderTemplate,
 } from '@graphgoblin/domain';
@@ -180,6 +181,13 @@ export class PollTriggers {
         value === undefined || value === null
           ? undefined
           : (typeof value === 'string' ? value : JSON.stringify(value)).slice(0, 512);
+      if (dedupeKey && !isPollKeyWellFormed(dedupeKey)) {
+        this.deps.logger.warn(
+          { ...context, code: 'POLL_DEDUPE_KEY_INVALID', reason: 'MALFORMED_DEDUPE_KEY' },
+          'poll trigger failed',
+        );
+        return [];
+      }
       if (
         dedupeKey &&
         (await this.deps.hasDedupe(target.loopId, target.triggerNodeId, dedupeKey))

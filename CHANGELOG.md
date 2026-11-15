@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Poll triggers refuse malformed UTF-16 dedupe keys before lookup or admission (#361, ADR-0079).
+  Item polls skip each affected candidate and admit later eligible items. Single-result polls check
+  the actual derived key, including a surrogate pair split by the 512-code-unit limit. Warnings
+  identify the trigger and refusal without including probe data. Historical run records are preserved.
+
 - A loop that opens with at least two cards, all at the origin `(0, 0)`, for example one written
   through the API or an import, now offers **Space cards** in a panel at the top of the canvas (#208,
   ADR-0077, the owner's decision). It puts the cards in columns that follow the connections and
