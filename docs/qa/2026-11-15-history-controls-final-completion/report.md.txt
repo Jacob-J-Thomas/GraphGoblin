@@ -1,0 +1,129 @@
+# Independent final audit of PR #480
+
+SIGN-OFF: PR #480 at 5a31678f5a8611ae3a89a1f6aefe797d7106a08e for target main at 1cfca9bce3967c9d41950266c83aab636667e0ab may merge.
+
+Auditor: fresh GPT-6 Astra, max reasoning, formal scan 2 of the three-scan batch limit. Completed 2026-11-15 UTC. This is an engineering merge verdict, not owner acceptance or closure of #208. No material introduced defect was found. No FIX-IN-PR or new DEFER-ISSUE finding is admitted.
+
+## Scope, independence and exact identity
+
+The reviewed contract is the stationarity half of #208: fixed leading Undo/Redo positions and hit targets through ordinary history, label, save, validation, publish, press and connectivity changes; unchanged history/keyboard semantics; and exactly one connection-status owner for the current screen. Explicit Space cards remain a separate child. Existing #479 Fit View placement and #481 Decision shared-ID rewriting are not incorporated into this PR.
+
+I read the complete eight changed production files, all five added test files, existing UndoRedo and EditorPage undo tests, and the relevant callers and supporting implementations: App routing and ErrorBoundary, shared Button, connectivity store, keyboard handling, editor state/history and early-return paths. I read the actual-main non-QA diff, ADR-0078, relevant numbered docs/guide/CHANGELOG, delivery register, AGENTS.md, issue workflow, batch audit rules and bounded pipeline review policy. Previous implementation, review and QA verdicts were not used as correctness premises. I worked alone and did not read private Claude events or results.
+
+Independent read-only Git checks established:
+
+| Object | Verified identity |
+| --- | --- |
+| Published PR head | `5a31678f5a8611ae3a89a1f6aefe797d7106a08e` |
+| Published tree | `c247968a388b1c74e7727ec27d4fe465ebfde0d0` |
+| Actual main target | `1cfca9bce3967c9d41950266c83aab636667e0ab` |
+| Actual main tree | `10fa2793ec1c2ee63e45143a40af5d6ba1a93f0b` |
+| Current-main synthetic merge | `6ae1eff7c27ca49e941b8bb5c4e18f32d34ef7d6` |
+| Native build source | `6b0eae62ea98ae73b22903c9922bba198e219608` |
+| Non-QA diff SHA-256 | `eeb26282af3d15be7299f40138a2e84018ff400e4569c68bb53e869eb40db2dc` |
+
+All 1,447 changed working files matched their current HEAD Git blobs. There are 19 non-QA paths: 13 production/test paths and six documentation paths. All 13 history production/test paths are unchanged from first-review source `c2cffebb7ca1bbea41ae72a37b9f232c90681906`; the final audit independently assessed their behavior. Publication from native source 6b0e to 5a316 changes QA evidence and delivery metadata, with no product or build-input delta. Actual main is an ancestor of the reviewed head, and inherited canvas product content is already present in that actual target.
+
+The last independent local readback at 06:27:16 UTC remained clean at these exact identities. Index SHA-256 remained `1ff4e7c444afad7370d17839bc04086c226beb14408203d040bc41349e3d703d`. Live GitHub readback confirmed base `main` at 1cf, head 5a316, merge 6ae, and an open, draft, mergeable PR. Root retains publication and merge ownership.
+
+## Source assessment and dispositions
+
+The toolbar gives history its own non-shrinking leading slot and lets the following sibling wrap. The DOM order matches visual and focus order; the change does not rely on CSS reordering. Fine-pointer buttons are **32 px in a 36 px high slot**; coarse-pointer buttons and slot are 44 px. This is the actual ADR-0078 contract. The original brief's shorthand saying 36 px fine targets was inaccurate; its correction is retained in `root-brief-clarifications.md` without modifying the original brief.
+
+UndoRedo's scoped `active:translate-none!` defeats the shared ghost-button active translation, while an enabled pressed border provides feedback. Shared Button styling and history actions, focusability, `aria-disabled`, labels, tooltips, `aria-keyshortcuts` and history payloads remain unchanged. Component tests verify semantics and compiled CSS; the retained native measurements establish actual geometry and hit behavior.
+
+Connection ownership is tied to the mounted `EditorConnectionBanner` component. `EditorPage` renders it below the toolbar only after its loaded-frame early returns and while voice staging is not inert. The shell subscribes through `useSyncExternalStore`; unique Set claims, idempotent releases, and layout-effect acquisition/cleanup handle overlap, navigation, StrictMode and error-boundary replacement. Copying the listener set before notifying makes subscription changes during notification safe for the current callers. Late or remounted subscribers read the current snapshot. No claim is acquired for a render that never commits. A renderer failure releases the committed claim; retry reacquires it. The application is a browser client with the reviewed single shell; no new server request ownership or cross-user state is introduced.
+
+The existing `useConnectionStatus` source, reconnect grace, offline/API-unreachable distinction and HTTP error classification are reused. API key, storage and shutdown notices stay with their existing shell owners. Auth, draft preservation, unsupported data, no-definition, loading and error paths remain intact. There are no new endpoints, external inputs, secrets, dependencies, persistence writes, schema changes, migrations or compatibility paths. History/store mutation and conditional save logic are not modified. I found no introduced security boundary, data-loss, lifecycle, cancellation or maintainability defect requiring a change.
+
+| Candidate concern | Disposition and evidence |
+| --- | --- |
+| History shifts during content wrapping or active press | NO-CHANGE: fixed leading slot, scoped computed active style and native stationary/hit measurements satisfy the contract. |
+| Claim leaks or duplicate status after overlap, subscriber remount, StrictMode or renderer failure | NO-CHANGE: source lifecycle plus existing and independent error/retry/subscription tests pass. Native settled loading/error/non-editor routes show correct ownership. |
+| Banner hidden inside inert voice staging or missing during blocked/loading/error screens | NO-CHANGE: component is absent in those states; shell fallback and component tests cover these paths. |
+| CI ran before the base retarget | NO-CHANGE: the exact-tree/context argument below is independently established; no claim is made that the original event targeted main. |
+| Inherited Fit View placement and shared-ID Decision rewriting | DUPLICATE-STALE for this child's finding gate: separate known issues #479 and #481, with no evidenced introduced impact here. |
+| Physical touch, actual text zoom, speech and other engines | Explicit evidence limits, not new asserted defects or a substitute for the accepted native matrix. |
+
+## Acceptance matrix
+
+Native entries below are independently inspected and recalculated **retained QA evidence**, not new browser runs by this auditor. Component entries identify their narrower scope.
+
+| Acceptance criterion | Evidence and result |
+| --- | --- |
+| Stable first-row Undo/Redo geometry across history, changing labels and save/validation/publish | PASS. D1 fine/light, D2 coarse/dark, 768 px fine/light and 512×384 CSS px/DPR-2 reflow proxy completed full lifecycle sequences. Across the full matrix, all 77 qualified windows and 13,430 layout samples have zero movement in x/y/width/height, zero fixed-point misses and zero exclusions; viewport and scroll remain constant inside each qualified window. |
+| Measurement detects real movement | PASS. D1's separate one-pixel positive control detected Undo's 1 px displacement while Redo stayed fixed and verified exact restoration. |
+| Press does not move or lose a held click | PASS. All 21 trusted native mouse down/up/click sequences use the intended targets and coordinates, with holds approximately 252.8–1116.6 ms; expected history changes occur. Compiled CSS checks also pass. |
+| Coarse targets and touch input | PASS within the stated mode. D2 measures 44 px targets and uses trusted emulated touch Undo/Redo. It does not establish physical-touch hold behavior. |
+| Narrow layout and clipping | PASS. The 768 px long-name case, 512 px proxy and 360 px case retain visible, ordered, hittable actions and no horizontal overflow. The 360 px case includes held Publish/current-only readback. Public Fit View in the 512 px fixture exposes a clipped card without changing graph/token/history/write count. |
+| Labels, enabled/disabled behavior, keyboard and focus | PASS. Native histories, shortcut and focus sequences agree with expected edits; component tests cover accessible names, `aria-disabled`, key shortcuts, DOM order, click suppression and unchanged history semantics. Screen-reader speech was not exercised. |
+| Save/data preservation | PASS. Replayed all 66 accepted draft PUT checkpoints. Exact prior If-Match token, expected whole graph, synced device graph, public API canonical graph and returned updated token agree. Schema parsing uses the bound compiled contracts. No unexpected write is hidden by a count-only assertion. |
+| Held validation/save, publish and modal interactions | PASS. Full lifecycle native groups and focused toolbar/editor tests preserve history state and stationary targets through the relevant transitions. |
+| Browser offline | PASS. Native offline case includes held Undo, expected saved history and one editor-owned status below the toolbar. |
+| Online browser with API transport failure | PASS. Native unreachable case distinguishes transport failure from browser offline and retains one editor-owned status and stable targets. |
+| Brief PUT-only transport failure | PASS. Raw frame evidence contains the two-frame editor-owned status flash, beneath the toolbar, with no duplicate banner or target movement. |
+| HTTP 500 classification | PASS. Separate validation POST and draft PUT HTTP 500 responses do not become offline/unreachable status; error/save behavior and targets remain correct. |
+| Loading, settled missing-loop error, non-editor navigation and editor re-entry | PASS. Native D1 and R512 ownership groups include Loops, held loading, Events and offline re-entry. Four real GET 404 responses settle the missing-loop routes; error content and one shell status coexist without an editor toolbar. |
+| Voice-inert, auth, storage/shutdown, blocked/no-definition and StrictMode | PASS at component/source tier. Existing focused tests and reviewed early returns/notice owners establish the claimed behavior; no native coverage is asserted for these cases. |
+| Initial renderer failure, committed renderer failure and actual ErrorBoundary retry | PASS at component tier. Three fresh external audit tests cover late/remounted subscriptions with overlapping/idempotent claims, a never-committed failing render and retry, and committed claim release/reacquisition under StrictMode. |
+| Resource and owner isolation | PASS. All 11 retained native cleanup records are clear; PID 26904 reuse is positively identified as the cleanup PowerShell itself. My focused runs left no owned process, source/index change, listener or service. Owner checkout, instance, store and ports 4747/4748 were not touched. |
+
+## CI against the actual target
+
+I read the full five raw job logs, both workflow definitions, configuration and relevant fixed-history browser-fixture access, and fetched terminal GitHub status independently. Both workflows are success at the reviewed head: CI run `43682228998` and routing run `43682229004`, each attempt 1. All five jobs succeeded. The preserved initial CI run metadata in `evidence-verification.json` was captured while the workflow was still in progress; `live-github-readback.json` and `final-live-readback.json` retain later terminal success. The historical snapshot is not presented as current status.
+
+Every job actually checked out `b08bf0ea5f304bd1bfb83b58dd2588607fb943a8`, with parents old base `48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6` and published head 5a316. The current synthetic merge 6ae has parents actual main 1cf and the same head. I independently verified all three complete trees—tested merge b08, current merge 6ae and head 5a—are exactly c247. Old base 48dd and actual main 1cf have exactly the same tree 10fa.
+
+The workflow executions and gate selection do not depend on differing base content, base-ref/SHA/diff output or merge-parent traversal. `github.ref` affects concurrency grouping; it does not select test behavior. Routing's path admission and invoked files are unchanged. Browser golden data is read from the same fixed commit `6976aa90f9c04bdef04b75ba14d297f58cdee8ba`, which exists in both merge histories; checkout fetches full history for that job. Manual performance/failure-evidence tools that record HEAD are not base-sensitive CI selectors. These facts support transferring the successful complete-tree checks to the independently reviewed actual-main context. **The original workflow event preceded retargeting and did not target main.**
+
+| Current job | Independently checked outcome |
+| --- | --- |
+| Gates `132715112409` | PASS. Build, process acceptance suites, types, lint, formatting, layers, migration no-op check, tokens, dependencies, templates, coverage, licenses, generated docs, contrast and high-severity audit threshold succeeded. Coverage invocation completed **22 total Turbo tasks, including build dependencies, for 13 coverage packages**. It reported 9,394 passed and 41 skipped tests; web contributed 2,738 passed tests across 218 files. All 13 downloaded coverage summary totals satisfy the thresholds; minimum lines 95.00%, minimum branches 90.55%; web 98.59% lines / 94.23% branches. |
+| Browser `132715112244` | PASS. 481 passed, one declared live Codex-provider skip, zero retries. The project label is Chromium but the configured CI browser channel is Edge on Linux. |
+| Template image `132715112372` | PASS. Built image and parsed bundled starter/implementation/review/QA templates with 4/11/10/11 nodes under network-none, read-only, capability-dropped execution. |
+| Windows launcher `132715112380` | PASS. 14 tests, 14 passed, zero failures. The artifact upload warned that its configured path had no files; the full job log retains test results, and no missing uploaded trace is claimed. |
+| Routing `132715112049` | PASS for normal limits. Three drags each at 100/300 nodes yielded median routing p95 5.0/5.5 ms, below 8 ms, and each drag below 16 ms. Frame p95 was approximately 33.4 ms. Optional strict/manual limits were not enabled; this is not a 60 fps claim. |
+
+The dependency audit passed its high-severity threshold with **eight low and thirteen moderate advisories**. It is not a zero-advisory result. Four existing dependency-cruiser orphan warnings remain, with zero errors. No threshold, exclusion, timeout, retry or dependency was changed for this audit.
+
+## Native provenance and independent checks performed
+
+The complete final-native packet, raw handoff, driver, gateway, binding scripts, actions, trace/phase data, cleanup records, integration packet and retained historical baseline/source/partial/recovery packets were inspected. Historical first-review material was used only to understand the scan budget and provenance, not to adopt its verdict. Representative retained final screenshots for R512, 360 px and settled R512 error ownership were viewed.
+
+Independent checks in `verify-evidence.mjs`, `verify-output-trees.mjs` and the served-asset receipt established:
+
+- All 475 curated files (36,363,257 bytes) match their source SHA-256/size mapping, including the two raw Markdown-to-`.md.txt` renames. Worker manifest has 455 raw artifacts. Handoff hash is `99b8d43d4b9137669e252a65ba565e6a6b8bd261ae34b168ec58c346453446a2`; worker manifest hash is `f30f12474961c5609aac01fb8dce570fb0a219147d3185bbe1f54b95e1bbc630`.
+- Before/after binding hash `241e04ffe55ae4a9ab1af3586d61060039ca9e973fe19cd0d8c820885f275273` and read-only binding hash `7cc5e70f4c96371fa0f9734594228d66368814ce4583276986912e5be5033f7b` match. All 1,683 source paths agree with the native build commit; 1,682 still have identical current bytes and the delivery register is the explicitly verified publication-metadata difference.
+- All 1,227 built output bytes and exact inventories of 13 distribution trees match their bindings, with 27 embedded web modules verified. Domain receipt hash `36a97407d92ee94f12d042ba45d62c733e8c9291171c2cb17aaa750567407b89` binds source/path and emitted JavaScript to the browser map. The TypeScript map does not embed TypeScript source; no such claim is made.
+- Every one of the 11 native groups served the bound HTML/CSS/JS. Entry bundle SHA-256 is `64d4e26a83e9710f6a92436e772900d9b98034d1cb0cee6a6a4181305ddb928f`. Gateway PID/lifecycle and closed-server records agree.
+- Replayed all 11 groups, 88 phases and 16,447 samples, including all 77 qualified windows, 21 held clicks, 66 exact save checkpoints and four real 404 responses. Results in the acceptance matrix were recalculated from the raw records rather than accepted from a summary assertion.
+- Read and hashed each full CI log and all 13 downloaded coverage summary JSON files. Retained routing metrics, command lists, checkout identities, tests and advisory counts are in `evidence-verification.json`.
+
+Under root's exclusive heavy-slot grant, I ran exactly one existing focused selection and one external audit fixture with project Node **v22.23.4** and `pnpm.cmd`. Both first attempts passed. The seven existing files produced **60 passed tests** (40.82 s); the external fixture produced **3 passed tests** (5.97 s). Exact commands, runtime, start/end times, exits and log hashes are in `focused-commands.json` and `focused-results.json`. Log hashes are:
+
+- `existing-first.log`: `b33d8be70940b89e7601f1be7a6b90602427ede3ec90ccf8d6a7a0dd4a91ffe9`.
+- `external-first.log`: `bf4a98340125c4bad82add3dc9bb35e0574a12c26ccc54da01a7dcf619c01068`.
+
+The audit fixture and Vitest wrapper are outside the checkout. They reuse the candidate's test configuration and actual ownership/error-boundary code, with external module resolution and cache location only. No production/test source or index was edited. No full build, coverage suite, browser, native/provider run or successful unchanged suite was repeated. The heavy slot was released after process and source/index cleanup verification at 06:16:16 UTC.
+
+## Preserved first outcomes and evidence limits
+
+Two audit-only evidence-parser assumptions failed before the final artifact replay passed. The first incorrectly required publication delivery metadata to have identical bytes to the earlier native build inventory; the correction verifies that metadata against its exact native-source Git blob and independently proves zero product/build-input difference. The second joined repeated phase labels as if globally unique; the correction consumes each qualified window occurrence in order and asserts complete consumption. Both earlier scripts and outputs remain as `verify-evidence-first.mjs` / `evidence-verification-first.log` and `verify-evidence-second.mjs` / `evidence-verification-corrected.log`. The final helper and `evidence-verification-final.log` are separate. Raw measurements, product code, oracles and thresholds were not changed and the product was not rerun to address these parser errors.
+
+A final read-only PowerShell command also required quoting `HEAD^{tree}` correctly. Its original error output remains in `final-live-readback.json`; the corrected identity read is in `final-local-readback.json`. This did not execute or retry tests.
+
+Historical fixture failures remain visible: source fixture/cleanup/type corrections, the partial-native post-publish draft expectation and unsettled 404 state, the first recovery reflow modal/theme case, and the integration wrapper that could not retain an empty lint log/first exit. The later integration static-only receipt establishes its type/lint/format result without claiming a first lint pass from silence or rerunning Vitest. The current complete 11-group native matrix passed its own initial attempts with zero fixture corrections; historical cases do not fill current matrix gaps.
+
+The native evidence establishes Windows Edge automation at the admitted configurations. DPR 2 is a reflow proxy, not actual text zoom. Trusted emulated touch and held mouse input are not physical-touch hold. Other engines and screen-reader speech were not tested. Voice, auth, storage/shutdown, StrictMode and renderer-error ownership remain component/source evidence. Test coverage percentages are not substitutes for these distinctions or for subjective owner acceptance.
+
+No mandatory engineering work remains for this candidate within the reviewed contract. Root may proceed with the exact-head/actual-target merge gate. **#208 stays open for post-merge owner observations and the separate explicit Space cards work.** The owner's instance and store have not been updated by this audit.
+
+## Local evidence index
+
+- `verification.json`: compact sealed result and SHA-256 references.
+- `evidence-verification.json`, `output-tree-verification.json`, `served-assets-verification.json`: independent source/native/CI recalculations.
+- `focused-results.json`, `focused-commands.json`, `existing-first.log`, `external-first.log`: new focused checks and first results.
+- `focused-before.json`, `focused-after.json`, `focused-cleanup.json`, `final-local-readback.json`: unchanged checkout/index and cleanup receipts.
+- `live-github-readback.json`, `final-live-readback.json`: live head/base/workflow evidence.
+- Sibling `current-ci-5a316/`: full five job logs, final run/job metadata, routing output and 13 coverage artifacts.
+- Candidate `docs/qa/2026-11-15-history-controls-final-native/` and `docs/qa/2026-11-15-history-controls-final-integration/`: committed evidence reviewed above.

@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-11-15T07:01:00.7780668Z",
+  "admissionSha256": "92baede1f46a80dc1383b7c1a15d36b70c062d8b0c4c302b6da39dbb401cc099",
+  "rows": [
+    {
+      "label": "binding",
+      "program": "node",
+      "arguments": [
+        "./verify-binding-final.mjs",
+        "./admission-native-final-summary.json",
+        "after"
+      ],
+      "exit": 0,
+      "startedAt": "2026-11-15T07:00:55.1770814Z",
+      "finishedAt": "2026-11-15T07:00:56.8667298Z",
+      "log": "./final-after-correction2-binding-log.txt",
+      "logSha256": "8205887b0b4a4dea6d2c76998d655be520d79ae415dc2b279136817d48743086"
+    },
+    {
+      "label": "read-only",
+      "program": "node",
+      "arguments": [
+        "./drivers/verify-reuse.mjs",
+        "./admission-native-final-summary.json",
+        "./binding/read-only-after-correction2.json",
+        "./binding/read-only-before.json"
+      ],
+      "exit": 0,
+      "startedAt": "2026-11-15T07:00:56.8729568Z",
+      "finishedAt": "2026-11-15T07:00:58.3377502Z",
+      "log": "./final-after-correction2-read-only-log.txt",
+      "logSha256": "3cfa13b4654f01c97a1ae47ee2c09fd27b0f4b6ed4173b06eec592911cf5c8d0"
+    },
+    {
+      "label": "domain",
+      "program": "node",
+      "arguments": [
+        "./verify-domain-map.mjs",
+        "./admission-native-final-summary.json",
+        "./binding/domain-map-after-correction2.json",
+        "./binding/domain-map-before.json"
+      ],
+      "exit": 0,
+      "startedAt": "2026-11-15T07:00:58.3409451Z",
+      "finishedAt": "2026-11-15T07:00:58.4595058Z",
+      "log": "./final-after-correction2-domain-log.txt",
+      "logSha256": "60c2177926e7e4e3ac90fdc704f4fe12bc4aff205ed5c6c91bd87bd7c3108fe4"
+    },
+    {
+      "label": "cleanup",
+      "program": "pwsh",
+      "arguments": [
+        "-NoProfile",
+        "-File",
+        "./drivers/verify-cleanup.ps1",
+        "./cleanup-after-correction2.json"
+      ],
+      "exit": 0,
+      "startedAt": "2026-11-15T07:00:58.4624762Z",
+      "finishedAt": "2026-11-15T07:01:00.3687301Z",
+      "log": "./final-after-correction2-cleanup-log.txt",
+      "logSha256": "e869921764369a9350abf78cf54f00d053b6e0d7ce504fbbe872fa6156994f11"
+    },
+    {
+      "label": "summary",
+      "program": "node",
+      "arguments": [
+        "./summarize-final.mjs",
+        "./admission-native-final-summary.json"
+      ],
+      "exit": 0,
+      "startedAt": "2026-11-15T07:01:00.3852360Z",
+      "finishedAt": "2026-11-15T07:01:00.7722244Z",
+      "log": "./final-after-correction2-summary-log.txt",
+      "logSha256": "93148b6bcb08a1f0a88c867bec3f066d4e01d5d42f2016094678ee825f5fb932"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+param()
+$env:PATH="$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+$env:GIT_OPTIONAL_LOCKS='0'
+$ad='./admission-native-remaining-initial.json'
+$sha='110228ba8b564de5f886d630cc887ed1936bba8a4f84922b6a13755f664229a4'
+if ((node --version) -ne 'v22.23.4' -or (Get-FileHash -LiteralPath $ad).Hash.ToLowerInvariant() -ne $sha -or (Get-FileHash -LiteralPath './binding/binding-before.json').Hash.ToLowerInvariant() -ne '086fbb626198f220e02620d7c1d7ab277d4837425a951767be471cd9c831f8eb') { throw 'Immutable launch prerequisites differ' }
+$group='gestures-d1'
+$exitFile="./exit-$group-initial.json"
+if (Test-Path -LiteralPath $exitFile) { throw 'Case exit receipt already exists' }
+$started=[DateTime]::UtcNow.ToString('o')
+& node ./drivers/run-case.mjs $ad 'C:/Users/98jak/AppData/Local/npm-cache/_npx/31e32ef8478fbf80/node_modules/@playwright/cli/playwright-cli.js' $group initial
+$rc=$LASTEXITCODE
+[ordered]@{label="$group-initial";exit=$rc;startedAt=$started;finishedAt=[DateTime]::UtcNow.ToString('o');admissionSha256=$sha} | ConvertTo-Json | Set-Content -LiteralPath $exitFile -Encoding UTF8
+& 'C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/final-native-preparation/verify-space-case-readback.ps1' -Packet 'C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/final-native-preparation' -Group $group -Attempt initial
+$verify=$LASTEXITCODE
+if ($rc -ne 0) { exit $rc }
+exit $verify

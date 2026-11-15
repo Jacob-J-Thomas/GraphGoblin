@@ -1,0 +1,17 @@
+# Space cards first full web coverage
+
+The first full web coverage run passed **2,886 tests in 223 files** on clean preparatory Space HEAD `20875894b0f2a9206141f3c469c649d7155d3e45`, tree `b23ac01c96358443047067cd9fd26d2e3afe4b86`, observed main `1cfca9bce3967c9d41950266c83aab636667e0ab`. This is coverage evidence for the exact premerge stack.
+
+The package script expanded to `vitest run --coverage` through `pnpm.cmd --filter @graphgoblin/web test:coverage` on project Node 22.23.4. The sole CLI override redirected coverage reports into this external directory. Reporter and thresholds stayed unchanged. Vitest exited zero on its only attempt. [Exact command](command.json) · [Complete first log](web-coverage-first.log) · [Exit receipt](exit-first.json)
+
+| Metric | Web coverage |
+| --- | --- |
+| Statements | 97.68% (13,354 / 13,670) |
+| Branches | 94.27% (12,463 / 13,220) |
+| Functions | 97.19% (3,365 / 3,462) |
+| Lines | 98.60% (11,732 / 11,898) |
+
+`SpaceCardsOffer.tsx` and `space-cards.ts` each had 100% line and branch coverage. `Canvas.tsx` recorded 98.84% lines and 93.95% branches. `store.ts` recorded 99.54% lines and 99.20% branches. These aggregate counts describe executed coverage. The later native verdict depends on the actual integrated build. [V8 summary](coverage/coverage-summary.json) · [Result summary](result-summary.json)
+
+Before and after receipts were byte-identical at SHA-256 `a8c3e2054d47d54f2577405bc63980e6bfb72118181e67a140a95e74fb7333a3`. The raw index stayed at `6b3719ca9ff5f911c9dda06281bfbdd37de1ddf2e6951dd686dbed4c40d0d3c5`. Terminal readback found zero matching coverage processes, with clean tracked and untracked status and the same exact source identity. No build, browser, service, provider, native fixture or formal scan ran. The global Space fixture correction budget remains 1/2 used. Final actual-main native admission still awaits the merged history predecessor. [Before](source-before.json) · [After](source-after.json) · [Terminal readback](terminal-readback.json)
+

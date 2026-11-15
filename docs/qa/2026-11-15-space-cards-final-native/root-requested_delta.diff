@@ -1,0 +1,184 @@
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/build-frozen.ps1 b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/build-frozen.ps1
+index d3589422..791946d5 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/build-frozen.ps1
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/build-frozen.ps1
+@@ -17,6 +17,7 @@ $env:GIT_OPTIONAL_LOCKS = '0'
+ $env:PATH = "$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+ $env:TURBO_TOKEN = ''
+ $env:TURBO_TEAM = ''
++$env:TURBO_CACHE = 'local:rw'
+ $log = Join-Path $packet 'forced-build.log'
+ $result = Join-Path $packet 'forced-build-exit.json'
+ if ((Test-Path -LiteralPath $log) -or (Test-Path -LiteralPath $result)) { throw 'Preserve first build evidence' }
+@@ -27,6 +28,7 @@ try {
+   $node = (node --version).Trim()
+   if ($node -ne 'v22.23.4') { throw 'Unexpected Node runtime' }
+   $cache = Join-Path $packet 'isolated-turbo-cache'
++  if (Test-Path -LiteralPath $cache) { throw 'A fresh cache is required' }
+   $started = [DateTime]::UtcNow.ToString('o')
+   pnpm.cmd build --force "--cache-dir=$cache" 2>&1 | Tee-Object -FilePath $log
+   $code = $LASTEXITCODE
+@@ -35,7 +37,7 @@ try {
+   $clean = !(git status --porcelain=v1 --untracked-files=all)
+   [ordered]@{ head = $admission.head; tree = $admission.tree; actualMain = $admission.actualMain;
+     after = $after; node = $node; exitCode = $code; startedAt = $started; finishedAt = $finished;
+-    cleanAfter = $clean; logSha256 = (Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant() } |
++    cache = $cache; cleanAfter = $clean; logSha256 = (Get-FileHash -LiteralPath $log).Hash.ToLowerInvariant() } |
+     ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8NoBOM -LiteralPath $result
+   if ($code -ne 0) { exit $code }
+   if (!$clean -or (Compare-Object @($admission.head,$admission.tree,$admission.actualMain) $after -SyncWindow 0)) {
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/drivers/run-case.mjs b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/drivers/run-case.mjs
+index a52a6f38..22e3b7bb 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/drivers/run-case.mjs
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/drivers/run-case.mjs
+@@ -68,7 +68,12 @@ if(attempt==='correction2'){
+   const row=corrections[1];
+   assert.equal(row?.attempt,'correction2');
+   assert(row.rootApproved&&row.firstEvidence&&row.fixtureCause&&row.unchangedOracles===true&&row.groups.includes(group));
+-  const first=JSON.parse(await readFile(join(base,'runs',group+'-initial','run.json'),'utf8'));
++  const firstRunPath=join(base,'runs',group+'-initial','run.json');
++  assert(existsSync(firstRunPath),'A pre-execution static admission failure is not an eligible native correction attempt');
++  const first=JSON.parse(await readFile(firstRunPath,'utf8'));
++  assert.equal(first.head,binding.head);
++  assert.equal(first.scenario,group);
++  assert.equal(first.label,group+'-initial');
+   assert(first.failure||first.harnessError,'Completed cases must not be rerun in this admission');
+   assert.notEqual(first.failure?.kind,'product','Product failures cannot be retried as fixture corrections');
+ }
+@@ -198,11 +203,11 @@ try {
+     const names = [];
+     for (const name of await readdir(scratch)) { const s = await stat(join(scratch, name)); names.push({ name, bytes: s.size, dir: s.isDirectory() }); }
+     info.store = { scratch, listing: names, residualLockWalShm: names.filter((n) => /(\.lock(\..+)?|-(wal|shm))$/i.test(n.name)).map((n) => n.name),
+-      sqliteFilePresent: names.some((n) => n.name === 'graphgoblin.db'), gatewayListening: closed.listening };
++      sqliteFilePresent: names.some((n) => n.name === 'graphgoblin.db' && !n.dir && n.bytes > 0), gatewayListening: closed.listening };
+     await rm(scratch, { recursive: true, force: true });
+     info.store.removed = !existsSync(scratch);
+   } catch (error) { info.storeError = String(error); process.exitCode ||= 3; }
+-  if (info.browserClose !== 0 || info.gatewayExit.code !== 0 || !info.store?.removed || info.store.residualLockWalShm.length) process.exitCode ||= 3;
++  if (info.browserClose !== 0 || info.gatewayExit.code !== 0 || !info.store?.removed || !info.store.sqliteFilePresent || info.store.residualLockWalShm.length) process.exitCode ||= 3;
+   await writeFile(join(output, 'gateway.log'), gatewayLog + gatewayError);
+   await writeFile(join(output, 'run.json'), JSON.stringify(info, null, 2) + '\n');
+   console.log(JSON.stringify(info, null, 2));
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/drivers/space.playwright.js b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/drivers/space.playwright.js
+index 0570c12a..098a741e 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/drivers/space.playwright.js
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/drivers/space.playwright.js
+@@ -1143,7 +1143,7 @@ async (page) => {
+       const before=definition(applied.next),after=definition(connected);
+       const added=after.edges.filter(edge=>!before.edges.some(old=>old.id===edge.id));
+       check(added.length===1,'First outside connection adds one edge');
+-      same([added[0].from.node,added[0].from.port,added[0].to.node],['island','out','peer'],'Exact native pointer connection');
++      same([added[0].from.node,added[0].from.port,added[0].to.node,added[0].to.port],['island','out','peer','in'],'Exact native pointer connection');
+       same({...after,edges:after.edges.filter(edge=>edge.id!==added[0].id)},before,'Connection preserves prior data and route order');
+     });
+   }
+@@ -1260,6 +1260,7 @@ async (page) => {
+       await sizingGroup();
+       await protection();
+     }else if(group==='double-r512'){
++      await repeatAtFailurePoint();
+       await stage('r512-reflow',async()=>{
+         const prior=await newFixture('r512-wrap');
+         await panelRead('r512-reflow');
+@@ -1269,7 +1270,6 @@ async (page) => {
+         await quiet(prior,0,await localDraft(),'R512 dismissal no side effect');
+       });
+       await stage('r512-centre-double',()=>repeatedSpace('centre-r512'));
+-      await repeatAtFailurePoint();
+     }else if(group==='touch-d2'){await touchRepeat();}
+     else if(group==='outside-d1'){await outsideControls();}
+     else if(group==='device-d1'){await deviceGroup();}
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/drivers/verify-cleanup.ps1 b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/drivers/verify-cleanup.ps1
+index cd9d5d78..b34be6c3 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/drivers/verify-cleanup.ps1
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/drivers/verify-cleanup.ps1
+@@ -17,13 +17,13 @@ $records = @(Get-ChildItem -LiteralPath (Join-Path $packet 'runs') -Directory |
+   $afterAssets = $closed.servedAfter | ConvertTo-Json -Compress
+   $sameServedBytes = $beforeAssets -ceq $afterAssets
+   $ports = @(([uri]$run.origin).Port, ([uri]$run.sinkOrigin).Port)
+-  $clean = $sameBinding -and $sameServedBytes -and !$closed.listening -and $opened.pid -eq $closed.pid -and
++  $clean = $sameBinding -and $sameServedBytes -and $run.store.sqliteFilePresent -and !$closed.listening -and $opened.pid -eq $closed.pid -and
+     $run.gatewayPid -eq $opened.pid -and $run.gatewayExit.code -eq 0 -and $run.browserClose -eq 0 -and
+     $run.store.removed -and !(Test-Path -LiteralPath $scratch) -and @($run.store.residualLockWalShm).Count -eq 0 -and
+     !($ports -contains 4747 -or $ports -contains 4748)
+   [pscustomobject]@{ label = $run.label; startedAt = $run.startedAt; finishedAt = $run.finishedAt;
+     pids = @($run.orchestratorPid,$run.gatewayPid,$run.browserPid) | Where-Object { $_ };
+-    ports = $ports; scratch = $scratch; resourceClean = [bool]$clean; outcome = $run.failure;
++    ports = $ports; scratch = $scratch; sqliteFilePresent = [bool]$run.store.sqliteFilePresent; resourceClean = [bool]$clean; outcome = $run.failure;
+     browserClose = $run.browserClose; gatewayExit = $run.gatewayExit.code }
+ })
+ if (!$records.Count) { throw 'No recorded native groups' }
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/plan.md b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/plan.md
+index a659c2f2..686ecc0b 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/plan.md
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/plan.md
+@@ -38,10 +38,10 @@ Count-1 repeats use separate Playwright presses. For the ~200 ms case, one count
+ 
+ ## Binding and cleanup
+ 
+-1. After grant, `build-frozen.ps1` inventories all existing files in the 13 dist trees. It runs one forced `pnpm.cmd build` on project Node 22.23.4 with a fresh external cache and cleared Turbo remote token. Require all resolved tasks successful and zero cached. Freeze the exact clean head/tree, working and Git blob equality for all tracked non-QA inputs, Git index hash before/after, and complete SHA-256 inventories for all built outputs. Bind unchanged historical QA by exact Git tree.
+-2. Check actual compiled web map bytes against the 30 named direct Space/Canvas/gate/history/persistence modules and any extra modules required by the final inherited correction. The separate domain verifier binds the exact TS path, emitted JS and JS map, and identical emitted JS in the web map. The map's TypeScript path is evidence of a link, unless embedded bytes are actually present. The read-only scripts recheck the entire binding before each fixture. Use 128 MiB for Git inventory parsing.
++1. After grant, `build-frozen.ps1` inventories all existing files in the 13 dist trees. It runs one forced `pnpm.cmd build` on project Node 22.23.4 with local-only Turbo caching and an absent external cache path. Record the cache path in the build receipt. Require all resolved tasks successful and zero cached. Freeze the exact clean head/tree, working and Git blob equality for all tracked non-QA inputs, Git index hash before/after, and complete SHA-256 inventories for all built outputs. Bind unchanged historical QA by exact Git tree.
++2. Follow the HTML entry to its exact hashed JavaScript and its declared `sourceMappingURL` before checking embedded bytes against the 30 named direct Space/Canvas/gate/history/persistence modules and any extra modules required by the final inherited correction. The separate domain verifier binds the exact TS path, emitted JS and JS map, and identical emitted JS in the web map. The map's TypeScript path is evidence of a link, unless embedded bytes are actually present. The read-only scripts recheck the entire binding before each fixture. Use 128 MiB for Git inventory parsing.
+ 3. Each fixture gets a fresh headless Edge session and disposable SQLite gateway using loopback-only ephemeral ports. Bind the live health PID, actual compiled API entry, exact HTML and every shipped CSS/JS asset at start and before exit, and the browser's script entry. Isolate environment and use unavailable disposable provider paths with Ollama disabled. No access to the owner's service, credentials, checkout or ports 4747/4748.
+-4. Close only the owned browser session and gateway. Validate the real scratch directory is an owned direct descendant of the run folder before removing it after a graceful exit. Retain PID/birth and listening proof, exact closure and no SQLite/WAL/SHM/lock/key leftovers. Inspect full before/after source/index/artifact/served bindings and cleanup. Missing or unsafe cleanup stops further runtime.
++4. Close only the owned browser session and gateway. Validate the real scratch directory is an owned direct descendant of the run folder before removing it after a graceful exit. Retain PID/birth and listening proof, graceful closure and a nonempty `graphgoblin.db` file witness before cleanup. The final audit requires that witness and zero SQLite/WAL/SHM/lock/key leftovers. Inspect full before/after source/index/artifact/served bindings and cleanup. Missing or unsafe cleanup stops further runtime.
+ 
+ ### Command sequence after authorization
+ 
+@@ -60,7 +60,7 @@ node ./verify-domain-map.mjs ./admission-native.json ./binding/domain-map-after.
+ node ./summarize.mjs ./admission-native.json
+ ```
+ 
+-Inspect each group before starting the next. A concrete product or unknown failure is preserved and sent to root before any further dependent work. Exactly one global Space fixture-correction batch remains. A root-approved fixture-only recovery must append `correction2` to the shared hash-bound ledger, retain the first native or pre-admission failure and evidence, record the cause and unchanged oracles, freeze the new driver and exact authorized groups, and execute only affected incomplete groups. The old correction1 record is preserved byte-for-byte as `fixture-corrections-historical.json`. Scope changes, a new correction head, or an actual-main run cannot reset this budget. No product failure rerun or widening waits.
++Inspect each group before starting the next. A concrete product or unknown failure is preserved and sent to root before any further dependent work. Exactly one global Space fixture-correction batch remains. A failed native group with a retained original `run.json` at the same candidate can enter `correction2` after root confirms a fixture-only cause. Record the first evidence and unchanged oracles in the shared hash-bound ledger, freeze the new driver and exact authorized groups, and execute only affected incomplete groups. A static pre-execution admission failure is a separate stop condition. Preserve its evidence and return it to root for admission reconciliation. It does not create an eligible native attempt or authorize a retry. The old correction1 record is preserved byte-for-byte as `fixture-corrections-historical.json`. Scope changes, a new correction head, or an actual-main run cannot reset this budget. No product failure rerun or widening waits.
+ 
+ ## What remains unverified
+ 
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/summarize.mjs b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/summarize.mjs
+index 7026c0e0..6dab722f 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/summarize.mjs
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/summarize.mjs
+@@ -33,7 +33,7 @@ for(const entry of await readdir(join(root,'runs'),{withFileTypes:true})){
+   assert.equal(run.head,admission.head);
+   assert(admission.authorizedGroups.includes(run.scenario));
+   const passes=!run.failure&&!run.harnessError&&!run.noStructuredResult&&!run.pageErrors?.length
+-    &&run.driverExit===0&&run.browserClose===0&&run.gatewayExit.code===0&&run.store?.removed;
++    &&run.driverExit===0&&run.browserClose===0&&run.gatewayExit.code===0&&run.store?.removed&&run.store.sqliteFilePresent;
+   const report={label:run.label,group:run.scenario,config:run.config,status:passes?'pass':run.failure?.kind==='product'?'product-failure':'incomplete',
+     failure:run.failure??null,harnessError:run.harnessError??null};
+   const raw=await readdir(join(folder,'raw'));
+diff --git a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/verify-binding.mjs b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/verify-binding.mjs
+index c8f74bd3..1961c5f8 100644
+--- a/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation-before-root-requested/verify-binding.mjs
++++ b/C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/review-208-space/corrected-native-preparation/verify-binding.mjs
+@@ -140,6 +140,7 @@ if (mode === 'source') {
+   const build = JSON.parse(await readFile(join(evidence, 'forced-build-exit.json'), 'utf8'));
+   assert.deepEqual([build.head, build.tree, build.actualMain, build.node, build.exitCode, build.cleanAfter],
+     [head, tree, actualMain, process.version, 0, true]);
++  assert.equal(resolve(build.cache),join(evidence,'isolated-turbo-cache'),'Unexpected build cache receipt');
+   const buildLog = await readFile(join(evidence, 'forced-build.log'));
+   assert.equal(digest(buildLog), build.logSha256);
+   const log = buildLog.toString('utf8');
+@@ -167,7 +168,11 @@ if (mode === 'source') {
+   assert.equal(scripts.length, 1);
+   const bundle = scripts[0][1];
+   const bundlePath = 'apps/web/dist/' + bundle.slice('/app/'.length);
+-  assert(critical[bundlePath] && critical['apps/api/dist/main.js']);
++  const bundleMapPath = bundlePath + '.map';
++  assert(critical[bundlePath] && critical[bundleMapPath] && critical['apps/api/dist/main.js']);
++  const entry = await readFile(join(checkout,bundlePath));
++  assert.equal(critical[bundlePath],digest(entry));
++  assert(entry.toString('utf8').includes('sourceMappingURL='+bundleMapPath.split('/').at(-1)), 'Served entry does not point to the bound source map');
+   const sourceMap = {};
+   for (const path of Object.keys(critical).filter((file) => file.endsWith('.js.map')).sort()) {
+     const map = JSON.parse(await readFile(join(checkout, path), 'utf8'));
+@@ -186,7 +191,7 @@ if (mode === 'source') {
+   }
+   const mapping = { id: '208-space-corrected-native-v1', sourceHashes };
+   mapping.sha256 = digest(JSON.stringify(mapping));
+-  const report = { ...source, builtSource: head, buildLogSha256: build.logSha256, bundle, critical, trees, sourceMap, mapping,
++  const report = { ...source, builtSource: head, buildLogSha256: build.logSha256, buildCache: build.cache, bundle, bundleMapPath, critical, trees, sourceMap, mapping,
+     builtFiles: Object.values(trees).reduce((count, current) => count + current.files, 0) };
+   if (mode === 'after') {
+     const before = JSON.parse(await readFile(join(evidence, 'binding', 'binding-before.json'), 'utf8'));
