@@ -18,7 +18,10 @@ import {
   renderTemplate,
   threadView,
   validateJson,
+  PatchError,
+  TemplateError,
   type MutationContext,
+  type MutationFailureMapper,
   type RepairRequest,
 } from '@graphgoblin/domain';
 import { applyMutations, completeRepair, applyPatch } from '@graphgoblin/domain';
@@ -196,6 +199,7 @@ export async function repairValue<K extends NodeKind>(
     repair: RepairPolicy;
     model?: string;
     effort?: Effort;
+    onPromptFailure?: (error: TemplateError) => unknown;
   },
 ): Promise<{ value: JsonValue; repaired: boolean }> {
   const { repair } = input;
@@ -211,13 +215,20 @@ export async function repairValue<K extends NodeKind>(
     }
     const { model, effort } = await ctx.services.resolveModel('codex', input.model, input.effort);
     for (let attempt = 1; attempt <= repair.maxAttempts; attempt += 1) {
-      const prompt = await renderTemplate(repair.prompt ?? DEFAULT_REPAIR_PROMPT, {
+      const view = {
         ...threadView(ctx.thread),
         schema: JSON.stringify(input.schema, null, 2),
         value: JSON.stringify(input.value ?? null, null, 2),
         errors,
         attempt,
-      });
+      };
+      const prompt = await renderTemplate(repair.prompt ?? DEFAULT_REPAIR_PROMPT, view).catch(
+        (error: unknown) => {
+          throw error instanceof TemplateError && input.onPromptFailure
+            ? input.onPromptFailure(error)
+            : error;
+        },
+      );
       const completion = await completeWithDeadline(
         (signal) => structured.complete({ prompt, schema: input.schema, model, effort }, signal),
         ctx.signal,
@@ -256,13 +267,14 @@ export async function runMutations<K extends NodeKind>(
   ctx: NodeContext<K>,
   thread: ContextThread,
   ops: readonly MutationOperation[],
+  mapFailure?: MutationFailureMapper,
 ): Promise<{ thread: ContextThread; patch: PatchOperation[] }> {
   const mctx = mutationContext(ctx);
   let current = thread;
   const patch: PatchOperation[] = [];
   let startAt = 0;
   for (;;) {
-    const result = await applyMutations(current, ops, mctx, startAt);
+    const result = await applyMutations(current, ops, mctx, startAt, mapFailure);
     current = result.thread;
     patch.push(...result.patch);
     if (!result.pending) return { thread: current, patch };
@@ -272,19 +284,29 @@ export async function runMutations<K extends NodeKind>(
       schema: pending.jsonSchema,
       errors: pending.errors,
       repair: pending.repair,
+      ...(mapFailure
+        ? { onPromptFailure: (error) => mapFailure(error, pending.opIndex, 'coerce') }
+        : {}),
     });
-    if (repaired.repaired) {
-      const done = completeRepair(current, pending, repaired.value);
-      current = done.thread;
-      patch.push(...done.patch);
-    } else {
-      const op: PatchOperation = {
-        op: hasPath(current, pending.target) ? 'replace' : 'add',
-        path: pending.target,
-        value: repaired.value,
-      };
-      current = applyPatch(current, [op]);
-      patch.push(op);
+    try {
+      if (repaired.repaired) {
+        const done = completeRepair(current, pending, repaired.value);
+        current = done.thread;
+        patch.push(...done.patch);
+      } else {
+        const op: PatchOperation = {
+          op: hasPath(current, pending.target) ? 'replace' : 'add',
+          path: pending.target,
+          value: repaired.value,
+        };
+        current = applyPatch(current, [op]);
+        patch.push(op);
+      }
+    } catch (error) {
+      // Only the authored target write. A provider result rejected by validation stays a repair fault.
+      throw error instanceof PatchError && mapFailure
+        ? mapFailure(error, pending.opIndex, 'coerce')
+        : error;
     }
     startAt = pending.opIndex + 1;
   }

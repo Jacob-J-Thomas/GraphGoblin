@@ -418,9 +418,9 @@ describe('run manager edge cases', () => {
     await manager.waitForIdle();
     expect((await ports.runs.get(a.id))?.failure).toMatchObject({
       code: 'INTERNAL_ERROR',
-      message: 'boom',
-      details: null,
+      resumable: true,
     });
+    expect((await ports.runs.get(a.id))?.failure?.message).not.toContain('boom');
     expect((await ports.runs.get(b.id))?.failure).toMatchObject({
       code: 'INTERNAL_ERROR',
       message: expect.stringMatching(/invalid patch/) as string,
@@ -434,13 +434,18 @@ describe('run manager edge cases', () => {
   it('fails a run when infrastructure throws outside node execution', async () => {
     const engine = await createTestEngine();
     const version = engine.publish(minimalLoop());
-    vi.spyOn(engine.ports.runs, 'saveThread').mockRejectedValueOnce(new Error('disk full'));
+    const fault = new Error('disk full at D:/outer-message-canary/engine.ts');
+    fault.stack = 'Error: disk full\n    at D:/outer-stack-canary/engine.ts:12:1';
+    vi.spyOn(engine.ports.runs, 'saveThread').mockRejectedValueOnce(fault);
     const run = await engine.runToIdle(version.loopId);
     expect(run.status).toBe('failed');
-    expect(run.failure).toMatchObject({ code: 'INTERNAL_ERROR', message: 'disk full' });
-    expect(
-      engine.ports.logger.lines.some((l) => l.msg === 'executor crashed outside node execution'),
-    ).toBe(true);
+    expect(run.failure).toMatchObject({ code: 'INTERNAL_ERROR', resumable: true });
+    expect(JSON.stringify([run.failure, engine.events(run.id)])).not.toMatch(
+      /outer-(message|stack)-canary/,
+    );
+    const logs = engine.ports.logger.lines.filter(({ obj }) => obj.runId === run.id);
+    expect(JSON.stringify(logs)).toContain('outer-message-canary');
+    expect(JSON.stringify(logs)).toContain('outer-stack-canary');
   });
 
   it('logs a failed timer wake and reports it to the timer port, which keeps the timer', async () => {

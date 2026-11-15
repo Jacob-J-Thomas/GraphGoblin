@@ -233,7 +233,20 @@ it.each(
       expect(run.failure).toMatchObject({
         code: 'INTERNAL_ERROR',
         inference: { promptKind: 'repair', submission: 'definitely-not-submitted' },
-        details: { name: 'Error', stack: expect.stringContaining('Repair append refused') },
+      });
+      const diagnostic = 'Repair append refused';
+      expect(JSON.stringify([run.failure, e.events(run.id)])).not.toContain(diagnostic);
+      const logged = e.ports.logger.lines.find(
+        ({ obj }) =>
+          obj.runId === run.id &&
+          obj.nodeId === run.failure?.nodeId &&
+          obj.turnId === run.failure?.inference?.turnId &&
+          obj.error,
+      );
+      expect(logged?.obj.error).toMatchObject({
+        name: 'Error',
+        message: diagnostic,
+        stack: expect.stringContaining(diagnostic),
       });
       const repair = e
         .events(run.id)

@@ -294,11 +294,20 @@ describe('inference consumption keeps engine failures and cleans up both harness
       expect(run.failure).toMatchObject({
         code: 'INTERNAL_ERROR',
         resumable: true,
-        message: 'Synthetic session persistence fault',
-        details: {
-          name: 'Error',
-          stack: expect.stringContaining('Synthetic session persistence fault'),
-        },
+      });
+      const diagnostic = 'Synthetic session persistence fault';
+      expect(JSON.stringify([run.failure, engine.events(run.id)])).not.toContain(diagnostic);
+      const logged = engine.ports.logger.lines.find(
+        ({ obj }) =>
+          obj.runId === run.id &&
+          obj.nodeId === run.failure?.nodeId &&
+          obj.turnId === run.failure?.inference?.turnId &&
+          obj.error,
+      );
+      expect(logged?.obj.error).toMatchObject({
+        name: 'Error',
+        message: diagnostic,
+        stack: expect.stringContaining(diagnostic),
       });
       expect(harness.cancelled).toHaveLength(1);
     },

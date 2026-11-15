@@ -99,6 +99,16 @@ make this safe:
   version is missing at recovery). At recovery a run whose log ends in such an event (not
   followed by `run.resumed` or `run.started`) gets its status from the event. Nothing is
   executed again, so an exit is never re-evaluated.
+
+- **Failure diagnostics are projected before the terminal append.** Newly emitted `run.failed`
+  events and their run rows share one failure. Unexpected faults use safe `INTERNAL_ERROR` messages,
+  with raw exception diagnostics in the server log. The engine preserves dispatch and retry
+  evidence when classifying failures. Secondary inference recording entries keep their operation
+  and order in the public failure, and raw diagnostics are logged privately with the run, node, turn
+  and operation. When a parent publishes a child's failure, it keeps child identities and recovery
+  evidence and projects recognized private diagnostic slots out of the copied child chain.
+  Historical rows and events remain readable as originally recorded.
+  [ADR-0080](decisions/ADR-0080-run-failure-diagnostics.md) defines these boundaries.
 - **Finalization is recorded.** After a terminal status the engine drops the run's timers,
   cancels its children (when it was cancelled), delivers its returns (when it finished), wakes
   its parent, and only then marks the run finalized (`RunRepository.markFinalized`, column

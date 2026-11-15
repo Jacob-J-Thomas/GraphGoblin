@@ -95,3 +95,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0078 — Stationary history controls and a one-owner connection banner](ADR-0078-stationary-history-controls.md) records the fixed leading Undo and Redo slot, their non-moving press, and the loaded editor owning the one connection banner under its toolbar, with the baseline causes and the shell fallback for every other state (#208).
 
 [ADR-0079 - Refuse malformed poll dedupe keys before lookup](ADR-0079-poll-dedupe-key-identities.md) refines D-020 for exact poll identities and candidate-local refusal (#361).
+
+[ADR-0080 - Authored failures and private run diagnostics](ADR-0080-run-failure-diagnostics.md) defines the mutation operation identity, Exit evaluation failure, and the public failure projection (#381, #414).

@@ -344,13 +344,24 @@ describe('prompt provenance through RunManager and the fake harness', () => {
       source: 'manual.api',
     });
     await manager.waitForIdle();
-    expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+    const failure = (await e.ports.runs.get(run.id))?.failure;
+    expect(failure).toMatchObject({
       code: 'INTERNAL_ERROR',
       inference: { submission: 'definitely-not-submitted' },
-      details: {
-        name: 'Error',
-        stack: expect.stringContaining('storage unavailable before launch'),
-      },
+    });
+    const diagnostic = 'storage unavailable before launch';
+    expect(JSON.stringify([failure, e.events(run.id)])).not.toContain(diagnostic);
+    const logged = e.ports.logger.lines.find(
+      ({ obj }) =>
+        obj.runId === run.id &&
+        obj.nodeId === failure?.nodeId &&
+        obj.turnId === failure?.inference?.turnId &&
+        obj.error,
+    );
+    expect(logged?.obj.error).toMatchObject({
+      name: 'Error',
+      message: diagnostic,
+      stack: expect.stringContaining(diagnostic),
     });
     expect(e.ports.harness.started).toHaveLength(0);
     await manager.resume(run.id);

@@ -161,11 +161,26 @@ describe('D-022 inherited-session recovery', () => {
         source: 'manual.api',
       });
       await manager.waitForIdle();
-      expect((await e.ports.runs.get(run.id))?.failure).toMatchObject({
+      const failure = (await e.ports.runs.get(run.id))?.failure;
+      expect(failure).toMatchObject({
         code: 'INTERNAL_ERROR',
         resumable: false,
         inference: { submission: 'delivery-uncertain', sessionId: 'fake-session-1' },
-        details: { name: 'Error', stack: expect.stringContaining('acceptance record not durable') },
+        details: { recording: [{ operation: 'harness.submission' }] },
+      });
+      const diagnostic = 'acceptance record not durable';
+      expect(JSON.stringify([failure, e.events(run.id)])).not.toContain(diagnostic);
+      const logged = e.ports.logger.lines.find(
+        ({ obj }) =>
+          obj.runId === run.id &&
+          obj.nodeId === failure?.nodeId &&
+          obj.turnId === failure?.inference?.turnId &&
+          obj.operation === 'harness.submission',
+      );
+      expect(logged?.obj.error).toMatchObject({
+        name: 'Error',
+        message: diagnostic,
+        stack: expect.stringContaining(diagnostic),
       });
       await expect(manager.resume(run.id)).rejects.toThrow();
       expect(e.ports.harness.resumed.map((call) => call.request.turn.prompt)).toEqual(['Task B']);

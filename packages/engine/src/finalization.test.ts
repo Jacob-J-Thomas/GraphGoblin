@@ -211,7 +211,7 @@ for (const source of [
           ],
         },
       });
-      code = 'INTERNAL_ERROR';
+      code = 'MUTATION_ERROR';
     }
     if (source === 'timeout') {
       def = singleNodeLoop(source, {
@@ -307,6 +307,14 @@ for (const source of [
           : 'failed';
     expect(final.status).toBe(expected);
     if (code) expect(final.failure?.code).toBe(code);
+    if (source === 'mutate-error') {
+      expect(final.failure).toMatchObject({
+        nodeId: 'mutate',
+        resumable: false,
+        details: { operationIndex: 0, operationKind: 'set' },
+      });
+      expect(before[0]).toMatchObject({ type: 'run.failed', failure: final.failure });
+    }
     if (source === 'invalid-patch') {
       expect(e.events(r.id)).toEqual(
         expect.arrayContaining([

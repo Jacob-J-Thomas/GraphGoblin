@@ -16,13 +16,13 @@ import {
   validateJson,
   systemChatIssues,
 } from '@graphgoblin/domain';
+import { ArtifactStoreError, RunCancelledError, RunFailureError, isAbortError } from '../errors.js';
 import {
-  ArtifactStoreError,
-  RunCancelledError,
-  RunFailureError,
-  describeError,
-  isAbortError,
-} from '../errors.js';
+  errorDiagnostic,
+  INTERNAL_FAILURE_MESSAGE,
+  InternalRunFailureError,
+  type InferenceRecordingOperation,
+} from '../failure-publication.js';
 import type { NodeContext, NodeHandler } from '../handler.js';
 import type {
   HarnessItem,
@@ -134,17 +134,27 @@ interface TurnFailures {
   evidence?: HarnessFailureEvidence | undefined;
   rejected: boolean;
   acceptanceFailure?: { error: unknown };
-  recording: { operation: string; message: string; name?: string; stack?: string }[];
+  recording: { operation: InferenceRecordingOperation }[];
 }
 
-function recordingFault(state: TurnFailures, operation: string, error: unknown): void {
-  state.recording.push({
-    operation,
-    message: describeError(error),
-    ...(error instanceof Error
-      ? { name: error.name, ...(error.stack ? { stack: error.stack } : {}) }
-      : {}),
-  });
+function recordingFault(
+  ctx: NodeContext<'inference'>,
+  pending: PendingTurn,
+  state: TurnFailures,
+  operation: InferenceRecordingOperation,
+  error: unknown,
+): void {
+  state.recording.push({ operation });
+  ctx.ports.logger.error(
+    {
+      runId: ctx.run.id,
+      nodeId: ctx.node.id,
+      turnId: pending.turn.turnId,
+      operation,
+      error: errorDiagnostic(error),
+    },
+    'inference recording failed',
+  );
 }
 function observe(state: TurnFailures, error: unknown): void {
   state.evidence = mergeHarnessFailure(state.evidence, harnessFailureEvidence(error));
@@ -165,7 +175,7 @@ async function recordSubmission(
   try {
     await submission(ctx, pending, value, marker);
   } catch (error) {
-    recordingFault(state, 'harness.submission', error);
+    recordingFault(ctx, pending, state, 'harness.submission', error);
     if (marker) state.acceptanceFailure = { error };
   }
 }
@@ -710,7 +720,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             await recordTurn(pending);
           pending.intentUnconfirmed = false;
         } catch (recordError) {
-          recordingFault(failures, 'turn.intent.reconcile', recordError);
+          recordingFault(ctx, pending, failures, 'turn.intent.reconcile', recordError);
         }
       }
       const unconfirmed = () =>
@@ -760,12 +770,27 @@ export const inferenceHandler: NodeHandler<'inference'> = {
           nodeId: ctx.node.id,
           details: { ref: failure.ref },
         });
-      if (!(failure instanceof RunFailureError) && !(failure instanceof RunCancelledError))
-        failure = new RunFailureError('INTERNAL_ERROR', describeError(failure), {
-          nodeId: ctx.node.id,
-          details:
-            failure instanceof Error ? { name: failure.name, stack: failure.stack ?? null } : null,
+      if (
+        !(failure instanceof RunCancelledError) &&
+        (!(failure instanceof RunFailureError) ||
+          (failure.code === 'INTERNAL_ERROR' && !(failure instanceof InternalRunFailureError)))
+      ) {
+        const { details, ...options } = failure instanceof RunFailureError ? failure.options : {};
+        ctx.ports.logger.error(
+          {
+            runId: ctx.run.id,
+            nodeId: ctx.node.id,
+            turnId: pending.turn.turnId,
+            error: errorDiagnostic(failure),
+            details,
+          },
+          'inference execution failed',
+        );
+        failure = new InternalRunFailureError(INTERNAL_FAILURE_MESSAGE, {
+          ...options,
+          nodeId: options.nodeId ?? ctx.node.id,
         });
+      }
 
       // Decide first, persist second. Even a before/after-commit storage exception can only add
       // details.recording; it cannot change cause, submission, cancellation precedence or retry.
@@ -786,7 +811,7 @@ export const inferenceHandler: NodeHandler<'inference'> = {
         try {
           await ctx.ports.sessions.upsert({ ...row });
         } catch (recordError) {
-          recordingFault(failures, 'harness.status', recordError);
+          recordingFault(ctx, pending, failures, 'harness.status', recordError);
         }
       }
       if (failure instanceof RunFailureError) {
@@ -803,52 +828,55 @@ export const inferenceHandler: NodeHandler<'inference'> = {
             ? 'HARNESS_DELIVERY_UNCERTAIN'
             : failure.code;
         const details = failure.options.details;
-        failure = new RunFailureError(
-          code,
-          missing
-            ? missingFailure(pending).message
-            : uncertain && !canContinueTurn(pending)
-              ? failure.message + '. ' + recoveryFailure(pending, ctx.node.id).message
-              : failure.message,
-          {
-            ...failure.options,
-            inference: provenance(pending),
-            ...(missing ? { missingSession: missingFailure(pending).options.missingSession } : {}),
-            ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
-              ? {
-                  details: {
-                    ...(typeof details === 'object' && details !== null && !Array.isArray(details)
-                      ? details
-                      : { cause: details ?? null }),
-                    interruptedByStop:
-                      timeout.signal.reason instanceof RunFailureError &&
-                      timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
-                  },
-                }
-              : {}),
-            ...(failures.recording.length
-              ? {
-                  details: {
-                    ...(typeof details === 'object' && details !== null && !Array.isArray(details)
-                      ? details
-                      : { cause: details ?? null }),
-                    ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
-                      ? {
-                          interruptedByStop:
-                            timeout.signal.reason instanceof RunFailureError &&
-                            timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
-                        }
-                      : {}),
-                    recording: failures.recording,
-                  },
-                }
-              : {}),
-            resumable:
-              !missing &&
-              (!uncertain || canContinueTurn(pending)) &&
-              failure.options.resumable !== false,
-          },
-        );
+        const message = missing
+          ? missingFailure(pending).message
+          : uncertain && !canContinueTurn(pending)
+            ? failure.message +
+              (failure instanceof InternalRunFailureError ? ' ' : '. ') +
+              recoveryFailure(pending, ctx.node.id).message
+            : failure.message;
+        const options: RunFailureError['options'] = {
+          ...failure.options,
+          inference: provenance(pending),
+          ...(missing ? { missingSession: missingFailure(pending).options.missingSession } : {}),
+          ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
+            ? {
+                details: {
+                  ...(typeof details === 'object' && details !== null && !Array.isArray(details)
+                    ? details
+                    : { cause: details ?? null }),
+                  interruptedByStop:
+                    timeout.signal.reason instanceof RunFailureError &&
+                    timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+                },
+              }
+            : {}),
+          ...(failures.recording.length
+            ? {
+                details: {
+                  ...(typeof details === 'object' && details !== null && !Array.isArray(details)
+                    ? details
+                    : { cause: details ?? null }),
+                  ...(code === 'HARNESS_TERMINATION_UNCONFIRMED'
+                    ? {
+                        interruptedByStop:
+                          timeout.signal.reason instanceof RunFailureError &&
+                          timeout.signal.reason.code === 'RUN_INTERRUPTED_BY_STOP',
+                      }
+                    : {}),
+                  recording: failures.recording,
+                },
+              }
+            : {}),
+          resumable:
+            !missing &&
+            (!uncertain || canContinueTurn(pending)) &&
+            failure.options.resumable !== false,
+        };
+        failure =
+          code === 'INTERNAL_ERROR' && failure instanceof InternalRunFailureError
+            ? new InternalRunFailureError(message, options)
+            : new RunFailureError(code, message, options);
       }
       throw failure;
     } finally {
