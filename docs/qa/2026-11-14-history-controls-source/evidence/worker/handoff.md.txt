@@ -1,0 +1,93 @@
+# #208 stationary history controls: source-only implementation handoff
+
+Source and focused verification only. Not built, no browser or native run, no coverage run, no install, no provider, nothing staged, committed, pushed or sent to GitHub. This is implementation, not an independent adversarial review; it consumes no formal scan. It does not clear the corrected #207 predecessor integration, native QA, opposite-family review, fresh Astra, exact-target CI or owner acceptance.
+
+## 0. Identity
+
+- Checkout `C:/Users/98jak/.codex/worktrees/gg-20261114-history-controls/GraphGoblin`, branch `codex/gg-20261114-history-controls`, HEAD `64a955887962f72287e532824be1b8cb32c5f055`, tree `a6691516210eb25887cb92abdcbd8c7abe1a4bb3` (unchanged; `hashes/base-identity.txt`). Staged files: 0 (`hashes/staged-file-count.txt`). 10 tracked files modified, 8 new, listed with SHA-256 in `hashes/source-sha256.txt` (`hashes/git-status-porcelain.txt`).
+- Node v22.23.4 for the whole shell (project runtime); pnpm via Git Bash. Baseline handoff SHA-256 `f880198b…200d9` verified before starting. Owner checkout, service, store, ports 4747/4748, other worktrees and baseline evidence untouched (other worktrees were only listed, read-only, to check ADR numbering).
+- Authorisation used: H1, H2, H3 and H4 were all reproduced in the baseline, so both A1 and A2 were implemented. HTTP 500 is the baseline's negative control: its classification is untouched and a test pins it (no banner).
+
+## 1. What changed
+
+Production (7 files):
+
+| File | Change |
+|---|---|
+| `apps/web/src/editor/EditorToolbar.tsx` | Header is `flex items-start` (no wrap). First child is the slot `div[data-testid="history-actions"]` (`flex h-9 shrink-0 items-center gap-2 pointer-coarse:h-11`) holding `<UndoRedo />`; second child is a `min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2` content area with the existing breadcrumb, name, badges, save status and the `ml-auto` right group (Open in Runs / Chat link, validation, Publish). `UndoRedo` left the right group. Real DOM order, no CSS reorder. |
+| `apps/web/src/editor/UndoRedo.tsx` | History buttons get `pointer-coarse:size-11 active:translate-none! not-aria-disabled:active:border-strong`. Names, `title`, `aria-keyshortcuts`, `aria-disabled`, `data-history`, click semantics untouched. Shared `Button`/`buttonStyles` untouched. |
+| `apps/web/src/components/layout/connection-banner.ts` (new) | Claim store: a `Set<symbol>` of claims, `claimConnectionBanner()` returning an idempotent release, `isConnectionBannerClaimed()`, `useConnectionBannerClaimed()` (`useSyncExternalStore`), `useConnectionBannerClaim()` (`useLayoutEffect`). |
+| `apps/web/src/components/layout/index.ts`, `AppShell.tsx` | Export the four names; a doc comment on `OfflineBanner`. `AppShell` behaviour unchanged. |
+| `apps/web/src/app/App.tsx` | `Layout` passes `offline`/`apiUnreachable` to `AppShell` only when `!useConnectionBannerClaimed()`. Same `useConnectionStatus()`. |
+| `apps/web/src/editor/EditorConnectionBanner.tsx` (new) | Calls `useConnectionBannerClaim()` and `useConnectionStatus()`, renders the exported `OfflineBanner` (`apiUnreachable` for `'api-unreachable'`) or nothing when online. |
+| `apps/web/src/editor/EditorPage.tsx` | `{voiceStaging ? null : <EditorConnectionBanner />}` directly after `<EditorToolbar />` inside the loaded frame. No new hook, so nothing before the early returns. |
+
+**One deliberate difference from the accepted design text.** The design says the claim hook runs in `EditorPage` before its early returns, keyed to "loaded and not staging". I put the claim in a small component that the loaded, non-staging frame renders. The effect is the same set of states, but ownership is exactly "that component is mounted", so it cannot drift from the early-return conditions, `EditorPage` gains no hook, and `EditorPage` does not re-render on connection changes. Say so in review if the literal hook placement is wanted.
+
+Behaviour of the claim: loading, error, `unsupportedBlocked`, `preservationBlocked`, no-definition and voice-staging (the frame is `inert`) states mount no claimant, so the shell banner stays. Release happens on unmount, navigation, an error-boundary replacement and strict-mode effect replay (tested). The layout effect makes the claim before paint so the shell and editor banners are not both painted; jsdom cannot show paint, so that is a native check.
+
+Docs: `docs/09-frontend-and-pwa.md` (shell line, split-pane toolbar line, a new "Banner placement" bullet in the offline notes, the Undo "Toolbar" bullet, the regression list), `docs/guide/02-build-a-loop.md` (Undo/Redo paragraph, offline/banner sentence), `CHANGELOG.md` (one Unreleased bullet, no upgrade note: nothing stored or exported changes), new `docs/decisions/ADR-0078-stationary-history-controls.md`, and its entry in `docs/decisions/README.md`.
+
+ADR-0078: no tracked or untracked file in this checkout, no ref in this repository, and none in the canvas, canvas-repair, space-cards (it has ADR-0077 only), node-references, save-publish or loop-names worktrees uses 0078. I created the file, did not reuse any gap (0070, 0071, 0074 untouched) and marked the number provisional in its status line.
+
+Not touched: Space cards, geometry/layout code, connection behaviour, the store, `useAutosave`, `online.ts`, `reachability.ts`, ApiKeyPanel, ShutdownNotice, StorageNotice, any API, schema or format. `canvas-focus.ts` still finds Undo by `[data-history="undo"]`.
+
+## 2. Tests and static checks
+
+Commands run from `apps/web` with `pnpm exec`: `vitest run <files>`, `tsc -p tsconfig.json --noEmit`, `eslint --max-warnings 0 <files>`, plus `prettier --check` from the repo root. Also `pnpm check:deps` (dependency-cruiser): 0 errors, 4 warnings, all pre-existing orphans in files I did not touch.
+
+| Moment | Result | Log |
+|---|---|---|
+| Before (HEAD): UndoRedo, layout, online, App, EditorPage.undo, useUndoShortcuts | 6 files, 42 tests pass | `logs/00-before-existing-focused.log` |
+| After impl, same files plus EditorPage.voice, before new tests | 7 files, 47 pass | `logs/02-…` |
+| After impl, broader: `src/editor/EditorPage*`, UndoRedo*, EditorToolbar, EditorConnectionBanner, useUndoShortcuts, Canvas, VoicePreviewNotice, `src/components`, `src/app`, `src/lib/online`, `src/lib/reachability`, `src/api` (includes all new tests) | 50 files, 591 pass, no existing test needed a change | `logs/07-…` |
+| Final, after the last edits: the 5 new files and the related existing ones | 12 files, 96 pass | `logs/12-final-focused-after.log` |
+| `tsc --noEmit` (web) | exit 0 before the tests and again at the end | `logs/01`, `logs/11` |
+| ESLint, 13 changed code files, `--max-warnings 0` | final exit 0 (first run: 1 error, below) | `logs/08`, `logs/09` |
+| Prettier `--check`, all 18 changed files (code, docs, CHANGELOG, ADR, README) | clean | `logs/10` |
+| `git diff --check` | clean | |
+
+New tests (49): `components/layout/connection-banner.test.tsx` 5, `editor/EditorConnectionBanner.test.tsx` 7, `editor/EditorToolbar.test.tsx` 20, `editor/UndoRedo.press.test.tsx` 4, `editor/EditorPage.connection.test.tsx` 13. No assertion was weakened and no threshold touched; existing tests were not edited.
+
+What they establish:
+- **Toolbar structure (`EditorToolbar.test`).** The slot is the header's first child and holds exactly Undo then Redo; content is a separate sibling; Tab order is Undo, Redo, Loops, Open in Runs, Publish in both publish states; the declared classes give a non-shrinking, top-aligned slot beside a wrapping area; through 14 toolbar content transitions (validation text, save states, publishing, version, draft only, 120-character name, Chat system loop, publish blocker) and through all of them in sequence, the slot and both buttons are the same DOM nodes in the same place, by identity, not by structural equality; names, `aria-disabled`, focus, one history effect per activation and disabled no-ops are preserved.
+- **Press (`UndoRedo.press.test`).** Tailwind 4.3.3's own compiler generates the real CSS for the exact classes on the rendered buttons, and a small evaluator applies the cascade (important, then specificity, then order) for rest and pressed, enabled and `aria-disabled`: the pressed `translate` winner is `none !important`, no other geometry property changes when pressed, the pressed border is `--border-color-strong` on an enabled button only, 32/44 px and the focus ring classes remain, and every shared variant keeps its own press and contains no `translate-none`. The evaluator throws on selectors it does not understand rather than guessing.
+- **Claim store and banner component.** Overlapping claims, repeated release, strict-mode replay, one claimant replacing another in the same commit with no unclaimed render, release on unmount, release when a failed render is caught by the screen's error boundary (and the shell then shows the one status), the exact banner text and `outerHTML` equal to the shell's `OfflineBanner` for offline and API-unreachable, offline taking precedence, recovery, and route enter/leave/re-enter and loop-to-loop switches.
+- **Whole app (`EditorPage.connection.test`).** For a loaded editor the one banner is the toolbar's next sibling inside the frame; the shell's children and every element before the toolbar in document order are the same nodes before, during and after the change, so nothing is inserted above the toolbar; the same holds across a history session (click, click, Ctrl+Z) while offline and back; a real failed autosave PUT yields the API-unreachable wording below the toolbar and recovery through the real probe clears it; HTTP 500 shows no banner anywhere and "Save failed"; loading keeps the shell banner and hands over once on load; the 404 error state, API-unreachable load failure and 401 (API key panel) keep the shell banner with nothing claimed; leaving to Events and re-entering transfers shell, editor, shell, editor; a crashed editor releases the claim and the shell shows the status; voice staging (the frame is `inert`) keeps the banner in the shell, outside `[inert]`, and returns it to the editor when staging ends; storage-pressure and shutdown notices stay in the shell above the editor, unchanged, beside the one banner; strict mode leaves exactly one banner and no claim after unmount. Every test file asserts no claim is left behind.
+
+### Paired source control (bounded, not a mutation campaign)
+
+The four modified production files (`App.tsx`, `EditorPage.tsx`, `EditorToolbar.tsx`, `UndoRedo.tsx`) were backed up, replaced by their HEAD blobs, the new tests run, and the new bytes restored; SHA-256 before and after are identical (`control/pre-control-hashes.txt`, `post-restore-hashes*.txt`, backup in `control/new-source-backup/`).
+- **All four old** (`control/old-source-new-tests.log`): 31 failed, 6 passed of 37 in the three affected new files. EditorToolbar 19 of 20 fail (no slot, Undo not first, buttons inside the right group). Press 2 of 4 fail (pressed `translate` winner is the ghost `0 1px` nudge; no pressed border). Connection 10 of 13 fail, mostly because the old toolbar has no `history-actions` to wait for, so this run says little about A2 alone. The 6 passes are the preserved behaviours: other controls and their behaviour, 32/44 px sizes, shared variant styles, the 404 and API-unreachable load failures, and the API key panel.
+- **A2 only** (old `App.tsx` and `EditorPage.tsx`, new toolbar; `control/old-banner-source-new-toolbar-connection-tests.log`): 9 failed, 4 passed of 13. The failures are the banner-placement, claim and transfer tests (banner above the toolbar, a changed shell, nothing claimed). The passes are HTTP 500, 404, API-unreachable load failure and 401: behaviour that must not change.
+
+## 3. Preserved failures and corrections (all test or static, none in production source)
+
+1. `logs/03-first-failure-press-evaluator-uncorrected.log`: my test-local cascade evaluator rejected `:focus-visible`. Corrected the evaluator. Its next failure (`svg`, a descendant rule from `[&_svg]:size-[15px]`) was only seen in the tool result, not saved; `logs/03b-…-transcribed.txt` records it as a transcription, not captured bytes. Corrected by skipping combinator rules.
+2. `logs/04-first-run-connection-test-uncorrected.log`: 8 of 13 failed with 5 s timeouts. Cause: TanStack's `onlineManager` is module state and my earlier tests left it offline. Fixed in the test's `afterEach` (`onlineManager.setOnline(true)`). `logs/05-…`: 2 failed, both test bugs (an over-broad text matcher, a `closest('[role=region]')` on an implicit-role `section`). `logs/06-…`: 13 pass.
+3. `logs/08-eslint-first.log`: one `no-unsafe-call` in `EditorConnectionBanner.test.tsx` from an inferred spy type; typed it `MockInstance<() => boolean>` (`logs/09`: clean).
+4. Two weaknesses of my own in `EditorToolbar.test.tsx`, found by reading it: a meaningless length assertion (fixed before its first run) and `toEqual` on DOM nodes, which compares structure, not identity (it had passed once; replaced by the identity helper `expectSameNodes` and rerun, 20 pass).
+
+## 4. Patches and hashes
+
+- `patches/tracked-changes.patch` (10 files), `patches/new-files.patch` (8 files), `patches/complete.patch` (both, 18 `diff --git`). `complete.patch` applies cleanly to a pristine `git archive HEAD` export and reproduces all 18 SHA-256 values in `hashes/source-sha256.txt`. Use `git -c core.autocrlf=false apply`: this host's system config has `core.autocrlf=true`, so a plain `git apply` outside the repository writes CRLF and the hashes differ (the repository's `.gitattributes` is `eol=lf`).
+
+## 5. Not proved: left to independent native QA and later gates
+
+jsdom has no layout, hit testing, paint or screen-reader output. Nothing below was measured:
+- **Geometry.** That Undo and Redo keep the same viewport box through content-width changes, wrapping (long name at the boundary, 512×384 at 200% reflow, 768 and 1440 wide), the load-time "Checking…" to "Ready to publish" change, publishing, and connection changes. Design estimates, not evidence, for the first boxes: fine pointer Undo (16, 68, 32×32), Redo (56, 68); coarse Undo (16, 66, 44×44), Redo (68, 66). Header single-row height should be unchanged.
+- **Hit testing and the lost click.** The baseline's top-pixel-row press held 250 ms must now deliver the click and change history once; rest-position hit grids; near-edge points; touch taps; the unresolved touch-hold case remains unresolved. The `!important` `translate: none` was verified only against Tailwind's generated stylesheet, not computed style in a browser: check `getComputedStyle(...).translate` while pressed.
+- **Banner.** One status only, never two painted, under the editor's toolbar in `offline`, failed-transport and PUT-only-failure cases and recovery; the editor banner does not shift the toolbar; the canvas gives up its height. A possible usability cost to look at: at 512×384 (frame 328 px) a 150–194 px toolbar plus an 80 px banner leaves roughly 54–98 px for the canvas, where before the document grew instead. The banner is a flex child with no `shrink-0`; it relies on `min-height:auto`. Announcement delivery (a `role="status"` inserted into the editor instead of the shell, and the one transfer on entering/leaving a loaded editor and around voice staging) needs a screen reader or accessibility-tree check.
+- **Visual alignment.** The slot is 36 px tall and centred on the first row only when that row is 36 px. In a state where Publish and the Runs link wrap to a second row, the first row (breadcrumb, name, badges, save status) is shorter, so its text centres a few px above the history buttons. Undo and Redo themselves do not move; this is a polish question for native or design review, not changed here.
+- **Keyboard.** Undo and Redo are now the first Tab stops of the toolbar, before the Loops link (intended by the design, a behaviour change). Check Tab/Shift+Tab, Space/Enter, repeated keys and that `removalFocusTarget` still lands on Undo.
+- **Narrow layout.** The slot costs 84 px (108 px coarse) of the bar's width: check 320–360 px, no horizontal overflow, name truncation, and that every control still wraps rather than clips (`e2e/responsive.spec.ts` asserts all four toolbar actions are on screen; `e2e/palette.spec.ts` expects Publish to be the last toolbar stop; `e2e/undo.spec.ts` checks 32/44 px; none was run).
+- **Not exercised in the baseline either:** other shell notices (auth, storage, shutdown) moving the editor, offline in a valid-graph state, real text-size enlargement, other engines.
+
+## 6. Integration, review and gates still open
+
+- **Integration.** This is on `64a95588`, before the corrected #207 predecessor and #474 integration; it does not claim to work there. Expected textual conflicts: `CHANGELOG.md` (new first Unreleased bullet), `docs/09-frontend-and-pwa.md` (toolbar, split-pane and shell lines, the offline bullet and the Undo regression list, all of which the Space cards PR is also expected to touch), `docs/decisions/README.md`. ADR-0078 is provisional and 0077 is the Space cards PR's. Space cards must keep focusing the canvas, not Undo; it no longer relies on any Undo position, only on `data-history`. Rerun this task's tests after integration.
+- **Open gates (none cleared here):** independent native geometry and action QA on the integrated build; proportional opposite-family GPT review of this Claude-written UI source; fresh Astra at the exact head; exact-target CI (including e2e and the coverage gate, not run here); owner acceptance. Items for the reviewer to look at first: the component-versus-hook claim placement (section 1), the chosen pressed look (`active` border; the design only required a visible non-moving treatment), the Tab-order change, the canvas-height cost of the in-frame banner, and the `!` modifier relying on Tailwind 4.3.
+
+## 7. Output index (`C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-208-history-source`)
+
+`handoff.md` (this), `hashes/` (identity, status, staged count, SHA-256 list), `patches/` (three patches), `control/` (backup, hashes, both control logs), `logs/` (14 numbered logs plus the transcribed note). Runner-owned `events.jsonl`, `latest.md`, `launch.json` untouched; `result.json` and `report.md` are the runner's.

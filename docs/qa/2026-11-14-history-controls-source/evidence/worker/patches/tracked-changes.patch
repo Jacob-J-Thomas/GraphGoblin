@@ -1,0 +1,382 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index a72dc085..932456a6 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,23 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- **Undo** and **Redo** stay where they are (#208, ADR-0078). A native baseline showed them moving
++  with the editor's changing toolbar: 30 to 37 px sideways when the validation text ("Checking…",
++  "Ready to publish", "N errors") or **Publish** / **Publishing…** changed width, 32 px up and down
++  when a long loop name put the bar on the edge of wrapping, and 1 px down while pressed (a press
++  held on a button's top pixel row lost the click). They now fill a fixed, top-aligned slot at the
++  start of the toolbar, first in the page order as on screen, with the rest of the bar wrapping
++  beside it, and they no longer move when pressed (a strong border shows the press; other buttons
++  keep theirs). Names, tooltips, shortcuts, `aria-disabled`, focus and history behaviour are
++  unchanged. Because the slot comes first, Undo and Redo are now the first **Tab** stops of the
++  toolbar, ahead of the **Loops** link. The offline and API-unreachable notice also moved, for a
++  loaded editor only: it appears directly under the editor's toolbar instead of above the whole
++  editor, where it pushed the toolbar and these buttons down by 36 to 80 px; the canvas gives up
++  that height. Its wording, the offline versus API-unreachable distinction, the reconnect grace and
++  what counts as a connectivity failure are unchanged (an HTTP 500 still shows no notice). While a
++  loop is loading, when it cannot be opened, while a voice draft is staged and on every other
++  page it stays under the main header, and the API key, shutdown and storage notices stay there
++  too. No stored or exported data changes, so there is no upgrade note.
+ - Connections are drawn, selected and removed only on the canvas (#207, ADR-0076, the owner's
+   decision). The node dialog no longer has a **Connections** list, **Remove edge** buttons or the
+   **Connect** form, for any node kind. Everything else in it stays: id and label, configuration,
+diff --git a/apps/web/src/app/App.tsx b/apps/web/src/app/App.tsx
+index 044d62bf..b272c33d 100644
+--- a/apps/web/src/app/App.tsx
++++ b/apps/web/src/app/App.tsx
+@@ -1,7 +1,13 @@
+ import { Link, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router';
+ import { ApiKeyPanel } from '../api/ApiKeyPanel.js';
+ import { ErrorBoundary } from '../components/ErrorBoundary.js';
+-import { AppShell, Page, PageHeader, type NavItem } from '../components/layout/index.js';
++import {
++  AppShell,
++  Page,
++  PageHeader,
++  useConnectionBannerClaimed,
++  type NavItem,
++} from '../components/layout/index.js';
+ import { buttonStyles, Card } from '../components/ui/index.js';
+ import { EditorPage } from '../editor/EditorPage.js';
+ import { EventsPage } from '../events/EventsPage.js';
+@@ -27,12 +33,15 @@ const NAV: readonly NavItem[] = [
+ 
+ function Layout() {
+   const connection = useConnectionStatus();
++  // A loaded editor shows the one connection banner under its own toolbar, so Undo and Redo do
++  // not move when it appears; every other screen and state keeps the shell's (#208).
++  const bannerClaimed = useConnectionBannerClaimed();
+   const location = useLocation();
+   return (
+     <AppShell
+       nav={NAV}
+-      offline={connection === 'offline'}
+-      apiUnreachable={connection === 'api-unreachable'}
++      offline={!bannerClaimed && connection === 'offline'}
++      apiUnreachable={!bannerClaimed && connection === 'api-unreachable'}
+     >
+       <ApiKeyPanel />
+       <ShutdownNotice />
+diff --git a/apps/web/src/components/layout/AppShell.tsx b/apps/web/src/components/layout/AppShell.tsx
+index e2d01e76..2982b9dd 100644
+--- a/apps/web/src/components/layout/AppShell.tsx
++++ b/apps/web/src/components/layout/AppShell.tsx
+@@ -2,7 +2,10 @@ import type { ReactNode } from 'react';
+ import { Icon, Logo } from '../icons/index.js';
+ import { MainNav, type NavItem } from './MainNav.js';
+ 
+-/** Shown under the header while the browser or API is unreachable. */
++/**
++ * Shown while the browser or API is unreachable: under the shell's header, or, for a loaded
++ * editor that claimed it (`connection-banner.ts`), under the editor's own toolbar.
++ */
+ export function OfflineBanner({ apiUnreachable = false }: { apiUnreachable?: boolean }) {
+   return (
+     <div
+diff --git a/apps/web/src/components/layout/index.ts b/apps/web/src/components/layout/index.ts
+index 40f40d1d..a54f4681 100644
+--- a/apps/web/src/components/layout/index.ts
++++ b/apps/web/src/components/layout/index.ts
+@@ -1,3 +1,9 @@
+ export { AppShell, OfflineBanner } from './AppShell.js';
++export {
++  claimConnectionBanner,
++  isConnectionBannerClaimed,
++  useConnectionBannerClaim,
++  useConnectionBannerClaimed,
++} from './connection-banner.js';
+ export { MainNav, type NavItem } from './MainNav.js';
+ export { Page, PageHeader } from './PageHeader.js';
+diff --git a/apps/web/src/editor/EditorPage.tsx b/apps/web/src/editor/EditorPage.tsx
+index 5a1c30e8..4d8dd3bb 100644
+--- a/apps/web/src/editor/EditorPage.tsx
++++ b/apps/web/src/editor/EditorPage.tsx
+@@ -32,6 +32,7 @@ import {
+   UnpreservedDeviceCopy,
+   UnsupportedDeviceDraft,
+ } from './DeviceCopyNotices.js';
++import { EditorConnectionBanner } from './EditorConnectionBanner.js';
+ import { EditorToolbar } from './EditorToolbar.js';
+ import { unsupportedEffortIssues } from './effort-issues.js';
+ import {
+@@ -670,6 +671,9 @@ export function EditorPage() {
+         onPublish={publish.start}
+         saveStatusRef={saveStatusRef}
+       />
++      {/* While the draft stages a voice preview the whole frame is inert, which hides this banner
++          from assistive technology: the shell shows the connection status then (#208). */}
++      {voiceStaging ? null : <EditorConnectionBanner />}
+       {system ? (
+         <SystemLoopNotice
+           binding={system}
+diff --git a/apps/web/src/editor/EditorToolbar.tsx b/apps/web/src/editor/EditorToolbar.tsx
+index 8c7d5d8b..a34447ca 100644
+--- a/apps/web/src/editor/EditorToolbar.tsx
++++ b/apps/web/src/editor/EditorToolbar.tsx
+@@ -92,76 +92,87 @@ export function EditorToolbar({
+   saveStatusRef?: Ref<HTMLSpanElement>;
+ }) {
+   return (
+-    <header className="relative z-[3] flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-default bg-surface-raised px-4 py-2.5">
+-      <Link
+-        to="/loops"
+-        className="touch-target text-muted no-underline hover:text-default hover:underline"
+-      >
+-        Loops
+-      </Link>
+-      <span className="text-subtle">/</span>
+-      {/* A long name (up to 120 characters) ends in an ellipsis on its own line; hover shows it. */}
+-      <h1
+-        className="max-w-full min-w-0 truncate text-lg font-semibold tracking-[-0.01em] text-heading"
+-        title={name}
++    <header className="relative z-[3] flex items-start gap-x-3 border-b border-default bg-surface-raised px-4 py-2.5">
++      {/* A fixed leading slot, first in the DOM and on screen and top-aligned: what the rest of the
++          bar holds, how wide it is, and whether it wraps never moves Undo and Redo (#208). Its
++          height is the row height of the bar's other controls, so each button sits where the
++          first row's controls are centred. */}
++      <div
++        data-testid="history-actions"
++        className="flex h-9 shrink-0 items-center gap-2 pointer-coarse:h-11"
+       >
+-        {name}
+-      </h1>
+-      {system ? <Badge>System</Badge> : null}
+-      {published ? <Badge tone="good">published v{version}</Badge> : <Badge>draft only</Badge>}
+-      <span
+-        ref={saveStatusRef}
+-        className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+-        data-testid="save-state"
+-        title={saveMessage}
+-      >
+-        {saveState === 'saved' ? (
+-          <Icon name="check-circle" className="size-[15px] text-status-good-fg" />
+-        ) : null}
+-        {saveState === 'invalid' ||
+-        saveState === 'offline' ||
+-        saveState === 'error' ||
+-        saveState === 'name-conflict' ? (
+-          <Icon
+-            name={saveState === 'error' ? 'failed' : 'alert'}
+-            className={cn(
+-              'size-[15px]',
+-              saveState === 'error' ? 'text-status-bad-fg' : 'text-status-warn-fg',
+-            )}
+-          />
+-        ) : null}
+-        {system && saveState === 'invalid'
+-          ? 'Not saved: fix the chat issue'
+-          : saveLabel(saveState, device)}
+-      </span>
+-      <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
+         <UndoRedo />
+-        {system ? (
+-          <Link
+-            className={cn(RUNS_LINK, 'text-link')}
+-            to={
+-              system.audience.kind === 'gateway'
+-                ? '/chat'
+-                : `/chat/devices#device-${system.audience.deviceId}`
++      </div>
++      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
++        <Link
++          to="/loops"
++          className="touch-target text-muted no-underline hover:text-default hover:underline"
++        >
++          Loops
++        </Link>
++        <span className="text-subtle">/</span>
++        {/* A long name (up to 120 characters) ends in an ellipsis on its own line; hover shows it. */}
++        <h1
++          className="max-w-full min-w-0 truncate text-lg font-semibold tracking-[-0.01em] text-heading"
++          title={name}
++        >
++          {name}
++        </h1>
++        {system ? <Badge>System</Badge> : null}
++        {published ? <Badge tone="good">published v{version}</Badge> : <Badge>draft only</Badge>}
++        <span
++          ref={saveStatusRef}
++          className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
++          data-testid="save-state"
++          title={saveMessage}
++        >
++          {saveState === 'saved' ? (
++            <Icon name="check-circle" className="size-[15px] text-status-good-fg" />
++          ) : null}
++          {saveState === 'invalid' ||
++          saveState === 'offline' ||
++          saveState === 'error' ||
++          saveState === 'name-conflict' ? (
++            <Icon
++              name={saveState === 'error' ? 'failed' : 'alert'}
++              className={cn(
++                'size-[15px]',
++                saveState === 'error' ? 'text-status-bad-fg' : 'text-status-warn-fg',
++              )}
++            />
++          ) : null}
++          {system && saveState === 'invalid'
++            ? 'Not saved: fix the chat issue'
++            : saveLabel(saveState, device)}
++        </span>
++        <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
++          {system ? (
++            <Link
++              className={cn(RUNS_LINK, 'text-link')}
++              to={
++                system.audience.kind === 'gateway'
++                  ? '/chat'
++                  : `/chat/devices#device-${system.audience.deviceId}`
++              }
++            >
++              {system.audience.kind === 'gateway' ? 'Open Chat' : 'Manage device'}
++            </Link>
++          ) : (
++            <OpenInRuns loopId={loopId} published={published} />
++          )}
++          {validation}
++          <Button
++            onClick={onPublish}
++            disabled={publishing || publishBlockedReason !== undefined}
++            title={
++              publishBlockedReason ??
++              (errors > 0 ? `${errors} validation error(s) will block publishing` : undefined)
+             }
+           >
+-            {system.audience.kind === 'gateway' ? 'Open Chat' : 'Manage device'}
+-          </Link>
+-        ) : (
+-          <OpenInRuns loopId={loopId} published={published} />
+-        )}
+-        {validation}
+-        <Button
+-          onClick={onPublish}
+-          disabled={publishing || publishBlockedReason !== undefined}
+-          title={
+-            publishBlockedReason ??
+-            (errors > 0 ? `${errors} validation error(s) will block publishing` : undefined)
+-          }
+-        >
+-          <Icon name="send" />
+-          {publishing ? 'Publishing…' : 'Publish'}
+-        </Button>
++            <Icon name="send" />
++            {publishing ? 'Publishing…' : 'Publish'}
++          </Button>
++        </div>
+       </div>
+     </header>
+   );
+diff --git a/apps/web/src/editor/UndoRedo.tsx b/apps/web/src/editor/UndoRedo.tsx
+index b99d408d..92587e96 100644
+--- a/apps/web/src/editor/UndoRedo.tsx
++++ b/apps/web/src/editor/UndoRedo.tsx
+@@ -3,6 +3,18 @@ import { Button } from '../components/ui/index.js';
+ import { useEditorStore } from './store.js';
+ import { historyShortcuts, isApplePlatform, type HistoryDirection } from './useUndoShortcuts.js';
+ 
++/**
++ * The history buttons' own classes on top of the ghost icon button: a 44 px target where the
++ * primary pointer is coarse (touch), and no press movement. The ghost style nudges a pressed
++ * button down 1 px, which moves it out from under the pointer: a press held on its top pixel row
++ * lost the click (#208). These two stay where they are and show the press as a strong border
++ * instead (an `aria-disabled` button, with nothing to do, keeps its ordinary look). The `!` makes
++ * the override win over the ghost style's own `:active` rule whatever order the stylesheet emits
++ * them in. Only these buttons change; the shared button styles are untouched.
++ */
++const HISTORY_BUTTON =
++  'pointer-coarse:size-11 active:translate-none! not-aria-disabled:active:border-strong';
++
+ /**
+  * One of the toolbar's history buttons, named by what it will change ("Undo move start"). With
+  * nothing to undo or redo it is `aria-disabled` rather than disabled, so it keeps its place in
+@@ -26,8 +38,8 @@ function HistoryButton({
+     <Button
+       size="icon"
+       variant="ghost"
+-      // 32 px for a mouse; a 44 px target where the primary pointer is coarse (touch).
+-      className="pointer-coarse:size-11"
++      // 32 px for a mouse (the icon size), 44 px for touch.
++      className={HISTORY_BUTTON}
+       title={name}
+       data-history={direction}
+       aria-keyshortcuts={shortcut}
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 2ccad5cc..4d096220 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -373,6 +373,7 @@ ended, so pending delivery cannot be finalized by JSON polling alone.
+ - Chat has a separate `/goblin/` shell/manifest/worker scope alongside `/app/`. Both workers precache only their own shell assets. Chat commands are never queued or replayed offline; reconnect only reads the saved request identity.
+ - Offline: the shell opens and unsaved editor drafts persist in IndexedDB. Anything needing the backend shows a clear offline state. Active queries that failed because the API could not be reached retry on the browser's `online` event, including after an offline reload, without navigating. While an active query holds a connectivity error, a public `GET /healthz` probe through the API client's base URL retries after 2 seconds, doubling to a 30-second cap. A successful health response refetches only active connectivity-failed queries without cancelling their in-flight fetches. Recovery is confirmed once per outage only after those reads cease holding connectivity errors; a healthy `/healthz` with a stuck route keeps backing off and leaves the banner stable. There is at most one probe in flight, with a 5-second timeout; probes stop when no query needs recovery, the tab is hidden, or the browser is offline, and resume when visible and online. HTTP 4xx/5xx query errors never start probing. Each fetch keeps the one-retry limit; HTTP errors keep the existing query behaviour. The banner says "You are offline" for browser connectivity and "Cannot reach the GraphGoblin API" for an API outage while the browser is online; confirmed recovery clears API unreachability. Signal sources are active query transport failures, draft-save transport failures, and run-stream transport failures; accepted streams report reachability through the same transition functions. A failed draft save refreshes its active loop read once per revision, and a dropped run stream refreshes its active run read once per outage, so loaded screens also create probe demand. A stream whose last failure was a transport failure restarts at its committed cursor on recovery. Stream outages are reported once until an event advances the cursor or an accepted stream stays open for at least one 15-second heartbeat interval; acceptance alone and repeated short connections do not re-arm them. HTTP refusals, invalid stream frames, and a clean end-of-stream do not create connectivity failures; their retries keep the existing SSE backoff. When no active query needs recovery, the unreachable claim clears after one tick and a fresh check for active failures or reads, without a recovery notification; cached errors are remembered across inactivity and do not reopen an outage until a fresh failure arrives. There is no offline execution.
+ - Reconnect: a connectivity error that lands after the browser's `online` event still starts probing, so a no-data fetch also recovers without focus or navigation. The API-unreachable banner is suppressed until the browser reconnect refetch cycle settles or five seconds elapse, whichever comes first. Unrelated active reads do not extend this grace.
++- Banner placement (#208, [ADR-0078](decisions/ADR-0078-stationary-history-controls.md)): there is one connection banner on screen and one live status, drawn by the one owner of the moment. The shell draws it under its header above the routed screen, for every route and state except one. A loaded editor claims it for as long as it is mounted (`components/layout/connection-banner.ts`; the claim is held by `editor/EditorConnectionBanner.tsx`, which the editor renders directly under its toolbar) and draws the same `OfflineBanner`, from the same `useConnectionStatus`, with the same wording and distinction, under its own toolbar; the shell's `Layout` hides its copy while the claim is held. That keeps the banner from pushing the toolbar, Undo and Redo down by its height (36.5, 60 or 79.5 px at the widths measured) when connectivity changes during a history session; the canvas gives up that height instead. The loading and error states, the editor's blocked states (an unsupported or unpreserved device draft, no definition), the voice-staging state (its frame is `inert`, hidden from assistive technology, so the claim is given back) and every other route keep the shell's banner. The banner moves once when a loaded editor is entered or left or voice staging begins or ends, never during a loaded history session. The claim goes with the component that holds it: on navigation, when an error boundary replaces a failed screen, and across React strict mode's replay of effects. Detection, the grace above, retries and the HTTP classification are unchanged (an HTTP 500 shows no banner), and the API key panel and the shutdown and storage notices stay in the shell above the editor.
+ - Install: a web manifest with icons; an install hint in settings.
+ 
+ ## State and data (Decided)
+@@ -469,7 +470,7 @@ Every form control comes from `components/ui/` and takes its look from the token
+ 
+ - `components/ui/`: one primitive per file (`button` with `buttonStyles` for links that sit among buttons, `field` with `Input`, `Select`, `Textarea`, `Checkbox`, `Label`, `FieldGroup`, `FieldRow`, `HelpText`, `RequiredMarker`, `RequiredNote`, and `FIELD_FRAME`, `FIELD_ROW`, and `CHECKBOX_LABEL`, `switch`, `segmented-control`, `file-picker`, `fieldset` with `Fieldset` and `Legend`, `card`, `badge`, `alert`, `table` (with `stack`), `dialog`, `disclosure` with `revealDisclosures`, `popover` with `closePopovers`, and `side-panel` with `useSidePanelState` and `overlayBelow`) behind `index.ts`. Variants use `lib/variants.ts`, a typed helper over `clsx`. Long text never spills out of a primitive: a badge or button stays within its container (`max-w-full`, and it does not widen a grid column) and ends an overlong label in an ellipsis, keeping the full text as its accessible name (`ellipsis.tsx`), and an alert breaks a word too long for its line.
+ - `components/icons/`: the SVG stroke glyphs (`Icon`), `KindIcon`, `StatusIcon`, and the goblin `Logo` (mark and wordmark, or the wordmark alone). Icons are decorative; the text or label beside them carries the name.
+-- `components/layout/`: `AppShell` (header, offline banner), `MainNav` (green underline, optional attention dot, a Menu button below 640 px), `Page`, and `PageHeader`. The responsive utilities behind the primitives are in `styles/layout.css` (see "Breakpoints and layout primitives" below).
++- `components/layout/`: `AppShell` (header, offline banner; a loaded editor shows the banner itself, see "Banner placement" under the PWA's offline notes, and `connection-banner.ts` holds the claim that tells the shell to leave it), `MainNav` (green underline, optional attention dot, a Menu button below 640 px), `Page`, and `PageHeader`. The responsive utilities behind the primitives are in `styles/layout.css` (see "Breakpoints and layout primitives" below).
+ - `components/status.tsx` (`RunStatusBadge`, `QueryState`) and `components/ErrorBoundary.tsx`.
+ - Feature folders assemble primitives and keep their public exports: `editor/` (`EditorPage` with `EditorToolbar` and `ValidationIndicator`, `LoopPanel`, `NodeEditorDialog`, `IssueBadge` with `IssuePopover`, `ConflictNotice`, `NameConflictNotice`, `useLoadEditor`, `useResolveConflict`; `KindChip`), `loops/` (`LoopsPage`, `TemplateGallery`; both use `components/loop-name-conflict.tsx`, which holds `LoopNameTakenHelp` and `LoopNameRetryForm`, over `lib/loop-names.ts`), `runs/` (`RunInspectorPage` with `runs/inspector/`: `RunControls`, `WaitPanel`, `Timeline`, `ThreadViewer`, `ProgressDrawer`; `runs/new/`: `NewRunPage` and `RunLauncher`), `settings/` (`SettingsPage` with `settings/sections/`), and `forms/` (`fields.tsx` re-exporting `forms/fields/`: `shared`, `text`, `choice`, `json`, and `structure`, which holds the dispatcher with the object, array, record, and union fields so the recursion has no import cycle; `layout.ts` and `sections.tsx` place a form's basic and advanced fields, #14).
+ 
+@@ -490,7 +491,7 @@ Every screen works from 360 px to wide desktop without sideways page scrolling o
+ - **Tables** (`components/ui/table.tsx`, `styles/layout.css`). `Table stack="md"` or `stack="lg"` turns each row into a block below that breakpoint: each cell shows its column's label beside the value; below 640 px, the label sits above the full-width value. The label is given as `Td label` and drawn as decoration (CSS `content` with empty alternative text), while the header row stays in the document, visually hidden, so assistive technology keeps the table and its headers. A cell without a label (the row's name, its actions) takes the whole line, long words break instead of widening the page, and on a coarse pointer each line is 44 px tall, so links in neighbouring lines never overlap. Loops, Runs, and Events stack below `lg`, the model catalog and classifier models below `md`. A flush `Card`'s body still scrolls sideways when a table is wider than it (a 120-character name, say), with a shadow on each edge that has more (`scroll-shadow-x`). On Loops the update time sits under the loop's name rather than in a column of its own, so the name keeps its room at 1024 px.
+ - **Forms** (`FieldRow`, or `FIELD_ROW` on a form of its own, in `components/ui/field.tsx`). Fields side by side that wrap; below 640 px one column, every field and note the full width whatever width it asked for, a button at its own width at the start of its line. Used by the Runs filters, Loops create, the model form, Defaults, Secrets, API keys, and the API key panel; the schema-driven config fields are one column already.
+ - **Header navigation** (`MainNav`). Below 640 px the links fold into a **Menu** button (`aria-expanded`, `aria-controls`) that opens a full-width panel of 48 px rows; choosing a link or Escape closes it, Escape returning focus to Menu.
+-- **Split panes** (`SidePanel`'s `overlayBelow`). Below its breakpoint an expanded panel floats over the content (absolute, full height, an overlay shadow, at least a rail's width of the content left beside it) instead of taking its own column: the editor's loop settings below `lg` and its palette below `md`, so the canvas keeps its width and no panel pushes the page sideways. Collapsed, both stay rails. The editor's toolbar wraps its actions (Undo, Redo, Open in Runs, the validation indicator, Publish) onto further lines rather than cutting them off, and the editor fills the dynamic viewport height (`100dvh`), at least 320 px.
++- **Split panes** (`SidePanel`'s `overlayBelow`). Below its breakpoint an expanded panel floats over the content (absolute, full height, an overlay shadow, at least a rail's width of the content left beside it) instead of taking its own column: the editor's loop settings below `lg` and its palette below `md`, so the canvas keeps its width and no panel pushes the page sideways. Collapsed, both stay rails. The editor's toolbar wraps its content (the breadcrumb, name, badges and save status, Open in Runs, the validation indicator, Publish) onto further lines rather than cutting it off, beside a fixed leading slot that holds Undo and Redo so they never move with it (see "Undo and redo"), and the editor fills the dynamic viewport height (`100dvh`), at least 320 px.
+ - **Touch.** Where the primary pointer is coarse (`pointer-coarse:`, `@media (pointer: coarse)`), controls are at least 44 px: buttons (`sm`, `md`, and icon sizes), inputs and selects, segment labels (at least 44 px wide and tall, including short Yes/No choices), disclosure toggles (including the inspector's Full thread JSON and Node progress, through the shared `Disclosure`), checkbox rows (`CHECKBOX_LABEL`, at least 44 px wide and tall), the Menu button, Open in Runs, the validation indicator and its rows, issue rows, timeline rows, palette buttons, the canvas's zoom controls, and the Omit of an edited New run or Wait input (drawn 44 by 44 px in a place its label line holds; see Form controls, "Where"). Controls that keep a small look take the touch with an invisible 44 px box around them (`touch-target`): the switch, the issue badge, and links in tables. Canvas ports counter-scale only their absolutely positioned `::after` hit box through `--gg-canvas-zoom`, clamped to the canvas's 0.1 to 2 range; a 1/32 CSS px allowance covers rounding. On coarse pointers output rows are always **44 CSS px**, with a **2 px gap (46 px pitch)**. Card dimensions, measured handles and the routing cache key never change with viewport zoom. Hit-box height is capped at the row pitch, and width at **half the gap to the next card** within the port's vertical strip, using geometry-only limits and a spatial index. With room horizontally, the on-screen target is about **44 by 44 px at zoom 1 and above**. Below about **0.96 zoom**, height is **46 times zoom**: **36.06 px at 0.784**, **23 px at 0.5** and **4.6 px at the 0.1 floor**, where zooming in is the way to connect, because the node dialog has no connection form (ADR-0076). Neighbouring cards can cap width below 44 px as well: at 260 px spacing (76 px card gap), the 38 CSS px cap gives **29.79 px at 0.784** and **19 px at 0.5**. These caps prevent neighbouring targets from overlapping without changing layout or rerouting edges on zoom. Fine-pointer rows remain 18 px with a 2 px gap. A selected connection's **Remove connection** button is 44 px on a coarse pointer. Nothing needs hover: the issue popovers open on tap, the collapsed palette's tooltips repeat what the expanded palette shows, and the remaining tooltips (a truncated name, Publish's blocking count, Validation unavailable, the disabled Open in Runs link's reason) repeat what the accessible name or description already carries; on touch those few explanations are not shown on screen. Keyboard order and accessible names are unchanged.
+ - **Zoom.** At 200% (a 1024 by 768 window lays out in 512 by 384 CSS pixels) Loops, the editor, the run inspector, and Settings reflow without sideways scrolling (WCAG 1.4.10); the editor keeps a usable canvas under its wrapped toolbar.
+ - **Regression.** `components/ui/ui.test.tsx` (stacking, `FieldRow`), `components/ui/side-panel.test.tsx` (overlay), `forms/cron/*.test.ts*`, and Edge `e2e/responsive.spec.ts`: both stored themes before load; no sideways page scroll or control clipped by its container on every screen and Settings section at the four widths, including the required API key panel, a forced API/healthz outage, the update toast, and the Events error-boundary test route; all nine node dialogs and their Advanced options at 360 and 768; the header Menu at 360 and the links at 768, the Runs table stacked at 360 and 768 with its headers kept, the secret form in one column at 360, the editor at 768 (pointer selection/edit/drag connection and keyboard rail addition/edit/open, with the pointer drawing its connections because the keyboard cannot since #207, validation, publish, the floating loop panel), 44 px controls including native summaries, code editors, checkbox/radio labels, short choices, and the Omit of an edited New run and Wait input on a touch screen, on-screen port hit boxes capped by fixed row pitch and neighbouring-card gaps at fitted zoom at 768 and 360 px, identical three-route card heights at zoom 1, 0.784 and 0.5, and zero routing measurements across eight coarse-pointer zoom changes on 300 nodes, and 200% zoom. The grouped geometry tests attach `scroll-widths.json` with `document.scrollingElement.scrollWidth` and `innerWidth` for the QA evidence table.
+@@ -987,8 +988,8 @@ The owner's request of 2026-10-04: undo and redo for the editor, with Ctrl+Z and
+ - **Undo and redo are edits.** They bump the revision (unless only unparsed text changed) and set the save state to pending, so autosave, the IndexedDB mirror, `If-Match`, and the conflict stop apply as to any edit; `useAutosave.ts` is unchanged. Undoing a rename keeps the node selected and its editor open, now on the old id. A node that an undo removes is deselected and its editor closes (focus returns to the canvas); redo brings the node back without reopening its editor.
+ - **Forms.** `historyEpoch`, bumped by every undo and redo, is part of the keys of the node editor's config form and of the loop panel's forms, so they remount with the restored values; the node editor's id draft resets with it. The node editor keeps its config form's disclosures (Advanced, collapsible list items) open or collapsed across the remount (see "Basic and advanced fields"). A node's label and the loop's name and description are controlled inputs and follow at once.
+ - **Shortcuts.** `editor/useUndoShortcuts.ts`, one `keydown` listener on `document` while the editor is mounted: Ctrl+Z undoes; Ctrl+Shift+Z and Ctrl+Y redo; on macOS and iOS (`navigator.userAgentData.platform`, else `navigator.platform`) Cmd+Z undoes and Cmd+Shift+Z redoes. The letter comes from the key's character, or from its place (`code`) on a non-Latin layout; presses with Alt (so AltGr), during composition, or already handled (`defaultPrevented`) are left alone. With focus in a text editor (an input of a text-entry type: text, search, url, email, password, number, tel, or a date or time type; a textarea; a content-editable element; or CodeMirror, including anything inside one, such as the checkboxes of CodeMirror's search panel), the keys belong to that control and its own text undo applies. Everywhere else they undo and redo the editor: the canvas, the toolbar, the page, and controls without text to undo, such as checkboxes, radios, switches, selects, and buttons, in the node editor or the loop panel. When a remount replaced the focused control, focus moves to the same control in the same field of the new form (the same element, type, role, and name, counted among its namesakes), else to whatever stands in its place there, else to the field's first control. A row's header toggle and Remove button follow that row when its index changes. When the focused row is gone, focus moves to the nearest surviving row's shown header, else the collection's Add button, else its fieldset, and never opens a row. Nested rows use their nearest surviving ancestor to remap the collection path; when the ancestor is gone too, its containing collection supplies the fallback. Outside any field, focus moves to the same control in the part of the page that stayed; failing those targets, to the heading of the dialog or panel it was in, else to the canvas. A radio stands for its group's checked radio, so after an undo that changed the choice the newly checked radio has focus (`groupFocus` in `editor/focus-field.ts`, which `focusField` uses too).
+-- **Toolbar.** Undo and Redo icon buttons open the toolbar's action group (`editor/UndoRedo.tsx`). Each is named by the step it will change ("Undo move start", "Redo edit label of start"; plain "Undo" or "Redo" with nothing to do), with the same text as its tooltip, and `aria-keyshortcuts` (`Control+Z`; `Control+Shift+Z Control+Y`; `Meta` on Apple platforms). With nothing to do a button is `aria-disabled`, not `disabled`, so it keeps its place in the Tab order. The names are visually hidden text rather than `aria-label`, so a lookup of a field by its label ("Description") never finds "Undo edit loop description". The buttons are 32 px for a mouse and 44 px where the primary pointer is coarse (`pointer-coarse:size-11`). While the node editor is open the page behind it is inert, so there the keys are the way to undo.
+-- **Regression.** `editor/history.test.ts`, `editor/store.test.ts` (every change undone and redone exactly, edge routes included, merging, commits and typing per field, a commit's writes as one step, deletion and rename, the 100-step cap), `forms/SchemaForm.test.tsx` (wired to the store: model then effort two steps, three keystrokes one, a toggle a step each, a row removal with the text it moves one step, and the paths reported), `editor/NodeEditorDialog.test.tsx` (Advanced and list items kept open through undo and redo, with focus restored), `editor/useUndoShortcuts.test.tsx`, `editor/UndoRedo.test.tsx`, `editor/EditorPage.undo.test.tsx`, `editor/EditorPage.conflict.test.tsx` (an undo saved with `If-Match` and mirrored to the device, a conflict on undo, and a reload clearing the history), and `e2e/undo.spec.ts`.
++- **Toolbar (#208, [ADR-0078](decisions/ADR-0078-stationary-history-controls.md)).** Undo and Redo icon buttons (`editor/UndoRedo.tsx`) fill a fixed leading slot of the editor's toolbar (`data-testid="history-actions"`: non-shrinking, top-aligned, 36 px high, 44 px under a coarse pointer, so each button is centred on the first row of the bar). The slot is the bar's first child in the DOM and on screen, in the same order, so Undo and Redo are the first Tab stops of the bar, ahead of the Loops link; the breadcrumb, name, badges, save status, Open in Runs, validation indicator and Publish follow in a sibling that wraps beside it. What those hold, how wide it is and whether it wraps never moves the two buttons: the validation indicator's and Publish's changing labels, a long name near a wrap boundary, the save status and the connection banner (which a loaded editor draws under its toolbar, not above it) all leave them where they are. A press does not move them either: the buttons override the shared ghost button's 1 px press translation (`active:translate-none!`, so nothing in the shared styles can win over it) and show the press as a strong border on an enabled button instead; every other button keeps the shared press. Each is named by the step it will change ("Undo move start", "Redo edit label of start"; plain "Undo" or "Redo" with nothing to do), with the same text as its tooltip, and `aria-keyshortcuts` (`Control+Z`; `Control+Shift+Z Control+Y`; `Meta` on Apple platforms). With nothing to do a button is `aria-disabled`, not `disabled`, so it keeps its place in the Tab order. The names are visually hidden text rather than `aria-label`, so a lookup of a field by its label ("Description") never finds "Undo edit loop description". The buttons are 32 px for a mouse and 44 px where the primary pointer is coarse (`pointer-coarse:size-11`). While the node editor is open the page behind it is inert, so there the keys are the way to undo.
++- **Regression.** `editor/history.test.ts`, `editor/store.test.ts` (every change undone and redone exactly, edge routes included, merging, commits and typing per field, a commit's writes as one step, deletion and rename, the 100-step cap), `forms/SchemaForm.test.tsx` (wired to the store: model then effort two steps, three keystrokes one, a toggle a step each, a row removal with the text it moves one step, and the paths reported), `editor/NodeEditorDialog.test.tsx` (Advanced and list items kept open through undo and redo, with focus restored), `editor/useUndoShortcuts.test.tsx`, `editor/UndoRedo.test.tsx`, `editor/UndoRedo.press.test.tsx` (the generated stylesheet's cascade for the pressed buttons), `editor/EditorToolbar.test.tsx` (the leading slot, its DOM and Tab order and its stability through every toolbar content change), `editor/EditorConnectionBanner.test.tsx`, `components/layout/connection-banner.test.tsx` and `editor/EditorPage.connection.test.tsx` (one banner under the loaded editor's toolbar, the shell's for every other state, route exit and re-entry, strict mode, a failed render, voice staging and the unrelated notices), `editor/EditorPage.undo.test.tsx`, `editor/EditorPage.conflict.test.tsx` (an undo saved with `If-Match` and mirrored to the device, a conflict on undo, and a reload clearing the history), and `e2e/undo.spec.ts`.
+ 
+ ## Primitive decision evidence (#97)
+ 
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index a505674b..fdea0d12 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -89,3 +89,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
+ [ADR-0075 — Repair references in the current loop's node state](ADR-0075-node-id-reference-repair.md) records the repair and publication boundaries for node-ID changes (#273).
+ 
+ [ADR-0076 — Canvas-only connection authoring](ADR-0076-canvas-only-connection-authoring.md) records the owner decision that connections are authored only on the canvas, that changing one means removing it and drawing it again, and the keyboard connection-creation path it removes (#207).
++
++[ADR-0078 — Stationary history controls and a one-owner connection banner](ADR-0078-stationary-history-controls.md) records the fixed leading Undo and Redo slot, their non-moving press, and the loaded editor owning the one connection banner under its toolbar, with the baseline causes and the shell fallback for every other state (#208).
+diff --git a/docs/guide/02-build-a-loop.md b/docs/guide/02-build-a-loop.md
+index c609e304..533fd013 100644
+--- a/docs/guide/02-build-a-loop.md
++++ b/docs/guide/02-build-a-loop.md
+@@ -11,7 +11,7 @@
+ 
+ Structured edits in the dialog save as you type; section JSON saves when applied, and unfinished text stays in this editing session when closing: use **Done**, the close button, **Esc**, or a click outside it, and focus returns to the node. An ID you are still typing applies when the dialog closes; an ID that cannot apply keeps the dialog open once with the reason, and closing again keeps the old ID. **Delete** and **Backspace** inside the dialog only edit text. While the dialog is open the rest of the editor waits, so close it to reach **Publish** or the palette. Below 768 px wide the dialog is a sheet along the bottom of the window.
+ 
+-**Undo** and **Redo** at the start of the toolbar's buttons take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, removing edges, rerouting or resetting a line, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and all connections to it, and discarding held input can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
++**Undo** and **Redo** lead the editor's toolbar, at its top left, and stay exactly where they are while the rest of the toolbar changes beside them: the validation text, the save status, **Publish** becoming **Publishing…** and a long loop name that wraps the other controls onto a second line never move them, and pressing them does not nudge them. They are the first stops of the toolbar when you press **Tab**, before the **Loops** link. They take back or repeat a change to the loop: adding, moving, connecting, renaming, or deleting nodes, removing edges, rerouting or resetting a line, and edits to labels, config, the loop's name and description, settings, and variables. Each button's name says what it will change, for example **Undo move start**. **Ctrl+Z** undoes and **Ctrl+Shift+Z** or **Ctrl+Y** redoes (**Cmd+Z** and **Cmd+Shift+Z** on a Mac) with focus anywhere except a text field or a code editor, where the keys undo your typing in that field instead; on a checkbox, an option, a list, or a button they undo the editor. Typing in one field is one step, as is one drag; deleting a node and undoing brings back its edges and all connections to it, and discarding held input can be undone like any change. An undo is saved like any other edit. The editor keeps the last 100 steps for as long as it is open; reloading it or choosing **Reload server draft** starts afresh.
+ 
+ The **Palette** and **Loop settings** panels each have their own Show and Hide buttons. The browser remembers both choices; until you choose, the palette starts expanded on windows at least 1024 px wide and collapsed below, and the loop panel starts expanded at 1280 px and wider and collapsed below. Each collapsed panel keeps a narrow rail with its Show button. Validation stays in sight either way, on the nodes and beside **Publish** (see [Connect and validate](#connect-and-validate)).
+ 
+@@ -31,7 +31,7 @@ The editor lives at this browser route:
+ /app/loops/<loop-id>/edit
+ ```
+ 
+-Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. If another GraphGoblin tab or window from an older version holds the device's draft storage, a notice says so: close the other GraphGoblin tabs and windows. Until then, changes the server has not saved show as **Kept in this window only**, and closing the window loses them; saves to the server still work and show as **All changes saved**. Device drafts saved before the node-only harness change were discarded by a one-off store upgrade. This device's saved work opens while the server is loading; returning to a loop uses its latest copy in this window even if device storage is slow. The checking notice means editing is available while server saves and Publish wait for reconciliation. If you are offline, keep editing; recovery reconciles before saving. The save indicator claims a device copy only after its durable write succeeds.
++Edits autosave after a short debounce and are mirrored in IndexedDB. A schema-invalid draft stays on the device with **Saved on this device only**; fix it before relying on the server copy. Offline saves retry on reconnect. If another GraphGoblin tab or window from an older version holds the device's draft storage, a notice says so: close the other GraphGoblin tabs and windows. Until then, changes the server has not saved show as **Kept in this window only**, and closing the window loses them; saves to the server still work and show as **All changes saved**. Device drafts saved before the node-only harness change were discarded by a one-off store upgrade. This device's saved work opens while the server is loading; returning to a loop uses its latest copy in this window even if device storage is slow. The checking notice means editing is available while server saves and Publish wait for reconciliation. If you are offline, keep editing; recovery reconciles before saving. While the browser is offline or the GraphGoblin API cannot be reached, the notice (**You are offline** or **Cannot reach the GraphGoblin API**) appears directly under the editor's toolbar, so the toolbar and its buttons do not move down; the canvas gives up that height instead. Outside a loaded editor (while a loop is loading, when it cannot be opened, and on every other page) the same notice stays under the main header. The save indicator claims a device copy only after its durable write succeeds.
+ 
+ If the server saved a newer draft, an untouched editor switches to it and offers **Use this device's copy instead** for the retained device work. Edits made while loading are kept in the editor. A stale base then asks you to reload or explicitly overwrite, rather than replacing those edits. Restore or discard failures keep the backup and offer a meaningful retry notice.
+ 

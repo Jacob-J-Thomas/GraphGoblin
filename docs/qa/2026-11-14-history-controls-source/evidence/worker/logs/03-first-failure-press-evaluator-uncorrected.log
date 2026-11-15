@@ -1,0 +1,47 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-history-controls/GraphGoblin/apps/web
+
+ ❯ src/editor/UndoRedo.press.test.tsx (4 tests | 2 failed) 268ms
+   ❯ Undo and Redo pressed state (4)
+     × does not move when pressed, enabled or not, while the shared ghost style still does 216ms
+     × shows the press as a strong border on an enabled button only, without changing its size 29ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/UndoRedo.press.test.tsx > Undo and Redo pressed state > does not move when pressed, enabled or not, while the shared ghost style still does
+Error: Unknown selector state: :focus-visible
+ ❯ matches src/editor/UndoRedo.press.test.tsx:85:40
+     83|   const tokens = state.match(STATE_TOKEN) ?? [];
+     84|   // Refuse a selector this evaluator does not understand rather than …
+     85|   if (tokens.join('') !== state) throw new Error(`Unknown selector sta…
+       |                                        ^
+     86|   const holds = (token: string) =>
+     87|     token === ':active'
+ ❯ src/editor/UndoRedo.press.test.tsx:110:38
+ ❯ winner src/editor/UndoRedo.press.test.tsx:108:28
+ ❯ src/editor/UndoRedo.press.test.tsx:184:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/editor/UndoRedo.press.test.tsx > Undo and Redo pressed state > shows the press as a strong border on an enabled button only, without changing its size
+Error: Unknown selector state: :focus-visible
+ ❯ matches src/editor/UndoRedo.press.test.tsx:85:40
+     83|   const tokens = state.match(STATE_TOKEN) ?? [];
+     84|   // Refuse a selector this evaluator does not understand rather than …
+     85|   if (tokens.join('') !== state) throw new Error(`Unknown selector sta…
+       |                                        ^
+     86|   const holds = (token: string) =>
+     87|     token === ':active'
+ ❯ src/editor/UndoRedo.press.test.tsx:110:38
+ ❯ winner src/editor/UndoRedo.press.test.tsx:108:28
+ ❯ border src/editor/UndoRedo.press.test.tsx:224:7
+ ❯ src/editor/UndoRedo.press.test.tsx:225:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  17:05:49
+   Duration  4.51s (environment 47%, transform 19%, setup 15%, import 13%, tests 6%)
+

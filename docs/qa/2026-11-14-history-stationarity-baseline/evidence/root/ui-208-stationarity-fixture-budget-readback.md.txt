@@ -1,0 +1,31 @@
+# #208 measurement-fixture budget readback
+
+Read-only audit of the named scripts, summary, and run records in `ui-208-stationarity-baseline-resume`. No worker, source checkout, or running process was changed. No raw model event/result streams were read.
+
+## Disposition
+
+The evidence shows two measurement-fixture corrections, within the brief's limit of two:
+
+1. `measure-m2.playwright.js` labels the first correction. Relative to m1, it sets and verifies the requested app theme, distinguishes the shell banner from app notices, adds integer-aligned hit-grid and edge-click-loss observations, and uses tap input for touch. These are the first fixture correction batch and added measurement coverage; no weakened assertion was found in the checked diff.
+2. `measure-h2tune.playwright.js` adds the planned H2 wrap-boundary calibration and candidate sequence. Its first D1 run failed at candidate-k70 with `409 LOOP_NAME_CONFLICT`: calibration had already created that loop name. `measure-h2tune2.playwright.js` records each calibration loop ID and reuses it for a candidate with the same length; other candidate lengths still create their own loops. This is the second correction. The candidate lengths and add/undo/redo sequence remain, and no assertion is weakened in the checked diff.
+
+The one-frame `during` omission mentioned in safe progress is an ad hoc evidence-readout issue, not a third measurement-fixture correction: the retained `scripts/key-evidence.mjs` explicitly handles a control record without `during` and reports the transient one-frame observation separately.
+
+`handoff.md` identifies itself as an in-progress draft. Its “Used so far: 0” line predates the named m2 and h2tune2 script/run evidence and is stale; use the later script labels and run records for the budget count. The h2tune summary records D1/D2 corrected runs with no effect mismatches and add/undo/redo deltas of `1,-1,1`.
+
+## Checked artifacts
+
+SHA-256 hashes below are of the exact checked files under `ui-208-stationarity-baseline-resume/`.
+
+| Artifact | Bytes | SHA-256 |
+|---|---:|---|
+| `scripts/measure.playwright.js` (m1) | 46842 | `771342cc076a23e6a7e8d4a545d54d249c7b2f61c9715cc56c030bb54e255a00` |
+| `scripts/measure-m2.playwright.js` | 51268 | `b0863aa2f7da708a3e1b6f5d4a0956c49c8ea67f67c522f5bf6871fec8b2eb66` |
+| `scripts/measure-h2tune.playwright.js` | 55089 | `9bb848bc0cd743b7fa1359050d12f83157d6b108f8dab566785070129625fae4` |
+| `scripts/measure-h2tune2.playwright.js` | 55384 | `48c5568540cf0bfe4548df2e1863ad8daa5f4bd538cc92e039988a7490170f56` |
+| `scripts/key-evidence.mjs` | 5202 | `0062a0c56272dc9e0d1bc22f4abc1c75d35ea99aceb3ca653c2ef03fbb969255` |
+| `analysis/h2tune-summary.md` | 1884 | `8448a079c0eb70ba5afd1f2e377888adc27c2f5614e9c672b7e87c2b9a05df7a` |
+| `runs/h2tune-d1.orchestrator.stdout.json` | 3416 | `b50d39acfe646ccbb22b7d883b7e469dd272bc039764015805f728a9db6ba1cb` |
+| `runs/h2tune2-d1.orchestrator.stdout.json` | 1892 | `7dbf14291368a5314634418735e82e06a7b888f7252bab6d931bdb9309fc22b1` |
+| `runs/h2tune2-d2.orchestrator.stdout.json` | 1893 | `d03b93c6daec12c6eae55c3c39fe153c8b282d3a2b771a457f585267e92980dd` |
+| `handoff.md` (in-progress draft) | 2161 | `bf2e6a4ccb6004ac1c62e1fb1c03c3992dbee3fb4b2a52206e6a7d343eb4207e` |
