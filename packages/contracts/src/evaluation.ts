@@ -245,7 +245,7 @@ export const RouteDeclarationSchema = z.strictObject({
     .trim()
     .min(1)
     .max(120)
-    .meta(field('Unique readable route label, shown on the canvas and in Connections.')),
+    .meta(field('Unique readable route label, shown on the canvas.')),
   repeat: z.boolean().optional().meta(field('Mark the one route that repeats through this gate.')),
 });
 export type RouteDeclaration = z.infer<typeof RouteDeclarationSchema>;

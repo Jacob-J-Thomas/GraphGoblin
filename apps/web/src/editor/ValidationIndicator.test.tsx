@@ -1,8 +1,10 @@
+import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { fieldErrorIssues, type EditorIssue } from './model.js';
+import { VOICE_STEP_MESSAGE } from './chat-protection.js';
+import { countsLabel, fieldErrorIssues, validateDraft, type EditorIssue } from './model.js';
 import { useEditorStore } from './store.js';
 import { ValidationIndicator } from './ValidationIndicator.js';
 
@@ -95,6 +97,10 @@ describe('ValidationIndicator', () => {
     // An issue about a node that is gone stays visible here, so the counts add up.
     expect(generalRows[2]).toHaveTextContent('node gone');
     expect(within(general).queryAllByRole('button')).toHaveLength(0);
+    // The canvas draws every edge of this draft: nothing to recover.
+    expect(
+      within(popover).queryByRole('group', { name: 'Connections the canvas cannot draw' }),
+    ).toBeNull();
 
     // Nodes in the definition's order, each with its count and worst severity.
     const nodes = within(popover).getByRole('group', { name: 'Nodes' });
@@ -120,6 +126,157 @@ describe('ValidationIndicator', () => {
     rerender(<ValidationIndicator issues={[loopLevel]} definition={definition} />);
     expect(screen.getByRole('group', { name: 'Loop and connections' })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Nodes' })).toBeNull();
+  });
+
+  function Live() {
+    const def = useEditorStore((s) => s.definition)!;
+    return <ValidationIndicator issues={validateDraft(def).issues} definition={def} />;
+  }
+  const STRANDED = 'Connections the canvas cannot draw';
+
+  it('removes an edge the canvas cannot draw from its own group, once, then returns focus (#207)', async () => {
+    const user = userEvent.setup();
+    const stranded = kitchenSinkLoop();
+    stranded.edges.push({
+      id: 'ghost',
+      from: { node: 'prep', port: 'nope' },
+      to: { node: 'gone' },
+    });
+    useEditorStore.getState().load('L1', stranded);
+    render(<Live />);
+    const before = useEditorStore.getState().definition!;
+    // The counts are the issues' alone.
+    await user.click(
+      screen.getByRole('button', { name: countsLabel(validateDraft(before).issues) }),
+    );
+    const general = screen.getByRole('group', { name: 'Loop and connections' });
+    // Two issues name the edge, and their rows only inform.
+    expect(within(general).getAllByText(/edge "ghost"/)).toHaveLength(2);
+    expect(within(general).queryAllByRole('button')).toHaveLength(0);
+    // The recovery group names it by its stored ends, with its one action in the popover.
+    const group = screen.getByRole('group', { name: STRANDED });
+    const rows = within(group).getAllByRole('listitem');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent('ghost from prep output nope to gone');
+    const remove = screen.getAllByRole('button', { name: /^Remove edge/ });
+    expect(remove.map((b) => b.textContent)).toEqual(['Remove edge ghost']);
+    expect(group).toContainElement(remove[0]!);
+    await user.click(remove[0]!);
+    const after = useEditorStore.getState().definition!;
+    expect(after.edges).toEqual(before.edges.filter((e) => e.id !== 'ghost'));
+    expect(after.nodes).toBe(before.nodes);
+    expect(useEditorStore.getState().past.map((step) => step.label)).toEqual([
+      'remove edge prep nope to gone',
+    ]);
+    expect(screen.queryByRole('dialog', { name: 'Loop issues' })).toBeNull();
+    await waitFor(() => expect(document.activeElement).not.toBe(document.body));
+    useEditorStore.getState().undo();
+    expect(useEditorStore.getState().definition!.edges).toEqual(before.edges);
+  });
+
+  it('lists the edge a blank Decision route ID owns, though the draft does not parse (#207)', async () => {
+    const user = userEvent.setup();
+    const definition: LoopDefinitionInput = {
+      schemaVersion: kitchenSinkLoop().schemaVersion,
+      name: 'Blank route',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+        {
+          id: 'pick',
+          kind: 'decision',
+          label: 'Pick',
+          config: {
+            kind: 'expression',
+            jsonata: '"yes"',
+            routes: [
+              { id: 'yes', label: 'Yes' },
+              { id: 'no', label: 'No' },
+              { id: 'route-3', label: '7' },
+            ],
+          },
+        },
+        {
+          id: 'branch',
+          kind: 'mutate',
+          label: 'Branch',
+          config: { operations: [{ op: 'append-message', role: 'note', content: 'Ran' }] },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: {} },
+      ],
+      edges: [
+        { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'pick' } },
+        { id: 'e2', from: { node: 'pick', port: 'yes' }, to: { node: 'done' } },
+        { id: 'e3', from: { node: 'pick', port: 'no' }, to: { node: 'done' } },
+        { id: 'e4', from: { node: 'branch', port: 'out' }, to: { node: 'done' } },
+        { id: 'e5', from: { node: 'pick', port: 'route-3' }, to: { node: 'branch' } },
+      ],
+    };
+    const state = () => useEditorStore.getState();
+    state().load('L1', definition);
+    const config = definition.nodes[1]!.config as { routes: { id: string; label: string }[] };
+    state().updateNode(
+      'pick',
+      {
+        config: {
+          ...config,
+          routes: config.routes.map((row, i) => (i === 2 ? { ...row, id: '' } : row)),
+        },
+      },
+      { path: 'routes.2.id', kind: 'typing', id: 1 },
+    );
+    const blank = { definition: state().definition!, decisionRoutes: state().decisionRoutes };
+    const { issues } = validateDraft(blank.definition);
+    expect(issues.map((i) => [i.code, i.nodeId, i.edgeId])).toEqual([
+      ['SCHEMA', 'pick', undefined],
+    ]);
+    render(<Live />);
+    // The one schema error, as before: the recovery adds nothing to the counts.
+    await user.click(screen.getByRole('button', { name: '1 error' }));
+    expect(screen.queryByRole('group', { name: 'Loop and connections' })).toBeNull();
+    expect(
+      within(screen.getByRole('group', { name: 'Nodes' })).getByRole('button'),
+    ).toHaveTextContent('pick: 1 issue');
+    const group = screen.getByRole('group', { name: STRANDED });
+    expect(within(group).getByRole('listitem')).toHaveTextContent(
+      'e5 from pick output route-3 to branch',
+    );
+    await user.click(within(group).getByRole('button', { name: 'Remove edge e5' }));
+    expect(state().definition!.edges).toEqual(
+      blank.definition.edges.filter((edge) => edge.id !== 'e5'),
+    );
+    expect(state().past.at(-1)!.label).toBe('remove edge pick route-3 to branch');
+    expect(screen.queryByRole('dialog', { name: 'Loop issues' })).toBeNull();
+    // One Undo restores the whole draft, the blank ID and the row's ownership of e5 included.
+    act(() => state().undo());
+    expect(state().definition).toEqual(blank.definition);
+    expect(state().decisionRoutes).toEqual(blank.decisionRoutes);
+  });
+
+  it('keeps a protected Chat voice step that the canvas cannot draw, saying why (#207)', async () => {
+    const user = userEvent.setup();
+    const chat = {
+      schemaVersion: 4,
+      name: 'Chat',
+      nodes: [
+        { id: 'chat-input', kind: 'trigger', label: 'In', config: { type: 'manual' } },
+        { id: 'chat-normalize', kind: 'mutate', label: 'N', config: { operations: [] } },
+      ],
+      edges: [{ id: 'v1', from: { node: 'chat-normalize', port: 'out' }, to: { node: 'gone' } }],
+    } as unknown as LoopDefinitionInput;
+    useEditorStore.getState().load('L1', chat);
+    useEditorStore.setState({ systemChat: true });
+    const issue: EditorIssue = {
+      code: 'EDGE_TO_MISSING',
+      severity: 'error',
+      message: 'x',
+      edgeId: 'v1',
+    };
+    render(<ValidationIndicator issues={[issue]} definition={chat} />);
+    await user.click(screen.getByRole('button', { name: '1 error' }));
+    const remove = screen.getByRole('button', { name: 'Remove edge v1' });
+    expect(remove).toBeDisabled();
+    expect(remove).toHaveAttribute('title', VOICE_STEP_MESSAGE);
+    useEditorStore.setState({ systemChat: false });
   });
 
   it('discards loop-level unparsed text, leaving focus on "Ready to publish"', async () => {

@@ -1,0 +1,1707 @@
+mode=no-stop-propagation
+production under test sha=e9dbf9578daeb3478cb3f60146b719d78510009ff04ab321829999b4195c044d
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (30 tests | 3 failed) 1997ms
+   ❯ Reset route keeps its toolbar where it was clicked (#207) (11)
+     × keeps the toolbar and Reset route where they were on a loop-back, so no later click lands on Remove connection 340ms
+     × keeps the toolbar and Reset route where they were on a forward connection, so no later click lands on Remove connection 331ms
+     × refuses on the pan gate first, holding nothing, and keeps Reset route unavailable after a pan settles 23ms
+ ❯ src/editor/viewport-gesture.contract.test.tsx (9 tests | 1 failed) 1386ms
+   ❯ Reset route on the installed xyflow and d3 (#207) (2)
+     × keeps the connection selected, and the hold with it, when Reset route is clicked with the multi-selection key held 177ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the toolbar and Reset route where they were on a loop-back, so no later click lands on Remove connection
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 15 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 1,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711736988,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  2nd vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 1,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737030,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  3rd vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737045,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  4th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 1,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737107,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  5th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737122,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  6th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 3,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737137,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  7th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737168,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  8th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 3,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737168,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  9th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 4,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737169,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  10th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 5,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737169,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  11th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": true,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737169,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  12th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": true,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737169,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  13th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": true,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737169,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  14th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737185,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  15th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737232,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+
+Number of calls: 15
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:812:27
+    810|       // Each click ends on the button, as Remove connection's does: t…
+    811|       // the connection again, which with Control or Meta held would t…
+    812|       expect(onClick).not.toHaveBeenCalled();
+       |                           ^
+    813|       expect(reset).toHaveFocus();
+    814|       expect(placed(view.container)).toBe(at);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > keeps the toolbar and Reset route where they were on a forward connection, so no later click lands on Remove connection
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 15 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 1,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737326,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  2nd vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 1,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737389,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  3rd vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737399,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  4th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 1,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737451,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  5th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737466,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  6th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 3,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737482,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  7th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 2,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737511,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  8th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 3,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737511,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  9th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 4,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737511,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  10th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 5,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737511,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  11th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": true,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737512,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  12th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": true,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737512,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  13th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": true,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737512,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  14th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737527,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+  15th vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": PointerEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          title="The connection already routes automatically."
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711737574,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+
+Number of calls: 15
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:812:27
+    810|       // Each click ends on the button, as Remove connection's does: t…
+    811|       // the connection again, which with Control or Meta held would t…
+    812|       expect(onClick).not.toHaveBeenCalled();
+       |                           ^
+    813|       expect(reset).toHaveFocus();
+    814|       expect(placed(view.container)).toBe(at);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > refuses on the pan gate first, holding nothing, and keeps Reset route unavailable after a pan settles
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      SyntheticBaseEvent {
+        "_reactName": "onClick",
+        "_targetInst": null,
+        "altKey": false,
+        "bubbles": true,
+        "button": 0,
+        "buttons": 0,
+        "cancelable": true,
+        "clientX": 0,
+        "clientY": 0,
+        "ctrlKey": false,
+        "currentTarget": null,
+        "defaultPrevented": false,
+        "detail": 0,
+        "eventPhase": 3,
+        "getModifierState": [Function modifierStateGetter],
+        "isDefaultPrevented": [Function functionThatReturnsFalse],
+        "isPropagationStopped": [Function functionThatReturnsFalse],
+        "isTrusted": false,
+        "metaKey": false,
+        "movementX": 0,
+        "movementY": 0,
+        "nativeEvent": MouseEvent {
+          "isTrusted": false,
+        },
+        "pageX": 0,
+        "pageY": 0,
+        "relatedTarget": null,
+        "screenX": 0,
+        "screenY": 0,
+        "shiftKey": false,
+        "target": <button
+          aria-disabled="true"
+          class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+          data-gesture="panning"
+          type="button"
+        >
+          <span
+            class="min-w-0 overflow-x-clip text-ellipsis"
+          >
+            Reset route
+          </span>
+        </button>,
+        "timeStamp": 1794711738262,
+        "type": "click",
+        "view": null,
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:950:33
+    948|       fireEvent.click(resetButton());
+    949|       expect(first.editing.reset).not.toHaveBeenCalled();
+    950|       expect(first.onClick).not.toHaveBeenCalled();
+       |                                 ^
+    951|       // The refused click made no hold: when the route changes some o…
+    952|       refused.publish(automatic);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Reset route on the installed xyflow and d3 (#207) > keeps the connection selected, and the hold with it, when Reset route is clicked with the multi-selection key held
+Error: expect(element).toHaveClass("selected")
+
+Expected the element to have class:
+  selected
+Received:
+  react-flow__edge react-flow__edge-smoothstep nopan selectable
+ ❯ src/editor/viewport-gesture.contract.test.tsx:800:23
+    798|       await microtasks();
+    799|       expect(store().past.map((step) => step.label)).toEqual(['reset r…
+    800|       expect(wrapper).toHaveClass('selected');
+       |                       ^
+    801|       expect(resetButton()).toBe(reset);
+    802|       expect(remove()).toBe(button);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  4 failed | 105 passed (109)
+   Start at  21:02:10
+   Duration  13.47s (environment 34%, tests 32%, import 12%, setup 12%, transform 9%)
+
+vitest exit=1
+restored sha=78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf expected=78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf

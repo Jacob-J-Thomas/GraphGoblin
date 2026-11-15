@@ -13,8 +13,8 @@ import type { Locator, Page } from '@playwright/test';
 import { denseGraph } from '../src/__fixtures__/routing.js';
 import {
   approvalLoop,
-  chooseOptionByKeyboard,
   closeNode,
+  connectOnCanvas,
   control,
   expect,
   openAdvanced,
@@ -627,7 +627,9 @@ for (const theme of ['dark', 'light'] as const) {
       expect(await pageOverflows(page)).toBe(false);
     });
 
-    test('at 768 px keyboard authoring adds, edits, connects, validates, and publishes', async ({
+    // Keyboard connection creation (the node editor's Connect form) was removed in #207, ADR-0076:
+    // the keyboard still adds, opens, edits and publishes, and the pointer draws the connections.
+    test('at 768 px keyboard authoring adds, opens and edits nodes and publishes; the pointer connects them', async ({
       page,
       request,
     }) => {
@@ -667,23 +669,17 @@ for (const theme of ['dark', 'light'] as const) {
       await dialog.getByLabel('Label', { exact: true }).focus();
       await page.keyboard.press('ControlOrMeta+A');
       await page.keyboard.type('Keyboard approval');
-      await dialog.getByLabel('To', { exact: true }).focus();
-      await chooseOptionByKeyboard(page, dialog.getByLabel('To', { exact: true }), 'Done (done)');
-      await expect(dialog.getByLabel('To', { exact: true })).toHaveValue('done');
-      await dialog.getByRole('button', { name: 'Connect', exact: true }).press('Enter');
-      await expect(dialog.getByText('No outgoing edges.')).toHaveCount(0);
+      await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
+      await expect(dialog.getByRole('button', { name: 'Connect', exact: true })).toHaveCount(0);
       await page.keyboard.press('Escape');
       await expect(page.getByTestId('node-wait')).toContainText('Keyboard approval');
       dialog = await open('start');
-      await dialog.getByLabel('To', { exact: true }).focus();
-      await chooseOptionByKeyboard(
-        page,
-        dialog.getByLabel('To', { exact: true }),
-        'Keyboard approval (wait)',
-      );
-      await expect(dialog.getByLabel('To', { exact: true })).toHaveValue('wait');
-      await dialog.getByRole('button', { name: 'Connect', exact: true }).press('Enter');
+      await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
       await page.keyboard.press('Escape');
+      await expect(dialog).toHaveCount(0);
+      // Pointer drags draw start -> wait -> done between the output and input handles.
+      await connectOnCanvas(page, 'start', 'out', 'wait');
+      await connectOnCanvas(page, 'wait', 'out', 'done');
       await expect(page.locator('.react-flow__edge')).toHaveCount(2);
       await expect(page.getByText('Ready to publish')).toBeVisible();
       await geometry(page, 'keyboard editor');

@@ -1,0 +1,169 @@
+# Selection-then-Remove click-count correction: implementation handoff
+
+Claude Sonnet 5.5, xhigh. Implementation and focused verification only. This is not a formal review, not native QA and not sign-off. Ready for root integration of this source and tests. Nothing here establishes native, touch or OS-numbered behaviour.
+
+## Identity and start state
+
+- Worktree `C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin`, branch `codex/gg-20261115-canvas-review-correction`.
+- HEAD `fdd9132763e7be881bbd7863f8ebbeb601a20233`, tree `a256f4ac78d026113b79c2093d9c299d13eb18f1`. Both unchanged at the end.
+- At the start `git status --porcelain=v1 -uall` was empty. Raw index `…/worktrees/GraphGoblin31/index` SHA-256 `613a569bae951ca742e190de0002a384e1e512719dd97060760a170736e7da5f`. `git ls-files -s -z` SHA-256 `fb3c4ec2edcb2bac634bfaf8d23845861ab090dd4dbea214f7283c2985cdacd3` (the text form, without `-z`, is `ca235c937361356863a53566cea4de3e8e06a003f95bd08d6663c8cb77e6091c`), 22,372 entries. See `logs/00-start-state.txt`.
+- Node `v22.23.4` (project runtime) for the whole shell. `pnpm exec node --version` in `apps/web` also printed `v22.23.4`. The machine Node was not changed.
+- Inputs: root disposition (read), Opus design `report.md` (SHA-256 `f42c0d4e…ec806`, verified), native report (SHA-256 `64dbcc54…8baafb8375`, verified), the Reset handoff and `reset-hold-source-freeze.json`. I read `AGENTS.md`, `docs/README.md`, the `docs/15` QA scope and pipeline, and the `docs/12` #207 mention; none adds a requirement for this change.
+- The Reset hold at HEAD was read, not changed. Its `RouteHandles` code, the held anchor, the `Reset route` slot, the crossing-chip width and the manual-return/deselection lifecycle are byte-identical (see the production diff below).
+
+## Changed files (8, all unstaged)
+
+Final copies are under `final/files/<path>`. The full patch is `final/final.diff` (54,672 bytes, SHA-256 `237aa945cba75f7be8c6f16a37f4b2ba4389e0b92f751b299e57bfd5584bed3a`). `final/final-manifest.json` holds the same data as this table, plus log hashes.
+
+| Path | Final SHA-256 | HEAD blob SHA-256 | +/- |
+| --- | --- | --- | --- |
+| `apps/web/src/editor/OrthogonalEdge.tsx` | `df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7` | `78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf` | +14/-4 |
+| `apps/web/src/editor/OrthogonalEdge.test.tsx` | `553d53de7f0e79df4601c4b32f93e79c80195af122f4808b0395813a2d4e6e27` | `3359e1e8b56e0165a0f624a42b80d3ac7f4e6ceabe6fcff45e15c95000927a81` | +166/-0 |
+| `apps/web/src/editor/Canvas.test.tsx` | `1128ef6ec78f93cf6279f1cd9f32e67e86332779d94edc3cda40471304475d25` | `93278710f23703cad88e00b73e20b3e3ad4563c2ddf9db9463f259b48854d077` | +44/-0 |
+| `apps/web/src/editor/viewport-gesture.contract.test.tsx` | `fd85076c5025a518e16479ec6b3ad97aac75717c03c0a9c27669c1ae506499a6` | `c5549718f0a1d43efd791cac92fc64d4fadd5b09ee40d8c1c6c8c1dc255d4a24` | +183/-4 |
+| `apps/web/e2e/edge-routes.spec.ts` | `311ce83f71282e535d8e8a1b983adb03ad329ba6adbd59d00b4b31f0581e2b05` | `366d68f9c2361f44d5907da6f4d593d89bfda98b541c43a977c50763266ff1df` | +134/-0 |
+| `docs/09-frontend-and-pwa.md` | `cca9567c1840f6071b0fd54508297d44ece197053f43036506c5f2ff6d9c148d` | `e7120d08a4688b0a5d307fdbd0024e9ffe4bcfa6c473865fa684376ae12e7ca2` | +2/-2 |
+| `docs/guide/02-build-a-loop.md` | `46cc5b93ce288e0be038830b2bd8819752dee1a7b51d7cebceb06004edef1fa2` | `726dfbad691c91ff659247f8b153d5aa3b089649bbcf0b5f16446d6c74861100` | +2/-0 |
+| `CHANGELOG.md` | `16b72b1a11f23d1232f03e4614d818b47c791867e2782ea7ca84b1384855e32b` | `c33d09588a024d8961c0c41e4106c8825cbeff6f4c5f6c31af52abbb1ac01ec3` | +4/-1 |
+
+No other path changed. `Canvas.tsx`, `route-editing.ts`, the route API, the viewport gate, route handles, dependencies and global listeners are untouched. The four removed lines in the contract file are the one-line doc comment and the signature of `observeWindow`, and its two `for (const type of …)` loops, which now read the optional event-type list (default unchanged).
+
+## Production change (`OrthogonalEdge.tsx`, Remove's `onClick` and one doc comment)
+
+```tsx
+onClick={(event) => {
+  // The edge wrapper would select this (now removed) edge again on the same click.
+  event.stopPropagation();
+  // A later click of a double or triple click (the browser's count above one) goes on
+  // from the press before it, which may have selected this connection and so drawn
+  // this button under the pointer (#207). It removes nothing and leaves focus on the
+  // connection, as that press did. Enter, Space and element.click() report 0, and a
+  // separate click 1: both go on to remove.
+  if (event.detail > 1) {
+    edgeElement()?.focus();
+    return;
+  }
+  if (settling) return;
+  editing.remove(edgeId);
+}}
+```
+
+The doc comment above `OrthogonalEdge` gained one clause (Remove ignores a later click of a double or triple click and keeps focus on the connection). Everything else in `RouteHandles` is unchanged: `stopPropagation` stays first, the `disabled`/`refusal` and `aria-disabled`/`data-gesture` props, `removeSettling`, the generation and drawability guards (in `Canvas.tsx`, not touched), `toolbarKeys`, and all of the Reset hold. No new state, timer, listener, event replay or toolbar placement change.
+
+## Tests added (10 vitest tests, 1 e2e test, none run in a browser)
+
+Every existing Remove test sends click count 0 (`fireEvent.click`) or 1 (`userEvent.click`), so the new tests set the count explicitly and assert what the component, store and installed dependencies do with it. None asserts jsdom hit-testing.
+
+`OrthogonalEdge.test.tsx`, a new `describe` (6 tests, 36 in the file):
+- Counts 2 and 3 on an automatic and a manual route: nothing removed or reset, the wrapper's click handler never sees the click, focus moves from Remove to the connection, Remove stays attached, enabled and not `aria-disabled`; a `dblclick` does nothing; a count-1 click then calls `remove('return')` once. An ancestor `onClickCapture` records the count each click carried.
+- Every modifier (Control, Meta, Shift, none) on counts 2 and 3 ends on the button, so the wrapper cannot see it; an accepted Control click ends there too.
+- Enter and Space through user-event, and `element.click()`, are recorded as count 0 and remove; a user-event pointer click is recorded as 1 and removes.
+- Pan gate: a count-1 click while `panning` is refused with focus staying on Remove (existing behaviour); once ready, count 2 is refused and returns focus, count 1 removes.
+- The store's refusal (protected voice step) leaves Remove disabled with its title for counts 0 to 3.
+
+`Canvas.test.tsx`, real store, `Live` canvas (2 tests of one `it.each`, 72 in the file), for an automatic forward and a manual loop-back connection: after `select`, counts 2 and 3 leave the exact loaded draft (`untouched`: same object, revision 0, `saved`, no history), the selection, the polite announcement text and Remove unchanged, with focus on the edge and not on Undo; a count-1 click records `remove edge start to work` / `remove edge done repeat to work`, clears the selection, focuses Undo, and one Undo restores the exact definition.
+
+`viewport-gesture.contract.test.tsx`, installed xyflow 12.12.0 and d3, real timers, no act environment (2 tests, 11 in the file). A `browserPress` helper sends pointerdown (count 0), mousedown, pointerup (0), mouseup and click in browser order, and does the focus a mousedown gives (jsdom does not). `observeWindow` takes an optional event-type list (default unchanged).
+- A press on `e1`'s `.react-flow__edge-interaction` selects it. A second press on Remove (click count 2) and a `dblclick`: `e1` stays stored with no history, the same Remove stays attached, enabled and not `aria-disabled`, the wrapper stays `selected` and focused, `.react-flow__viewport` style and xyflow's transform are unchanged, and the window capture listener saw all seven events (down, up, click, down, up, click, dblclick) with `defaultPrevented` false and no `click.drag` blocker. A count-1 click then removes once, with the step `remove edge start to done`, and one Undo restores the draft.
+- With xyflow's multi-selection key held, counts 2 and 3 on Remove keep `e1` selected and Remove attached (xyflow's wrapper would otherwise toggle it off); a count-1 click without the key removes once.
+- The existing post-pan, middle-button, newer-pan, wheel, unmount and card-drag "first available click acts once" tests and the Reset contract tests are unchanged and run on every control below.
+
+`e2e/edge-routes.spec.ts`: one new test, typechecked, linted and formatted but not run (see the limits).
+
+## Docs
+
+One source comment (above), the Remove bullet in `docs/09` (rule, why, the keep-focus and `stopPropagation`-first effects, "follows the browser's count, not timing or position", a separate count-1 click removes and one Undo restores, and "how a browser counts touch or pen clicks, and a run of more than three, is not established here"), two regression-list clauses and the e2e entry in the same `docs/09` bullet, one guide paragraph in `docs/guide/02-build-a-loop.md`, and one CHANGELOG #207 sentence. The rejected "Double-clicking a connection ... never removes it" wording is not used. No Windows timing or area, touch classification or four-click boundary is stated as a fact. I left the Reset bullet in `docs/09` unchanged: its "no click-count guard" refers to the Reset hold itself, which still has none.
+
+## Commands and results
+
+All in `apps/web` with Node 22.23.4 unless noted. Logs are under `logs/`.
+
+| Log | Command | Result |
+| --- | --- | --- |
+| `01-candidate-v1-OrthogonalEdge.log` | `pnpm exec vitest run src/editor/OrthogonalEdge.test.tsx` | 36 passed |
+| `02-candidate-v1-Canvas-new-only.log` | `… Canvas.test.tsx -t "Remove connection ignores"` | 2 passed, 70 skipped |
+| `03-candidate-v1-contract.log` | `… viewport-gesture.contract.test.tsx` | **1 failed**, 10 passed (first failure, below) |
+| `04-diagnostic-viewport-stages.log` | the same file, `-t "Remove connection after a click"`, with a temporary `console.log` | exit 1 as before; evidence for the repair, then the logging was removed |
+| `05-candidate-v2-contract.log` | `… viewport-gesture.contract.test.tsx` | 11 passed |
+| `06-candidate-v1-prettier.log` | `pnpm exec prettier --check` on the 8 files | **exit 1**: `e2e/edge-routes.spec.ts` (first failure, below) |
+| `07-candidate-v2-typecheck.log` | `pnpm run typecheck` (`tsc -p tsconfig.json --noEmit`; its `include` has `src` and `e2e`) | exit 0 |
+| `08-candidate-v2-eslint.log` | `pnpm exec eslint` on the 5 changed source, test and e2e files | exit 0 |
+| `09-candidate-v2-prettier.log` | `prettier --check` on the 8 files | exit 0, all use Prettier style |
+| `10-candidate-v2-diff-check.log` | `git diff --check` (repo root) | exit 0 |
+| `12-final-positive-4-files.log` | `vitest run` of `OrthogonalEdge.test.tsx`, `Canvas.test.tsx`, `viewport-gesture.contract.test.tsx`, `viewport-gesture.test.ts` | 4 files, **125 passed** (36 + 72 + 11 + 6), on the final bytes |
+
+Logs 07 to 10 ran after the last source, test and doc edit. `logs/11-final-hashes-before-final-positive.txt` and `logs/20-end-state.txt` show the 8 final hashes identical before and after every control.
+
+### First failures and repairs (kept, not hidden)
+
+1. **Contract test, first run (`03`).** `expected {viewport: translate(0px,0px) scale(1)} to equal {translate(96px,120px) scale(2)}`. My fixture read the viewport before xyflow's initial fit-view had run, then compared it with the fitted viewport. The diagnostic (`04`) logged `initial` as `translate(0px,0px) scale(1)` and `afterFirstPress`, before any second press or `dblclick`, as `translate(96px,120px) scale(2)`, so the change was the initial fit and not a double-click zoom. I moved the reference reading to after the first press has settled (one queued task), and removed the diagnostic. The first-failure test source is `scratch/contract-v1-first-failure.tsx` (SHA-256 `b684b7e0…939b`). This was a fixture defect and is not counted as defect detection.
+2. **Prettier on `e2e/edge-routes.spec.ts` (`06`).** Two long lines. `prettier --write` on that one file changed only those lines (`scratch/edge-routes.before-prettier.ts` has the prior bytes). No other file needed formatting.
+3. A first attempt to apply the contract edit failed to parse in the shell before running. Nothing changed (the file hash still equalled its start hash); I applied it from a script file (`scripts/patch-contract.cjs`, `scratch/contract-addition.txt`, the pre-repair addition).
+
+## Old-production and mutation controls
+
+`scripts/control.sh` asserts the worktree `OrthogonalEdge.tsx` is the candidate, swaps it for the file under test, runs `vitest run` on `OrthogonalEdge.test.tsx`, `Canvas.test.tsx` and `viewport-gesture.contract.test.tsx` (119 tests), and an exit trap restores the candidate from `backup/OrthogonalEdge.candidate-final.tsx` and hashes it. No index command was run. Every log shows "restored worktree sha256 `df730746…b7d7` (candidate `df730746…b7d7`)".
+
+| Control | Production under test (SHA-256) | Log | Result |
+| --- | --- | --- | --- |
+| Old production (the HEAD file, also the missing-guard case) | `78abfe48…7ddf`, from `git show HEAD:…` | `13-control-old-production.log` | **8 failed**, 111 passed |
+| `>= 1` | `b83e2d3b…bee0` | `14-mutation-detail-gte-1.log` | **17 failed**, 102 passed |
+| `!== 1` | `64965864…cd60` | `15-mutation-detail-neq-1.log` | **15 failed**, 104 passed |
+| `stopPropagation` after the guard | `47e30d10…fdd3` | `16-mutation-propagation-after-guard.log` | **4 failed**, 115 passed |
+
+- **Old production:** exactly the 8 new count tests fail: 2 unit (automatic, manual), the modifier test, the pan-gate count test, 2 Canvas, 2 contract. The reasons are the accidental removal (`remove` called 1 and 8 times, Canvas draft object no longer identical, contract `stored` is `[]` instead of `['e1']`, and the Remove button gone). Every earlier test passes, and so do the Enter, Space and `element.click()` test and the store-refusal test as positive controls. The missing-guard mutation is the same handler as HEAD, so I did not run it separately.
+- **`>= 1`:** the new tests, and also the existing post-pan, middle-button, newer-pan, wheel, card-drag and Reset first-available count-1 tests and the count-1 `user.click` Reset tests, so those are the count-1 positive control.
+- **`!== 1`:** the existing count-0 tests (`fireEvent.click`), the toolbar Remove tests in `Canvas.test.tsx` and the new Enter/Space test.
+- **Propagation after the guard:** the two count 2/3 unit tests (the wrapper's click handler sees the click), the modifier test and the real-xyflow multi-selection contract test (the wrapper toggles the connection off).
+
+## Static and scope checks
+
+- `git diff --check` clean; `prettier --check` clean on all 8 files; `eslint` clean on the 5 code files; web `tsc --noEmit` clean, including `e2e`.
+- No build, full coverage, browser, Playwright, native gateway, provider, owner service or store, or ports 4747/4748. Git was only read (`--no-optional-locks`); no add, `add -N`, reset, restore, checkout, stash, commit or push, and no new worktree.
+- End state (`logs/20-end-state.txt`, `final/final-manifest.json`): HEAD and tree unchanged; raw index SHA-256 `613a569b…7da5f` and `git ls-files -s -z` SHA-256 `fb3c4ec2…cdacd3` both equal the start values; status shows the 8 ` M` paths above; nothing staged; nothing untracked. The temporary substitutions and the diagnostic logging are gone (the final file hashes in the manifest are those of the candidate).
+
+## The e2e test, and why it was not run
+
+`edge-routes.spec.ts` has one new test: a fixture from the file's `crossingLoop()` with the six cards moved so `start-work` has ports far apart vertically and nothing else near its trunk. It selects `start-work` from the keyboard (existing `select`), measures Remove connection's box, deselects with Escape (xyflow's edge keydown unselects on Escape, read in the installed source), and samples the unselected path for a vertical-trunk point that lies inside that box and that `elementFromPoint` reports as the connection's `.react-flow__edge-interaction` line. It asserts that one ordinary click there makes the same point hit the Remove button, deselects, then calls `page.mouse.dblclick` at the point and asserts the connection stays selected, focused and available, Undo stays disabled, the viewport style is unchanged, no PUT was sent and the server draft is unchanged. A `remove.click()` then removes it once (server draft readback), and the "Undo remove edge start to work" button restores the exact draft.
+
+It is **not executed, so these are unconfirmed**:
+- The fixture geometry (card spots, other edges, Fit view zoom) was chosen by reasoning, not observed. The overlap point is computed at runtime and `expect(point).not.toBeNull()` fails with a clear message if no hit-tested trunk point lies inside the box; I could not check that it exists here. If it does not, move `work` further down (or the others further right) in the `spots` table.
+- `toBeFocused()` on the connection after the double click, and the name "Undo remove edge start to work", come from reading the handler and the store label (the native probe used the same label); neither was observed.
+- The PUT-count assertion holds right after the double click, and a late PUT from an accidental removal would not be caught by it; the disabled-Undo and unchanged-draft assertions catch that case.
+- Click counts are the ones Playwright's mouse gives the browser (driver-supplied), the same limit as the Opus N1 to N3 rows. It does not test OS-numbered clicks, touch or pen.
+
+## Limits and what remains for root
+
+- Browser-counted rule only: nothing here measures how Edge numbers real mouse clicks, touch taps or a fourth click. Unit and store tests set `detail` to 0, 1, 2 and 3 explicitly (4 and above fall under the same `> 1` code, but no test asserts a four-click boundary). Opus N7 (touch, coarse context) and N8 (OS-injected mouse) remain for root's native run; per the root disposition, a same-point touch sequence that still removes the connection is a product failure for root to dispose of, not something to waive.
+- Two separate clicks the browser counts as 1 each still remove (Opus limit 1), and a first click that the pan gate refused can carry a repeat into the same run (Opus limit 4). Refusal is silent: no announcement, no visual change beyond focus returning to the connection.
+- The jsdom contract test dispatches events directly to the line and then the button; it does not hit-test and does not prove the browser's pointer targeting. Native N1 to N6 and N9 evidence is still needed.
+- Not covered, as admitted: Reset after selecting a manual route, segment handles (press-driven), third press after Remove's own unmount, #479 and #481.
+- `scripts/patch-docs.cjs` and `scripts/patch-contract.cjs` were one-time editors (the latter applied the pre-repair addition, then the repair was a direct edit); the final bytes are in `final/files/`.
+
+## Artifacts
+
+Under `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-selection-doubleclick-implementation/`:
+`handoff.md`; `final/final.diff` (SHA-256 `237aa945…ed3a`), `final/final-diffstat.txt`, `final/final-numstat.txt`, `final/final-manifest.json` (SHA-256 `518d04d7…d1604`), `final/files/<path>` (8 files); `backup/OrthogonalEdge.candidate-final.tsx`; `logs/*`; `scripts/` (`control.sh`, `mutate.cjs`, `manifest.cjs`, `patch-contract.cjs`, `patch-docs.cjs`); `scratch/` (`contract-v1-first-failure.tsx`, `contract-addition.txt`, `edge-routes.before-prettier.ts`). `events.jsonl`, `latest.md` and `launch.json` belong to the runner.
+
+### Log SHA-256
+
+```
+fa1f0064a8eadfe4133e899e9ac9cf266e901f9b5c5feec309d655df27442c4b  logs/00-start-state.txt
+d85ed310895fba53ab52c4d5cd570b5545d9db3183f5799ecc6dddffd0e974e0  logs/01-candidate-v1-OrthogonalEdge.log
+9136e014238ca00fc77713f472497b5664608565b61b5af6c30d7838e5227feb  logs/02-candidate-v1-Canvas-new-only.log
+dfbc895e9f83b89fb91e0f4892a6b9b09f1f650edb18601d528b535a2efe6f1c  logs/03-candidate-v1-contract.log
+c6f326fbc9b87909cb874c9287c5c5b3c23a1c480a3215c1d04b1539c4300652  logs/04-diagnostic-viewport-stages.log
+faa7b36fc27615243c8d660fae08f713cccdff7b7d7d8afcc3cd8db1bfcabb43  logs/05-candidate-v2-contract.log
+32aba7ddbab07c201a6c6db1ed415787d09f7b266c7ea3b1f8c047344603e2ab  logs/06-candidate-v1-prettier.log
+8452fec3b87828bfb73fa3bd50c48b3085b1de54a04dc990340ee0ee3c56b94b  logs/07-candidate-v2-typecheck.log
+19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061  logs/08-candidate-v2-eslint.log
+0836837fe0982de65d95dbba93ebd4d1d0276ffef6024401afb13170cc6a8afd  logs/09-candidate-v2-prettier.log
+19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061  logs/10-candidate-v2-diff-check.log
+691f8cfbe12d2d0cf8bc19a3aacee66bae2f99f135fae70c3165d477d3dcdf9a  logs/11-final-hashes-before-final-positive.txt
+ea45e648c654efa465a4b23e4b8fca33cc216b31579f4c46317a98b5394906f0  logs/12-final-positive-4-files.log
+f3ed844a4c8ee56936ce0a5fd3c0a326fa0f1c67fcfbe7b631be86a68f5c3767  logs/13-control-old-production.log
+4f50d7af250fc55f771d3be094b7f19d7b363103ee47dc325a9b3a24d1c7cc67  logs/14-mutation-detail-gte-1.log
+84e5004436450bc563322c09797bf31a195b096311e5d8e44a8fd44afd672e6a  logs/15-mutation-detail-neq-1.log
+faefcfaaabd8ca82b52ee296d29d6bb9702f19842588cea455ade9d688ef07ca  logs/16-mutation-propagation-after-guard.log
+9d004e4bb4f900284f41d51d721f841bae19303bd9210de0b456759d195a6bb4  logs/20-end-state.txt
+```

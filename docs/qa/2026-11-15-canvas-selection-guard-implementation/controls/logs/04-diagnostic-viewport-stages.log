@@ -1,0 +1,51 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+stdout | src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click
+PROBE initial {"viewport":"translate(0px,0px) scale(1)","transform":[0,0,1]}
+
+stdout | src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click
+PROBE afterFirstPress {"viewport":"translate(96px,120px) scale(2)","transform":[96,120,2]}
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx (11 tests | 1 failed | 9 skipped) 553ms
+   ❯ Remove connection after a click on its line, on the installed xyflow and d3 (#207) (2)
+     × keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click 368ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/viewport-gesture.contract.test.tsx > Remove connection after a click on its line, on the installed xyflow and d3 (#207) > keeps a connection selected by the first click under the second click of a double click, without cancelling anything, and removes it once on the next deliberate click
+AssertionError: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+    "transform": [
+-     0,
+-     0,
+-     1,
++     96,
++     120,
++     2,
+    ],
+-   "viewport": "translate(0px,0px) scale(1)",
++   "viewport": "translate(96px,120px) scale(2)",
+  }
+
+ ❯ src/editor/viewport-gesture.contract.test.tsx:950:86
+    948|       expect(wrapper).toHaveClass('selected');
+    949|       expect(wrapper).toHaveFocus();
+    950|       expect({ viewport: viewport(), transform: [...xyflow!.getState()…
+       |                                                                                      ^
+    951|         before,
+    952|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 9 skipped (11)
+   Start at  21:17:13
+   Duration  5.83s (environment 41%, transform 19%, import 15%, setup 14%, tests 10%)
+
+exit=1

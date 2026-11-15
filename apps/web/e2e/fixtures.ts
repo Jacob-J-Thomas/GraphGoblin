@@ -162,6 +162,39 @@ export async function closeNode(page: Page): Promise<void> {
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 
+/** A node's port handle on the canvas; the input handle's id is `in`. */
+export function portHandle(page: Page, nodeId: string, handleId: string): Locator {
+  return page.locator(`.react-flow__handle[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`);
+}
+
+/**
+ * Draw a connection as a pointer user does, by dragging from an output handle to the target's input
+ * handle after fitting the graph into view (#207). The node editor offers no connection controls
+ * and the keyboard cannot create a connection (ADR-0076), so close the node editor first.
+ */
+export async function connectOnCanvas(
+  page: Page,
+  source: string,
+  port: string,
+  target: string,
+): Promise<void> {
+  await page.locator('.react-flow__controls-fitview').click();
+  await portHandle(page, source, port).dragTo(portHandle(page, target, 'in'));
+}
+
+/**
+ * Remove a connection from the keyboard: focus it, Enter selects it, Delete removes it. This is
+ * the keyboard path that remains after #207; the selected connection's toolbar also has a visible
+ * Remove connection button.
+ */
+export async function removeEdgeOnCanvas(page: Page, edgeId: string): Promise<void> {
+  const edge = page.locator(`.react-flow__edge[data-id="${edgeId}"]`);
+  await edge.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Delete');
+  await expect(edge).toHaveCount(0);
+}
+
 /** Create and publish a loop through the API; returns its id. */
 export async function publishLoop(
   request: APIRequestContext,

@@ -3,6 +3,7 @@ import {
   type LoopDefinitionInput,
   type NodeInput,
 } from '@graphgoblin/contracts';
+import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -99,7 +100,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
         returns: 'outputs.work.value',
       });
       expect(dialog.querySelector('[data-field="criteria"]')).toBeNull();
-      expect(within(dialog).queryByRole('form', { name: 'Connect finish' })).toBeNull();
+      expect(within(dialog).queryByRole('region', { name: 'Connections' })).toBeNull();
       expect(dialog.querySelector('[data-field="destinations"]')).toBeInTheDocument();
       await user.click(within(dialog).getByRole('radio', { name: 'None' }));
       expect(store().definition!.nodes.find((n) => n.id === 'finish')!.config).toHaveProperty(
@@ -181,9 +182,7 @@ describe('NodeEditorDialog evaluator-specific decisions', () => {
     );
     expect(
       within(routes).getAllByRole('textbox', { name: 'Label' })[0],
-    ).toHaveAccessibleDescription(
-      'Unique readable route label, shown on the canvas and in Connections.',
-    );
+    ).toHaveAccessibleDescription('Unique readable route label, shown on the canvas.');
   });
 
   it.each(['expression', 'llm', 'classifier'] as const)(
@@ -441,6 +440,48 @@ describe('NodeEditorDialog webhook receiver', () => {
     );
     expect(within(dialog).queryByRole('region', { name: 'Receiver' })).toBeNull();
   });
+});
+
+describe('NodeEditorDialog leaves connections to the canvas (#207, ADR-0076)', () => {
+  it('shows no Connections list, Connect form or edge removal on any node kind, and keeps the stored connections', async () => {
+    const api = new FakeApi();
+    const definition = kitchenSinkLoop();
+    const loop = api.addLoop(definition);
+    renderNodeEditor(loop.id, definition, 'start', api);
+    const edgesBefore = store().definition!.edges;
+    const kinds = new Set<string>();
+    for (const node of definition.nodes) {
+      act(() => store().openNode(node.id));
+      const dialog = await screen.findByRole('dialog', { name: new RegExp(` ${node.id}$`) });
+      await within(dialog).findByRole('form', { name: `${node.id} config` });
+      kinds.add(node.kind);
+      // Every kind but Exit has outgoing connections: the retired section listed each one with a
+      // Remove button and offered a Connect form for its free outputs, so absence means something.
+      const outgoing = edgesBefore.filter((edge) => edge.from.node === node.id);
+      if (node.kind !== 'exit') expect(outgoing.length).toBeGreaterThan(0);
+      expect(within(dialog).queryByRole('region', { name: 'Connections' })).toBeNull();
+      expect(within(dialog).queryByRole('heading', { name: 'Connections' })).toBeNull();
+      expect(within(dialog).queryByRole('form', { name: `Connect ${node.id}` })).toBeNull();
+      expect(within(dialog).queryByRole('button', { name: 'Connect' })).toBeNull();
+      expect(within(dialog).queryByRole('button', { name: /^Remove edge/ })).toBeNull();
+      expect(within(dialog).queryByText('No outgoing edges.')).toBeNull();
+      // The rest of the editor stays: the node's own configuration and Delete node.
+      expect(within(dialog).getByRole('button', { name: 'Delete node' })).toBeInTheDocument();
+    }
+    expect([...kinds].sort()).toEqual([
+      'decision',
+      'exit',
+      'heartbeat',
+      'inference',
+      'mutate',
+      'script',
+      'subloop',
+      'trigger',
+      'wait',
+    ]);
+    // Looking at every dialog edited nothing.
+    expect(store().definition!.edges).toEqual(edgesBefore);
+  }, 60_000);
 });
 
 describe('NodeEditorDialog GitHub trigger presets', () => {

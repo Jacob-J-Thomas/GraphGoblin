@@ -59,7 +59,6 @@ import { focusIssuePath, groupFocus } from './focus-field.js';
 import { IssueBadge } from './IssueBadge.js';
 import { KindChip } from './KindChip.js';
 import { KIND_INFO, type EditorIssue } from './model.js';
-import { NodeConnections } from './NodeConnections.js';
 import { SubloopPicker } from './SubloopPicker.js';
 import {
   SYSTEM_CHAT_TRIGGER_FIELDS,
@@ -157,8 +156,9 @@ interface IdDraft {
 /**
  * The editor of one node, in a modal dialog named "Edit <kind> <id>": the node's issue badge beside
  * the title (choosing an issue focuses its field), id, label, the subloop picker, the config form
- * generated from the kind's schema, its connections with the Connect form (the keyboard path for
- * edges), and Delete node. Opened at an issue (`openNode(id, { field })`), it focuses that field. Every edit goes to the
+ * generated from the kind's schema, and Delete node. It does not list or author connections: those
+ * are drawn, selected and removed on the canvas (#207, ADR-0076). Opened at an issue
+ * (`openNode(id, { field })`), it focuses that field. Every edit goes to the
  * store as it is made (and autosaves from there), so closing never discards anything, with one
  * exception handled here: an id still being typed. A valid one is applied on close; an invalid one
  * keeps the dialog open once, with the reason, and is dropped if the user closes again.
@@ -810,7 +810,6 @@ export function NodeEditorDialog({
         {node.kind === 'trigger' && node.config?.type === 'webhook' ? (
           <WebhookReceiver loopId={loopId} nodeId={node.id} />
         ) : null}
-        <NodeConnections node={node} definition={definition} />
       </section>
     </Dialog>
   );

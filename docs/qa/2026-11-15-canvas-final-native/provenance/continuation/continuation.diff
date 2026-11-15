@@ -1,0 +1,138 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-balanced-release\\corrected-native.mjs" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-continuation\\corrected-native.mjs"
+index 60ee8584..a06f8195 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-balanced-release\\corrected-native.mjs"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-continuation\\corrected-native.mjs"
+@@ -18,6 +18,16 @@ const digest = (data) => createHash('sha256').update(data).digest('hex');
+ assert.equal(digest(rawAdmission), admissionSha, 'Admission changed');
+ const admission = JSON.parse(rawAdmission.toString('utf8'));
+ assert.equal(admission.status, 'ROOT_ADMITTED');
++assert(['run', 'gateway'].includes(mode), 'This continuation cannot build, admit, or start another correction');
++if (mode === 'run') assert(['initial-focused', 'initial-preservation'].includes(cases[0]));
++const originalAdmissionHash = '6e081ebbe9b710c99eb5bd26d37d6e24d0a693d6b369c5e5622865443b0894f3';
++const { preparedManifestSha256, originalAdmission, administrativeClearance, ...unchangedAdmission } = admission;
++assert.equal(originalAdmission?.sha256, originalAdmissionHash, 'Original root admission required');
++const original = await readFile(resolve(originalAdmission.path));
++assert.equal(digest(original), originalAdmissionHash);
++const { preparedManifestSha256: originalManifest, ...previousAdmission } = JSON.parse(original);
++assert.equal(originalManifest, '146b57ff6a48497e2b1460628a5bcb8201f609cb6eeaca0ccb8eb80e14061a37');
++assert.deepEqual(unchangedAdmission, previousAdmission, 'Only continuation manifest and administrative references may differ');
+ for (const key of ['resetDisposition', 'selectionDisposition', 'integration']) {
+   const receipt = admission.rootApprovals?.[key];
+   assert(receipt && /^[a-f0-9]{64}$/.test(receipt.sha256), 'Missing root-accepted ' + key);
+@@ -50,12 +60,13 @@ assert.equal(evidence, resolve(preparedRoot, '..', 'corrected-doubleclick-native
+ assert(relative(repo, evidence).startsWith('..'), 'Evidence must be external');
+ const json = async (path) => JSON.parse(await readFile(path, 'utf8'));
+ const archive = await readFile(join(preparedRoot, 'literal-manifest.json'));
+-assert.equal(digest(archive), admission.preparedManifestSha256, 'Prepared manifest changed');
++assert.equal(digest(archive), preparedManifestSha256, 'Prepared manifest changed');
+ for (const [name, expected] of Object.entries(JSON.parse(archive.toString('utf8')).files)) {
+   assert(/^[\w. -]+$/.test(name), 'Unsafe prepared source name');
+   assert.equal(digest(await readFile(join(preparedRoot, name))), expected.sha256, 'Prepared artifact changed ' + name);
+ }
+ const scenarios = await json(join(preparedRoot, 'scenarios.json'));
++if (mode === 'gateway') assert(['focused', 'preservation'].includes(scenarios[cases[0]]?.phase), 'No prior-fixture rerun');
+ 
+ const record = (path, value) => writeFile(path, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+ const git = (...args) => execFileSync('git', args, { cwd: repo, maxBuffer: 24 * 1024 * 1024 });
+@@ -391,6 +402,73 @@ async function runFixture(cli, batchDir, scenario, binding) {
+   return info;
+ }
+ 
++async function confirmOptionalMouseDisposition() {
++  const exact = {
++    disposition: ['first-phase-root-disposition.md', '2a642a0a02657f5f972d98bf636f5eb4ad4ba7871c6e5024fe19a7c4bb2f8a54'],
++    overview: ['runs/initial-clicks/overview.json', '40bfe0e8a17a35cc0e8bb8fb4726d3a8f8b2319725cd2c389ed87808f26b7fbe'],
++    osRun: ['runs/initial-clicks/selection-os-mouse/run.json', 'f4951512dc8a00efe74acfbb933a5e6e2371aa440e323b306094f9446bfb15e6'],
++    osObserved: ['runs/initial-clicks/selection-os-mouse/observed.json', 'ed381e9faf325392b238ffc30f74f3a41f0b05fea0ebf4c2b0d7befac1cb94d2'],
++    osRefusal: ['runs/initial-clicks/selection-os-mouse/owned-mouse-move-refusal.json', 'c47e5177b57cc803c364723987979dafdd1b4bab4454e660fd58423b17e192e8'],
++    cleanup: ['first-phase-terminal-cleanup.json', 'd9064d3fc015993f884eccba99307c33cf98edb93bf6fd21fdac57c980bb86b2'],
++    browserPid: ['first-phase-refused-browser-pid-readback.json', 'bb021048267564d43b40d50d5314dbfef36a77f7dbd4f39f9d47aa27553bff4e'],
++    binding: ['binding-before.json', '30301a845a772e816da4bdfe4816766e81278fe58dcfd8b3ca4ee249925da81f'],
++    firstBindingAfter: ['runs/initial-clicks/binding-after.json', '30301a845a772e816da4bdfe4816766e81278fe58dcfd8b3ca4ee249925da81f'],
++  };
++  assert.deepEqual(Object.keys(administrativeClearance).sort(), Object.keys(exact).sort());
++  const records = {};
++  for (const [key, [name, sha256]] of Object.entries(exact)) {
++    const path = resolve(evidence, name);
++    assert.equal(resolve(administrativeClearance[key].path), path);
++    assert.equal(administrativeClearance[key].sha256, sha256);
++    const bytes = await readFile(path);
++    assert.equal(digest(bytes), sha256, key + ' first-phase bytes changed');
++    if (name.endsWith('.json')) records[key] = JSON.parse(bytes);
++  }
++  const { overview, osRun, osObserved, osRefusal, cleanup, browserPid, binding } = records;
++  for (const record of [overview, binding]) {
++    assert.deepEqual([record.head, record.tree, record.actualMain], [identity.head, identity.tree, identity.actualMain]);
++  }
++  assert.equal(osRun.head, identity.head);
++  assert.deepEqual(overview.outcomes.map(({ scenario }) => scenario),
++    ['selection-doubleclick', 'reset-doubleclick', 'selection-touch', 'selection-os-mouse']);
++  assert.deepEqual(overview.outcomes[3], osRun);
++  for (const row of overview.outcomes) {
++    assert(!row.failure && !row.cleanupError && !row.gatewayForced && row.portClosed &&
++      row.gatewayExit.code === 0 && row.browserClose.code === 0 && row.closedStore.residue.length === 0 &&
++      row.pageErrors.length === 0, 'No other first-phase failure or cleanup issue is waived');
++  }
++  for (const row of overview.outcomes.slice(0, 3)) {
++    assert(!row.error);
++    assert.equal(row.result, scenarios[row.scenario].expected);
++  }
++  const limitation = 'LIMITED_OS_MOUSE_WINDOW_OR_PROCESS_GUARD';
++  assert.equal(osRun.result, limitation);
++  assert(osRun.error.startsWith('AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:') &&
++    osRun.error.includes("+ '" + limitation + "'") && osRun.error.includes("- 'PASS_OS_MOUSE_BROWSER_CLASSIFICATION'"));
++  assert.equal(osRun.ownedMousePortClosed, true);
++  assert.equal(osRefusal.stage, 'move');
++  assert(osRefusal.refused.includes('Exact 100% single-display calibration is unavailable'));
++  assert.equal(osObserved.outcome, limitation);
++  const probe = osObserved.checkpoints.find((item) => item.label === 'owned headed Edge OS-injected double-click');
++  assert.deepEqual(probe.events.map(({ type }) => type), ['pointermove']);
++  assert.deepEqual([probe.clicks, probe.pointers, probe.writes], [[], [], []]);
++  const osOutput = join(evidence, 'runs', 'initial-clicks', 'selection-os-mouse');
++  for (const name of ['owned-mouse-move.json', 'owned-mouse-double.json', 'owned-mouse-double-refusal.json']) {
++    assert(!existsSync(join(osOutput, name)), 'OS calibration or injection advanced unexpectedly');
++  }
++  assert.equal(cleanup.allClosed, true);
++  assert.deepEqual(cleanup.gitIdentity, [identity.head, identity.tree, identity.actualMain]);
++  assert.deepEqual(cleanup.gitStatus, []);
++  assert.deepEqual([cleanup.bindingBefore, cleanup.bindingAfter], [exact.binding[1], exact.firstBindingAfter[1]]);
++  assert.deepEqual(cleanup.fixtures.map((item) => item.scenario), overview.outcomes.map((item) => item.scenario));
++  for (const row of cleanup.fixtures) {
++    assert.deepEqual([row.active, row.listeners, row.residual, row.browserClose, row.gatewayExit], [[], [], [], 0, 0]);
++  }
++  assert.equal(cleanup.fixtures[3].coordinatorClosed, true);
++  assert.deepEqual([browserPid.browserPid, browserPid.matchedLive], [29032, []]);
++  return { scenario: 'selection-os-mouse', result: limitation, dispositionSha256: exact.disposition[1] };
++}
++
+ async function run(cli, batch, requested) {
+   frozenCheckout();
+   assert(existsSync(cli));
+@@ -404,6 +482,8 @@ async function run(cli, batch, requested) {
+   assert(selectedPhase >= 0 || correctionNumber > alreadyUsed,
+     'Use one first pass per phase or an unspent globally numbered correction batch');
+   const required = (phase) => Object.keys(scenarios).filter((name) => scenarios[name].phase === phase);
++  const administrativeRecord = await confirmOptionalMouseDisposition();
++  const administrativelyCleared = new Set([administrativeRecord.scenario]);
+   const passed = new Set();
+   const casesPreviouslyTried = new Set();
+   for (const name of [...initial, ...corrections]) {
+@@ -422,7 +502,8 @@ async function run(cli, batch, requested) {
+   if (selectedPhase >= 0) {
+     const phase = phases[selectedPhase];
+     for (const previous of phases.slice(0, selectedPhase)) {
+-      assert(required(previous).every((name) => passed.has(name)), 'Finish and inspect prior phase ' + previous);
++      assert(required(previous).every((name) => passed.has(name) || administrativelyCleared.has(name)),
++        'Finish and inspect prior phase ' + previous);
+     }
+     assert.deepEqual(requested, required(phase).filter((name) => !passed.has(name)),
+       'Execute every outstanding phase case once in the frozen order');
+@@ -453,7 +534,7 @@ async function run(cli, batch, requested) {
+     const after = await inspectCurrent();
+     assert.deepEqual(after, binding, 'Fixture changed frozen source/build');
+     await record(join(output, 'binding-after.json'), after);
+-    await record(join(output, 'overview.json'), { ...identity, cases: requested, outcomes });
++    await record(join(output, 'overview.json'), { ...identity, cases: requested, outcomes, administrativelyCleared: [administrativeRecord] });
+   }
+   if (outcomes.length !== requested.length || outcomes.some((row) => row.error || row.failure || row.result?.startsWith('REPRODUCED_') ||
+       row.gatewayForced || !row.portClosed || row.gatewayExit?.code !== 0 || row.browserClose?.code !== 0 ||

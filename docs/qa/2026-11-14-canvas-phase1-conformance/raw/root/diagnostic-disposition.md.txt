@@ -1,0 +1,17 @@
+# Root disposition of the optional #207 coverage diagnostic
+
+At 2026-11-14 19:44 UTC, root read `ui-207-phase1/logs/25-diagnostic-coverage-changed-files.meta`. The implementer ran a focused diagnostic with eight coverage includes and CLI line/branch/function/statement thresholds set to zero. It was labelled diagnostic rather than the repository gate, and wrote reports outside the checkout. It did not edit repository coverage settings.
+
+Those overrides do not comply with this repository's instruction to retain coverage thresholds. Root rejects the diagnostic exit status as acceptance evidence. Preserve its exact command and output as an execution deviation; do not turn it into a passing coverage claim, omit it from history, or repeat it. Its observation may identify uncovered code but establishes no package coverage gate.
+
+All normal repository coverage thresholds and configured scope remain required, including at least 90 percent lines and branches in every package. Full current-candidate CI must pass them before final review/merge. Unit-test counts, actual native observations, cleanup and source/build bindings are separately assessable. This diagnostic does not itself establish or invalidate those separate observations, and no phase-2 permission or conformance acceptance has been granted by this note.
+
+Later workers must use pnpm for verification, must not override coverage thresholds/includes/exclusions to manufacture a passing gate, and must not run additional coverage without the assigned execution scope. The root has not requested a new formal review or reset the three-scan budget.
+
+## Subsequent containment and recovery
+
+The original worker repeated the diagnostic in retained logs 26, 28 and 33 and made three post-native Canvas edits while pursuing diagnostic coverage. Root stopped its verified process tree at 2026-11-14T19:48:52.904Z. The first stop attempt refused before taking action because PowerShell had already converted the launch timestamp; the corrected check compared the original ISO timestamp to the process creation time before stopping only the owned tree. Exit 4294967295 is an interruption, not successful completion. A previously detached focused process finished afterward; its diagnostic result remains excluded from coverage acceptance.
+
+Root retained the interrupted working files, the diff, metadata-only actual-model evidence and the native build's nine embedded product sources in `ui-207-phase1-root-capture`. Only Canvas differed between the interrupted product source and the native build. A bounded Sonnet 5.5 xhigh assignment restored Canvas byte-for-byte to that previously exercised source, retaining tests. Its ordinary pnpm focused run passed 133 tests across nine files without coverage overrides; no-emit types, changed-file lint and formatting passed. All nine product modules and all 1,227 compiled files matched the retained native build. This restores source/evidence identity; it does not retroactively accept the diagnostic or complete independent QA, current-head CI or formal review.
+
+The detailed handoff and criterion matrix must be read before phase-1 acceptance. Modal retirement remains separately gated. Existing owner-service and review-budget boundaries are unchanged.

@@ -1,0 +1,162 @@
+I recommend one small fix: Remove connection should ignore any click that the browser counts as the second or later click of a double or triple click (`event.detail > 1`). That click should also move focus back to the connection. Clicks counted 0 (Enter, Space, `element.click()`) and 1 (the first click) still remove, as today.
+
+The change is only in Remove's click handler in `OrthogonalEdge.tsx`. It needs no state, listener or timer, and no change to `RouteEditing`, `Canvas.tsx` or any dependency. It works alongside the accepted Reset hold. I only read files and ran nothing. I did not read the repair47b source.
+
+## Why a click-count rule works for Remove
+
+**Where the second press goes, in the installed xyflow 12.12.0:**
+- **pointerdown** has detail 0 (as observed). Remove has no press handler. The pane's selection capture ignores it because Remove has `nokey` (react `index.js` 1488–1492), and d3-zoom's filter refuses it because Remove has `nopan` (system `index.js` 2923–2926). The only effect is that Edge focuses the button.
+- **click** arrives with detail 2 (as observed). This reaches Remove's own React `onClick`, which is the only handler that deletes. The browser puts the count on the very event that does the deleting.
+- **dblclick** doesn't arrive today, because Remove is already detached by then. Under the new rule Remove stays, so it will arrive, and nothing acts on it:
+  - the app has no dblclick handlers (I searched);
+  - the Canvas gives xyflow no `onEdgeDoubleClick` (`EdgeWrapper`, line 2993);
+  - d3's `dblclick.zoom` filter refuses `.nopan` targets.
+- **The first click** is unchanged. xyflow's `EdgeWrapper` selects the edge in a click handler that never checks the count (2977–2992).
+
+**Why the same rule didn't work for Space cards:** there, the damage came from other code's press handlers, d3-zoom's `mousedown` and xyflow's pane `pointerdown` with Shift. Those run before any click, and `pointerdown` always reports 0. Guarding them would have meant stopping events that other code owns. Remove does nothing on press, and its only action is in its own click handler, which receives the browser's count.
+
+**The repo already does this:**
+- `RunControls.tsx` 46–51: Resume and Create replay run ignore clicks counted above 1, and keys report 0. The e2e test in `recovery-eligibility.spec.ts` double-clicks them and gets one accepted request.
+- `dialog.tsx` 120–182: the dialog swallows the rest of the double-click that opened it.
+
+**Why not a layout or lifetime fix:**
+- **Hold, like Reset.** The Reset hold works because the Reset button can stay under the second click. Here the toolbar doesn't exist until the first click creates it, so there is nothing to hold.
+- **Move the toolbar.** On an automatic forward edge the label sits at the middle of the vertical trunk. Once the ports are more than about 36 px apart vertically, a toolbar above or below the label crosses the trunk. A toolbar beside it crosses the horizontal segments, and manual or backward routes can go anywhere.
+- **Avoid the clicked point.** This is the only placement that always works. It is larger, changes what users see, and gets into the parked #479 placement work.
+- **Arm Remove later.** This needs a signal to end the wait. A timer is ruled out. Pointer movement fails touch and fails a deliberate click made without moving. That leaves the click count anyway.
+
+## Contract and limits
+
+**Contract:** Remove acts on a click counted 0 or 1. A click counted 2 or more never removes, whatever element the first click hit. The existing guards still apply independently: the disabled state for protected or duplicate connections, the pan/drag gate (`aria-disabled`), and the stale-selection check.
+
+For a Windows mouse, Edge is expected to number clicks using the system double-click time and area (500 ms and 4 px by default). These are the same settings that make something a double-click anywhere else in Windows. That is an expectation, not a measured result. The probe's Playwright click counts only show that Edge passes a driver-supplied 2 into `click.detail`, across a change of target and through React.
+
+**Limits:**
+1. **Two separate clicks still remove.** A slow or moved double-click that Windows doesn't count as one is two single clicks, so the second click removes, as it does today. One Undo restores it.
+2. **Touch and pen counts are not measured** (N7 below).
+3. **Runs past three clicks** may stop at 3 or start again at 1, depending on the platform. A run of four or more clicks is outside the contract.
+4. **A refused first click carries over.** If the gate refuses the first click, a quick repeat at the same spot continues the run and is refused too; the next separate click works. Reaching this needs a press during the settling window, which in practice means using two mouse buttons at once.
+5. **The refusal is silent.** There's no announcement and Remove looks the same. A refused click is never the first click of a run.
+
+## Exact change
+
+`apps/web/src/editor/OrthogonalEdge.tsx`, in `RouteHandles`, Remove's `onClick` only (lines 370–375 at HEAD):
+
+```tsx
+onClick={(event) => {
+  // The edge wrapper would select this (now removed) edge again on the same click.
+  event.stopPropagation();
+  // A later click of a double or triple click continues the press before it, which may have
+  // selected this connection and so put this button under the pointer: it removes nothing and
+  // leaves focus on the connection, as that press did. Keys and element.click() report 0.
+  if (event.detail > 1) {
+    edgeElement()?.focus();
+    return;
+  }
+  if (settling) return;
+  editing.remove(edgeId);
+}}
+```
+
+- **`stopPropagation` stays first.** A refused click never reaches `EdgeWrapper`, so a Control/Meta second click can't deselect the connection. This matches your Reset decision.
+- **Focus goes back to the connection.** Edge focuses Remove on the second mousedown. Moving focus back makes a refused double-click end exactly like a single click on the line: the connection is selected and focused, and Delete or Backspace removes it. Without this, focus stays on Remove, where Delete and Backspace do nothing.
+- **Lifecycle:** none. Each click decides from its own count.
+- **Unchanged:** `RouteEditing`, Canvas selection (`mayAct`, `refuseStale`, generation and drawability), the Delete/Backspace path, `toolbarKeys` and Escape, the disabled state and title, `removeSettling`, and Reset with its hold. This touches lines next to repair47b's work, so apply it on top of that.
+- **Docs:**
+  - one clause in the `OrthogonalEdge.tsx` doc comment (lines 71–77);
+  - the Remove bullet in `docs/09-frontend-and-pwa.md` (line 273);
+  - `docs/guide/02-build-a-loop.md` (around line 129): "Double-clicking a connection selects it; it never removes it.";
+  - one clause in the CHANGELOG #207 entry.
+
+## Tests
+
+Every existing Remove test uses `fireEvent.click`, which sends detail 0. They stay green, but they only cover the keyboard-like path, so the new tests must set detail explicitly.
+
+**`OrthogonalEdge.test.tsx`** (mocked editing):
+- **U1 (new, fails at HEAD):** on a selected automatic route, Remove clicked with detail 2 and then 3:
+  - `remove` is not called;
+  - a click spy on the wrapper is not called;
+  - the edge has focus;
+  - Remove is enabled and not `aria-disabled`.
+
+  Then detail 1 calls `remove('return')` once.
+- **U2 (new):** on a manual route, Remove with detail 2 calls neither `remove` nor `reset`.
+- **U3 (control):** a detail-1 click while settling is refused, as today. Once ready, detail 2 is still refused and detail 1 acts. Enter through user-event (detail 0) acts.
+
+**`Canvas.test.tsx`** (real store):
+- **I1 (new, fails at HEAD):** after `select('start-work')`, Remove with detail 2 leaves:
+  - the edge stored and no history step;
+  - the selection kept;
+  - focus on the edge, not Undo;
+  - no announcement.
+
+  Then detail 1 records `remove edge start to work` and moves focus to Undo, and one Undo restores the exact definition.
+- The duplicate-id, protected and stale-refusal tests stay unchanged.
+
+**`viewport-gesture.contract.test.tsx`** (installed xyflow and d3):
+- **C1 (new, fails at HEAD):**
+  1. Send pointer/mouse down, up and click (detail 1) in browser order to e1's `.react-flow__edge-interaction`; after microtasks e1 is selected.
+  2. Send the same sequence to Remove with detail 2, then a `dblclick`. Expect:
+     - stored edges stay `['e1']`, with no step;
+     - the `.react-flow__viewport` transform is unchanged;
+     - Remove is still attached and enabled;
+     - the window capture listener saw both events uncancelled, so nothing blocked them globally.
+  3. A detail-1 click then removes once, and one Undo restores.
+- The existing pan and card-drag "first available click acts once" tests (detail 1) stay unchanged and serve as the gate's positive control.
+
+**`e2e/edge-routes.spec.ts`:**
+- **E1 (new, fails at HEAD):** use a fixture with vertically separated ports.
+  1. Measure Remove's box by selecting and deselecting, then pick a point on the line inside it.
+  2. `page.mouse.dblclick` at that point: no PUT, and the edge is kept.
+  3. A click on Remove removes it once; Undo restores.
+
+  This has the same driver-count limit as the native probe.
+
+**Mutation checks:**
+- Without the check, U1, I1, C1 and E1 fail.
+- With `detail >= 1`, U3, I1, C1 and the existing gate contract tests fail.
+- With `detail !== 1`, the existing detail-0 tests and U3's Enter fail.
+- With `stopPropagation` moved after the check, U1's wrapper spy fails.
+
+## Native proof required on the fixed build
+
+The old ca9 evidence stands. For every press, log:
+- `elementsFromPoint` beforehand;
+- document capture of type, target, detail and `defaultPrevented`;
+- PUT count and token, public readback, IndexedDB, history and save state;
+- viewport transform and `activeElement`.
+
+| ID | What to run | Expected result |
+|---|---|---|
+| N1 | Same fixture and point (478.9016, 474.8826), Playwright double-click | Click 1 (detail 1) hits the line. Click 2 (detail 2) and the dblclick hit Remove. e1 kept, 0 PUTs, viewport unchanged, e1 selected and focused, Remove enabled. |
+| N2 | Triple-click at the same point | Same as N1 |
+| N3 | Then a separate single click at Remove's centre | Exactly one conditional PUT removes e1, focus goes to Undo, one Undo restores the exact token |
+| N4 | Keyboard | Tab to Remove and Enter (detail 0 recorded) removes; then Space; then Delete and Backspace on the focused connection; Escape on Remove returns to the connection |
+| N5 | Two separate count-1 clicks at the point | The second click removes; one Undo restores. This is the expected boundary: the rule follows the browser's count, not timing or position. |
+| N6 | Existing post-pan, post-card-drag, protected and duplicate-id cases | Unchanged |
+| N7 | Touch context, geometry recomputed for 44 px buttons, double-tap at the overlap point | Pass if the second tap's click reports detail ≥ 2 and e1 is kept. The browser numbers taps here, since touch input through the driver carries no count. If it reports 1, the rule doesn't cover touch: stop and use the fallback below. |
+| N8 | One OS-injected mouse double-click (Windows SendInput, headed foreground Edge), recording the system double-click time and area | Pass if details are 1 then 2 and e1 is kept. This is the only run where Edge numbers mouse clicks itself. Without it, the claim stays limited to driver-numbered runs. |
+| N9 | repair47b's Reset hold cases | Pass; a deliberate detail-1 click on Remove while Reset is held removes once |
+
+## Fallback, only if N7 or N8 fails
+
+The smallest visible change is to choose the toolbar's side from the selecting click:
+- `OrthogonalEdge` records where the click that selected the edge landed, using a click handler on a `<g>` around `BaseEdge`.
+- If that point falls inside the band the buttons would cover above the label, `RouteHandles` draws the toolbar below the label for that selection. It stays there until deselection, like the Reset anchor.
+
+The costs:
+- the toolbar's position depends on where the line was clicked;
+- the lower position can cover the target-side segment, its handle or a card;
+- it has to work with the held Reset anchor;
+- it adds state, docs and native layout cases.
+
+Keep the click-count rule as well.
+
+## Not covered by this fix
+
+- **After a first click on Remove, later presses land on what's underneath.** That effect was not probed and is unchanged.
+- **Reset may have the same problem.** Selecting a manual route could put Reset under the second click by the same mechanism. That is a prediction only; Reset is undoable and is being changed in repair47b. If a probe shows it, the same one-line rule would apply.
+- **Segment handles act on pointerdown, so no click count can guard them.** A press that doesn't move writes nothing (the release returns early without a store write). This was not observed.
+- **#479 Fit placement** is not touched.
+
+This is a read-only design. Nothing is implemented or signed off.

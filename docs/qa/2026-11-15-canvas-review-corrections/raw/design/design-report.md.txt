@@ -1,0 +1,125 @@
+I've read the source and drafted the design. Nothing was changed, no commands ran and no tests ran. This is design only: not an implementation, a review verdict or native proof.
+
+# PR478 F1/F2 correction design (UI owner, head `993d58a`)
+
+**Read:** AGENTS.md, docs/README, docs/15, ADR-0076, the scan-1 report, CHANGELOG, docs/09 (§268–278), and the affected source and tests. The source covers Canvas, OrthogonalEdge, route-editing, viewport-gesture, canvas-focus, store, model, stranded-edges, chat-protection, decision-route-edges, github-fragment, ValidationIndicator, useResolveConflict, the useLoadEditor load calls, EditorPage, UndoRedo and useUndoShortcuts. It also covers installed xyflow 12.12.0 (`useVisibleEdgeIds`) and system 0.0.83 XYDrag.
+
+## F1: one shared removal guard
+
+**The store refuses unless exactly one stored edge holds the ID** (`store.ts`):
+- Export `edgeRemovalRefusal(definition, system, edgeId): string | undefined`.
+  - It checks for duplicates first: if more than one record holds the ID, it returns the duplicate-ID message.
+  - Only then does it check voice protection, on the one record.
+  - Checking duplicates first means a protected holder is refused the same way whichever order the two records are in.
+- `removeEdge`:
+  - On a refusal, set `connectionError` and return.
+  - Otherwise find the one record with `onlyEdge` and remove that exact record (`d.edges.filter((e) => e !== edge)`).
+  - Keep the label `remove edge …`, one step and the `void` signature. Absent IDs still return silently, as now.
+- Move `onlyEdge` from `stranded-edges.ts` into `model.ts` next to `canvasDrawsEdge`. `stranded-edges.ts` imports it and behaves as before.
+- No schema, draft-admission, migration or compatibility change.
+
+**The toolbar shows the same refusal** (`OrthogonalEdge.tsx`):
+- `removalBlocked` becomes a selector that returns `edgeRemovalRefusal(...)` as a string.
+- The button uses `disabled={!!refusal}` and `title={refusal}`, with `removeSettling = refusal ? undefined : settling`. A duplicate ID therefore beats the pan gate, as the voice reason already does.
+- Reset route is unchanged.
+
+**Message** (one shared string; final wording is copy): `More than one connection uses the id "e1"; removing it here would remove them all.` It mirrors the existing node-rename refusal. The keyboard path shows it as "Connection refused: …".
+
+**What the user sees:**
+- A duplicate ID can still be selected. Installed xyflow puts every holder's ID in `edgeIds`, and each wrapper resolves to the last holder, so there may be stacked toolbars.
+- Every Remove is disabled with the reason.
+- Delete or Backspace refuses with the page notice. It does not fall through to a selected node, and the selection stays.
+
+## F2: selection tied to the loaded draft and to a drawable connection
+
+**Model** (Canvas-local, no general selection framework):
+- `type EdgeSelection = { generation; id; holders }`, where `holders` is a key built from the stored ends of every record holding the ID, in stored order: `[from.node, from.port, to.node, to.port ?? 'in']`.
+- It is captured in `onEdgesChange` from `useEditorStore.getState()` before any remove in that batch is applied.
+- **Stored identity** is the generation plus the ID plus the ends. **Renderability** is a separate check: `canvasDrawsEdge` holds for every holder, the same test the stranded-edge list uses.
+- It never depends on xyflow edge objects or stored-record object identity.
+
+**Cleanup at render:**
+- Canvas reads `generation` from the store.
+- `liveSelectedId` is memoised on `[selection, generation, definition]`. That keeps the Zod port parse out of drag frames.
+- If a selection is held but is not live, it is cleared during render, using the pattern at lines 481–482.
+- `buildEdges` receives `liveSelectedId`.
+- This clears the selection on:
+  - any load: Reload server draft, device restore, server reconcile, set-aside restore;
+  - an ID whose ends change: a preset reusing a freed ID via `nextEdgeId`, rewired successors, a whole-draft voice or audio replacement;
+  - a port that disappears: a Script label removed, a Decision route ID left blank.
+- It keeps the selection through moves, route edits, label and config edits that keep the ports, issue refreshes, and Undo/Redo of those.
+- Undo does not bring a cleared selection back.
+
+**Refusal at the moment of action** covers render lag and act-batched updates:
+- One check, `liveSelected(edgeId?)`, reads `selectionRef` (synced in a layout effect, like `planRef`) and `useEditorStore.getState()`.
+- It is used by `editing.remove`, by `editing.reset`, and by the shared `store()` path behind drag commit and nudge, so a load in the middle of a drag cannot write a route.
+- A stale toolbar or route action: no change, selection cleared, a polite announcement ("That connection changed since it was selected; nothing changed."), focus to `removalFocusTarget()`. That target is Undo, outside the canvas, so a repeated Delete cannot hit a selected node.
+- **Keyboard**, when an edge selection exists:
+  - Call `preventDefault`.
+  - If the selection is stale, clear it, announce, and stop. It does not fall through to the node in the same key press.
+  - If live, call `removeEdge`. Clear the selection only if the definition actually changed; a store refusal keeps it, matching the toolbar.
+- Node removal and Enter on a node are unchanged.
+- The `RouteEditing` interface is unchanged, so the context value is not recreated when the selection changes.
+
+**Two behaviour choices for GPT to accept or reject:**
+- **(a) A node rename or Decision route-ID rename clears the edge selection, because the ends changed.** Keying on ends is what catches the same-step ID reuse by presets. Following renames would need history plumbing. The cost is benign: these edits happen in the dialog and nothing is deleted.
+- **(b) A refused keyboard removal now keeps the selection.** Today it is cleared, so a second Delete removes a selected node.
+
+**Pan gate and later #208:** `viewport-gesture.ts`, its attach and move calls, `editing.viewport`, the gate's first-input timing and `inert` are all untouched. #208's Space cards need no gate change. Expect rebase conflicts in these Canvas.tsx regions: `onEdgesChange`, `editing`, `onKeyDown`, and `onNodeDragStart` if the change below lands.
+
+## Node-drag overlap: only if the probe shows a blocked click
+
+The overlap is still unproven. Make this change only if the CDP probe sees a separate trusted click on an enabled Remove cancelled by the active `click.drag` capture listener.
+
+- **Change:** in `Canvas.onNodeDragStart`, add `gesture.move(event)`.
+  - With `nodeDragThreshold = 3`, XYDrag's `startDrag` passes the drag's native `mousemove` (system 2265/2308).
+  - That matches d3-drag's `clickDistance(3)`, which arms `yesdrag`.
+  - Touch is ignored by the existing type check.
+- The gate's mount-time release listener comes before d3-drag's per-press `mouseup.drag`, so the same two-task barrier applies. No new prop, listener patch, replay or timer.
+- **Docs:** docs/09's sentence "after a node drag … not gated", ADR-0076 "a mouse pan's first move", guide 02 line 129.
+- If the probe passes or is inconclusive: no change, and the existing docs/09 disclosure stands.
+
+## Files
+
+- **Product:** `store.ts`, `model.ts`, `stranded-edges.ts` (import only), `OrthogonalEdge.tsx`, `Canvas.tsx`, and the doc comment in `route-editing.ts`.
+- **Docs:** docs/09 (Remove bullet and Regression list), ADR-0076 (one clause on the Remove bullet), the CHANGELOG #207 entry (one sentence).
+- **Not touched:** contracts, domain, API, history, `UndoRedo`, `useUndoShortcuts`, `NodeEditorDialog`, `ValidationIndicator`, Fit placement (#479).
+
+## Regression tests
+
+Each must assert exact `definition` (identity or equality to the fixture), `past` labels, `revision`, `saveState`, `connectionError` and focus. "Fails on old" means the test fails on head `993d58a`.
+
+| # | File | Case | Fails on old? |
+|---|---|---|---|
+| T1 | store.test.ts | Schema-valid duplicate (`e1` start→work, `e1` work→done); confirm it parses and has `DUPLICATE_EDGE_ID`. `removeEdge('e1')`: the state snapshot stays identical; message set. | Yes (both removed) |
+| T2 | chat-protection.test.ts | `it.each` protected holder first or second: no change, duplicate-ID message, and `edgeRemovalRefusal` returns the same string. | Yes (second order deletes; first gives the voice message) |
+| T3 | OrthogonalEdge.test.tsx | Two holders: Remove disabled with the title; click does nothing; reason holds during `panning`. | Yes |
+| T4 | Canvas.test.tsx (`Live`) | `simpleLoop` with `work-check` renamed `start-work`, node `check` selected. All Remove buttons disabled; Delete and Backspace leave the draft, revision 0, `saved`, `past=[]`; node kept; selection kept. **Control:** unique `return` removes exactly that edge, focus to Undo, Undo equals the fixture. | Yes; control passes on both |
+| T5 | Canvas.test.tsx | `it.each` load replacement with other ends / same ends: unselected, no toolbar; Delete gives `definition` identical to the replacement, rev 0, `saved`, `past=[]`. **Control:** select again → one step, focus Undo, Undo exact. | Yes (both variants) |
+| T6 | Canvas.test.tsx | `it.each` Script label removed / Decision `routes.0.id` blank (typing change): unselected; Delete removes nothing; edge record equals the original; Undo does not reselect. Optional Loop-issues `openNode('done')` path: Delete gives `delete done`, not `remove edge …`. | Yes |
+| T7 | Canvas.test.tsx | Same-generation end change (rename) clears the selection. | Yes; depends on choice (a) |
+| T8 | Canvas.test.tsx | Inside one `act`: load, then click Remove, Reset or press Delete. No mutation, announcement shown, focus on Undo for the toolbar case. | Yes; confirm it reaches the stale render |
+| T9 | Canvas.test.tsx | **Control:** selection survives move, label edit, `setEdgeRoute`, issue rerender and Undo; then Remove acts exactly once. | No; passes on both |
+| T10 | viewport-gesture.contract.test.tsx | **Conditional only.** Control-key node drag, then immediate click: gate in settling while the blocker is registered; first available click acts once; two exact Undos. | Yes |
+
+An optional installed-xyflow version of T4 can go in the contract harness. Existing tests to keep: the removal "forget" test, toolbar focus and refusal, all gate tests, keyboard and ordering, and stranded-edge recovery.
+
+## Risks
+
+- **Ambiguous route edits:** `setEdgeRoute` still writes every holder of an ambiguous ID. That predates this PR, is geometry only and is undoable. I left it out of F1. If wanted: add a uniqueness guard and announce only when something changed.
+- **Duplicate React keys:** these come from xyflow (console noise and stacked toolbars); tests must use `getAllByRole`.
+- **Static test harnesses:** `renderCanvas` passes a fixed definition while the store moves on. The selection is captured from the store but rendered from the prop; the existing kitchen-sink tests should still pass, but check them.
+- **Disabled button with a title:** keyboard and screen-reader users cannot reach the reason on the button. That matches the existing voice-step pattern; the keyboard path shows the reason in the page notice.
+- **Pre-existing, out of scope:** `decisionRouteEdges` removes edges by ID for every holder.
+
+## Unresolved inputs and limits
+
+- GPT's acceptance of choices (a) and (b) above.
+- Final message wording.
+- The outcome of the node-drag CDP probe.
+- Three things the implementer must check:
+  - `routingInput` with duplicate IDs;
+  - that T8's act batching actually exercises the stale path;
+  - real xyflow behaviour with duplicate keys.
+- Public-Chat admission of duplicate IDs remains qualified pending native QA.
+- Fresh native F1/F2 negative evidence is still needed before the isolated canvas-repair implementation.

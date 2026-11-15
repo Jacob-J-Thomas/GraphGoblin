@@ -1,8 +1,9 @@
+import { LoopDefinitionSchema, type LoopDefinitionInput } from '@graphgoblin/contracts';
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FormChange } from '../forms/changes.js';
 import { COALESCE_MS, HISTORY_LIMIT } from './history.js';
-import { newLoopDefinition } from './model.js';
+import { newLoopDefinition, validateDraft } from './model.js';
 import { useEditorStore } from './store.js';
 
 const store = () => useEditorStore.getState();
@@ -196,6 +197,110 @@ describe('editor store', () => {
     expect(store()).toMatchObject({ saveState: 'saved', savedRevision: 7 });
     store().setSaveState('error', 'boom');
     expect(store()).toMatchObject({ saveState: 'error', saveMessage: 'boom', savedRevision: 7 });
+  });
+});
+
+describe('removing a connection by its id (#207)', () => {
+  beforeEach(() => store().reset());
+
+  /**
+   * A draft the API admits (#207 review): it parses, and validation reports the shared id
+   * (`DUPLICATE_EDGE_ID`). `e1` names start → `via` and an edge out of `via` → done, with a manual
+   * route; `c1` is an ordinary unique connection. With `decision`, `via` is a Decision whose `yes`
+   * row owns its `e1`.
+   */
+  function sharedId(decision: boolean): LoopDefinitionInput {
+    const definition = newLoopDefinition('Shared id');
+    definition.nodes.push(
+      decision
+        ? {
+            id: 'via',
+            kind: 'decision',
+            label: 'Via',
+            config: {
+              kind: 'expression',
+              jsonata: '"yes"',
+              routes: [
+                { id: 'yes', label: 'Yes' },
+                { id: 'no', label: 'No' },
+              ],
+            },
+          }
+        : {
+            id: 'via',
+            kind: 'mutate',
+            label: 'Via',
+            config: { operations: [{ op: 'append-message', role: 'note', content: 'Via' }] },
+          },
+      { id: 'spare', kind: 'trigger', label: 'Spare', config: { type: 'manual' } },
+      { id: 'other', kind: 'exit', label: 'Other', config: {} },
+    );
+    definition.edges = [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'via' } },
+      {
+        id: 'e1',
+        from: { node: 'via', port: decision ? 'yes' : 'out' },
+        to: { node: 'done' },
+        ui: { route: [635] },
+      },
+      { id: 'c1', from: { node: 'spare', port: 'out' }, to: { node: 'other' } },
+    ];
+    return definition;
+  }
+
+  it.each([false, true])(
+    'refuses an id two stored edges hold, changing nothing but the notice (one owned by a Decision row: %s)',
+    (decision) => {
+      const definition = sharedId(decision);
+      expect(LoopDefinitionSchema.safeParse(definition).success).toBe(true);
+      expect(validateDraft(definition).issues.map((issue) => issue.code)).toContain(
+        'DUPLICATE_EDGE_ID',
+      );
+      store().load('L1', definition, { baseToken: 'token-1', deviceSaved: true });
+      if (decision)
+        expect(store().decisionRoutes['via']!.rows[0]).toMatchObject({
+          id: 'yes',
+          edgeIds: ['e1'],
+        });
+      const before = store();
+      store().removeEdge('e1');
+      const message =
+        'More than one connection uses the ID "e1"; this action cannot choose just one.';
+      // Only the notice changed: both records, the row ownership, history, revision and save
+      // state are the very ones loaded.
+      expect(store()).toEqual({ ...before, connectionError: message });
+      expect(store().definition).toBe(definition);
+      expect(store().decisionRoutes).toBe(before.decisionRoutes);
+      expect(store().past).toBe(before.past);
+      expect(store()).toMatchObject({
+        revision: 0,
+        savedRevision: 0,
+        deviceRevision: 0,
+        saveState: 'saved',
+        baseToken: 'token-1',
+      });
+    },
+  );
+
+  it('removes exactly the one record of a unique id, in one step, and says nothing for an absent id', () => {
+    const definition = sharedId(false);
+    store().load('L1', definition);
+    // An id no edge holds changes nothing, the notice included.
+    const quiet = store();
+    store().removeEdge('missing');
+    expect(store()).toBe(quiet);
+    store().removeEdge('c1');
+    expect(store().definition!.edges).toEqual(definition.edges.slice(0, 2));
+    expect(store().definition!.edges[0]).toBe(definition.edges[0]);
+    expect(store().definition!.edges[1]).toBe(definition.edges[1]);
+    expect(store().past.map((step) => step.label)).toEqual(['remove edge spare to other']);
+    expect(store()).toMatchObject({
+      revision: 1,
+      saveState: 'pending',
+      connectionError: undefined,
+    });
+    store().undo();
+    expect(store().definition).toEqual(definition);
   });
 });
 

@@ -902,40 +902,48 @@ describe('EditorPage', () => {
     }
   });
 
-  // Adding nodes, entering the modal from the canvas, connecting/removing an edge and opening a
-  // second full form are the integration behavior under test. With no setup strings to batch,
+  // Adding nodes, entering the modal from the canvas, a connection made on the canvas and opening
+  // a second full form are the integration behavior under test. With no setup strings to batch,
   // keep these transitions and allow 60 s locally after a measured 20 s coverage/load timeout.
-  it('connects nodes from the keyboard and customizes a default list', async () => {
+  // Keyboard connection creation (the dialog's Connect form) was removed in #207 (ADR-0076): the
+  // dialog no longer offers it, and a connection is drawn on the canvas.
+  it('opens a node from the keyboard without connection controls, keeps its edges through Delete and Backspace, and customizes a default list', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('keys'));
     renderApp(`/loops/${loop.id}/edit`, api);
     await screen.findByRole('heading', { name: 'keys' });
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
+    // The canvas's own operation, as a drag between handles performs it (jsdom cannot drag).
+    act(() => {
+      useEditorStore.getState().connect({ source: 'wait', sourceHandle: 'out', target: 'done' });
+    });
+    const edges = useEditorStore.getState().definition!.edges;
+    expect(edges).toContainEqual(
+      expect.objectContaining({
+        from: { node: 'wait', port: 'out' },
+        to: { node: 'done', port: 'in' },
+      }),
+    );
     // Enter on the focused node opens its editor, with focus on the dialog's heading.
     const card = screen.getByTestId('node-wait').closest<HTMLElement>('.react-flow__node')!;
     act(() => card.focus());
     await user.keyboard('{Enter}');
     const dialog = screen.getByRole('dialog', { name: 'Edit wait wait' });
     expect(within(dialog).getByRole('heading', { name: 'Edit wait wait' })).toHaveFocus();
-    const form = within(dialog).getByRole('form', { name: 'Connect wait' });
-    await user.selectOptions(within(form).getByLabelText('To'), 'done');
-    await user.click(within(form).getByRole('button', { name: 'Connect' }));
-    expect(useEditorStore.getState().definition?.edges).toContainEqual(
-      expect.objectContaining({
-        from: { node: 'wait', port: 'out' },
-        to: { node: 'done', port: 'in' },
-      }),
-    );
-    // Its only port is now used, so the form is gone.
-    expect(screen.queryByRole('form', { name: 'Connect wait' })).toBeNull();
+    // The dialog lists no connections and has no Connect form or Remove edge button, although its
+    // node has an outgoing connection.
+    expect(within(dialog).queryByRole('region', { name: 'Connections' })).toBeNull();
+    expect(within(dialog).queryByRole('form', { name: 'Connect wait' })).toBeNull();
+    expect(within(dialog).queryByRole('button', { name: 'Connect' })).toBeNull();
+    expect(within(dialog).queryByRole('button', { name: /^Remove edge/ })).toBeNull();
     // Delete or Backspace in the dialog edits nothing on the canvas (WP-D2 D19).
-    await user.click(within(dialog).getByRole('button', { name: 'Remove edge e2' }));
     act(() => within(dialog).getByLabelText('Label').focus());
     await user.keyboard('{Delete}{Backspace}');
     act(() => within(dialog).getByRole('button', { name: 'Done' }).focus());
     await user.keyboard('{Delete}{Backspace}');
     expect(useEditorStore.getState().definition?.nodes.some((n) => n.id === 'wait')).toBe(true);
+    expect(useEditorStore.getState().definition?.edges).toEqual(edges);
     // Esc closes it; focus returns to the node, which stays selected.
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -1011,7 +1019,7 @@ describe('EditorPage', () => {
     expect(useEditorStore.getState().nodeFocus).toBeUndefined();
   });
 
-  it('says in the dialog why a connection was refused', async () => {
+  it('says on the page why a connection was refused; the node dialog carries no refusal of its own', async () => {
     const user = userEvent.setup();
     const api = new FakeApi();
     const loop = api.addLoop(newLoopDefinition('refused'));
@@ -1019,13 +1027,17 @@ describe('EditorPage', () => {
     await screen.findByRole('heading', { name: 'refused' });
     await user.click(screen.getByRole('button', { name: 'Add Wait node' }));
     act(() => useEditorStore.getState().openNode('wait'));
-    const form = await screen.findByRole('form', { name: 'Connect wait' });
-    await user.selectOptions(within(form).getByLabelText('To'), 'done');
-    // The chosen target disappears before Connect is pressed (as another edit could do).
+    const dialog = await screen.findByRole('dialog', { name: 'Edit wait wait' });
+    // The other end disappears before the connection is made (as another edit could do).
     act(() => useEditorStore.getState().removeNode('done'));
-    act(() => useEditorStore.getState().openNode('wait'));
-    await user.click(within(form).getByRole('button', { name: 'Connect' }));
-    expect(within(form).getByRole('alert')).toHaveTextContent('Connection refused: unknown node');
+    act(() => {
+      useEditorStore.getState().connect({ source: 'wait', sourceHandle: 'out', target: 'done' });
+    });
+    expect(await screen.findByText('Connection refused: unknown node')).toBeInTheDocument();
+    expect(within(dialog).queryByText(/Connection refused/)).toBeNull();
+    expect(useEditorStore.getState().definition!.edges.some((e) => e.from.node === 'wait')).toBe(
+      false,
+    );
   });
 
   it('never lets an older save land after a newer one', async () => {
@@ -1220,13 +1232,25 @@ describe('EditorPage', () => {
     expect(screen.queryByText(/is already used/)).toBeNull();
     fireEvent.blur(screen.getByLabelText('Node id'));
 
-    await user.click(screen.getByRole('button', { name: /Remove edge e5b/ }));
+    // The renamed node's connection followed it, and the dialog offers no way to remove it: edges
+    // are removed on the canvas (#207), through the store operation its toolbar and keys call.
+    expect(useEditorStore.getState().definition!.edges.find((e) => e.id === 'e5b')).toMatchObject({
+      from: { node: 'verify', port: 'retry' },
+      to: { node: 'infer' },
+    });
+    expect(within(dialog).queryByRole('button', { name: /^Remove edge/ })).toBeNull();
+    act(() => useEditorStore.getState().removeEdge('e5b'));
     expect(useEditorStore.getState().definition!.edges.some((e) => e.id === 'e5b')).toBe(false);
 
     act(() => useEditorStore.getState().removeEdge('e2'));
     act(() => useEditorStore.getState().openNode('nightly'));
-    expect(await screen.findByText('No outgoing edges.')).toBeInTheDocument();
-    expect(screen.getByRole('dialog', { name: 'Edit trigger nightly' })).toBeInTheDocument();
+    // Its last outgoing edge is gone, and the dialog says nothing about it.
+    const nightly = await screen.findByRole('dialog', { name: 'Edit trigger nightly' });
+    expect(within(nightly).queryByRole('region', { name: 'Connections' })).toBeNull();
+    expect(within(nightly).queryByText('No outgoing edges.')).toBeNull();
+    expect(useEditorStore.getState().definition!.edges.some((e) => e.from.node === 'nightly')).toBe(
+      false,
+    );
     act(() => useEditorStore.getState().closeNodeDialog());
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(useEditorStore.getState().selectedNodeId).toBe('nightly');

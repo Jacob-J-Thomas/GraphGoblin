@@ -87,3 +87,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0073: Transactional loop-name uniqueness](ADR-0073-transactional-loop-names.md) records owner-scoped comparison, copy suggestions, write serialization and explicit repair for existing duplicates (#209).
 
 [ADR-0075 — Repair references in the current loop's node state](ADR-0075-node-id-reference-repair.md) records the repair and publication boundaries for node-ID changes (#273).
+
+[ADR-0076 — Canvas-only connection authoring](ADR-0076-canvas-only-connection-authoring.md) records the owner decision that connections are authored only on the canvas, that changing one means removing it and drawing it again, and the keyboard connection-creation path it removes (#207).

@@ -18,6 +18,7 @@ import { everyFieldLoop } from '@graphgoblin/contracts/testing';
 import {
   approvalLoop,
   closeNode,
+  connectOnCanvas,
   control,
   expect,
   openAdvanced,
@@ -215,6 +216,19 @@ async function expandAll(dialog: Locator) {
 async function jsonEditor(dialog: Locator, label: string) {
   await dialog.getByRole('button', { name: `Edit as JSON: ${label}`, exact: true }).click();
   return dialog.getByRole('textbox', { name: `${label} JSON`, exact: true });
+}
+/**
+ * Open a node editor again after drawing on the canvas and return its Answer JSON editor, whether
+ * the reopened editor shows the structured form (the toggle) or kept the JSON editor open.
+ */
+async function reopenAnswerJson(page: Page, nodeId: string) {
+  const dialog = await openNode(page, nodeId);
+  const toggle = dialog.getByRole('button', { name: 'Edit as JSON: Answer', exact: true });
+  const editor = dialog.getByRole('textbox', { name: 'Answer JSON', exact: true });
+  await expect(toggle.or(editor)).toBeVisible();
+  if (await toggle.isVisible()) await toggle.click();
+  await expect(editor).toBeVisible();
+  return editor;
 }
 const sectionOf = (editor: Locator) => editor.locator('xpath=ancestor::*[@data-json-section][1]');
 async function apply(editor: Locator) {
@@ -1432,11 +1446,14 @@ test('I5 Score: 200 unicode rubric anchors roundtrip; split, connect, rename and
   };
   await replace(page, editor, JSON.stringify(split));
   await apply(editor);
-  await dialog.getByLabel('Output', { exact: true }).selectOption('high');
-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+  // The node editor has no connection controls (#207): close it, draw the new band's output on the
+  // canvas, and reopen the editor on the same declaration.
+  await closeNode(page);
+  await connectOnCanvas(page, 'approve', 'high', 'done');
   await expect
     .poll(async () => (await saved(request, id)).edges.some((e) => e.from.port === 'high'))
     .toBe(true);
+  editor = await reopenAnswerJson(page, 'approve');
   const renamed = { ...split, bands: [split.bands[0], { ...split.bands[1], id: 'top' }] };
   await replace(page, editor, JSON.stringify(renamed));
   await apply(editor);
@@ -1449,12 +1466,14 @@ test('I5 Score: 200 unicode rubric anchors roundtrip; split, connect, rename and
       (await saved(request, id)).edges.some((e) => e.from.port === 'high' || e.from.port === 'top'),
     )
     .toBe(false);
-  // Reconnect explicitly: the following removal still exercises an applied connection on top.
-  await dialog.getByLabel('Output', { exact: true }).selectOption('top');
-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
+  // Reconnect explicitly on the canvas: the following removal still exercises an applied connection
+  // on top.
+  await closeNode(page);
+  await connectOnCanvas(page, 'approve', 'top', 'done');
   await expect
     .poll(async () => (await saved(request, id)).edges.some((e) => e.from.port === 'top'))
     .toBe(true);
+  editor = await reopenAnswerJson(page, 'approve');
   await replace(page, editor, JSON.stringify(large));
   await apply(editor);
   await expect(

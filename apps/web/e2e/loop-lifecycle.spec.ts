@@ -1,5 +1,13 @@
 import type { Page } from '@playwright/test';
-import { approvalLoop, closeNode, expect, openNode, publishLoop, test } from './fixtures.js';
+import {
+  approvalLoop,
+  closeNode,
+  expect,
+  openNode,
+  publishLoop,
+  removeEdgeOnCanvas,
+  test,
+} from './fixtures.js';
 
 function handle(page: Page, nodeId: string, handleId: string) {
   return page.locator(`.react-flow__handle[data-nodeid="${nodeId}"][data-handleid="${handleId}"]`);
@@ -20,8 +28,10 @@ test('draw a loop in the editor, publish it, run it, watch events, and provide i
   await expect(page.getByTestId('node-wait')).toBeVisible();
   const start = await openNode(page, 'start');
   await expect(start).toHaveAccessibleName('Edit trigger start');
-  await start.getByRole('button', { name: 'Remove edge e1' }).click();
+  // The node editor no longer lists or removes connections (#207): the canvas does.
+  await expect(start.getByRole('region', { name: 'Connections' })).toHaveCount(0);
   await closeNode(page);
+  await removeEdgeOnCanvas(page, 'e1');
   await page.locator('.react-flow__controls-fitview').click();
 
   await handle(page, 'start', 'out').dragTo(handle(page, 'wait', 'in'));

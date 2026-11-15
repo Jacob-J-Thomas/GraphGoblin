@@ -13,10 +13,14 @@ import {
   type Connection,
   type Edge,
   type EdgeChange,
+  type HandleType,
   type IsValidConnection,
   type NodeChange,
   type NodeMouseHandler,
+  type OnConnectEnd,
+  type OnConnectStart,
   type OnInit,
+  type OnMove,
   type OnNodeDrag,
   type XYPosition,
 } from '@xyflow/react';
@@ -46,6 +50,7 @@ import {
 import { OrthogonalEdge, type OrthogonalEdgeData } from './OrthogonalEdge.js';
 import { RouteEditingContext, type RouteEditing } from './route-editing.js';
 import {
+  canvasDrawsEdge,
   canvasPorts,
   canvasPortLabels,
   connectionProblem,
@@ -67,6 +72,8 @@ import { createLabelPlacementCache, type EdgeLabelPosition } from './edge-label-
 import { ForwardEdge } from './ForwardEdge.js';
 import { edgeLabelText } from './edge-label-text.js';
 import { loopBackEdgeIds } from './loop-back-edges.js';
+import { removalFocusTarget } from './canvas-focus.js';
+import { createViewportGestureGate } from './viewport-gesture.js';
 
 const nodeTypes = { gg: NodeCard };
 const edgeTypes = { orthogonal: OrthogonalEdge, smoothstep: ForwardEdge };
@@ -104,9 +111,128 @@ const ARIA_LABELS: Partial<AriaLabelConfig> = {
     'Press Enter to edit the node, or Space to select it. With a node selected, press Delete to remove it.',
   'node.a11yDescription.keyboardDisabled':
     'Press Enter to edit the node, or Space to select it. With a node selected, use the arrow keys to move it and Delete to remove it.',
+  // A connection is changed by removing it and drawing it again (#207).
+  'edge.a11yDescription.default':
+    'Press Enter or Space to select the connection, then Delete or Backspace to remove it; its toolbar also has Remove connection. To connect its output elsewhere, remove the connection and draw from the output again.',
 };
 
+/** One end of a refused drop: a rendered port handle (xyflow's handle, or its element's data). */
+export interface DropEnd {
+  nodeId: string;
+  id?: string | null | undefined;
+  type: HandleType;
+}
+
+/**
+ * Why a drop from `from` onto `to` was refused, in the store's current draft (#207), or null when it
+ * says nothing: no handle under the drop (the pane), two ends of one type, or an allowed tuple. A
+ * drag may start at either end, so the output end is found by its handle type.
+ */
+export function dropRefusal(
+  definition: LoopDefinitionInput | undefined,
+  from: DropEnd | null | undefined,
+  to: DropEnd | null | undefined,
+): string | null {
+  if (!definition || !from || !to || from.type === to.type) return null;
+  const [source, target] = from.type === 'source' ? [from, to] : [to, from];
+  return connectionProblem(definition, {
+    source: source.nodeId,
+    sourceHandle: source.id ?? null,
+    target: target.nodeId,
+  });
+}
+
+const connectionKey = (source: string, port: string | null, target: string) =>
+  JSON.stringify([source, port ?? 'out', target]);
+
+/** The port handle a click landed on, read from xyflow's handle element. */
+function clickedEnd(target: EventTarget | null): DropEnd | undefined {
+  const handle =
+    target instanceof Element ? target.closest<HTMLElement>('.react-flow__handle') : null;
+  const nodeId = handle?.dataset['nodeid'];
+  if (!handle || !nodeId) return undefined;
+  return {
+    nodeId,
+    id: handle.dataset['handleid'] ?? null,
+    type: handle.classList.contains('source') ? 'source' : 'target',
+  };
+}
+
 export { canvasFocusTarget } from './canvas-focus.js';
+
+/**
+ * The connection the user selected (#207), as it was then: the load of the draft it was selected in
+ * (the store's `generation`: a reload, restore or reconcile is a new one), its id, and the stored
+ * ends of every edge holding that id, in stored order. Canvas-local; the store selects nodes only.
+ */
+interface EdgeSelection {
+  readonly generation: number;
+  readonly id: string;
+  readonly ends: string;
+}
+
+/** The stored ends of every edge holding `id`, in stored order, as one key (JSON, no delimiter). */
+const storedEnds = (definition: LoopDefinitionInput, id: string) =>
+  JSON.stringify(
+    definition.edges
+      .filter((edge) => edge.id === id)
+      .map((edge) => [edge.from.node, edge.from.port, edge.to.node, edge.to.port ?? 'in']),
+  );
+
+/** A selection of `id` in the store's draft as it is now; none when no stored edge holds the id. */
+function selectionOf(id: string): EdgeSelection | undefined {
+  const { definition, generation } = useEditorStore.getState();
+  if (!definition?.edges.some((edge) => edge.id === id)) return undefined;
+  return { generation, id, ends: storedEnds(definition, id) };
+}
+
+/**
+ * Whether the canvas draws every edge holding `id`: xyflow draws an edge only when both its nodes
+ * and both its handles exist (`canvasDrawsEdge`). One whose output port is gone (a removed Script
+ * label, a blank Decision route ID) has no path, so nothing on the canvas shows it selected.
+ */
+const drawsAll = (definition: LoopDefinitionInput, id: string) =>
+  definition.edges.every((edge) => edge.id !== id || canvasDrawsEdge(definition, edge));
+
+/**
+ * Whether `selection` is still the connection the user selected, in `definition` as loaded in
+ * `generation`: the same load and the same stored ends under its id (not a replacement that reuses
+ * the id, nor one with a renamed end), and still drawn.
+ */
+function selectionLive(
+  selection: EdgeSelection,
+  definition: LoopDefinitionInput,
+  generation: number,
+): boolean {
+  return (
+    selection.generation === generation &&
+    storedEnds(definition, selection.id) === selection.ends &&
+    drawsAll(definition, selection.id)
+  );
+}
+
+/**
+ * Whether an action rendered for `expected`, the selection of `edgeId`, may act now: it is still the
+ * canvas's selection (`current`, the same selection, not merely the same id), and still live in the
+ * store's draft. Rendering can lag the store, so the toolbar, a key and a route edit ask when they act.
+ */
+function mayAct(
+  current: EdgeSelection | undefined,
+  expected: EdgeSelection | undefined,
+  edgeId: string,
+): boolean {
+  const { definition, generation } = useEditorStore.getState();
+  return (
+    expected !== undefined &&
+    expected === current &&
+    expected.id === edgeId &&
+    definition !== undefined &&
+    selectionLive(expected, definition, generation)
+  );
+}
+
+/** What a stale action says (#207): politely, in the canvas's live region. */
+const STALE_CONNECTION = 'That connection changed since it was selected; nothing changed.';
 
 type Size = { width: number; height: number };
 
@@ -424,7 +550,33 @@ export function Canvas({
   );
   const [measured, setMeasured] = useState<Record<string, Size>>({});
   const [dragging, setDragging] = useState<Record<string, XYPosition>>({});
-  const [selectedEdge, setSelectedEdge] = useState<string | undefined>();
+  // The selected connection (#207). It stays selected only while it is the one the user selected:
+  // a load (even of an edge with the same id and ends), an id now held by other ends (a rename of
+  // an end, or an id reused after a removal) or a port that is gone forgets it while rendering, and
+  // Undo does not bring it back. Moves, route edits, label and config edits that keep the ports,
+  // and issue refreshes keep it. Drawing parses the ports, so this runs when the draft changes,
+  // not on drag frames.
+  const generation = useEditorStore((s) => s.generation);
+  const [selection, setSelection] = useState<EdgeSelection>();
+  const selectedEdge = useMemo(
+    () =>
+      selection && selectionLive(selection, definition, generation) ? selection.id : undefined,
+    [selection, definition, generation],
+  );
+  if (selection !== undefined && selectedEdge === undefined) setSelection(undefined);
+  // The selection an action finds when it acts (the toolbar, a key, a route edit).
+  const selectionRef = useRef(selection);
+  useLayoutEffect(() => {
+    selectionRef.current = selection;
+  }, [selection]);
+  // An action rendered for a selection that is no longer live (rendering can lag a load or an edit)
+  // changes nothing. The selection goes and focus moves to Undo, outside the canvas, so the same
+  // key cannot go on to remove a selected node.
+  const refuseStale = useCallback(() => {
+    setSelection(undefined);
+    announce(STALE_CONNECTION);
+    removalFocusTarget()?.focus();
+  }, [announce]);
   const cardDataRef = useRef<ReadonlyMap<string, NodeCardData>>(new Map());
   const nodesRef = useRef<ReadonlyMap<string, FlowNode>>(new Map());
   const edgesRef = useRef({ byId: new Map<string, Edge>(), value: [] as Edge[] });
@@ -432,6 +584,19 @@ export function Canvas({
   // A node's issue popover is placed from its badge: a pan, a zoom, or a drag closes it. Popovers
   // elsewhere (the toolbar's) stay, since nothing they hang from moved.
   const closeCanvasPopovers = useCallback(() => closePopovers(rootRef.current), []);
+  // A mouse pan's or mouse node drag's release leaves d3's click blocker in place for a task: the
+  // selected connection's toolbar is unavailable until it is gone (#207). The gate's window
+  // listener is added at mount, before any press adds d3's own; a layout effect adds it before the
+  // browser can deliver one.
+  const [gesture] = useState(createViewportGestureGate);
+  useLayoutEffect(() => gesture.attach(window), [gesture]);
+  const onMove: OnMove = useCallback(
+    (event) => {
+      gesture.move(event);
+      closeCanvasPopovers();
+    },
+    [gesture, closeCanvasPopovers],
+  );
 
   const cardData = useMemo(() => {
     const next = buildCardData(definition, issues, cardDataRef.current);
@@ -569,8 +734,20 @@ export function Canvas({
   // Segment handles and Reset route (#44). A drag previews through the router and ends in one
   // store change; the step before it is closed first, as for a node drag. Where the author puts a
   // segment is kept, even across a card: the route is then drawn dotted and announced as crossing.
+  // Each edit acts only for the selection it was rendered or started for, while that is still live
+  // in the store's draft (#207); otherwise it changes nothing (`refuseStale`).
   const editing = useMemo<RouteEditing>(() => {
-    const store = (edgeId: string, route: readonly number[], from: XYPosition, to: XYPosition) => {
+    const store = (
+      expected: EdgeSelection | undefined,
+      edgeId: string,
+      route: readonly number[],
+      from: XYPosition,
+      to: XYPosition,
+    ) => {
+      if (!mayAct(selectionRef.current, expected, edgeId)) {
+        refuseStale();
+        return undefined;
+      }
       const stored = normalize(route, from, to);
       if (stored.length && !EdgeRouteSchema.safeParse(stored).success) {
         announce('This route has as many segments as a route can hold');
@@ -585,10 +762,18 @@ export function Canvas({
         : '';
     return {
       begin(edgeId, base, segment, pointer) {
+        // The drag belongs to the selection it starts from. A load, or another selection (even of
+        // a connection with the same id, selected again), ends it without writing a route.
+        const bound = selectionRef.current;
         closeStep();
         const start = screenToFlowPosition({ x: pointer.clientX, y: pointer.clientY });
         let latest: number[] | undefined;
         const move = (event: PointerEvent) => {
+          if (selectionRef.current !== bound) {
+            stop(false);
+            refuseStale();
+            return;
+          }
           const at = screenToFlowPosition({ x: event.clientX, y: event.clientY });
           const delta = segment.axis === 'x' ? at.x - start.x : at.y - start.y;
           const value = Math.round(segment.value + delta);
@@ -604,7 +789,7 @@ export function Canvas({
           if (!keep || !latest) return;
           const before = normalize(base.route, base.from, base.to);
           if (sameRoute(normalize(latest, base.from, base.to), before)) return;
-          if (!store(edgeId, latest, base.from, base.to)) return;
+          if (!store(bound, edgeId, latest, base.from, base.to)) return;
           closeStep();
           announce(`Route changed.${crossing(latest, base.from, base.to)}`);
         };
@@ -624,7 +809,7 @@ export function Canvas({
       nudge(edgeId, base, segment, direction, steps) {
         const value = nudged(segment.value, direction, steps);
         const moved = moveSegment(base.route, segment.index, value, base.from, base.to);
-        const stored = store(edgeId, moved.route, base.from, base.to);
+        const stored = store(selectionRef.current, edgeId, moved.route, base.from, base.to);
         if (!stored) return undefined;
         announce(`Segment at ${segment.axis} ${value}.${crossing(stored, base.from, base.to)}`);
         const near = midpoint({
@@ -634,11 +819,24 @@ export function Canvas({
         return findSegment(stored, base.from, base.to, segment.axis, value, near);
       },
       reset(edgeId) {
+        if (!mayAct(selectionRef.current, selectionRef.current, edgeId)) return refuseStale();
         setEdgeRoute(edgeId, undefined);
         announce('Route reset: the connection routes automatically.');
       },
+      remove(edgeId) {
+        const expected = selectionRef.current;
+        if (!mayAct(expected, expected, edgeId)) return refuseStale();
+        const before = useEditorStore.getState().definition;
+        removeEdge(edgeId);
+        // Refused (a protected Chat voice step, or an id more than one connection holds): the
+        // store's notice says why, and the selection stays.
+        if (useEditorStore.getState().definition === before) return;
+        setSelection((current) => (current === expected ? undefined : current));
+        removalFocusTarget()?.focus();
+      },
+      viewport: gesture,
     };
-  }, [announce, closeStep, screenToFlowPosition, setEdgeRoute]);
+  }, [announce, closeStep, gesture, refuseStale, removeEdge, screenToFlowPosition, setEdgeRoute]);
 
   const pinnedCrossings = useCallback(() => {
     const cards = cardBoxes(planRef.current.nodes);
@@ -711,11 +909,22 @@ export function Canvas({
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
-      setSelectedEdge((current) => {
-        const replacement = changes.find((change) => change.type === 'select' && change.selected);
-        if (replacement?.type === 'select') return replacement.id;
+      const replacement = changes.find((change) => change.type === 'select' && change.selected);
+      // What is selected is read from the store's draft as it is now, before any removal below.
+      const next = replacement?.type === 'select' ? selectionOf(replacement.id) : undefined;
+      setSelection((current) => {
+        if (replacement) {
+          // xyflow selects an edge again under its multi-selection key: the same selection stays.
+          const same =
+            current &&
+            next &&
+            current.generation === next.generation &&
+            current.id === next.id &&
+            current.ends === next.ends;
+          return same ? current : next;
+        }
         return changes.some(
-          (change) => change.type === 'select' && !change.selected && change.id === current,
+          (change) => change.type === 'select' && !change.selected && change.id === current?.id,
         )
           ? undefined
           : current;
@@ -737,23 +946,71 @@ export function Canvas({
     [definition],
   );
 
+  // The last connection a gesture made, so the click-connect end below can tell a click that
+  // connected from one that was refused; and the port a click-connect started from.
+  const connectedRef = useRef<string | undefined>(undefined);
+  const clickStartRef = useRef<DropEnd | undefined>(undefined);
   const onConnect = useCallback(
     (conn: Connection) => {
+      connectedRef.current = connectionKey(conn.source, conn.sourceHandle, conn.target);
       connect({ source: conn.source, sourceHandle: conn.sourceHandle, target: conn.target });
     },
     [connect],
   );
 
+  // A drop on a port that refused it says why in the page's "Connection refused" notice (#207). A
+  // drop that connected went through onConnect; a drop on the pane or on a port of the same type
+  // says nothing (and leaves an earlier notice as it was). Never connects anything.
+  const onConnectEnd: OnConnectEnd = useCallback((_event, state) => {
+    if (state.isValid) return;
+    const problem = dropRefusal(
+      useEditorStore.getState().definition,
+      state.fromHandle,
+      state.toHandle,
+    );
+    if (problem) useEditorStore.setState({ connectionError: problem });
+  }, []);
+  // xyflow hands a click-connect's end the drag state (idle by then), so the two ends come from
+  // the click that started it and the handle element clicked last.
+  const onClickConnectStart: OnConnectStart = useCallback((_event, params) => {
+    connectedRef.current = undefined;
+    clickStartRef.current =
+      params.nodeId && params.handleType
+        ? { nodeId: params.nodeId, id: params.handleId, type: params.handleType }
+        : undefined;
+  }, []);
+  const onClickConnectEnd: OnConnectEnd = useCallback((event) => {
+    const from = clickStartRef.current;
+    clickStartRef.current = undefined;
+    const to = clickedEnd(event.target);
+    if (!from || !to || from.type === to.type) return;
+    const [source, target] = from.type === 'source' ? [from, to] : [to, from];
+    const made = connectionKey(source.nodeId, source.id ?? null, target.nodeId);
+    if (connectedRef.current === made) {
+      connectedRef.current = undefined;
+      return;
+    }
+    const problem = dropRefusal(useEditorStore.getState().definition, from, to);
+    if (problem) useEditorStore.setState({ connectionError: problem });
+  }, []);
+
   const onNodeDragStop: OnNodeDrag<FlowNode> = useCallback(
     (_, node) => endDrag(node.id, node.position),
     [endDrag],
   );
-  const onNodeDragStart = useCallback(() => {
-    closeCanvasPopovers();
-    // Each drag is an undo step of its own, however soon it follows the last move.
-    closeStep();
-    setNodeDrag(pinnedCrossings());
-  }, [closeCanvasPopovers, closeStep, pinnedCrossings]);
+  const onNodeDragStart: OnNodeDrag<FlowNode> = useCallback(
+    (event) => {
+      // A mouse drag of a card ends, like a pan, with d3's click blocker (#207): xyflow starts it on
+      // the `mousemove` past the click distance, the same move that makes d3-drag block the click
+      // after the release. A touch drag adds no blocker, and the gate ignores it.
+      gesture.move(event);
+      closeCanvasPopovers();
+      // Each drag is an undo step of its own, however soon it follows the last move.
+      closeStep();
+      setNodeDrag(pinnedCrossings());
+    },
+    [gesture, closeCanvasPopovers, closeStep, pinnedCrossings],
+  );
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -778,7 +1035,10 @@ export function Canvas({
   // handler listens on the whole document, so the keys deleted the selected node with focus on a
   // toolbar button too, with no undo. The node editor dialog renders outside the canvas, and keys
   // from any dialog are ignored here as well, as are keys from a node's issue badge and its popover
-  // (`nokey`, which xyflow ignores too).
+  // (`nokey`, which xyflow ignores too). With a connection selected the key is that connection's
+  // alone (#207): it removes the connection, or the store refuses and says why (the selection
+  // stays), or, when the connection changed since it was selected, nothing changes and the key does
+  // not go on to the selected node. A selection forgotten while rendering leaves the node's keys.
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     if (target.closest('dialog, .nokey')) return;
@@ -792,14 +1052,17 @@ export function Canvas({
     }
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
     if (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
-    if (selectedEdge) {
-      removeEdge(selectedEdge);
-      setSelectedEdge(undefined);
-    } else if (selected) {
-      removeNode(selected);
-    } else {
+    if (selection) {
+      event.preventDefault();
+      if (!mayAct(selectionRef.current, selection, selection.id)) return refuseStale();
+      const before = useEditorStore.getState().definition;
+      removeEdge(selection.id);
+      if (useEditorStore.getState().definition !== before)
+        setSelection((current) => (current === selection ? undefined : current));
       return;
     }
+    if (!selected) return;
+    removeNode(selected);
     event.preventDefault();
   };
 
@@ -815,9 +1078,12 @@ export function Canvas({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onConnectEnd={onConnectEnd}
+          onClickConnectStart={onClickConnectStart}
+          onClickConnectEnd={onClickConnectEnd}
           isValidConnection={isValidConnection}
           onNodeDragStop={onNodeDragStop}
-          onMove={closeCanvasPopovers}
+          onMove={onMove}
           onNodeDragStart={onNodeDragStart}
           onNodeClick={onNodeClick}
           nodeClickDistance={CLICK_DISTANCE}
@@ -841,9 +1107,12 @@ export function Canvas({
       onNodesChange,
       onEdgesChange,
       onConnect,
+      onConnectEnd,
+      onClickConnectStart,
+      onClickConnectEnd,
       isValidConnection,
       onNodeDragStop,
-      closeCanvasPopovers,
+      onMove,
       onNodeDragStart,
       onNodeClick,
       onPaneClick,

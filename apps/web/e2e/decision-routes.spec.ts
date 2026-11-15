@@ -8,8 +8,8 @@ import {
 } from '@graphgoblin/contracts';
 import type { APIRequestContext, Page } from '@playwright/test';
 import {
-  chooseOptionByKeyboard,
   closeNode,
+  connectOnCanvas,
   control,
   expect,
   openNode,
@@ -145,6 +145,108 @@ async function savedDraft(page: Page, request: APIRequestContext, loopId: string
   return LoopDefinitionSchema.parse(body.draft.definition);
 }
 
+/** The server's draft as stored and its token, without waiting for the editor. */
+async function serverDraft(request: APIRequestContext, loopId: string) {
+  const body = (await (await request.get(`/loops/${loopId}`)).json()) as {
+    draft: { definition: LoopDefinitionInput };
+    draftToken: string;
+  };
+  return { definition: body.draft.definition, token: body.draftToken };
+}
+
+/** Every draft save the page sends from now on, by its body. */
+function draftPuts(page: Page, loopId: string) {
+  const puts: LoopDefinitionInput[] = [];
+  page.on('request', (sent) => {
+    if (sent.method() !== 'PUT' || !sent.url().endsWith(`/loops/${loopId}/draft`)) return;
+    puts.push((sent.postDataJSON() as { definition: LoopDefinitionInput }).definition);
+  });
+  return puts;
+}
+
+interface DeviceCopy {
+  definition: LoopDefinitionInput;
+  /** The editor's device-only route ownership (rows in authored order, with their edges). */
+  decisionRoutes?: Record<string, { rows: { id?: string; edgeIds: string[] }[] }>;
+  synced: boolean;
+  baseToken?: string;
+}
+
+/** This device's IndexedDB copy of the loop, read only, without upgrading the editor's database. */
+async function deviceCopy(page: Page, loopId: string) {
+  return page.evaluate(async (id) => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const opening = indexedDB.open('graphgoblin', 2);
+      opening.onsuccess = () => resolve(opening.result);
+      opening.onerror = () => reject(opening.error ?? new Error('IndexedDB open failed'));
+    });
+    try {
+      return await new Promise<unknown>((resolve, reject) => {
+        const read = db.transaction('drafts', 'readonly').objectStore('drafts').get(id);
+        read.onsuccess = () => resolve(read.result);
+        read.onerror = () => reject(read.error ?? new Error('IndexedDB read failed'));
+      });
+    } finally {
+      db.close();
+    }
+  }, loopId) as Promise<DeviceCopy | undefined>;
+}
+
+/** The device copy once `ready` holds for it (the mirror is written after each edit). */
+async function deviceCopyWhen(page: Page, loopId: string, ready: (copy: DeviceCopy) => boolean) {
+  await expect
+    .poll(async () => {
+      const copy = await deviceCopy(page, loopId);
+      return copy !== undefined && ready(copy);
+    })
+    .toBe(true);
+  return (await deviceCopy(page, loopId))!;
+}
+
+const pickRoutes = (definition: LoopDefinitionInput) =>
+  (
+    definition.nodes.find((node) => node.id === 'pick')!.config as {
+      routes: { id: string; label: string }[];
+    }
+  ).routes;
+
+/** Edges by their stored ends and layout, with the input port's default spelled out. */
+const topology = (edges: LoopDefinitionInput['edges']) =>
+  edges.map((item) => ({
+    id: item.id,
+    from: item.from,
+    to: { node: item.to.node, port: item.to.port ?? 'in' },
+    ui: item.ui ?? null,
+  }));
+
+/**
+ * The device copy while the third route's ID is blank: invalid, so it stays on this device with the
+ * saved token as its base. It keeps the saved topology exactly, `edgeId` included on its last valid
+ * port, and the blank third row still owns that edge.
+ */
+function expectHeldBlank(
+  copy: DeviceCopy,
+  saved: { definition: LoopDefinitionInput; token: string },
+  edgeId: string,
+) {
+  expect(copy.synced).toBe(false);
+  expect(copy.baseToken).toBe(saved.token);
+  expect(pickRoutes(copy.definition)).toEqual(
+    pickRoutes(saved.definition).map((route, index) =>
+      index === 2 ? { ...route, id: '' } : route,
+    ),
+  );
+  expect(topology(copy.definition.edges)).toEqual(topology(saved.definition.edges));
+  expect(copy.definition.edges.find((item) => item.id === edgeId)).toMatchObject({
+    from: { node: 'pick', port: 'route-3' },
+    to: { node: 'branch' },
+  });
+  const rows = copy.decisionRoutes?.['pick']?.rows ?? [];
+  expect(rows.map((row) => row.id)).toEqual(['yes', 'no', '']);
+  expect(rows.map((row) => row.edgeIds.includes(edgeId))).toEqual([false, false, true]);
+  expect(rows[2]!.edgeIds).toEqual([edgeId]);
+}
+
 for (const hasTouch of [true, false]) {
   test.describe(`decision answer help with ${hasTouch ? 'touch' : 'mouse'}`, () => {
     test.use({ hasTouch });
@@ -265,34 +367,82 @@ test('option IDs stay connected when numeric display labels change, save, and re
   await dialog.locator('[data-field="routes.2.label"] input').fill('7');
 
   await expect(handle(page, 'pick', 'route-3')).toBeVisible();
-  const output = dialog.getByLabel('Output', { exact: true });
-  await output.selectOption('route-3');
-  await dialog.getByLabel('To', { exact: true }).selectOption('branch');
-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
-  const connections = dialog.getByRole('region', { name: 'Connections' });
-  await expect(connections).toContainText('7 (route-3)');
-
-  // A blank in-progress ID keeps ownership on the last valid port. Repairing the same row moves
-  // that edge with it, and restoring the ID does not create or transfer another connection.
-  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
-  const thirdId = dialog.locator('[data-field="routes.2.id"] input');
-  await thirdId.fill('');
-  await expect(connections).toContainText('route-3');
-  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
-  await page.reload();
-  await openNode(page, 'pick');
-  await expect(thirdId).toHaveValue('');
-  await thirdId.fill('route-4');
-  await expect(connections).toContainText('7 (route-4)');
-  await expect(handle(page, 'pick', 'route-4')).toBeVisible();
-  await thirdId.fill('route-3');
-  await expect(connections).toContainText('7 (route-3)');
+  // The editor has no connection controls (#207): close it, draw the new route's output on the
+  // canvas, and read the connection from the canvas and the saved draft from here on.
   await closeNode(page);
-
+  await connectOnCanvas(page, 'pick', 'route-3', 'branch');
   const connected = (await savedDraft(page, request, loopId)).edges.find(
     (item) => item.from.port === 'route-3',
   )!;
   expect(connected.to.node).toBe('branch');
+  await expect(edge(page, connected.id)).toHaveAttribute(
+    'aria-label',
+    'pick 7 (route-3) to branch',
+  );
+  const saved = await serverDraft(request, loopId);
+  const puts = draftPuts(page, loopId);
+  await openNode(page, 'pick');
+
+  // A blank in-progress ID is invalid: no handle stands in for it, so the canvas draws neither the
+  // row's output nor its edge, and the draft stays on this device. There the blank row keeps
+  // ownership of the same edge on its last valid port, the saved topology is exact, and nothing
+  // invalid is sent; a reload of the device copy keeps all of it (#207).
+  const thirdId = dialog.locator('[data-field="routes.2.id"] input');
+  await thirdId.fill('');
+  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+  await expect(handle(page, 'pick', 'route-3')).toHaveCount(0);
+  await expect(edge(page, connected.id)).toHaveCount(0);
+  const blank = await deviceCopyWhen(
+    page,
+    loopId,
+    (copy) => pickRoutes(copy.definition)[2]?.id === '',
+  );
+  expectHeldBlank(blank, saved, connected.id);
+  await page.reload();
+  await openNode(page, 'pick');
+  await expect(thirdId).toHaveValue('');
+  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+  const reloaded = (await deviceCopy(page, loopId))!;
+  expectHeldBlank(reloaded, saved, connected.id);
+  expect(reloaded.definition).toEqual(blank.definition);
+  expect(reloaded.decisionRoutes).toEqual(blank.decisionRoutes);
+  expect(puts).toEqual([]);
+  expect(await serverDraft(request, loopId)).toEqual(saved);
+
+  // Repairing the same row moves that same edge to the new ID's real handle and saves it; restoring
+  // the old ID moves it back, without creating or transferring another connection.
+  await thirdId.fill('route-4');
+  await expect(handle(page, 'pick', 'route-4')).toBeVisible();
+  await expect(edge(page, connected.id)).toHaveAttribute(
+    'aria-label',
+    'pick 7 (route-4) to branch',
+  );
+  const repaired = await savedDraft(page, request, loopId);
+  expect(
+    repaired.edges
+      .filter((item) => item.from.node === 'pick' && item.to.node === 'branch')
+      .map((item) => [item.id, item.from.port]),
+  ).toEqual([[connected.id, 'route-4']]);
+  expect(topology(repaired.edges)).toEqual(
+    topology(saved.definition.edges).map((item) =>
+      item.id === connected.id ? { ...item, from: { node: 'pick', port: 'route-4' } } : item,
+    ),
+  );
+  // No save ever carried the blank ID.
+  expect(puts.length).toBeGreaterThan(0);
+  expect(puts.every((sent) => pickRoutes(sent).every((route) => route.id !== ''))).toBe(true);
+  await thirdId.fill('route-3');
+  await expect(edge(page, connected.id)).toHaveAttribute(
+    'aria-label',
+    'pick 7 (route-3) to branch',
+  );
+  await closeNode(page);
+
+  const restored = await savedDraft(page, request, loopId);
+  const settled = restored.edges.filter((item) => item.from.port === 'route-3');
+  expect(settled.map((item) => [item.id, item.to.node])).toEqual([[connected.id, 'branch']]);
+  // The saved topology is exactly what it was before the blank ID.
+  expect(topology(restored.edges)).toEqual(topology(saved.definition.edges));
   await page.reload();
   await expect(handle(page, 'pick', 'route-3')).toBeVisible();
   await expect(page.getByTestId('node-pick')).toContainText('7');
@@ -334,7 +484,98 @@ test('option IDs stay connected when numeric display labels change, save, and re
   });
 });
 
-test('keyboard connection reaches the eighth option by its ID while showing its numeric label', async ({
+test('Loop issues remove the edge a blank route ID owns, and one Undo restores the whole draft', async ({
+  page,
+  request,
+}) => {
+  const loopId = await openLoop(page, request);
+  let dialog = await openNode(page, 'pick');
+  await dialog.getByRole('button', { name: 'Add routes', exact: true }).click();
+  await dialog.locator('[data-field="routes.2.id"] input').fill('route-3');
+  await dialog.locator('[data-field="routes.2.label"] input').fill('7');
+  await expect(handle(page, 'pick', 'route-3')).toBeVisible();
+  await closeNode(page);
+  await connectOnCanvas(page, 'pick', 'route-3', 'branch');
+  const connected = (await savedDraft(page, request, loopId)).edges.find(
+    (item) => item.from.port === 'route-3',
+  )!;
+  expect(connected.to.node).toBe('branch');
+  const saved = await serverDraft(request, loopId);
+  const puts = draftPuts(page, loopId);
+
+  // Blank the ID and leave the dialog: the edge is stored but not drawn.
+  dialog = await openNode(page, 'pick');
+  await dialog.locator('[data-field="routes.2.id"] input').fill('');
+  await closeNode(page);
+  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+  await expect(edge(page, connected.id)).toHaveCount(0);
+  const blank = await deviceCopyWhen(
+    page,
+    loopId,
+    (copy) => pickRoutes(copy.definition)[2]?.id === '',
+  );
+  expectHeldBlank(blank, saved, connected.id);
+
+  // Loop issues list it by its stored ends, with the one Remove in the popover (#207).
+  await page.getByRole('button', { name: /^\d+ errors?\b/ }).click();
+  const issues = page.getByRole('dialog', { name: 'Loop issues' });
+  const group = issues.getByRole('group', { name: 'Connections the canvas cannot draw' });
+  await expect(group.getByRole('listitem')).toHaveCount(1);
+  await expect(group.getByRole('listitem')).toContainText(
+    `${connected.id} from pick output route-3 to branch`,
+  );
+  await expect(issues.getByRole('button', { name: /^Remove edge/ })).toHaveCount(1);
+  await group.getByRole('button', { name: `Remove edge ${connected.id}`, exact: true }).click();
+  await expect(issues).toHaveCount(0);
+
+  // Exactly that edge goes, as one undo step, still only on this device; the blank row owns none.
+  const removed = await deviceCopyWhen(
+    page,
+    loopId,
+    (copy) => !copy.definition.edges.some((item) => item.id === connected.id),
+  );
+  expect(removed.definition).toEqual({
+    ...blank.definition,
+    edges: blank.definition.edges.filter((item) => item.id !== connected.id),
+  });
+  expect(removed.decisionRoutes?.['pick']?.rows.map((row) => [row.id, row.edgeIds])).toEqual(
+    blank.decisionRoutes?.['pick']?.rows.map((row, index) => [
+      row.id,
+      index === 2 ? [] : row.edgeIds,
+    ]),
+  );
+  expect(removed).toMatchObject({ synced: false, baseToken: saved.token });
+  await expect(page.getByTestId('save-state')).toHaveText('Saved on this device only');
+
+  // One Undo restores the whole draft, the edge and its ownership included.
+  await page
+    .getByRole('button', { name: 'Undo remove edge pick route-3 to branch', exact: true })
+    .click();
+  const undone = await deviceCopyWhen(page, loopId, (copy) =>
+    copy.definition.edges.some((item) => item.id === connected.id),
+  );
+  expect(undone.definition).toEqual(blank.definition);
+  expect(undone.decisionRoutes).toEqual(blank.decisionRoutes);
+  expect(undone).toMatchObject({ synced: false, baseToken: saved.token });
+  expect(puts).toEqual([]);
+  expect(await serverDraft(request, loopId)).toEqual(saved);
+
+  // Repairing the ID draws the same edge again on its real handle and saves the saved topology.
+  dialog = await openNode(page, 'pick');
+  await dialog.locator('[data-field="routes.2.id"] input').fill('route-3');
+  await expect(edge(page, connected.id)).toHaveAttribute(
+    'aria-label',
+    'pick 7 (route-3) to branch',
+  );
+  await closeNode(page);
+  expect(topology((await savedDraft(page, request, loopId)).edges)).toEqual(
+    topology(saved.definition.edges),
+  );
+});
+
+// The keyboard cannot create a connection since #207 (ADR-0076): the node editor's Connect form,
+// which this test drove from the keyboard, was removed.
+test('pointer connection reaches the eighth option by its ID while showing its numeric label', async ({
   page,
   request,
 }) => {
@@ -342,25 +583,21 @@ test('keyboard connection reaches the eighth option by its ID while showing its 
   await expect(
     page.locator('.react-flow__handle[data-nodeid="pick"]:not([data-handleid="in"])'),
   ).toHaveCount(8);
+  await expect(handle(page, 'pick', 'route-8')).toBeVisible();
+  await connectOnCanvas(page, 'pick', 'route-8', 'branch');
+  const connected = (await savedDraft(page, request, loopId)).edges.find(
+    (item) => item.from.port === 'route-8',
+  );
+  expect(connected?.to.node).toBe('branch');
+  // The canvas names it by the numeric label and the stable ID.
+  await expect(edge(page, connected!.id)).toHaveAttribute(
+    'aria-label',
+    'pick 8 (route-8) to branch',
+  );
+  // The editor shows neither a Connections list nor a Connect form for the node.
   const dialog = await openNode(page, 'pick');
-  const output = dialog.getByLabel('Output', { exact: true });
-  await output.focus();
-  await chooseOptionByKeyboard(page, output, '8 (route-8)');
-  await expect(output).toHaveValue('route-8');
-  await expect(output.getByRole('option', { selected: true })).toHaveText('8 (route-8)');
-  const target = dialog.getByLabel('To', { exact: true });
-  await target.focus();
-  await chooseOptionByKeyboard(page, target, 'Branch (branch)');
-  await expect(target).toHaveValue('branch');
-  const connect = dialog.getByRole('button', { name: 'Connect', exact: true });
-  await connect.focus();
-  await connect.press('Enter');
-  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText('8 (route-8)');
-  await closeNode(page);
-  expect(
-    (await savedDraft(page, request, loopId)).edges.find((item) => item.from.port === 'route-8')?.to
-      .node,
-  ).toBe('branch');
+  await expect(dialog.getByRole('region', { name: 'Connections' })).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Connect', exact: true })).toHaveCount(0);
 });
 
 test('expression true/false routes preserve edges, then save and run the edited route', async ({
@@ -397,8 +634,10 @@ test('expression true/false routes preserve edges, then save and run the edited 
   await trueId.fill('affirm');
   await dialog.locator('[data-field="routes.0.label"] input').fill('Affirmative');
   await expect(handle(page, 'pick', 'affirm')).toBeVisible();
-  await expect(dialog.getByRole('region', { name: 'Connections' })).toContainText(
-    'Affirmative (affirm)',
+  // The existing connection follows the renamed ID and label; the canvas names it by both.
+  await expect(edge(page, 'true-edge')).toHaveAttribute(
+    'aria-label',
+    'pick Affirmative (affirm) to branch',
   );
   await closeNode(page);
 
@@ -439,7 +678,7 @@ test('expression true/false routes preserve edges, then save and run the edited 
   ).toHaveText('affirm');
 });
 
-test('Score bands expose fractional boundaries, validate malformed coverage, and connect by keyboard', async ({
+test('Score bands expose fractional boundaries, validate malformed coverage, and connect on the canvas', async ({
   page,
   request,
 }) => {
@@ -482,15 +721,16 @@ test('Score bands expose fractional boundaries, validate malformed coverage, and
   await middleMax.fill('1.5');
   await expect(malformedBandsError).toHaveCount(0);
 
-  const connections = dialog.getByRole('region', { name: 'Connections' });
-  const output = dialog.getByLabel('Output', { exact: true });
-  await output.focus();
-  await expect(output.getByRole('option', { selected: true })).toHaveText('Middle (middle)');
-  await chooseOptionByKeyboard(page, output, 'Top score (high)');
-  await expect(output.getByRole('option', { selected: true })).toHaveText('Top score (high)');
-  await dialog.getByRole('button', { name: 'Connect', exact: true }).click();
-  await expect(connections).toContainText('Top score (high)');
+  // The editor has no connection controls (#207): close it and draw the band's output on the canvas.
   await closeNode(page);
+  await connectOnCanvas(page, 'pick', 'high', 'branch');
+  const drawn = (await savedDraft(page, request, loopId)).edges.find(
+    (item) => item.from.port === 'high',
+  );
+  await expect(edge(page, drawn!.id)).toHaveAttribute(
+    'aria-label',
+    'pick Top score (high) to branch',
+  );
   const saved = await savedDraft(page, request, loopId);
   expect(saved.edges.find((item) => item.id === 'low-edge')).toMatchObject({
     from: { node: 'pick', port: 'low' },

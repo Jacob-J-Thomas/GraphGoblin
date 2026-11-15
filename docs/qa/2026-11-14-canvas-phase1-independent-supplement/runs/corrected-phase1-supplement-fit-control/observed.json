@@ -1,0 +1,4068 @@
+{
+  "origin": "http://127.0.0.1:60309",
+  "suite": "207-phase1-supplement-independent",
+  "outcome": {
+    "selected": [
+      {
+        "output": "out",
+        "created": {
+          "id": "e3",
+          "from": {
+            "node": "subject",
+            "port": "out"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        "redrawn": {
+          "id": "e3",
+          "from": {
+            "node": "subject",
+            "port": "out"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          }
+        }
+      },
+      {
+        "output": "retry",
+        "created": {
+          "id": "e4",
+          "from": {
+            "node": "subject",
+            "port": "retry"
+          },
+          "to": {
+            "node": "done",
+            "port": "in"
+          }
+        },
+        "redrawn": {
+          "id": "e4",
+          "from": {
+            "node": "subject",
+            "port": "retry"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          }
+        }
+      }
+    ],
+    "validation": {
+      "issues": [
+        {
+          "code": "EDGE_PORT_MISSING",
+          "severity": "error",
+          "message": "edge \"stale\" leaves node \"subject\" through unknown port \"retired\"",
+          "edgeId": "stale"
+        },
+        {
+          "code": "NODE_UNREACHABLE",
+          "severity": "error",
+          "message": "node \"done\" is not reachable from any trigger",
+          "nodeId": "done"
+        }
+      ],
+      "publishable": false
+    },
+    "recoveryView": "- dialog \"Loop issues\":\n  - group \"Loop and connections\":\n    - paragraph: Loop and connections\n    - list:\n      - listitem:\n        - text: Error EDGE_PORT_MISSING edge \"stale\" leaves node \"subject\" through unknown port \"retired\"\n        - code: edge stale\n        - button \"Remove edge stale\"\n  - group \"Nodes\":\n    - paragraph: Nodes\n    - list:\n      - listitem:\n        - 'button \"done: 1 issue\"':\n          - code: done\n          - text: \": 1 issue\"",
+    "stranded": {
+      "id": "stale",
+      "from": {
+        "node": "subject",
+        "port": "retired"
+      },
+      "to": {
+        "node": "other",
+        "port": "in"
+      },
+      "ui": {
+        "route": [
+          495,
+          302,
+          590
+        ]
+      }
+    },
+    "original": {
+      "schemaVersion": 4,
+      "name": "Script and stranded route bddd43ee",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Manual entry",
+          "ui": {
+            "x": 0,
+            "y": 165
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "subject",
+          "label": "Draft-only Script",
+          "ui": {
+            "x": 345,
+            "y": 180
+          },
+          "kind": "script",
+          "config": {
+            "command": "never-execute-this-fixture",
+            "args": [],
+            "cwd": "workspace",
+            "stdin": "none",
+            "stdout": "ignore",
+            "exitCodeRoutes": {
+              "7": "retry"
+            }
+          }
+        },
+        {
+          "id": "done",
+          "label": "Destination One",
+          "ui": {
+            "x": 780,
+            "y": 50
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "id": "other",
+          "label": "Destination Two",
+          "ui": {
+            "x": 780,
+            "y": 340
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "failure",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "entry",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "subject",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              179
+            ]
+          }
+        },
+        {
+          "id": "stale",
+          "from": {
+            "node": "subject",
+            "port": "retired"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              495,
+              302,
+              590
+            ]
+          }
+        }
+      ]
+    },
+    "restored": {
+      "schemaVersion": 4,
+      "name": "Script and stranded route bddd43ee",
+      "settings": {
+        "workingDirectory": {
+          "kind": "temp"
+        },
+        "defaults": {
+          "byHarness": {}
+        },
+        "maxNodeVisits": 10,
+        "runDeadlineSeconds": null,
+        "structuredTimeoutMs": null,
+        "subloopDepthLimit": 8
+      },
+      "variables": {},
+      "nodes": [
+        {
+          "id": "start",
+          "label": "Manual entry",
+          "ui": {
+            "x": 0,
+            "y": 165
+          },
+          "kind": "trigger",
+          "config": {
+            "type": "manual",
+            "exposeTo": [
+              "ui",
+              "api",
+              "mcp"
+            ]
+          }
+        },
+        {
+          "id": "subject",
+          "label": "Draft-only Script",
+          "ui": {
+            "x": 345,
+            "y": 180
+          },
+          "kind": "script",
+          "config": {
+            "command": "never-execute-this-fixture",
+            "args": [],
+            "cwd": "workspace",
+            "stdin": "none",
+            "stdout": "ignore",
+            "exitCodeRoutes": {
+              "7": "retry"
+            }
+          }
+        },
+        {
+          "id": "done",
+          "label": "Destination One",
+          "ui": {
+            "x": 780,
+            "y": 50
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "success",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        },
+        {
+          "id": "other",
+          "label": "Destination Two",
+          "ui": {
+            "x": 780,
+            "y": 340
+          },
+          "kind": "exit",
+          "config": {
+            "outcome": "failure",
+            "returns": "none",
+            "destinations": [
+              {
+                "kind": "caller"
+              }
+            ]
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "entry",
+          "from": {
+            "node": "start",
+            "port": "out"
+          },
+          "to": {
+            "node": "subject",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              179
+            ]
+          }
+        },
+        {
+          "id": "stale",
+          "from": {
+            "node": "subject",
+            "port": "retired"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          },
+          "ui": {
+            "route": [
+              495,
+              302,
+              590
+            ]
+          }
+        },
+        {
+          "id": "e3",
+          "from": {
+            "node": "subject",
+            "port": "out"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          }
+        },
+        {
+          "id": "e4",
+          "from": {
+            "node": "subject",
+            "port": "retry"
+          },
+          "to": {
+            "node": "other",
+            "port": "in"
+          }
+        }
+      ]
+    },
+    "mutations": 8
+  },
+  "checkpoints": [
+    {
+      "label": "port inventory",
+      "subject": "subject",
+      "handles": [
+        {
+          "direction": "target",
+          "id": "in",
+          "label": "subject input"
+        },
+        {
+          "direction": "source",
+          "id": "out",
+          "label": "subject output out (out)"
+        },
+        {
+          "direction": "source",
+          "id": "retry",
+          "label": "subject output retry (retry)"
+        }
+      ]
+    },
+    {
+      "label": "draw subject.out → done",
+      "persisted": {
+        "loop": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "ownerId": "local",
+          "name": "Script and stranded route bddd43ee",
+          "draftVersionId": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "createdAt": "2026-11-14T20:17:24.716Z",
+          "updatedAt": "2026-11-14T20:17:26.197Z"
+        },
+        "draft": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Script and stranded route bddd43ee",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 165
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Draft-only Script",
+                "ui": {
+                  "x": 345,
+                  "y": 180
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "7": "retry"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Destination One",
+                "ui": {
+                  "x": 780,
+                  "y": 50
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Destination Two",
+                "ui": {
+                  "x": 780,
+                  "y": 340
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    179
+                  ]
+                }
+              },
+              {
+                "id": "stale",
+                "from": {
+                  "node": "subject",
+                  "port": "retired"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    495,
+                    302,
+                    590
+                  ]
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:17:24.716Z"
+        },
+        "draftToken": "81ed3633f1a45dd8"
+      },
+      "local": {
+        "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:17:26.210Z",
+        "synced": true,
+        "baseToken": "81ed3633f1a45dd8"
+      },
+      "ifMatch": "\"45d6e8de697a7fb5\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e3",
+      "accessibleName": "subject out to done",
+      "d": "M536 274L556 274L 645,274Q 655,274 655,264L 655,106Q 655,96 665,96L754 96L774 96"
+    },
+    {
+      "label": "remove subject.out",
+      "persisted": {
+        "loop": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "ownerId": "local",
+          "name": "Script and stranded route bddd43ee",
+          "draftVersionId": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "createdAt": "2026-11-14T20:17:24.716Z",
+          "updatedAt": "2026-11-14T20:17:27.764Z"
+        },
+        "draft": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Script and stranded route bddd43ee",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 165
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Draft-only Script",
+                "ui": {
+                  "x": 345,
+                  "y": 180
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "7": "retry"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Destination One",
+                "ui": {
+                  "x": 780,
+                  "y": 50
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Destination Two",
+                "ui": {
+                  "x": 780,
+                  "y": 340
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    179
+                  ]
+                }
+              },
+              {
+                "id": "stale",
+                "from": {
+                  "node": "subject",
+                  "port": "retired"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    495,
+                    302,
+                    590
+                  ]
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:17:24.716Z"
+        },
+        "draftToken": "45d6e8de697a7fb5"
+      },
+      "local": {
+        "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:17:27.775Z",
+        "synced": true,
+        "baseToken": "45d6e8de697a7fb5"
+      },
+      "ifMatch": "\"81ed3633f1a45dd8\""
+    },
+    {
+      "label": "draw subject.out → other",
+      "persisted": {
+        "loop": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "ownerId": "local",
+          "name": "Script and stranded route bddd43ee",
+          "draftVersionId": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "createdAt": "2026-11-14T20:17:24.716Z",
+          "updatedAt": "2026-11-14T20:17:29.708Z"
+        },
+        "draft": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Script and stranded route bddd43ee",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 165
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Draft-only Script",
+                "ui": {
+                  "x": 345,
+                  "y": 180
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "7": "retry"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Destination One",
+                "ui": {
+                  "x": 780,
+                  "y": 50
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Destination Two",
+                "ui": {
+                  "x": 780,
+                  "y": 340
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    179
+                  ]
+                }
+              },
+              {
+                "id": "stale",
+                "from": {
+                  "node": "subject",
+                  "port": "retired"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    495,
+                    302,
+                    590
+                  ]
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:17:24.716Z"
+        },
+        "draftToken": "6aea6c16cc885c86"
+      },
+      "local": {
+        "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:17:29.720Z",
+        "synced": true,
+        "baseToken": "6aea6c16cc885c86"
+      },
+      "ifMatch": "\"45d6e8de697a7fb5\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e3",
+      "accessibleName": "subject out to other",
+      "d": "M536 274L556 274L 645,274Q 655,274 655,284L 655,376Q 655,386 665,386L754 386L774 386"
+    },
+    {
+      "label": "draw subject.retry → done",
+      "persisted": {
+        "loop": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "ownerId": "local",
+          "name": "Script and stranded route bddd43ee",
+          "draftVersionId": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "createdAt": "2026-11-14T20:17:24.716Z",
+          "updatedAt": "2026-11-14T20:17:31.626Z"
+        },
+        "draft": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Script and stranded route bddd43ee",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 165
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Draft-only Script",
+                "ui": {
+                  "x": 345,
+                  "y": 180
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "7": "retry"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Destination One",
+                "ui": {
+                  "x": 780,
+                  "y": 50
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Destination Two",
+                "ui": {
+                  "x": 780,
+                  "y": 340
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    179
+                  ]
+                }
+              },
+              {
+                "id": "stale",
+                "from": {
+                  "node": "subject",
+                  "port": "retired"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    495,
+                    302,
+                    590
+                  ]
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "retry"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:17:24.716Z"
+        },
+        "draftToken": "a3f4b65abd052bca"
+      },
+      "local": {
+        "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:17:31.639Z",
+        "synced": true,
+        "baseToken": "a3f4b65abd052bca"
+      },
+      "ifMatch": "\"6aea6c16cc885c86\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e4",
+      "accessibleName": "subject retry to done",
+      "d": "M536 294L556 294L 645,294Q 655,294 655,284L 655,106Q 655,96 665,96L754 96L774 96"
+    },
+    {
+      "label": "remove subject.retry",
+      "persisted": {
+        "loop": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "ownerId": "local",
+          "name": "Script and stranded route bddd43ee",
+          "draftVersionId": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "createdAt": "2026-11-14T20:17:24.716Z",
+          "updatedAt": "2026-11-14T20:17:33.177Z"
+        },
+        "draft": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Script and stranded route bddd43ee",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 165
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Draft-only Script",
+                "ui": {
+                  "x": 345,
+                  "y": 180
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "7": "retry"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Destination One",
+                "ui": {
+                  "x": 780,
+                  "y": 50
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Destination Two",
+                "ui": {
+                  "x": 780,
+                  "y": 340
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    179
+                  ]
+                }
+              },
+              {
+                "id": "stale",
+                "from": {
+                  "node": "subject",
+                  "port": "retired"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    495,
+                    302,
+                    590
+                  ]
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:17:24.716Z"
+        },
+        "draftToken": "6aea6c16cc885c86"
+      },
+      "local": {
+        "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:17:33.187Z",
+        "synced": true,
+        "baseToken": "6aea6c16cc885c86"
+      },
+      "ifMatch": "\"a3f4b65abd052bca\""
+    },
+    {
+      "label": "draw subject.retry → other",
+      "persisted": {
+        "loop": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "ownerId": "local",
+          "name": "Script and stranded route bddd43ee",
+          "draftVersionId": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "createdAt": "2026-11-14T20:17:24.716Z",
+          "updatedAt": "2026-11-14T20:17:35.082Z"
+        },
+        "draft": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Script and stranded route bddd43ee",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 165
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Draft-only Script",
+                "ui": {
+                  "x": 345,
+                  "y": 180
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "7": "retry"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Destination One",
+                "ui": {
+                  "x": 780,
+                  "y": 50
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Destination Two",
+                "ui": {
+                  "x": 780,
+                  "y": 340
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    179
+                  ]
+                }
+              },
+              {
+                "id": "stale",
+                "from": {
+                  "node": "subject",
+                  "port": "retired"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    495,
+                    302,
+                    590
+                  ]
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "retry"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:17:24.716Z"
+        },
+        "draftToken": "6c34f8d6268ab274"
+      },
+      "local": {
+        "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:17:35.093Z",
+        "synced": true,
+        "baseToken": "6c34f8d6268ab274"
+      },
+      "ifMatch": "\"6aea6c16cc885c86\""
+    },
+    {
+      "label": "new canvas edge",
+      "id": "e4",
+      "accessibleName": "subject retry to other",
+      "d": "M536 294L556 294L 645,294Q 655,294 655,304L 655,376Q 655,386 665,386L754 386L774 386"
+    },
+    {
+      "label": "Legacy modal Connections",
+      "view": "- region \"Connections\":\n  - heading \"Connections\" [level=3]\n  - list:\n    - listitem:\n      - text: retired →\n      - code: other\n      - button \"Remove edge stale\"\n    - listitem:\n      - text: out →\n      - code: other\n      - button \"Remove edge e3\"\n    - listitem:\n      - text: retry →\n      - code: other\n      - button \"Remove edge e4\""
+    },
+    {
+      "label": "Remove the exact stranded edge",
+      "persisted": {
+        "loop": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "ownerId": "local",
+          "name": "Script and stranded route bddd43ee",
+          "draftVersionId": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "createdAt": "2026-11-14T20:17:24.716Z",
+          "updatedAt": "2026-11-14T20:17:38.043Z"
+        },
+        "draft": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Script and stranded route bddd43ee",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 165
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Draft-only Script",
+                "ui": {
+                  "x": 345,
+                  "y": 180
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "7": "retry"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Destination One",
+                "ui": {
+                  "x": 780,
+                  "y": 50
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Destination Two",
+                "ui": {
+                  "x": 780,
+                  "y": 340
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    179
+                  ]
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "retry"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:17:24.716Z"
+        },
+        "draftToken": "c733a25ee5c249a3"
+      },
+      "local": {
+        "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:17:38.052Z",
+        "synced": true,
+        "baseToken": "c733a25ee5c249a3"
+      },
+      "ifMatch": "\"6c34f8d6268ab274\""
+    },
+    {
+      "label": "Undo once to restore exact manual edge",
+      "persisted": {
+        "loop": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "ownerId": "local",
+          "name": "Script and stranded route bddd43ee",
+          "draftVersionId": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "createdAt": "2026-11-14T20:17:24.716Z",
+          "updatedAt": "2026-11-14T20:17:39.569Z"
+        },
+        "draft": {
+          "id": "01M7DVA9QCHKKZ2JR2553SYFS6",
+          "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Script and stranded route bddd43ee",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Manual entry",
+                "ui": {
+                  "x": 0,
+                  "y": 165
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "subject",
+                "label": "Draft-only Script",
+                "ui": {
+                  "x": 345,
+                  "y": 180
+                },
+                "kind": "script",
+                "config": {
+                  "command": "never-execute-this-fixture",
+                  "args": [],
+                  "cwd": "workspace",
+                  "stdin": "none",
+                  "stdout": "ignore",
+                  "exitCodeRoutes": {
+                    "7": "retry"
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Destination One",
+                "ui": {
+                  "x": 780,
+                  "y": 50
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Destination Two",
+                "ui": {
+                  "x": 780,
+                  "y": 340
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "subject",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    179
+                  ]
+                }
+              },
+              {
+                "id": "stale",
+                "from": {
+                  "node": "subject",
+                  "port": "retired"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    495,
+                    302,
+                    590
+                  ]
+                }
+              },
+              {
+                "id": "e3",
+                "from": {
+                  "node": "subject",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e4",
+                "from": {
+                  "node": "subject",
+                  "port": "retry"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T20:17:24.716Z"
+        },
+        "draftToken": "6c34f8d6268ab274"
+      },
+      "local": {
+        "loopId": "01M7DVA9QCHKKZ2JR2553SYFS5",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-14T20:17:39.580Z",
+        "synced": true,
+        "baseToken": "6c34f8d6268ab274"
+      },
+      "ifMatch": "\"c733a25ee5c249a3\""
+    }
+  ],
+  "writes": [
+    {
+      "path": "/loops/01M7DVA9QCHKKZ2JR2553SYFS5/draft",
+      "at": 1794687446189,
+      "ifMatch": "\"45d6e8de697a7fb5\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DVA9QCHKKZ2JR2553SYFS5/draft",
+      "at": 1794687447758,
+      "ifMatch": "\"81ed3633f1a45dd8\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DVA9QCHKKZ2JR2553SYFS5/draft",
+      "at": 1794687449703,
+      "ifMatch": "\"45d6e8de697a7fb5\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DVA9QCHKKZ2JR2553SYFS5/draft",
+      "at": 1794687451618,
+      "ifMatch": "\"6aea6c16cc885c86\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DVA9QCHKKZ2JR2553SYFS5/draft",
+      "at": 1794687453172,
+      "ifMatch": "\"a3f4b65abd052bca\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DVA9QCHKKZ2JR2553SYFS5/draft",
+      "at": 1794687455078,
+      "ifMatch": "\"6aea6c16cc885c86\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DVA9QCHKKZ2JR2553SYFS5/draft",
+      "at": 1794687458037,
+      "ifMatch": "\"6c34f8d6268ab274\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/loops/01M7DVA9QCHKKZ2JR2553SYFS5/draft",
+      "at": 1794687459564,
+      "ifMatch": "\"c733a25ee5c249a3\"",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Script and stranded route bddd43ee",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Manual entry",
+              "ui": {
+                "x": 0,
+                "y": 165
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "subject",
+              "label": "Draft-only Script",
+              "ui": {
+                "x": 345,
+                "y": 180
+              },
+              "kind": "script",
+              "config": {
+                "command": "never-execute-this-fixture",
+                "args": [],
+                "cwd": "workspace",
+                "stdin": "none",
+                "stdout": "ignore",
+                "exitCodeRoutes": {
+                  "7": "retry"
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Destination One",
+              "ui": {
+                "x": 780,
+                "y": 50
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Destination Two",
+              "ui": {
+                "x": 780,
+                "y": 340
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "subject",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  179
+                ]
+              }
+            },
+            {
+              "id": "stale",
+              "from": {
+                "node": "subject",
+                "port": "retired"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  495,
+                  302,
+                  590
+                ]
+              }
+            },
+            {
+              "id": "e3",
+              "from": {
+                "node": "subject",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e4",
+              "from": {
+                "node": "subject",
+                "port": "retry"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "bundles": [
+    200,
+    200
+  ],
+  "pageErrors": [],
+  "failure": null,
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0"
+}

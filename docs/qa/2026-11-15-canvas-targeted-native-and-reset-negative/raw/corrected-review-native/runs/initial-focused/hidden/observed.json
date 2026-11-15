@@ -1,0 +1,1439 @@
+{
+  "suite": "207-corrected-review-focused",
+  "scenario": "hidden",
+  "origin": "http://127.0.0.1:52848",
+  "gatewayPid": "50636",
+  "bundle": "/app/assets/index-smG5osOh.js",
+  "checkpoints": [
+    {
+      "label": "public fixture created",
+      "id": "01M7ECX8H9S246XJW65T9V3HY1",
+      "public": {
+        "loop": {
+          "id": "01M7ECX8H9S246XJW65T9V3HY1",
+          "ownerId": "local",
+          "name": "Corrected hidden Decision selection",
+          "draftVersionId": "01M7ECX8H9S246XJW65T9V3HY2",
+          "createdAt": "2026-11-15T01:24:51.881Z",
+          "updatedAt": "2026-11-15T01:24:51.881Z"
+        },
+        "draft": {
+          "id": "01M7ECX8H9S246XJW65T9V3HY2",
+          "loopId": "01M7ECX8H9S246XJW65T9V3HY1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected hidden Decision selection",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Editable decision",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Accept"
+                    },
+                    {
+                      "id": "fallback",
+                      "label": "Fallback"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "fallback",
+                "from": {
+                  "node": "work",
+                  "port": "fallback"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:24:51.881Z"
+        },
+        "draftToken": "721a1404569419ee"
+      }
+    },
+    {
+      "label": "selected Decision baseline",
+      "id": "01M7ECX8H9S246XJW65T9V3HY1",
+      "public": {
+        "loop": {
+          "id": "01M7ECX8H9S246XJW65T9V3HY1",
+          "ownerId": "local",
+          "name": "Corrected hidden Decision selection",
+          "draftVersionId": "01M7ECX8H9S246XJW65T9V3HY2",
+          "createdAt": "2026-11-15T01:24:51.881Z",
+          "updatedAt": "2026-11-15T01:24:51.881Z"
+        },
+        "draft": {
+          "id": "01M7ECX8H9S246XJW65T9V3HY2",
+          "loopId": "01M7ECX8H9S246XJW65T9V3HY1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected hidden Decision selection",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Editable decision",
+                "ui": {
+                  "x": 355,
+                  "y": 265
+                },
+                "kind": "decision",
+                "config": {
+                  "kind": "expression",
+                  "jsonata": "\"accept\"",
+                  "routes": [
+                    {
+                      "id": "accept",
+                      "label": "Accept"
+                    },
+                    {
+                      "id": "fallback",
+                      "label": "Fallback"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "entry",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e1",
+                "from": {
+                  "node": "work",
+                  "port": "accept"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                },
+                "ui": {
+                  "route": [
+                    635
+                  ]
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "fallback",
+                "from": {
+                  "node": "work",
+                  "port": "fallback"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:24:51.881Z"
+        },
+        "draftToken": "721a1404569419ee"
+      },
+      "local": null
+    },
+    {
+      "label": "trusted pointer selected edge",
+      "id": "e1",
+      "point": {
+        "x": 777.92236328125,
+        "y": 357.70965576171875
+      },
+      "identity": "work Accept (accept) to done, manual route"
+    },
+    {
+      "label": "hidden edge kept until a new explicit action and node has focus",
+      "blank": {
+        "loopId": "01M7ECX8H9S246XJW65T9V3HY1",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected hidden Decision selection",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Editable decision",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "",
+                    "label": "Accept"
+                  },
+                  {
+                    "id": "fallback",
+                    "label": "Fallback"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "fallback",
+              "from": {
+                "node": "work",
+                "port": "fallback"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "decisionRoutes": {
+          "work": {
+            "nextKey": 2,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "e1"
+                ],
+                "id": ""
+              },
+              {
+                "key": 1,
+                "edgeIds": [
+                  "fallback"
+                ],
+                "id": "fallback"
+              }
+            ]
+          }
+        },
+        "savedAt": "2026-11-15T01:24:52.687Z",
+        "synced": false,
+        "baseToken": "721a1404569419ee"
+      },
+      "owner": {
+        "key": 0,
+        "edgeIds": [
+          "e1"
+        ],
+        "id": ""
+      },
+      "writesBefore": 0
+    },
+    {
+      "label": "explicit focused-node Backspace",
+      "id": "01M7ECX8H9S246XJW65T9V3HY1",
+      "public": {
+        "loop": {
+          "id": "01M7ECX8H9S246XJW65T9V3HY1",
+          "ownerId": "local",
+          "name": "Corrected hidden Decision selection",
+          "draftVersionId": "01M7ECX8H9S246XJW65T9V3HY2",
+          "createdAt": "2026-11-15T01:24:51.881Z",
+          "updatedAt": "2026-11-15T01:24:54.175Z"
+        },
+        "draft": {
+          "id": "01M7ECX8H9S246XJW65T9V3HY2",
+          "loopId": "01M7ECX8H9S246XJW65T9V3HY1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected hidden Decision selection",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:24:51.881Z"
+        },
+        "draftToken": "b5ed391611d7f7f8"
+      },
+      "local": {
+        "loopId": "01M7ECX8H9S246XJW65T9V3HY1",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected hidden Decision selection",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "savedAt": "2026-11-15T01:24:54.187Z",
+        "synced": true,
+        "baseToken": "b5ed391611d7f7f8"
+      }
+    },
+    {
+      "label": "one Undo restores device-only invalid node and its edges",
+      "restored": {
+        "loopId": "01M7ECX8H9S246XJW65T9V3HY1",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected hidden Decision selection",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Editable decision",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "",
+                    "label": "Accept"
+                  },
+                  {
+                    "id": "fallback",
+                    "label": "Fallback"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e1",
+              "from": {
+                "node": "work",
+                "port": "accept"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              },
+              "ui": {
+                "route": [
+                  635
+                ]
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "fallback",
+              "from": {
+                "node": "work",
+                "port": "fallback"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "decisionRoutes": {
+          "work": {
+            "nextKey": 2,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [
+                  "e1"
+                ],
+                "id": ""
+              },
+              {
+                "key": 1,
+                "edgeIds": [
+                  "fallback"
+                ],
+                "id": "fallback"
+              }
+            ]
+          }
+        },
+        "savedAt": "2026-11-15T01:24:55.231Z",
+        "synced": false,
+        "baseToken": "b5ed391611d7f7f8"
+      },
+      "server": {
+        "loop": {
+          "id": "01M7ECX8H9S246XJW65T9V3HY1",
+          "ownerId": "local",
+          "name": "Corrected hidden Decision selection",
+          "draftVersionId": "01M7ECX8H9S246XJW65T9V3HY2",
+          "createdAt": "2026-11-15T01:24:51.881Z",
+          "updatedAt": "2026-11-15T01:24:54.175Z"
+        },
+        "draft": {
+          "id": "01M7ECX8H9S246XJW65T9V3HY2",
+          "loopId": "01M7ECX8H9S246XJW65T9V3HY1",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Corrected hidden Decision selection",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 20,
+                  "y": 285
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 735,
+                  "y": 270
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "other",
+                "label": "Other terminal",
+                "ui": {
+                  "x": 730,
+                  "y": 590
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "failure",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "spare",
+                "label": "Unaffected source",
+                "ui": {
+                  "x": 90,
+                  "y": 600
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Control edge"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "spare",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "other",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:24:51.881Z"
+        },
+        "draftToken": "b5ed391611d7f7f8"
+      }
+    },
+    {
+      "label": "Loop issues explicitly removes only the unique stranded connection",
+      "recovery": {
+        "loopId": "01M7ECX8H9S246XJW65T9V3HY1",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected hidden Decision selection",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Editable decision",
+              "ui": {
+                "x": 355,
+                "y": 265
+              },
+              "kind": "decision",
+              "config": {
+                "kind": "expression",
+                "jsonata": "\"accept\"",
+                "routes": [
+                  {
+                    "id": "",
+                    "label": "Accept"
+                  },
+                  {
+                    "id": "fallback",
+                    "label": "Fallback"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "entry",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            },
+            {
+              "id": "fallback",
+              "from": {
+                "node": "work",
+                "port": "fallback"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "decisionRoutes": {
+          "work": {
+            "nextKey": 2,
+            "rows": [
+              {
+                "key": 0,
+                "edgeIds": [],
+                "id": ""
+              },
+              {
+                "key": 1,
+                "edgeIds": [
+                  "fallback"
+                ],
+                "id": "fallback"
+              }
+            ]
+          }
+        },
+        "savedAt": "2026-11-15T01:24:56.301Z",
+        "synced": false,
+        "baseToken": "b5ed391611d7f7f8"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "puts": [
+    {
+      "url": "http://127.0.0.1:52848/loops/01M7ECX8H9S246XJW65T9V3HY1/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Corrected hidden Decision selection",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 20,
+                "y": 285
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 735,
+                "y": 270
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "other",
+              "label": "Other terminal",
+              "ui": {
+                "x": 730,
+                "y": 590
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "failure",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "spare",
+              "label": "Unaffected source",
+              "ui": {
+                "x": 90,
+                "y": 600
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Control edge"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "spare",
+                "port": "out"
+              },
+              "to": {
+                "node": "other",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"721a1404569419ee\"",
+      "at": 1794705894167,
+      "status": 200
+    }
+  ],
+  "bundleResponses": [
+    {
+      "status": 200,
+      "pid": null
+    }
+  ],
+  "outcome": "PASS_HIDDEN_EDGE_RETIRED_AND_EXPLICIT_NODE_DELETE"
+}

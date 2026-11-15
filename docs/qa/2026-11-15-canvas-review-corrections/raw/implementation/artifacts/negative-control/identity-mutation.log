@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.test.tsx (62 tests | 1 failed | 61 skipped) 255ms
+   ❯ the selected connection is the one the user selected (#207) (17)
+     × keeps a drag when xyflow selects its connection again under the multi-selection key 253ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > keeps a drag when xyflow selects its connection again under the multi-selection key
+AssertionError: expected [] to deeply equal [ 'reroute done repeat to work' ]
+
+- Expected
++ Received
+
+- [
+-   "reroute done repeat to work",
+- ]
++ []
+
+ ❯ src/editor/Canvas.test.tsx:1827:22
+    1825|     fireEvent.pointerMove(window, { clientX: 0, clientY: 44 });
+    1826|     fireEvent.pointerUp(window);
+    1827|     expect(labels()).toEqual(['reroute done repeat to work']);
+       |                      ^
+    1828|     expect(said()).toMatch(/^Route changed\./);
+    1829|     expect(selected()).toEqual(['return']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 61 skipped (62)
+   Start at  19:11:53
+   Duration  5.48s (environment 42%, transform 23%, import 16%, setup 15%, tests 5%)
+
+exit=1

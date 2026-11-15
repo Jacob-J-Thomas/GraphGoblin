@@ -1,0 +1,11 @@
+# ui-207-final-correction checkpoint (worker-owned; runner owns report.md/result.json/events.jsonl)
+
+Written 2026-11-14 ~22:50Z by the implementing worker. Not a readiness claim.
+
+- Source checkout: C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin, branch codex/gg-20261114-canvas-repair, base HEAD 64a955887962f72287e532824be1b8cb32c5f055 (tree a6691516210eb25887cb92abdcbd8c7abe1a4bb3). Uncommitted working-tree edits only.
+- Pan gate implemented (apps/web/src/editor/viewport-gesture.ts) and wired (Canvas.tsx, route-editing.ts, OrthogonalEdge.tsx).
+- Recovery implemented (stranded-edges.ts strandedEdges; ValidationIndicator.tsx group; IssuePopover.tsx rowAction reverted to stack-base bytes).
+- Tests: viewport-gesture.test.ts, viewport-gesture.contract.test.tsx (real installed xyflow/d3 in jsdom), Canvas/OrthogonalEdge/ValidationIndicator/stranded-edges updates; e2e decision-routes.spec.ts corrected + new recovery scenario (NOT executed: browser not granted).
+- Contract fixture corrections: (1) jsdom event view + ResizeObserver contentRect; (2) vitest jsdom global vs jsdom.window. One reading correction (Remove's own stopPropagation; window bubble -> target arrival).
+- Old-code causal runs retained under old-code-run/ (HEAD production files temporarily restored, then byte-identical restore verified by sha256).
+- Logs under logs/.

@@ -1,0 +1,487 @@
+async (page) => {
+  const url = new URL(page.url());
+  const origin = url.origin;
+  const scenario = url.searchParams.get('case');
+  const bundle = url.searchParams.get('bundle');
+  const gatewayPid = url.searchParams.get('gatewayPid');
+  const wait = { timeout: 9000 };
+  const result = { suite: '207-selection-doubleclick-probe', scenario, origin, gatewayPid, bundle, checkpoints: [], pageErrors: [], puts: [], bundleResponses: [] };
+  const checkpoint = (label, details) => result.checkpoints.push({ label, ...details });
+  const check = (truth, message) => { if (!truth) throw new Error(message); };
+  function canon(value) {
+    return JSON.stringify(value, (_, data) => data && typeof data === 'object' && !Array.isArray(data)
+      ? Object.fromEntries(Object.keys(data).sort().map((key) => [key, data[key]])) : data);
+  }
+  const same = (actual, expected, message) => {
+    check(canon(actual) === canon(expected), message + '\nExpected ' + canon(expected) + '\nActual ' + canon(actual));
+  };
+  const waitDebounce = () => new Promise((done) => setTimeout(done, 1000));
+  const definitionOf = (record) => record.draft?.definition ?? record.current?.definition;
+  const editPath = (id) => '/loops/' + id;
+  const edge = (id, source, port, target) => ({ id, from: { node: source, port }, to: { node: target, port: 'in' } });
+  const node = (id, kind, label, x, y, config) => ({ id, kind, label, ui: { x, y }, config });
+
+  page.on('pageerror', (error) => result.pageErrors.push(String(error)));
+  page.on('request', (request) => {
+    const requestUrl = new URL(request.url());
+    if (requestUrl.origin !== origin || request.method() !== 'PUT' ||
+      !/^\/loops\/[^/]+\/draft$/.test(requestUrl.pathname)) return;
+    result.puts.push({
+      url: request.url(), body: request.postDataJSON(), ifMatch: request.headers()['if-match'] ?? null,
+      at: Date.now(), status: null,
+    });
+  });
+  page.on('response', (response) => {
+    const responseUrl = new URL(response.url());
+    if (responseUrl.origin === origin && responseUrl.pathname === bundle)
+      result.bundleResponses.push({ status: response.status(), pid: response.headers()['x-graphgoblin-pid'] ?? null });
+    if (response.request().method() !== 'PUT') return;
+    const pending = result.puts.find((item) => item.url === response.url() && item.status === null);
+    if (pending) pending.status = response.status();
+  });
+
+  async function api(method, path, body, { status = 200, token } = {}) {
+    const response = await page.request.fetch(origin + path, {
+      method,
+      timeout: 10000,
+      ...(body === undefined ? {} : { data: body }),
+      ...(token === undefined ? {} : { headers: { 'if-match': '"' + token + '"' } }),
+    });
+    const payload = await response.json();
+    same(response.status(), status, method + ' ' + path + ' status');
+    return payload;
+  }
+  const get = (id) => api('GET', editPath(id));
+  const put = (id, definition, token) => api('PUT', editPath(id) + '/draft', { definition }, { token });
+  const saveState = (text) => page.getByTestId('save-state').filter({ hasText: text });
+  const selected = (id) => page.locator('.react-flow__edge.selected[data-id=' + JSON.stringify(id) + ']');
+  const allEdges = (id) => page.locator('.react-flow__edge[data-id=' + JSON.stringify(id) + ']');
+  const card = (id) => page.locator('.react-flow__node[data-id=' + JSON.stringify(id) + ']');
+  const undo = () => page.locator('button[data-history="undo"]').click(wait);
+
+  async function deviceCopy(id, expectedToken, expectedSynced, graphPredicate) {
+    const copy = await page.waitForFunction(async ({ id, expectedToken, expectedSynced, graphPredicate }) => {
+      const value = await new Promise((done) => {
+        const open = indexedDB.open('graphgoblin');
+        open.onupgradeneeded = () => open.transaction.abort();
+        open.onerror = () => done(null);
+        open.onsuccess = () => {
+          const db = open.result;
+          try {
+            const query = db.transaction('drafts').objectStore('drafts').get(id);
+            query.onsuccess = () => { db.close(); done(query.result ?? null); };
+            query.onerror = () => { db.close(); done(null); };
+          } catch { db.close(); done(null); }
+        };
+      });
+      if (!value || value.synced !== expectedSynced || value.baseToken !== expectedToken) return false;
+      if (graphPredicate) {
+        const expected = graphPredicate;
+        const node = value.definition.nodes.find((item) => item.id === 'work');
+        if (node?.config.routes?.[0]?.id !== '' || value.definition.edges.some((item) => item.id === expected.edgeId) !== expected.edgePresent)
+          return false;
+      }
+      return value;
+    }, { id, expectedToken, expectedSynced, graphPredicate }, { timeout: 9000, polling: 100 });
+    try { return await copy.jsonValue(); }
+    finally { await copy.dispose(); }
+  }
+
+  async function initialDeviceCopy(id) {
+    return page.evaluate((id) => new Promise((done) => {
+      const open = indexedDB.open('graphgoblin');
+      open.onupgradeneeded = () => open.transaction.abort();
+      open.onerror = () => done(null);
+      open.onsuccess = () => {
+        const db = open.result;
+        try {
+          const query = db.transaction('drafts').objectStore('drafts').get(id);
+          query.onsuccess = () => { db.close(); done(query.result ?? null); };
+          query.onerror = () => { db.close(); done(null); };
+        } catch { db.close(); done(null); }
+      };
+    }), id);
+  }
+
+  async function durable(id, label, { initial = false } = {}) {
+    const current = await get(id);
+    check(typeof current.draftToken === 'string', 'Fixture has no public draft token');
+    const local = initial ? await initialDeviceCopy(id) : await deviceCopy(id, current.draftToken, true);
+    if (local) {
+      same(local.definition, definitionOf(current), label + ' matches device and server');
+      same(local.synced, true, label + ' browser copy is synced');
+      same(local.baseToken, current.draftToken, label + ' browser copy token');
+    }
+    checkpoint(label, { id, public: current, local });
+    return current;
+  }
+
+  async function edit(id, base, action, label) {
+    const start = result.puts.length;
+    const [response] = await Promise.all([
+      page.waitForResponse((value) => value.request().method() === 'PUT' && new URL(value.url()).pathname === editPath(id) + '/draft', wait),
+      Promise.resolve().then(action),
+    ]);
+    same(response.status(), 200, label + ' PUT response');
+    const receipt = await response.json();
+    await saveState('All changes saved').waitFor(wait);
+    const current = await durable(id, label);
+    await waitDebounce();
+    const requests = result.puts.slice(start);
+    same(requests.length, 1, label + ' exactly one browser PUT');
+    same(requests[0].ifMatch, '"' + base.draftToken + '"', label + ' preserves conditional base');
+    same(receipt.draft, current.draft, label + ' response and exact readback agree');
+    same(receipt.draftToken, current.draftToken, label + ' response token');
+    same(requests[0].body.definition, definitionOf(current), label + ' exact body');
+    return current;
+  }
+
+  function specimen(name) {
+    return {
+      schemaVersion: 4,
+      name,
+      nodes: [
+        node('start', 'trigger', 'Fixture start', 100, 145, { type: 'manual' }),
+        node('work', 'mutate', 'Lower action', 790, 545, {
+          operations: [{ op: 'append-message', role: 'note', content: 'Fixture control' }],
+        }),
+        node('done', 'exit', 'Fixture success', 1150, 565, { outcome: 'success' }),
+      ],
+      edges: [
+        edge('e1', 'start', 'out', 'work'),
+        edge('control', 'work', 'out', 'done'),
+      ],
+    };
+  }
+
+
+  async function create(name, options) {
+    const definition = specimen(name, options);
+    const { loop } = await api('POST', '/loops', { definition }, { status: 201 });
+    const current = await get(loop.id);
+    checkpoint('public fixture created', { id: loop.id, public: current });
+    return { id: loop.id, current, name };
+  }
+
+  async function fit() {
+    await page.locator('.react-flow__controls-fitview').click(wait);
+    await page.locator('.react-flow__viewport').evaluate(async (view) => {
+      await document.fonts.ready;
+      await new Promise((done, reject) => {
+        let previous = view.getAttribute('style'), stable = 0, frames = 0;
+        const frame = () => {
+          const now = view.getAttribute('style');
+          stable = now === previous ? stable + 1 : 0;
+          previous = now;
+          if (++frames > 180) reject(new Error('Viewport did not settle'));
+          else if (stable >= 6) done();
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      });
+    });
+  }
+
+  async function open({ id, name }, { settings = false } = {}) {
+    await page.goto(origin + '/app' + editPath(id) + '/edit');
+    await page.getByRole('heading', { name, exact: true }).waitFor(wait);
+    await page.getByText('The editor is available. Checking the server and this device before saving changes.', { exact: true })
+      .waitFor({ state: 'hidden', timeout: 9000 });
+    const hidePalette = page.getByRole('button', { name: 'Hide palette', exact: true });
+    if (await hidePalette.isVisible()) await hidePalette.click(wait);
+    const toggle = page.getByRole('button', { name: settings ? 'Show loop settings' : 'Hide loop settings', exact: true });
+    if (await toggle.isVisible()) await toggle.click(wait);
+    await fit();
+  }
+
+  async function selectEdge(id) {
+    await allEdges(id).first().waitFor(wait);
+    const point = await allEdges(id).evaluateAll((roots) => {
+      for (const root of roots) {
+        const path = root.querySelector('.react-flow__edge-path');
+        const transform = path?.getScreenCTM();
+        if (!transform) continue;
+        for (const fraction of [0.25, 0.4, 0.55, 0.7, 0.8]) {
+          const point = path.getPointAtLength(path.getTotalLength() * fraction).matrixTransform(transform);
+          const hit = document.elementFromPoint(point.x, point.y);
+          if (hit?.closest('.react-flow__edge')?.dataset.id === root.dataset.id &&
+              hit.classList.contains('react-flow__edge-interaction')) return { x: point.x, y: point.y };
+        }
+      }
+      return null;
+    });
+    check(point, 'No unique hittable canvas path point for ' + id);
+    await page.mouse.click(point.x, point.y);
+    await selected(id).first().waitFor(wait);
+    const identity = await selected(id).first().getAttribute('aria-label');
+    checkpoint('trusted pointer selected edge', { id, point, identity });
+    return identity;
+  }
+
+  async function buttonHit(id, { allowUnavailable = false } = {}) {
+    const buttons = selected(id).getByRole('button', { name: 'Remove connection', exact: true });
+    await buttons.first().waitFor(wait);
+    const point = await buttons.evaluateAll((items) => {
+      for (const button of items) {
+        const rect = button.getBoundingClientRect();
+        const x = rect.left + rect.width / 2, y = rect.top + rect.height / 2;
+        const hit = document.elementFromPoint(x, y);
+        if (items.includes(hit?.closest('button')))
+          return { x, y, width: rect.width, height: rect.height,
+            disabled: button.disabled, ariaDisabled: button.getAttribute('aria-disabled'),
+            label: hit.closest('.react-flow__edge')?.getAttribute('aria-label') };
+      }
+      return null;
+    });
+    check(point && (allowUnavailable || (!point.disabled && point.ariaDisabled !== 'true')), 'Selected Remove needs an enabled, hit-tested center');
+    return point;
+  }
+  const clickAt = ({ x, y }) => page.mouse.click(x, y);
+
+  function without(definition, id) {
+    return { ...definition, edges: definition.edges.filter((item) => item.id !== id) };
+  }
+
+  async function idleFingerprint(id) {
+    const history = await page.locator('button[data-history]').evaluateAll((buttons) =>
+      buttons.map((button) => [button.dataset.history, button.textContent, button.getAttribute('aria-disabled')]));
+    return { public: await get(id), local: await initialDeviceCopy(id), history,
+      save: await page.getByTestId('save-state').textContent() };
+  }
+
+  async function noWrite(id, before, action, label) {
+    const offset = result.puts.length;
+    await action();
+    await waitDebounce();
+    same(result.puts.length, offset, label + ' sent no browser PUT');
+    const after = await idleFingerprint(id);
+    same(after, before, label + ' kept public graph, token, device, history and save state');
+    checkpoint(label, after);
+  }
+
+  async function assertSelectionCleared(id, label) {
+    await selected(id).first().waitFor({ state: 'detached', timeout: 9000 });
+    same(await page.getByRole('button', { name: 'Remove connection', exact: true }).count(), 0,
+      label + ' left a selected-edge control');
+  }
+
+  async function checkUndoLabel(label) {
+    await page.getByRole('button', { name: 'Undo ' + label, exact: true }).waitFor(wait);
+  }
+
+  async function assertUndoFocus() {
+    await page.waitForFunction(() => document.activeElement?.matches('button[data-history="undo"]'), null, wait);
+  }
+
+  async function peek(point) {
+    return page.evaluate(({ x, y }) => {
+      const hit = document.elementFromPoint(x, y);
+      const connection = hit?.closest('.react-flow__edge');
+      return {
+        tag: hit?.tagName ?? null, class: hit?.getAttribute('class') ?? null,
+        button: hit?.closest('button')?.textContent.trim() ?? null,
+        edge: connection?.dataset.id ?? null,
+        node: hit?.closest('.react-flow__node')?.dataset.id ?? null,
+        pane: hit?.matches('.react-flow__pane') ?? false,
+        selection: connection?.classList.contains('selected') ?? false,
+        viewport: document.querySelector('.react-flow__viewport')?.getAttribute('style') ?? null,
+      };
+    }, point);
+  }
+
+  async function deselect() {
+    const at = await page.locator('.react-flow__pane').evaluate((pane) => {
+      const r = pane.getBoundingClientRect();
+      for (const y of [0.18, 0.35, 0.67, 0.82]) {
+        for (const x of [0.2, 0.4, 0.65, 0.85]) {
+          const point = { x: r.x + r.width * x, y: r.y + r.height * y };
+          if (document.elementFromPoint(point.x, point.y) === pane) return point;
+        }
+      }
+      return null;
+    });
+    check(at, 'No natural pane area to clear edge selection');
+    await clickAt(at);
+    await assertSelectionCleared('e1', 'native pane deselection');
+  }
+
+  async function monitor() {
+    await page.evaluate(() => {
+      const raw = [];
+      const events = [];
+      const byEvent = new WeakMap();
+      const identities = new WeakMap();
+      let sequence = 0;
+      const identity = (item) => { if (!item) return null; if (!identities.has(item)) identities.set(item, ++sequence); return identities.get(item); };
+      const record = (event) => {
+        const target = event.target instanceof Element ? event.target : null;
+        const edge = target?.closest('.react-flow__edge');
+        const button = target?.closest('button');
+        const entry = {
+          type: event.type, trusted: event.isTrusted, at: performance.now(), eventTime: event.timeStamp,
+          detail: event.detail, x: event.clientX, y: event.clientY, buttonState: event.buttons,
+          targetKey: identity(target), target: target?.tagName, classes: target?.getAttribute('class'),
+          path: event.composedPath().slice(0, 10).map(identity),
+          button: button?.textContent.trim() ?? null,
+          disabled: button?.disabled ?? null, ariaDisabled: button?.getAttribute('aria-disabled') ?? null,
+          edge: edge?.dataset.id ?? null, edgeSelected: edge?.classList.contains('selected') ?? false,
+          node: target?.closest('.react-flow__node')?.dataset.id ?? null,
+          pane: target?.matches('.react-flow__pane') ?? false,
+          clickBlocker: (window.__on ?? []).some((item) => item.name === 'drag' && item.type === 'click'),
+          before: event.defaultPrevented, reachedDocument: false,
+        };
+        events.push(entry);
+        raw.push(event);
+        byEvent.set(event, entry);
+      };
+      for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'dblclick']) {
+        window.addEventListener(type, record, { capture: true, passive: true });
+        document.addEventListener(type, (event) => {
+          const old = byEvent.get(event);
+          if (old) old.reachedDocument = true;
+        }, { capture: true, passive: true });
+      }
+      window.__gg207SelectionProbe = () => events.map((entry, i) => ({ ...entry, after: raw[i].defaultPrevented }));
+    });
+  }
+  const trace = () => page.evaluate(() => window.__gg207SelectionProbe());
+
+  async function nativeConcern() {
+    const fixture = await create('Automatic edge double click fixture');
+    const { id } = fixture;
+    await open(fixture, { settings: true });
+    const base = await durable(id, 'public automatic baseline', { initial: true });
+    const ready = await edit(id, base,
+      () => page.getByLabel('Description', { exact: true }).fill('Disposable synced baseline for native pointer comparison.'),
+      'establish exact synced baseline with one label edit');
+    check(definitionOf(ready).edges.every((item) => item.ui === undefined), 'Fixture edge must have only automatic routing');
+    const hide = page.getByRole('button', { name: 'Hide loop settings', exact: true });
+    if (await hide.isVisible()) await hide.click(wait);
+    await fit();
+
+    await selectEdge('e1');
+    const control = selected('e1').getByRole('button', { name: 'Remove connection', exact: true });
+    const future = await control.boundingBox();
+    check(future && !(await page.getByRole('button', { name: 'Reset route', exact: true }).count()),
+      'Expected selected automatic toolbar with Remove alone');
+    const selectedLabel = await selected('e1').getAttribute('aria-label');
+    await deselect();
+    const path = allEdges('e1').locator('.react-flow__edge-path');
+    const crossing = await path.evaluate((line, box) => {
+      const transform = line.getScreenCTM();
+      const length = line.getTotalLength();
+      if (!transform) return null;
+      const pathAt = (distance) => line.getPointAtLength(distance).matrixTransform(transform);
+      for (let i = 2; i < 599; i += 1) {
+        const t = i * length / 600;
+        const point = pathAt(t);
+        const prev = pathAt(t - length / 600);
+        const next = pathAt(t + length / 600);
+        const hit = document.elementFromPoint(point.x, point.y);
+        if (Math.abs(next.x - prev.x) < 0.1 && Math.abs(next.y - prev.y) > 1 &&
+          point.x > box.x + 3 && point.x < box.x + box.width - 3 &&
+          point.y > box.y + 3 && point.y < box.y + box.height - 3 &&
+          hit?.matches('path') && hit.closest('.react-flow__edge')?.dataset.id === 'e1')
+          return { x: point.x, y: point.y, pathLength: length, fraction: i / 600 };
+      }
+      return null;
+    }, future);
+    check(crossing, 'No live unselected vertical trunk point inside its selected Remove box');
+    const unselectedHit = await peek(crossing);
+    check(unselectedHit.edge === 'e1' && unselectedHit.tag === 'path' && !unselectedHit.selection &&
+      unselectedHit.button === null, 'Natural pre-click target is not the unselected connection path');
+    await monitor();
+    const fingerprint = await idleFingerprint(id);
+    await noWrite(id, fingerprint, () => clickAt(crossing), 'single trusted click selects with no mutation');
+    const newHit = await peek(crossing);
+    check(newHit.edge === 'e1' && newHit.selection && newHit.button === 'Remove connection',
+      'The same point did not naturally become Remove after selection');
+    checkpoint('same point before and after a normal selection', {
+      crossing, future, selectedLabel, unselectedHit, newHit, input: await trace(),
+    });
+
+    const button = await buttonHit('e1');
+    const one = await edit(id, ready, () => clickAt(button), 'normal deliberately selected unique Remove');
+    same(definitionOf(one), without(definitionOf(ready), 'e1'), 'Deliberate Remove changed an unrelated record');
+    await checkUndoLabel('remove edge start to work');
+    await assertUndoFocus();
+    const afterOrdinaryRemove = await peek(button);
+    checkpoint('natural hit underneath deliberately removed control', { button, afterOrdinaryRemove });
+    const restored = await edit(id, one, undo, 'one Undo restores the unique automatic connection');
+    same(definitionOf(restored), definitionOf(ready), 'Baseline Undo did not restore exact graph');
+    same(restored.draftToken, ready.draftToken, 'Baseline Undo did not restore exact token');
+    await assertSelectionCleared('e1', 'undo normal Remove');
+    same(await peek(crossing), unselectedHit, 'Live hit or viewport changed before native double-click');
+
+    const firstEvent = (await trace()).length;
+    const beforeWrites = result.puts.length;
+    await page.mouse.dblclick(crossing.x, crossing.y);
+    await saveState('All changes saved').waitFor(wait);
+    await waitDebounce();
+    const after = await durable(id, 'observed consequence of one native double-click');
+    const events = (await trace()).slice(firstEvent);
+    const clicks = events.filter((event) => event.trusted && event.type === 'click');
+    check(clicks.length >= 1 && clicks[0].edge === 'e1' && clicks[0].target === 'path' &&
+      !clicks[0].edgeSelected && clicks[0].button === null, 'First trusted click did not hit the unselected edge');
+    checkpoint('double-click trusted dispatch and actual hits', { crossing, events, clicks, current: await peek(crossing) });
+    const removed = !definitionOf(after).edges.some((item) => item.id === 'e1');
+    if (removed) {
+      check(clicks[1]?.button === 'Remove connection' && clicks[1]?.edge === 'e1' && clicks[1].edgeSelected &&
+        clicks[0].reachedDocument && clicks[1].reachedDocument && !clicks[1].after && !clicks[1].clickBlocker,
+        'Removal lacks proof of a separate promoted Remove target');
+      const mutations = result.puts.slice(beforeWrites);
+      same(mutations.map(({ status }) => status), [200], 'Double-click made other durable writes');
+      same(mutations[0].ifMatch, '"' + restored.draftToken + '"', 'Removal used exact current token');
+      same(definitionOf(after), without(definitionOf(ready), 'e1'), 'Double-click changed another record');
+      same(mutations[0].body.definition, definitionOf(after), 'Exact browser PUT and API/device agree');
+      await checkUndoLabel('remove edge start to work');
+      await assertUndoFocus();
+      const undone = await edit(id, after, undo, 'one Undo after accidental removal');
+      same(definitionOf(undone), definitionOf(ready), 'Accidental removal Undo did not restore graph');
+      same(undone.draftToken, ready.draftToken, 'Accidental removal Undo token');
+      return 'REPRODUCED_SELECTION_DOUBLECLICK_REMOVES_CONNECTION';
+    }
+
+    same(definitionOf(after), definitionOf(restored), 'Negative outcome changed other data');
+    same(result.puts.length, beforeWrites, 'No confirmed deletion but browser sent mutation');
+    if (!afterOrdinaryRemove.node && !afterOrdinaryRemove.edge) {
+      checkpoint('no bounded second action after successful Remove', { afterOrdinaryRemove });
+      return 'OBSERVATION_NO_REMOVAL_IN_TRUSTED_DOUBLECLICK';
+    }
+
+    const stillSelected = await selected('e1').count();
+    if (!stillSelected) await selectEdge('e1');
+    const actualRemove = await buttonHit('e1');
+    const start = (await trace()).length;
+    const removedDirectly = await edit(id, after, () => page.mouse.dblclick(actualRemove.x, actualRemove.y),
+      'native double-click directly on a successful Remove');
+    same(definitionOf(removedDirectly), without(definitionOf(ready), 'e1'), 'Direct double-click edited another record');
+    const directEvents = (await trace()).slice(start);
+    const modal = page.getByRole('dialog', { name: /^Edit / });
+    checkpoint('direct Remove second target and UI state', {
+      directEvents, modal: await modal.count(), hit: await peek(actualRemove),
+    });
+    if (await modal.count()) await page.keyboard.press('Escape');
+    const undone = await edit(id, removedDirectly, undo, 'one Undo after direct Remove');
+    same(definitionOf(undone), definitionOf(ready), 'Direct Remove did not Undo exactly');
+    return 'OBSERVATION_DIRECT_REMOVE_DOUBLECLICK_DELIVERY';
+  }
+
+  try {
+    check(/^http:\/\/127\.0\.0\.1:\d+$/.test(origin) && !/:474[78]$/.test(origin), 'Refused owner or nonfixture address');
+    check(/^\/app\/assets\/index-[\w-]+\.js$/.test(bundle ?? ''), 'Current bound main bundle required');
+    const health = await page.request.get(origin + '/healthz', { timeout: 5000 });
+    same(health.status(), 200, 'Compiled disposable gateway health');
+    same(health.headers()['x-graphgoblin-pid'], gatewayPid, 'Fixture gateway PID matches');
+    same(scenario, 'selection-doubleclick', 'Bounded case only');
+    result.outcome = await nativeConcern();
+    check(result.bundleResponses.some((entry) => entry.status === 200), 'Expected candidate JS did not load');
+    same(result.pageErrors, [], 'No browser page errors');
+  } catch (error) {
+    result.failure = { message: String(error), stack: error.stack };
+    try { result.partialTrace = await page.evaluate(() => window.__gg207SelectionProbe?.() ?? []); }
+    catch (traceError) { result.traceFailure = String(traceError); }
+  }
+  return result;
+}
+

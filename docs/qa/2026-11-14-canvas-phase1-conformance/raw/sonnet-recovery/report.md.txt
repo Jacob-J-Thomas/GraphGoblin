@@ -1,0 +1,38 @@
+`Canvas.tsx` is restored byte-for-byte from the captured native source, and all the verification you permitted passes. The evidence handoff is written. Root has not accepted conformance, and I'm not claiming that it has.
+
+**Restoration**
+- Before the restore, `Canvas.tsx` hashed `487ab3dc…`, matching the captured working-source hash.
+- After the restore it hashes `34f33d1f…`, identical to the native source. The delta removed was exactly the three optional changes, so the tested selected-edge conditional is back.
+- Nothing else was touched: HEAD is still `1dcee36b`, there are 14 dirty paths, no index edits, and `NodeConnections.tsx` and the modal controls are unchanged. `NodeConnections.tsx` also matches git HEAD and the built source map.
+
+**Verification** (all through `pnpm.cmd` on Node 22.23.4, no coverage arguments)
+- The nine focused files pass: 9 files, 133 tests.
+- Web no-emit types, ESLint and Prettier on the 14 changed files all pass.
+- All nine product files equal the captured native source.
+- All 1,227 compiled files in the 13 trees still equal the candidate-build manifests, with none missing, extra or changed.
+
+My one stumble was a syntax error in my own verifier script, caused by a collapsed backslash. I kept that log (`06a-…`) and reran the script once. No test, type, lint or format run needed a retry.
+
+**Evidence handoff**
+`handoff.md` has a criterion/evidence matrix covering every item you listed. Each row cites a result file and step, and I read the actual structured results and driver scripts rather than inferring from screenshots or exit codes. The conclusions I'd flag:
+- **Binding:** every candidate gateway recorded the native `Canvas.tsx` and served `index-DauABcWi.js`. After restoration, 13 of the 14 dirty-path hashes they recorded match the checkout.
+- **`Canvas.test.tsx` has changed since native:** it was edited at 19:46:06 UTC, after the native runs, and the earlier version isn't retained. The 796-test count therefore can't be tied to today's test file.
+- **Missing proof, labelled as missing:**
+  - **Modal Connections region:** the final `kinds.js` has a check that it is present on the candidate build. That check was written after candidate-b and never run natively.
+  - **Decisions freed-ID reuse:** the reuse block in the decisions scenario silently did not run. Other scenarios cover it.
+  - **Script edge cycle:** there is no native create, toolbar-remove and redraw cycle for a drawable Script edge.
+  - **Stale actions and undo routes:** stale Loop-issues actions and manual-route restoration on undo are unit-test evidence only.
+  - **Immutability for the repeat loop:** published-version immutability after a later draft edit is asserted for Chat only.
+  - **Touch hardware:** coarse input is emulated touch in Edge, not a physical device.
+- **Observations for root, not decisions:** refusal notices persist until the next successful connect, including across an unrelated removal. Plain keyboard Delete leaves focus on `BODY`, the same as the baseline.
+- **Rejected diagnostics:** the zero-threshold coverage runs, including `33-focused-final.meta`, are excluded from every gate claim and listed in section 7.
+- **Still pending:** required package coverage, independent final native QA, actual-parent integration, exact-head and current-target CI, GPT review and the Astra max audit. The same list covers root acceptance, the separate modal-removal grant and owner acceptance.
+
+I'm Claude Sonnet 5.5 (`claude-sonnet-5-5`) at requested `xhigh` effort, and I can't observe the effort actually applied. The admission about gateway close records, session PIDs and the stopped worker processes is cited from you and QA, not observed by me.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/ui-207-handoff-recovery/`:
+- `handoff.md`
+- `evidence-index.json`
+- `logs/`
+- `summaries/`
+- `scripts/`
