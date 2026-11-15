@@ -7,13 +7,32 @@
  *
  * It shows that the offer's two buttons follow the same gate as the selected connection's Remove
  * button: d3 cancels the click that follows a mouse pan before it reaches any of them, all three say
- * so, and the first press after they show as available acts once. jsdom has no hit-testing and no
- * layout: where a native press lands, target sizes and doubleclicks stay native checks.
+ * so, and the first press after they show as available acts once. It also shows what xyflow and d3
+ * do, and do not do, with the presses that follow a Space cards click once its result has replaced
+ * the offer (#208): presses on the result reach neither, while the first press elsewhere ends the
+ * result and acts exactly as it would have without it. jsdom has no hit-testing and no layout:
+ * which element a native press lands on, target sizes, the browser's own click counting and touch
+ * stay native checks, and here each press is dispatched at the element a browser would hit.
  */
 import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { ReactFlowProvider } from '@xyflow/react';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  ReactFlowProvider,
+  useReactFlow,
+  useStoreApi,
+  type ReactFlowInstance,
+} from '@xyflow/react';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from 'vitest';
 import { Canvas } from './Canvas.js';
 import { newLoopDefinition } from './model.js';
 import { NODE_CARD_SIZE } from './routing-geometry.js';
@@ -148,11 +167,22 @@ function whenFirstAvailable<T>(button: HTMLElement, act: () => T): Promise<T> {
   });
 }
 
+let flow: ReactFlowInstance | undefined;
+let flowStore: ReturnType<typeof useStoreApi> | undefined;
+
+/** Reads xyflow's instance and store, which the Canvas leaves to the provider. */
+function Observe() {
+  flow = useReactFlow();
+  flowStore = useStoreApi();
+  return null;
+}
+
 function Live() {
   const definition = useEditorStore((s) => s.definition)!;
   return (
     <ReactFlowProvider>
       <Canvas definition={definition} issues={[]} />
+      <Observe />
     </ReactFlowProvider>
   );
 }
@@ -356,5 +386,244 @@ describe('the Space cards offer on the pan gate and the installed d3 (#207, #208
     // A new canvas has a gate of its own, ready.
     await openedPile();
     expectOneGate(undefined);
+  });
+});
+
+/** d3's window listeners now, as d3-selection records them (read only). */
+const d3Listeners = () =>
+  ((view as unknown as { __on?: { type: string; name: string }[] }).__on ?? []).map(
+    (listener) => `${listener.type}.${listener.name}`,
+  );
+
+const PRIMARY = {
+  bubbles: true,
+  cancelable: true,
+  composed: true,
+  view,
+  clientX: 93,
+  clientY: 290,
+  button: 0,
+};
+
+/** The pointerdown a browser sends before the mousedown of a press, for a press done by hand. */
+const pointerDown = (target: Element) =>
+  target.dispatchEvent(
+    new PointerEvent('pointerdown', { ...PRIMARY, buttons: 1, pointerType: 'mouse', pointerId: 1 }),
+  );
+
+/**
+ * One press of the primary mouse button as a browser delivers it to `target`, the `count`th of a
+ * run: pointerdown and pointerup (no click count yet), then mousedown, mouseup and click carrying
+ * it, and a dblclick after the second.
+ */
+async function press(target: Element, count: number, shiftKey = false) {
+  const base = { ...PRIMARY, shiftKey };
+  const pointer = (type: string, buttons: number) =>
+    new PointerEvent(type, {
+      ...base,
+      buttons,
+      pointerType: 'mouse',
+      isPrimary: true,
+      pointerId: 1,
+    });
+  const mouseEvent = (type: string, buttons: number) =>
+    new MouseEvent(type, { ...base, buttons, detail: count });
+  for (const event of [
+    pointer('pointerdown', 1),
+    mouseEvent('mousedown', 1),
+    pointer('pointerup', 0),
+    mouseEvent('mouseup', 0),
+    mouseEvent('click', 0),
+    ...(count === 2 ? [mouseEvent('dblclick', 0)] : []),
+  ]) {
+    target.dispatchEvent(event);
+    // As in a browser, microtasks run between one event's listeners and the next event.
+    await microtasks();
+  }
+}
+
+/** A few tasks and microtasks: React commits, d3's cleanup and the fit have all had their turn. */
+async function settle() {
+  for (let i = 0; i < 4; i += 1) {
+    await queuedTask(() => undefined);
+    await microtasks();
+  }
+}
+
+describe('presses after a Space cards click, on the installed xyflow and d3 (#208)', () => {
+  const result = () => screen.queryByTestId('space-cards-result');
+  const zoomOut = () => document.querySelector<HTMLElement>('.react-flow__controls-zoomout')!;
+  let boxSpy: MockInstance<Element['getBoundingClientRect']>;
+
+  beforeEach(() => {
+    // jsdom has no layout: the offer's box is the one a browser measured at 512 px.
+    const measured = Element.prototype.getBoundingClientRect;
+    boxSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: Element,
+    ) {
+      return this.getAttribute('data-testid') === 'space-cards-offer'
+        ? DOMRect.fromRect({ width: 392, height: 129.5 })
+        : measured.call(this);
+    });
+  });
+  afterEach(async () => {
+    // A test that failed mid-gesture must not leave d3's window listeners, or its click blocker,
+    // to swallow the next test's press: release, then let the blocker's own task run.
+    view.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, view }));
+    await queuedTask(() => undefined);
+    fireEvent.keyUp(document.body, { key: 'Shift', code: 'ShiftLeft' });
+    boxSpy.mockRestore();
+  });
+
+  /** The pile with its connection and one card selected, and Shift held when asked. */
+  async function selectedPile(shift: boolean) {
+    const opened = await openedPile();
+    const nodeId = store().definition!.nodes[0]!.id;
+    store().select(nodeId);
+    if (shift)
+      fireEvent.keyDown(document.body, { key: 'Shift', code: 'ShiftLeft', shiftKey: true });
+    await settle();
+    expect(store().selectedNodeId).toBe(nodeId);
+    expect(remove()).toBeInTheDocument();
+    return { ...opened, nodeId };
+  }
+
+  /** Press 1: Space cards. Waits for the offer to go and the one fit to land. */
+  async function spaced(shift: boolean) {
+    await press(space(), 1, shift);
+    await waitFor(() => expect(screen.queryByTestId('space-cards-offer')).toBeNull());
+    await settle();
+  }
+
+  /**
+   * Where the next press of the run lands, as a browser would hit it at the box's point: on the
+   * result while there is one, else on what the offer covered (`covered`: at 512 px, Zoom Out, as
+   * the native run found). jsdom has no hit-testing, so the premise is stated here; xyflow and d3
+   * then do whatever they really do with it. Without the result this reproduces the double hit.
+   */
+  const landing = (covered: Element) => result() ?? covered;
+
+  it('holds the second and third presses of a run on the result, Shift held: neither xyflow nor d3 sees them', async () => {
+    const { nodeId } = await selectedPile(true);
+    const before = { revision: store().revision, d3: d3Listeners() };
+    await spaced(true);
+    const fitted = flow!.getViewport();
+
+    // Press 2 (and its dblclick) on what it lands on, press 3 on that element's first child.
+    await press(landing(zoomOut()), 2, true);
+    await press(landing(zoomOut()).firstElementChild!, 3, true);
+    await settle();
+
+    // The view is still the one fit, and both selections are kept.
+    expect(flow!.getViewport()).toEqual(fitted);
+    expect(store().selectedNodeId).toBe(nodeId);
+    expect(remove()).toBeInTheDocument();
+    // No selection box, drag or pan began, and nothing was opened.
+    expect(flowStore!.getState()).toMatchObject({
+      userSelectionActive: false,
+      userSelectionRect: null,
+      nodesSelectionActive: false,
+    });
+    expect(d3Listeners()).toEqual(before.d3);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // The result is still there, and the one step, announcement and focus are as press 1 left them.
+    expect(result()).not.toBeNull();
+    expect(store().past.map((step) => step.label)).toEqual(['space cards']);
+    expect(store().revision).toBe(before.revision + 1);
+    expect(announced()).toBe('Spaced 2 cards. Undo puts them back.');
+    expect(canvas()).toHaveFocus();
+  });
+
+  it.each([false, true])(
+    'holds a press dragged on the result: no pan, selection box or listener begins (Shift %s)',
+    async (shift) => {
+      const { pane, nodeId } = await selectedPile(shift);
+      const before = d3Listeners();
+      await spaced(shift);
+      const fitted = flow!.getViewport();
+      const target = landing(pane);
+      const at = (type: string, x: number, buttons: number) => ({
+        pointer: new PointerEvent(type, {
+          ...PRIMARY,
+          clientX: x,
+          buttons,
+          pointerType: 'mouse',
+          isPrimary: true,
+          pointerId: 1,
+        }),
+        mouse: mouse(type.replace('pointer', 'mouse'), x, 290, 0, buttons),
+      });
+      for (const [type, x, buttons] of [
+        ['pointerdown', 93, 1],
+        ['pointermove', 103, 1],
+        ['pointermove', 123, 1],
+      ] as const) {
+        const events = at(type, x, buttons);
+        target.dispatchEvent(events.pointer);
+        target.dispatchEvent(events.mouse);
+        await microtasks();
+      }
+      // Mid-drag, where a pan would have started or a selection box been drawn.
+      expect(flow!.getViewport()).toEqual(fitted);
+      expect(remove()).not.toHaveAttribute('data-gesture');
+      expect(flowStore!.getState()).toMatchObject({
+        userSelectionActive: false,
+        userSelectionRect: null,
+      });
+      expect(d3Listeners()).toEqual(before);
+      const release = at('pointerup', 123, 0);
+      target.dispatchEvent(release.pointer);
+      target.dispatchEvent(release.mouse);
+      await settle();
+      expect(flow!.getViewport()).toEqual(fitted);
+      expect(store().selectedNodeId).toBe(nodeId);
+      expect(remove()).toBeInTheDocument();
+      expect(result()).not.toBeNull();
+      expect(store().past.map((step) => step.label)).toEqual(['space cards']);
+    },
+  );
+
+  it.each([false, true])(
+    'control: the first press on the pane ends the result and clears both selections as ever (Shift %s)',
+    async (shift) => {
+      const { pane } = await selectedPile(shift);
+      await spaced(shift);
+      await press(pane, 1, shift);
+      await settle();
+      expect(result()).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Remove connection' })).toBeNull();
+      expect(store().selectedNodeId).toBeUndefined();
+      expect(store().past.map((step) => step.label)).toEqual(['space cards']);
+    },
+  );
+
+  it('control: a mouse pan that is the first press elsewhere ends the result and pans as ever', async () => {
+    const { pane } = await selectedPile(false);
+    await spaced(false);
+    const fitted = flow!.getViewport();
+    pointerDown(pane);
+    // The pointerdown's own listener only schedules the end: React commits it in the microtask after
+    // the listeners return, which is before this press's mousedown and anything it triggers.
+    await microtasks();
+    expect(result()).toBeNull();
+    pane.dispatchEvent(mouse('mousedown', 600, 400, 0, 1));
+    await microtasks();
+    pane.dispatchEvent(mouse('mousemove', 710, 400, 0, 1));
+    await microtasks();
+    expect(remove()).toHaveAttribute('data-gesture', 'panning');
+    expect(flow!.getViewport().x).toBeCloseTo(fitted.x + 110, 5);
+    pane.dispatchEvent(mouse('mouseup', 710, 400, 0, 0));
+    await whenFirstAvailable(remove(), () => undefined);
+    expect(remove()).not.toHaveAttribute('data-gesture');
+  });
+
+  it('control: a Zoom Out press that is the first press elsewhere ends the result and zooms out once', async () => {
+    await selectedPile(false);
+    await spaced(false);
+    const zoom = flow!.getViewport().zoom;
+    await press(zoomOut(), 1);
+    await settle();
+    expect(result()).toBeNull();
+    expect(flow!.getViewport().zoom).toBeCloseTo(zoom / 1.2, 5);
   });
 });

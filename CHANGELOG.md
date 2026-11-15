@@ -12,9 +12,14 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   cards move. The panel shows only while every card is at the same spot and no connection has a
   route you set; **Dismiss suggestion** hides it until the loop is opened or reloaded again.
   Right after a mouse pan, both buttons are briefly shown unavailable and do nothing, like
-  **Remove connection**, until the pan's own click blocker is gone. Opening a loop, other edits,
-  Undo and Redo never move cards by themselves. No stored or exported data changes, so there is
-  no upgrade note.
+  **Remove connection**, until the pan's own click blocker is gone. After a click, tap or pen
+  press on either button, the panel's box stays where it was and shows the result (**Spaced _n_
+  cards.**, the refusal, or **Suggestion dismissed.**) until the next press anywhere else, so the
+  second press of a double click lands on it and not on the controls under the panel (found at
+  512 px, where it covers **Zoom Out**). The area it covers, and any card the fit places there,
+  stays covered until then; the keyboard leaves nothing behind. Opening a loop, other edits, Undo
+  and Redo never move cards by themselves. No stored or exported data changes, so there is no
+  upgrade note.
 
 - **Undo** and **Redo** stay where they are (#208, ADR-0078). A native baseline showed them moving
   with the editor's changing toolbar: 30 to 37 px sideways when the validation text ("Checking…",

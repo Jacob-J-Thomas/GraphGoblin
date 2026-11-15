@@ -28,4 +28,5 @@ Dismissing the offer lasts for the editor load. There is no general arrange comm
 - Opening a loop, ordinary edits, Undo and Redo never change positions on their own, so a pile stays a pile until the author acts.
 - Loops partly positioned, positioned off the origin or with any routed connection are never offered the action. Arranging them stays out of scope.
 - The layout does not promise crossing-free connections or that a long chain fits in one view. Spacing at larger text sizes depends on the measured heights that the canvas passes in, and still needs native checks.
+- A pointer press on either button leaves a plain result in the panel's box until the next press elsewhere, so the second press of a double click cannot reach what the panel covered (found at 512 px, where it covers Zoom Out). That area, and any card the fit places there, stays covered for that long. The action itself is as decided: explicit, one step, nothing applied or previewed by itself.
 - Contracts, the API, migrations and stored data are unchanged, so there is no upgrade note.

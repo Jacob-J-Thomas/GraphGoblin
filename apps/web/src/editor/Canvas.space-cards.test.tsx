@@ -2,11 +2,12 @@ import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { NodeChange, ReactFlowProps } from '@xyflow/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Profiler } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Canvas } from './Canvas.js';
 import type { FlowNode } from './NodeCard.js';
 import { spacedPositions } from './space-cards.js';
-import { SpaceCardsOffer } from './SpaceCardsOffer.js';
+import { SpaceCardsOffer, SpaceCardsResult } from './SpaceCardsOffer.js';
 import { useEditorStore } from './store.js';
 import type { RoutingGeometry } from './useRouting.js';
 import { createViewportGestureGate } from './viewport-gesture.js';
@@ -38,6 +39,21 @@ const canvas = () => screen.getByTestId('canvas');
 const announced = () => canvas().querySelector('[aria-live="polite"]')!.textContent;
 const labels = () => store().past.map((step) => step.label);
 const positions = () => store().definition!.nodes.map((node) => node.ui ?? { x: 0, y: 0 });
+const result = () => screen.queryByTestId('space-cards-result');
+const dismissButton = () => screen.getByRole('button', { name: 'Dismiss suggestion' });
+
+/** The box a browser measured for the offer at 512 px (#208): jsdom has no layout of its own. */
+const OFFER_BOX = { width: 392, height: 129.5 };
+function stubOfferBox() {
+  const measured = Element.prototype.getBoundingClientRect;
+  return vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: Element,
+  ) {
+    return this.getAttribute('data-testid') === 'space-cards-offer'
+      ? DOMRect.fromRect(OFFER_BOX)
+      : measured.call(this);
+  });
+}
 const OPENING_FIT = {
   padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
   minZoom: 0.5,
@@ -216,9 +232,300 @@ describe('Space cards on the canvas (#208)', () => {
   });
 });
 
+describe('the result a pointer press leaves where the offer was (#208)', () => {
+  const PRESSES = [
+    'pointerdown',
+    'mousedown',
+    'pointerup',
+    'mouseup',
+    'click',
+    'dblclick',
+  ] as const;
+  let boxSpy: ReturnType<typeof stubOfferBox>;
+
+  beforeEach(() => {
+    fitView.mockClear();
+    store().load('L1', kitchenSinkLoop());
+    boxSpy = stubOfferBox();
+  });
+  afterEach(() => boxSpy.mockRestore());
+
+  /** What the DOM shows after each commit: the offer, its result, or (never) neither. */
+  const commitsOf = (states: string[]) => () => {
+    const offered = screen.queryByTestId('space-cards-offer') !== null;
+    const shown = result() !== null;
+    states.push(offered ? (shown ? 'both' : 'offer') : shown ? 'result' : 'neither');
+  };
+
+  it('replaces the offer, in the same commit and box, with a plain line: no control, no live region, the same announcement', async () => {
+    const user = userEvent.setup();
+    const states: string[] = [];
+    render(
+      <Profiler id="canvas" onRender={commitsOf(states)}>
+        <Live />
+      </Profiler>,
+    );
+    const panel = screen.getByTestId('space-cards-offer');
+    const was = { wrapper: panel.parentElement!.className, section: panel.className };
+    measure({ prep: 400 });
+    const before = states.length;
+    await user.click(spaceButton());
+
+    // The offer is never gone without its result: no commit shows neither.
+    expect(states.slice(before)).toContain('result');
+    expect(states.slice(before)).not.toContain('neither');
+    expect(states.slice(before)).not.toContain('both');
+    const shown = screen.getByTestId('space-cards-result');
+    expect(offer()).toBeNull();
+    expect(shown.textContent).toBe(`Spaced ${CARDS} cards.`);
+    // The offer's own wrapper, classes (background, border, shadow) and measured size, ahead of the flow.
+    expect(shown.parentElement!.className).toBe(was.wrapper);
+    for (const name of was.section.split(' ')) expect(shown).toHaveClass(name);
+    expect(shown).toHaveStyle({ width: '392px', height: '129.5px' });
+    expect(shown.parentElement!.parentElement).toBe(canvas());
+    expect(
+      shown.compareDocumentPosition(screen.getByTestId('flow')) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Nothing to press, focus, select or hear: the canvas's one polite region says it, once.
+    expect(shown).toHaveClass('select-none');
+    expect(
+      shown.querySelectorAll('button, a, input, select, textarea, [tabindex], [role]'),
+    ).toHaveLength(0);
+    expect(shown).not.toHaveAttribute('tabindex');
+    expect(canvas().querySelectorAll('[aria-live]')).toHaveLength(1);
+    expect(shown.closest('[aria-live]')).toBeNull();
+    expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
+    expect(canvas()).toHaveFocus();
+    // One step and one fit, as without the result.
+    expect(labels()).toEqual(['space cards']);
+    expect(fitView).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows Suggestion dismissed. in the box for Dismiss, with no edit, save or step', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    const state = store();
+    await user.click(dismissButton());
+    expect(offer()).toBeNull();
+    expect(result()!.textContent).toBe('Suggestion dismissed.');
+    expect(result()).toHaveStyle({ width: '392px', height: '129.5px' });
+    expect(announced()).toBe('Suggestion dismissed.');
+    expect(canvas()).toHaveFocus();
+    expect(store()).toBe(state);
+  });
+
+  it('shows the refusal line when the store refuses an offer that retires in the same update, and none while the offer stays', async () => {
+    const user = userEvent.setup();
+    const view = render(<Live />);
+    // The click arrives in the update that moves the draft: the pile is gone when it renders.
+    act(() => {
+      store().moveNode('prep', { x: 5, y: 5 });
+      fireEvent.click(spaceButton(), { detail: 1 });
+    });
+    expect(offer()).toBeNull();
+    expect(result()!.textContent).toBe(
+      'Cards were not spaced: they are no longer all in one spot.',
+    );
+    expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
+    expect(labels()).toEqual(['move prep']);
+    expect(canvas()).toHaveFocus();
+    view.unmount();
+
+    // A canvas that still shows the stale offer replaces nothing, so it adds nothing.
+    act(() => store().load('L1', kitchenSinkLoop()));
+    render(<Canvas definition={store().definition!} issues={[]} />);
+    act(() => store().moveNode('prep', { x: 6, y: 6 }));
+    await user.click(spaceButton());
+    expect(result()).toBeNull();
+    expect(offer()).not.toBeNull();
+    expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
+  });
+
+  it('holds presses on it, plain, with Shift and as a double click, without preventing or stopping any event', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    act(() => store().select('prep'));
+    await user.click(spaceButton());
+    const shown = screen.getByTestId('space-cards-result');
+    const state = store();
+    const seen: { type: string; prevented: boolean }[] = [];
+    const record = (event: Event) =>
+      seen.push({ type: event.type, prevented: event.defaultPrevented });
+    for (const type of PRESSES) window.addEventListener(type, record);
+    try {
+      await user.dblClick(shown);
+      await user.keyboard('{Shift>}');
+      await user.dblClick(shown);
+      await user.keyboard('{/Shift}');
+    } finally {
+      for (const type of PRESSES) window.removeEventListener(type, record);
+    }
+    // Every kind of press reached the page's bubble phase, none cancelled.
+    expect(new Set(seen.map((event) => event.type))).toEqual(new Set(PRESSES));
+    expect(seen.some((event) => event.prevented)).toBe(false);
+    // And it did nothing: the result stays, the draft, selection, focus and announcement are as they were.
+    expect(result()).toBe(shown);
+    expect(store()).toBe(state);
+    expect(store().selectedNodeId).toBe('prep');
+    expect(canvas()).toHaveFocus();
+    expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
+  });
+
+  it('is not left by a keyboard or scripted activation: Enter, Space and a click with no detail retire the offer at once', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    for (const press of [
+      () => user.keyboard('{Enter}'),
+      () => user.keyboard('[Space]'),
+      () => fireEvent.click(document.activeElement!),
+    ]) {
+      act(() => store().load('L1', kitchenSinkLoop()));
+      act(() => spaceButton().focus());
+      await act(async () => press());
+      expect(offer()).toBeNull();
+      expect(result()).toBeNull();
+    }
+    act(() => store().load('L1', kitchenSinkLoop()));
+    act(() => dismissButton().focus());
+    fireEvent.click(dismissButton());
+    expect(offer()).toBeNull();
+    expect(result()).toBeNull();
+    expect(announced()).toBe('Suggestion dismissed.');
+  });
+
+  it('ends at the next pointerdown outside it, which goes on untouched, and not at one inside it', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    const show = async () => {
+      if (result() === null) {
+        act(() => store().load('L1', kitchenSinkLoop()));
+        await user.click(spaceButton());
+      }
+      return screen.getByTestId('space-cards-result');
+    };
+    const shown = await show();
+    fireEvent.pointerDown(shown, { button: 0 });
+    fireEvent.pointerDown(shown.firstElementChild!, { button: 0 });
+    expect(result()).toBe(shown);
+
+    const flowElement = screen.getByTestId('flow');
+    const arrivals: boolean[] = [];
+    flowElement.addEventListener('pointerdown', (event) => arrivals.push(event.defaultPrevented));
+    const presses = [
+      { button: 0 },
+      { button: 2 },
+      { button: 1 },
+      { button: 0, pointerType: 'touch' },
+      { button: 0, pointerType: 'pen' },
+    ];
+    for (const init of presses) {
+      await show();
+      fireEvent.pointerDown(flowElement, init);
+      expect(result()).toBeNull();
+    }
+    // Each press went on to the flow, never cancelled on the way.
+    expect(arrivals).toEqual(presses.map(() => false));
+    // Anywhere else on the page ends it too: the canvas's own root, and the page.
+    for (const target of [canvas(), document.body]) {
+      await show();
+      fireEvent.pointerDown(target, { button: 0 });
+      expect(result()).toBeNull();
+    }
+  });
+
+  it('is dropped when the offer returns or another draft loads, and kept through other edits of this one', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    await user.click(spaceButton());
+    expect(result()).not.toBeNull();
+    // Edits and the undo of one, within this load, keep it: it was no offer's place.
+    act(() => store().moveNode('prep', { x: 1, y: 1 }));
+    expect(result()).not.toBeNull();
+    act(() => store().undo());
+    expect(result()).not.toBeNull();
+    // The undo that brings the offer back takes it away, and a redo adds none.
+    act(() => store().undo());
+    expect(offer()).not.toBeNull();
+    expect(result()).toBeNull();
+    act(() => store().redo());
+    expect(offer()).toBeNull();
+    expect(result()).toBeNull();
+
+    // A load of a draft that is no pile drops it, and so does a load of one that is.
+    act(() => store().undo());
+    await user.click(spaceButton());
+    expect(result()).not.toBeNull();
+    const loop = kitchenSinkLoop();
+    act(() =>
+      store().load('L2', {
+        ...loop,
+        nodes: loop.nodes.map((node, index) => ({ ...node, ui: { x: index * 300, y: 0 } })),
+      }),
+    );
+    expect(offer()).toBeNull();
+    expect(result()).toBeNull();
+    act(() => store().load('L1', kitchenSinkLoop()));
+    await user.click(dismissButton());
+    expect(result()!.textContent).toBe('Suggestion dismissed.');
+    act(() => store().load('L1', kitchenSinkLoop()));
+    expect(offer()).not.toBeNull();
+    expect(result()).toBeNull();
+  });
+
+  it('stays until a press elsewhere, however long: no timer ends it', () => {
+    vi.useFakeTimers();
+    try {
+      render(<Live />);
+      fireEvent.click(spaceButton(), { detail: 1 });
+      expect(result()).not.toBeNull();
+      act(() => {
+        vi.advanceTimersByTime(60 * 60 * 1000);
+      });
+      expect(result()).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('listens on the document for one passive capture pointerdown only while it shows, and cleans up when it ends and on unmount', async () => {
+    const user = userEvent.setup();
+    const added = vi.spyOn(document, 'addEventListener');
+    const removed = vi.spyOn(document, 'removeEventListener');
+    const windowAdded = vi.spyOn(window, 'addEventListener');
+    const listeners = (spy: typeof added) =>
+      spy.mock.calls.filter(([type]) => type === 'pointerdown');
+    try {
+      const view = render(<Live />);
+      const baseline = listeners(added).length;
+      expect(listeners(removed)).toHaveLength(0);
+      await user.click(spaceButton());
+      const [, press, options] = listeners(added).at(-1)!;
+      expect(listeners(added)).toHaveLength(baseline + 1);
+      expect(options).toEqual({ capture: true, passive: true });
+      // Ending it removes that very listener; nothing else is left behind.
+      fireEvent.pointerDown(document.body);
+      expect(listeners(removed)).toEqual([['pointerdown', press, { capture: true }]]);
+      // The canvas's own gate stays the page's one window `mouseup` listener.
+      expect(windowAdded.mock.calls.filter(([type]) => type === 'mouseup')).toHaveLength(1);
+
+      act(() => store().undo());
+      await user.click(dismissButton());
+      expect(result()).not.toBeNull();
+      const second = listeners(added).at(-1)![1];
+      view.unmount();
+      expect(listeners(removed).at(-1)).toEqual(['pointerdown', second, { capture: true }]);
+      expect(listeners(added)).toHaveLength(baseline + 2);
+      expect(listeners(removed)).toHaveLength(2);
+    } finally {
+      added.mockRestore();
+      removed.mockRestore();
+      windowAdded.mockRestore();
+    }
+  });
+});
+
 describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
   const viewport = { x: 0, y: 0, zoom: 1 };
-  const dismissButton = () => screen.getByRole('button', { name: 'Dismiss suggestion' });
   /** xyflow's `onMove` for the first move of a mouse pan: the gate is `panning` from here. */
   const pan = () => act(() => flow().onMove!(new MouseEvent('mousemove'), viewport));
   /** A mouse release on the page, seen first by the canvas's one window listener. */
@@ -384,6 +691,32 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
     expect(fitView).not.toHaveBeenCalled();
   });
 
+  it('leaves no result for a pointer press the gate refuses, and one for the first press that acts', async () => {
+    const user = userEvent.setup();
+    const boxSpy = stubOfferBox();
+    try {
+      render(<Live />);
+      const state = store();
+      pan();
+      fireEvent.click(spaceButton(), { detail: 1 });
+      fireEvent.click(dismissButton(), { detail: 1 });
+      release();
+      fireEvent.click(spaceButton(), { detail: 1 });
+      expectGesture('settling');
+      expect(result()).toBeNull();
+      expect(offer()).not.toBeNull();
+      expect(store()).toBe(state);
+
+      await untilAvailable();
+      await user.click(spaceButton());
+      expect(offer()).toBeNull();
+      expect(result()!.textContent).toBe(`Spaced ${CARDS} cards.`);
+      expect(labels()).toEqual(['space cards']);
+    } finally {
+      boxSpy.mockRestore();
+    }
+  });
+
   it('uses the canvas’s one gate: no second window listener, detached with the canvas', () => {
     const add = vi.spyOn(window, 'addEventListener');
     const removeListener = vi.spyOn(window, 'removeEventListener');
@@ -482,6 +815,49 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
       } finally {
         detach();
       }
+    });
+
+    it('hands the canvas the offer’s measured box for a pointer click, and none for a keyboard or scripted one', () => {
+      const boxSpy = stubOfferBox();
+      try {
+        const gate = createViewportGestureGate();
+        const { onSpace, onDismiss } = offerOn(gate);
+        fireEvent.click(spaceButton(), { detail: 1 });
+        fireEvent.click(dismissButton(), { detail: 2 });
+        expect(onSpace).toHaveBeenLastCalledWith(OFFER_BOX);
+        expect(onDismiss).toHaveBeenLastCalledWith(OFFER_BOX);
+        // Enter, Space and `element.click()` report a detail of 0.
+        fireEvent.click(spaceButton());
+        fireEvent.click(dismissButton(), { detail: 0 });
+        expect(onSpace).toHaveBeenLastCalledWith(undefined);
+        expect(onDismiss).toHaveBeenLastCalledWith(undefined);
+        expect(onSpace).toHaveBeenCalledTimes(2);
+        expect(onDismiss).toHaveBeenCalledTimes(2);
+      } finally {
+        boxSpy.mockRestore();
+      }
+    });
+
+    it('shows its line in the given box, ends at a pointerdown outside only, and listens no more once gone', () => {
+      const onEnd = vi.fn();
+      const view = render(
+        <>
+          <SpaceCardsResult message="Done." box={{ width: 200, height: 60 }} onEnd={onEnd} />
+          <button type="button">Elsewhere</button>
+        </>,
+      );
+      const shown = screen.getByTestId('space-cards-result');
+      expect(shown).toHaveStyle({ width: '200px', height: '60px' });
+      expect(shown).toHaveTextContent('Done.');
+      fireEvent.pointerDown(shown);
+      fireEvent.pointerDown(within(shown).getByText('Done.'));
+      expect(onEnd).not.toHaveBeenCalled();
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Elsewhere' }));
+      fireEvent.pointerDown(document);
+      expect(onEnd).toHaveBeenCalledTimes(2);
+      view.unmount();
+      fireEvent.pointerDown(document.body);
+      expect(onEnd).toHaveBeenCalledTimes(2);
     });
 
     it('asks the gate again when pressed, so a rendered state that missed a pan still refuses', () => {

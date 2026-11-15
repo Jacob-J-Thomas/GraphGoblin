@@ -74,7 +74,7 @@ import { edgeLabelText } from './edge-label-text.js';
 import { loopBackEdgeIds } from './loop-back-edges.js';
 import { removalFocusTarget } from './canvas-focus.js';
 import { spaceCardsEligible } from './space-cards.js';
-import { SpaceCardsOffer } from './SpaceCardsOffer.js';
+import { SpaceCardsOffer, SpaceCardsResult, type OfferBox } from './SpaceCardsOffer.js';
 import { createViewportGestureGate } from './viewport-gesture.js';
 
 const nodeTypes = { gg: NodeCard };
@@ -931,6 +931,22 @@ export function Canvas({
   const pile = useMemo(() => spaceCardsEligible(definition), [definition]);
   const [dismissedOffer, setDismissedOffer] = useState<number>();
   const offered = pile && !moving && dismissedOffer !== generation;
+  // What a pointer press on the offer leaves in its box (#208): the result of the press, until the
+  // next press elsewhere, so a double click's second press lands on it and not on what the offer
+  // covered. Like a selected connection that is gone, it is dropped while rendering when the offer
+  // is back (undo) or the draft was loaded; a keyboard press leaves none.
+  const [offerResult, setOfferResult] = useState<{
+    message: string;
+    box: OfferBox;
+    generation: number;
+  }>();
+  if (offerResult && (offered || offerResult.generation !== generation)) setOfferResult(undefined);
+  const endOfferResult = useCallback(() => setOfferResult(undefined), []);
+  // The polite announcement says `spoken`, which defaults to what the result shows.
+  const report = (message: string, box: OfferBox | undefined, spoken = message) => {
+    announce(spoken);
+    if (box) setOfferResult({ message, box, generation: useEditorStore.getState().generation });
+  };
   // The one view fit that Space cards asks for: the draft it produced, kept until that draft has
   // rendered with every card measured (this passive effect runs after xyflow's own, which hands it
   // the new positions). Another edit, an undo or a load first drops it; no edit, undo or redo
@@ -949,7 +965,7 @@ export function Canvas({
   }, [definition, generation, measured, fitView]);
   // The store checks its current draft again, so a second press, a repeated key or an offer left
   // from an older render changes nothing.
-  const spaceAll = () => {
+  const spaceAll = (box: OfferBox | undefined) => {
     // xyflow measures each card's layout box, which zoom does not scale: flow pixels.
     const heights = new Map(Object.entries(measured).map(([id, size]) => [id, size.height]));
     const result = spaceCards(heights);
@@ -959,15 +975,16 @@ export function Canvas({
       const state = useEditorStore.getState();
       const spaced = state.definition!;
       spacedFitRef.current = { definition: spaced, generation: state.generation };
-      announce(`Spaced ${spaced.nodes.length} cards. Undo puts them back.`);
+      const shown = `Spaced ${spaced.nodes.length} cards.`;
+      report(shown, box, `${shown} Undo puts them back.`);
     } else {
-      announce('Cards were not spaced: they are no longer all in one spot.');
+      report('Cards were not spaced: they are no longer all in one spot.', box);
     }
   };
-  const dismissOffer = () => {
+  const dismissOffer = (box: OfferBox | undefined) => {
     setDismissedOffer(generation);
     rootRef.current?.focus();
-    announce('Suggestion dismissed.');
+    report('Suggestion dismissed.', box);
   };
 
   // A geometry-only update publishes edge channels without rendering the whole canvas again.
@@ -1045,6 +1062,13 @@ export function Canvas({
           viewport={gesture}
           onSpace={spaceAll}
           onDismiss={dismissOffer}
+        />
+      ) : null}
+      {offerResult ? (
+        <SpaceCardsResult
+          message={offerResult.message}
+          box={offerResult.box}
+          onEnd={endOfferResult}
         />
       ) : null}
       {flow}
