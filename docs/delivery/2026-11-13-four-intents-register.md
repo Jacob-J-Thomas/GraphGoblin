@@ -159,6 +159,12 @@ Root then integrated actual main `8fadcb0d` into `35bb3fbd`, freezing `da1681e4d
 
 This evidence publication changes no product, tests or build inputs after that source freeze. Final current-target CI, a fresh compiled native run of all 19 outcomes, and the independent whole-PR Astra max audit remain required. One of three formal scans is consumed; the planned final audit is scan 2. Owner acceptance on #237 remains separate and open.
 
+## Save and publish: actual-main native verification
+
+Independent native QA passed all 19 outcomes on their first execution across 14 isolated Edge/compiled-gateway/file-SQLite fixtures at `bf9f287652a23177b87488df110dfd6147acaad0`, tree `51f8676e5ed738377456f9c70a67d577248df202`, including actual main `8fadcb0d`. The 12-task forced build had zero cache hits. All 49 source paths, 17 embedded source-map modules and 1,227 distribution files matched before/after; live served bytes and all fixture cleanup checks passed. No driver/oracle corrections or uncaught browser errors occurred. Root read the complete report and inspected three screenshots. [Final actual-main native evidence](../qa/2026-11-14-publish-final-main-native/README.md)
+
+This publication preserves 102 exact raw files and a reviewed wrapper. Its changes are evidence and delivery metadata only; the tested source remains unchanged. The first push's CI runs 43655173378 and 43655173372 started before PR retargeting and checked merge `8ef92a63916b34552bb82e89a7f6d8f5a5e42df3` against the old parent branch at `b1810e03`, as their actual checkout logs establish. Their subsequently updated API base metadata does not make those current-target checks. The original results stay retained separately. The next publication must pass fresh CI against actual main before the independent Astra max whole-PR audit (scan 2 of 3). No gate is waived, and owner acceptance on #237 remains open.
+
 ## PR #478: corrected canvas stack and preserved native evidence
 
 The #207 source correction is frozen at `bc9094fd426fe1c1a4b81b0e490e3887f977dbc7`, tree `c8841e39d83bf292553d840de4bf3cadc6097824`, parent `64a95588`, on the save/publish stack `35bb3fbd`. Actual main has since advanced to #474's merge `8fadcb0d`; this source has not yet incorporated that final parent. No final-main acceptance is claimed.

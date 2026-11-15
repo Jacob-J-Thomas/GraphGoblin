@@ -1,0 +1,848 @@
+{
+  "origin": "http://127.0.0.1:53626",
+  "mapping": "237-review-corrected-native-v1",
+  "phase": "corrected",
+  "scenario": "f1",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36 Edg/157.0.0.0",
+  "outcomes": [
+    {
+      "active": "F1 healthy",
+      "variant": "healthy",
+      "oldOutcome": {
+        "failedReads": [
+          {
+            "seq": 16,
+            "type": "deliberately failed browser detail read",
+            "wallMs": 1794700289704,
+            "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7"
+          },
+          {
+            "seq": 19,
+            "type": "deliberately failed browser detail read",
+            "wallMs": 1794700289708,
+            "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7"
+          }
+        ]
+      },
+      "count": 2,
+      "conflict": false,
+      "server": {
+        "loop": {
+          "id": "01M7E7J93SYKRMQMH1N08G61J7",
+          "ownerId": "local",
+          "name": "Divergent retry healthy cbd8deca",
+          "description": "A1 acknowledged by the original editor",
+          "currentVersionId": "01M7E7J95C8R9ENBNFS9FZQDXE",
+          "createdAt": "2026-11-14T23:51:29.145Z",
+          "updatedAt": "2026-11-14T23:51:29.828Z"
+        },
+        "current": {
+          "id": "01M7E7J95C8R9ENBNFS9FZQDXE",
+          "loopId": "01M7E7J93SYKRMQMH1N08G61J7",
+          "version": 2,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry healthy cbd8deca",
+            "description": "A1 acknowledged by the original editor",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"v1\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:51:29.196Z",
+          "publishedAt": "2026-11-14T23:51:29.828Z"
+        },
+        "draftToken": "a6b15130471b11ec"
+      },
+      "publishedHistory": [
+        {
+          "id": "01M7E7J95C8R9ENBNFS9FZQDXE",
+          "loopId": "01M7E7J93SYKRMQMH1N08G61J7",
+          "version": 2,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry healthy cbd8deca",
+            "description": "A1 acknowledged by the original editor",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"v1\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:51:29.196Z",
+          "publishedAt": "2026-11-14T23:51:29.828Z"
+        },
+        {
+          "id": "01M7E7J93SYKRMQMH1N08G61J8",
+          "loopId": "01M7E7J93SYKRMQMH1N08G61J7",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Divergent retry healthy cbd8deca",
+            "description": "Exact older version",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {
+              "key": {
+                "type": "string",
+                "description": "Retain accepted variable metadata"
+              }
+            },
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 300,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "\"v1\"",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "connect",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-14T23:51:29.145Z",
+          "publishedAt": "2026-11-14T23:51:29.168Z"
+        }
+      ],
+      "state": {
+        "path": "/app/loops/01M7E7J93SYKRMQMH1N08G61J7/edit",
+        "title": "Divergent retry healthy cbd8deca",
+        "save": "All changes saved",
+        "description": "A1 acknowledged by the original editor",
+        "notices": [
+          {
+            "role": "status",
+            "text": "Published version 2.",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          },
+          {
+            "role": "status",
+            "text": "",
+            "links": []
+          }
+        ]
+      }
+    }
+  ],
+  "chronology": [
+    {
+      "seq": 1,
+      "type": "independent HTTP",
+      "wallMs": 1794700289158,
+      "method": "POST",
+      "path": "/loops",
+      "status": 201,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry healthy cbd8deca",
+          "description": "Exact older version",
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "kind": "trigger",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "config": {
+                "type": "manual"
+              }
+            },
+            {
+              "id": "done",
+              "kind": "exit",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "config": {
+                "returns": "\"v1\""
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 2,
+      "type": "independent HTTP",
+      "wallMs": 1794700289176,
+      "method": "POST",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/publish",
+      "status": 200
+    },
+    {
+      "seq": 3,
+      "type": "independent HTTP",
+      "wallMs": 1794700289183,
+      "method": "GET",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "status": 200
+    },
+    {
+      "seq": 4,
+      "type": "independent HTTP",
+      "wallMs": 1794700289206,
+      "method": "PUT",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/draft",
+      "status": 200,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry healthy cbd8deca",
+          "description": "A1 acknowledged by the original editor",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"v1\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "ifMatch": "\"dbaed5a876bbb4a1\""
+    },
+    {
+      "seq": 5,
+      "type": "bound browser entry",
+      "wallMs": 1794700289257,
+      "tag": "primary",
+      "path": "/app/assets/index-DBQ4wl7Y.js",
+      "status": 200
+    },
+    {
+      "seq": 6,
+      "type": "browser request",
+      "wallMs": 1794700289329,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 7,
+      "type": "browser response",
+      "wallMs": 1794700289334,
+      "requestSeq": 6,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "method": "GET"
+    },
+    {
+      "seq": 8,
+      "type": "browser request",
+      "wallMs": 1794700289511,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/validate",
+      "method": "POST",
+      "ifMatch": null,
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Divergent retry healthy cbd8deca",
+          "description": "A1 acknowledged by the original editor",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "key": {
+              "type": "string",
+              "description": "Retain accepted variable metadata"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 300,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "\"v1\"",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "connect",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seq": 9,
+      "type": "browser response",
+      "wallMs": 1794700289520,
+      "requestSeq": 8,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/validate",
+      "method": "POST"
+    },
+    {
+      "seq": 10,
+      "type": "browser validation result",
+      "wallMs": 1794700289524,
+      "requestSeq": 8,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/validate",
+      "issues": []
+    },
+    {
+      "seq": 11,
+      "type": "browser request",
+      "wallMs": 1794700289691,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 12,
+      "type": "barrier intercepted",
+      "wallMs": 1794700289692,
+      "label": "The first browser POST never reaches the gateway",
+      "order": "before",
+      "method": "POST",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/publish",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 13,
+      "type": "barrier dispatched",
+      "wallMs": 1794700289695,
+      "label": "The first browser POST never reaches the gateway"
+    },
+    {
+      "seq": 14,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794700289702,
+      "requestSeq": 11,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/publish"
+    },
+    {
+      "seq": 15,
+      "type": "browser request",
+      "wallMs": 1794700289703,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 16,
+      "type": "deliberately failed browser detail read",
+      "wallMs": 1794700289704,
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7"
+    },
+    {
+      "seq": 17,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794700289705,
+      "requestSeq": 15,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7"
+    },
+    {
+      "seq": 18,
+      "type": "browser request",
+      "wallMs": 1794700289708,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 19,
+      "type": "deliberately failed browser detail read",
+      "wallMs": 1794700289708,
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7"
+    },
+    {
+      "seq": 20,
+      "type": "browser request ended without HTTP response",
+      "wallMs": 1794700289712,
+      "requestSeq": 18,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7"
+    },
+    {
+      "seq": 21,
+      "type": "independent HTTP",
+      "wallMs": 1794700289775,
+      "method": "GET",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "status": 200
+    },
+    {
+      "seq": 22,
+      "type": "independent HTTP",
+      "wallMs": 1794700289781,
+      "method": "GET",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "status": 200
+    },
+    {
+      "seq": 23,
+      "type": "browser request",
+      "wallMs": 1794700289804,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 24,
+      "type": "barrier intercepted",
+      "wallMs": 1794700289804,
+      "label": "Known actual retry readback is held for observation",
+      "order": "after",
+      "method": "GET",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "ifMatch": null,
+      "data": null
+    },
+    {
+      "seq": 25,
+      "type": "barrier upstream response captured",
+      "wallMs": 1794700289810,
+      "label": "Known actual retry readback is held for observation",
+      "status": 200
+    },
+    {
+      "seq": 26,
+      "type": "barrier observer release",
+      "wallMs": 1794700289812,
+      "label": "Known actual retry readback is held for observation",
+      "drop": false
+    },
+    {
+      "seq": 27,
+      "type": "browser response",
+      "wallMs": 1794700289814,
+      "requestSeq": 23,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "method": "GET"
+    },
+    {
+      "seq": 28,
+      "type": "browser request",
+      "wallMs": 1794700289819,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/publish",
+      "method": "POST",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 29,
+      "type": "browser response",
+      "wallMs": 1794700289837,
+      "requestSeq": 28,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/publish",
+      "method": "POST"
+    },
+    {
+      "seq": 30,
+      "type": "browser request",
+      "wallMs": 1794700289839,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "method": "GET",
+      "ifMatch": null,
+      "body": null
+    },
+    {
+      "seq": 31,
+      "type": "browser response",
+      "wallMs": 1794700289846,
+      "requestSeq": 30,
+      "status": 200,
+      "tag": "primary",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "method": "GET"
+    },
+    {
+      "seq": 32,
+      "type": "independent HTTP",
+      "wallMs": 1794700289864,
+      "method": "GET",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7",
+      "status": 200
+    },
+    {
+      "seq": 33,
+      "type": "independent HTTP",
+      "wallMs": 1794700289875,
+      "method": "GET",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/versions/01M7E7J93SYKRMQMH1N08G61J8",
+      "status": 200
+    },
+    {
+      "seq": 34,
+      "type": "independent HTTP",
+      "wallMs": 1794700289880,
+      "method": "GET",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/versions/01M7E7J95C8R9ENBNFS9FZQDXE",
+      "status": 200
+    },
+    {
+      "seq": 35,
+      "type": "independent HTTP",
+      "wallMs": 1794700289886,
+      "method": "GET",
+      "path": "/loops/01M7E7J93SYKRMQMH1N08G61J7/versions",
+      "status": 200
+    }
+  ],
+  "checkpoints": [
+    {
+      "label": "Completed F1 healthy",
+      "path": "/app/loops/01M7E7J93SYKRMQMH1N08G61J7/edit",
+      "title": "Divergent retry healthy cbd8deca",
+      "save": "All changes saved",
+      "description": "A1 acknowledged by the original editor",
+      "notices": [
+        {
+          "role": "status",
+          "text": "Published version 2.",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        },
+        {
+          "role": "status",
+          "text": "",
+          "links": []
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "failures": []
+}
