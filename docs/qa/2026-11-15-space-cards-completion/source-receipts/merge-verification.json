@@ -1,0 +1,60 @@
+{
+  "at": "2026-11-15T10:26:52.915Z",
+  "result": {
+    "sha": "15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd",
+    "merged": true,
+    "message": "Pull Request successfully merged"
+  },
+  "pr": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482",
+    "number": 482,
+    "state": "closed",
+    "merged": true,
+    "mergeable": false,
+    "draft": false,
+    "body": "Part of #208. Owner product acceptance and closure remain on that issue.\n\nLoops created through an API, import or agent can open with every card at the origin. The editor now offers the owner's chosen **Space cards** action when at least two cards are at the origin and no connection has a saved manual route. Applying it spaces the cards in deterministic columns as one ordinary, undoable edit. Opening or editing a loop never arranges it implicitly, and intentionally positioned or routed graphs stay protected.\n\nOnly card positions change. The action rechecks the current draft, preserves all edges and other content, uses normal autosave/history and restores canvas focus. Pointer activation leaves a visible result in the offer's measured box so a second click cannot activate covered controls; the first outside press clears it and continues normally. Keyboard activation leaves no result panel. Both offer buttons follow the existing pan/node-drag availability gate.\n\nThe final fit is bound to the exact applied draft, generation and revision. It waits for valid measured bounds and viewport readiness, then updates the viewport synchronously through public APIs. An intervening edit, Undo or authoritative load cancels stale pending work. Ordinary opening and manual Fit keep their existing behavior.\n\nClaude Opus 5.5 xhigh owned UI design; Claude Sonnet 5.5 xhigh implemented the bounded helper, corrections and integration after GPT architecture review. GPT-6.1 Sol xhigh performed the independent opposite-family review and separate native QA.\n\n## Candidate and verification\n\nPublication head `e1237593babd4d03466b91685fc05dbe49223b2a`, target main `177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd`. Corrected product source is `b043d3b8baafdff742803ae46750c8664067f3c7`; later publication adds QA evidence and delivery metadata only.\n\n- **Review correction:** Sol scan 1 required correction of a queued-fit/Undo race. The original controlled native failure, complete review and root FIX-IN-PR disposition remain retained. [Review and disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482#issuecomment-6891219300) · [Design and negative evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/e1237593babd4d03466b91685fc05dbe49223b2a/docs/qa/2026-11-15-space-cards-queued-fit-correction-evidence/README.md)\n- **Implementation checks:** 409 focused tests in 21 files passed, including the unchanged three viewport cases that failed in original-head CI. Types, scoped lint and formatting passed. Controlled real-dependency and mutation evidence, its initial fixture failures, and the report-recovery qualification are retained. These are component results. [Implementation evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/e1237593babd4d03466b91685fc05dbe49223b2a/docs/qa/2026-11-15-space-cards-queued-fit-correction-implementation/README.md)\n- **Corrected native QA:** All four affected groups passed on b043: 194 checks, 33 accepted browser draft saves and one intentional real 409 conflict. A fresh build completed 12 tasks with zero cache hits; source, served assets and all 1,227 outputs matched. Five retained executions, including the original D1 fixture stop, cleaned up fully. The one fixture correction reads aria-disabled correctly; the original failure and exact change remain recorded under D-035, without consuming a formal scan. [Exact native evidence and limits](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/e1237593babd4d03466b91685fc05dbe49223b2a/docs/qa/2026-11-15-space-cards-corrected-native/README.md)\n- **Original CI:** the daa publication-head Gates job failed three existing Space viewport assertions (2,883 passed, 3 failed). Browser passed 481 with one declared live-provider skip and no retries; Windows 14, Template image and normal routing passed. Later gates skipped after coverage failure were not passes. No retry erased that result. [Original CI](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/e1237593babd4d03466b91685fc05dbe49223b2a/docs/qa/2026-11-15-space-cards-current-ci/README.md)\n\nThe earlier full web coverage and seven native groups remain evidence for their named earlier sources. **Corrected-head CI passed all five jobs on attempt 1:** [Gates, Browser, Windows and Template image](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43698926003) and [normal routing](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43698925969). The tested merge `2a3ae36fdd72ebceacbfbe2d4f21d5e10c75ad13` has parents main177f and publication e123, and its tree equals the publication tree. Coverage passed 9,567 tests with 41 declared skips across 13 packages; web passed 2,911 tests at 98.60% lines / 94.31% branches. Browser passed 481 with one declared live-provider skip and no retries; Windows passed 14. The configured high-severity dependency-audit gate passed with eight low and thirteen moderate advisories. Routing ran with strict mode off, so its passing result is not a 60 Hz claim.\n\n**Fresh Astra max final scan 2 of 3 returned SIGN-OFF** for exact e123/main177f. Root read the complete report and independently rechecked its evidence inventory, exact source/target and all five current CI results. Astra ran 245 focused tests in seven files and three independent synchronous viewport observations, all passing. The prior queued-fit blocker is resolved; no new blocker or follow-up was found. [Full final audit and root disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482#issuecomment-6892947230). Existing #479/#481 follow-ups remain separate.\n\nNative verification uses Windows Edge, compiled gateway and disposable file SQLite. Larger-text evidence uses a CSS root-size override and touch uses Chromium emulation. Physical input, actual browser text-size preferences, other engines and screen-reader speech are not established. Readability claims concern the Space offer/result/cards; the unchanged global header overflows in the 24 px screenshot. Corrected Edge is 157.0.4341.60; the original negative used .46.\n\n## Post-merge owner acceptance\n\nAfter the combined build is installed, record the build and observations on #208:\n\n- The explicit suggestion and its result feel clear and predictable.\n- Spacing is useful at the owner's usual window and text sizes.\n- Undo/Redo and continuing ordinary editing feel natural.\n\nMachine-verifiable geometry, data preservation, persistence, interaction and lifecycle checks remain pipeline responsibilities. This PR does not complete owner acceptance or close #208.",
+    "title": "Offer explicit undoable spacing for stacked cards",
+    "base": "main",
+    "base_sha": "177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd",
+    "head": "codex/gg-20261114-space-cards",
+    "head_sha": "e1237593babd4d03466b91685fc05dbe49223b2a",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": "15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-15T07:25:06Z",
+    "updated_at": "2026-11-15T10:26:05Z",
+    "closed_at": "2026-11-15T10:26:05Z",
+    "merged_at": "2026-11-15T10:26:05Z",
+    "commits": 11,
+    "changed_files": 2661,
+    "additions": 690432,
+    "deletions": 18,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482",
+    "display_title": "Offer explicit undoable spacing for stacked cards"
+  },
+  "gitReadback": {
+    "chunk_id": "b5cebc",
+    "wall_time_seconds": 6.1276756,
+    "exit_code": 0,
+    "original_token_count": 89,
+    "output": "From https://github.com/Jacob-J-Thomas/GraphGoblin\n * branch              main       -> FETCH_HEAD\n   177f3a7d..15ce9a1d  main       -> origin/main\n15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd\n57541f0423de585307f5d7db27923ddac41d7181\n177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd e1237593babd4d03466b91685fc05dbe49223b2a\n15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd\n"
+  },
+  "verifiedParents": [
+    "177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd",
+    "e1237593babd4d03466b91685fc05dbe49223b2a"
+  ],
+  "verifiedTree": "57541f0423de585307f5d7db27923ddac41d7181",
+  "auditedTreeEqual": true,
+  "ownerAcceptance": false
+}

@@ -1,0 +1,95 @@
+node v22.23.4
+startedUtc=2026-11-15T10:54:24.9569437Z
+pnpm.cmd --filter @graphgoblin/api test src/ollama-container.test.ts src/preflight-ollama.test.ts src/subloop-restart.test.ts src/cron-preview.test.ts --maxWorkers=1 --reporter=verbose --no-color
+$ vitest run src/ollama-container.test.ts src/preflight-ollama.test.ts src/subloop-restart.test.ts src/cron-preview.test.ts --maxWorkers=1 --reporter=verbose --no-color
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/apps/api
+
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+ ✓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > a hard kill around child completion leaves every parent one continuation after restart 36417ms
+ ✓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a child finished while down with one continuation per parent 10076ms
+ ✓ src/subloop-restart.test.ts > awaited subloops across process death (#242) > the built API recovers a parent interrupted mid-wake with one continuation per parent 9741ms
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama offline diagnostic from failing a Codex gateway 1199ms
+ × src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama off diagnostic from failing a Codex gateway 5832ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-oR7t9o\gateway.db'
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama ready diagnostic from failing a Codex gateway 173ms
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > accepts explicit Ollama-only readiness without a Codex login and diagnoses a selected offline service 191ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > fails a known missing model 3ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > fails a known unsupported model 2ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > checks owner enablement and exact effort without inventing a default 7ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > warns until discovery or migration, and diagnoses a missing selected harness 5ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > does not treat an empty Ollama defaults entry as a selected model 3ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > keeps explicit Codex defaults required and treats absent Codex as optional only for Ollama-only defaults 5ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses the current saved connection (enabled=false) instead of environment fallback without writes 148ms
+ × src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses the current saved connection (enabled=true) instead of environment fallback without writes 5675ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-qKCWJQ\gateway.db'
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > leaves a current saved Off connection and its active write-ahead log byte-for-byte unchanged 159ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses fallback for a missing database without creating it or running discovery 8ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses fallback for an absent singleton in a current store without inserting a row 2434ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing pending store with zero Ollama HTTP and zero writes 276ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing unsupported store with zero Ollama HTTP and zero writes 417ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing unreadable store with zero Ollama HTTP and zero writes 8ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > wires the native harness and supplies the canonical process connection fallback 781ms
+ × src/ollama-container.test.ts > Ollama composition lifecycle > retains the saved connection and disabled state over new process fallbacks after restart 240ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-container-petQrL\gateway.db'
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > starts discovery once after durable Chat setup without replacing an explicit harness fixture 91ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > stops discovery immediately during shutdown and retains SQLite until it has stopped 86ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > retains SQLite until a native service initialization already in progress has settled 91ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > does not restart discovery when shutdown was requested before storage startup 79ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > stops the service during failed-start teardown even before discovery was started 80ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > equals the scheduler across the March DST boundary without arming anything 1284ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > uses the server clock by default, supports seconds, and bounds the count 146ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"expression":"not cron"} 118ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"expression":""} 116ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"timezone":"Mars/Olympus"} 132ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > returns CRON_INVALID for {"timezone":""} 129ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":0} 133ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":11} 125ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"count":1.5} 113ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"from":"tomorrow"} 112ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > rejects malformed requests: {"unexpected":true} 102ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > keeps the CRON_INVALID field path on every admission endpoint (expression) 140ms
+ ✓ src/cron-preview.test.ts > cron preview endpoint > keeps the CRON_INVALID field path on every admission endpoint (timezone) 132ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/ollama-container.test.ts > Ollama composition lifecycle > retains the saved connection and disabled state over new process fallbacks after restart
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-container-petQrL\gateway.db'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-container-petQrL\gateway.db' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama off diagnostic from failing a Codex gateway
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-oR7t9o\gateway.db'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-oR7t9o\gateway.db' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses the current saved connection (enabled=true) instead of environment fallback without writes
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-qKCWJQ\gateway.db'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-qKCWJQ\gateway.db' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  3 failed | 38 passed (41)
+   Start at  04:54:25
+   Duration  89.34s (tests 87%, import 10%, transform 3%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261115-runtime\GraphGoblin\apps\api
+
+endedUtc=2026-11-15T10:55:55.2327681Z
+exit=1

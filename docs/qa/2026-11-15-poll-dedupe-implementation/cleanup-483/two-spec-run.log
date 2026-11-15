@@ -1,0 +1,35 @@
+$ vitest run src/ollama-container.test.ts src/preflight-ollama.test.ts --maxWorkers=1 --reporter=verbose --no-color
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/apps/api
+
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama offline diagnostic from failing a Codex gateway 1293ms
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama off diagnostic from failing a Codex gateway 282ms
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama ready diagnostic from failing a Codex gateway 315ms
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > accepts explicit Ollama-only readiness without a Codex login and diagnoses a selected offline service 209ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > fails a known missing model 20ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > fails a known unsupported model 18ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > checks owner enablement and exact effort without inventing a default 22ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > warns until discovery or migration, and diagnoses a missing selected harness 19ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > does not treat an empty Ollama defaults entry as a selected model 17ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > keeps explicit Codex defaults required and treats absent Codex as optional only for Ollama-only defaults 21ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses the current saved connection (enabled=false) instead of environment fallback without writes 177ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses the current saved connection (enabled=true) instead of environment fallback without writes 177ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > leaves a current saved Off connection and its active write-ahead log byte-for-byte unchanged 183ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses fallback for a missing database without creating it or running discovery 41ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses fallback for an absent singleton in a current store without inserting a row 282ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing pending store with zero Ollama HTTP and zero writes 293ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing unsupported store with zero Ollama HTTP and zero writes 112ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing unreadable store with zero Ollama HTTP and zero writes 22ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > wires the native harness and supplies the canonical process connection fallback 719ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > retains the saved connection and disabled state over new process fallbacks after restart 246ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > starts discovery once after durable Chat setup without replacing an explicit harness fixture 94ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > stops discovery immediately during shutdown and retains SQLite until it has stopped 99ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > retains SQLite until a native service initialization already in progress has settled 101ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > does not restart discovery when shutdown was requested before storage startup 102ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > stops the service during failed-start teardown even before discovery was started 93ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  05:10:04
+   Duration  13.23s (import 42%, tests 39%, transform 19%)
+

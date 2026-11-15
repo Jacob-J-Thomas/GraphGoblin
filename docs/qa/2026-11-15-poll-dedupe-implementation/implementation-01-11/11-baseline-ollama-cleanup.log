@@ -1,0 +1,82 @@
+node v22.23.4
+pnpm 12.8.1
+HEAD=e1237593babd4d03466b91685fc05dbe49223b2a
+tree=57541f0423de585307f5d7db27923ddac41d7181
+bindingSha256=08b5ef78cc21dc591067547d8ea906c6a049af2aefaff82f8b3b307b791910cb
+startedUtc=2026-11-15T11:00:11.6541964Z
+pnpm.cmd --filter @graphgoblin/api test src/ollama-container.test.ts src/preflight-ollama.test.ts --maxWorkers=1 --reporter=verbose --no-color
+$ vitest run src/ollama-container.test.ts src/preflight-ollama.test.ts --maxWorkers=1 --reporter=verbose --no-color
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin/apps/api
+
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama offline diagnostic from failing a Codex gateway 1180ms
+ × src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama off diagnostic from failing a Codex gateway 5769ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-UMySSL\gateway.db'
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama ready diagnostic from failing a Codex gateway 174ms
+ ✓ src/preflight-ollama.test.ts > system preflight with the native container harness map > accepts explicit Ollama-only readiness without a Codex login and diagnoses a selected offline service 176ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > fails a known missing model 4ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > fails a known unsupported model 3ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > checks owner enablement and exact effort without inventing a default 6ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > warns until discovery or migration, and diagnoses a missing selected harness 5ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > does not treat an empty Ollama defaults entry as a selected model 3ms
+ ✓ src/preflight-ollama.test.ts > selected Ollama model diagnostics > keeps explicit Codex defaults required and treats absent Codex as optional only for Ollama-only defaults 5ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses the current saved connection (enabled=false) instead of environment fallback without writes 207ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses the current saved connection (enabled=true) instead of environment fallback without writes 675ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > leaves a current saved Off connection and its active write-ahead log byte-for-byte unchanged 165ms
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses fallback for a missing database without creating it or running discovery 8ms
+ × src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses fallback for an absent singleton in a current store without inserting a row 5677ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-y16G2C\gateway.db'
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing pending store with zero Ollama HTTP and zero writes 1085ms
+ × src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing unsupported store with zero Ollama HTTP and zero writes 5624ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-92kcTQ\gateway.db-shm'
+ ✓ src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing unreadable store with zero Ollama HTTP and zero writes 9ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > wires the native harness and supplies the canonical process connection fallback 736ms
+ × src/ollama-container.test.ts > Ollama composition lifecycle > retains the saved connection and disabled state over new process fallbacks after restart 236ms
+   → EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-container-NCEuCY\gateway.db'
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > starts discovery once after durable Chat setup without replacing an explicit harness fixture 97ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > stops discovery immediately during shutdown and retains SQLite until it has stopped 93ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > retains SQLite until a native service initialization already in progress has settled 96ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > does not restart discovery when shutdown was requested before storage startup 87ms
+ ✓ src/ollama-container.test.ts > Ollama composition lifecycle > stops the service during failed-start teardown even before discovery was started 83ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/ollama-container.test.ts > Ollama composition lifecycle > retains the saved connection and disabled state over new process fallbacks after restart
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-container-NCEuCY\gateway.db'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-container-NCEuCY\gateway.db' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/preflight-ollama.test.ts > system preflight with the native container harness map > keeps unused Ollama off diagnostic from failing a Codex gateway
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-UMySSL\gateway.db'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-UMySSL\gateway.db' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > uses fallback for an absent singleton in a current store without inserting a row
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-y16G2C\gateway.db'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-y16G2C\gateway.db' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/preflight-ollama.test.ts > CLI Ollama source resolution is read-only > defers an existing unsupported store with zero Ollama HTTP and zero writes
+Error: EBUSY: resource busy or locked, unlink 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-92kcTQ\gateway.db-shm'
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\Users\98jak\AppData\Local\Temp\gg-ollama-preflight-92kcTQ\gateway.db-shm' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 21 passed (25)
+   Start at  05:00:12
+   Duration  32.79s (tests 69%, import 18%, transform 13%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261114-space-cards\GraphGoblin\apps\api
+
+endedUtc=2026-11-15T11:00:45.5555177Z
+dirtyEntriesAfter=0
+testExit=1

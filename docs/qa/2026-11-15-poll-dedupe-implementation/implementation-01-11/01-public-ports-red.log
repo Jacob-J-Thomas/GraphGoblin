@@ -1,0 +1,231 @@
+node v22.23.4 pnpm 12.8.1 HEAD 15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd tree 57541f0423de585307f5d7db27923ddac41d7181 System.Object[] pnpm.cmd --filter @graphgoblin/api test src/triggers/poll-items.test.ts src/triggers/poll-dedupe.test.ts --reporter=verbose --no-color
+$ vitest run src/triggers/poll-items.test.ts src/triggers/poll-dedupe.test.ts --reporter=verbose --no-color
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/apps/api
+
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > looks up depth-refused keys without admitting them or counting them toward the cap 14ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > validates every key before the single lookup and admits unseen candidates sequentially up to the default cap 4ms
+ × src/triggers/poll-items.test.ts > bounded poll item admission > does not pass repeated malformed identities to lookup or admission, and keeps later valid work 8ms
+   → Poll items are invalid: KEY_DUPLICATE
+ × src/triggers/poll-items.test.ts > bounded poll item admission > skips lookup and admission for a malformed-only observation 4ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        "private�",
+      ],
+    ]
+
+
+Number of calls: 1
+
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a wrong type key 3ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a blank key 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a overlong key 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a overlong and malformed key 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > preserves complete-batch validation for a duplicate well-formed key 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does no I/O for an empty set or any invalid key beyond the dispatch cap 2ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > stops at the first admission failure while preserving prior runs and leaves the tail for a later poll 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > does not consume the dispatch cap for an atomic key reservation found after lookup 1ms
+ ✓ src/triggers/poll-items.test.ts > bounded poll item admission > reports safe lookup failure without starting a run and skips fully seen sets 1ms
+ × src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a lone high surrogate before any lookup or admission 21ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "loop",
+      "poll",
+      "private-high�",
+    ]
+
+
+Number of calls: 1
+
+ × src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a lone low surrogate before any lookup or admission 2ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "loop",
+      "poll",
+      "private-low�",
+    ]
+
+
+Number of calls: 1
+
+ × src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a pair split by the 512-unit slice before any lookup or admission 1ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "loop",
+      "poll",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�",
+    ]
+
+
+Number of calls: 1
+
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for literal replacement character 2ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for complete pair at the boundary 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for independently supplied short prefix 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves the exact derived key for JSON stringification 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > skips a previously seen exact key 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves unkeyed admission for no expression 3ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves unkeyed admission for an undefined result 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves unkeyed admission for a null result 1ms
+ ✓ src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > preserves unkeyed admission for an empty result 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a lone high surrogate before any lookup or admission
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "loop",
+      "poll",
+      "private-high�",
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/triggers/poll-dedupe.test.ts:95:27
+     93|     );
+     94|
+     95|     expect(hasDedupe).not.toHaveBeenCalled();
+       |                           ^
+     96|     expect(startRun).not.toHaveBeenCalled();
+     97|     expect(runs).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a lone low surrogate before any lookup or admission
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "loop",
+      "poll",
+      "private-low�",
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/triggers/poll-dedupe.test.ts:95:27
+     93|     );
+     94|
+     95|     expect(hasDedupe).not.toHaveBeenCalled();
+       |                           ^
+     96|     expect(startRun).not.toHaveBeenCalled();
+     97|     expect(runs).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/triggers/poll-dedupe.test.ts > single-result poll dedupe identities > refuses a pair split by the 512-unit slice before any lookup or admission
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "loop",
+      "poll",
+      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx�",
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/triggers/poll-dedupe.test.ts:95:27
+     93|     );
+     94|
+     95|     expect(hasDedupe).not.toHaveBeenCalled();
+       |                           ^
+     96|     expect(startRun).not.toHaveBeenCalled();
+     97|     expect(runs).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/triggers/poll-items.test.ts > bounded poll item admission > does not pass repeated malformed identities to lookup or admission, and keeps later valid work
+PollItemsError: Poll items are invalid: KEY_DUPLICATE
+ ❯ preparePollItems ../../packages/domain/src/poll-items.ts:90:30
+     88|     if (typeof key !== 'string' || key.trim() === '' || key.length > 5…
+     89|       throw new PollItemsError('KEY_INVALID', 'items.dedupeKey', index…
+     90|     if (seen.has(key)) throw new PollItemsError('KEY_DUPLICATE', 'item…
+       |                              ^
+     91|     seen.add(key);
+     92|     result.push({
+ ❯ admitPollItems src/triggers/poll-items.ts:26:17
+ ❯ src/triggers/poll-items.test.ts:80:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'POLL_ITEMS_INVALID', details: { reason: 'KEY_DUPLICATE', path: 'items.dedupeKey', itemIndex: 5 }, reason: 'KEY_DUPLICATE', path: 'items.dedupeKey', itemIndex: 5 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/triggers/poll-items.test.ts > bounded poll item admission > skips lookup and admission for a malformed-only observation
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Array [
+        "private�",
+      ],
+    ]
+
+
+Number of calls: 1
+
+ ❯ src/triggers/poll-items.test.ts:108:26
+    106|     );
+    107|
+    108|     expect(findSeen).not.toHaveBeenCalled();
+       |                          ^
+    109|     expect(start).not.toHaveBeenCalled();
+    110|     expect(result).toEqual({
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 20 passed (25)
+   Start at  04:38:08
+   Duration  6.53s (import 66%, transform 33%, tests 1%)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+  Transform  transforming modules took 3.44s · 33% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261115-runtime\GraphGoblin\apps\api
+
+exit=1

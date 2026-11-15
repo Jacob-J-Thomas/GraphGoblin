@@ -1,0 +1,41 @@
+# #361 old native fixture admission
+
+The external scripts and wire inputs are frozen in SHA256SUMS. The JavaScript sources and PowerShell cleanup script passed parser-only checks. Read-only binding matched 1,691 raw production/build-input files, 1,227 outputs across 13 complete dist trees, 18 workspace resolution links, and the successful zero-cache build receipt. No product process, HTTP fixture, SQLite client, build, or runtime check ran in preparation.
+
+The frozen worktree is `C:\Users\98jak\.codex\worktrees\gg-20261114-space-cards\GraphGoblin`, commit `e1237593babd4d03466b91685fc05dbe49223b2a`, tree `57541f0423de585307f5d7db27923ddac41d7181`. Its successful Node 22.23.4 build is tied to `b043d3b8baafdff742803ae46750c8664067f3c7`, tree `c87fed2f00990e7ccb3728ab1935e3d75241f736`. The complete diff between them is QA evidence and register metadata. The independently recomputed source and bundled asset bytes matched the earlier native binding, including workspace links, schema/migration inputs and compiled poll, engine and SQLite modules. `binding-preparation.json` records the hashes and index SHA. Its origin/main observation was the pre-merge commit and provides preparation evidence only.
+
+## Execute after root grants admission
+
+After PR #482 is merged and its final-audit cleanup is confirmed, root supplies an independently verified current origin/main SHA. The read-only rebind requires the local tracking ref to agree with that SHA and its tree to equal `57541f0423de585307f5d7db27923ddac41d7181`. A different tree stops this exact build reuse. The driver repeats the rebind before startup and after closure, and retains the original source and output byte comparisons.
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+node --version
+Set-Location -LiteralPath 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\runtime-361-native'
+$admittedMain = '<root-verified merged main SHA>'
+node .\binding.mjs .\merged-main-binding.json $admittedMain
+# Proceed only after that rebind exits 0 and the frozen inputs still match SHA256SUMS.
+node .\run-old.mjs $admittedMain old-attempt-1
+$nativeExit = $LASTEXITCODE
+# Run after the supervisor process exits. This records cleanup even if runtime evidence is incomplete.
+& .\verify-cleanup.ps1 -Attempt old-attempt-1
+$cleanupExit = $LASTEXITCODE
+```
+
+The driver invokes the built API main entry with a process-local environment and a fresh `old-attempt-1\disposable-store\poll.sqlite`. The API and scripted probe each bind a kernel-allocated port on 127.0.0.1, refusing 4747/4748. Probe routes are `/qa361/items`, `/qa361/lone`, `/qa361/split`, `/qa361/valid` and `/qa361/unkeyed`. The only product graph is Poll → Exit. P1–P3 precede an ordinary drain and P4 follows a graceful same-file restart using the same published versions. P5 is the split target’s exact 511-unit prefix. Twenty-one distinct fire-true responses and individually timed inert barriers bound the observations. Unexpected timeout, startup, identity or persistence errors stop dependent actions. The fixture makes a best effort to drain its own gateway. If that fails, it may terminate only the direct child handle it created, marks the run incomplete, and preserves scratch for diagnosis. No silent retry is scheduled.
+
+## Old observations and evidence
+
+| Route | P1 | P2 | P3 | P4 on same file | P5 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Item cumulative runs | 7 | 11 | 14 | 18 | |
+| Single lone-unit cumulative runs | 1 | 2 | 3 | 4 | |
+| Single split-pair cumulative runs | 1 | 2 | 3 | 4 | 5 |
+| Single valid cumulative runs | 1 | 2 | 3 | 3 | |
+| Deliberately unkeyed cumulative runs | 1 | 2 | 3 | 4 | |
+
+Each item malformed key is expected to appear exactly once per poll with distinct run IDs, including a tail key. ASCII, a complete astral pair, and actual U+FFFD persist once each. Old P2 adds ASCII C, old P4 adds D, and no old list contains the duplicate malformed H or its exact replacement alias RH. The single target repeats high at P1/P3 and low at P2/P4. The original split input is well-formed 513-unit text. Its old stored 512-unit identity ends with a lone high surrogate, while P5 is an independently valid 511-unit key. Single valid controls persist literal U+FFFD and a complete pair ending at 512 units, plus ASCII, without admitting P4 again. Four unkeyed IDs omit the dedupeKey field.
+
+The database reader binds only fixture-owned loop IDs. It counts exact parsed UTF-16 code units and one `run.queued` event per initial-thread ID with matching payload. Separately recorded SQLite JSON-extracted hex is a storage witness. Files include raw JSON text and hex, response bytes, REST pages and samples, creation and exit receipts, the same-file and restart-arm evidence, and post-drain durable readbacks. Full verdict is per target, with any path that misses an observation qualified individually. The baseline makes no lookup-absence, current contract, fake/native equivalence or cross-process race claim.
+
+Only the external disposable directory is eligible for removal after both owned drain requests have exited, listeners and live PID ownership are resolved, the reader and HTTP source closed, and SQLite has no remaining locks or sidecars. The cleanup script checks resolved paths and reparse points, leaves partial attempts available for diagnosis, and records an audit before the run is handed off. Logs and reports avoid credentials, token fields and master-key contents. The prepared corrected wires include the repeated malformed candidate, RH, and the 7.1-second hold. Candidate execution and binding of fixed diagnostic names are pending review and separate authorization.

@@ -1,0 +1,861 @@
+{
+  "schema": "graphgoblin-independent-final-audit-v1",
+  "sealedAt": "2026-11-15T10:24:16.904Z",
+  "verdict": "SIGN-OFF: PR #482 at e1237593babd4d03466b91685fc05dbe49223b2a for target main at 177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd may merge.",
+  "role": {
+    "agent": "/root/audit_482_final",
+    "model": "gpt-6-astra",
+    "effort": "max",
+    "formalScan": 2,
+    "totalScanCap": 3,
+    "independentOfImplementationReviewAndNativeQA": true,
+    "subagentsUsed": false
+  },
+  "scope": {
+    "pr": 482,
+    "head": "e1237593babd4d03466b91685fc05dbe49223b2a",
+    "tree": "57541f0423de585307f5d7db27923ddac41d7181",
+    "target": "main",
+    "targetSha": "177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd",
+    "nativeSource": "b043d3b8baafdff742803ae46750c8664067f3c7",
+    "priorReviewedHead": "daa43634c8a093f2cde8239a3501ae4b6b14c112",
+    "effectiveFiles": 16,
+    "productionFiles": 4,
+    "testFiles": 7,
+    "behaviorDocuments": 5,
+    "productDeltaAfterNativeSource": [],
+    "testedMerge": {
+      "sha": "2a3ae36fdd72ebceacbfbe2d4f21d5e10c75ad13",
+      "tree": "57541f0423de585307f5d7db27923ddac41d7181",
+      "parents": [
+        "177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd",
+        "e1237593babd4d03466b91685fc05dbe49223b2a"
+      ]
+    }
+  },
+  "admission": {
+    "path": "root-green-ci-admission.json",
+    "sha256": "5d82928b5ab1523d771b52617fcdf85383b9c77d6b1a3d5204d14072c6956d61",
+    "status": "AUTHORIZED_FRESH_FINAL_AUDIT"
+  },
+  "finalIdentity": {
+    "path": "source-index-after.json",
+    "observedAt": "2026-11-15T10:17:07.121Z",
+    "head": "e1237593babd4d03466b91685fc05dbe49223b2a",
+    "base": "177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd",
+    "indexUnchanged": true,
+    "indexSha256": "d853666a5a6100e4a05b1838079b464d9a9e4eeac9b4e8ef33b8b1d6cb71b8ac",
+    "pr": {
+      "number": 482,
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/482",
+      "state": "open",
+      "draft": true,
+      "mergeable": true,
+      "mergeableState": "clean",
+      "head": "e1237593babd4d03466b91685fc05dbe49223b2a",
+      "base": "177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd"
+    },
+    "remoteRefs": {
+      "refs/heads/codex/gg-20261114-space-cards": "e1237593babd4d03466b91685fc05dbe49223b2a",
+      "refs/heads/main": "177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd",
+      "refs/pull/482/head": "e1237593babd4d03466b91685fc05dbe49223b2a",
+      "refs/pull/482/merge": "2a3ae36fdd72ebceacbfbe2d4f21d5e10c75ad13"
+    }
+  },
+  "findings": {
+    "blocking": [],
+    "newNonblocking": [],
+    "prior": [
+      {
+        "signature": "space-cards/queued-fit-acts-on-replacement-graph",
+        "severity": "P2",
+        "priorDisposition": "FIX-IN-PR",
+        "status": "RESOLVED",
+        "source": "apps/web/src/editor/Canvas.tsx:1151-1179",
+        "basis": "Captured definition/generation/revision checks followed in the same turn by nonanimated public setViewport; real dependency readiness/supersession cases and independent synchronous public-API probe."
+      }
+    ],
+    "parked": [
+      {
+        "issue": 479,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/479"
+      },
+      {
+        "issue": 481,
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/481"
+      }
+    ]
+  },
+  "acceptance": [
+    {
+      "criterion": "eligibility-explicit-only",
+      "status": "PASS",
+      "evidence": "space-cards.ts:23-36; Canvas.tsx:1115-1119; focused helper/store/EditorPage and corrected Apply/N768"
+    },
+    {
+      "criterion": "current-eligibility-geometry-only",
+      "status": "PASS",
+      "evidence": "store.ts:859-883; space-cards.ts:189-205; invalid-edge/reference preservation tests and native Apply"
+    },
+    {
+      "criterion": "one-history-revision-save-exact-undo-redo",
+      "status": "PASS",
+      "evidence": "store.ts:859-883; ordinary history/autosave/device path; D1 durable records"
+    },
+    {
+      "criterion": "deterministic-linear-topology-height",
+      "status": "PASS",
+      "evidence": "space-cards.ts:55-178; bounded traversal and independent 500-node/2000-edge/clearance oracles"
+    },
+    {
+      "criterion": "shared-gesture-keyboard-focus-announcement",
+      "status": "PASS_WITH_DECLARED_TIERS",
+      "evidence": "current real-library cases; historical native held Enter during pan"
+    },
+    {
+      "criterion": "one-positive-ready-measured-fit",
+      "status": "PASS",
+      "evidence": "Canvas.tsx:263-280,585-589,1151-1179; 44 mock and eight real-library cases"
+    },
+    {
+      "criterion": "supersession-cancellation-public-synchronous-commit",
+      "status": "PASS",
+      "evidence": "captured revision plus rendered/live identities; real readiness tests; three direct public setViewport observations"
+    },
+    {
+      "criterion": "measured-result-repeat-press-protection",
+      "status": "PASS_WITH_ACCEPTED_COST",
+      "evidence": "SpaceCardsOffer; corrected R512 native hit targets; old-screen-coordinate resize limitation"
+    },
+    {
+      "criterion": "outside-input-and-keyboard-result",
+      "status": "PASS_WITH_DECLARED_TIERS",
+      "evidence": "passive capture cleanup; current tests and selected unchanged historical native observations"
+    },
+    {
+      "criterion": "generation-dismiss-result-device-recovery",
+      "status": "PASS",
+      "evidence": "current source/tests; corrected D1 reload; historical device conflict/500 recovery"
+    },
+    {
+      "criterion": "docs-boundaries-gates",
+      "status": "PASS",
+      "evidence": "five behavior documents; no format/API/dependency/workflow/threshold change; all current jobs success"
+    }
+  ],
+  "commandsActuallyRun": [
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/web test src/editor/space-cards.test.ts src/editor/store.space-cards.test.ts src/editor/Canvas.space-cards.test.tsx src/editor/Canvas.space-cards.gate.test.tsx src/editor/Canvas.space-cards.fit.test.tsx src/editor/EditorPage.space-cards.test.tsx src/editor/Canvas.test.tsx --maxWorkers=1",
+      "node": "v22.23.4",
+      "attempts": 1,
+      "exit": 0,
+      "passed": 245,
+      "files": 7,
+      "durationSeconds": 85.36,
+      "log": "focused-first-run.log"
+    },
+    {
+      "command": "node synchronous-public-probe.cjs",
+      "attempts": 1,
+      "exit": 0,
+      "cases": 3,
+      "log": "synchronous-public-probe.log",
+      "tier": "real installed ReactFlow public API in jsdom; synthetic layout; no Canvas, browser painting, input, source mutation, or private store writes"
+    },
+    {
+      "command": "node verify-evidence.mjs",
+      "attempts": 2,
+      "exit": 0,
+      "firstResult": "first-evidence-integrity.json",
+      "log": "evidence-integrity.log",
+      "correction": "Classify the one known delivery-register publication metadata change explicitly; compare current bytes against HEAD."
+    },
+    {
+      "command": "node inspect-retained.mjs",
+      "attempts": 2,
+      "exit": 0,
+      "firstResult": "first-native-independent-readback.json",
+      "firstLog": "first-inspect-retained.log",
+      "log": "inspect-retained.log",
+      "correction": "Explicitly account for exactly three existing Add Script defaults in one request; strip ANSI terminal color before CI summary parsing."
+    },
+    {
+      "command": "node historical-readback.mjs",
+      "attempts": 1,
+      "exit": 0,
+      "log": "historical-readback.log",
+      "tier": "read-only parsing of historical native evidence"
+    },
+    {
+      "command": "node final-check.mjs",
+      "attempts": 1,
+      "exit": 0,
+      "log": "final-check.log"
+    },
+    {
+      "command": "pnpm.cmd exec prettier --write <external report.md>",
+      "attempts": 1,
+      "exit": 0,
+      "log": "report-format.log",
+      "mutates": "external report only"
+    },
+    {
+      "command": "git status/rev-parse/ls-files/diff/diff --check/ls-remote",
+      "exit": 0,
+      "purpose": "source, index, diff, and current remote identity verification"
+    },
+    {
+      "command": "gh api repos/Jacob-J-Thomas/GraphGoblin/{pulls/482,issues/208,git/ref/heads/main,actions/runs/43698926003,actions/runs/43698925969,their jobs,git/commits/2a3ae36fdd72ebceacbfbe2d4f21d5e10c75ad13}",
+      "exit": 0,
+      "purpose": "live read-only fallback after unavailable advertised connector"
+    }
+  ],
+  "ci": {
+    "workflowResults": [
+      {
+        "id": 43698926003,
+        "attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 132765496147,
+            "name": "Gates",
+            "status": "completed",
+            "conclusion": "success",
+            "attempt": 1,
+            "completed": "2026-11-15T09:48:04Z"
+          },
+          {
+            "id": 132765496370,
+            "name": "Template image",
+            "status": "completed",
+            "conclusion": "success",
+            "attempt": 1,
+            "completed": "2026-11-15T09:23:58Z"
+          },
+          {
+            "id": 132765496437,
+            "name": "Windows launcher",
+            "status": "completed",
+            "conclusion": "success",
+            "attempt": 1,
+            "completed": "2026-11-15T09:26:10Z"
+          },
+          {
+            "id": 132765496455,
+            "name": "Browser",
+            "status": "completed",
+            "conclusion": "success",
+            "attempt": 1,
+            "completed": "2026-11-15T09:51:08Z"
+          }
+        ]
+      },
+      {
+        "id": 43698925969,
+        "attempt": 1,
+        "status": "completed",
+        "conclusion": "success",
+        "jobs": [
+          {
+            "id": 132765496037,
+            "name": "routing",
+            "status": "completed",
+            "conclusion": "success",
+            "attempt": 1,
+            "completed": "2026-11-15T09:24:41Z"
+          }
+        ]
+      }
+    ],
+    "coverage": {
+      "packages": [
+        {
+          "name": "contracts",
+          "passed": 304,
+          "skipped": 0,
+          "lines": 99.4,
+          "branches": 94.73
+        },
+        {
+          "name": "domain",
+          "passed": 459,
+          "skipped": 0,
+          "lines": 98.73,
+          "branches": 96.08
+        },
+        {
+          "name": "engine",
+          "passed": 1795,
+          "skipped": 0,
+          "lines": 97,
+          "branches": 91.33
+        },
+        {
+          "name": "adapter-codex",
+          "passed": 641,
+          "skipped": 5,
+          "lines": 99.23,
+          "branches": 95.41
+        },
+        {
+          "name": "infrastructure",
+          "passed": 1149,
+          "skipped": 8,
+          "lines": 97.8,
+          "branches": 93.18
+        },
+        {
+          "name": "adapter-jev",
+          "passed": 34,
+          "skipped": 5,
+          "lines": 98.8,
+          "branches": 96.77
+        },
+        {
+          "name": "api-client",
+          "passed": 103,
+          "skipped": 0,
+          "lines": 100,
+          "branches": 97.3
+        },
+        {
+          "name": "api",
+          "passed": 1917,
+          "skipped": 20,
+          "lines": 95.77,
+          "branches": 90.55
+        },
+        {
+          "name": "mcp",
+          "passed": 62,
+          "skipped": 0,
+          "lines": 96.95,
+          "branches": 94.23
+        },
+        {
+          "name": "web",
+          "passed": 2911,
+          "skipped": 0,
+          "lines": 98.6,
+          "branches": 94.31
+        },
+        {
+          "name": "plugin-claude",
+          "passed": 8,
+          "skipped": 0,
+          "lines": 95,
+          "branches": 95.23
+        },
+        {
+          "name": "plugin-codex",
+          "passed": 9,
+          "skipped": 1,
+          "lines": 95.58,
+          "branches": 91.66
+        },
+        {
+          "name": "tooling",
+          "passed": 175,
+          "skipped": 2,
+          "lines": 96.89,
+          "branches": 91.67
+        }
+      ],
+      "passed": 9567,
+      "skipped": 41,
+      "minLines": 95,
+      "minBranches": 90.55,
+      "rawLogsChecked": [
+        "job-132765496147-gates.log",
+        "job-132765496455-browser.log",
+        "job-132765496437-windows-launcher.log",
+        "job-132765496370-template-image.log",
+        "job-132765496037-routing.log"
+      ],
+      "notes": [
+        "All five job logs name tested merge 2a3ae36fdd72ebceacbfbe2d4f21d5e10c75ad13.",
+        "Browser 481 passed, one declared live-provider skip, --retries=0 --workers=1.",
+        "Windows 14 passed and no matching native artifact upload; raw terminal log retained.",
+        "Normal routing only; frame p95 33.4-50 ms, not optional 17 ms strict acceptance.",
+        "Configured high severity audit passed with 8 low and 13 moderate advisories."
+      ]
+    },
+    "browser": {
+      "passed": 481,
+      "declaredLiveProviderSkipped": 1,
+      "retries": 0,
+      "workers": 1
+    },
+    "windows": {
+      "passed": 14,
+      "skipped": 0,
+      "uploadedNativeArtifact": false
+    },
+    "template": {
+      "loaded": 4
+    },
+    "routing": {
+      "groups": 2,
+      "strict": false,
+      "routingP95MediansMs": [
+        6.2,
+        5.4
+      ],
+      "frameP95Ms": [
+        33.4,
+        50,
+        33.4,
+        50,
+        49.9,
+        33.4
+      ],
+      "sixtyHzClaim": false,
+      "controlledBaseline": false
+    },
+    "securityAudit": {
+      "threshold": "high",
+      "low": 8,
+      "moderate": 13,
+      "gate": "PASS"
+    },
+    "logs": [
+      {
+        "path": "../corrected-ci/job-132765496147-gates.log",
+        "sha256": "f49869bac9cad21315a3aab58d5f9d1de734aa8f02d53dc71ce1226815681df3"
+      },
+      {
+        "path": "../corrected-ci/job-132765496455-browser.log",
+        "sha256": "b847521db2c2bf1fd9f6c9670afe0c6ad28a45e02edd24b99ea0d03fa0fcccef"
+      },
+      {
+        "path": "../corrected-ci/job-132765496437-windows-launcher.log",
+        "sha256": "015f440eb773c2455128c931aa2adb921cfd097e794f4708b5ee26600f2b0271"
+      },
+      {
+        "path": "../corrected-ci/job-132765496370-template-image.log",
+        "sha256": "38ca061179302cbc354c516bcd0235213f1f91f0581d4f873e32090e839459ed"
+      },
+      {
+        "path": "../corrected-ci/job-132765496037-routing.log",
+        "sha256": "84b5fa9eda172402d96b678f244630cf3e991cbe0ac76bb4de3c2661fe4f45ab"
+      }
+    ]
+  },
+  "nativeEvidence": {
+    "executedByThisAuditor": false,
+    "corrected": {
+      "source": "b043d3b8baafdff742803ae46750c8664067f3c7",
+      "groups": 4,
+      "checks": 194,
+      "rawRecords": 377,
+      "putAttempts": 34,
+      "acceptedPuts": 33,
+      "intentionalConflicts": 1,
+      "rawDefinitionsEquivalent": 32,
+      "declaredDefaultTransitions": 1,
+      "edgeVersion": "157.0.4341.60",
+      "record": "native-independent-readback.json"
+    },
+    "historical": {
+      "source": "af583977ef1ace8fa086eb54b0b66c38f263b1ef",
+      "groups": 7,
+      "checks": 310,
+      "acceptedPuts": 46,
+      "putAttempts": 48,
+      "scope": "unchanged gesture/result/keyboard/device evidence only; not a seven-group rerun on corrected head",
+      "record": "historical-native-independent-readback.json"
+    },
+    "nativeUndo": {
+      "fitCommittedMs": 560.5,
+      "trustedUndoMs": 574.2,
+      "precommitGapDirectlyInjected": false
+    },
+    "originalNegativeEdgeVersion": "157.0.4341.46"
+  },
+  "integrity": {
+    "record": "evidence-integrity.json",
+    "result": "PASS",
+    "manifestEntries": 1783,
+    "nativeCopyMapRecords": 708,
+    "recordedInputs": 1692,
+    "unchangedInputs": 1691,
+    "publicationMetadataExceptions": 1,
+    "buildOutputs": 1227,
+    "applicationSourceMaps": 35,
+    "dependencyAndAppChain": 6
+  },
+  "preservedFailures": [
+    "Scan1 accepted queued-fit product defect and original controlled native negative at daa.",
+    "Original daa CI web: 2883 passed and three failed; subsequent Gates steps skipped.",
+    "Implementation initial fixture/lint failures; old-production replay two relevant negatives plus four faulty visibility fixtures; mutation result 9/10.",
+    "Original R512 native fixture stop and earlier wrapper parse failure.",
+    "Corrected D1 initial wrong native-disabled observer; exact aria-disabled correction3 admitted under D035 behavior-QA exemption, without resetting formal scan cap.",
+    "Seven advertised GitHub connector calls unavailable to this agent; successful gh fallback.",
+    "Auditor first integrity comparator rejected known delivery metadata change; first files preserved.",
+    "Auditor first native parser flagged declared Add Script defaults and failed to parse ANSI-colored Tests summary; first files preserved."
+  ],
+  "residualLimits": [
+    "No owner product acceptance or issue/intent closure. #208 remains open.",
+    "Native corrected Undo follows committed fit; precommit cancellation is supported by controlled real-dependency tests and synchronous source/API proof.",
+    "Public API probe uses installed CommonJS ReactFlow and synthetic jsdom dimensions; deployed ESM is independently source/map-bound, not natively painted by this probe.",
+    "Original negative and corrected native Edge binaries differ.",
+    "CSS 24px root override is not actual browser text preference; coarse touch is emulation. Physical input, other engines and screen-reader speech unverified.",
+    "Historical native unavailable-gate observation uses trusted Enter during held mouse press; no separate unavailable pointer-click oracle.",
+    "Result rectangle intentionally covers content until outside press; later resize does not protect former screen coordinate.",
+    "Recovered detailed worker report lacks original digest; exact short summary and provenance erratum are distinct.",
+    "Routing strict mode off; frame p95 exceeds optional17ms target; no60Hz or baseline regression claim.",
+    "Declared CI skips, lower-severity advisories, absent Windows upload artifact retained."
+  ],
+  "ownership": {
+    "sourceChanged": false,
+    "indexChanged": false,
+    "buildChanged": false,
+    "ownerResourcesTouched": false,
+    "protectedPr460Touched": false,
+    "ports4747or4748Used": false,
+    "providersInvoked": false,
+    "publicationPerformed": false,
+    "heavySlotReleased": true,
+    "rootMustReadFullReportBeforePublication": true,
+    "ownerAcceptance": false
+  },
+  "report": {
+    "path": "report.md",
+    "sha256": "8ffa71cf11e8de4e084b6161c8af85492d0315254bf56a526c56a461aae7e81a",
+    "bytes": 27672
+  },
+  "artifacts": [
+    {
+      "path": "after-gh-ci-jobs.json",
+      "bytes": 14297,
+      "sha256": "da1953c6d23bf81b3ccc80f8147f9d29712128ab58fa210d1ef7f963b05539a1"
+    },
+    {
+      "path": "after-gh-ci-run.json",
+      "bytes": 13714,
+      "sha256": "62cc6c41a3d4d662cd0e29aa953449486f5274ebce98c8bd5ea1ddefd8432a44"
+    },
+    {
+      "path": "after-gh-main.json",
+      "bytes": 352,
+      "sha256": "b43a8ab2782bb49634b8246cfe42f5b2419077688e3a57560e447c6658d15ede"
+    },
+    {
+      "path": "after-gh-pr.json",
+      "bytes": 23082,
+      "sha256": "03dd1a569ab31c1c7a1b326974a559b28d820273d9474260bcd0d4395ce875c9"
+    },
+    {
+      "path": "after-gh-routing-jobs.json",
+      "bytes": 3244,
+      "sha256": "dfc1f57c62293bce0415871901540b4863123acf1973b463b2001eecb96a03b2"
+    },
+    {
+      "path": "after-gh-routing-run.json",
+      "bytes": 13741,
+      "sha256": "3ee17daf4c899947f9c2dfa55448a5fa6650c7338316306e54379922b8d6400d"
+    },
+    {
+      "path": "brief.md",
+      "bytes": 8803,
+      "sha256": "7dc1bb7ecf2da75ec18a4ccd205aacf483a870095c9410c0dbc9364494269154"
+    },
+    {
+      "path": "ci-independent-summary.json",
+      "bytes": 2401,
+      "sha256": "635c598ddfdcc6b2eded28311e07adb43c7c171ed0445f72a8ccfd5a38f59ecf"
+    },
+    {
+      "path": "correction-delta.diff",
+      "bytes": 86165,
+      "sha256": "e6c44bc184728b7ff73a3a87716b9482d89e6bd8bae8f28a178972e269fde03f"
+    },
+    {
+      "path": "effective-full-scope.diff",
+      "bytes": 253642,
+      "sha256": "13b080ef4c65299ca3bc84e4e8b5af48f326e3f3b2e5ae1744f2f63363e87b04"
+    },
+    {
+      "path": "evidence-integrity.json",
+      "bytes": 2895,
+      "sha256": "a22d0d42be416e920fbdd7f985d079f29b7802d94578bc8956a53f8ff731a734"
+    },
+    {
+      "path": "evidence-integrity.log",
+      "bytes": 2973,
+      "sha256": "020532b10707afb58c905126dd2154d2184b0df2958342c14372e201570a7257"
+    },
+    {
+      "path": "final-check-exit.json",
+      "bytes": 64,
+      "sha256": "c9f2cda8f77f6c22edaf97e2c23812bfe054f78991fc1afb52dc97df65e6a6aa"
+    },
+    {
+      "path": "final-check.log",
+      "bytes": 3182,
+      "sha256": "83aab65e0682c019d967b1a1d50bdc39cb9db95cd349e2e408be4f78197947f3"
+    },
+    {
+      "path": "final-check.mjs",
+      "bytes": 4312,
+      "sha256": "d8e8e337276d2e3446de3fea2f1aaaedb751a04eaf4c094e48f9de807a62fba5"
+    },
+    {
+      "path": "first-evidence-integrity.json",
+      "bytes": 2555,
+      "sha256": "2ac2a241778b9569cf0213afc29f4775cc550f1e0983b0863a76249cd8118471"
+    },
+    {
+      "path": "first-evidence-integrity.log",
+      "bytes": 2629,
+      "sha256": "2f9ac8a9b36f7f5d97787adcb37107903c4875e7cc757234d645eb4d530b611e"
+    },
+    {
+      "path": "first-inspect-retained.log",
+      "bytes": 641,
+      "sha256": "5c77a1c658930ef3ae3d5c4c74b591171ddeed35578f1ae2cd2246db88ce6431"
+    },
+    {
+      "path": "first-inspect-retained.mjs",
+      "bytes": 5327,
+      "sha256": "6ddda7e37a7ab042a13aca362a94bf823e4f409f132c9be04ffde8f26695d7ca"
+    },
+    {
+      "path": "first-native-independent-readback.json",
+      "bytes": 4597,
+      "sha256": "5825745fef54ba98a779d6297657f51afbbedb20ba2a33853dffcb359df9316d"
+    },
+    {
+      "path": "first-verify-evidence.mjs",
+      "bytes": 4912,
+      "sha256": "d6ee2d62e41b67d4a898fb71cfd2698bc48a80b34b43bbb27e6fb82a002c306b"
+    },
+    {
+      "path": "focused-first-run-exit.json",
+      "bytes": 60,
+      "sha256": "8c8cb5aa7ffb3cf96f46cea2869248337acee82953b359faef90046a08b3872f"
+    },
+    {
+      "path": "focused-first-run.log",
+      "bytes": 560,
+      "sha256": "a3de3f83dba470f4008aecb39b8b7c7a560e0ad40688e4b53057fe58b0ac2ccd"
+    },
+    {
+      "path": "gh-ci-jobs.json",
+      "bytes": 14297,
+      "sha256": "da1953c6d23bf81b3ccc80f8147f9d29712128ab58fa210d1ef7f963b05539a1"
+    },
+    {
+      "path": "gh-ci-run.json",
+      "bytes": 13714,
+      "sha256": "62cc6c41a3d4d662cd0e29aa953449486f5274ebce98c8bd5ea1ddefd8432a44"
+    },
+    {
+      "path": "gh-issue208.json",
+      "bytes": 12670,
+      "sha256": "721827f50b16bc63786db7c0ab2f16f6f3458d7cc4a1984495a44a5202c5e0e7"
+    },
+    {
+      "path": "gh-main.json",
+      "bytes": 352,
+      "sha256": "b43a8ab2782bb49634b8246cfe42f5b2419077688e3a57560e447c6658d15ede"
+    },
+    {
+      "path": "gh-pr.json",
+      "bytes": 22282,
+      "sha256": "0b891fdf775eec1a0dd9de14569dd6d9cd12f6e0c985f82a7d7aeea81dcd1e0a"
+    },
+    {
+      "path": "gh-routing-jobs.json",
+      "bytes": 3244,
+      "sha256": "dfc1f57c62293bce0415871901540b4863123acf1973b463b2001eecb96a03b2"
+    },
+    {
+      "path": "gh-routing-run.json",
+      "bytes": 13741,
+      "sha256": "3ee17daf4c899947f9c2dfa55448a5fa6650c7338316306e54379922b8d6400d"
+    },
+    {
+      "path": "gh-tested-merge.json",
+      "bytes": 2727,
+      "sha256": "3f9c44b40a3664aae51ac4c71d9a6f031fdd3347877b59d171e4844b3e107e58"
+    },
+    {
+      "path": "historical-native-independent-readback.json",
+      "bytes": 5809,
+      "sha256": "6adb36691d9c29b1be32019734ad74c45b820d8c390a182f5ec6b5d3aead1a5f"
+    },
+    {
+      "path": "historical-readback-exit.json",
+      "bytes": 64,
+      "sha256": "356cba9f5cba34940120840927fa6218fe0bea77b305aa5764533d517e0ce164"
+    },
+    {
+      "path": "historical-readback.log",
+      "bytes": 6054,
+      "sha256": "33246359783d395ae3c8e210e8ccfbc1fe993e40871250f1ff7ab20b7496d782"
+    },
+    {
+      "path": "historical-readback.mjs",
+      "bytes": 3580,
+      "sha256": "e6c31aab4bc2a6770d950e4b97c73e88850c7609f95b29cab09e9ad8e5ea1a4e"
+    },
+    {
+      "path": "independent-correction-delta.diff",
+      "bytes": 86165,
+      "sha256": "e6c44bc184728b7ff73a3a87716b9482d89e6bd8bae8f28a178972e269fde03f"
+    },
+    {
+      "path": "independent-effective-full-scope.diff",
+      "bytes": 253642,
+      "sha256": "13b080ef4c65299ca3bc84e4e8b5af48f326e3f3b2e5ae1744f2f63363e87b04"
+    },
+    {
+      "path": "index-before.txt",
+      "bytes": 3307935,
+      "sha256": "3bac114a02b04c86255b993e0f56d8a93e0071c2e08a162ad9612d616e958449"
+    },
+    {
+      "path": "inspect-retained-exit.json",
+      "bytes": 64,
+      "sha256": "78c8d8fb5e81222377cbf56449662462de582c7af88bab949fd48a951f79fbe6"
+    },
+    {
+      "path": "inspect-retained.log",
+      "bytes": 8495,
+      "sha256": "606443efc445feca5366200235ab5f0fc7218ddd92674b03e46981e883b30cee"
+    },
+    {
+      "path": "inspect-retained.mjs",
+      "bytes": 6407,
+      "sha256": "b397afbe5481a1e6314ef0417d71a12eb898cc36f9512659ed32bc76fb5ff7f7"
+    },
+    {
+      "path": "live-ci-jobs.json",
+      "bytes": 157,
+      "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737"
+    },
+    {
+      "path": "live-ci-run.json",
+      "bytes": 157,
+      "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737"
+    },
+    {
+      "path": "live-main.json",
+      "bytes": 157,
+      "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737"
+    },
+    {
+      "path": "live-pr.json",
+      "bytes": 157,
+      "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737"
+    },
+    {
+      "path": "live-routing-jobs.json",
+      "bytes": 157,
+      "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737"
+    },
+    {
+      "path": "live-routing-run.json",
+      "bytes": 157,
+      "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737"
+    },
+    {
+      "path": "live-tested-merge.json",
+      "bytes": 157,
+      "sha256": "7be08228495f8c7973f4b6a0d49bcf0665b22b45d97b702159267024df768737"
+    },
+    {
+      "path": "ls-remote-after.log",
+      "bytes": 260,
+      "sha256": "3bc8a5ef5c7fae785278b6d16fb4f295a8ac3ee65faa14dea2e549f2754e2dfa"
+    },
+    {
+      "path": "ls-remote-before.log",
+      "bytes": 264,
+      "sha256": "b79735baed9b9e7de0e6b076bdd37350bda16ad57a5e1a4e6a892420f5313b12"
+    },
+    {
+      "path": "native-independent-readback.json",
+      "bytes": 4946,
+      "sha256": "64fc3f739f1b56e97c751e14d51b57387cbb5b9e78013c3eda235f5dff577588"
+    },
+    {
+      "path": "report-format-exit.json",
+      "bytes": 64,
+      "sha256": "0b7345113fed731e9f58a1aff7410ff397eec5d066a5e6d2ef29be29300487af"
+    },
+    {
+      "path": "report-format.log",
+      "bytes": 101,
+      "sha256": "12b5a93386bac995bea787c0ee4791de5ecb296cedc75dc37102bdcfe3d6a98b"
+    },
+    {
+      "path": "report.md",
+      "bytes": 27672,
+      "sha256": "8ffa71cf11e8de4e084b6161c8af85492d0315254bf56a526c56a461aae7e81a"
+    },
+    {
+      "path": "root-ci-body-readback.json",
+      "bytes": 7547,
+      "sha256": "6b73238133f07bccccc02c6b9f884cd58c8de6e832b079549f1c73f9e19ae6aa"
+    },
+    {
+      "path": "root-green-ci-admission.json",
+      "bytes": 4284,
+      "sha256": "5d82928b5ab1523d771b52617fcdf85383b9c77d6b1a3d5204d14072c6956d61"
+    },
+    {
+      "path": "root-publication-comment.md",
+      "bytes": 28273,
+      "sha256": "d6fdd60ba4161694c07d4689e4e2521ba7e531c7a8570870933653ea6d76aa87"
+    },
+    {
+      "path": "seal.mjs",
+      "bytes": 12437,
+      "sha256": "fec9ddd47a5362c7150bdb1ba15049c42eac579cd6a3436a08777962837f1ae6"
+    },
+    {
+      "path": "source-identity.json",
+      "bytes": 4374,
+      "sha256": "1262edd9f950e66f5627994757c3308aa5a21f0e6a26dbaf8c9fb41fc36aac97"
+    },
+    {
+      "path": "source-index-after.json",
+      "bytes": 6414,
+      "sha256": "410dd7534c033742bcb816430cda74b1fed97fc1bf153fd5edd69beb3049f449"
+    },
+    {
+      "path": "source-index-before.json",
+      "bytes": 5235,
+      "sha256": "e2b7c0accc1d585ede41133e9df5ae7724e2e98c0e0bf9cbe52f768e87b9dc50"
+    },
+    {
+      "path": "synchronous-public-probe-exit.json",
+      "bytes": 60,
+      "sha256": "ae353b8bab5bd39c0c7125f34863baec4aef4513fe2bf359463d3fe6403e352d"
+    },
+    {
+      "path": "synchronous-public-probe.cjs",
+      "bytes": 3699,
+      "sha256": "9cb1afe09445ed781ec3b315d015f9a74607d4a2b185e24d74f3e194a68edb71"
+    },
+    {
+      "path": "synchronous-public-probe.json",
+      "bytes": 1007,
+      "sha256": "6b7582abd5c30294973d7e3231ac8ffdf240aeec0ac54b0f4fa8252ee0d43576"
+    },
+    {
+      "path": "synchronous-public-probe.log",
+      "bytes": 640,
+      "sha256": "3e6e6b525970de1670df225c694a82335772d7d1d8c8d0367515922264f6b4b9"
+    },
+    {
+      "path": "verify-evidence.mjs",
+      "bytes": 5531,
+      "sha256": "c78a575c37c434c55a06b2fc04e172af3978dfb2f26c0e16cdfd391b3b5653e3"
+    }
+  ]
+}

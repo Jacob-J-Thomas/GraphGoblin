@@ -69,6 +69,71 @@ describe('bounded poll item admission', () => {
     expect(result.runs.map((r) => r.id)).toEqual(['1', '3', '5', '7', '9']);
     expect(result.failedItemIndex).toBeUndefined();
   });
+
+  it('does not pass repeated malformed identities to lookup or admission, and keeps later valid work', async () => {
+    const high = 'distinct\uD800';
+    const low = 'low\uDC00';
+    const replacement = 'distinct\uFFFD';
+    const pair = 'astral\uD83D\uDE00';
+    const findSeen = vi.fn(() => Promise.resolve(new Set(['seen'])));
+    const start = vi.fn((item: { dedupeKey: string }) => Promise.resolve(run(item.dedupeKey)));
+    const result = await admitPollItems(
+      { ...config, dedupeKey: 'item.key', maxRunsPerPoll: 3 },
+      view([high, 'seen', 'ascii', low, replacement, high, pair, 'tail'].map((key) => ({ key }))),
+      { findSeen, start },
+    );
+
+    expect(findSeen).toHaveBeenCalledOnce();
+    expect(findSeen).toHaveBeenCalledWith(['seen', 'ascii', replacement, pair, 'tail']);
+    expect(start.mock.calls.map(([item]) => item.dedupeKey)).toEqual(['ascii', replacement, pair]);
+    expect(result).toEqual({
+      runs: ['ascii', replacement, pair].map(run),
+      rejections: [0, 3, 5].map((itemIndex) => ({
+        code: 'POLL_ITEM_REJECTED',
+        reason: 'MALFORMED_DEDUPE_KEY',
+        itemIndex,
+      })),
+    });
+  });
+
+  it('skips lookup and admission for a malformed-only observation', async () => {
+    const findSeen = vi.fn(() => Promise.resolve(new Set<string>()));
+    const start = vi.fn(() => Promise.resolve(run('never')));
+    const result = await admitPollItems(
+      { ...config, dedupeKey: 'item.key' },
+      view([{ key: 'private\uD800', value: 'private payload' }]),
+      { findSeen, start },
+    );
+
+    expect(findSeen).not.toHaveBeenCalled();
+    expect(start).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      runs: [],
+      rejections: [{ code: 'POLL_ITEM_REJECTED', reason: 'MALFORMED_DEDUPE_KEY', itemIndex: 0 }],
+    });
+  });
+
+  it.each([
+    { label: 'wrong type', key: 42, reason: 'KEY_INVALID' },
+    { label: 'blank', key: ' \t', reason: 'KEY_INVALID' },
+    { label: 'overlong', key: 'x'.repeat(513), reason: 'KEY_INVALID' },
+    { label: 'overlong and malformed', key: 'x'.repeat(512) + '\uD800', reason: 'KEY_INVALID' },
+    { label: 'duplicate well-formed', key: '\uFFFD', reason: 'KEY_DUPLICATE' },
+  ])('preserves complete-batch validation for a $label key', async ({ key, reason }) => {
+    const findSeen = vi.fn(() => Promise.resolve(new Set<string>()));
+    const start = vi.fn(() => Promise.resolve(run('never')));
+
+    await expect(
+      admitPollItems(
+        { ...config, dedupeKey: 'item.key', maxRunsPerPoll: 1 },
+        view([{ key: '\uFFFD' }, { key: '\uD800' }, { key }]),
+        { findSeen, start },
+      ),
+    ).rejects.toMatchObject({ code: 'POLL_ITEMS_INVALID', reason, itemIndex: 2 });
+    expect(findSeen).not.toHaveBeenCalled();
+    expect(start).not.toHaveBeenCalled();
+  });
+
   it('does no I/O for an empty set or any invalid key beyond the dispatch cap', async () => {
     const findSeen = vi.fn(() => Promise.resolve(new Set<string>()));
     const start = vi.fn(() => Promise.resolve(run('never')));

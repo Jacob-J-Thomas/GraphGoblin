@@ -12,7 +12,12 @@ export const POLL_ITEM_MAX_NESTING_DEPTH = 1000 - 4;
 export interface PollItemRejection {
   code: 'POLL_ITEM_REJECTED';
   itemIndex: number;
-  reason: 'NESTING_DEPTH_EXCEEDED';
+  reason: 'NESTING_DEPTH_EXCEEDED' | 'MALFORMED_DEDUPE_KEY';
+}
+
+export function isPollKeyWellFormed(key: string): boolean {
+  // Unicode mode sees a complete surrogate pair as one code point outside this range.
+  return !/[\uD800-\uDFFF]/u.test(key);
 }
 
 export function exceedsStoredJsonDepth(
@@ -36,6 +41,8 @@ export interface PreparedPollItem {
   dedupeKey: string;
   rejection?: PollItemRejection;
 }
+
+type PreparedPollCandidate = PreparedPollItem | { dedupeKey?: never; rejection: PollItemRejection };
 
 type ItemFailure =
   | 'SELECTOR_FAILED'
@@ -65,7 +72,7 @@ export class PollItemsError extends DomainError {
 export async function preparePollItems(
   config: PollItems,
   view: { now: string; probe: JsonValue },
-): Promise<PreparedPollItem[]> {
+): Promise<PreparedPollCandidate[]> {
   let selected: unknown;
   try {
     selected = await evaluateExpression(config.select, view);
@@ -74,11 +81,10 @@ export async function preparePollItems(
   }
   if (!Array.isArray(selected)) throw new PollItemsError('NOT_ARRAY', 'items.select');
   if (selected.length > 200) throw new PollItemsError('TOO_MANY_ITEMS', 'items.select');
-  const result: PreparedPollItem[] = [];
+  const result: PreparedPollCandidate[] = [];
   const seen = new Set<string>();
   for (const [index, candidate] of selected.entries()) {
     if (!isJsonValue(candidate)) throw new PollItemsError('ITEM_INVALID', 'items.select', index);
-    const tooDeep = exceedsStoredJsonDepth(candidate);
     let key: unknown;
     try {
       key = await evaluateExpression(config.dedupeKey, { ...view, item: candidate, index });
@@ -87,8 +93,19 @@ export async function preparePollItems(
     }
     if (typeof key !== 'string' || key.trim() === '' || key.length > 512)
       throw new PollItemsError('KEY_INVALID', 'items.dedupeKey', index);
+    if (!isPollKeyWellFormed(key)) {
+      result.push({
+        rejection: {
+          code: 'POLL_ITEM_REJECTED',
+          itemIndex: index,
+          reason: 'MALFORMED_DEDUPE_KEY',
+        },
+      });
+      continue;
+    }
     if (seen.has(key)) throw new PollItemsError('KEY_DUPLICATE', 'items.dedupeKey', index);
     seen.add(key);
+    const tooDeep = exceedsStoredJsonDepth(candidate);
     result.push({
       item: candidate,
       index,

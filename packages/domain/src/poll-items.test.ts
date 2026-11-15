@@ -23,6 +23,19 @@ describe('complete poll-items preparation', () => {
       ['later', undefined],
     ]);
   });
+  it('returns only a diagnostic for each malformed key, even on a depth-refused item', async () => {
+    let nested: JsonValue = null;
+    for (let i = 0; i < 1100; i += 1) nested = [nested];
+    const malformed = { key: 'private\uD800', nested };
+    const valid = { key: 'private\uFFFD' };
+    await expect(
+      preparePollItems(config(), { now, probe: [malformed, valid, malformed] }),
+    ).resolves.toEqual([
+      { rejection: { code: 'POLL_ITEM_REJECTED', reason: 'MALFORMED_DEDUPE_KEY', itemIndex: 0 } },
+      { item: valid, index: 1, dedupeKey: valid.key },
+      { rejection: { code: 'POLL_ITEM_REJECTED', reason: 'MALFORMED_DEDUPE_KEY', itemIndex: 2 } },
+    ]);
+  });
   it('keeps invalid or duplicate deep-item keys as whole-batch refusals', async () => {
     let nested: JsonValue = {};
     for (let i = 0; i < 5000; i += 1) nested = { child: nested };

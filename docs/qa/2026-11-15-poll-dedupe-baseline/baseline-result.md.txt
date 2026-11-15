@@ -1,0 +1,21 @@
+# #361 native baseline on merged main
+
+All 21 planned data-bearing requests reproduced the predeclared old behavior on merged main `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd` and tree `57541f0423de585307f5d7db27923ddac41d7181`. The frozen driver exited 0 in its first and only attempt. It served another 29 scheduled, inert requests. [Result](old-attempt-1/result.json) · [Probe bytes and timing](old-attempt-1/probe-requests.json)
+
+The built gateway came from the prior forced Node 22.23.4 build at `b043d3b8baafdff742803ae46750c8664067f3c7`. The frozen checkout `e1237593babd4d03466b91685fc05dbe49223b2a` had the same product input bytes as that build and the exact merged-main tree. Read-only binding checked 1,691 product/build inputs, 1,227 outputs across 13 trees and 18 workspace dependency links before and after. The two retained binding files have the identical SHA-256 `ea397ee1d9c127ce3a8022f2fcf260c6f2e204ba96a29954c2b73fa777ba12ce`. [Before](old-attempt-1/source-and-build.json) · [After](old-attempt-1/source-and-build-after.json)
+
+| Native timer target | P1 | P2 | P3 | P4 after restart | P5 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Items | 7 | 11 | 14 | 18 | |
+| Single lone units | 1 | 2 | 3 | 4 | |
+| Single split pair | 1 | 2 | 3 | 4 | 5 |
+| Single valid | 1 | 2 | 3 | 3 | |
+| Deliberate no key | 1 | 2 | 3 | 4 | |
+
+Item mode admitted each of the escaped lone high, lone low and final malformed keys once in every poll, with four distinct IDs per key. ASCII A/B/C/D, a complete astral pair and literal U+FFFD each persisted once. The single-result lone path admitted the same high key twice (P1/P3) and the same low key twice (P2/P4). The single-result split path admitted the exact malformed 512-unit slice of a valid 513-unit source four times. P5 admitted the independent original 511-unit prefix once. Single valid keys retained actual U+FFFD and the complete pair at the 512-unit boundary. Four provider-free unkeyed admissions omitted the dedupeKey field. [Item P4](old-attempt-1/old-items-P4-durable.json) · [Lone P4](old-attempt-1/old-lone-P4-durable.json) · [Split P4](old-attempt-1/old-split-P4-durable.json) · [Prefix P5](old-attempt-1/old-split-P5-durable.json)
+
+Every final fixture run ID had one SQLite `run.queued` row and a matching raw JSON initial thread (34 IDs). The comparisons count decoded JavaScript code units from those stored JSON values. SQLite JSON-extracted hex independently showed EDA080, EDB080 and EDA082 for the item surrogates, EDA083 and EDB083 for single lone units, EDA0BD for the sliced pair, and EFBFBD for genuine U+FFFD. All 21 paged REST lists matched durable IDs, and every sampled snapshot, thread and event read returned HTTP 200. Retained durable records remained stable after the final drain. This baseline establishes actual repeated admissions and their stored identities through one gateway scheduler. Lookup absence, corrected diagnostics, corrected overlap and cross-process admission belong to subsequent verification. [Post-drain SQLite](old-attempt-1/post-drain-readback.json) · [REST list and samples](old-attempt-1/old-items-P4-rest.json)
+
+Both API processes drained with HTTP 202 and exited 0 with no active runs at the control call. The restart retained the original file path, NTFS identity and original published targets without republish. The first same-file restart probes arrived 4.745–4.945 seconds after readiness and 62–248 ms after their recorded due times. [First restart requests](old-attempt-1/restart-first-due.json)
+
+The first cleanup exited nonzero because WAL and SHM remained after both gateways and the supervisor exited and all three ports had stopped listening. A separately authorized continuation verified that the DB, WAL and SHM could all be held concurrently with exclusive read handles, resolved the exact external scratch path, then removed that directory. The final audit found all three owned PIDs and listeners absent, with no disposable store or runtime files. The original cleanup record retains the sidecar failure and the subsequent cleanup has its own receipt. [First cleanup](old-attempt-1/cleanup.json) · [Cleanup continuation](old-attempt-1/cleanup-continuation.json)

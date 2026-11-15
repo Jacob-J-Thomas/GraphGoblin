@@ -35,6 +35,7 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   vi.restoreAllMocks();
+  globalThis.gc?.();
   await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 });
 function stubCli(

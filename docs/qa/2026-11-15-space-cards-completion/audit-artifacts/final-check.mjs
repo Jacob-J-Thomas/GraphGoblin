@@ -1,0 +1,53 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import assert from 'node:assert/strict';
+const root='C:/Users/98jak/.codex/worktrees/gg-20261114-space-cards/GraphGoblin';
+const out=path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/,'$1'));
+const json=name=>JSON.parse(fs.readFileSync(path.join(out,name),'utf8').replace(/^\uFEFF/,''));
+const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+const git=(...args)=>execFileSync('git',['--no-optional-locks',...args],{cwd:root,encoding:'utf8'}).trim();
+const head='e1237593babd4d03466b91685fc05dbe49223b2a';
+const base='177f3a7d57768c88f19c6bb4d8ef2b272c1e91bd';
+const tree='57541f0423de585307f5d7db27923ddac41d7181';
+const merge='2a3ae36fdd72ebceacbfbe2d4f21d5e10c75ad13';
+const before=json('source-index-before.json');
+const indexPath=git('rev-parse','--git-path','index');
+const indexSha256=digest(fs.readFileSync(indexPath));
+const status=git('status','--porcelain=v2','--branch').split(/\r?\n/);
+const files=before.files.map(f=>({path:f.path,sha256:digest(fs.readFileSync(path.join(root,f.path))),gitBlob:git('rev-parse',`HEAD:${f.path}`)}));
+assert.equal(git('rev-parse','HEAD'),head);
+assert.equal(git('rev-parse','HEAD^{tree}'),tree);
+assert.equal(indexSha256,before.indexSha256);
+assert.ok(status.every(l=>l.startsWith('#')));
+assert.equal(git('ls-files','--unmerged'),'');
+assert.equal(git('diff','--name-only'),'');
+assert.equal(git('diff','--cached','--name-only'),'');
+for(const f of files){const b=before.files.find(x=>x.path===f.path);assert.equal(f.sha256,b.sha256,f.path);assert.equal(f.gitBlob,b.gitBlob,f.path);}
+const nativeToPublication=git('diff','--name-only','b043d3b8baafdff742803ae46750c8664067f3c7','HEAD','--','.',':!docs/qa',':!docs/delivery');
+assert.equal(nativeToPublication,'');
+git('diff','--check',base,'HEAD','--','.',':!docs/qa',':!docs/delivery');
+const remote=git('ls-remote','origin','refs/heads/main','refs/heads/codex/gg-20261114-space-cards','refs/pull/482/head','refs/pull/482/merge');
+fs.writeFileSync(path.join(out,'ls-remote-after.log'),remote+'\n');
+const refs=Object.fromEntries(remote.split(/\r?\n/).map(l=>l.split(/\s+/).reverse()));
+assert.equal(refs['refs/heads/main'],base);
+assert.equal(refs['refs/heads/codex/gg-20261114-space-cards'],head);
+assert.equal(refs['refs/pull/482/head'],head);
+assert.equal(refs['refs/pull/482/merge'],merge);
+const pr=json('after-gh-pr.json'),target=json('after-gh-main.json');
+assert.equal(pr.head.sha,head);assert.equal(pr.base.sha,base);assert.equal(target.object.sha,base);
+assert.equal(pr.base.ref,'main');assert.equal(pr.state,'open');assert.equal(pr.mergeable,true);
+const workflowResults=[];
+for(const [label,id,count] of [['ci',43698926003,4],['routing',43698925969,1]]){
+ const run=json(`after-gh-${label}-run.json`),jobs=json(`after-gh-${label}-jobs.json`);
+ assert.equal(run.id,id);assert.equal(run.head_sha,head);assert.equal(run.status,'completed');assert.equal(run.conclusion,'success');assert.equal(run.run_attempt,1);
+ assert.equal(jobs.jobs.length,count);
+ for(const j of jobs.jobs){assert.equal(j.status,'completed');assert.equal(j.conclusion,'success');assert.equal(j.run_attempt,1);}
+ workflowResults.push({id,attempt:run.run_attempt,status:run.status,conclusion:run.conclusion,jobs:jobs.jobs.map(j=>({id:j.id,name:j.name,status:j.status,conclusion:j.conclusion,attempt:j.run_attempt,completed:j.completed_at}))});
+}
+const tested=json('gh-tested-merge.json');
+assert.equal(tested.sha,merge);assert.equal(tested.tree.sha,tree);assert.deepEqual(tested.parents.map(x=>x.sha),[base,head]);
+const after={at:new Date().toISOString(),node:process.version,result:'PASS',head,tree,base,indexPath,indexSha256,indexUnchanged:true,status,files,nativeToPublicationEffectivePaths:[],remoteRefs:refs,pr:{number:pr.number,url:pr.html_url,state:pr.state,draft:pr.draft,mergeable:pr.mergeable,mergeableState:pr.mergeable_state,head:pr.head.sha,base:pr.base.sha},testedMerge:{sha:merge,tree,parents:[base,head]},workflowResults};
+fs.writeFileSync(path.join(out,'source-index-after.json'),JSON.stringify(after,null,2)+'\n');
+console.log(JSON.stringify({...after,files:`${files.length} effective source/test/doc hashes and Git blobs unchanged`},null,2));

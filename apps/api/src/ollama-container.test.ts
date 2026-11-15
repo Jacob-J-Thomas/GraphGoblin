@@ -20,6 +20,7 @@ afterEach(async () => {
   vi.restoreAllMocks();
   await container?.stop();
   container = undefined;
+  globalThis.gc?.();
   await rm(dataDir, { recursive: true, force: true });
 });
 

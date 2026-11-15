@@ -1,0 +1,50 @@
+# #361 corrected QA preparation
+
+The corrected fixture and controlled-port drivers are prepared outside the repository. This v3 packet preserves both earlier corrected preparations as separate siblings. The behavioral inputs, diagnostic oracle and cleanup drivers are byte-identical to v2. The earlier baseline driver, wire manifest, first attempt and cleanup receipts remain frozen. The driver's JavaScript and PowerShell cleanup passed parser-only checks. Candidate build, proof commands and diagnostic names require the exact frozen candidate and explicit admission.
+
+## Candidate and input binding
+
+Use the dedicated runtime worktree at `C:\Users\98jak\.codex\worktrees\gg-20261115-runtime\GraphGoblin`. Pin the exact committed head/tree, origin/main and clean index. Wait for the genuine final receipt after coverage with HEAD `15ce9a1d` and twelve changed working files. The binding parses that receipt and its build log. It verifies exit 0, Node 22.23.4, seven successful tasks, zero cache, equal before/after source inventories, the exact twelve path names, and each recorded SHA-256 and Git blob against the frozen commit. The other tracked build inputs retain the baseline tree values and match their raw worktree blobs. It separately validates the eight selected build outputs from the final receipt and produces complete manifests for the seven runtime-output trees, plus workspace links and libsql identity. Frozen source equality determines reuse of these binaries across the commit.
+
+[Issue #483](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/483) records a pre-existing Windows SQLite test-cleanup defect reproduced on the unchanged baseline. The additional admitted inputs are `apps/api/src/ollama-container.test.ts` and `apps/api/src/preflight-ollama.test.ts`, whose cleanup hooks invoke garbage collection before removing their disposable stores. These paths add test provenance to the ten original #361 inputs. Final API coverage and the new literal receipt paths and hashes remain pending. The baseline's old artifacts and the earlier ten-input build receipt stay separate.
+
+Once the final build receipt and log exist, populate a new admission JSON from [admission.template.json](admission.template.json). Read the three diagnostic source paths named there at the frozen head before setting the warning values and recording their SHA-256. The template spells the code, reason and messages provisionally. After all build-changing gates have finished, run `binding.mjs` in `PREPARATION_ONLY` status to record the read-only `candidate-binding.json`. The root's separate rebind receipt must have `schema` set to `graphgoblin-361-build-source-rebind/v1` and the fields `head`, `tree`, `changed`, `trees` and `selectedOutputs` copied from that binding plus `buildReceiptSha256` set to the original build receipt digest. Root records that receipt's absolute path and digest in `freeze` and sets `status` to `CORRECTED_NATIVE_ADMITTED`. Each driver independently repeats the immutable checks before and after its own activity.
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+node --version
+Set-Location -LiteralPath 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\runtime-361-native\corrected-preparation-v3'
+node .\binding.mjs .\admission.json .\candidate-binding.json # Read-only, status PREPARATION_ONLY
+# Continue after the root's rebind receipt, explicit execution grant and manifest hash check.
+node .\run-corrected.mjs .\admission.json corrected-attempt-1
+$nativeExit = $LASTEXITCODE
+& .\verify-cleanup.ps1 -Attempt corrected-attempt-1
+$nativeCleanupExit = $LASTEXITCODE
+# These independent public boundaries require the same frozen candidate and admission.
+node .\run-ports.mjs .\admission.json ports-attempt-1
+$portsExit = $LASTEXITCODE
+node .\run-race.mjs .\admission.json race-attempt-1
+$raceExit = $LASTEXITCODE
+& .\verify-cleanup.ps1 -Attempt race-attempt-1
+$raceCleanupExit = $LASTEXITCODE
+```
+
+The native process runs once and records a first failure before any optional diagnosis. Complete each required safety and identity check before dependent work. The native and SQLite-race fixtures use separate external files, while the controlled ports open neither a gateway nor SQLite. No retry is included in these commands. The cleanup script treats any observed WAL/SHM presence as recorded filesystem state, acquires exclusive read handles on every present SQLite file at once, and then removes only a verified disposable store after the process exits. Locks, reparse points or live ownership cause a stop with the first result retained.
+
+## Corrected behavioral oracle
+
+| Native timer target | P1 | P2 | P3 | P4 after same-file restart | P5 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Item cumulative IDs | 4 | 6 | 6 | 7 | |
+| Single lone-unit IDs | 0 | 0 | 0 | 0 | |
+| Single split-pair IDs | 0 | 0 | 0 | 0 | 1 |
+| Single valid IDs | 1 | 2 | 3 | 3 | |
+| Intentional no-key IDs | 1 | 2 | 3 | 4 | |
+
+The shared frozen wire file includes corrected P2's repeated malformed high, malformed low, seen ASCII, exact literal replacement spelling RH and later ASCII C. Other item positives are ordinary ASCII, complete astral and literal U+FFFD. P5 admits the exact independently valid 511-unit prefix. All final 15 durable IDs require a matching queued event and stored JSON identity. Corrections in other systems are outside this fixture.
+
+The item P2 response remains open for 7.1 seconds. The schedule readback must pass the advanced due boundary while one HTTP request is open, the read-only SQLite result must retain only its pre-P2 IDs before release, and release must follow the advanced due time by at least one normal tick. Preserve actual request/release/completion and scheduled barrier timestamps. Require peak item in-flight count one, no second item request before release, the exact expected P2 admissions and later scheduler progress. This observation measures the public HTTP and readback timeline.
+
+The expected 20 warning records are 12 item warnings with exact per-observation candidate indices and eight single warnings across lone/split. Count the typed, bounded records between the observation and its later inert request for each loop. Check exact context, code, reason, message and field inventory. Synthetic key/body/other canary prefixes survive raw, JSON escaping and replacement spellings, so the log sieve checks all three representations. Successful candidate payloads remain in their separate durable evidence.
+
+The independent instrumented public-method driver verifies no malformed key reaches either lookup or start on item and single paths, and preserves direct validation failures, depth/seen/cap, fail-tail behavior and keyed/unkeyed controls. Its controlled collaborators give call evidence. The second independent driver concurrently submits two distinct IDs with one exact well-formed key through `SqliteTriggerAdmission.createPollItem` against a fresh SQLite file. It expects one success, one duplicate outcome, one durable run, one queued event, and one listener notification. This file-SQLite race covers the public adapter within one process.

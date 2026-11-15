@@ -1,0 +1,46 @@
+# #361 corrected verification
+
+Candidate `420240cad27d3865988dc7009dc9d80291e93c9c` and tree `75d6720f6cc7da85e04d9f17f8b96f40b94c4094` passed all 21 native behavior observations, 20 retained diagnostic checks, 20 controlled public-method checks, and one concurrent file-SQLite admission check. The original native supervisor exited 1 on its warning-correlation assertion. A separate offline readback resolved that assertion with the original first-run evidence. The native sequence ran once.
+
+## Exact source and build
+
+The final Node 22.23.4 API build ran at baseline HEAD `15ce9a1dd12e87b7f7cb5f853aaecf68d6188afd` with twelve working-file changes. The build log recorded seven successful tasks and zero cache. The final build receipt's before/after worktree records agree. The committed candidate diff contains those exact twelve path names, with matching raw SHA-256 and Git blobs on all twelve inputs. The read-only bindings account for 1,694 tracked inputs, 1,056 compiled outputs across seven runtime trees, and 18 workspace dependency links. They match before and after the native run. The two #483 inputs are Windows test cleanup hooks. The source/build rebind and exact warning source are recorded in the admitted configuration.
+
+| Record | SHA-256 |
+| --- | --- |
+| [V3 fixture manifest](SHA256SUMS) | `957458526b7231c6dcf3f3103502dd9348e277cb4036dc53ea06db497ee6cfcc` |
+| [Root admission and build receipt references](admission.json) | `27dd6040c1d605ff73de4da10c0e47c5a2a8fe7c86fd676413af21526edc3311` |
+| Final build receipt | `278cee67a28e810f7766c5325c8590a4e14b109f844bf7b66338f64373cbd8b6` |
+| [Before](corrected-attempt-1/source-and-build.json) and [after](corrected-attempt-1/source-and-build-after.json) source/build binding | `fb547ec5d2039ac902c9ae81b72a8cba1c26722a8a2b3779b9f388eeb32e99ec` |
+
+## Native scheduler and durable state
+
+| Route | P1 | P2 | P3 | P4 after same-file restart | P5 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Items | 4 | 6 | 6 | 7 | |
+| Single lone units | 0 | 0 | 0 | 0 | |
+| Single split pair | 0 | 0 | 0 | 0 | 1 |
+| Single valid | 1 | 2 | 3 | 3 | |
+| Intentional no key | 1 | 2 | 3 | 4 | |
+
+The scheduler served 21 data-bearing and 29 inert HTTP requests. ASCII A/B/C/D, the complete astral pair, literal replacement R and the exact replacement spelling RH each admitted once in item mode. All malformed item identities and the malformed single keys produced zero IDs. The split target admitted only the exact independently valid 511-unit prefix at P5. Valid single controls kept their exact U+FFFD and complete-pair identities. The four intentional unkeyed runs omitted the key field.
+
+The old and corrected phases use different planned item cases. The old P2 repeats the P1 sequence and appends C. Corrected P2 repeats malformed H in one batch, includes malformed L and seen A, then admits RH and later valid C. Corrected P3/P4 also retain RH. The recorded cumulative counts follow each phase's own declared inputs. [Old baseline](../baseline-result.md) · [Shared manifest with explicit phases](../wire-fixtures.json) · [Corrected P2 durable readback](corrected-attempt-1/corrected-items-P2-durable.json)
+
+All 15 final IDs had one SQLite `run.queued` event with an identical decoded initial thread. Counts use exact UTF-16 code units and key presence in the raw stored JSON. All 21 paged REST lists matched durable IDs. The 17 sampled snapshot/thread/events groups returned HTTP 200. Both gateways returned 202 for drain, reported zero active runs, and exited 0. Restart kept the file identity and published target versions, and the first due requests arrived 4.733–4.809 seconds after readiness. Final SQL readbacks after drain kept the expected IDs and queued events. [Native result](corrected-attempt-1/result.json) · [Durable after drain](corrected-attempt-1/post-drain-readback.json) · [Restart](corrected-attempt-1/restart-first-due.json)
+
+Item P2 held the real HTTP response open for 7,101.81 ms. The gateway had advanced its schedule, and while the response remained open the fixture read SQLite 116 ms after that due boundary. It still had exactly the four P1 IDs. The response released 2,104 ms after the advanced due. Peak item in-flight count was one, there was no second item request while held, and another scheduled request passed after release. The two expected P2 admissions persisted and later ticks, including restart, progressed. [Hold timeline](corrected-attempt-1/corrected-items-P2-hold.json)
+
+## Warning correlation and preserved first outcome
+
+Original supervisor session 53673 completed with exit 1. Its warning checker required a gateway's wall-clock timestamp to fall at or after a probe supervisor's separate reception wall-clock timestamp. Lone P3's warning in initial log line 164 and split P3's in line 165 each preceded that recorded reception by 1 ms. The preserved first result returned the assertion at lone P3, after all native observations and both ordinary drains had finished. [Original completion](diagnostic-reanalysis/original-session-completion.json) · [Original result](corrected-attempt-1/result.json)
+
+The offline check bound the original driver, input, result, and log hashes and used the gateway-reported `armed.nextPollAt` as the lower bound and the later inert request as the exclusive upper bound. It required exact gateway PID, loop ID, and trigger node. The 21 per-loop windows are disjoint and assign all 20 warnings once. The two disputed warnings arrived 30 and 31 ms after the gateway-reported due time. All 12 item warnings had the correct index, code `POLL_ITEM_REJECTED` and reason `MALFORMED_DEDUPE_KEY`. All eight single warnings had code `POLL_DEDUPE_KEY_INVALID` and the same reason. Every message and field inventory matched, record sizes were 221–229 bytes, and the entire captured logs contained zero synthetic payload canaries. The archive preserves the original exit and the distinct offline result. [Offline reader](diagnostic-reanalysis/read-warnings.mjs) · [Offline receipt](diagnostic-reanalysis/receipt.json)
+
+## Independent port and SQLite admission evidence
+
+All 20 controlled public-method checks passed. Item-only malformed input produced zero lookups and start calls. For mixed P2, only A/RH/C reached the seen lookup, and only RH/C reached admission. Type, blank, overlong and valid duplicate failure controls stopped the whole batch. Depth, seen-key and cap semantics remained intact. A failed lookup produced zero admission calls, and a failed admission stopped the tail. Single high, low and split identities performed zero lookups and starts. The direct interface preserved exact valid, seen, omitted, undefined, null and empty controls. This tier observes call arguments through controlled collaborators. [Public-method trace](ports-attempt-1/result.json)
+
+Two concurrent calls submitted distinct IDs and one exact well-formed key through `SqliteTriggerAdmission.createPollItem` to one real file-SQLite adapter. One call admitted a run and the other fulfilled with the duplicate outcome. SQLite retained only the winning row and its one queued event, with exact U+FFFD and astral code units. Only the winning ID received a queued notification. This exercises the adapter in one process. [File-SQLite race](race-attempt-1/result.json)
+
+The native cleanup and race cleanup each exited 0. Native cleanup verified all three PIDs and listeners absent and held the DB, WAL and SHM with simultaneous exclusive handles before removing the disposable directory. Race cleanup held its only SQLite file with an exclusive handle and removed its own directory. Both final audits verified no remaining owned resources. [Native cleanup](corrected-attempt-1/cleanup.json) · [Race cleanup](race-attempt-1/cleanup.json) · [Observed tool completions](execution-completions.json)
