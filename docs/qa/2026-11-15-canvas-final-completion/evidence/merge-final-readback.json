@@ -1,0 +1,110 @@
+{
+  "at": "2026-11-15T05:05:39.026Z",
+  "pr": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/478",
+    "number": 478,
+    "state": "closed",
+    "merged": true,
+    "mergeable": false,
+    "draft": false,
+    "body": "Part of #207. Owner acceptance and closure remain on that issue.\n\nConnections are authored on the canvas. Selecting a connection exposes Remove connection; Loop issues provides removal for unique stored connections whose endpoints or ports can no longer be drawn. Node dialogs retain declaration editing and connected-route confirmations. Their Connections section and keyboard creation form are removed, as approved in ADR-0076.\n\nThe final correction protects destructive actions from ambiguous IDs, stale selection, and mouse gestures still settling after a pan or node drag. A rapid second click that lands on a newly exposed Remove action preserves the graph. Reset route retains its control position after returning a route to automatic, so a second click cannot fall through to Remove. Separate clicks and keyboard actions remain available, with exact Undo boundaries.\n\nCandidate `48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6` targets actual main `41bde22c80a796bf8c4bec8ab5dec8e755271f9e`. The final metadata commit retains the tested product source from `dbc55454b224e350f7005cdaf58b8655c4b9e71e`.\n\nIndependent native QA completed fifteen product cases against the compiled API, file SQLite and exact built web assets. Coverage includes every supported output family, removal and recovery, duplicate-ID refusals, reload and hidden-port selection, drag/pan behavior, Reset/Undo, coarse input and protected Chat. All seventeen fixture launches closed cleanly; source/build hashes stayed unchanged. The first pan attempt remains inconclusive because it failed before recording its sampled trace. One bounded fixture-only diagnostic correction passed the unchanged input sequence and criteria. The optional OS mouse witness remains LIMITED at a display/DPI guard before native input; browser-injected input is not physical-device evidence. The two affected repository Edge E2Es independently passed first attempt, zero retries, using the source API/in-memory composition. [Current native and browser evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6/docs/qa/2026-11-15-canvas-final-native/README.md)\n\nClaude Opus 5.5 xhigh owned the UI designs and core corrections; Claude Sonnet 5.5 xhigh implemented the bounded double-click fixes. Reset's 115 focused tests and selection's final 125 focused tests, types, lint and formatting passed. Old-source and mutation controls establish the regressions. [Reset correction](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6/docs/qa/2026-11-15-canvas-reset-hold-implementation/README.md) · [Selection correction](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6/docs/qa/2026-11-15-canvas-selection-guard-implementation/README.md)\n\nAll five current-head jobs passed on their first attempts: [CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43676039784) and [routing](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43676039785). Browser recorded 481 passes and its one declared live-provider skip, with zero retries; Windows launcher acceptance passed 14/14. [Fresh independent Astra max review signed off](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/478#issuecomment-6889484381) on this exact head and target as formal scan 2 of the shared 3-scan budget. It independently passed 173 focused tests, verified source/build/evidence hashes and current CI, and found no blocking root cause. The root orchestrator read the full verdict and verified its evidence. The original negative findings and all fixture failures remain in the evidence; accepted duplicate-ID, stale-selection and node-drag findings have corrections with independent behavior evidence. Partial Fit view placement is deferred in #479; pre-existing Decision shared-ID port rewriting is deferred in #481. [Delivery record](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6/docs/delivery/2026-11-13-four-intents-register.md)\n\nPost-merge owner acceptance remains on #207: record the merged build and whether drawing, selecting, removing and recovering connections is understandable, and whether declaration editing and connected-route confirmations are discoverable. The removed modal keyboard creation path must be disclosed at acceptance. Machine-verifiable behavior remains a pipeline responsibility.",
+    "title": "Make the canvas the connection editor",
+    "base": "main",
+    "base_sha": "41bde22c80a796bf8c4bec8ab5dec8e755271f9e",
+    "head": "codex/gg-20261114-canvas",
+    "head_sha": "48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": "1cfca9bce3967c9d41950266c83aab636667e0ab",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-14T21:28:28Z",
+    "updated_at": "2026-11-15T05:02:49Z",
+    "closed_at": "2026-11-15T05:01:21Z",
+    "merged_at": "2026-11-15T05:01:21Z",
+    "commits": 13,
+    "changed_files": 1258,
+    "additions": 1277682,
+    "deletions": 402,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/478",
+    "display_title": "Make the canvas the connection editor"
+  },
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/207",
+    "title": "[I08/U23/B64] Make canvas the connection-editing surface",
+    "issue_number": 207,
+    "body": "<!-- graphgoblin-engineering-complete:2026-11-15 -->\n**Engineering delivered in [#478](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/478), merge `1cfca9bce3967c9d41950266c83aab636667e0ab`.** The merged tree equals the reviewed candidate. Claude owned the UI; independent GPT review and native QA corrected the discovered defects. Fresh Astra max signed off at exact head/target (scan 2 of 3), and all five current CI jobs passed first attempt. The first engineering criterion below is satisfied within the approved supported-browser scope. This issue stays open and is parked solely for owner product acceptance; historical dispatch text below is superseded for queue status.\n\n**Owner acceptance still pending:** exercise that merged build and record whether canvas drawing, selecting, removal and recovery are understandable, and whether declaration editing/connected-route confirmations are discoverable. The modal keyboard connection-creation path is removed (ADR-0076); broader accessibility/mobile parity remains deferred. Agent evidence does not complete owner acceptance.\n<!-- /graphgoblin-engineering-complete:2026-11-15 -->\n\n<!-- graphgoblin-routing:2026-11-14 -->\n**Owner routing update (2026-11-14):** Claude owns UI design and implementation; GPT independently adversarially reviews it. This issue routes to Claude Opus 5.5 xhigh implementation and GPT-6.1 Sol xhigh review, with separate behavior QA and the preserved fresh Astra max exact-head audit. Earlier GPT frontend proposals are unaccepted inputs for Claude to assess and own, not completed UI delivery. Model tier/effort stays proportional to each slice; smaller independent implementation work is delegated to faster agents. The older proposed routing below is historical.\n<!-- /graphgoblin-routing:2026-11-14 -->\n\nPart of #312\n\n<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for I08, the first lane, alongside the Claude plugin. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\n<!-- graphgoblin-approved-roadmap:2026-10-17:B64 -->\n\n<!-- graphgoblin-approved-revision:2026-10-18 -->\n\n**Owner-approved consolidated revision, 2026-10-18. Implementation remains held by #279.** Latest owner decisions in #278 supersede older proposals and historical comments. This approval authorizes backlog publication only; no implementation, owner-environment change, or provider run is dispatched.\n\nAuthority and complete owner decision record: #278. Current text supersedes older model proposals and historical scheduling/approval statements; comments remain historical evidence, not a competing current specification.\n\n## Bounded change\n\nMake canvas the connection-editing surface\n\n## Acceptance criteria\n\n- [x] Supported connections can be created, changed and removed on the canvas before the modal connection section is removed; no output-mapping capability is lost.\n\n- [ ] Preserve the owner's canvas-only connection choice across node types. Disclose the removed modal keyboard path at acceptance; broader accessibility work remains deferred and is not a new POC gate.\n\n## Verification\n\nComplete supported output inventory and browser operations; require accepted canvas conformance evidence even if #221 is unreproduced.\n\n## Dependencies\n\n- #221 — B62\n- #281 — X-EDITOR\n- #279 — implementation dispatch remains held.\n\n## Scope limits\n\nOnly the described behavior and its necessary tests/contracts/docs.\n\n## Delivery and closure\n\nApproved plan; parked pending explicit dispatch. Proposed implementer: GPT-6.1 Sol xhigh; independent reviewer: Claude Opus 5.5 xhigh; independent QA: GPT-6.1 Sol xhigh. QA scope: touched systems, including relevant positive, negative, concurrency, cancellation and restart cases. All tests use supported interfaces; retain existing coverage protections.\n\n**Owner product acceptance required before closure.** PRs use Part of rather than auto-closing this issue until the owner has accepted the running behavior.\n\nNo implementation gate labels are applied now. After later dispatch, select the repository gate consistent with owner-review requirements; never combine aidlc-ready and human-in-the-loop.\n\n## Source requirements\n\n#207\n\n## Specific owner feedback\n\n- The owner wants connections authored on the canvas for every node type and the Connections section removed from node dialogs. Verify complete create/change/remove coverage first. This does not reopen general UI redesign or make deferred mobile/accessibility expansion a POC requirement.\n",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:claude-opus-5.5",
+        "color": "0052CC",
+        "description": "Implementer: Claude Opus 5.5 (harder work), reasoning xhigh"
+      },
+      {
+        "name": "review:gpt-6.1-sol",
+        "color": "0E8A8A",
+        "description": "Cross-vendor reviewer: Codex gpt-6.1-sol"
+      },
+      {
+        "name": "type:ui-polish",
+        "color": "F9D0C4",
+        "description": "Visual or interaction polish"
+      },
+      {
+        "name": "area:editor",
+        "color": "BFDADC",
+        "description": "Loop editor canvas and node forms"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      },
+      {
+        "name": "kind:bolt",
+        "color": "1d76db",
+        "description": "Bounded deliverable with dependencies and acceptance"
+      }
+    ],
+    "milestone": 3,
+    "state_reason": null,
+    "comments": 3,
+    "created_at": "2026-10-16T00:24:25Z",
+    "updated_at": "2026-11-15T05:02:38Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/207",
+    "display_title": "[I08/U23/B64] Make canvas the connection-editing surface"
+  },
+  "auditReportSha256": "72d074e03fdb859dbd98d692f33ce6b836dbb1ab2c805dadda86ccea6da5a74f",
+  "mergeTree": "10fa2793ec1c2ee63e45143a40af5d6ba1a93f0b",
+  "parents": [
+    "41bde22c80a796bf8c4bec8ab5dec8e755271f9e",
+    "48dddb1af1239bbdddc7d7c9c8b0e47c0431c6c6"
+  ],
+  "sourceObjectVerification": "Root git show readback verified tree and both ordered parents.",
+  "auditComment": 6889484381,
+  "issueComment": 6889501515
+}
