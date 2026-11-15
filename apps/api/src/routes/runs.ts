@@ -10,6 +10,7 @@ import {
   RunStatusSchema,
   TimestampSchema,
   UlidSchema,
+  type ContextThread,
   type InvocationSource,
   type RunRecord,
 } from '@graphgoblin/contracts';
@@ -211,11 +212,33 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void 
       },
     },
     async (request, reply) => {
-      await ownedRun(request, request.params.id);
-      const thread =
-        request.query.at === undefined
-          ? await manager.getThread(request.params.id)
-          : await historicalThread(container, request.params.id, request.query.at);
+      const { id } = request.params;
+      const { at } = request.query;
+      let thread: ContextThread | undefined;
+      if (at === undefined) {
+        await ownedRun(request, id);
+        thread = await manager.getThread(id);
+      } else {
+        const response = reply.raw;
+        let closed = false;
+        const onClose = () => {
+          closed = true;
+        };
+        const isDisconnected = () => closed || response.destroyed;
+        // The outgoing response can still be live after the incoming GET has ended.
+        response.once('close', onClose);
+        try {
+          if (isDisconnected()) return reply.hijack();
+          await ownedRun(request, id);
+          thread = await historicalThread(container, id, at, isDisconnected);
+          if (isDisconnected()) return reply.hijack();
+        } catch (error) {
+          if (isDisconnected()) return reply.hijack();
+          throw error;
+        } finally {
+          response.off('close', onClose);
+        }
+      }
       if (!thread) return problem(reply, 404, 'THREAD_NOT_FOUND', 'the run has no thread');
       return thread;
     },
