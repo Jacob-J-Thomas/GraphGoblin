@@ -1,0 +1,546 @@
+control mutate detail-neq-1 started 2026-11-15T03:23:33Z
+node v22.23.4
+candidate backup sha256 df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7
+worktree sha256 before swap df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7
+wrote detail-neq-1 to C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web/src/editor/OrthogonalEdge.tsx
+worktree sha256 under test 649658647638a5609b5ded0739d4515fb88d491610ebee2e5bab18079900cd60
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (36 tests | 4 failed) 2524ms
+   ❯ OrthogonalEdge (19)
+     × offers Remove connection on every selected edge, keeping its keys from the edge and canvas (#207) 36ms
+     × keeps Reset route and Remove connection visibly unavailable while a mouse pan settles (#207) 32ms
+   ❯ Reset route keeps its toolbar where it was clicked (#207) (11)
+     × refuses on the pan gate first, holding nothing, and keeps Reset route unavailable after a pan settles 220ms
+   ❯ Remove connection ignores the later clicks of a double click (#207) (6)
+     × still removes on Enter, on Space and on element.click(), which the browser counts 0 51ms
+stderr | src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > refuses an id two connections hold from every Remove and from the keyboard, changing nothing
+Encountered two children with the same key, `start-work`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ❯ src/editor/Canvas.test.tsx (72 tests | 11 failed) 3963ms
+   ❯ manual edge routes (#44) (18)
+     × removes the selected connection from its toolbar in one undo step, then focuses Undo (#207) 64ms
+     × keeps the selection when the store refuses the removal, and focuses the canvas without a toolbar 28ms
+     × makes the toolbar unavailable from a mouse pan’s move until its release settles, and detaches on unmount (#207) 36ms
+   ❯ the selected connection is the one the user selected (#207) (27)
+     × refuses an id two connections hold from every Remove and from the keyboard, changing nothing 60ms
+     × does not carry the selection into a loaded draft whose connection has the same ends 36ms
+     × does not carry the selection into a loaded draft whose connection has other ends 34ms
+     × refuses Remove connection rendered for a connection that a load replaced before the canvas rendered again 30ms
+     × keeps the selection through moves, route, label and config edits that keep the ports, issue refreshes and Undo, then removes once 38ms
+     × makes the toolbar unavailable from a mouse drag of a card until its release settles; a touch drag never does 49ms
+     ❯ Reset route holds the selected connection’s toolbar where it was clicked (#207) (8)
+       × keeps the same two buttons through one Reset route on a loop-back, then removes once on purpose: one step each, two Undos 43ms
+       × keeps the same two buttons through one Reset route on a forward connection, then removes once on purpose: one step each, two Undos 34ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.test.tsx > manual edge routes (#44) > removes the selected connection from its toolbar in one undo step, then focuses Undo (#207)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/editor/Canvas.test.tsx:946:76
+    944|       select('start-work');
+    945|       fireEvent.click(handle('Remove connection'));
+    946|       expect(store().definition!.edges.some((e) => e.id === 'start-wor…
+       |                                                                            ^
+    947|       expect(labels()).toEqual(['remove edge start to work']);
+    948|       expect(undo).toHaveFocus();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > manual edge routes (#44) > keeps the selection when the store refuses the removal, and focuses the canvas without a toolbar
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'start-work' ]
+
+Number of calls: 0
+
+ ❯ src/editor/Canvas.test.tsx:967:23
+    965|       select('start-work');
+    966|       fireEvent.click(handle('Remove connection'));
+    967|       expect(refused).toHaveBeenCalledWith('start-work');
+       |                       ^
+    968|       expect(edge('start-work').selected).toBe(true);
+    969|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > manual edge routes (#44) > makes the toolbar unavailable from a mouse pan’s move until its release settles, and detaches on unmount (#207)
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/editor/Canvas.test.tsx:1010:74
+    1008|     await waitFor(() => expect(remove).not.toHaveAttribute('aria-disab…
+    1009|     fireEvent.click(remove);
+    1010|     expect(store().definition!.edges.some((e) => e.id === 'start-work'…
+       |                                                                          ^
+    1011|     expect(labels()).toEqual(['remove edge start to work']);
+    1012|     view.unmount();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > refuses an id two connections hold from every Remove and from the keyboard, changing nothing
+AssertionError: expected [ { id: 'start-work', …(2) }, …(3) ] to deeply equal [ { id: 'start-work', …(2) }, …(2) ]
+
+- Expected
++ Received
+
+@@ -27,6 +27,16 @@
+      "id": "check-done",
+      "to": {
+        "node": "done",
+      },
+    },
++   {
++     "from": {
++       "node": "done",
++       "port": "repeat",
++     },
++     "id": "return",
++     "to": {
++       "node": "work",
++     },
++   },
+  ]
+
+ ❯ src/editor/Canvas.test.tsx:1602:39
+    1600|       ),
+    1601|     );
+    1602|     expect(store().definition!.edges).toEqual(definition.edges.filter(…
+       |                                       ^
+    1603|     expect(labels()).toEqual(['remove edge done repeat to work']);
+    1604|     expect(undo).toHaveFocus();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > does not carry the selection into a loaded draft whose connection has the same ends
+AssertionError: expected [] to deeply equal [ 'remove edge start to work' ]
+
+- Expected
++ Received
+
+- [
+-   "remove edge start to work",
+- ]
++ []
+
+ ❯ src/editor/Canvas.test.tsx:1639:24
+    1637|       select('start-work');
+    1638|       fireEvent.click(screen.getByRole('button', { name: 'Remove conne…
+    1639|       expect(labels()).toEqual([`remove edge start to ${target}`]);
+       |                        ^
+    1640|       expect(undo).toHaveFocus();
+    1641|       act(() => store().undo());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > does not carry the selection into a loaded draft whose connection has other ends
+AssertionError: expected [] to deeply equal [ 'remove edge start to check' ]
+
+- Expected
++ Received
+
+- [
+-   "remove edge start to check",
+- ]
++ []
+
+ ❯ src/editor/Canvas.test.tsx:1639:24
+    1637|       select('start-work');
+    1638|       fireEvent.click(screen.getByRole('button', { name: 'Remove conne…
+    1639|       expect(labels()).toEqual([`remove edge start to ${target}`]);
+       |                        ^
+    1640|       expect(undo).toHaveFocus();
+    1641|       act(() => store().undo());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > refuses Remove connection rendered for a connection that a load replaced before the canvas rendered again
+AssertionError: expected '' to be 'That connection changed since it was …' // Object.is equality
+
+- Expected
++ Received
+
+- That connection changed since it was selected; nothing changed.
+
+ ❯ src/editor/Canvas.test.tsx:1764:22
+    1762|       untouched(replacement);
+    1763|       // Only the guard on the stale render says this: the action reac…
+    1764|       expect(said()).toBe(STALE);
+       |                      ^
+    1765|       expect(selected()).toEqual([]);
+    1766|       expect(store().selectedNodeId).toBe('work');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > keeps the selection through moves, route, label and config edits that keep the ports, issue refreshes and Undo, then removes once
+AssertionError: expected [] to deeply equal [ 'remove edge start to work' ]
+
+- Expected
++ Received
+
+- [
+-   "remove edge start to work",
+- ]
++ []
+
+ ❯ src/editor/Canvas.test.tsx:1861:22
+    1859|     expect(store().definition).toEqual(definition);
+    1860|     fireEvent.click(screen.getByRole('button', { name: 'Remove connect…
+    1861|     expect(labels()).toEqual(['remove edge start to work']);
+       |                      ^
+    1862|     expect(store().definition!.edges).toEqual(
+    1863|       definition.edges.filter((e) => e.id !== 'start-work'),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > makes the toolbar unavailable from a mouse drag of a card until its release settles; a touch drag never does
+AssertionError: expected [ 'move check' ] to deeply equal [ 'move check', …(1) ]
+
+- Expected
++ Received
+
+  [
+    "move check",
+-   "remove edge start to work",
+  ]
+
+ ❯ src/editor/Canvas.test.tsx:1898:22
+    1896|     await waitFor(() => expect(remove).not.toHaveAttribute('aria-disab…
+    1897|     fireEvent.click(remove);
+    1898|     expect(labels()).toEqual(['move check', 'remove edge start to work…
+       |                      ^
+    1899|   });
+    1900|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Reset route holds the selected connection’s toolbar where it was clicked (#207) > keeps the same two buttons through one Reset route on a loop-back, then removes once on purpose: one step each, two Undos
+AssertionError: expected [ Array(1) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    "reset route of done repeat to work",
+-   "remove edge done repeat to work",
+  ]
+
+ ❯ src/editor/Canvas.test.tsx:1981:26
+    1979|         // A deliberate click on Remove connection removes once, in a …
+    1980|         fireEvent.click(remove);
+    1981|         expect(labels()).toEqual([MANUAL[id].reset, REMOVE[id]]);
+       |                          ^
+    1982|         expect(store().definition!.edges.some((e) => e.id === id)).toB…
+    1983|         expect(selected()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Reset route holds the selected connection’s toolbar where it was clicked (#207) > keeps the same two buttons through one Reset route on a forward connection, then removes once on purpose: one step each, two Undos
+AssertionError: expected [ 'reset route of start to work' ] to deeply equal [ Array(2) ]
+
+- Expected
++ Received
+
+  [
+    "reset route of start to work",
+-   "remove edge start to work",
+  ]
+
+ ❯ src/editor/Canvas.test.tsx:1981:26
+    1979|         // A deliberate click on Remove connection removes once, in a …
+    1980|         fireEvent.click(remove);
+    1981|         expect(labels()).toEqual([MANUAL[id].reset, REMOVE[id]]);
+       |                          ^
+    1982|         expect(store().definition!.edges.some((e) => e.id === id)).toB…
+    1983|         expect(selected()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > offers Remove connection on every selected edge, keeping its keys from the edge and canvas (#207)
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'return' ]
+
+Number of calls: 0
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:443:28
+    441|     // The edge wrapper never sees the click (it would select the remo…
+    442|     fireEvent.click(remove);
+    443|     expect(editing.remove).toHaveBeenCalledWith('return');
+       |                            ^
+    444|     expect(onClick).not.toHaveBeenCalled();
+    445|     // A manual route that crosses a card: the note, Reset route, then…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > OrthogonalEdge > keeps Reset route and Remove connection visibly unavailable while a mouse pan settles (#207)
+Error: expect(element).toHaveFocus()
+
+Expected element with focus:
+  <button
+  aria-disabled="true"
+  class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+  data-gesture="panning"
+  type="button"
+>
+  <span
+    class="min-w-0 overflow-x-clip text-ellipsis"
+  >
+    Remove connection
+  </span>
+</button>
+Received element with focus:
+  <g
+  class="react-flow__edge"
+  data-testid="edge"
+  tabindex="0"
+>
+  <title>
+    loopBack
+  </title>
+  <path
+    class="react-flow__edge-path"
+    d="M 100 0 L 122 0 Q 130 0 130 8 L 130 172 Q 130 180 122 180 L -12 180 Q -20 180 -20 172 L -20 48 Q -20 40 -12 40 L 0 40"
+    fill="none"
+    id="return"
+  />
+  <path
+    class="react-flow__edge-interaction"
+    d="M 100 0 L 122 0 Q 130 0 130 8 L 130 172 Q 130 180 122 180 L -12 180 Q -20 180 -20 172 L -20 48 Q -20 40 -12 40 L 0 40"
+    fill="none"
+    stroke-opacity="0"
+    stroke-width="20"
+  />
+  <g
+    class="react-flow__edge-textwrapper"
+    transform="translate(27 174.5)"
+    visibility="visible"
+  >
+    <rect
+      class="react-flow__edge-textbg"
+      height="17"
+      rx="9"
+      ry="9"
+      width="72"
+      x="-8"
+      y="-3"
+    />
+    <text
+      class="react-flow__edge-text"
+      dy="0.3em"
+      y="5.5"
+    >
+      loopBack
+    </text>
+  </g>
+  <g
+    class="gg-route-handles"
+  >
+    <g
+      aria-description="Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowUp ArrowDown"
+      aria-label="Route segment 1 of 5, horizontal"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-y"
+      data-segment="1"
+      role="button"
+      tabindex="0"
+      transform="translate(115 0) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      aria-description="Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowLeft ArrowRight"
+      aria-label="Route segment 2 of 5, vertical"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-x"
+      data-segment="2"
+      role="button"
+      tabindex="0"
+      transform="translate(130 90) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      aria-description="Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowUp ArrowDown"
+      aria-label="Route segment 3 of 5, horizontal"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-y"
+      data-segment="3"
+      role="button"
+      tabindex="0"
+      transform="translate(55 180) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      aria-description="Left and Right arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowLeft ArrowRight"
+      aria-label="Route segment 4 of 5, vertical"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-x"
+      data-segment="4"
+      role="button"
+      tabindex="0"
+      transform="translate(-20 110) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      aria-description="Up and Down arrows move it one grid step, with Shift five. Escape returns to the connection."
+      aria-keyshortcuts="ArrowUp ArrowDown"
+      aria-label="Route segment 5 of 5, horizontal"
+      class="gg-route-handle nodrag nopan nokey gg-route-handle-y"
+      data-segment="5"
+      role="button"
+      tabindex="0"
+      transform="translate(-10 40) scale(1)"
+    >
+      <circle
+        class="gg-route-handle-hit"
+        r="12"
+      />
+      <circle
+        class="gg-route-handle-ring"
+        r="10"
+      />
+      <circle
+        class="gg-route-handle-dot"
+        r="6"
+      />
+    </g>
+    <g
+      transform="translate(55 162) scale(1)"
+    >
+      <foreignobject
+        class="gg-route-toolbar-frame"
+        height="48"
+        width="420"
+        x="-210"
+        y="-48"
+      >
+        <div
+          class="gg-route-toolbar flex h-full items-end justify-center gap-2"
+        >
+          <button
+            aria-disabled="true"
+            class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+            data-gesture="panning"
+            type="button"
+          >
+            <span
+              class="min-w-0 overflow-x-clip text-ellipsis"
+            >
+              Reset route
+            </span>
+          </button>
+          <button
+            aria-disabled="true"
+            class="relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11"
+            data-gesture="panning"
+            type="button"
+          >
+            <span
+              class="min-w-0 overflow-x-clip text-ellipsis"
+            >
+              Remove connection
+            </span>
+          </button>
+        </div>
+      </foreignobject>
+    </g>
+  </g>
+</g>
+ ❯ src/editor/OrthogonalEdge.test.tsx:541:22
+    539|       // The refused click stays on the button, as an accepted one doe…
+    540|       expect(onClick).not.toHaveBeenCalled();
+    541|       expect(remove).toHaveFocus();
+       |                      ^
+    542|       fireEvent.click(reset);
+    543|       expect(editing.reset).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > refuses on the pan gate first, holding nothing, and keeps Reset route unavailable after a pan settles
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/editor/OrthogonalEdge.test.tsx:987:30
+    985|       expect(editing.reset).toHaveBeenCalledTimes(1);
+    986|       fireEvent.click(remove);
+    987|       expect(editing.remove).toHaveBeenCalledTimes(1);
+       |                              ^
+    988|       expect(editing.remove).toHaveBeenCalledWith('return');
+    989|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Remove connection ignores the later clicks of a double click (#207) > still removes on Enter, on Space and on element.click(), which the browser counts 0
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ src/editor/OrthogonalEdge.test.tsx:1119:28
+    1117|     await user.keyboard('{Enter}');
+    1118|     expect(counts).toEqual([0]);
+    1119|     expect(editing.remove).toHaveBeenCalledTimes(1);
+       |                            ^
+    1120|     await user.keyboard(' ');
+    1121|     expect(counts).toEqual([0, 0]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  15 failed | 104 passed (119)
+   Start at  21:23:34
+   Duration  13.68s (tests 36%, environment 33%, import 12%, setup 11%, transform 9%)
+
+vitest exit=1
+restored worktree sha256 df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7 (candidate df73074650e0a2bc1da2a2e50cf77805f1f396b726ade8284bc3f6d77a66b7d7)

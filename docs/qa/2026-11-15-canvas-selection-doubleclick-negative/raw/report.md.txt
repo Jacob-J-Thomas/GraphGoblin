@@ -1,0 +1,37 @@
+# PR #478 native automatic-edge selection double-click probe
+
+**Reproduced on the first fixture.** A single native click on an unselected automatic edge selected it and left the graph unchanged. A native double-click at that same naturally hittable point selected the edge on the first click and removed it on the second, after the selected-edge toolbar appeared under the pointer.
+
+## Bound source and runtime
+
+- Frozen head `e624a2f5b0eaeaf608d9dc66baaa38c9c81c07be`, tree `759f9e39ed042082d1a07bd4859f76188b1ca1da`, actual-main reference `41bde22c80a796bf8c4bec8ab5dec8e755271f9e`. Head e624 has parent `ca9ac7bdea9adb0a05a5e515fb6d7bb229b1eab8`. The 319 changed paths are QA evidence or the delivery register. The original 1,680-entry source closure was compared by path and hash. Of these, 1,679 remained byte-identical. The sole differing entry, the delivery register, matched the exact respective Git blobs. Runtime and build inputs therefore remain ca9-identical. No product code, tests, or build files changed between those heads.
+- The probe reused the exact compiled ca9 runtime, previously built on Node 22.23.4. All 19 embedded source modules and all 1,227 artifact hashes across 13 trees matched. The HTML, CSS and JS were served by the real compiled gateway on an isolated ephemeral loopback port, with file SQLite and Microsoft Edge. The candidate bundle was `/app/assets/index-smG5osOh.js`, SHA-256 `b1f84d0868cfffe89e25191b289e008fda58a2e8d061ac7c08dce6eac97a4b64`. Prior binding SHA-256 `d30f0225116d44e8e22c65aeeda5cb3a07dfa3e3589ab7480395ad256eac7874`. The probe's before/after binding SHA-256 matched `799e5881a9bbae1b417926ca12dc63d84b17e6a5b0fafa9c3cb7c1093ef329d6`. [Before binding](evidence/binding-before.json) · [After binding](evidence/runs/first/binding-after.json) · [Gateway served bytes](evidence/runs/first/selection-doubleclick/gateway.json)
+
+## Geometry and native sequence
+
+Fixture `01M7EECPRQRC3024NHMXCNNNZ6` had two normal automatic edges. The checked edge `e1` connected `start.out → work.in`; unaffected `control` connected `work.out → done.in`. The seed deliberately gave the first edge vertically separated endpoints. There was no stored manual route and the selected edge showed Remove alone.
+
+A normal select and deselect measured the actual future Remove rectangle `x 405.6047, y 471.8667, width 146.5781, height 32`. Sampling the unselected SVG path's real vertical trunk found `(478.9016, 474.8826)` inside that rectangle. DOM hit-testing at that exact point initially found the `react-flow__edge-interaction` path of unselected `e1`. After one genuine click it found the enabled Remove button of selected `e1`. Viewport transform was unchanged. Public GET, browser PUT count, synced IndexedDB, history and save-state fingerprints all remained exact through the single select.
+
+The separate deliberate unique Remove used the native button center `(478.8937, 487.8667)` and removed only `e1` once. One Undo restored the exact graph and token and left the edge unselected. The original overlap point still hit the same unselected path in the same viewport. One Playwright native mouse double-click at that point then produced these trusted events. Relative times are from the first pointerdown.
+
+| Event | Time | Mouse event detail | Actual hit |
+| --- | --- | --- | --- |
+| First click | +0.6 ms | 1 | SVG interaction path of unselected `e1` |
+| Second pointerdown | +2.9 ms | 0 | Newly rendered Remove button of selected `e1` |
+| Second click | +3.8 ms | 2 | Same enabled Remove button |
+
+Both trusted click events reached document capture and completed uncanceled. No D3 drag click blocker was present, and no separate `dblclick` event was observed. The unintended deletion occurred in the second ordinary click handler. No CSS injection, forced click, DOM event construction, replay, or timer modification was used. Playwright requested a native double-click with browser input click counts. The DOM evidence establishes the delivered sequence with trusted input and its visible state transitions. It does not measure physical double-click classification or a human input timing range.
+
+Exactly one conditional PUT from token `8247230d60e5a846` removed `e1`, yielding token `84e503059ce1e912`. API response, public readback, submitted definition and synced IndexedDB all preserved the rest of the graph. History was named **remove edge start to work**. Focus moved to Undo, which restored the full graph and baseline token in one step. Five successful browser PUTs were recorded across the fixture: one initial description edit to establish a synced baseline, ordinary Remove and its Undo, and the accidental Remove and its Undo. The initial create request is fixture setup outside that PUT count. Zero page errors. [Full geometry, events, PUTs and graph readbacks](evidence/runs/first/selection-doubleclick/observed.json)
+
+## Introducedness and separate Remove follow-up
+
+Actual main `41bde22c` displays selected route handles and conditionally displays a toolbar only for a manual route. That toolbar has Reset route, with no canvas Remove button. Before #207 the pointer removal control belonged to the node dialog, with selected-edge Delete/Backspace also supported on the canvas. In the candidate an automatic forward edge gains the canvas toolbar on selection. Its HTML Remove button is placed over the still-clickable trunk and calls `editing.remove(edgeId)` on the second click. The dynamically introduced destructive hit is therefore a #207 behavior. This comparison is from the exact source, with no actual-main runtime run. [Main edge toolbar](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/41bde22c80a796bf8c4bec8ab5dec8e755271f9e/apps/web/src/editor/OrthogonalEdge.tsx#L299) · [Main node dialog removal](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/41bde22c80a796bf8c4bec8ab5dec8e755271f9e/apps/web/src/editor/NodeConnections.tsx#L117) · [Candidate toolbar](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/e624a2f5b0eaeaf608d9dc66baaa38c9c81c07be/apps/web/src/editor/OrthogonalEdge.tsx#L330)
+
+After the deliberately selected unique Remove control acted, its former center hit only the bare canvas pane. No node or other edge occupied that point, and the viewport had not moved. A separate double-click directly on already available Remove was not driven, because the observed underlay supplied no second actionable graph target and the requested selection reproduction was already confirmed. The fixture makes no claim about other underlying targets.
+
+## Terminal state
+
+One native fixture, zero fixture-preparation correction batches, and zero new formal review scans. The runner returned exit 2 for the confirmed product failure and stopped. Browser close and gateway exit were zero. Terminal readback found no matching fixture PIDs, open listener, lock, reclaim, WAL or SHM sidecar. Head and tracked/index status stayed exact. The heavy slot was released. Terminal cleanup SHA-256 `5b538b79d119f3dde0f26ba6dfaf2fb454c4d88e91b25d9595e98efff3c33cd5`. [Run record](evidence/runs/first/selection-doubleclick/run.json) · [Terminal cleanup](evidence/terminal-cleanup.json) · [Probe driver](probe.playwright.js) · [Admission and orchestration](probe.mjs)
+

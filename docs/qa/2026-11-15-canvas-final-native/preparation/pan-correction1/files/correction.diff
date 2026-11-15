@@ -1,0 +1,87 @@
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-partial-release\\owned-mouse.ps1" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-balanced-release\\owned-mouse.ps1"
+index 66b98f89..2f711be0 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-partial-release\\owned-mouse.ps1"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-balanced-release\\owned-mouse.ps1"
+@@ -70,7 +70,7 @@ public static class GG207OwnedClick {
+     var caption = new StringBuilder(512);
+     Need(GetWindowText(hwnd, caption, caption.Capacity) > 0 && caption.ToString().Contains(marker), "Disposable browser title marker is absent");
+   }
+-  static void CheckTarget(IntPtr hwnd, int pid, long born, string marker, POINT point, bool cursor) {
++  static void Guard(IntPtr hwnd, int pid, long born, string marker, POINT point, bool cursor) {
+     Own(hwnd, pid, born, marker);
+     Need(GetForegroundWindow() == hwnd, "Owned browser is not the current foreground");
+     Need(GetAncestor(WindowFromPoint(point), 2) == hwnd, "Point lies outside the owned browser window");
+@@ -78,10 +78,6 @@ public static class GG207OwnedClick {
+       POINT current;
+       Need(GetCursorPos(out current) && current.X == point.X && current.Y == point.Y, "Real cursor changed after verified calibration");
+     }
+-    Need(GetForegroundWindow() == hwnd, "Owned foreground changed during target verification");
+-  }
+-  static void Guard(IntPtr hwnd, int pid, long born, string marker, POINT point, bool cursor) {
+-    CheckTarget(hwnd, pid, born, marker, point, cursor);
+     foreach (var key in new int[] { 1, 2, 4, 0x10, 0x11, 0x12, 0x5b, 0x5c })
+       Need((GetAsyncKeyState(key) & 0x8000) == 0, "Another key or mouse button is currently down");
+     Need(GetForegroundWindow() == hwnd, "Owned foreground changed during the immediate input check");
+@@ -92,13 +88,15 @@ public static class GG207OwnedClick {
+     public bool cleanupAttempted { get; set; }
+     public uint? cleanupSubmitted { get; set; }
+     public bool? cleanupAccepted { get; set; }
++    public int? cleanupWin32Error { get; set; }
+     public string cleanupRefusal { get; set; }
+   }
+-  static void Click(List<PressReceipt> presses, IntPtr hwnd, int pid, long born, string marker, POINT point) {
++  static void Click(List<PressReceipt> presses) {
+     var inputs = new [] {
+       new Input { type = 0, mouse = new MouseInput { flags = 0x0002 } },
+       new Input { type = 0, mouse = new MouseInput { flags = 0x0004 } },
+     };
++    var release = new[] { inputs[1] };
+     var inputSize = Marshal.SizeOf(typeof(Input));
+     var receipt = new PressReceipt { requested = (uint)inputs.Length };
+     presses.Add(receipt);
+@@ -108,11 +106,12 @@ public static class GG207OwnedClick {
+     // The batch is ordered: exactly one inserted input means only LEFTDOWN was inserted.
+     if (receipt.submitted == 1) {
+       try {
+-        // The normal input guard rejects a held button. Cleanup verifies the same target without that check.
+-        CheckTarget(hwnd, pid, born, marker, point, true);
++        // Immediately balance the known inserted LEFTDOWN. The next new press still requires its own guard.
+         receipt.cleanupAttempted = true;
+-        receipt.cleanupSubmitted = SendInput(1, new[] { inputs[1] }, inputSize);
+-        receipt.cleanupAccepted = receipt.cleanupSubmitted == 1;
++        var releaseSubmitted = SendInput(1, release, inputSize);
++        if (releaseSubmitted != 1) receipt.cleanupWin32Error = Marshal.GetLastWin32Error();
++        receipt.cleanupSubmitted = releaseSubmitted;
++        receipt.cleanupAccepted = releaseSubmitted == 1;
+         if (receipt.cleanupAccepted != true) receipt.cleanupRefusal = "Windows refused the one-shot LEFTUP cleanup";
+       } catch (Exception error) {
+         receipt.cleanupRefusal = error.Message;
+@@ -150,14 +149,14 @@ public static class GG207OwnedClick {
+           Guard(hwnd, pid, born, marker, point, true);
+         } else {
+           Guard(hwnd, pid, born, marker, point, true);
+-          Click(presses, hwnd, pid, born, marker, point);
++          Click(presses);
+           clicks = 1;
+           elapsed.Restart();
+           Thread.Sleep(Math.Max(1, (int)Math.Min(60u, clickTime / 4u)));
+           Guard(hwnd, pid, born, marker, point, true);
+           secondMs = elapsed.ElapsedMilliseconds;
+           Need(secondMs < clickTime, "Window check exceeded the actual OS double-click time");
+-          Click(presses, hwnd, pid, born, marker, point);
++          Click(presses);
+           clicks = 2;
+         }
+       } catch (InvalidOperationException error) {
+diff --git "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-partial-release\\plan.md" "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-balanced-release\\plan.md"
+index 82a27fa0..5801b910 100644
+--- "a/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-partial-release\\plan.md"
++++ "b/C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\review-207\\corrected-doubleclick-qa-preparation-balanced-release\\plan.md"
+@@ -9,6 +9,6 @@ Run `initial-clicks selection-doubleclick reset-doubleclick selection-touch sele
+ - **Desktop.** Run trusted CDP-counted double and triple clicks and a real Control-key double sequence. Require the initial e1 path target and counts 2 and 3 on the enabled, promoted Remove, with selection and focus returned to e1, unchanged viewport, exact public graph/token, device copy, history/save state, and no PUT. Capture DOM target stack, document delivery and post-dispatch prevention. Browser delivery of the supplied mouse counts is the scope of these cases. Record any dblclick actually seen. Exercise a later independent count-one action at the same overlap and an explicit count-one button-center action. Each removes only e1, focuses Undo and restores the exact graph and token with one Undo. Use natural Tab from normal selection for separate Enter and Space detail-zero controls. If the focus path cannot reach the enabled button, retain the traversal and stop for root review.
+ - **Reset.** Keep the identical accepted driver from the prior packet. It exercises the measured original Reset point when live, or an independently hit-tested current right-side point. The same e1 Reset element and toolbar anchor must survive both clicks in its held, focusable and aria-disabled state. The exact graph changes only route geometry in one conditional PUT, with separate deliberate Remove and two ordered Undo controls.
+ - **Coarse touch.** Use the dedicated coarse context and confirm the actual pointer media state, touch capability, and approximately 44 px target height. Measure the actual overlap. Send two touch start/end pairs at that point with no supplied click count. Capture resulting pointer, touch and click details and exact server/device/history state. The same-point accidental removal is a product failure. Preserved graph without proven classification is a coverage limitation that stops this phase. This fixture measures Edge’s handling of injected touch events in a coarse context.
+-- **OS-injected mouse.** Run one owned headed Edge witness only with a separate explicit root allowance in the admission. The helper must get the browser PID from the fixture’s CDP browser target, match an Edge process born with that case and a profile inside its fixture-owned scratch, and identify its HWND by the disposable page’s unique title. A separate local authenticated one-shot controller runs one calibrating cursor move and then one double-click only. It checks actual DOM mousemove delivery at the measured e1 point, foreground, current cursor position and top-level hit HWND before injecting. The second press repeats the checks with the same HWND and process birth. It records the system double-click interval and rectangle, injection timing, the submitted count for each press, and the actual trusted browser click counts. An incomplete send always stops the witness without counting the press as completed. If Windows accepted only LEFTDOWN, the helper rechecks the owned target and makes one LEFTUP cleanup attempt. Its receipt records whether cleanup was attempted and accepted, including a refusal or failure. The native evidence keeps any observed draft change alongside the incomplete witness. A single-display 100%-DPI session is the supported calibration in this helper. If the session, title, PID, profile, coordinates or foreground cannot be verified, stop with the limitation and retain the first evidence. No unverified window receives an injected click. This witness uses Windows SendInput and does not establish physical device behavior.
++- **OS-injected mouse.** Run one owned headed Edge witness only with a separate explicit root allowance in the admission. The helper must get the browser PID from the fixture’s CDP browser target, match an Edge process born with that case and a profile inside its fixture-owned scratch, and identify its HWND by the disposable page’s unique title. A separate local authenticated one-shot controller runs one calibrating cursor move and then one double-click only. It checks actual DOM mousemove delivery at the measured e1 point, foreground, current cursor position and top-level hit HWND before injecting. The second press repeats the checks with the same HWND and process birth. It records the system double-click interval and rectangle, injection timing, the submitted count for each press, and the actual trusted browser click counts. An incomplete send always stops the witness without counting the press as completed. If Windows accepted only LEFTDOWN, the helper immediately sends one balancing LEFTUP. All ownership checks still apply to every new press. The receipt records whether cleanup was attempted and accepted, including the release count and any error. The native evidence keeps any observed draft change alongside the incomplete witness. A single-display 100%-DPI session is the supported calibration in this helper. If the session, title, PID, profile, coordinates or foreground cannot be verified, stop with the limitation and retain the first evidence. No unverified window receives an injected click. This witness uses Windows SendInput and does not establish physical device behavior.
+ 
+ The broader pass remains gated behind these controls. Continue the unchanged `initial-focused duplicate reload hidden script-geometry node-drag` and `initial-preservation shared script decisions pan-reset blank-device coarse protected-chat` only after root inspects the first phase. A verified touch or OS accidental edit stops as product failure. An unavailable optional OS host or unclassified required input is presented to root for an explicit readiness disposition. No toolbar-placement fallback, timer, global listener or unrelated source change is authorized. The previous corrected allowance remains 0/2 used across heads. The past 993 budget remains 2/2 and the earlier separate selection probe remains 0/1. The tests, parser checks and native execution remain distinct.

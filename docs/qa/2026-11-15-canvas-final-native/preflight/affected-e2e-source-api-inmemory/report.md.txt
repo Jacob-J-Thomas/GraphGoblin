@@ -1,0 +1,20 @@
+# Canvas affected Playwright cases
+
+Both selected cases passed on their first execution on `dbc55454b224e350f7005cdaf58b8655c4b9e71e`, tree `a52fb7570c279ceb74f0ffa9c1a0453313c39e21`, with current local comparison base `41bde22c80a796bf8c4bec8ab5dec8e755271f9e`.
+
+| Case | Result |
+| --- | --- |
+| Keyboard Tab, grid-step arrow nudging and Escape back to the edge | PASS, 1.991 s |
+| Double click at the future Remove connection location, then deliberate remove and Undo | PASS, 2.896 s |
+
+Playwright ran 2 tests with 1 worker and 0 retries. Exit was 0. The installed Microsoft Edge 157.0.4341.46 channel was selected under Node 22.23.4 and pnpm 12.8.1. The 12.622 s Playwright result contains 0 skipped, unexpected, or flaky tests. Stderr contains the Node color-environment warning. [Exact command](command.json) · [Test JSON](results.json) · [Stdout](stdout.log) · [Stderr](stderr.log) · [Process exit](exit.json)
+
+## Isolation and integrity
+
+The repository's regular global setup started a real API from workspace TypeScript source with fake harness and classifier boundaries, an in-memory database, and disposable temporary state. Both case fixtures used that API and the built web assets. The 28-file external copy matched the frozen web distribution before use. Teardown wrote the copy's service worker, which retained the same bytes. The original service-worker timestamp and all original output hashes remained identical. [Copy before](dist-copy-before.json) · [Copy after](dist-copy-after.json)
+
+The clean checkout, head and tree, Git index digest, 1,680 source/dependency input hashes and 1,227 output hashes across 13 distribution trees matched before and after. The preliminary source checker had assumed that the installed xyflow dependency row supplied a Git blob. That row supplies size and SHA-256. The checker was corrected before the only test execution and still requires Git identity for every row with a Git blob. [Source and build binding before](binding-before.json) · [Source and build binding after](binding-after.json) · [Preflight failure record](binding-preflight-first.json)
+
+Twenty process samples observed the owned Playwright Edge and API processes and loopback-only listeners on ports 61636 and 61637. Both listeners closed. No owned processes, listeners, disposable store or browser-profile leftovers remained. The 4747 listener had the same PID before and after, and 4748 was unused. The evidence directory retains tool caches and logs. [Cleanup](cleanup.json)
+
+Scope is the two repository E2E cases. The separate native pan correction and final integration gates require their own evidence.

@@ -1,0 +1,2769 @@
+{
+  "suite": "207-selection-doubleclick-probe",
+  "scenario": "selection-doubleclick",
+  "origin": "http://127.0.0.1:63267",
+  "gatewayPid": "13572",
+  "bundle": "/app/assets/index-smG5osOh.js",
+  "checkpoints": [
+    {
+      "label": "public fixture created",
+      "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+      "public": {
+        "loop": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "ownerId": "local",
+          "name": "Automatic edge double click fixture",
+          "draftVersionId": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "createdAt": "2026-11-15T01:50:46.551Z",
+          "updatedAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draft": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Automatic edge double click fixture",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 100,
+                  "y": 145
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Lower action",
+                "ui": {
+                  "x": 790,
+                  "y": 545
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture control"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 1150,
+                  "y": 565
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draftToken": "2e45bf9f23a8220b"
+      }
+    },
+    {
+      "label": "public automatic baseline",
+      "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+      "public": {
+        "loop": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "ownerId": "local",
+          "name": "Automatic edge double click fixture",
+          "draftVersionId": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "createdAt": "2026-11-15T01:50:46.551Z",
+          "updatedAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draft": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Automatic edge double click fixture",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 100,
+                  "y": 145
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Lower action",
+                "ui": {
+                  "x": 790,
+                  "y": 545
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture control"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 1150,
+                  "y": 565
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draftToken": "2e45bf9f23a8220b"
+      },
+      "local": null
+    },
+    {
+      "label": "establish exact synced baseline with one label edit",
+      "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+      "public": {
+        "loop": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "ownerId": "local",
+          "name": "Automatic edge double click fixture",
+          "description": "Disposable synced baseline for native pointer comparison.",
+          "draftVersionId": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "createdAt": "2026-11-15T01:50:46.551Z",
+          "updatedAt": "2026-11-15T01:50:47.761Z"
+        },
+        "draft": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Automatic edge double click fixture",
+            "description": "Disposable synced baseline for native pointer comparison.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 100,
+                  "y": 145
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Lower action",
+                "ui": {
+                  "x": 790,
+                  "y": 545
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture control"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 1150,
+                  "y": 565
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draftToken": "8247230d60e5a846"
+      },
+      "local": {
+        "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        },
+        "savedAt": "2026-11-15T01:50:47.774Z",
+        "synced": true,
+        "baseToken": "8247230d60e5a846"
+      }
+    },
+    {
+      "label": "trusted pointer selected edge",
+      "id": "e1",
+      "point": {
+        "x": 450.34124755859375,
+        "y": 371.1069641113281
+      },
+      "identity": "start out to work"
+    },
+    {
+      "label": "single trusted click selects with no mutation",
+      "public": {
+        "loop": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "ownerId": "local",
+          "name": "Automatic edge double click fixture",
+          "description": "Disposable synced baseline for native pointer comparison.",
+          "draftVersionId": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "createdAt": "2026-11-15T01:50:46.551Z",
+          "updatedAt": "2026-11-15T01:50:47.761Z"
+        },
+        "draft": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Automatic edge double click fixture",
+            "description": "Disposable synced baseline for native pointer comparison.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 100,
+                  "y": 145
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Lower action",
+                "ui": {
+                  "x": 790,
+                  "y": 545
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture control"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 1150,
+                  "y": 565
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draftToken": "8247230d60e5a846"
+      },
+      "local": {
+        "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        },
+        "savedAt": "2026-11-15T01:50:47.774Z",
+        "synced": true,
+        "baseToken": "8247230d60e5a846"
+      },
+      "history": [
+        [
+          "undo",
+          "Undo edit loop description",
+          null
+        ],
+        [
+          "redo",
+          "Redo",
+          "true"
+        ]
+      ],
+      "save": "All changes saved"
+    },
+    {
+      "label": "same point before and after a normal selection",
+      "crossing": {
+        "x": 478.90155029296875,
+        "y": 474.882568359375,
+        "pathLength": 848.4647216796875,
+        "fraction": 0.43333333333333335
+      },
+      "future": {
+        "x": 405.60467529296875,
+        "y": 471.86669921875,
+        "width": 146.57806396484375,
+        "height": 32
+      },
+      "selectedLabel": "start out to work",
+      "unselectedHit": {
+        "tag": "path",
+        "class": "react-flow__edge-interaction",
+        "button": null,
+        "edge": "e1",
+        "node": null,
+        "pane": false,
+        "selection": false,
+        "viewport": "transform: translate(-11.5632px, 59.5859px) scale(0.830632);"
+      },
+      "newHit": {
+        "tag": "BUTTON",
+        "class": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+        "button": "Remove connection",
+        "edge": "e1",
+        "node": null,
+        "pane": false,
+        "selection": true,
+        "viewport": "transform: translate(-11.5632px, 59.5859px) scale(0.830632);"
+      },
+      "input": [
+        {
+          "type": "pointerdown",
+          "trusted": true,
+          "at": 2458.900000035763,
+          "eventTime": 2458.2000000476837,
+          "detail": 0,
+          "x": 478.90155029296875,
+          "y": 474.882568359375,
+          "buttonState": 1,
+          "targetKey": 1,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "mousedown",
+          "trusted": true,
+          "at": 2459,
+          "eventTime": 2458.2000000476837,
+          "detail": 1,
+          "x": 478,
+          "y": 474,
+          "buttonState": 1,
+          "targetKey": 1,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "pointerup",
+          "trusted": true,
+          "at": 2459.600000023842,
+          "eventTime": 2458.300000011921,
+          "detail": 0,
+          "x": 478.90155029296875,
+          "y": 474.882568359375,
+          "buttonState": 0,
+          "targetKey": 1,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "mouseup",
+          "trusted": true,
+          "at": 2459.7000000476837,
+          "eventTime": 2458.300000011921,
+          "detail": 1,
+          "x": 478,
+          "y": 474,
+          "buttonState": 0,
+          "targetKey": 1,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "at": 2459.7000000476837,
+          "eventTime": 2458.300000011921,
+          "detail": 1,
+          "x": 478,
+          "y": 474,
+          "buttonState": 0,
+          "targetKey": 1,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        }
+      ]
+    },
+    {
+      "label": "normal deliberately selected unique Remove",
+      "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+      "public": {
+        "loop": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "ownerId": "local",
+          "name": "Automatic edge double click fixture",
+          "description": "Disposable synced baseline for native pointer comparison.",
+          "draftVersionId": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "createdAt": "2026-11-15T01:50:46.551Z",
+          "updatedAt": "2026-11-15T01:50:50.696Z"
+        },
+        "draft": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Automatic edge double click fixture",
+            "description": "Disposable synced baseline for native pointer comparison.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 100,
+                  "y": 145
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Lower action",
+                "ui": {
+                  "x": 790,
+                  "y": 545
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture control"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 1150,
+                  "y": 565
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draftToken": "84e503059ce1e912"
+      },
+      "local": {
+        "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        },
+        "savedAt": "2026-11-15T01:50:50.706Z",
+        "synced": true,
+        "baseToken": "84e503059ce1e912"
+      }
+    },
+    {
+      "label": "natural hit underneath deliberately removed control",
+      "button": {
+        "x": 478.8937072753906,
+        "y": 487.86669921875,
+        "width": 146.57806396484375,
+        "height": 32,
+        "disabled": false,
+        "ariaDisabled": null,
+        "label": "start out to work"
+      },
+      "afterOrdinaryRemove": {
+        "tag": "DIV",
+        "class": "react-flow__pane draggable",
+        "button": null,
+        "edge": null,
+        "node": null,
+        "pane": true,
+        "selection": false,
+        "viewport": "transform: translate(-11.5632px, 59.5859px) scale(0.830632);"
+      }
+    },
+    {
+      "label": "one Undo restores the unique automatic connection",
+      "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+      "public": {
+        "loop": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "ownerId": "local",
+          "name": "Automatic edge double click fixture",
+          "description": "Disposable synced baseline for native pointer comparison.",
+          "draftVersionId": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "createdAt": "2026-11-15T01:50:46.551Z",
+          "updatedAt": "2026-11-15T01:50:52.365Z"
+        },
+        "draft": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Automatic edge double click fixture",
+            "description": "Disposable synced baseline for native pointer comparison.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 100,
+                  "y": 145
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Lower action",
+                "ui": {
+                  "x": 790,
+                  "y": 545
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture control"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 1150,
+                  "y": 565
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draftToken": "8247230d60e5a846"
+      },
+      "local": {
+        "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        },
+        "savedAt": "2026-11-15T01:50:52.376Z",
+        "synced": true,
+        "baseToken": "8247230d60e5a846"
+      }
+    },
+    {
+      "label": "observed consequence of one native double-click",
+      "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+      "public": {
+        "loop": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "ownerId": "local",
+          "name": "Automatic edge double click fixture",
+          "description": "Disposable synced baseline for native pointer comparison.",
+          "draftVersionId": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "createdAt": "2026-11-15T01:50:46.551Z",
+          "updatedAt": "2026-11-15T01:50:54.048Z"
+        },
+        "draft": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Automatic edge double click fixture",
+            "description": "Disposable synced baseline for native pointer comparison.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 100,
+                  "y": 145
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Lower action",
+                "ui": {
+                  "x": 790,
+                  "y": 545
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture control"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 1150,
+                  "y": 565
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "control",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draftToken": "84e503059ce1e912"
+      },
+      "local": {
+        "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        },
+        "savedAt": "2026-11-15T01:50:54.058Z",
+        "synced": true,
+        "baseToken": "84e503059ce1e912"
+      }
+    },
+    {
+      "label": "double-click trusted dispatch and actual hits",
+      "crossing": {
+        "x": 478.90155029296875,
+        "y": 474.882568359375,
+        "pathLength": 848.4647216796875,
+        "fraction": 0.43333333333333335
+      },
+      "events": [
+        {
+          "type": "pointerdown",
+          "trusted": true,
+          "at": 6836.300000011921,
+          "eventTime": 6835.200000047684,
+          "detail": 0,
+          "x": 478.90155029296875,
+          "y": 474.882568359375,
+          "buttonState": 1,
+          "targetKey": 27,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            27,
+            28,
+            29,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "mousedown",
+          "trusted": true,
+          "at": 6836.300000011921,
+          "eventTime": 6835.200000047684,
+          "detail": 1,
+          "x": 478,
+          "y": 474,
+          "buttonState": 1,
+          "targetKey": 27,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            27,
+            28,
+            29,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "pointerup",
+          "trusted": true,
+          "at": 6836.800000011921,
+          "eventTime": 6835.300000011921,
+          "detail": 0,
+          "x": 478.90155029296875,
+          "y": 474.882568359375,
+          "buttonState": 0,
+          "targetKey": 27,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            27,
+            28,
+            29,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "mouseup",
+          "trusted": true,
+          "at": 6836.900000035763,
+          "eventTime": 6835.300000011921,
+          "detail": 1,
+          "x": 478,
+          "y": 474,
+          "buttonState": 0,
+          "targetKey": 27,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            27,
+            28,
+            29,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "at": 6836.900000035763,
+          "eventTime": 6835.300000011921,
+          "detail": 1,
+          "x": 478,
+          "y": 474,
+          "buttonState": 0,
+          "targetKey": 27,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            27,
+            28,
+            29,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "pointerdown",
+          "trusted": true,
+          "at": 6839.200000047684,
+          "eventTime": 6835.300000011921,
+          "detail": 0,
+          "x": 478.90155029296875,
+          "y": 474.882568359375,
+          "buttonState": 1,
+          "targetKey": 30,
+          "target": "BUTTON",
+          "classes": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+          "path": [
+            30,
+            31,
+            32,
+            33,
+            34,
+            28,
+            29,
+            4,
+            5,
+            6
+          ],
+          "button": "Remove connection",
+          "disabled": false,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": true,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "mousedown",
+          "trusted": true,
+          "at": 6839.200000047684,
+          "eventTime": 6835.300000011921,
+          "detail": 2,
+          "x": 478,
+          "y": 474,
+          "buttonState": 1,
+          "targetKey": 30,
+          "target": "BUTTON",
+          "classes": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+          "path": [
+            30,
+            31,
+            32,
+            33,
+            34,
+            28,
+            29,
+            4,
+            5,
+            6
+          ],
+          "button": "Remove connection",
+          "disabled": false,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": true,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "pointerup",
+          "trusted": true,
+          "at": 6839.900000035763,
+          "eventTime": 6835.400000035763,
+          "detail": 0,
+          "x": 478.90155029296875,
+          "y": 474.882568359375,
+          "buttonState": 0,
+          "targetKey": 30,
+          "target": "BUTTON",
+          "classes": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+          "path": [
+            30,
+            31,
+            32,
+            33,
+            34,
+            28,
+            29,
+            4,
+            5,
+            6
+          ],
+          "button": "Remove connection",
+          "disabled": false,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": true,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "mouseup",
+          "trusted": true,
+          "at": 6840,
+          "eventTime": 6835.400000035763,
+          "detail": 2,
+          "x": 478,
+          "y": 474,
+          "buttonState": 0,
+          "targetKey": 30,
+          "target": "BUTTON",
+          "classes": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+          "path": [
+            30,
+            31,
+            32,
+            33,
+            34,
+            28,
+            29,
+            4,
+            5,
+            6
+          ],
+          "button": "Remove connection",
+          "disabled": false,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": true,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "at": 6840.100000023842,
+          "eventTime": 6835.400000035763,
+          "detail": 2,
+          "x": 478,
+          "y": 474,
+          "buttonState": 0,
+          "targetKey": 30,
+          "target": "BUTTON",
+          "classes": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+          "path": [
+            30,
+            31,
+            32,
+            33,
+            34,
+            28,
+            29,
+            4,
+            5,
+            6
+          ],
+          "button": "Remove connection",
+          "disabled": false,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": true,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        }
+      ],
+      "clicks": [
+        {
+          "type": "click",
+          "trusted": true,
+          "at": 6836.900000035763,
+          "eventTime": 6835.300000011921,
+          "detail": 1,
+          "x": 478,
+          "y": 474,
+          "buttonState": 0,
+          "targetKey": 27,
+          "target": "path",
+          "classes": "react-flow__edge-interaction",
+          "path": [
+            27,
+            28,
+            29,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "button": null,
+          "disabled": null,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": false,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        },
+        {
+          "type": "click",
+          "trusted": true,
+          "at": 6840.100000023842,
+          "eventTime": 6835.400000035763,
+          "detail": 2,
+          "x": 478,
+          "y": 474,
+          "buttonState": 0,
+          "targetKey": 30,
+          "target": "BUTTON",
+          "classes": "relative inline-flex max-w-full min-w-0 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-semibold leading-none cursor-pointer select-none no-underline transition-[background-color,border-color,box-shadow,translate] active:shadow-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:shadow-none border-strong bg-surface-raised text-default shadow-ledge hover:bg-surface-hover active:translate-y-px h-8 gap-1.5 px-[11px] text-sm pointer-coarse:h-11 [&_svg]:size-[15px] nodrag nopan nokey pointer-coarse:h-11",
+          "path": [
+            30,
+            31,
+            32,
+            33,
+            34,
+            28,
+            29,
+            4,
+            5,
+            6
+          ],
+          "button": "Remove connection",
+          "disabled": false,
+          "ariaDisabled": null,
+          "edge": "e1",
+          "edgeSelected": true,
+          "node": null,
+          "pane": false,
+          "clickBlocker": false,
+          "before": false,
+          "reachedDocument": true,
+          "after": false
+        }
+      ],
+      "current": {
+        "tag": "DIV",
+        "class": "react-flow__pane draggable",
+        "button": null,
+        "edge": null,
+        "node": null,
+        "pane": true,
+        "selection": false,
+        "viewport": "transform: translate(-11.5632px, 59.5859px) scale(0.830632);"
+      }
+    },
+    {
+      "label": "one Undo after accidental removal",
+      "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+      "public": {
+        "loop": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "ownerId": "local",
+          "name": "Automatic edge double click fixture",
+          "description": "Disposable synced baseline for native pointer comparison.",
+          "draftVersionId": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "createdAt": "2026-11-15T01:50:46.551Z",
+          "updatedAt": "2026-11-15T01:50:55.919Z"
+        },
+        "draft": {
+          "id": "01M7EECPRQRC3024NHMXCNNNZ7",
+          "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+          "version": 1,
+          "status": "draft",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "Automatic edge double click fixture",
+            "description": "Disposable synced baseline for native pointer comparison.",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Fixture start",
+                "ui": {
+                  "x": 100,
+                  "y": 145
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "work",
+                "label": "Lower action",
+                "ui": {
+                  "x": 790,
+                  "y": 545
+                },
+                "kind": "mutate",
+                "config": {
+                  "operations": [
+                    {
+                      "op": "append-message",
+                      "role": "note",
+                      "content": "Fixture control"
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "done",
+                "label": "Fixture success",
+                "ui": {
+                  "x": 1150,
+                  "y": 565
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "work",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "control",
+                "from": {
+                  "node": "work",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-11-15T01:50:46.551Z"
+        },
+        "draftToken": "8247230d60e5a846"
+      },
+      "local": {
+        "loopId": "01M7EECPRQRC3024NHMXCNNNZ6",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        },
+        "savedAt": "2026-11-15T01:50:55.928Z",
+        "synced": true,
+        "baseToken": "8247230d60e5a846"
+      }
+    }
+  ],
+  "pageErrors": [],
+  "puts": [
+    {
+      "url": "http://127.0.0.1:63267/loops/01M7EECPRQRC3024NHMXCNNNZ6/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        }
+      },
+      "ifMatch": "\"2e45bf9f23a8220b\"",
+      "at": 1794707447753,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:63267/loops/01M7EECPRQRC3024NHMXCNNNZ6/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        }
+      },
+      "ifMatch": "\"8247230d60e5a846\"",
+      "at": 1794707450689,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:63267/loops/01M7EECPRQRC3024NHMXCNNNZ6/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        }
+      },
+      "ifMatch": "\"84e503059ce1e912\"",
+      "at": 1794707452359,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:63267/loops/01M7EECPRQRC3024NHMXCNNNZ6/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        }
+      },
+      "ifMatch": "\"8247230d60e5a846\"",
+      "at": 1794707454041,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:63267/loops/01M7EECPRQRC3024NHMXCNNNZ6/draft",
+      "body": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "Automatic edge double click fixture",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Fixture start",
+              "ui": {
+                "x": 100,
+                "y": 145
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Lower action",
+              "ui": {
+                "x": 790,
+                "y": 545
+              },
+              "kind": "mutate",
+              "config": {
+                "operations": [
+                  {
+                    "op": "append-message",
+                    "role": "note",
+                    "content": "Fixture control"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "done",
+              "label": "Fixture success",
+              "ui": {
+                "x": 1150,
+                "y": 565
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "control",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ],
+          "description": "Disposable synced baseline for native pointer comparison."
+        }
+      },
+      "ifMatch": "\"84e503059ce1e912\"",
+      "at": 1794707455914,
+      "status": 200
+    }
+  ],
+  "bundleResponses": [
+    {
+      "status": 200,
+      "pid": null
+    }
+  ],
+  "outcome": "REPRODUCED_SELECTION_DOUBLECLICK_REMOVES_CONNECTION"
+}

@@ -1,0 +1,35 @@
+mode=identity-only
+production under test sha=05bd5e637b558e44c16a479faa40ae3eb9c67c2ca315fbc39f3c163b0534badc
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (30 tests | 1 failed) 2302ms
+   ❯ Reset route keeps its toolbar where it was clicked (#207) (11)
+     × ends the hold when the same points array again, as an Undo might return it is drawn, and holds again at the next click 104ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > ends the hold when the same points array again, as an Undo might return it is drawn, and holds again at the next click
+AssertionError: expected 'translate(55 162) scale(1)' to be 'translate(70 132) scale(1)' // Object.is equality
+
+Expected: "translate(70 132) scale(1)"
+Received: "translate(55 162) scale(1)"
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:867:36
+    865|     expect(resetButton()).not.toHaveAttribute('aria-disabled');
+    866|     expect(resetButton()).not.toHaveAttribute('title');
+    867|     expect(placed(view.container)).toBe(above(next.label));
+       |                                    ^
+    868|
+    869|     // It resets that route too, and holds where that was clicked.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 108 passed (109)
+   Start at  21:02:25
+   Duration  15.15s (environment 35%, tests 33%, import 12%, setup 11%, transform 9%)
+
+vitest exit=1
+restored sha=78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf expected=78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf

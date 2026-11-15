@@ -1,0 +1,130 @@
+mode=hold-never-ends
+production under test sha=2bf9de6c7068c959c1536e127dca6acee5637553f7d6cb0ed69da5d95868acf2
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261114-canvas-repair/GraphGoblin/apps/web
+
+ ❯ src/editor/Canvas.test.tsx (70 tests | 4 failed) 3863ms
+   ❯ the selected connection is the one the user selected (#207) (25)
+     ❯ Reset route holds the selected connection’s toolbar where it was clicked (#207) (8)
+       × follows the label again once Undo brings the manual route back on a loop-back, and holds again at the next Reset 55ms
+       × follows the label again once Undo brings the manual route back on a forward connection, and holds again at the next Reset 52ms
+       × follows the label again at a keyboard nudge, a drag and a later Undo of the route a held Reset route reset on a loop-back 59ms
+       × follows the label again at a keyboard nudge, a drag and a later Undo of the route a held Reset route reset on a forward connection 67ms
+ ❯ src/editor/OrthogonalEdge.test.tsx (30 tests | 3 failed) 2332ms
+   ❯ Reset route keeps its toolbar where it was clicked (#207) (11)
+     × ends the hold when the same points array again, as an Undo might return it is drawn, and holds again at the next click 102ms
+     × ends the hold when another manual route, as a nudge or a drag draws is drawn, and holds again at the next click 134ms
+     × follows a different manual route that arrives before the automatic one 86ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Reset route holds the selected connection’s toolbar where it was clicked (#207) > follows the label again once Undo brings the manual route back on a loop-back, and holds again at the next Reset
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Reset route holds the selected connection’s toolbar where it was clicked (#207) > follows the label again once Undo brings the manual route back on a forward connection, and holds again at the next Reset
+AssertionError: expected [ 'Reset route', 'Remove connection' ] to deeply equal [ 'Remove connection' ]
+
+- Expected
++ Received
+
+  [
++   "Reset route",
+    "Remove connection",
+  ]
+
+ ❯ src/editor/Canvas.test.tsx:2015:27
+    2013|         // there is no Reset route to hold.
+    2014|         act(() => store().setEdgeRoute(id, undefined));
+    2015|         expect(toolbar()).toEqual(['Remove connection']);
+       |                           ^
+    2016|         const followed = toolbarAt();
+    2017|         expect(followed).not.toBe(at);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Reset route holds the selected connection’s toolbar where it was clicked (#207) > follows the label again at a keyboard nudge, a drag and a later Undo of the route a held Reset route reset on a loop-back
+AssertionError: expected 'translate(692 272) scale(1)' to be 'translate(692 246) scale(1)' // Object.is equality
+
+Expected: "translate(692 246) scale(1)"
+Received: "translate(692 272) scale(1)"
+
+ ❯ src/editor/Canvas.test.tsx:2060:31
+    2058|           expect(resetButton()).not.toHaveAttribute('aria-disabled');
+    2059|           expect(resetButton()).not.toHaveAttribute('title');
+    2060|           expect(toolbarAt()).toBe(overLabel(id));
+       |                               ^
+    2061|           expect(toolbarAt()).not.toBe(at);
+    2062|           // Back to the route that was reset, for the next way of dra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/editor/Canvas.test.tsx > the selected connection is the one the user selected (#207) > Reset route holds the selected connection’s toolbar where it was clicked (#207) > follows the label again at a keyboard nudge, a drag and a later Undo of the route a held Reset route reset on a forward connection
+AssertionError: expected 'translate(250 143) scale(1)' to be 'translate(224 182) scale(1)' // Object.is equality
+
+Expected: "translate(224 182) scale(1)"
+Received: "translate(250 143) scale(1)"
+
+ ❯ src/editor/Canvas.test.tsx:2060:31
+    2058|           expect(resetButton()).not.toHaveAttribute('aria-disabled');
+    2059|           expect(resetButton()).not.toHaveAttribute('title');
+    2060|           expect(toolbarAt()).toBe(overLabel(id));
+       |                               ^
+    2061|           expect(toolbarAt()).not.toBe(at);
+    2062|           // Back to the route that was reset, for the next way of dra…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > ends the hold when the same points array again, as an Undo might return it is drawn, and holds again at the next click
+AssertionError: expected 'translate(55 162) scale(1)' to be 'translate(70 132) scale(1)' // Object.is equality
+
+Expected: "translate(70 132) scale(1)"
+Received: "translate(55 162) scale(1)"
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:867:36
+    865|     expect(resetButton()).not.toHaveAttribute('aria-disabled');
+    866|     expect(resetButton()).not.toHaveAttribute('title');
+    867|     expect(placed(view.container)).toBe(above(next.label));
+       |                                    ^
+    868|
+    869|     // It resets that route too, and holds where that was clicked.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > ends the hold when another manual route, as a nudge or a drag draws is drawn, and holds again at the next click
+AssertionError: expected 'translate(55 162) scale(1)' to be 'translate(70 182) scale(1)' // Object.is equality
+
+Expected: "translate(70 182) scale(1)"
+Received: "translate(55 162) scale(1)"
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:867:36
+    865|     expect(resetButton()).not.toHaveAttribute('aria-disabled');
+    866|     expect(resetButton()).not.toHaveAttribute('title');
+    867|     expect(placed(view.container)).toBe(above(next.label));
+       |                                    ^
+    868|
+    869|     // It resets that route too, and holds where that was clicked.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > Reset route keeps its toolbar where it was clicked (#207) > follows a different manual route that arrives before the automatic one
+AssertionError: expected 'translate(55 162) scale(1)' to be 'translate(70 182) scale(1)' // Object.is equality
+
+Expected: "translate(70 182) scale(1)"
+Received: "translate(55 162) scale(1)"
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:884:36
+    882|     expect(placed(view.container)).toBe(above(manual.label));
+    883|     stand.publish(nudged);
+    884|     expect(placed(view.container)).toBe(above(nudged.label));
+       |                                    ^
+    885|     expect(resetButton()).not.toHaveAttribute('aria-disabled');
+    886|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  7 failed | 102 passed (109)
+   Start at  21:01:54
+   Duration  14.35s (tests 35%, environment 32%, import 13%, setup 12%, transform 9%)
+
+vitest exit=1
+restored sha=78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf expected=78abfe483474d79694be521f0b7dacd6909352d3669fa62b031b327b7b557ddf
