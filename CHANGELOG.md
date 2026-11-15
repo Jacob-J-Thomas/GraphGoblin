@@ -4,13 +4,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
-- A loop that opens with all its cards stacked in one spot, for example one written through the
-  API or an import, now offers **Space cards** in a panel at the top of the canvas (#208,
+- A loop that opens with at least two cards, all at the origin `(0, 0)`, for example one written
+  through the API or an import, now offers **Space cards** in a panel at the top of the canvas (#208,
   ADR-0077, the owner's decision). It puts the cards in columns that follow the connections and
   keeps the first card where it is. Only card positions change, in one **Undo** step ("Undo space
   cards") that is saved like any edit. Focus stays on the canvas, and the view fits once after the
-  cards move. The panel shows only while every card is at the same spot and no connection has a
-  route you set; **Dismiss suggestion** hides it until the loop is opened or reloaded again.
+  cards move. The panel shows only while at least two cards exist, every card is at the origin (0, 0), and no
+  connection has a route you set; **Dismiss suggestion** hides it until the loop is opened or reloaded again.
   Right after a mouse pan, both buttons are briefly shown unavailable and do nothing, like
   **Remove connection**, until the pan's own click blocker is gone. After a click, tap or pen
   press on either button, the panel's box stays where it was and shows the result (**Spaced _n_
@@ -18,7 +18,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   second press of a double click lands on it and not on the controls under the panel (found at
   512 px, where it covers **Zoom Out**). The area it covers, and any card the fit places there,
   stays covered until then; the keyboard leaves nothing behind. Opening a loop, other edits, Undo
-  and Redo never move cards by themselves. No stored or exported data changes, so there is no
+  and Redo never move cards by themselves. The stored and export formats are unchanged, so there is no
   upgrade note.
 
 - **Undo** and **Redo** stay where they are (#208, ADR-0078). A native baseline showed them moving

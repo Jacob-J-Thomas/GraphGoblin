@@ -483,8 +483,10 @@ export const useEditorStore = create<EditorState>((set, get) => {
   });
 
   /**
-   * Apply an edit to the definition: bump the revision and record the step for undo. Every change
-   * of the definition goes through here. An edit that changes nothing is not one.
+   * Apply an edit through the generic, route-normalizing path: bump the revision and record its
+   * history step. Most definition changes go through here. The geometry-only `spaceCards` action
+   * bypasses this path to preserve existing routes while recording its own step.
+   * An edit that changes nothing is not one.
    */
   const edit = (
     fn: (def: LoopDefinitionInput) => LoopDefinitionInput,

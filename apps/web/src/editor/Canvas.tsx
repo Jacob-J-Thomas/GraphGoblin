@@ -2,6 +2,7 @@ import { EdgeRouteSchema, type LoopDefinitionInput, type NodeKind } from '@graph
 import {
   Background,
   getSmoothStepPath,
+  getViewportForBounds,
   Position,
   Controls,
   ReactFlow,
@@ -9,7 +10,9 @@ import {
   type FitViewOptions,
   useReactFlow,
   useStore,
+  useStoreApi,
   type ReactFlowState,
+  type Rect,
   type Connection,
   type Edge,
   type EdgeChange,
@@ -90,14 +93,17 @@ const MIN_CANVAS_ZOOM = 0.1;
 const MAX_CANVAS_ZOOM = 2;
 
 /** Fit the graph with room on the left for the zoom controls, so they never cover a card. */
-const FIT_VIEW_OPTIONS: FitViewOptions = {
-  padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
-};
+const FIT_PADDING = { top: '8%', right: '8%', bottom: '8%', left: '72px' } as const;
+const FIT_VIEW_OPTIONS: FitViewOptions = { padding: FIT_PADDING };
 /**
  * Opening the editor fits the graph but stays readable; Fit View shows a large graph whole. The fit
  * is queued from `onInit` because xyflow's `fitView` prop can fit again without its options.
  */
-const INITIAL_FIT_VIEW_OPTIONS: FitViewOptions<FlowNode> = { ...FIT_VIEW_OPTIONS, minZoom: 0.5 };
+const OPENING_MIN_ZOOM = 0.5;
+const INITIAL_FIT_VIEW_OPTIONS: FitViewOptions<FlowNode> = {
+  ...FIT_VIEW_OPTIONS,
+  minZoom: OPENING_MIN_ZOOM,
+};
 const fitOnOpen: OnInit<FlowNode, Edge> = (instance) =>
   void instance.fitView(INITIAL_FIT_VIEW_OPTIONS);
 
@@ -242,6 +248,37 @@ type Size = { width: number; height: number };
 const NO_ISSUES: readonly EditorIssue[] = [];
 
 const zoomOf = (state: ReactFlowState) => state.transform[2];
+
+const isLength = (length: number) => Number.isFinite(length) && length > 0;
+
+/** Whether xyflow has measured its pane, which starts at 0 × 0: a fit needs room to fit into. */
+const paneMeasured = (state: ReactFlowState) => isLength(state.width) && isLength(state.height);
+
+/**
+ * The rectangle the draft's cards fill: their positions in the draft and the sizes xyflow measured
+ * for them. It is undefined while any card has no size yet, or a size that is not positive and
+ * finite. Sizes are looked up as own properties, since a card can be called `constructor`. The
+ * draft is one Space cards spaced, so it has at least two cards.
+ */
+function cardBounds(
+  definition: LoopDefinitionInput,
+  measured: Record<string, Size>,
+): Rect | undefined {
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const node of definition.nodes) {
+    const size = Object.hasOwn(measured, node.id) ? measured[node.id] : undefined;
+    if (!size || !isLength(size.width) || !isLength(size.height)) return undefined;
+    const { x, y } = node.ui ?? { x: 0, y: 0 };
+    left = Math.min(left, x);
+    top = Math.min(top, y);
+    right = Math.max(right, x + size.width);
+    bottom = Math.max(bottom, y + size.height);
+  }
+  return { x: left, y: top, width: right - left, height: bottom - top };
+}
 
 /** Publish zoom without re-rendering the canvas or its cards on each viewport change. */
 function CanvasZoom({
@@ -545,7 +582,11 @@ export function Canvas({
     setEdgeRoute,
     spaceCards,
   } = useEditorStore.getState();
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, setViewport, viewportInitialized } = useReactFlow();
+  const flowStore = useStoreApi();
+  // Renders again when xyflow measures its pane, so a fit waiting for one tries again; the size
+  // itself is read live where the fit uses it.
+  const paneReady = useStore(paneMeasured);
   // A segment drag in progress (#44): its route is routed as a preview until the pointer is up.
   const [routeDrag, setRouteDrag] = useState<{ edgeId: string; route: readonly number[] }>();
   const [announcement, setAnnouncement] = useState({ text: '', key: 0 });
@@ -1092,22 +1133,50 @@ export function Canvas({
     announce(spoken);
     if (box) setOfferResult({ message, box, generation: useEditorStore.getState().generation });
   };
-  // The one view fit that Space cards asks for: the draft it produced, kept until that draft has
-  // rendered with every card measured (this passive effect runs after xyflow's own, which hands it
-  // the new positions). Another edit, an undo or a load first drops it; no edit, undo or redo
-  // fits the view by itself.
-  const spacedFitRef = useRef<{ definition: LoopDefinitionInput; generation: number }>(undefined);
+  // The one view fit that Space cards asks for: the draft it produced (and its revision, which
+  // tells it from the same draft object back after an undo and a redo), kept until that draft has
+  // rendered with every card measured, the pane measured and the viewport ready. This is not
+  // `fitView`: xyflow queues that fit and spends it on whichever graph it adopts next (an undo that
+  // lands first fits the restored pile), and no public call cancels a queued fit. The view is set
+  // from the cards' own bounds with `setViewport` in the same synchronous turn as these checks, so
+  // nothing is left to run later. Any other edit, an undo, a redo or a load before then drops the
+  // fit for good, as the store's own draft is read again here; the effect runs again as
+  // measurements and readiness arrive. The padding and zoom limits are the opening fit's, and no
+  // edit, undo or redo fits the view by itself.
+  const spacedFitRef = useRef<{
+    definition: LoopDefinitionInput;
+    generation: number;
+    revision: number;
+  }>(undefined);
   useEffect(() => {
     const pending = spacedFitRef.current;
     if (!pending) return;
-    if (pending.definition !== definition || pending.generation !== generation) {
+    const live = useEditorStore.getState();
+    if (
+      pending.definition !== definition ||
+      pending.generation !== generation ||
+      live.definition !== pending.definition ||
+      live.generation !== pending.generation ||
+      live.revision !== pending.revision
+    ) {
       spacedFitRef.current = undefined;
       return;
     }
-    if (!definition.nodes.every((node) => Object.hasOwn(measured, node.id))) return;
+    const bounds = cardBounds(definition, measured);
+    const pane = flowStore.getState();
+    if (!viewportInitialized || !bounds || !paneMeasured(pane)) return;
     spacedFitRef.current = undefined;
-    void fitView(INITIAL_FIT_VIEW_OPTIONS);
-  }, [definition, generation, measured, fitView]);
+    void setViewport(
+      getViewportForBounds(
+        bounds,
+        pane.width,
+        pane.height,
+        OPENING_MIN_ZOOM,
+        MAX_CANVAS_ZOOM,
+        FIT_PADDING,
+      ),
+    );
+  }, [definition, generation, measured, viewportInitialized, paneReady, setViewport, flowStore]);
   // The store checks its current draft again, so a second press, a repeated key or an offer left
   // from an older render changes nothing.
   const spaceAll = (box: OfferBox | undefined) => {
@@ -1119,7 +1188,11 @@ export function Canvas({
     if (result === 'applied') {
       const state = useEditorStore.getState();
       const spaced = state.definition!;
-      spacedFitRef.current = { definition: spaced, generation: state.generation };
+      spacedFitRef.current = {
+        definition: spaced,
+        generation: state.generation,
+        revision: state.revision,
+      };
       const shown = `Spaced ${spaced.nodes.length} cards.`;
       report(shown, box, `${shown} Undo puts them back.`);
     } else {

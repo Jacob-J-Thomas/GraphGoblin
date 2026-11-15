@@ -35,6 +35,8 @@ const geometryOf = (nodes: readonly RoutingNode[]): RoutingGeometry => ({
 let geometry: RoutingGeometry = geometryOf([]);
 /** Render the orthogonal edges too (the real component, in a stand-in wrapper), for #44. */
 let drawEdges = false;
+/** The pane xyflow has not measured: Space cards waits for a pane to fit into, and this never presses it. */
+const flowStoreStub = { getState: () => ({ width: 0, height: 0 }) };
 
 vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
@@ -45,6 +47,7 @@ vi.mock('@xyflow/react', async (importOriginal) => {
       return <div data-testid="flow">{drawEdges ? <EdgeLayer flow={p} /> : null}</div>;
     },
     useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p }),
+    useStoreApi: () => flowStoreStub,
     // The edge's handles read the zoom; everything else here reads the routing geometry.
     useStore: (selector?: { name?: string }) => (selector?.name === 'zoomOf' ? 1 : geometry),
   };

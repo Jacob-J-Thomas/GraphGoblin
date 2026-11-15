@@ -1,10 +1,12 @@
+import type { LoopDefinitionInput } from '@graphgoblin/contracts';
 import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { NodeChange, ReactFlowProps } from '@xyflow/react';
-import { Profiler } from 'react';
+import { getViewportForBounds, type NodeChange, type ReactFlowProps } from '@xyflow/react';
+import { Profiler, useLayoutEffect, useSyncExternalStore } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Canvas } from './Canvas.js';
+import { newLoopDefinition } from './model.js';
 import type { FlowNode } from './NodeCard.js';
 import { spacedPositions } from './space-cards.js';
 import { SpaceCardsOffer, SpaceCardsResult } from './SpaceCardsOffer.js';
@@ -14,7 +16,35 @@ import { createViewportGestureGate } from './viewport-gesture.js';
 
 let props: ReactFlowProps<FlowNode> | undefined;
 const fitView = vi.fn(() => Promise.resolve(true));
+const setViewport = vi.fn(() => Promise.resolve(true));
 const geometry: RoutingGeometry = { nodes: [], preparationMs: 0, outputOrder: new Map() };
+
+/**
+ * What xyflow says about its pane and its viewport, as these tests control it: the pane size its
+ * store holds (a pane starts at 0 × 0 until measured) and whether the viewport can be moved. A
+ * change notifies the hooks that read it, as xyflow's store does. The Canvas's real selector runs
+ * on this state, and its live read of the pane size sees the same state.
+ */
+const FLOW_READY = { width: 1200, height: 800, viewportInitialized: true };
+const flow$ = (() => {
+  const listeners = new Set<() => void>();
+  let state = { ...FLOW_READY };
+  return {
+    state: () => state,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => void listeners.delete(listener);
+    },
+    set: (next: Partial<typeof FLOW_READY>) => {
+      state = { ...state, ...next };
+      for (const listener of listeners) listener();
+    },
+    reset: () => {
+      state = { ...FLOW_READY };
+    },
+  };
+})();
+const flowStoreStub = { getState: () => flow$.state() };
 
 vi.mock('@xyflow/react', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
@@ -24,8 +54,26 @@ vi.mock('@xyflow/react', async (importOriginal) => {
       props = p;
       return <div data-testid="flow" />;
     },
-    useReactFlow: () => ({ screenToFlowPosition: (p: { x: number; y: number }) => p, fitView }),
-    useStore: (selector?: { name?: string }) => (selector?.name === 'zoomOf' ? 1 : geometry),
+    useReactFlow: () => ({
+      screenToFlowPosition: (p: { x: number; y: number }) => p,
+      fitView,
+      setViewport,
+      viewportInitialized: useSyncExternalStore(
+        flow$.subscribe,
+        () => flow$.state().viewportInitialized,
+      ),
+    }),
+    useStoreApi: () => flowStoreStub,
+    useStore: (
+      selector?: ((state: ReturnType<typeof flow$.state>) => unknown) & { name?: string },
+    ) => {
+      // The Canvas's own selector of the pane runs on the state above; its other hooks read the
+      // routing geometry or the zoom, as before. Every call subscribes, so hooks run in order.
+      const pane = useSyncExternalStore(flow$.subscribe, () =>
+        selector?.name === 'paneMeasured' ? selector(flow$.state()) : undefined,
+      );
+      return selector?.name === 'zoomOf' ? 1 : selector?.name === 'paneMeasured' ? pane : geometry;
+    },
   };
 });
 
@@ -54,10 +102,7 @@ function stubOfferBox() {
       : measured.call(this);
   });
 }
-const OPENING_FIT = {
-  padding: { top: '8%', right: '8%', bottom: '8%', left: '72px' },
-  minZoom: 0.5,
-};
+const FIT_PADDING = { top: '8%', right: '8%', bottom: '8%', left: '72px' } as const;
 
 /** xyflow's measurement of every card in the current draft: `heights` by id, else 100. */
 const measure = (heights: Record<string, number> = {}) =>
@@ -71,6 +116,50 @@ const measure = (heights: Record<string, number> = {}) =>
     ),
   );
 
+/** xyflow's measurement of the cards named, at the sizes given, and of no other. */
+const measureCards = (sizes: Record<string, { width: number; height: number }>) =>
+  act(() =>
+    flow().onNodesChange!(
+      Object.entries(sizes).map(([id, dimensions]): NodeChange<FlowNode> => ({
+        type: 'dimensions',
+        id,
+        dimensions,
+      })),
+    ),
+  );
+
+/**
+ * The view the draft is owed, worked from where its cards are now and the sizes `measure` gave
+ * them, never from the Canvas's own bounds: the opening fit's padding, its 50 % floor and the
+ * canvas's own 200 % ceiling, in a pane of the size given (1200 × 800 unless said).
+ */
+function owedView(
+  heights: Record<string, number> = {},
+  pane: { width: number; height: number } = FLOW_READY,
+) {
+  const cards = store().definition!.nodes.map((node) => {
+    const { x, y } = node.ui ?? { x: 0, y: 0 };
+    // By own id, as the canvas does: a card called `constructor` has no entry of `heights`.
+    const height = Object.hasOwn(heights, node.id) ? heights[node.id]! : 100;
+    return { left: x, top: y, right: x + 184, bottom: y + height };
+  });
+  const left = Math.min(...cards.map((card) => card.left));
+  const top = Math.min(...cards.map((card) => card.top));
+  return getViewportForBounds(
+    {
+      x: left,
+      y: top,
+      width: Math.max(...cards.map((card) => card.right)) - left,
+      height: Math.max(...cards.map((card) => card.bottom)) - top,
+    },
+    pane.width,
+    pane.height,
+    0.5,
+    2,
+    FIT_PADDING,
+  );
+}
+
 /** The canvas as the editor page renders it: on the store's current draft. */
 function Live() {
   const definition = useEditorStore((s) => s.definition)!;
@@ -80,6 +169,8 @@ function Live() {
 describe('Space cards on the canvas (#208)', () => {
   beforeEach(() => {
     fitView.mockClear();
+    setViewport.mockClear();
+    flow$.reset();
     store().load('L1', kitchenSinkLoop());
   });
 
@@ -139,34 +230,320 @@ describe('Space cards on the canvas (#208)', () => {
     expect(canvas()).toHaveFocus();
     expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
     expect(offer()).toBeNull();
-    expect(fitView).toHaveBeenCalledTimes(1);
-    expect(fitView).toHaveBeenCalledWith(OPENING_FIT);
+    // One view, set at once from the spaced cards' own bounds. xyflow's queued `fitView` is not used.
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
+    expect(fitView).not.toHaveBeenCalled();
     // Undo, redo, an ordinary edit and later measurements never fit the view again.
     act(() => store().undo());
     act(() => store().redo());
     act(() => store().moveNode('prep', { x: 1, y: 1 }));
     measure({ prep: 410 });
-    expect(fitView).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    expect(fitView).not.toHaveBeenCalled();
+  });
+
+  it('sets the view as the press is handled, with nothing waiting behind a promise, a timer or a frame', () => {
+    render(<Live />);
+    measure({ prep: 400 });
+    fireEvent.click(spaceButton(), { detail: 1 });
+    // `fireEvent` returns once React has handled the press and run its effects, and no `await`
+    // came between: a fit behind a promise, timer or frame would not have set the view by now.
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
+    expect(fitView).not.toHaveBeenCalled();
   });
 
   it('fits only once the spaced cards are measured, and drops the fit when an undo or a load comes first', async () => {
     const user = userEvent.setup();
     let view = render(<Live />);
     await user.click(spaceButton());
-    expect(fitView).not.toHaveBeenCalled();
+    expect(setViewport).not.toHaveBeenCalled();
     measure();
-    expect(fitView).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledTimes(1);
 
     for (const first of [() => store().undo(), () => store().load('L1', kitchenSinkLoop())]) {
       // A new canvas, with nothing measured yet.
       act(() => store().load('L1', kitchenSinkLoop()));
       view.unmount();
       view = render(<Live />);
-      fitView.mockClear();
+      setViewport.mockClear();
       await user.click(spaceButton());
       act(first);
       measure();
+      expect(setViewport).not.toHaveBeenCalled();
+    }
+    expect(fitView).not.toHaveBeenCalled();
+  });
+
+  it('keeps waiting for every card to have a size that is positive and finite, and fits when the last one does', async () => {
+    const user = userEvent.setup();
+    const none = { width: 0, height: 0 };
+    for (const bad of [
+      none,
+      { width: 184, height: 0 },
+      { width: 0, height: 100 },
+      { width: -184, height: 100 },
+      { width: 184, height: Number.NaN },
+      { width: Number.POSITIVE_INFINITY, height: 100 },
+    ]) {
+      act(() => store().load('L1', kitchenSinkLoop()));
+      setViewport.mockClear();
+      const view = render(<Live />);
+      await user.click(spaceButton());
+      // Every card but `prep` has its size, and `prep` has none yet or has not got a usable one.
+      measureCards(
+        Object.fromEntries(
+          store()
+            .definition!.nodes.filter((node) => node.id !== 'prep')
+            .map((node) => [node.id, { width: 184, height: 100 }]),
+        ),
+      );
+      expect(setViewport).not.toHaveBeenCalled();
+      measureCards({ prep: bad });
+      expect(setViewport).not.toHaveBeenCalled();
+      measureCards({ prep: { width: 184, height: 400 } });
+      expect(setViewport).toHaveBeenCalledTimes(1);
+      expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
+      view.unmount();
+    }
+  });
+
+  it('looks a card’s size up by its own id: a card called `constructor` is not measured by the object’s prototype', async () => {
+    const user = userEvent.setup();
+    const base = newLoopDefinition('Pile');
+    const named = (id: string) => (id === 'start' ? 'constructor' : id);
+    act(() =>
+      store().load('L1', {
+        ...base,
+        nodes: base.nodes.map((node) => ({ ...node, id: named(node.id), ui: { x: 0, y: 0 } })),
+        edges: base.edges.map((edge) => ({
+          ...edge,
+          from: { ...edge.from, node: named(edge.from.node) },
+          to: { ...edge.to, node: named(edge.to.node) },
+        })),
+      }),
+    );
+    render(<Live />);
+    await user.click(spaceButton());
+    expect(store().past.map((step) => step.label)).toEqual(['space cards']);
+    measureCards({ done: { width: 184, height: 100 } });
+    expect(setViewport).not.toHaveBeenCalled();
+    measureCards({ constructor: { width: 184, height: 100 } });
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledWith(owedView());
+  });
+
+  it.each([
+    ['no width', { width: 0 }],
+    ['no height', { height: 0 }],
+    ['no size at all', { width: 0, height: 0 }],
+    ['a negative width', { width: -1 }],
+    ['a width that is not a number', { width: Number.NaN }],
+    ['an infinite height', { height: Number.POSITIVE_INFINITY }],
+  ])(
+    'waits while xyflow’s pane has %s, and fits once, at that size, when it is measured',
+    async (_, unmeasured) => {
+      const user = userEvent.setup();
+      flow$.set(unmeasured);
+      render(<Live />);
+      measure({ prep: 400 });
+      await user.click(spaceButton());
+      expect(labels()).toEqual(['space cards']);
+      // Kept, not dropped and not spent: nothing is set, and a later measurement of a card changes
+      // nothing either while the pane has no size.
+      expect(setViewport).not.toHaveBeenCalled();
+      measure({ prep: 400 });
+      expect(setViewport).not.toHaveBeenCalled();
+
+      act(() => flow$.set({ width: 900, height: 600 }));
+      expect(setViewport).toHaveBeenCalledTimes(1);
+      expect(setViewport).toHaveBeenCalledWith(
+        owedView({ prep: 400 }, { width: 900, height: 600 }),
+      );
+      // Spent: the pane changing again, or a card measured again, fits nothing more.
+      act(() => flow$.set({ width: 1200, height: 800 }));
+      measure({ prep: 410 });
+      expect(setViewport).toHaveBeenCalledTimes(1);
       expect(fitView).not.toHaveBeenCalled();
+    },
+  );
+
+  it('waits while xyflow has no viewport to move, and fits once when it has', async () => {
+    const user = userEvent.setup();
+    flow$.set({ viewportInitialized: false });
+    render(<Live />);
+    measure({ prep: 400 });
+    await user.click(spaceButton());
+    expect(setViewport).not.toHaveBeenCalled();
+    measure({ prep: 400 });
+    expect(setViewport).not.toHaveBeenCalled();
+
+    act(() => flow$.set({ viewportInitialized: true }));
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
+  });
+
+  it('keeps waiting through each readiness change, and an edit while it waits drops the fit for good', async () => {
+    const user = userEvent.setup();
+    flow$.set({ width: 0, height: 0, viewportInitialized: false });
+    render(<Live />);
+    await user.click(spaceButton());
+    measure({ prep: 400 });
+    expect(setViewport).not.toHaveBeenCalled();
+    act(() => flow$.set({ viewportInitialized: true }));
+    expect(setViewport).not.toHaveBeenCalled();
+    // An ordinary edit while it waits: the fit is gone for good, whatever arrives after.
+    act(() => store().moveNode('prep', { x: 5, y: 5 }));
+    act(() => flow$.set({ width: 1200, height: 800 }));
+    measure({ prep: 400 });
+    act(() => store().undo());
+    measure({ prep: 400 });
+    expect(setViewport).not.toHaveBeenCalled();
+  });
+
+  it('drops a fit that waits when an Undo and a Redo bring the same draft back, because it is a newer revision', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    await user.click(spaceButton());
+    const spaced = store().definition!;
+    const revision = store().revision;
+    // Both in one update: the canvas renders the very draft it was given before, in the same load.
+    act(() => {
+      store().undo();
+      store().redo();
+    });
+    expect(store().definition).toBe(spaced);
+    expect(store().revision).toBe(revision + 2);
+    measure({ prep: 400 });
+    expect(setViewport).not.toHaveBeenCalled();
+    // And the same with the draft measured first, the pane the last thing to arrive.
+    act(() => store().load('L1', kitchenSinkLoop()));
+    act(() => flow$.set({ width: 0 }));
+    measure({ prep: 400 });
+    await user.click(spaceButton());
+    const again = store().definition!;
+    act(() => {
+      store().undo();
+      store().redo();
+    });
+    expect(store().definition).toBe(again);
+    act(() => flow$.set({ width: 1200 }));
+    expect(setViewport).not.toHaveBeenCalled();
+    expect(fitView).not.toHaveBeenCalled();
+  });
+
+  it('drops a fit when the store has moved past the draft this canvas still renders, and fits nothing when it catches up', async () => {
+    const user = userEvent.setup();
+    // A canvas whose rendering lags the store: it holds the draft it was told last, until released.
+    let held: LoopDefinitionInput | undefined;
+    const Lagging = () => {
+      const definition = useEditorStore((s) => s.definition)!;
+      return <Canvas definition={held ?? definition} issues={[]} />;
+    };
+    const view = render(<Lagging />);
+    await user.click(spaceButton());
+    held = store().definition!;
+    // The store goes back to the pile while the canvas still renders the spaced draft it asked for.
+    act(() => store().undo());
+    expect(setViewport).not.toHaveBeenCalled();
+    // Every card of that rendered draft is measured and the pane is ready: all but the store's word.
+    measure();
+    expect(setViewport).not.toHaveBeenCalled();
+    held = undefined;
+    view.rerender(<Lagging />);
+    measure();
+    expect(setViewport).not.toHaveBeenCalled();
+    expect(fitView).not.toHaveBeenCalled();
+  });
+
+  it('drops a fit when input reaches the store after the render that would fit it and before the effect that does, even a load that repeats its revision', async () => {
+    const user = userEvent.setup();
+    // A load of another draft from a layout effect: after the press's render commits, before its
+    // passive effects (the fit's) run. The load is dirty, so its revision is 1, the very revision
+    // Space cards gave the draft it spaced: only the load's own number and draft tell them apart.
+    let intrusion: (() => void) | undefined;
+    const Intruder = () => {
+      const definition = useEditorStore((s) => s.definition);
+      useLayoutEffect(() => {
+        const run = intrusion;
+        intrusion = undefined;
+        run?.();
+      }, [definition]);
+      return null;
+    };
+    render(
+      <>
+        <Live />
+        <Intruder />
+      </>,
+    );
+    measure();
+    intrusion = () => store().load('L2', kitchenSinkLoop(), { dirty: true });
+    await user.click(spaceButton());
+    expect(store()).toMatchObject({ loopId: 'L2', revision: 1 });
+    expect(intrusion).toBeUndefined();
+    // Every card was measured and the pane ready: nothing but the store's own word stopped it.
+    expect(setViewport).not.toHaveBeenCalled();
+    expect(fitView).not.toHaveBeenCalled();
+    // The load's own pile is offered, and its own press fits once.
+    await user.click(spaceButton());
+    expect(setViewport).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops a fit when the canvas still renders an older draft than the one the store spaced, and fits nothing of the draft it renders', async () => {
+    const user = userEvent.setup();
+    // A canvas that lags the other way: it renders the pile it was given, while the store moves on.
+    const pileDraft = store().definition!;
+    const Behind = () => {
+      useEditorStore((s) => s.definition);
+      return <Canvas definition={pileDraft} issues={[]} />;
+    };
+    render(<Behind />);
+    await user.click(spaceButton());
+    expect(store().definition).not.toBe(pileDraft);
+    expect(labels()).toEqual(['space cards']);
+    // Every card is measured, the pane and viewport are ready, and the store still holds the spaced
+    // draft it asked for: the canvas is not rendering it, so what it would fit is the pile's bounds.
+    measure();
+    expect(setViewport).not.toHaveBeenCalled();
+    expect(fitView).not.toHaveBeenCalled();
+  });
+
+  it('drops a fit that waits when the draft is loaded again, even a draft of the same cards', async () => {
+    const user = userEvent.setup();
+    render(<Live />);
+    await user.click(spaceButton());
+    act(() => store().load('L1', kitchenSinkLoop()));
+    measure();
+    expect(setViewport).not.toHaveBeenCalled();
+    expect(offer()).not.toBeNull();
+    // The new load can still be spaced, and fits once of its own.
+    await user.click(spaceButton());
+    expect(setViewport).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves nothing queued when the canvas unmounts while its fit waits, however the pane and cards change after', async () => {
+    const user = userEvent.setup();
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      flow$.set({ width: 0, height: 0 });
+      const view = render(<Live />);
+      await user.click(spaceButton());
+      view.unmount();
+      act(() => flow$.set({ width: 1200, height: 800, viewportInitialized: false }));
+      act(() => flow$.set({ viewportInitialized: true }));
+      expect(setViewport).not.toHaveBeenCalled();
+      expect(fitView).not.toHaveBeenCalled();
+      expect(errors).not.toHaveBeenCalled();
+      // A canvas that mounts afterwards has no fit waiting for it.
+      act(() => store().undo());
+      const next = render(<Live />);
+      measure();
+      expect(setViewport).not.toHaveBeenCalled();
+      next.unmount();
+    } finally {
+      errors.mockRestore();
     }
   });
 
@@ -180,6 +557,7 @@ describe('Space cards on the canvas (#208)', () => {
     expect(store()).toBe(state);
     expect(canvas()).toHaveFocus();
     expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
+    expect(setViewport).not.toHaveBeenCalled();
     expect(fitView).not.toHaveBeenCalled();
   });
 
@@ -245,6 +623,8 @@ describe('the result a pointer press leaves where the offer was (#208)', () => {
 
   beforeEach(() => {
     fitView.mockClear();
+    setViewport.mockClear();
+    flow$.reset();
     store().load('L1', kitchenSinkLoop());
     boxSpy = stubOfferBox();
   });
@@ -298,7 +678,8 @@ describe('the result a pointer press leaves where the offer was (#208)', () => {
     expect(canvas()).toHaveFocus();
     // One step and one fit, as without the result.
     expect(labels()).toEqual(['space cards']);
-    expect(fitView).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
   });
 
   it('shows Suggestion dismissed. in the box for Dismiss, with no edit, save or step', async () => {
@@ -555,6 +936,8 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
 
   beforeEach(() => {
     fitView.mockClear();
+    setViewport.mockClear();
+    flow$.reset();
     store().load('L1', kitchenSinkLoop());
   });
 
@@ -601,6 +984,7 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
       // Focus did not leave the button for the canvas, and nothing was announced or fitted.
       expect(space).toHaveFocus();
       expect(announced()).toBe('');
+      expect(setViewport).not.toHaveBeenCalled();
       expect(fitView).not.toHaveBeenCalled();
       expect(offer()).not.toBeNull();
     };
@@ -627,7 +1011,9 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
     expect(canvas()).toHaveFocus();
     expect(announced()).toBe(`Spaced ${CARDS} cards. Undo puts them back.`);
     expect(offer()).toBeNull();
-    expect(fitView).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledTimes(1);
+    expect(setViewport).toHaveBeenCalledWith(owedView({ prep: 400 }));
+    expect(fitView).not.toHaveBeenCalled();
     expect(store().future).toEqual([]);
   });
 
@@ -688,6 +1074,7 @@ describe('Space cards follow the canvas viewport gate (#207, #208)', () => {
     expect(store()).toBe(state);
     expect(canvas()).toHaveFocus();
     expect(announced()).toBe('Cards were not spaced: they are no longer all in one spot.');
+    expect(setViewport).not.toHaveBeenCalled();
     expect(fitView).not.toHaveBeenCalled();
   });
 
