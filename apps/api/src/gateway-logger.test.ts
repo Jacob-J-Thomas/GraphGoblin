@@ -12,7 +12,7 @@ import {
   managedClientErrorHandler,
 } from './gateway-logger.js';
 import { createTestApp } from './testing/test-app.js';
-import { openGatewayLog, type GatewayLogWriter } from './windows-log/gateway-log-writer.js';
+import { openGatewayLog, type GatewayLogWriter } from './managed-log/gateway-log-writer.js';
 
 const roots: string[] = [];
 const writers: GatewayLogWriter[] = [];

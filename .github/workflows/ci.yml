@@ -10,6 +10,76 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  macos-launcher:
+    name: macOS launcher
+    runs-on: macos-15
+    timeout-minutes: 40
+    env:
+      LIVE: '0'
+      GG_MACOS_LAUNCHER_ARTIFACT_DIR: ${{ github.workspace }}/.tmp/macos-launcher-acceptance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Record native toolchain
+        shell: bash
+        run: |
+          mkdir -p .tmp/macos-launcher-toolchain
+          {
+            git rev-parse HEAD 'HEAD^{tree}'
+            sw_vers
+            uname -m
+            xcode-select -p
+            xcrun --sdk macosx --show-sdk-version
+            xcrun --sdk macosx swift --version
+            node --version
+            pnpm --version
+          } > .tmp/macos-launcher-toolchain/versions.txt
+          cat .tmp/macos-launcher-toolchain/versions.txt
+          test "$(uname -m)" = arm64
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Mac API integration tests
+        run: >-
+          pnpm --filter @graphgoblin/api exec vitest run
+          src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts
+          src/database-ownership.test.ts src/data-dir-lock.test.ts
+          src/serve.test.ts src/gateway-logger.test.ts
+          src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts
+          src/macos-log/guard.test.ts
+      - name: Swift native and presentation tests
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          mkdir -p .tmp/macos-launcher-swift
+          set +e
+          xcrun --sdk macosx swift test --package-path apps/macos-launcher \
+            --scratch-path .tmp/macos-swift-test --arch arm64 --enable-code-coverage \
+            > .tmp/macos-launcher-swift/stdout.log 2> .tmp/macos-launcher-swift/stderr.log
+          result=$?
+          printf '%s\n' "$result" > .tmp/macos-launcher-swift/exit.txt
+          cat .tmp/macos-launcher-swift/stdout.log
+          cat .tmp/macos-launcher-swift/stderr.log >&2
+          exit "$result"
+      - name: Native macOS installer and gateway acceptance
+        timeout-minutes: 20
+        run: pnpm test:macos-launcher
+      - name: Upload native evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-launcher
+          include-hidden-files: true
+          path: |
+            .tmp/macos-launcher-*/
+            .tmp/macos-swift-test/**/codecov/**
+          if-no-files-found: error
+          retention-days: 7
   windows-launcher:
     name: Windows launcher
     runs-on: windows-latest

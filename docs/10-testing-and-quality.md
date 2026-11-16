@@ -1,5 +1,20 @@
 # 10 - Testing and quality
 
+`pnpm test:macos-launcher` is the additional built-app acceptance entry for the **macOS
+launcher** CI job on arm64 macOS 15. The job records the exact checkout and toolchain, builds
+the application, runs the affected API tests, runs the Swift engine/installer/presentation
+suites under full Xcode and exercises the public installer and real gateway with an alternate
+bundle, disposable stores and non-owner ports. Native test output and failure evidence are
+retained for seven days. Swift coverage output is additional evidence; it does not replace
+the existing TypeScript/JavaScript V8 gates or their thresholds.
+
+The presentation tests use an injected clock, engine, opener and surface. Five offscreen
+window tests require an available Quartz session; report their actual skips separately.
+They do not establish Finder/Dock routing, real keyboard focus, VoiceOver or default-browser
+activation. These remain native acceptance observations, with post-merge owner acceptance
+tracked on #456 and #326. A Command Line Tools installation without the `Testing` module can
+compile production Swift but cannot run this suite; that failure is not a test pass.
+
 `pnpm test:windows-launcher` runs on the **Windows launcher** CI job after the normal build. It
 compiles the shipped x64 C# source with the Windows .NET Framework compiler and drives real built
 gateways on disposable stores and alternate ports: concurrent cold clicks, warm PID reuse,

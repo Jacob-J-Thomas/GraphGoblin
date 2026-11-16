@@ -69,6 +69,19 @@ As an engineering parameter, Windows publication uses six attempts with five del
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
+The optional [macOS Finder/Dock launcher](decisions/ADR-0082-macos-finder-dock-launcher.md)
+installs per user from a built checkout, for native Apple Silicon macOS 15 or later. It saves
+the canonical checkout and Node 22.22.2+ path, local store and typed options. It uses direct
+detached process creation and opens the default browser after verifying the intended gateway
+and both web shells. The launcher never stops the gateway; the existing management controls
+retain that authority. Installation and replacement require private descriptor-verified
+bundle/receipt state and same-volume publication. Foreign destinations and uncertain ownership
+refuse. The private APFS log root is independently reserved by the API before loading the
+application; the same bounded writer serves Windows and Mac adapters. The Mac launch also
+rechecks its local key source after both writer leases, before SQLite or key creation.
+The [installation guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
+describes alternate app names and log locations. No automatic update or login item is installed.
+
 A gateway started by the Windows launcher keeps its private server log in the launcher folder,
 which must be a local NTFS folder accessible only to the operator, SYSTEM and Administrators.
 Retention is bounded to two 4 MiB gateway files and two 256 KiB launcher files. The gateway log

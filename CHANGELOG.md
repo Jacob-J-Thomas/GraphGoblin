@@ -4,6 +4,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Optional per-user macOS Finder and Dock launcher for a built checkout on Apple Silicon,
+  macOS 15 or later, with a saved native Node 22.22.2+ path. Install with
+  `bash scripts/install-macos-launcher.sh`; it builds `~/Applications/GraphGoblin.app`, starts
+  or reuses the verified local instance and opens the default browser. Hide keeps the launch
+  going; Quit never stops an already started gateway, and closing the browser leaves work
+  running. Managed replacement preserves the installation identity; alternate app names keep
+  independent identities and logs. Private gateway logs share the existing bounded writer,
+  with a Darwin directory reservation and a local-key check after both writer leases.
+  **Setup:** an existing store needs its owned local `master.key`; external database paths and
+  shell-only master-key overrides are unsupported by this launcher. Keep Node and the checkout
+  at their saved paths or rerun the installer. No format change or migration. Part of #456 and
+  #326; owner acceptance is tracked separately. See ADR-0082.
 - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
   written by the gateway itself so it never waits on logging and keeps working after the launcher

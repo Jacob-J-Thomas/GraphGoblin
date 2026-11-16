@@ -1,6 +1,5 @@
 /**
- * Bounded private gateway log for a gateway started by the Windows desktop launcher (#438,
- * ADR-0081). Node built-ins only: the guarded entry loads it before any dependency.
+ * Bounded private gateway log for launcher-managed gateways (#438, ADR-0081). Node built-ins only: the guarded entry loads it before any dependency.
  *
  * Exactly two fixed slots, `gateway.log` and `gateway.log.1`, of at most 4 MiB each. Every
  * record is complete UTF-8 ending in LF and at most 64 KiB; a larger record is replaced by a
@@ -30,7 +29,7 @@ export const GATEWAY_LOG_BACKOFF_MS = [1_000, 2_000, 4_000, 8_000, 16_000, 32_00
 
 const LF = 0x0a;
 
-/** Full-width identity observed for one file: volume serial and file index. */
+/** Full-width device and file identity. */
 export interface LogFileIdentity {
   dev: bigint;
   ino: bigint;

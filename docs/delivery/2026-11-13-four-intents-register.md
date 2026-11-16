@@ -32,6 +32,28 @@ The owner clarified [delivery routing on 2026-11-14](https://github.com/Jacob-J-
 
 Validator, builder and integration architecture uses GPT-6.1 Sol xhigh with Claude Opus 5.5 xhigh review. Stateful form/canvas UI uses Claude Opus 5.5 xhigh with independent GPT-6.1 Sol xhigh review. The in-progress #235 GPT proposal was frozen uncommitted and handed to Claude for design and final implementation. Mixed #209/#273 work separates GPT architecture/domain and Claude UI surfaces into bounded slices. The test-only #452 prerequisite is assigned to GPT-6 Luna xhigh; it changes observation timing, never product focus behavior or assertion deadlines.
 
+## Launcher checkpoint - 2026-11-16
+
+PR #500 (#438) merged as `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`, with tree
+`430d34fda9d7e91752a7dbc93794242b4c17a5aa` identical to the reviewed head. Independent
+behavior QA, opposite-family review, corrected-head CI and fresh Astra MAX sign-off completed
+with two of three formal scans. The original failed CI attempt remains recorded separately
+from the successful unchanged-source retry. [Final audit and disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/500#issuecomment-6926418968).
+
+#456 proceeds from that merged base. Actual Claude Code Opus 5.5 xhigh authored the AppKit
+presentation and corrected repeated Quit so it cannot bypass the pending cleanup wait.
+GPT-6.1 Sol xhigh authored the API admission integration, native engine, installer and native
+acceptance driver in separate file scopes. The first owner-Mac component invocation compiled
+the original presentation but failed test compilation because Command Line Tools lacked
+`Testing`; no tests ran. The full Swift suites move to hosted macOS with Xcode, while owner
+release compilation and native interactive acceptance remain required. No toolchain was
+installed on the owner Mac. [Implementation dispatch](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6926775616).
+
+This is an implementation checkpoint, not review, native QA, CI or audit approval. Formal
+#456 scans have not started. Its mixed implementation requires Claude review of GPT-owned
+code, GPT review of Claude-owned code and the fresh final Astra MAX audit within the shared
+three-scan limit. #456/#326 retain owner closure, and PR #460 remains under its separate hold.
+
 ## Reconciliation completed
 
 The fresh inventory had 158 open issues. Reconciliation closed 18 records, leaving 140; every remaining non-epic has a gate or parking marker. See [reconciliation evidence](../qa/2026-11-13-backlog-reconciliation/README.md).

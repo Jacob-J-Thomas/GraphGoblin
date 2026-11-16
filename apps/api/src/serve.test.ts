@@ -15,8 +15,8 @@ import {
   openGatewayLog,
   type GatewayLogWriter,
   type LogFileSystem,
-} from './windows-log/gateway-log-writer.js';
-import type { StartupStage } from './windows-log/guard.js';
+} from './managed-log/gateway-log-writer.js';
+import type { StartupStage } from './managed-log/guard.js';
 
 const roots: string[] = [];
 const writers: GatewayLogWriter[] = [];
