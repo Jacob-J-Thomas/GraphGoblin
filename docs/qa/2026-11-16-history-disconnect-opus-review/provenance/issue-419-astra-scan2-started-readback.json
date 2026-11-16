@@ -1,0 +1,70 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "issue": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+      "title": "An abandoned historical thread read keeps replaying on the server after its client disconnects",
+      "issue_number": 419,
+      "body": "<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for the third lane, after I08 and the parallel Claude plugin lane. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\nFound while fixing the #186 acceptance regression (PR #418), outside its scope.\n\n## What happens\n\n`GET /runs/{id}/thread?at=N` rebuilds a historical thread by replaying the run's events from its seed in 128-event pages when the run's checkpoint is newer than `N` (`historicalThread` in `apps/api/src/run-history.ts`). If the client goes away (a tab closes, a selection changes, a request is aborted), the server keeps replaying to the end anyway. Before PR #418 the live inspector queued many such reads; after the tab closed, the gateway kept draining the queued replays and ran at 6.5 events/s for the next 15 seconds. PR #418 removes these reads from the live path, but rapid selection changes on a long run can still queue several abandoned replays.\n\n## Expected\n\nA historical read stops replaying between pages once its request is closed, so abandoned reads cost at most one page each.\n\n## Evidence\n\n`docs/qa/2026-10-26-acceptance-fix-186/README.md` (carried with PR #418).\n\n## Delivery — 2026-11-15\n\nDraft [PR #490](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490) publishes candidate source `7b7932f89b038a4635183b6adbc5fefa6df4fa6f` at publication head `497acaa602959bc828e8f1e90f2dce0a576a3492`, tree `88ade580c80b2139b5d1bf51449dca10e33184f1`, against the same integrated main below. Separate behavior QA accepted the candidate: all eight actual response closes stop new repository calls and writes; eleven successful responses match baseline wire bytes; ten negative controls, stored history, lifecycle cleanup and unrelated responsiveness pass. Native child exit and stream close are both complete; independent process/TCP readback found the owned runner, supervisor, helper and listener absent. [Baseline evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/497acaa602959bc828e8f1e90f2dce0a576a3492/docs/qa/2026-11-15-history-disconnect-baseline/README.md) · [Candidate QA](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/497acaa602959bc828e8f1e90f2dce0a576a3492/docs/qa/2026-11-15-history-disconnect-candidate/README.md)\n\nThe corrected final test reproduced seven expected old-source disconnect failures and three passing connected controls; candidate focused tests passed 22/22, with types, lint, formatting and diff checks passing. The first fixture draft failed for fixture/tooling reasons and remains distinct. Full local API coverage failed on unchanged Windows reset-test setup rename `EPERM` (1,952 passed, 14 skipped, one failed; no coverage totals). The unchanged isolated diagnostic passed 7/7; parked [#489](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/489) retains this unexplained failure. The diagnostic is not a waiver: full current-head CI must establish every coverage floor before formal review. [Implementation evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/497acaa602959bc828e8f1e90f2dce0a576a3492/docs/qa/2026-11-15-history-disconnect-implementation/README.md)\n\nCurrent-head [CI run 43773546178](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43773546178) is successful. The first Gates job hit its 30-minute whole-job deadline; the one unchanged Gates-only retry passed all 32 steps, 9,617 tests with 41 skips, and all 13 line/branch coverage floors. The three successful companion jobs carried forward: Browser 481 passes/one live-provider skip/zero retries, Windows 14/14 with no uploaded native artifact, and all four template catalogs. Optional strict routing bounds were off; the configured audit threshold passed with 8 low and 13 moderate findings. #488 retains the first deadline failure. Root verified the downloaded coverage ZIP digest and every member, and the tested merge `387322e7f7d2b2f4a48c149aeaea2fc4f3001996` has the publication tree and parents target/head.\n\n[Claude Opus 5.5 xhigh scan 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490#issuecomment-6904020571) returned READY on the unchanged publication head. Root read and published the complete report and separate dispositions. The focused inter-page-yield regression improvement is parked in [#491](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/491); current native yield evidence remains accepted. The report's static pipelining observation is not native-confirmed, and the separate root correction gives 166 checked local links with zero missing targets. No product correction followed the review.\n\nFresh independent GPT-6 Astra max agent `audit_419_final` is now performing the exact-head/target final audit as scan 2 of the shared three-scan cap. No final-audit verdict or merge is claimed yet. This remains candidate engineering evidence, not issue or whole-batch completion.\n\n### Accepted baseline and original dispatch\n\nImplementation is admitted after independent reproduction on actual merged main `98692c8a8c7b519e8c83e585e026d595cedc0550`, tree `9439a500040aa4763613549cca6235023916de58`, containing the completed #381 and #410 changes. Implementer: GPT-6.1 Sol xhigh, agent `runtime_419_implementation`, isolated branch `codex/gg-20261115-history-disconnect`. Independent behavior QA: separate GPT-6.1 Sol xhigh agent `runtime_419_native_qa`. Claude Opus 5.5 xhigh opposite-family review, current-head CI and fresh independent Astra max final audit remain required under the shared three-scan limit. No formal scan has run yet.\n\nThe first native baseline completed all 29 cases: eight actual HTTP disconnects, eleven connected positive controls and ten negative controls. After observed unfinished-response close, seven cases started 6/6/6/4/4/4/5 further replay pages respectively; all seven attempted a 200 response write. The pending-page rejection started no further page and attempted a generic 500 on the closed response. Connected success bytes, current-thread reads, authentication/ownership, bounds, checkpoints and stored-error controls matched expectations. Unrelated health and current reads remained responsive during held pages. Seeded run/event row digests were unchanged.\n\nThis is compiled production-route composition in Fastify over real TCP, genuine manager/repositories/API-key handling and file SQLite, with controlled promise gates and explicitly synthetic histories. It does not claim ordinary gateway startup or browser behavior. Runner and supervisor exited 0, separate pipes closed, and independent readback confirmed owned processes/listener absent and the store empty. Full source/build/harness bindings were checked before and after execution. The accepted baseline summary SHA-256 is `935f6a4abce16e9633f7342fb35d4bc1ca7e73f8b5c1f0c2f9defae1f989ca3c`; evidence will be retained in the implementation PR.\n\nThe bounded fix must stop new reads after an observed response close, preserve normal incoming-request completion and connected results/errors, and remove lifecycle listeners on settlement. This checkpoint records the defect reproduction and implementation dispatch, not candidate acceptance or completion.\n",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "aidlc-ready",
+          "color": "0E8A16",
+          "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+        },
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "area:api",
+          "color": "BFDADC",
+          "description": "Fastify API"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 1,
+      "created_at": "2026-10-26T11:18:29Z",
+      "updated_at": "2026-11-16T00:34:30Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+      "display_title": "An abandoned historical thread read keeps replaying on the server after its client disconnects"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+    "title": "An abandoned historical thread read keeps replaying on the server after its client disconnects",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+    "display_title": "An abandoned historical thread read keeps replaying on the server after its client disconnects"
+  },
+  "isError": false
+}

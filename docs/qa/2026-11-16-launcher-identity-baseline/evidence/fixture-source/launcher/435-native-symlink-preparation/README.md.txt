@@ -1,0 +1,44 @@
+# #435 Windows directory symlink supplement
+
+One separate symlink-specific derivative of the sealed Windows native fixture. It preserves that fixture's public CLI, real launcher, ownership and cleanup assertions. The exact code delta adds directory symlink creation and native type readback, a separately reported creation refusal, and immediate import/store and post-helper listener checks. It imports the existing `native.mjs` only after checking its exact SHA-256 and the two frozen junction provenance hashes. Product code, the junction packet and existing evidence stay byte-identical. [Issue #435](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435) · [Owner's two-path requirement](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435#issuecomment-6872675871) · [Current static preflight](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/435-post-runtime-static-preflight.md) · [Exact derivative](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/435-native-symlink-preparation/source-delta.patch)
+
+## Expected native outcomes
+
+| Check | Admitted baseline prediction | Candidate acceptance |
+| --- | --- | --- |
+| Real directory symbolic link | Attempt `fs.symlink(checkout, alias, 'dir')` as the admitted Windows token. Read back a directory reparse point with a filesystem-provider symlink type. Node's canonical alias and helper paths resolve to the exact admitted checkout and built helper. Record the link's own device and file identity and readlink target. | Same link proof. |
+| Direct and alias helper identity | Direct absolute and direct relative paths emit exactly one lowercase 64-hex digest plus LF with empty stderr. The old aliased invocation and its store-state call may be silent with exit zero. Preserve the actual output and stop on an incompatible prediction. | With equivalent config, symlink and direct return the same digest, exit and stream bytes. Both report exactly one free store-state record before launch. |
+| Inert imports and refusals | Import through both spellings prints only the fixture's marker, with empty stderr and an empty store after each import. A direct invalid port refuses with the fixed product diagnostic, and the stale alias may remain silent. The nonexistent aliased script returns the Node module-not-found failure. | Import results remain identical. Invalid config through both spellings returns the same existing generic diagnostic and exit 1. Node still owns the nonexistent script diagnostic. The entire helper matrix leaves all owned stores empty and both selected loopback endpoints refusing TCP. |
+| Actual `--ensure-gateway` | The compiled native launcher cold-starts and then reuses the direct process. Symlink warm invocation on that process and the independent symlink cold invocation are predicted refusals. The fixture checks serving identity remains exact and the refused fresh store remains empty. | The ordinary native launcher forwards the explicit symlink spelling. Both native cold paths start a genuine local gateway. Same-spelling and cross-spelling warm invocations retain the exact verified running gateway. Its two file locks, Windows process birth identity, actual argv, TCP health fingerprint, SQLite signature and served shells are checked. |
+| Wrong store and wrong configuration | The direct-address healthy gateway rejects reuse from changed identities. | Both direct and symlink cold gateways keep their exact PID, birth, fingerprint and locks after wrong-store and changed-API-key-setting refusals; the alternate store stays empty. |
+
+The directory is named `checkout symlink α 雪 %`, with spaces and Unicode. The phase tests real executable CLI behavior. It writes fixture config verbatim, so it does not depend on installer canonicalization. Browser activation, shortcuts, transactional installer work, persistent logs, and held #458/#460 changes are outside the test. [Original native matrix](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-435-native-preparation/README.md) · [Node 22 filesystem API](https://nodejs.org/docs/latest-v22.x/api/fs.html#fspromisessymlinktarget-path-type) · [PowerShell filesystem link metadata](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_filesystem_provider?view=powershell-5.1)
+
+### Creation refusal
+
+Read-only preparation observed no visible Developer Mode registry value or current token `SeCreateSymbolicLinkPrivilege` row. These are hints. The actual creation and native type readback under the admitted token determine the result. If creation returns `EPERM` or `EACCES` and the exact alias is confirmed absent, the harness records the original system error, writes its first-failure and summary receipts with `capability-unavailable`, and exits 2. It allocates no ports or stores and runs no compiler, helper, launcher or gateway on that path. Other creation errors, incomplete type verification and any unexpected behavior are incomplete observations with exit 1. Record native Windows symbolic link evidence independently of junction and Linux runs. This separate supplement neither changes host security settings nor requests elevation. [Read-only preparation](C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/435-native-symlink-preparation/syntax-readback.json) · [Windows symlink creation semantics](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createsymboliclinkw)
+
+## Later invocation, binding and cleanup
+
+Root first verifies actual post-#419 main for baseline, or a separate frozen #435 head and current target for candidate. For each actual attempt bind the clean isolated `gg-*/GraphGoblin` checkout, head/tree/index and tracked source, exact build receipt and all output/dependency maps, the project Node and Windows compiler and PowerShell, this supplement manifest, and the three verified originals below. Runner receipts corroborate primary compiled helper/main, `Launcher.cs`, two index files and tool hashes. The native utilities are a single hash-bound import from the original external packet. Recheck the complete source/build and packet bindings after exit. Keep original and supplemental attempt directories distinct.
+
+The root-admitted supervisor should record exact runner PID and creation time, raw stdout and stderr, actual exit and separate stream close before any interpretation. It must keep the first refusal or failure and any live identity for review. Use the exact project Node executable with zero flags and no `NODE_OPTIONS`.
+
+```powershell
+$qaNode = 'C:\Users\98jak\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe'
+$qaHarness = 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher\435-native-symlink-preparation\run.mjs'
+& $qaNode $qaHarness baseline '<root-bound canonical isolated checkout>' 'evidence-baseline-first'
+# A separate candidate admission binds its own checkout and uses candidate and evidence-candidate-first.
+```
+
+Retain the inherited 245-second fixture watchdog, operation-specific 9-second read-only PowerShell query, 18-second CLI, 30-second compile, and 72-second launcher holds. Use a bounded supervisor observation window of 270 seconds after the direct child starts. A missed deadline is incomplete and sends no guessed process or tree signal. Product launcher timeouts remain its existing 30-second startup and two-second window configuration; those are the existing fixture configuration values.
+
+Only an exact owned, healthy gateway with verified PID, creation time, fingerprint, file locks and empty active-run query qualifies for the existing shutdown drain. The harness then observes port refusal, lock release and absence of that PID/birth pair. On successful cleanup, native utilities exclusively probe all recognized files in the verified disposable stores together before unlinking. The private alias itself must still match the saved device, inode, link target and canonical checkout before unlinking that exact name. The fixture never traverses the link for deletion. It confirms alias disappearance, empty stores and all selected loopback ports refusing TCP. The owner checkout, data, processes, 4747/4748, shortcuts, keys and provider sessions remain outside the admitted paths. Failed or ambiguous observations retain the first result and any unknown identities.
+
+| Original shared input | SHA-256 |
+| --- | --- |
+| `launcher-435-native-preparation/SHA256SUMS.txt` | `9bc668ac5cf3b56b84d6aa1d4ccb1ad24f8656bd10325282f32e532c1d839130` |
+| `launcher-435-native-preparation/run.mjs` | `2cbb10e74295b22f040837a354e826189e5bb168b769cb335c3ab7053d69fe43` |
+| `launcher-435-native-preparation/native.mjs` | `486f6b060ca6ba16320af8f198de51251c90632b56ef444053dba41bea09587d` |
+
+Preparation included only source inspection, read-only token and registry metadata, and syntax checks. Actual alias creation and both launcher phases await the separate admissions.

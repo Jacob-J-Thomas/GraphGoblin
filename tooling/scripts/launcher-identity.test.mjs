@@ -1,7 +1,18 @@
 import { execFile } from 'node:child_process';
-import { access, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  symlink,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { expect, it } from 'vitest';
@@ -10,12 +21,8 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const identityEntry = join(root, 'apps/api/dist/instance-identity.js');
 const execute = promisify(execFile);
 
-it('matches launcher identity to the built gateway with both bundled shells and retains refusal boundaries', async () => {
-  // Tooling's test dependencies build both shells. Do not silently test an absent fallback.
-  await access(join(root, 'apps/web/dist/index.html'));
-  await access(join(root, 'apps/web/dist-goblin/index.html'));
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-launcher-identity space-α-'));
-  const env = {
+function launcherEnvironment(dataDir) {
+  return {
     ...Object.fromEntries(
       Object.entries(process.env).filter(
         ([name]) => !name.toUpperCase().startsWith('GG_') && name.toUpperCase() !== 'JEV_API_KEY',
@@ -27,6 +34,67 @@ it('matches launcher identity to the built gateway with both bundled shells and 
     GG_REQUIRE_API_KEY: 'false',
     GG_OLLAMA_ENABLED: 'false',
   };
+}
+
+it('reads the same identity and store state through a checkout link', async () => {
+  const scratch = await mkdtemp(join(await realpath(tmpdir()), 'gg-launcher-link-'));
+  const alias = join(scratch, 'checkout alias α %');
+  const dataDir = join(scratch, 'data');
+  const aliasedEntry = join(alias, relative(root, identityEntry));
+  const env = launcherEnvironment(dataDir);
+  const run = (argv, cwd, overrides = {}) =>
+    execute(process.execPath, argv, {
+      cwd,
+      env: { ...env, ...overrides },
+      windowsHide: true,
+      timeout: 15_000,
+    });
+  let linked = false;
+  try {
+    await mkdir(dataDir);
+    await symlink(root, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    linked = true;
+    expect(await realpath(alias)).toBe(await realpath(root));
+    expect(await realpath(aliasedEntry)).toBe(await realpath(identityEntry));
+
+    const direct = await run([identityEntry], root);
+    const digest = direct.stdout.trim();
+    expect(digest).toMatch(/^[a-f0-9]{64}$/);
+    expect(direct).toEqual({ stdout: digest + '\n', stderr: '' });
+    const state = await run([identityEntry, '--store-state'], root);
+    expect(state).toEqual({ stdout: '{"state":"free"}\n', stderr: '' });
+    expect.soft(await run([aliasedEntry], alias)).toEqual(direct);
+    expect.soft(await run([aliasedEntry, '--store-state'], alias)).toEqual(state);
+    await expect
+      .soft(run([aliasedEntry, '--store-state'], alias, { GG_PORT: 'invalid' }))
+      .rejects.toMatchObject({
+        code: 1,
+        stdout: '',
+        stderr: 'Launcher configuration is invalid. Check the configured GG_* overrides.\n',
+      });
+    const imported = await run(
+      [
+        '--input-type=module',
+        '-e',
+        `await import(${JSON.stringify(pathToFileURL(aliasedEntry).href)})`,
+      ],
+      alias,
+      { GG_PORT: 'invalid' },
+    );
+    expect(imported).toEqual({ stdout: '', stderr: '' });
+    expect(await readdir(dataDir)).toEqual([]);
+  } finally {
+    if (linked) await unlink(alias);
+    await rm(scratch, { recursive: true, force: true, maxRetries: 10 });
+  }
+});
+
+it('matches launcher identity to the built gateway with both bundled shells and retains refusal boundaries', async () => {
+  // Tooling's test dependencies build both shells. Do not silently test an absent fallback.
+  await access(join(root, 'apps/web/dist/index.html'));
+  await access(join(root, 'apps/web/dist-goblin/index.html'));
+  const dataDir = await mkdtemp(join(tmpdir(), 'gg-launcher-identity space-α-'));
+  const env = launcherEnvironment(dataDir);
   const identity = async (overrides = {}) => {
     const result = await execute(process.execPath, [identityEntry], {
       cwd: root,

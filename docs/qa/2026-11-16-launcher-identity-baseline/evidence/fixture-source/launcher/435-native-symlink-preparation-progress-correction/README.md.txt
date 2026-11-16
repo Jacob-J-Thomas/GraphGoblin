@@ -1,0 +1,5 @@
+# #435 symlink fixture PowerShell progress correction
+
+This derivative keeps the frozen true-directory-symlink matrix and changes only its shared junction packet references. The bound junction runner is byte-identical to the original. The bound native utility adds one `$ProgressPreference = 'SilentlyContinue'` line to the existing `Win32_Process` diagnostic source. The symlink-specific link-type request still checks the same raw stderr, exit and metadata. The exact import changes are in `source-delta.patch`. [Original symlink matrix](../435-native-symlink-preparation/README.md) · [Corrected shared diagnostic](../../launcher-435-native-preparation-progress-correction/README.md)
+
+The fixture attempts a real Windows directory symlink under the admitted token. A genuine creation `EPERM` or `EACCES`, confirmed absent alias and verified exit 2 leaves native symlink behavior unobserved. Preserve that and other first-failure receipts on an actual attempt. Root reviews and admits the corrected phase separately with the live source/build proof and fresh paths. This preparation verifies syntax and input bytes only.

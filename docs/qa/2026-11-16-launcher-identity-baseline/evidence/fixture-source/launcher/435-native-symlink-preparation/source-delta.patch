@@ -1,0 +1,212 @@
+diff --git a/launcher-435-native-preparation/run.mjs "b/launcher\\435-native-symlink-preparation\\run.mjs"
+index 5c2ad41..2c01347 100644
+--- a/launcher-435-native-preparation/run.mjs
++++ "b/launcher\\435-native-symlink-preparation\\run.mjs"
+@@ -1,8 +1,8 @@
+ import assert from 'node:assert/strict';
+-import { lstat, mkdir, open, readFile, readdir, realpath, symlink, unlink, writeFile } from 'node:fs/promises';
++import { createHash } from 'node:crypto';
++import { lstat, mkdir, open, readFile, readdir, readlink, realpath, symlink, unlink, writeFile } from 'node:fs/promises';
+ import { dirname, join, relative, resolve } from 'node:path';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+-import { checkPort, createNative, observe, refused, selectPort, sha256, systemRoot } from './native.mjs';
+ 
+ const suite = await realpath(dirname(fileURLToPath(import.meta.url)));
+ const [phase, checkoutArg, evidenceName, ...extras] = process.argv.slice(2);
+@@ -14,25 +14,42 @@ assert.equal(process.platform, 'win32');
+ assert.equal(process.version, 'v22.23.4');
+ assert.deepEqual(process.execArgv, []);
+ assert.equal(process.env.NODE_OPTIONS, undefined);
+-const profile = resolve(suite, '..', '..', '..');
++const profile = resolve(suite, '..', '..', '..', '..');
+ const node = await realpath(join(profile, '.claude', 'codex-runs', 'GraphGoblin',
+   'runtime', 'node-v22.23.4-win-x64', 'node.exe'));
+ assert.equal(await realpath(process.execPath), node);
+ const checkout = await realpath(resolve(checkoutArg));
+ const worktrees = await realpath(join(profile, '.codex', 'worktrees'));
+ assert.match(relative(worktrees, checkout), /^gg-[^\\/]+[\\/]GraphGoblin$/i);
++const junctionSuite = join(profile, 'graphgoblin-qa', '2026-11-13-aidlc-batch', 'launcher-435-native-preparation');
++assert.equal(await realpath(junctionSuite), junctionSuite);
++const sharedBindings = {};
++for (const [name, file, expected] of [
++  ['junctionManifest', 'SHA256SUMS.txt', '9bc668ac5cf3b56b84d6aa1d4ccb1ad24f8656bd10325282f32e532c1d839130'],
++  ['junctionRunner', 'run.mjs', '2cbb10e74295b22f040837a354e826189e5bb168b769cb335c3ab7053d69fe43'],
++  ['windowsNativeUtilities', 'native.mjs', '486f6b060ca6ba16320af8f198de51251c90632b56ef444053dba41bea09587d'],
++]) {
++  const input = join(junctionSuite, file);
++  assert.equal(await realpath(input), input);
++  assert.ok((await lstat(input)).isFile());
++  const value = createHash('sha256').update(await readFile(input)).digest('hex');
++  assert.equal(value, expected, file);
++  sharedBindings[name] = { file: input, sha256: value };
++}
++const { checkPort, createNative, observe, refused, selectPort, sha256, systemRoot } =
++  await import(pathToFileURL(sharedBindings.windowsNativeUtilities.file).href);
+ const evidence = join(suite, evidenceName);
+ const helperRel = 'apps/api/dist/instance-identity.js';
+ const mainRel = 'apps/api/dist/main.js';
+ const launcherRel = 'apps/windows-launcher/Launcher.cs';
+ const webRel = 'apps/web/dist';
+ const goblinRel = 'apps/web/dist-goblin';
+-const alias = join(evidence, 'checkout junction α 雪 %');
++const alias = join(evidence, 'checkout symlink α 雪 %');
+ const pendingGateways = new Map();
+ const usedPorts = new Set();
+ const stores = new Set();
+ const result = {
+-  phase, checkout, evidence, node, runnerPid: process.pid, bindings: {}, cases: {},
++  phase, checkout, evidence, node, runnerPid: process.pid, bindings: { ...sharedBindings }, cases: {},
+   tier: 'built direct helper and native Windows launcher --ensure-gateway over real TCP and file SQLite store',
+   processes: [], ports: [], cleanup: {},
+ };
+@@ -40,6 +57,7 @@ let stage = 'binding';
+ let native;
+ let launcher;
+ let failure;
++let capabilityRefusal;
+ 
+ function serialize(_key, value) {
+   return value instanceof Error ? { ...value, name: value.name, message: value.message, stack: value.stack } : value;
+@@ -243,6 +261,27 @@ async function absent(path) {
+   catch (error) { if (error.code === 'ENOENT') return true; throw error; }
+ }
+ 
++
++async function symlinkIdentity() {
++  assert.equal(dirname(alias), evidence);
++  assert.notEqual(alias, checkout);
++  const entry = await lstat(alias, { bigint: true });
++  assert.ok(entry.isSymbolicLink());
++  assert.equal(await realpath(alias), checkout);
++  return { device: String(entry.dev), inode: String(entry.ino), linkTarget: await readlink(alias) };
++}
++
++const linkTypeQuery = Buffer.from(String.raw`
++$ErrorActionPreference = 'Stop'
++$qaItem = Get-Item -LiteralPath $env:QA435_LINK -Force
++$qaRecord = [ordered]@{
++    linkType = [string]$qaItem.LinkType
++    directory = [bool]($qaItem.Attributes -band [IO.FileAttributes]::Directory)
++    reparse = [bool]($qaItem.Attributes -band [IO.FileAttributes]::ReparsePoint)
++} | ConvertTo-Json -Compress
++[Console]::WriteLine([Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($qaRecord)))
++`, 'utf16le').toString('base64');
++
+ async function stopVerified(known, receipt) {
+   const { config, before, launcherPid } = known;
+   assert.deepEqual(await readGateway(config, before.identity, launcherPid), before);
+@@ -375,15 +414,40 @@ try {
+   native = createNative(scratch, result.processes);
+   const compiler = await realpath(join(systemRoot, 'Microsoft.NET', 'Framework64', 'v4.0.30319', 'csc.exe'));
+   await bind('compiler', compiler);
++  const systemPowerShell = join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
++  await bind('systemPowerShell', systemPowerShell);
+   await save('runner.json', result);
+ 
+-  stage = 'junction and helper matrix';
+-  await symlink(checkout, alias, 'junction');
+-  assert.ok((await lstat(alias)).isSymbolicLink());
+-  assert.notEqual(alias, checkout);
+-  assert.equal(await realpath(alias), checkout);
++  stage = 'native directory symbolic link creation';
++  assert.ok(await absent(alias));
++  try {
++    await symlink(checkout, alias, 'dir');
++  } catch (error) {
++    if (['EPERM', 'EACCES'].includes(error.code) && await absent(alias)) {
++      capabilityRefusal = error;
++      result.symlinkCapability = { state: 'creation-refused', requestedType: 'dir', alias, target: checkout,
++        error, aliasAbsent: true };
++    }
++    throw error;
++  }
++  stage = 'verify native directory symbolic link';
++  const entry = await symlinkIdentity();
++  const inspected = await native.run('Windows directory symbolic link type', systemPowerShell,
++    ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', linkTypeQuery], scratch,
++    { childEnv: { ...native.env, QA435_LINK: alias }, timeout: 9000, reapReadOnly: true });
++  assert.equal(inspected.exit.code, 0);
++  assert.equal(inspected.stderr, '');
++  const encoded = inspected.stdout.trim();
++  assert.match(encoded, /^[A-Za-z0-9+/]+={0,2}$/);
++  const bytes = Buffer.from(encoded, 'base64');
++  assert.equal(bytes.toString('base64'), encoded);
++  const metadata = JSON.parse(bytes.toString('utf8'));
++  assert.deepEqual({ directory: metadata.directory, reparse: metadata.reparse }, { directory: true, reparse: true });
++  assert.match(metadata.linkType, /^(?:SymbolicLink|SymLink)$/);
+   assert.equal(await realpath(join(alias, helperRel)), join(checkout, helperRel));
+-  result.junction = { alias, target: checkout, aliasedHelper: join(alias, helperRel) };
++  result.symlinkCapability = { state: 'verified', requestedType: 'dir', nativeQueryPid: inspected.pid };
++  result.symlink = { alias, target: checkout, aliasedHelper: join(alias, helperRel), entry, metadata };
++  stage = 'symbolic link and helper matrix';
+   const first = cfg(checkout, await store('direct-store'), await port());
+   const second = cfg(alias, await store('aliased-store'), await port());
+   const baselineAliasEnv = { ...first, Repo: alias };
+@@ -391,8 +455,8 @@ try {
+   assert.equal(goodIdentity(await directHelper('relative entry from direct cwd', first, [], {},
+     './' + helperRel)), direct);
+   freeState(await directHelper('direct store state', first, ['--store-state']));
+-  const aliasIdentity = await directHelper('junction helper identity', baselineAliasEnv);
+-  const aliasState = await directHelper('junction store state', baselineAliasEnv, ['--store-state']);
++  const aliasIdentity = await directHelper('symbolic link helper identity', baselineAliasEnv);
++  const aliasState = await directHelper('symbolic link store state', baselineAliasEnv, ['--store-state']);
+   if (phase === 'baseline') {
+     aliasSilence(aliasIdentity);
+     aliasSilence(aliasState);
+@@ -410,6 +474,7 @@ try {
+     assert.equal(imported.exit.code, 0);
+     assert.equal(imported.stdout, 'qa435-import-ok\n');
+     assert.equal(imported.stderr, '');
++    assert.deepEqual(await readdir(config.DataDir), [], 'import changed the empty owned store');
+     const invalid = await directHelper('invalid helper environment', config, ['--store-state'], { GG_PORT: 'invalid' });
+     if (phase === 'baseline' && config.Repo === alias) aliasSilence(invalid);
+     else invalidConfig(invalid);
+@@ -421,8 +486,10 @@ try {
+   assert.match(missing.stderr, /MODULE_NOT_FOUND/);
+   assert.deepEqual(await readdir(first.DataDir), []);
+   assert.deepEqual(await readdir(second.DataDir), []);
+-  result.cases.helper = { fingerprint: direct, junctionExit: aliasIdentity.exit,
+-    junctionStdout: aliasIdentity.stdout, junctionStateStdout: aliasState.stdout, readOnlyEmptyStores: true };
++  for (const value of usedPorts) assert.equal(await refused(value), true);
++  result.cases.helper = { fingerprint: direct, symlinkExit: aliasIdentity.exit,
++    symlinkStdout: aliasIdentity.stdout, symlinkStateStdout: aliasState.stdout,
++    readOnlyEmptyStores: true, listenersAbsentAfterHelperMatrix: true };
+ 
+   stage = 'external native launcher compilation';
+   launcher = join(evidence, 'QA GraphGoblin 435.exe');
+@@ -450,7 +517,7 @@ try {
+ 
+   stage = 'real native cold/warm/wrong configuration';
+   await launchModes('real', firstConfig, 'real', direct, alias);
+-  stage = 'verbatim junction native cold/warm/wrong configuration';
++  stage = 'verbatim symbolic link native cold/warm/wrong configuration';
+   const secondExpected = goodIdentity(await directHelper('canonical expected fingerprint for aliased store',
+     { ...second, Repo: checkout }));
+   await launchModes('alias', secondConfig, 'alias', secondExpected,
+@@ -464,10 +531,10 @@ try {
+     result.cleanup[directory] = receipt;
+     await native.closeStore(evidence, directory, receipt);
+   }
+-  assert.ok((await lstat(alias)).isSymbolicLink() && (await realpath(alias)) === checkout);
++  assert.deepEqual(await symlinkIdentity(), result.symlink.entry);
+   await unlink(alias);
+   assert.ok(await absent(alias));
+-  result.cleanup.junctionRemoved = true;
++  result.cleanup.symlinkRemoved = true;
+   for (const value of usedPorts) assert.equal(await refused(value), true);
+ } catch (error) {
+   failure = error;
+@@ -480,10 +547,11 @@ try {
+     try { await stopVerified(known, receipt); } catch (cleanupError) { receipt.error = cleanupError; }
+   }
+ } finally {
+-  result.status = failure ? 'incomplete' : 'assertions-met';
++  const unavailable = capabilityRefusal !== undefined && failure === capabilityRefusal;
++  result.status = unavailable ? 'capability-unavailable' : failure ? 'incomplete' : 'assertions-met';
+   result.remainingVerifiedGateways = [...pendingGateways].map(([portNumber, known]) =>
+     ({ port: portNumber, pid: known.before.pid, creation: known.before.identityProof.creationFileTime, store: known.config.DataDir }));
+   await save('summary.json', result);
+   clearTimeout(watchdog);
+-  if (failure) process.exit(1);
++  if (failure) process.exit(unavailable ? 2 : 1);
+ }

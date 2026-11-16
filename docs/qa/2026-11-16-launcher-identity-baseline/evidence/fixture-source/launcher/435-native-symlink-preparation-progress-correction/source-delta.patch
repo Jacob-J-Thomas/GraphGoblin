@@ -1,0 +1,21 @@
+diff --git a/launcher/435-native-symlink-preparation/run.mjs b/launcher/435-native-symlink-preparation-progress-correction/run.mjs
+index 2c01347..43d642c 100644
+--- a/launcher/435-native-symlink-preparation/run.mjs
++++ b/launcher/435-native-symlink-preparation-progress-correction/run.mjs
+@@ -21,13 +21,13 @@ assert.equal(await realpath(process.execPath), node);
+ const checkout = await realpath(resolve(checkoutArg));
+ const worktrees = await realpath(join(profile, '.codex', 'worktrees'));
+ assert.match(relative(worktrees, checkout), /^gg-[^\\/]+[\\/]GraphGoblin$/i);
+-const junctionSuite = join(profile, 'graphgoblin-qa', '2026-11-13-aidlc-batch', 'launcher-435-native-preparation');
++const junctionSuite = join(profile, 'graphgoblin-qa', '2026-11-13-aidlc-batch', 'launcher-435-native-preparation-progress-correction');
+ assert.equal(await realpath(junctionSuite), junctionSuite);
+ const sharedBindings = {};
+ for (const [name, file, expected] of [
+-  ['junctionManifest', 'SHA256SUMS.txt', '9bc668ac5cf3b56b84d6aa1d4ccb1ad24f8656bd10325282f32e532c1d839130'],
++  ['junctionManifest', 'SHA256SUMS.txt', '748a1b65e2800d6af0519fed6f0b0455eef9e4194e53156e70f343db27c2756a'],
+   ['junctionRunner', 'run.mjs', '2cbb10e74295b22f040837a354e826189e5bb168b769cb335c3ab7053d69fe43'],
+-  ['windowsNativeUtilities', 'native.mjs', '486f6b060ca6ba16320af8f198de51251c90632b56ef444053dba41bea09587d'],
++  ['windowsNativeUtilities', 'native.mjs', '1e50aca23303a0fbdec64951a5c3f661fb7a646c892500cd3d5a596bba5e378a'],
+ ]) {
+   const input = join(junctionSuite, file);
+   assert.equal(await realpath(input), input);

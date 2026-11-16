@@ -1,0 +1,134 @@
+{
+  "at": "2026-11-16 00:59:41 UTC",
+  "state": "admitted-expected-head-merge",
+  "pr": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490",
+      "number": 490,
+      "state": "open",
+      "merged": false,
+      "mergeable": true,
+      "draft": false,
+      "body": "Closes #419.\n\nHistorical-thread replay now stops before starting more repository work after the outgoing response disconnects. An already pending operation may settle; a late rejection does not attempt an error response on the closed connection. Normal completed GETs, connected errors, current-thread reads and historical response bytes retain their behavior. The route removes its close listener on every settled path.\n\nIndependent behavior QA reproduced the defect on integrated main and verified the candidate through compiled production routes over real TCP and file SQLite: all eight disconnect cases stop new calls and writes, eleven successful responses match baseline bytes, and ten negative controls preserve their results. Process exits, stream closure and independent PID/listener readbacks establish owned cleanup. The fixture uses synthetic histories and controlled promise gates after SQL returns; it is not ordinary gateway or browser evidence. [Baseline](docs/qa/2026-11-15-history-disconnect-baseline/README.md) · [Candidate QA](docs/qa/2026-11-15-history-disconnect-candidate/README.md)\n\nValidation:\n- The final regression fixture produced seven intended failures and three passing controls on old source; all 22 focused candidate tests passed. Types, lint, formatting and diff checks passed. [Implementation evidence](docs/qa/2026-11-15-history-disconnect-implementation/README.md)\n- [Current-head CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43773546178) passed on tested merge `387322e7f7d2b2f4a48c149aeaea2fc4f3001996`, whose tree equals publication head `497acaa602959bc828e8f1e90f2dce0a576a3492`. The one unchanged Gates-only retry passed all 32 steps, 9,617 tests with 41 skips, and all 13 line/branch coverage floors. Successful companion jobs carried forward: Browser 481 passes/one live-provider skip/zero retries, Windows 14/14 with no native artifact uploaded, and all four template catalogs. Strict routing performance enforcement was off; the configured audit threshold passed with 8 low/13 moderate findings.\n- [Claude Opus 5.5 xhigh scan 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490#issuecomment-6904020571) returned READY. [Fresh GPT-6 Astra max scan 2](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490#issuecomment-6904383049) returned SIGN-OFF at the exact head and target `98692c8a8c7b519e8c83e585e026d595cedc0550`. No blocker remains; two of three formal scans were used.\n\nThe first CI deadline remains in #488; the unexplained local Windows reset-test rename EPERM remains in #489, without a claimed local full-coverage pass. The focused inter-page-yield regression improvement is parked in #491; accepted native evidence covers that boundary. Static pipelining observations and all review qualifications are preserved in the complete reports.\n\nThis PR also archives the already completed #410 CI, reviews and merge record, with no additional product change. The owner instance and separate PR #460 hold remain untouched. This completes the bounded engineering change, not owner acceptance or the broader batch. [Delivery register](docs/delivery/2026-11-13-four-intents-register.md)\n",
+      "title": "Stop historical thread replay when its response disconnects",
+      "base": "main",
+      "base_sha": "98692c8a8c7b519e8c83e585e026d595cedc0550",
+      "head": "codex/gg-20261115-history-disconnect",
+      "head_sha": "497acaa602959bc828e8f1e90f2dce0a576a3492",
+      "head_repo_id": 1403707890,
+      "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+      "merge_commit_sha": "387322e7f7d2b2f4a48c149aeaea2fc4f3001996",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "requested_reviewers": null,
+      "requested_team_reviewers": null,
+      "diff": null,
+      "comments": null,
+      "created_at": "2026-11-15T23:12:31Z",
+      "updated_at": "2026-11-16T00:59:28Z",
+      "closed_at": null,
+      "merged_at": null,
+      "commits": 2,
+      "changed_files": 263,
+      "additions": 264020,
+      "deletions": 6,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490",
+      "display_title": "Stop historical thread replay when its response disconnects"
+    },
+    "isError": false
+  },
+  "runs": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "workflow_runs": [
+        {
+          "id": 43773546178,
+          "name": "CI",
+          "status": "completed",
+          "conclusion": "success",
+          "run_number": 887,
+          "jobs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/43773546178/jobs",
+          "logs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/43773546178/logs",
+          "workflow_id": 374245139
+        }
+      ]
+    },
+    "isError": false
+  },
+  "git": {
+    "chunk_id": "bb39fa",
+    "wall_time_seconds": 1.4338521,
+    "exit_code": 0,
+    "original_token_count": 45,
+    "output": "98692c8a8c7b519e8c83e585e026d595cedc0550\trefs/heads/main\n497acaa602959bc828e8f1e90f2dce0a576a3492 88ade580c80b2139b5d1bf51449dca10e33184f1 7b7932f89b038a4635183b6adbc5fefa6df4fa6f\n"
+  },
+  "held460": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460",
+        "number": 460,
+        "state": "open",
+        "merged": false,
+        "mergeable": false,
+        "draft": false,
+        "body": "Part of #458; preserves the separate owner acceptance on #276 and #325.\n\nThe launcher could abort a valid ownership check at 15 seconds despite a configured 60-second startup allowance, and it could deadlock by waiting for helper exit before draining redirected output. A native baseline reproduction fails on four valid slow ownership probes; the candidate completes the precheck and starts the matching disposable gateway.\n\nDrain both streams in bounded chunks, retain at most 256 KiB of UTF-8 protocol stdout, and require exit zero plus complete valid output. Initial helper allowance is `max(15, StartupTimeoutSeconds)`; ownership retries share the remaining monotonic release budget. Initial failures identify the helper stage, timing, output sizes and exit status without logging raw output. An inconclusive recheck retains the last verified held owner and complete safety guidance. Slow successful checks leave metadata. API, ownership decisions, stored formats and configuration remain unchanged.\n\nValidation at `b6ed79eeb289b781c48d3b0f994c1b2577990df9`: 27/27 native checks; independent focused QA and mutation checks; tooling lint and repository formatting passed. The preceding implementation also passed actual built-API slow ownership/startup/both-shells/managed-drain QA and all CI jobs. [Exact-head CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43546076967) is fully green: Gates (including all coverage thresholds, licenses, generated docs and dependency audit), Browser, Windows launcher and Template image. Unchanged local Windows symlink/POSIX/SQLite test limitations are recorded in the [evidence directory](docs/qa/2026-11-13-launcher-timeouts/README.md); the complete Linux gate passed.\n\nClaude Opus 5.5 xhigh completed diagnosis/design review, one full implementation review and one [targeted correction review](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460#issuecomment-6870208840). Both full-review findings are fixed and mutation-verified; the targeted verdict is READY with no introduced blocker. Existing helper-descendant cleanup remains follow-up #459. The exact historical stalled helper is unrecorded; reproduced defects are not claimed as proof of the original incident.\n\nLocal repair and owner cold-launch QA: the reviewed executable is installed; configuration and all three shortcut hashes are preserved. At the owner's request, two separate normal drains confirmed process exit, closed port and released locks before the owner launched first the desktop shortcut, then the taskbar icon. Both cold launches succeeded, produced new gateway PIDs and returned 200 for health and both app shells. The final gateway is left running. Automated installed-launch execution was policy-blocked; no workaround was attempted, and the owner performed both actual clicks. No migration or reset occurred. Implementation, reviews, independent QA, CI and local cold-launch acceptance are complete. Merge awaits explicit owner authorization.",
+        "title": "Fix Windows launcher helper timeouts and pipe draining",
+        "base": "main",
+        "base_sha": "b3b5e1874a8252cc01c065d18fef42cbfbe075b4",
+        "head": "codex/windows-launcher-timeouts",
+        "head_sha": "b6ed79eeb289b781c48d3b0f994c1b2577990df9",
+        "head_repo_id": 1403707890,
+        "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+        "merge_commit_sha": null,
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "requested_reviewers": null,
+        "requested_team_reviewers": null,
+        "diff": null,
+        "comments": null,
+        "created_at": "2026-11-14T01:45:05Z",
+        "updated_at": "2026-11-14T02:55:18Z",
+        "closed_at": null,
+        "merged_at": null,
+        "commits": 2,
+        "changed_files": 37,
+        "additions": 5727,
+        "deletions": 20,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460",
+        "display_title": "Fix Windows launcher helper timeouts and pipe draining"
+      },
+      "isError": false
+    }
+  },
+  "audit": "runtime-419-astra-root-acceptance.json",
+  "publishedAudit": 6904383049,
+  "publishedOpus": 6904020571
+}

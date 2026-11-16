@@ -1,0 +1,41 @@
+**Verdict: READY.** This is #419 formal scan 1 of 3, by Claude Opus 5.5 (`claude-opus-5-5`) at xhigh effort, reviewing the GPT-6.1 Sol implementation. I found no blocking defect in correctness, disconnect handling, auth isolation, error behaviour, docs or evidence claims.
+
+The full report is at `review-419-opus-scan1/full-report.md` (SHA-256 `1f0abc7a32cd9a3b17e98e62cf37f04766ea833e47c11dd8728093a9c45061dc`).
+
+**Identities:** I re-checked all of these myself and nothing has drifted.
+- **Target (main):** `98692c8a`, tree `9439a500`; live main still points there.
+- **Source:** `7b7932f8`, tree `e6d58118`.
+- **Head:** `497acaa6`, tree `88ade580`; checkout clean with an unchanged index before and after.
+- **Tested merge:** `387322e7`, same tree, parents target then head.
+- **PR #490:** open, draft, 263 files, no reviews or comments yet.
+- **CI run 43773546178:** attempt 2 succeeded on all four jobs.
+
+**What I checked:**
+- **The code change:** read in full. The five changed files hash identically at source, head, merge and worktree. `git diff --check` passes (run by me; the packet had no receipt for it).
+- **Fastify and Node behaviour:** I read the installed Fastify 5.12.5 and Node 22.23.4 code. A disconnect makes the handler stop silently: nothing is sent, no error hook runs, nothing hangs. A finished GET on a still-open connection is not mistaken for a disconnect.
+- **Disconnect checkpoints:** there is a check before every next database call, so after the client disconnects, at most the one read already in progress finishes.
+- **Native evidence, read from the raw files:**
+  - All eight candidate disconnect cases start zero new reads after close, with zero writes, sends and errors; the baseline started 6/6/6/4/4/4/5 pages and then tried to respond.
+  - All eleven connected responses are byte-identical to baseline, and the ten error cases keep their codes and order.
+  - No listeners remain when any request finishes, and stored history is unchanged.
+  - Only the two changed compiled files differ between the baseline and candidate runs.
+  - The test harness's `setImmediate` hook still works on the candidate; there is no bypass to report.
+- **Red/green:** the failing-before test file is byte-identical to the committed test, and the old source matches main. It produced 7 genuine assertion failures (no timeouts) with 3 passing controls; the candidate passed 22/22.
+- **CI:** the Gates log confirms checkout `387322e7` and 9,617 passed / 41 skipped; all 32 steps succeeded. I re-hashed the coverage ZIP (`ac09c754…`) and all 13 members match root's readback and clear both 90% floors. Browser is 481 passed / 1 skip with no retries, and Windows 14/14 with no artifact uploaded.
+- **Evidence packets:** all checksum files verify for the three #419 packets and the three archived #410 packets. All 160 local links resolve. The archived #410 code copies are documents only, outside every package's build and lint scope.
+
+**Observations (none blocking; proposed handling):**
+- **O1, test gap:** no focused test disconnects during the pause between pages. Deleting either the check after a page read or the check after the pause would still pass all ten tests (static reasoning; I ran no tests). The native disconnect-at-pause case does prove the behaviour (5 extra pages → 0). Accept with that native evidence, or add one focused test later; I don't recommend reopening the PR just for this.
+- **O2:** an HTTP/1.1 request pipelined behind another on the same connection never sees the disconnect in Node, so it replays fully, as it did before the change. Browsers, undici and curl don't pipeline by default. No action.
+- **O3:** if a read fails after the client has gone, nothing is logged on the server, as the brief's "silent" rule requires. Persistent corruption still shows up on the next connected read. No action.
+- **O4:** `historicalThread` returns `undefined` both for "no thread" and for "disconnected"; the only caller tells them apart correctly. No action.
+
+**Limitations:** no tests, mutation runs, builds or native reruns. The native evidence covers compiled routes over real TCP and file SQLite, not the ordinary gateway or a browser. The coverage artifact has only summaries, so I couldn't see which individual branches are uncovered. I spot-checked the carried-forward Browser, Windows and Template logs rather than reading every line.
+
+**Process notes:**
+- One read-only `node -e require.resolve` ran before I set the Node PATH; the default `node` was already v22.23.4.
+- I briefly wrote two scratch files to `/tmp/rv419`, outside the admitted folder, and deleted it.
+- One compound shell command was denied; I replaced it with a script in the review folder.
+- My review scripts and their outputs are kept in `review-419-opus-scan1`.
+
+I did not touch the owner instance or store, ports 4747/4748, or PR #460, and made no Git, GitHub or CI changes.

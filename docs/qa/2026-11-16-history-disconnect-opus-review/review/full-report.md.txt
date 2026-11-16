@@ -1,0 +1,206 @@
+# #419 formal scan 1 — Claude Opus 5.5 xhigh opposite-family review of PR #490
+
+## Verdict
+
+**READY.** I found no blocking or in-scope correctness, lifecycle, auth, error-behaviour, documentation or evidence-truth defect. Four non-blocking observations (O1–O4) and four process notes (P1–P4) follow. O1 is a test-adequacy gap at one enumerated boundary. The behaviour itself is established by the independent native evidence. Root chooses its disposition.
+
+- Reviewer: Claude Opus 5.5 (`claude-opus-5-5`), effort `xhigh`, per runner `launch.json` (pid 49392, started 2026-11-16T00:14:00.770Z). Implementer family is GPT (GPT-6.1 Sol xhigh), so the opposite-family rule holds. Labels on #419 are `impl:gpt-6.1-sol` and `review:claude-opus-5.5`.
+- Budget: this is formal scan 1 of the shared maximum of 3. No other formal scan has run on this PR: PR #490 has 0 reviews and 0 comments at readback.
+
+## Exact identities (re-established independently)
+
+| Item | Commit | Tree | Verified how |
+| --- | --- | --- | --- |
+| Target / post-#410 main | `98692c8a8c7b519e8c83e585e026d595cedc0550` | `9439a500040aa4763613549cca6235023916de58` | `git rev-parse`; live `gh api …/branches/main` = same SHA |
+| Source candidate | `7b7932f89b038a4635183b6adbc5fefa6df4fa6f` (sole parent = target) | `e6d5811824f170e36d5a90038486a5531feca255` | `git log`/`rev-parse` |
+| Publication head | `497acaa602959bc828e8f1e90f2dce0a576a3492` (sole parent = source) | `88ade580c80b2139b5d1bf51449dca10e33184f1` | Checkout HEAD; clean status; `+0 -0` vs upstream; index clean before and after review |
+| Tested merge | `387322e7f7d2b2f4a48c149aeaea2fc4f3001996`, parents target then head | `88ade580…` (= head tree) | `git log --format=%P`; live PR `merge_commit_sha`; Gates/Browser/Windows/Template logs `HEAD is now at 387322e7` |
+| PR #490 | open, **draft**, mergeable, base `main` @ `98692c8a`, head `497acaa6`, 263 changed files | — | live `gh pr view` / `gh api pulls/490` at review time |
+| CI run 43773546178 | attempt 2, `completed/success`, event `pull_request`, headSha `497acaa6` | — | live `gh run view`: Gates 133004478824, Browser 133004480023, Template image 133004480764, Windows launcher 133004511413 all `success` |
+
+There is no identity drift. The 263 changed files are 5 effective source paths + the delivery register + `docs/qa/.gitattributes` + 256 added evidence files (50 baseline, 43 implementation, 35 candidate, plus 48 + 17 + 63 archived #410 files).
+
+## Effective source diff reviewed (target → source, identical in head and tested merge)
+
+All five blobs hash identically at source, publication head, tested merge and the clean worktree. They match the root source acceptance exactly:
+
+| Path | SHA-256 | Bytes |
+| --- | --- | --- |
+| `apps/api/src/routes/runs.ts` | `36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1` | 19,590 |
+| `apps/api/src/run-history.ts` | `9595ea63a217a56b6d6b5a93d7a8b23d22d64488d0fdadc083a7868f6c96f742` | 2,756 |
+| `apps/api/src/routes/thread-disconnect.test.ts` | `1260cb00e9c66895b898541e655b264c25431cda3d7881c50def8524f9339e39` | 12,828 |
+| `docs/07-api-and-streaming.md` | `4aeffdcfda08f0f93acda9f0f27ca8e5d2d8b163fb5e4e2528e3bb386afdcdf5` | 105,210 |
+| `CHANGELOG.md` | `01ef14a26f9201a7d32963b71d9e5044ad76a5079e9093ea7286782856b05f59` | 162,496 |
+
+Source to publication changes only `docs/qa/**` (256 A + `.gitattributes` M) and `docs/delivery/2026-11-13-four-intents-register.md` (+20 lines). `git diff --check` passes on both target→source and the target→merge non-QA diff; I ran it myself (exit 0). The implementation packet had no raw receipt for that check, only handoff prose.
+
+### Product change, in substance
+
+`GET /runs/:id/thread`:
+- With `at === undefined` (current thread), the code is unchanged: `ownedRun` then `manager.getThread`.
+- With `at` set, the handler registers `reply.raw.once('close')` and defines the monotonic `isDisconnected = () => closed || response.destroyed`. It checks before `ownedRun`, passes the predicate into `historicalThread`, and checks again afterwards. On disconnect, both the success path and the `catch` path `return reply.hijack()`. A connected error is rethrown unchanged. A `finally` always removes the listener.
+
+`historicalThread(container, runId, at, isDisconnected)` checks the predicate:
+- on entry;
+- after `getInitialThread` (merged with `!thread`);
+- after `getThreadCheckpoint`;
+- after the boundary `events.read`;
+- after each page `events.read`, before `replayThread`;
+- after the existing `setImmediate` inter-page yield.
+
+On disconnect it returns `undefined`.
+
+## Correctness and lifecycle analysis
+
+1. **Every asynchronous boundary is guarded, with no window before the next call.** Each predicate check is followed synchronously by the next repository call: no `await` and no macrotask between them. A close event is delivered by I/O, so no new ownership, initial-thread, checkpoint, boundary or page read can start after Node has emitted response `close`. At most the operation already pending settles. This matches the issue's expectation that abandoned reads cost at most one page.
+2. **Response already closed before handler entry.** The listener is added after the fact, but `response.destroyed` is already true. In Node 22.23.4, `emitCloseNT` sets `destroyed = true` and then emits `close`, which I read offline from the runtime's own `_http_server` source. The handler therefore hijacks before `ownedRun`. The unit 'before handler' case and native `closed-before-handler` confirm this with 0 operations.
+3. **Outgoing close versus a completed incoming GET.** The implementation listens only on the outgoing `ServerResponse`, never on `request.raw` `close`/`end`. In Node 22, a response gets `close` only from its socket closing (`onServerResponseClose`), from `destroy()`, or after `finish`. So a fully received bodyless GET with a live response is not treated as abandoned. The focused keep-alive test checks `inputEnded === true`, a 200 with exact bytes, `writableFinished === true` at close, and reuse of the same socket. Native `historical-completed-input` checks the drained-input wire bytes against baseline.
+4. **Fastify 5.12.5 hijack semantics (installed source read).**
+   - `Reply.prototype.hijack` sets `kReplyHijacked`. `wrapThenable` returns before `reply.send`, and the rejection path is never entered because the catch converts a disconnected error into a resolved hijack.
+   - The async handler returns the `reply` thenable. `Reply.prototype.then` calls `fulfilled()` immediately because `sent` (hijacked) is true, so nothing hangs.
+   - `onResponse` hooks run only on response `finish`/`error`, which a client-closed response never emits. Skipping them via hijack therefore matches baseline disconnect behaviour.
+   - The only app-level `onResponse` hook, in `chat.ts` on the root instance, releases WeakMap audio reservations that exist only for `POST /chat/audio`.
+   - No `handlerTimeout`, `onTimeout` or diagnostics-channel subscriber is configured.
+   - SSE already uses `reply.hijack()` the same way after its own close checks.
+5. **Listener cleanup.** `once` plus `off(onClose)` works with the `once` wrapper, and `finally` covers success, connected error, disconnected error and early-hijack paths. The listener is per-`ServerResponse`, so it never accumulates on a keep-alive socket. Native snapshots show `added: 0` at handler settlement in all 24 entered cases and +1 only while held.
+6. **Error behaviour.** A disconnected rejection is silent, with no `onError`, error handler, send or write. A connected rejection is rethrown into the unchanged error handler: `INTERNAL_ERROR` 500, `STORED_EVENT_INVALID` 500, `STORED_RUN_INVALID` 500, `RUN_NOT_FOUND` 404 and `THREAD_NOT_FOUND` 404 are all preserved, per the unit tests and the native negatives.
+7. **Auth isolation.** Auth, scope and validation still run in hooks or schema before the handler, and these failures never reach the product handler: 401, 403 and 400 show no operations and no listener snapshot in the native data. Ownership is still checked before any history read. The disconnected path writes nothing, so no ownership information can leak.
+8. **Preserved semantics.** Sequence bounds, checkpoint selection and boundary verification, replay state carried across pages, the 128-row page size, isolation of damaged later records, and the current-thread path are textually unchanged apart from the guards. Nothing adds truncation, retries, persistence or time limits, and no pending promise is force-interrupted.
+9. **`setImmediate` seam.** The candidate keeps `await new Promise<void>((resolve) => setImmediate(resolve))` byte-for-byte as a context line. The native harness intercepts global `setImmediate` only when it is scheduled from compiled `historicalThread` in `run-history.js`. The candidate trace records `replay-yield-scheduled` from `dist/run-history.js:63:15`, then `replay-yield-callback` and the `yield-1` barrier. **There is no seam mismatch.**
+10. **Design boundary.** The HTTP lifetime stays in the route, and `run-history.ts` receives only a transport-agnostic predicate. This is the smallest local connection, with no new framework, package or subsystem. `historicalThread` is called only from this route; the signature change is type-enforced and CI typecheck passed.
+
+## Test adequacy (focused suite `thread-disconnect.test.ts`, 10 tests)
+
+**What the suite covers.** It uses real loopback TCP and Fastify, the production `registerRunRoutes`/`registerAuth`/`registerErrorHandler`, and a real container with API keys. Request-scoped holds sit at public repository methods. Coverage includes:
+- distinct close boundaries: before handler, ownership, initial thread, checkpoint, checkpoint boundary, and a page with concurrent `/healthz` and current-thread reads;
+- connected versus abandoned rejection;
+- a bodyless keep-alive GET with exact expected bytes from the domain oracle (`reconcileThread`), three pages, and socket reuse;
+- 401, 403, 400 and other-owner 404, plus `THREAD_NOT_FOUND`;
+- listener cleanup, counted as listeners added at settlement.
+
+**Red/green.** I verified the following:
+- The final red test bytes equal the committed test (`1260cb00…`).
+- The recorded old-source hashes equal the target blobs: runs.ts `29a5f691…`, run-history.ts `1978fab4…`.
+- The red log shows 7 assertion failures with no timeouts or setup errors: six `operations` mismatches and one `errors` mismatch. The 3 connected controls pass.
+- Green was 22/22 across 4 files.
+- CI ran the file on Linux: 10 tests passed in 531 ms.
+
+**Timing of the sends assertion.** The `sends === 0` assertion depends on microtask order. The test resumes after `abandon()` returns, which is after Fastify's synchronous `onSend` in `wrapThenable`. That makes it meaningful for a non-hijacked send, but it is order-sensitive rather than event-awaited. The `operations` assertion is the primary discriminator and is deterministic.
+
+**Gap (see O1).** No focused test closes the response during the inter-page `setImmediate` yield. I reasoned statically; I ran no mutation tests.
+- Deleting only the post-yield check (`run-history.ts` line 67) passes all ten focused tests, because the 'page' case is caught by the post-read check.
+- Deleting only the post-read check (line 60) also passes, because the post-yield check stops before the next read.
+- The route-level and the other four `historicalThread` checks are each pinned individually.
+- The native `closed-at-yield` case pins line 67 on the compiled candidate (baseline 5 pages → candidate 0), but that harness is not a CI regression test.
+
+**Coverage.** The CI artifact holds only summaries, so per-branch attribution is not possible. Per file, `run-history.ts` moved from 13/16 to 25/28 branches and 28/28 to 33/33 lines; `routes/runs.ts` from 100/105 to 109/113 branches. Package floors are what AGENTS.md requires, and API is at 95.8% lines / 90.7% branches.
+
+## Independent native evidence (raw, not prose)
+
+I compared the raw `summary.json` files offline with `compare-native.mjs` and `check-native-details.mjs`. Outputs are retained beside this report.
+
+**Identities.**
+- Baseline summary SHA `935f6a4abce16e9633f7342fb35d4bc1ca7e73f8b5c1f0c2f9defae1f989ca3c`.
+- Candidate summary SHA `bb651598360f7b2395d2fa700dd923c68c71270eb2d426841472185a06f71b3b`.
+- Candidate report `8e95c2cb458fcf2545ddd7f9d16863f0df6eb192ab9047e816ccc2d346b3d088`, eight-payload seal `96919fc03fd0af45866a69f9ffc9b1f15b335ec864e34f7a896d1220187855f7`.
+- Baseline report `4646abd8…`, seal `3ca86523…`.
+- All match the brief, the root receipts and the external report folders.
+
+**Disconnect cases, operations started after close (baseline → candidate).**
+
+| Case | Baseline | Candidate |
+| --- | --- | --- |
+| Before handler | 3 metadata reads + 6 pages | 0 |
+| Ownership | 2 + 6 | 0 |
+| Initial thread | 1 + 6 | 0 |
+| Checkpoint lookup | boundary + 4 | 0 |
+| Boundary | 4 | 0 |
+| Page 2 | 4 | 0 |
+| Yield | 5 | 0 |
+| Page 2 rejects | 0 | 0 |
+
+- **Candidate:** writes after close, sends and errors are all 0 in every case. The only work settling after close is the held operation. The logs show only "incoming request".
+- **Baseline:** every case had 2 writes and 1 send after close. The rejecting case also had 1 error and a level-50 "unhandled error" log.
+- In every held case the SQL had returned before the barrier and the close. For example, in `closed-during-page` `sqlite-returned` is at step 17, the barrier at 18 and the close at 20. This matches the stated tier.
+
+**Connected controls, history, bindings and cleanup.**
+- **Positive wires.** All 11 positive cases have identical status and content type and byte-identical bodies. I decoded each body and recomputed its SHA.
+- **Negative controls.** All 10 negatives have identical status, code and operation progression.
+- **Stored history.** Four history digests are unchanged before and after within each phase; each digest covers the full `runs` and `run_events` rows. They are not equal across phases, and no such cross-phase claim is made.
+- **Compiled bindings.** Only `dist/routes/runs.js` and `dist/run-history.js` differ between the two runtimes. The other nine bound modules are identical, and the candidate-recorded baseline bindings equal the baseline summary.
+- **Cleanup.** Fastify and the container closed with 0 sockets and no remaining listener. The exclusive-open probe exited 0 and the store was empty.
+
+The native full bindings describe source `7b7932f8` and its historical index. Publication `497acaa6` changes documentary files only, so I make no claim that the full indexes of the two heads are equal.
+
+## CI evidence (current head)
+
+The root CI acceptance inputs are 9 files, all hashing as recorded. In the exact Gates log:
+- checkout is `387322e7`;
+- the 13 Vitest suites sum to **9,617 passed / 41 skipped** (API 1,947 / 20 skipped);
+- the uploaded artifact digest is `ac09c754722adc1d6012886bebb58da0126c2f95127876615ac6b51130512a06`;
+- all **32** step conclusions are `success`.
+
+I re-hashed the downloaded ZIP (`ac09c754…`, 22,024 bytes) and read all 13 members in memory without extracting. Every member SHA matches the root readback, and every package is at least 90% lines and branches: the minimum is API 90.7% branches and plugin-claude 95% lines.
+
+Companion jobs (attempt-1 executions carried forward):
+- Browser: `playwright test --retries=0 --workers=1`, 481 passed / 1 skipped.
+- Windows launcher: `# tests 14 / pass 14 / fail 0`, and "No files were found … No artifacts will be uploaded".
+- Template image: checkout `387322e7`.
+
+The first Gates attempt's 30-minute cancellation (parked #488) and the local `EPERM` coverage failure (#489) stay as recorded. The local log shows 1,952 passed / 14 skipped / 1 failed (`reset/tree.test.ts` rename `EPERM`), with no totals. I did not reopen either.
+
+## Documentation and evidence truth
+
+- **docs/07.** The new paragraph is accurate: pending read settles, nothing further starts after the outgoing response closes, and a completed incoming GET still receives its full response. No other numbered doc states the old behaviour; I checked docs/09 and docs/10. Route schemas are unchanged, and CI's generated-docs gate passed.
+- **CHANGELOG.** The entry is accurate and placed under Unreleased.
+- **Register, PR body and issue delivery section.** Every #419 claim I could trace is supported by the raw data: 7/3 red, 22/22 green, eight closes with zero new calls/sends/writes/error hooks, eleven byte-identical wires, ten negatives, responsiveness, digests, listener cleanup, the evidence tier, and CI totals and qualifications. The responsiveness timings match the raw data: 8.42/24.84 ms and 3.14/21.79 ms. The register's #410 completion entry matches the archived #410 packets.
+- **Packet integrity.** Packet `SHA256SUMS.txt` verify for all three #419 packets (42 / 49 / 34 entries). Inner seals verify; renamed `*.md.txt` copies match their original `README.md`/`report.md` digests. All three archived #410 packets verify, including nested seals. One #410 seal uses CRLF and needed CR stripping before `sha256sum -c`; all entries pass. Its `audit/full-report.md.txt` and `commands.md.txt` match their listed digests. All local links in the six packet READMEs and the register (108 links) resolve at the head.
+- **Archived #410 product copies.** The `*.patch` files and the `old-source-emulation.setup.ts` probe sit under `docs/qa` only. They are outside every package's TypeScript, Vitest and ESLint scope, and the green CI lint, typecheck and format confirm it. They are documentary, not new active source.
+
+## Observations and proposed dispositions (none blocking)
+
+- **O1 — Focused tests do not pin the inter-page-yield check individually (test adequacy, low).**
+  - *Reachability:* only a future regression that deletes or breaks the post-yield check (line 67), or the post-read check (line 60), alone would pass CI.
+  - *Impact:* no current defect. Behaviour at the yield is established on the compiled candidate by native `closed-at-yield` (5 → 0 pages). docs/15 allows native-process evidence where a criterion needs it.
+  - *Proposed disposition:* root's choice. Either ACCEPT with the native evidence as the yield criterion's proof, or add one focused case in a later hardening change. That case would hold the first `setImmediate` scheduled from `historicalThread` during an observed request, close the client, release, and expect exactly one page. I do not recommend reopening this PR solely for O1.
+- **O2 — HTTP/1.1 pipelined requests (residual, informational).**
+  - *Behaviour:* a historical request pipelined behind another response on the same socket sits in Node's `state.outgoing` queue without a socket. If the connection dies, Node 22.23.4's `abortIncoming` destroys only the incoming request (its own source comment: "Abort socket._httpMessage ?"). The queued response never gets `close` or `destroyed`, so that request still replays fully, as on baseline.
+  - *Reachability:* browsers, undici's default and curl do not pipeline. The issue contract is scoped to an observed response close.
+  - *Proposed disposition:* no action; note as a limitation if desired.
+- **O3 — Disconnected rejections leave no server-side diagnostic (informational).**
+  - *Behaviour:* a genuine infrastructure fault on an abandoned read is silently dropped, not logged.
+  - *Basis:* this follows the brief's explicit "silent" contract. Persistent corruption resurfaces with the existing logging on the next connected read.
+  - *Proposed disposition:* no action in #419. A future debug-level log is optional.
+- **O4 — `undefined` means two things (informational design).**
+  - *Behaviour:* `historicalThread` returns `undefined` both for a missing initial thread and for a disconnect. The single caller disambiguates safely with the monotonic predicate, but a future caller must do the same.
+  - *Proposed disposition:* no action.
+
+## Commands and actions (all read-only with respect to product, checkout, index and GitHub)
+
+- **Git** (`GIT_OPTIONAL_LOCKS=0`): `rev-parse`, `status --porcelain=v2 --branch`, `log`, `diff --stat/--name-status/--check`, `show <sha>:<path> | sha256sum`, `check-attr`, `diff --cached --quiet`.
+- **GitHub (read-only):** `gh pr view 490 --json …`, `gh run view 43773546178 --json …`, `gh api repos/…/branches/main`, `gh api repos/…/pulls/490`, `gh issue view 419 --json …`.
+- **Offline inspection:**
+  - `sha256sum` and `sha256sum -c` (CR-stripped where needed) over packets, external receipts, report folders and the CI ZIP;
+  - `grep`/`sed` over the exact CI logs;
+  - reading the installed Fastify 5.12.5 `wrap-thenable.js`, `reply.js` and `route.js`;
+  - reading Node 22.23.4 `_http_server`/`_http_outgoing` internals via `process.binding('natives')`.
+- **Scripts written only in this folder:**
+  - `compare-native.mjs` → `compare-native.out.txt`
+  - `check-native-details.mjs` → `check-native-details.out.txt`
+  - `read-coverage-zip.py`, run with `python -I`, in memory, no extraction → `read-coverage-zip.out.txt`
+  - `check-links.mjs`
+- **Not done:** no product or native rerun, no build, no test run, no CI retry, no reviewer spawned, and no application provider called. Owner instance, store and ports 4747/4748, and PR #460, were untouched. The checkout stayed clean at `497acaa6` with an unchanged index.
+
+## Limitations
+
+- I did not run mutation tests or focused tests; the O1 reasoning is static. The CI coverage artifact contains only summaries, so I could not attribute which branches are uncovered.
+- The native tier is compiled production routes in instrumented Fastify over real TCP, file SQLite, the real manager and API-key handling, with synthetic histories, a fake clock and IDs, and request-scoped gates after the SQL returned. It is not ordinary built-gateway or browser evidence; in particular, browser `fetch` abort → TCP close was not exercised.
+- I relied on the root receipt plus spot checks of the carried-forward Browser, Windows and Template logs; I did not read every log line.
+- I did not re-verify the external 4.33 MB build bindings, which the root and the independent QA verified.
+
+## Process notes
+
+- **P1.** One read-only `node -e "require.resolve(...)"` ran before I explicitly prepended the project Node PATH. I confirmed straight away that the default `node` already resolved to the project runtime v22.23.4. Every later Node command set the PATH explicitly.
+- **P2.** I briefly wrote two path-list scratch files to `/tmp/rv419`, outside the admitted output folder, and deleted that directory before finishing.
+- **P3.** Tool permissions denied one compound Bash link-check command. I replaced it with `check-links.mjs` in this folder.
+- **P4.** I used the deprecated `process.binding('natives')` only to read Node's bundled HTTP source offline.

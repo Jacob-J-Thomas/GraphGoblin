@@ -4,6 +4,8 @@
 
 The optional [Windows launcher](guide/01-install-and-first-run.md#optional-windows-desktop-and-taskbar-launcher)
 starts or reuses the configured built gateway before opening/focusing its installed Chrome PWA.
+The launcher resolves the identity helper through directory junctions and symbolic links to the
+checkout, so the real and aliased paths identify the same gateway for the same configuration.
 The desktop/Start-menu shortcut and actual PWA window share a launcher AppUserModelID and native
 relaunch command, so a pin of that window goes through readiness on a cold start. Its app ID is
 validated against the configured IPv4 loopback origin and current `/app/` manifest ID. Browser

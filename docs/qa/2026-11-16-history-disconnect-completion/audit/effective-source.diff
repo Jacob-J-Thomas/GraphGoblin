@@ -1,0 +1,466 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3390f5d4..18199925 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- Historical context-thread requests stop reading run history when the client disconnects (#419).
++  The gateway lets an in-flight read settle without attempting a response.
++
+ - A run clears its current wait when it moves to failed, including recovery after a failure
+   event was committed before the status write (#410). Park, wake and child events remain in
+   the log. Runs already marked failed by an older build can still carry a stale wait.
+diff --git a/apps/api/src/routes/runs.ts b/apps/api/src/routes/runs.ts
+index 09104b49..656f81c3 100644
+--- a/apps/api/src/routes/runs.ts
++++ b/apps/api/src/routes/runs.ts
+@@ -10,6 +10,7 @@ import {
+   RunStatusSchema,
+   TimestampSchema,
+   UlidSchema,
++  type ContextThread,
+   type InvocationSource,
+   type RunRecord,
+ } from '@graphgoblin/contracts';
+@@ -211,11 +212,33 @@ export function registerRunRoutes(app: ApiInstance, container: Container): void
+       },
+     },
+     async (request, reply) => {
+-      await ownedRun(request, request.params.id);
+-      const thread =
+-        request.query.at === undefined
+-          ? await manager.getThread(request.params.id)
+-          : await historicalThread(container, request.params.id, request.query.at);
++      const { id } = request.params;
++      const { at } = request.query;
++      let thread: ContextThread | undefined;
++      if (at === undefined) {
++        await ownedRun(request, id);
++        thread = await manager.getThread(id);
++      } else {
++        const response = reply.raw;
++        let closed = false;
++        const onClose = () => {
++          closed = true;
++        };
++        const isDisconnected = () => closed || response.destroyed;
++        // The outgoing response can still be live after the incoming GET has ended.
++        response.once('close', onClose);
++        try {
++          if (isDisconnected()) return reply.hijack();
++          await ownedRun(request, id);
++          thread = await historicalThread(container, id, at, isDisconnected);
++          if (isDisconnected()) return reply.hijack();
++        } catch (error) {
++          if (isDisconnected()) return reply.hijack();
++          throw error;
++        } finally {
++          response.off('close', onClose);
++        }
++      }
+       if (!thread) return problem(reply, 404, 'THREAD_NOT_FOUND', 'the run has no thread');
+       return thread;
+     },
+diff --git a/apps/api/src/routes/thread-disconnect.test.ts b/apps/api/src/routes/thread-disconnect.test.ts
+new file mode 100644
+index 00000000..c1fa1321
+--- /dev/null
++++ b/apps/api/src/routes/thread-disconnect.test.ts
+@@ -0,0 +1,339 @@
++import { once } from 'node:events';
++import { Agent, get } from 'node:http';
++import type { Socket } from 'node:net';
++import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
++import Fastify from 'fastify';
++import {
++  serializerCompiler,
++  validatorCompiler,
++  type ZodTypeProvider,
++} from 'fastify-type-provider-zod';
++import { ContextThreadSchema, type RunRecord } from '@graphgoblin/contracts';
++import { minimalLoop } from '@graphgoblin/contracts/testing';
++import { reconcileThread } from '@graphgoblin/domain';
++import type { EventDraft } from '@graphgoblin/engine';
++import { registerAuth } from '../plugins/auth.js';
++import { registerErrorHandler } from '../plugins/errors.js';
++import { createTestApp } from '../testing/test-app.js';
++import { registerRunRoutes } from './runs.js';
++import { registerSystemRoutes } from './system.js';
++
++type Stage = 'before handler' | 'ownership' | 'initial' | 'checkpoint' | 'boundary' | 'page';
++type Headers = Record<string, string>;
++
++function deferred<Value = void>() {
++  let resolve!: (value: Value | PromiseLike<Value>) => void;
++  let reject!: (error: unknown) => void;
++  const promise = new Promise<Value>((resolvePromise, rejectPromise) => {
++    resolve = resolvePromise;
++    reject = rejectPromise;
++  });
++  return { promise, resolve, reject };
++}
++
++function observeRequest(hold?: Stage) {
++  return {
++    hold,
++    operations: [] as Stage[],
++    reached: deferred(),
++    release: deferred(),
++    closed: deferred<boolean>(),
++    settled: deferred<number>(),
++    inputEnded: false,
++    sends: 0,
++    errors: [] as Error[],
++  };
++}
++
++function read(url: string, headers: Headers = {}, agent?: Agent) {
++  return new Promise<{ status: number | undefined; body: string; socket: Socket }>(
++    (resolve, reject) => {
++      get(url, { headers, agent }, (response) => {
++        const socket = response.socket;
++        response.setEncoding('utf8');
++        let body = '';
++        response.on('data', (text: string) => {
++          body += text;
++        });
++        response.once('error', reject);
++        response.once('end', () => resolve({ status: response.statusCode, body, socket }));
++      }).once('error', reject);
++    },
++  );
++}
++
++describe('historical thread response lifetime', () => {
++  const app = Fastify().withTypeProvider<ZodTypeProvider>();
++  let test: Awaited<ReturnType<typeof createTestApp>>;
++  let base: string;
++  let headers: Headers;
++  let history: string;
++  let current: string;
++  let runId: string;
++  let expectedBody: string;
++  let currentBody: string;
++  let checkpointSeq: number;
++  let observation: ReturnType<typeof observeRequest>;
++  const observedHeaders = () => ({ ...headers, 'x-observe-history': 'yes' });
++
++  async function holdAt(control: typeof observation, stage: Stage) {
++    if (control.hold !== stage) return;
++    control.reached.resolve();
++    await control.release.promise;
++  }
++
++  beforeAll(async () => {
++    test = await createTestApp({ requireApiKey: true });
++    const key = await test.container.repos.apiKeys.create('local', 'history-test', ['*']);
++    headers = { authorization: `Bearer ${key.token}` };
++    const loopId = await test.publishLoop(minimalLoop(), headers);
++    const start = async () => {
++      const result = await test.app.inject({
++        method: 'POST',
++        url: `/loops/${loopId}/runs`,
++        headers,
++        payload: {},
++      });
++      expect(result.statusCode, result.body).toBe(202);
++      await test.idle();
++      return result.json<{ run: RunRecord }>().run.id;
++    };
++    runId = await start();
++    const currentPath = `/runs/${await start()}/thread`;
++    const { runs, events } = test.container.repos;
++    const initial = await runs.getInitialThread(runId);
++    const checkpoint = await runs.getThreadCheckpoint(runId);
++    if (!initial || !checkpoint?.replayState)
++      throw new Error('Fixture must have a replay checkpoint');
++    checkpointSeq = checkpoint.seq;
++    await events.append(
++      runId,
++      Array.from({ length: 150 }, (_, count): EventDraft[] => [
++        { type: 'node.started', nodeId: 'work', kind: 'mutate', attempt: 1, configHash: 'h' },
++        {
++          type: 'node.finished',
++          nodeId: 'work',
++          patch: [{ op: 'add', path: '/vars/count', value: count + 1 }],
++          durationMs: 1,
++        },
++      ]).flat(),
++    );
++    const at = checkpointSeq + 259;
++    const expected = reconcileThread(initial, await events.read(runId), undefined, at);
++    expectedBody = JSON.stringify(ContextThreadSchema.parse(expected));
++    currentBody = (await test.app.inject({ url: currentPath, headers })).body;
++
++    app.setValidatorCompiler(validatorCompiler);
++    app.setSerializerCompiler(serializerCompiler);
++    registerErrorHandler(app);
++    registerAuth(app, test.container);
++    app.addHook('onRoute', (route) => {
++      if (route.method !== 'GET' || route.url !== '/runs/:id/thread') return;
++      const handler = route.handler;
++      route.handler = async function (request, reply) {
++        if (request.headers['x-observe-history'] !== 'yes')
++          return handler.call(this, request, reply);
++        const control = observation;
++        reply.raw.once('close', () => control.closed.resolve(reply.raw.writableFinished));
++        const originalListeners = reply.raw.listeners('close');
++        try {
++          // A completed, bodyless incoming message still has a live outgoing response.
++          if (!request.raw.readableEnded) {
++            const ended = once(request.raw, 'end');
++            request.raw.resume();
++            await ended;
++          }
++          control.inputEnded = request.raw.readableEnded;
++          await holdAt(control, 'before handler');
++          return await handler.call(this, request, reply);
++        } finally {
++          control.settled.resolve(
++            reply.raw.listeners('close').filter((listener) => !originalListeners.includes(listener))
++              .length,
++          );
++        }
++      };
++    });
++    app.addHook('onError', (request, _reply, error, done) => {
++      if (request.headers['x-observe-history'] === 'yes') observation.errors.push(error);
++      done();
++    });
++    app.addHook('onSend', (request, _reply, payload, done) => {
++      if (request.headers['x-observe-history'] === 'yes') observation.sends++;
++      done(null, payload);
++    });
++    registerRunRoutes(app, test.container);
++    registerSystemRoutes(app, test.container);
++
++    function watch<Args extends unknown[], Value>(
++      stage: Stage | ((...args: Args) => Stage),
++      delegate: (...args: Args) => Promise<Value>,
++    ) {
++      return async (...args: Args) => {
++        if (args[0] === runId) {
++          const operation = typeof stage === 'function' ? stage(...args) : stage;
++          observation.operations.push(operation);
++          await holdAt(observation, operation);
++        }
++        return delegate(...args);
++      };
++    }
++    runs.get = watch('ownership', runs.get.bind(runs));
++    runs.getInitialThread = watch('initial', runs.getInitialThread.bind(runs));
++    runs.getThreadCheckpoint = watch('checkpoint', runs.getThreadCheckpoint.bind(runs));
++    events.read = watch(
++      (_id, after, limit) => (after === checkpointSeq - 1 && limit === 1 ? 'boundary' : 'page'),
++      events.read.bind(events),
++    );
++    base = await app.listen({ host: '127.0.0.1', port: 0 });
++    history = `${base}/runs/${runId}/thread?at=${at}`;
++    current = base + currentPath;
++  });
++
++  beforeEach(() => {
++    observation = observeRequest();
++  });
++
++  afterAll(async () => {
++    try {
++      await app.close();
++    } finally {
++      await test?.close();
++    }
++  });
++
++  async function abandon(stage: Stage, whileHeld?: () => Promise<void>) {
++    observation.hold = stage;
++    const prematureResponse = deferred<never>();
++    const client = get(history, { headers: observedHeaders(), agent: false }, (response) => {
++      response.resume();
++      prematureResponse.reject(new Error(`Received HTTP ${response.statusCode} before ${stage}`));
++    });
++    client.setTimeout(8_000, () => client.destroy(new Error(`Timed out waiting for ${stage}`)));
++    client.once('error', prematureResponse.reject);
++    try {
++      await Promise.race([observation.reached.promise, prematureResponse.promise]);
++      await whileHeld?.();
++      client.destroy();
++      expect(await observation.closed.promise).toBe(false);
++    } finally {
++      client.destroy();
++      observation.release.resolve();
++    }
++    expect(await observation.settled.promise).toBe(0);
++  }
++
++  it.each([
++    ['before handler', []],
++    ['ownership', ['ownership']],
++    ['initial', ['ownership', 'initial']],
++    ['checkpoint', ['ownership', 'initial', 'checkpoint']],
++    ['boundary', ['ownership', 'initial', 'checkpoint', 'boundary']],
++  ] as const)('stops at an abandoned %s boundary', async (stage, operations) => {
++    await abandon(stage);
++    expect(observation.operations).toEqual(operations);
++    expect(observation.sends).toBe(0);
++  });
++
++  it('stops after an abandoned page while unrelated health and current reads complete', async () => {
++    await abandon('page', async () => {
++      const health = await read(base + '/healthz');
++      expect(health.status).toBe(200);
++      expect(JSON.parse(health.body)).toEqual({ status: 'ok' });
++      expect(await read(current, headers)).toMatchObject({ status: 200, body: currentBody });
++    });
++    expect(observation.operations).toEqual([
++      'ownership',
++      'initial',
++      'checkpoint',
++      'boundary',
++      'page',
++    ]);
++    expect(observation.sends).toBe(0);
++  });
++
++  it.each(['connected', 'abandoned'] as const)(
++    'handles the same %s read rejection',
++    async (mode) => {
++      const { events } = test.container.repos;
++      const readEvents = events.read;
++      events.read = async (...args) => {
++        await readEvents(...args);
++        throw new Error('Injected read failure');
++      };
++      try {
++        if (mode === 'connected') {
++          const response = await read(history, observedHeaders());
++          expect(response.status).toBe(500);
++          expect(JSON.parse(response.body)).toMatchObject({ code: 'INTERNAL_ERROR' });
++          expect(await observation.settled.promise).toBe(0);
++          expect(observation.errors.map((error) => error.message)).toEqual([
++            'Injected read failure',
++          ]);
++        } else {
++          await abandon('boundary');
++          expect(observation.errors).toEqual([]);
++          expect(observation.sends).toBe(0);
++        }
++      } finally {
++        events.read = readEvents;
++      }
++    },
++  );
++
++  it('completes bodyless requests and reuses the connection after a full historical response', async () => {
++    const agent = new Agent({ keepAlive: true, maxSockets: 1 });
++    try {
++      const first = await read(history, observedHeaders(), agent);
++      expect(first, observation.errors.map((error) => error.message).join('\n')).toMatchObject({
++        status: 200,
++        body: expectedBody,
++      });
++      expect(observation.inputEnded).toBe(true);
++      expect(await observation.settled.promise).toBe(0);
++      expect(await observation.closed.promise).toBe(true);
++      expect(observation.operations).toEqual([
++        'ownership',
++        'initial',
++        'checkpoint',
++        'boundary',
++        'page',
++        'page',
++        'page',
++      ]);
++      const next = await read(current, headers, agent);
++      expect(next).toMatchObject({ status: 200, body: currentBody });
++      expect(first.socket).not.toBeNull();
++      expect(next.socket).toBe(first.socket);
++    } finally {
++      agent.destroy();
++    }
++  });
++
++  it('preserves missing-thread, validation and authorization errors', async () => {
++    const { runs, apiKeys } = test.container.repos;
++    const other = await apiKeys.create('another-owner', 'another-owner', ['runs:read']);
++    const forbidden = await apiKeys.create('local', 'loops-only', ['loops:read']);
++    for (const [url, credentials, status, code] of [
++      [history, {}, 401, 'UNAUTHORIZED'],
++      [history, { authorization: `Bearer ${forbidden.token}` }, 403, 'FORBIDDEN'],
++      [history.replace(/\d+$/, '-1'), headers, 400, 'VALIDATION_FAILED'],
++      [history, { authorization: `Bearer ${other.token}` }, 404, 'RUN_NOT_FOUND'],
++    ] as const) {
++      const response = await read(url, credentials);
++      expect(response.status).toBe(status);
++      expect(JSON.parse(response.body)).toMatchObject({ code });
++    }
++    expect(observation.operations).toEqual(['ownership']);
++    const getInitialThread = runs.getInitialThread;
++    runs.getInitialThread = () => Promise.resolve(undefined);
++    try {
++      const response = await read(history, observedHeaders());
++      expect(response.status).toBe(404);
++      expect(JSON.parse(response.body)).toMatchObject({ code: 'THREAD_NOT_FOUND' });
++      expect(await observation.settled.promise).toBe(0);
++    } finally {
++      runs.getInitialThread = getInitialThread;
++    }
++  });
++});
+diff --git a/apps/api/src/run-history.ts b/apps/api/src/run-history.ts
+index 24edcdef..b253b600 100644
+--- a/apps/api/src/run-history.ts
++++ b/apps/api/src/run-history.ts
+@@ -33,16 +33,20 @@ export async function historicalThread(
+   container: Container,
+   runId: string,
+   at: number,
++  isDisconnected: () => boolean,
+ ): Promise<ContextThread | undefined> {
+   const { repos } = container;
++  if (isDisconnected()) return undefined;
+   let thread = await repos.runs.getInitialThread(runId);
+-  if (!thread) return undefined;
++  if (isDisconnected() || !thread) return undefined;
+   let after = 0;
+   let state: ReplayState = { strict: false };
+   // A checkpoint past `at` stays undecoded, so its damage never blocks this read (D-016).
+   const checkpoint = await repos.runs.getThreadCheckpoint(runId, at);
++  if (isDisconnected()) return undefined;
+   if (checkpoint?.replayState) {
+     const [boundary] = await repos.events.read(runId, checkpoint.seq - 1, 1);
++    if (isDisconnected()) return undefined;
+     if (boundary?.seq === checkpoint.seq) {
+       thread = checkpoint.thread;
+       after = checkpoint.seq;
+@@ -53,12 +57,14 @@ export async function historicalThread(
+     // Sequences are contiguous, so a page never reaches past `at`: a damaged later event must
+     // not block an earlier thread (D-016).
+     const page = await repos.events.read(runId, after, Math.min(128, at - after));
++    if (isDisconnected()) return undefined;
+     if (!page.length) break;
+     thread = replayThread(thread, page, at, state);
+     state = replayStateAt(page, at, state);
+     after = page.at(-1)!.seq;
+     // Give cancellation and other requests a turn between historical pages.
+     await new Promise<void>((resolve) => setImmediate(resolve));
++    if (isDisconnected()) return undefined;
+   }
+   return thread;
+ }
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 97bb7595..9aa7f295 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -211,6 +211,10 @@ The existing JSON `GET /runs/{id}/events?after=N&limit=L` remains a forward read
+ 
+ `GET /runs/{id}/thread?at=N` resolves the exact context after boundary N (zero is the admitted seed). The current read without `at` keeps #116's behavior. Historical reconstruction uses 128-event pages and carries the domain open-visit/strict replay state across pages, retaining only the thread and one page, and yields between reads. It uses a verified preceding checkpoint when available and never writes execution state. Neither a page nor the checkpoint read decodes anything recorded after N, so damage to a later event or a later checkpoint fails only reads at or after it (D-016). Work is proportional to the prefix after that checkpoint; the requested thread's intrinsic size remains supported. The executor rewrites the run's checkpoint after every node completion, so a boundary behind the newest completion replays from the admitted seed: the read costs time proportional to the history before the boundary. The inspector therefore issues it only for an explicitly selected event and never while following live, which reads only the run record, `/observation` and the current thread, coalesced to at most one refresh every 500 ms (#186 acceptance fix; docs/09 "Live following").
+ 
++When the outgoing response closes before completion, the gateway lets any pending historical read
++settle and stops before starting another repository read or replay page. A completed incoming GET
++can still receive its full historical response.
++
+ `GET /runs/{id}/observation` returns the latest durable lifecycle, exit, gate decision and finish evidence, the latest `run.cancelled` and the `run.cancel_requested` that led to it (one a later `run.resumed` answered does not; each field optional), and `freshSessionChoices`, the latest 20 `run.resumed` events that record a fresh-session choice (#265), oldest first, independently of browser retention. Type-indexed latest reads select exact events. The last gate and the fresh-session choices each seek a partial index (`run_events_gate_idx`, `run_events_fresh_session_idx`, migration 0021) that holds only the decisions carrying gate evidence or the resumes recording a fresh-session choice, plus rows whose JSON is malformed so a read of the newest one reports the corruption. Neither read grows with the run's ungated decisions or other resumes: an ungated cyclic loop is valid and can record any number of them (#186 review round 1). The reads name their index (`INDEXED BY`) and repeat its condition word for word, which SQLite requires before it uses a partial index. Run status/result/delivery authority remains the run record, and this read does not change stream completion or delivery finality.
+ 
+ ## SSE protocol (Decided)

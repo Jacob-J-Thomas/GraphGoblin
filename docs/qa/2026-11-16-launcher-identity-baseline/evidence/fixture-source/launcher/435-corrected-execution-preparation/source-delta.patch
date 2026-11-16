@@ -1,0 +1,157 @@
+diff --git a/launcher/435-execution-preparation/launch.ps1 b/launcher/435-corrected-execution-preparation/launch.ps1
+index 0827465..a5e8e0c 100644
+--- a/launcher/435-execution-preparation/launch.ps1
++++ b/launcher/435-corrected-execution-preparation/launch.ps1
+@@ -9,6 +9,22 @@ $ErrorActionPreference = 'Stop'
+ $qaBatch = 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch'
+ $qaNode = 'C:\Users\98jak\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe'
+ $qaDeadlineMs = 270000
++$qaOldPrep = Join-Path $qaBatch 'launcher\435-execution-preparation'
++$qaOldTool = Join-Path $qaOldPrep 'job.mjs'
++$qaOldToolSha = '3fd3d55808e5c3cd300a05aff41d2c47705b3abac855cc157fd7485560d5917c'
++$qaOldLauncherSha = '333856077b76da59567d80116b3f413d35a6c8e46d3548db50dc93882171283a'
++$qaSuites = [ordered]@{
++  junction = @{
++    directory = Join-Path $qaBatch 'launcher-435-native-preparation-progress-correction'
++    sha256 = '748a1b65e2800d6af0519fed6f0b0455eef9e4194e53156e70f343db27c2756a'
++    expectedNames = @('README.md', 'native.mjs', 'run.mjs', 'syntax-readback.json')
++  }
++  symlink = @{
++    directory = Join-Path $qaBatch 'launcher\435-native-symlink-preparation-progress-correction'
++    sha256 = '5ad918110aea6f18cea78e16c341589af37fdbb41e526416c2df5647897e9c62'
++    expectedNames = @('README.md', 'run.mjs', 'source-delta.patch', 'syntax-readback.json')
++  }
++}
+ 
+ function Get-QaSha([string]$Path) {
+   (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+@@ -35,14 +51,76 @@ function Read-QaJson([string]$Path) {
+   Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -AsHashtable
+ }
+ 
++function Confirm-QaDirectory([string]$Path) {
++  $entry = Get-Item -LiteralPath $Path -Force
++  if (!$entry.PSIsContainer -or ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
++      (Resolve-Path -LiteralPath $Path).Path -cne $Path) { throw "Unexpected directory: $Path" }
++}
++
++function Read-QaCorrectedSuite([string]$Kind) {
++  $suite = $qaSuites[$Kind]
++  Confirm-QaDirectory $suite.directory
++  $declared = $qaInput.correctedManifestSha256[$Kind]
++  if ($declared -cne $suite.sha256) { throw "Unreviewed corrected fixture manifest: $Kind" }
++  $manifest = Join-Path $suite.directory 'SHA256SUMS.txt'
++  Confirm-QaFile $manifest $declared
++  $members = [ordered]@{}
++  foreach ($row in (Get-Content -LiteralPath $manifest)) {
++    if ($row -cnotmatch '^([a-f0-9]{64})  ([A-Za-z0-9._-]+)$') { throw "Malformed fixture seal: $Kind" }
++    $sha = $Matches[1]
++    $name = $Matches[2]
++    if ($name -cnotin $suite.expectedNames -or $members.Contains($name)) { throw "Unexpected fixture member: $name" }
++    $file = Join-Path $suite.directory $name
++    Confirm-QaFile $file $sha
++    $members[$name] = [ordered]@{ file = $file; sha256 = $sha }
++  }
++  if ($members.Count -ne $suite.expectedNames.Count) { throw "Incomplete corrected fixture seal: $Kind" }
++  [ordered]@{ directory = $suite.directory; manifest = [ordered]@{ file = $manifest; sha256 = $declared }; members = $members }
++}
++
+ function Invoke-QaVerification {
+-  $text = & $qaNode $qaTool 'verify-launch' $AdmissionPath $AdmissionSha256
+-  if ($LASTEXITCODE -ne 0) { throw "Binding verification exited $LASTEXITCODE" }
+-  if (@($text).Count -ne 1) { throw 'Verification must return exactly one JSON line' }
+-  $text
++  Confirm-QaFile $AdmissionPath $AdmissionSha256
++  Confirm-QaFile $PSCommandPath $qaInput.supervisorSha256
++  Confirm-QaFile $qaOldTool $qaOldToolSha
++  Confirm-QaFile (Join-Path $qaOldPrep 'launch.ps1') $qaOldLauncherSha
++  Confirm-QaFile $qaNode $qaInput.nodeSha256
++  $proof = $qaInput.originalVerification
++  if (!$proof.path.StartsWith($qaBatch + '\', [StringComparison]::OrdinalIgnoreCase)) {
++    throw 'Expected a sealed v1 verification input under the external batch'
++  }
++  Confirm-QaFile $proof.path $proof.sha256
++  $text = & $qaNode $qaOldTool 'verify-launch' $proof.path $proof.sha256
++  if ($LASTEXITCODE -ne 0) { throw "Original binding verification exited $LASTEXITCODE" }
++  if (@($text).Count -ne 1) { throw 'Original verification must return exactly one JSON line' }
++  $original = $text | ConvertFrom-Json -AsHashtable
++  if ($original.input.phase -cne $qaInput.phase -or $original.input.fixture -cne $qaInput.fixture -or
++      $original.node.nodeSha256 -cne $qaInput.nodeSha256 -or
++      $original.buildBinding.path -cne $qaInput.buildBinding.path -or
++      $original.buildBinding.sha256 -cne $qaInput.buildBinding.sha256) {
++    throw 'Original proof names a different phase, fixture kind, runtime or build'
++  }
++  $suites = [ordered]@{ junction = Read-QaCorrectedSuite 'junction'; symlink = Read-QaCorrectedSuite 'symlink' }
++  $executed = $suites[$qaInput.fixture]
++  $expected = [ordered]@{}
++  foreach ($entry in $original.expectedFixtureBindings.GetEnumerator()) { $expected[$entry.Key] = $entry.Value }
++  if ($qaInput.fixture -ceq 'symlink') {
++    $expected['junctionManifest'] = $suites.junction.manifest
++    $expected['junctionRunner'] = $suites.junction.members['run.mjs']
++    $expected['windowsNativeUtilities'] = $suites.junction.members['native.mjs']
++  }
++  $plan = [ordered]@{
++    schema = 'gg435-corrected-native-execution-plan/v1'
++    originalProof = [ordered]@{ usage = 'build-verification-only'; input = $proof; proofJson = $text }
++    correctedFixtures = $suites; executedFixture = $qaInput.fixture; executedRunner = $executed.members['run.mjs']
++    receiptDirectory = $qaInput.receiptDirectory; evidence = Join-Path $executed.directory $qaInput.evidenceName
++    args = @($executed.members['run.mjs'].file, $qaInput.phase, $original.checkout, $qaInput.evidenceName)
++    node = $original.node; checkout = $original.checkout; nativeTools = $original.nativeTools
++    buildBinding = $original.buildBinding; expectedFixtureBindings = $expected
++  }
++  $plan | ConvertTo-Json -Depth 25 -Compress
+ }
+ 
+-if (!$IsWindows -or $PSScriptRoot -cne (Join-Path $qaBatch 'launcher\435-execution-preparation') -or
++if (!$IsWindows -or $PSScriptRoot -cne (Join-Path $qaBatch 'launcher\435-corrected-execution-preparation') -or
+     (Test-Path Env:NODE_OPTIONS) -or (Test-Path Env:NODE_PATH)) {
+   throw 'Use the reviewed Windows supervisor path with NODE_OPTIONS and NODE_PATH absent'
+ }
+@@ -51,10 +129,17 @@ if (!$AdmissionPath.StartsWith($qaBatch + '\', [StringComparison]::OrdinalIgnore
+ }
+ Confirm-QaFile $AdmissionPath $AdmissionSha256
+ $qaInput = Read-QaJson $AdmissionPath
+-$qaTool = Join-Path $PSScriptRoot 'job.mjs'
+-Confirm-QaFile $qaTool $qaInput.jobSha256
+-Confirm-QaFile $PSCommandPath $qaInput.launcherSha256
+-Confirm-QaFile $qaNode $qaInput.nodeSha256
++if ($qaInput.schema -cne 'gg435-corrected-native-launch-admission/v1' -or $qaInput.state -cne 'root-admitted' -or
++    $qaInput.fixture -cnotin @('junction', 'symlink') -or $qaInput.phase -cnotin @('baseline', 'candidate') -or
++    $qaInput.evidenceName -cnotmatch ('^evidence-' + $qaInput.phase + '-[a-z0-9-]{3,48}$')) {
++  throw 'Invalid corrected fixture admission'
++}
++$qaLauncherDirectory = Join-Path $qaBatch 'launcher'
++foreach ($directory in @($qaBatch, $qaLauncherDirectory, $PSScriptRoot, $qaOldPrep)) {
++  Confirm-QaDirectory $directory
++}
++$qaExpectedReceipt = Join-Path $qaLauncherDirectory ('435-native-corrected-' + $qaInput.fixture + '-' + $qaInput.evidenceName.Substring(9))
++if ($qaInput.receiptDirectory -cne $qaExpectedReceipt) { throw 'Invalid corrected fixture receipt directory' }
+ $qaPreflight = Invoke-QaVerification
+ $qaPlan = $qaPreflight | ConvertFrom-Json -AsHashtable
+ if ($qaPlan.node.nodePath -cne $qaNode -or $qaPlan.node.nodeVersion -cne 'v22.23.4' -or
+@@ -176,10 +261,6 @@ function Confirm-QaFixtureRecord($Record) {
+ }
+ 
+ try {
+-  Confirm-QaFile $AdmissionPath $AdmissionSha256
+-  Confirm-QaFile $qaTool $qaInput.jobSha256
+-  Confirm-QaFile $PSCommandPath $qaInput.launcherSha256
+-  Confirm-QaFile $qaNode $qaInput.nodeSha256
+   $qaPostflight = Invoke-QaVerification
+   if ($qaPreflight -cne $qaPostflight) { throw 'Postflight differs from the verified preflight binding' }
+   if (Test-Path -LiteralPath $qaPlan.evidence) {
+@@ -233,10 +314,13 @@ try {
+     if (Test-Path -LiteralPath $file) { $qaRawHashes[$name] = Get-QaSha $file }
+   }
+   $qaResult = [ordered]@{
+-    schema = 'gg435-native-launch-result/v1'; phase = $qaInput.phase; fixture = $qaInput.fixture
++    schema = 'gg435-corrected-native-launch-result/v1'; phase = $qaInput.phase; fixture = $qaInput.fixture
+     status = $qaStatus; childExit = $qaRaw; childClose = $qaClose
+     evidence = $qaPlan.evidence; evidenceSha256 = $qaEvidenceHashes; rawSha256 = $qaRawHashes
+     buildBinding = $qaPlan.buildBinding; admissionSha256 = $AdmissionSha256
++    originalVerification = $qaInput.originalVerification; executedRunner = $qaPlan.executedRunner
++    correctedFixtures = $qaPlan.correctedFixtures
++    preflightSha256 = Get-QaSha (Join-Path $qaPlan.receiptDirectory 'preflight.json')
+     closingBindingVerified = $true; observationError = $qaSupervisionError
+   }
+   Write-QaJson 'launch-result.json' $qaResult

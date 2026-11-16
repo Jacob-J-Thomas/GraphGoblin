@@ -1,0 +1,642 @@
+{
+  "recordedAt": "2026-11-16 00:10:23 UTC",
+  "pr": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490",
+        "number": 490,
+        "state": "open",
+        "merged": false,
+        "mergeable": true,
+        "draft": true,
+        "body": "Closes #419.\n\nWhen a historical-thread client disconnects, replay now stops before starting further repository work. A pending operation may settle, but a late rejection does not attempt an error response on the closed connection. Normal completed GETs, connected error policy, current-thread reads and historical response bytes retain their behavior; the response-close listener is removed on settlement.\n\nGPT-6.1 Sol xhigh implemented the fix. Separate GPT-6.1 Sol xhigh behavior QA reproduced the defect on actual integrated main and verified the candidate through compiled production routes over TCP and file SQLite. All eight disconnect cases stop new calls/writes, eleven connected success responses match the baseline byte for byte, and ten negative controls preserve their outcomes. The fixture uses controlled promise gates and synthetic histories; it does not claim ordinary gateway or browser behavior. Actual process/stream exit and independent PID/listener readbacks confirm owned cleanup. [Baseline](docs/qa/2026-11-15-history-disconnect-baseline/README.md) · [Candidate QA](docs/qa/2026-11-15-history-disconnect-candidate/README.md)\n\nThe final regression test produced seven expected disconnect failures and three passing controls on old source; all 22 focused tests passed on the candidate. Types, scoped lint, formatting and diff checks passed. The initial fixture draft failed and remains separately recorded. Full local API coverage failed on an unchanged Windows reset-test setup rename (`EPERM`): 1,952 passed, 14 skipped, one failed, with no coverage totals. The unchanged isolated reset test passed 7/7; [#489](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/489) tracks the unexplained failure. Current-head full CI must still establish every coverage floor. [Implementation evidence](docs/qa/2026-11-15-history-disconnect-implementation/README.md)\n\nCurrent-head CI, Claude Opus 5.5 xhigh opposite-family scan 1 and fresh independent Astra max final audit remain pending under the shared three-scan cap. No owner acceptance or overall intent completion is claimed. This PR also archives the already completed #410 CI/review/merge record; that changes no product source. The owner instance and separate PR #460 merge hold remain untouched. [Delivery register](docs/delivery/2026-11-13-four-intents-register.md)\n",
+        "title": "Stop historical thread replay when its response disconnects",
+        "base": "main",
+        "base_sha": "98692c8a8c7b519e8c83e585e026d595cedc0550",
+        "head": "codex/gg-20261115-history-disconnect",
+        "head_sha": "497acaa602959bc828e8f1e90f2dce0a576a3492",
+        "head_repo_id": 1403707890,
+        "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+        "merge_commit_sha": "387322e7f7d2b2f4a48c149aeaea2fc4f3001996",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "requested_reviewers": null,
+        "requested_team_reviewers": null,
+        "diff": null,
+        "comments": null,
+        "created_at": "2026-11-15T23:12:31Z",
+        "updated_at": "2026-11-15T23:12:31Z",
+        "closed_at": null,
+        "merged_at": null,
+        "commits": 2,
+        "changed_files": 263,
+        "additions": 264020,
+        "deletions": 6,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490",
+        "display_title": "Stop historical thread replay when its response disconnects"
+      },
+      "isError": false
+    }
+  },
+  "runs": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "workflow_runs": [
+          {
+            "id": 43773546178,
+            "name": "CI",
+            "status": "completed",
+            "conclusion": "success",
+            "run_number": 887,
+            "jobs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/43773546178/jobs",
+            "logs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/43773546178/logs",
+            "workflow_id": 374245139
+          }
+        ]
+      },
+      "isError": false
+    }
+  },
+  "git": {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "47eac8",
+      "wall_time_seconds": 1.0137891,
+      "exit_code": 0,
+      "original_token_count": 72,
+      "output": "497acaa602959bc828e8f1e90f2dce0a576a3492 88ade580c80b2139b5d1bf51449dca10e33184f1 7b7932f89b038a4635183b6adbc5fefa6df4fa6f\n387322e7f7d2b2f4a48c149aeaea2fc4f3001996 88ade580c80b2139b5d1bf51449dca10e33184f1 98692c8a8c7b519e8c83e585e026d595cedc0550 497acaa602959bc828e8f1e90f2dce0a576a3492\n"
+    }
+  },
+  "jobs": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "jobs": [
+        {
+          "id": 133004478824,
+          "name": "Gates",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43773546178,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install (frozen lockfile)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Reset acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Recovery process acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Chat restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Wait restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Prompt restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Webhook retry acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Current-format migration acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Typecheck",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Lint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Format check",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Layer rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Migration generation is a no-op",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Design token rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Dependency graph rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Shipped templates and deliberate-invalid refusal",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Install Chromium for tooling browser measurements",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Unit tests with coverage thresholds",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            },
+            {
+              "name": "Licence allowlist",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Generated docs are current",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            },
+            {
+              "name": "Design token contrast table is current and passing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26
+            },
+            {
+              "name": "Dependency audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27
+            },
+            {
+              "name": "Upload coverage reports",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 54
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 55
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 56
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 57
+            }
+          ]
+        },
+        {
+          "id": 133004480023,
+          "name": "Browser",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43773546178,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install (frozen lockfile)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Install Edge",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Functional browser suite (no retries)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Browser coverage and exclusions",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Upload browser failure evidence",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            }
+          ]
+        },
+        {
+          "id": 133004480764,
+          "name": "Template image",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43773546178,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Build the distributed image",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Load installed templates without network or writable storage",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        },
+        {
+          "id": 133004511413,
+          "name": "Windows launcher",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43773546178,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Native Windows launcher acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Upload native evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            }
+          ]
+        }
+      ]
+    },
+    "isError": false
+  },
+  "issue": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "issue": {
+          "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+          "title": "An abandoned historical thread read keeps replaying on the server after its client disconnects",
+          "issue_number": 419,
+          "body": "<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for the third lane, after I08 and the parallel Claude plugin lane. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\nFound while fixing the #186 acceptance regression (PR #418), outside its scope.\n\n## What happens\n\n`GET /runs/{id}/thread?at=N` rebuilds a historical thread by replaying the run's events from its seed in 128-event pages when the run's checkpoint is newer than `N` (`historicalThread` in `apps/api/src/run-history.ts`). If the client goes away (a tab closes, a selection changes, a request is aborted), the server keeps replaying to the end anyway. Before PR #418 the live inspector queued many such reads; after the tab closed, the gateway kept draining the queued replays and ran at 6.5 events/s for the next 15 seconds. PR #418 removes these reads from the live path, but rapid selection changes on a long run can still queue several abandoned replays.\n\n## Expected\n\nA historical read stops replaying between pages once its request is closed, so abandoned reads cost at most one page each.\n\n## Evidence\n\n`docs/qa/2026-10-26-acceptance-fix-186/README.md` (carried with PR #418).\n\n## Delivery — 2026-11-15\n\nDraft [PR #490](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490) publishes candidate source `7b7932f89b038a4635183b6adbc5fefa6df4fa6f` at publication head `497acaa602959bc828e8f1e90f2dce0a576a3492`, tree `88ade580c80b2139b5d1bf51449dca10e33184f1`, against the same integrated main below. Separate behavior QA accepted the candidate: all eight actual response closes stop new repository calls and writes; eleven successful responses match baseline wire bytes; ten negative controls, stored history, lifecycle cleanup and unrelated responsiveness pass. Native child exit and stream close are both complete; independent process/TCP readback found the owned runner, supervisor, helper and listener absent. [Baseline evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/497acaa602959bc828e8f1e90f2dce0a576a3492/docs/qa/2026-11-15-history-disconnect-baseline/README.md) · [Candidate QA](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/497acaa602959bc828e8f1e90f2dce0a576a3492/docs/qa/2026-11-15-history-disconnect-candidate/README.md)\n\nThe corrected final test reproduced seven expected old-source disconnect failures and three passing connected controls; candidate focused tests passed 22/22, with types, lint, formatting and diff checks passing. The first fixture draft failed for fixture/tooling reasons and remains distinct. Full local API coverage failed on unchanged Windows reset-test setup rename `EPERM` (1,952 passed, 14 skipped, one failed; no coverage totals). The unchanged isolated diagnostic passed 7/7; parked [#489](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/489) retains this unexplained failure. The diagnostic is not a waiver: full current-head CI must establish every coverage floor before formal review. [Implementation evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/497acaa602959bc828e8f1e90f2dce0a576a3492/docs/qa/2026-11-15-history-disconnect-implementation/README.md)\n\nCI and both formal reviews remain pending (0/3 scans consumed). This is candidate engineering evidence, not merge or issue completion.\n\n### Accepted baseline and original dispatch\n\nImplementation is admitted after independent reproduction on actual merged main `98692c8a8c7b519e8c83e585e026d595cedc0550`, tree `9439a500040aa4763613549cca6235023916de58`, containing the completed #381 and #410 changes. Implementer: GPT-6.1 Sol xhigh, agent `runtime_419_implementation`, isolated branch `codex/gg-20261115-history-disconnect`. Independent behavior QA: separate GPT-6.1 Sol xhigh agent `runtime_419_native_qa`. Claude Opus 5.5 xhigh opposite-family review, current-head CI and fresh independent Astra max final audit remain required under the shared three-scan limit. No formal scan has run yet.\n\nThe first native baseline completed all 29 cases: eight actual HTTP disconnects, eleven connected positive controls and ten negative controls. After observed unfinished-response close, seven cases started 6/6/6/4/4/4/5 further replay pages respectively; all seven attempted a 200 response write. The pending-page rejection started no further page and attempted a generic 500 on the closed response. Connected success bytes, current-thread reads, authentication/ownership, bounds, checkpoints and stored-error controls matched expectations. Unrelated health and current reads remained responsive during held pages. Seeded run/event row digests were unchanged.\n\nThis is compiled production-route composition in Fastify over real TCP, genuine manager/repositories/API-key handling and file SQLite, with controlled promise gates and explicitly synthetic histories. It does not claim ordinary gateway startup or browser behavior. Runner and supervisor exited 0, separate pipes closed, and independent readback confirmed owned processes/listener absent and the store empty. Full source/build/harness bindings were checked before and after execution. The accepted baseline summary SHA-256 is `935f6a4abce16e9633f7342fb35d4bc1ca7e73f8b5c1f0c2f9defae1f989ca3c`; evidence will be retained in the implementation PR.\n\nThe bounded fix must stop new reads after an observed response close, preserve normal incoming-request completion and connected results/errors, and remove lifecycle listeners on settlement. This checkpoint records the defect reproduction and implementation dispatch, not candidate acceptance or completion.\n",
+          "state": "open",
+          "user": {
+            "login": "Jacob-J-Thomas",
+            "name": "Jacob-J-Thomas",
+            "email": null,
+            "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+            "id": 92639671
+          },
+          "assignees": null,
+          "labels": [
+            {
+              "name": "aidlc-ready",
+              "color": "0E8A16",
+              "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+            },
+            {
+              "name": "qa:touched-systems",
+              "color": "FBCA04",
+              "description": "QA tests and catalogues every system the change touches, positive and negative"
+            },
+            {
+              "name": "impl:gpt-6.1-sol",
+              "color": "1D76DB",
+              "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+            },
+            {
+              "name": "review:claude-opus-5.5",
+              "color": "006B75",
+              "description": "Cross-vendor reviewer: Claude Opus 5.5"
+            },
+            {
+              "name": "type:bug",
+              "color": "D73A4A",
+              "description": "Something does not work as documented"
+            },
+            {
+              "name": "area:api",
+              "color": "BFDADC",
+              "description": "Fastify API"
+            }
+          ],
+          "milestone": null,
+          "state_reason": null,
+          "comments": 1,
+          "created_at": "2026-10-26T11:18:29Z",
+          "updated_at": "2026-11-15T23:13:16Z",
+          "closed_at": null,
+          "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+          "display_title": "An abandoned historical thread read keeps replaying on the server after its client disconnects"
+        },
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+        "title": "An abandoned historical thread read keeps replaying on the server after its client disconnects",
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+        "display_title": "An abandoned historical thread read keeps replaying on the server after its client disconnects"
+      },
+      "isError": false
+    }
+  },
+  "comments": {
+    "status": "fulfilled",
+    "value": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Action completed."
+        }
+      ],
+      "structuredContent": {
+        "comments": [
+          {
+            "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419#issuecomment-6872673117",
+            "body": "<!-- graphgoblin-reconciliation:2026-11-13 -->\n\n2026-11-13 owner dispatch releases this bounded work under the new batch record linked from #279. The original acceptance and scope remain applicable. Independent cross-vendor review, separate QA, current-head CI and the batch’s independent exact-head/target audit gate apply. Bound abandoned historical thread replay after an actual HTTP disconnect, with an instrumented remaining page budget. Admit implementation after current-baseline reproduction.",
+            "user": {
+              "login": "Jacob-J-Thomas",
+              "name": "Jacob-J-Thomas",
+              "email": null,
+              "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+              "id": 92639671
+            },
+            "id": 6872673117,
+            "pull_request_review_id": null,
+            "in_reply_to_id": null,
+            "created_at": null,
+            "updated_at": null,
+            "review": null,
+            "side": null,
+            "line": null,
+            "start_line": null,
+            "path": null,
+            "body_html": "\n<p dir=\"auto\">2026-11-13 owner dispatch releases this bounded work under the new batch record linked from <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5902504312\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/279/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279\">#279</a>. The original acceptance and scope remain applicable. Independent cross-vendor review, separate QA, current-head CI and the batch’s independent exact-head/target audit gate apply. Bound abandoned historical thread replay after an actual HTTP disconnect, with an instrumented remaining page budget. Admit implementation after current-baseline reproduction.</p>"
+          }
+        ],
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+        "title": "Jacob-J-Thomas/GraphGoblin Issue #419 comments",
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419",
+        "display_title": "Jacob-J-Thomas/GraphGoblin Issue #419 comments"
+      },
+      "isError": false
+    }
+  },
+  "state": "CI green observed; detailed coverage/log verification and formal reviews pending"
+}

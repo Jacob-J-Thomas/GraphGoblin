@@ -1,0 +1,70 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "issue": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/491",
+      "title": "Pin historical replay cancellation at the inter-page yield in focused CI tests",
+      "issue_number": 491,
+      "body": "Origin: [Claude Opus 5.5 xhigh formal scan 1 and root dispositions](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490#issuecomment-6904020571), observation O1, on [PR #490](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490) at `497acaa602959bc828e8f1e90f2dce0a576a3492` against `98692c8a8c7b519e8c83e585e026d595cedc0550`. The full report SHA-256 is `1f0abc7a32cd9a3b17e98e62cf37f04766ea833e47c11dd8728093a9c45061dc`.\n\nThe focused real-TCP test suite closes responses at ownership, initial-thread, checkpoint, boundary and page-read holds, but does not close at the inter-page `setImmediate` yield in `apps/api/src/run-history.ts`. Static review indicates removing just the post-yield guard could escape these focused tests. This was not established by a mutation run.\n\nThe current implementation is correct at this boundary in independent compiled-route/native evidence: the accepted `closed-at-yield` case changes five further baseline pages to zero, preserves connected responses and records cleanup. [Candidate evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/497acaa602959bc828e8f1e90f2dce0a576a3492/docs/qa/2026-11-15-history-disconnect-candidate/README.md). The follow-up improves ongoing CI regression protection; it is not an unverified product fix or a reason to repeat the accepted native matrix.\n\nAcceptance:\n- Add a focused regression at the actual inter-page yield after a completed replay page, with an observed outgoing response close before releasing the yield.\n- Establish that no subsequent repository page starts, and retain normal connected responses, late-rejection policy, request isolation and cleanup.\n- Demonstrate that the targeted regression detects removal/breakage of the yield cancellation check. Record exactly which test/source bytes were used and distinguish static reasoning from an executed mutation.\n- Use bounded event ordering instead of elapsed sleeps; preserve the current test workload, coverage floors and production scheduling behavior.\n- Obtain independent opposite-family review and touched-system QA.\n\nDisposition: DEFER-ISSUE, P3 test maintainability. Parked under `backlog`; no implementation is dispatched and #419's current native evidence remains its accepted yield criterion proof.\n\nDuplicate check: searched open and closed issues for yield/disconnect, setImmediate, and historical/disconnect. #419 describes the product defect; no separate focused-yield regression issue was found.\n",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "qa:touched-systems",
+          "color": "FBCA04",
+          "description": "QA tests and catalogues every system the change touches, positive and negative"
+        },
+        {
+          "name": "impl:gpt-6.1-sol",
+          "color": "1D76DB",
+          "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+        },
+        {
+          "name": "review:claude-opus-5.5",
+          "color": "006B75",
+          "description": "Cross-vendor reviewer: Claude Opus 5.5"
+        },
+        {
+          "name": "type:chore",
+          "color": "CFD3D7",
+          "description": "Maintenance, tooling, or docs"
+        },
+        {
+          "name": "area:api",
+          "color": "BFDADC",
+          "description": "Fastify API"
+        },
+        {
+          "name": "backlog",
+          "color": "9E9E9E",
+          "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 0,
+      "created_at": "2026-11-16T00:31:16Z",
+      "updated_at": "2026-11-16T00:34:07Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/491",
+      "display_title": "Pin historical replay cancellation at the inter-page yield in focused CI tests"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/491",
+    "title": "Pin historical replay cancellation at the inter-page yield in focused CI tests",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/491",
+    "display_title": "Pin historical replay cancellation at the inter-page yield in focused CI tests"
+  },
+  "isError": false
+}

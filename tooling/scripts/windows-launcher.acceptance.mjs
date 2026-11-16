@@ -1,11 +1,23 @@
 // Native Windows executable + built API, disposable stores, no provider turns or owner ports.
 import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  readlink,
+  realpath,
+  symlink,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
 import { createServer as createHttpServer } from 'node:http';
-import { createServer } from 'node:net';
-import { join } from 'node:path';
+import { createConnection, createServer } from 'node:net';
+import { tmpdir } from 'node:os';
+import { dirname, isAbsolute, join, normalize, relative, sep } from 'node:path';
 import process from 'node:process';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -128,6 +140,31 @@ async function stop(config) {
   throw new Error('Disposable gateway did not finish its normal drain.');
 }
 
+async function compileLauncher(compiler, exe) {
+  await execute(
+    compiler,
+    [
+      '/nologo',
+      '/target:winexe',
+      '/platform:x64',
+      '/reference:System.Windows.Forms.dll',
+      '/reference:System.Web.Extensions.dll',
+      `/out:${exe}`,
+      join(root, 'apps/windows-launcher/Launcher.cs'),
+    ],
+    { windowsHide: true },
+  );
+}
+
+function launchNative(exe, path, environment = env) {
+  return execute(exe, ['--config', path, '--ensure-gateway'], {
+    cwd: root,
+    env: environment,
+    windowsHide: true,
+    timeout: 30_000,
+  });
+}
+
 test(
   'native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route',
   { skip: process.platform !== 'win32', timeout: 240_000 },
@@ -138,19 +175,7 @@ test(
     await mkdir(install);
     const exe = join(install, 'GraphGoblin.exe');
     const compiler = join(process.env.WINDIR, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe');
-    await execute(
-      compiler,
-      [
-        '/nologo',
-        '/target:winexe',
-        '/platform:x64',
-        '/reference:System.Windows.Forms.dll',
-        '/reference:System.Web.Extensions.dll',
-        `/out:${exe}`,
-        join(root, 'apps/windows-launcher/Launcher.cs'),
-      ],
-      { windowsHide: true },
-    );
+    await compileLauncher(compiler, exe);
     async function configuration(name, overrides = {}) {
       const config = {
         Repo: root,
@@ -167,13 +192,7 @@ test(
       await writeFile(path, JSON.stringify(config));
       return { config, path };
     }
-    const launch = (path) =>
-      execute(exe, ['--config', path, '--ensure-gateway'], {
-        cwd: root,
-        env,
-        windowsHide: true,
-        timeout: 30_000,
-      });
+    const launch = (path) => launchNative(exe, path);
     const first = await configuration('primary');
     await t.test(
       'concurrent cold starts create one gateway and later clicks reuse its PID',
@@ -566,6 +585,432 @@ test(
       },
     );
     console.log(JSON.stringify({ evidence: 'windows-launcher-native', artifacts: base }));
+  },
+);
+
+const identityLine = /^[a-f0-9]{64}\n$/;
+const freeStoreLine = '{"state":"free"}\n';
+const identityRefusal =
+  "The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.";
+const configRefusal = /belongs to an unrelated or differently configured service/;
+const leaseNames = ['graphgoblin.lock', 'graphgoblin.db.graphgoblin.lock'];
+
+function publicCommandOutput(output, protocol) {
+  if (!output) return '';
+  if (protocol && (identityLine.test(output) || output === freeStoreLine)) return output;
+  const firstLine = output.split(/\r?\n/, 1)[0];
+  if (firstLine === identityRefusal) return firstLine;
+  if (configRefusal.test(firstLine)) return 'unrelated or differently configured service';
+  return `[${Buffer.byteLength(output)} bytes suppressed]`;
+}
+
+async function observeCommand(evidence, name, command) {
+  const {
+    code = null,
+    signal = null,
+    stdout = '',
+    stderr = '',
+  } = await command.then(
+    (result) => ({ ...result, code: 0 }),
+    (error) => error,
+  );
+  evidence[name] = {
+    code,
+    signal,
+    stdout: publicCommandOutput(
+      stdout,
+      name.endsWith('-identity') || name.endsWith('-store-state'),
+    ),
+    stderr: publicCommandOutput(stderr, false),
+  };
+  return { code, stdout, stderr };
+}
+
+function assertOutput(result, expected, name) {
+  assert.equal(result.code, 0, `${name} must exit successfully.`);
+  assert.ok(result.stderr === '', `${name} must have empty stderr.`);
+  assert.ok(result.stdout === expected, `${name} returned an unexpected stdout record.`);
+}
+
+async function nativeObservation(script, overrides = {}) {
+  const command = `$ErrorActionPreference='Stop'; $ProgressPreference='SilentlyContinue';
+    [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false);
+    ${script}`;
+  const args = ['-NoProfile', '-NonInteractive', '-Command', command];
+  const powershell = join(
+    process.env.SystemRoot ?? 'C:\\Windows',
+    'System32/WindowsPowerShell/v1.0/powershell.exe',
+  );
+  const { stdout, stderr } = await execute(powershell, args, {
+    env: { ...env, ...overrides },
+    windowsHide: true,
+    timeout: 15_000,
+  });
+  assert.ok(stderr === '', 'Native Windows inspection emitted stderr.');
+  return parseInspection(stdout, 'Native Windows inspection');
+}
+
+function parseInspection(contents, name) {
+  try {
+    return JSON.parse(contents);
+  } catch {
+    assert.fail(`${name} must contain valid JSON.`);
+  }
+}
+
+function listening(port) {
+  return new Promise((resolve, reject) => {
+    const socket = createConnection({ host: '127.0.0.1', port }, () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.setTimeout(2000, () => socket.destroy(new Error(`TCP probe timed out on ${port}.`)));
+    socket.once('error', (error) => {
+      if (error.code === 'ECONNREFUSED') resolve(false);
+      else reject(error);
+    });
+  });
+}
+
+async function ownedAliasGateway(config, digest) {
+  const running = await health(config);
+  assert.ok(
+    digest && running.identity === digest,
+    'The listener must have the configured identity.',
+  );
+  assert.ok(/^[1-9][0-9]*$/.test(running.pid), 'The listener must report its PID.');
+  const pid = Number(running.pid);
+  const native = await nativeObservation(`
+    $owner = Get-CimInstance Win32_Process -Filter 'ProcessId = ${pid}';
+    if (!$owner -or !$owner.CreationDate) { throw 'No process creation identity'; }
+    [pscustomobject]@{
+      pid = [int]$owner.ProcessId
+      birth = $owner.CreationDate.ToFileTimeUtc().ToString([Globalization.CultureInfo]::InvariantCulture)
+      executable = $owner.ExecutablePath
+      commandLine = $owner.CommandLine
+    } | ConvertTo-Json -Compress
+  `);
+  assert.equal(native.pid, pid);
+  assert.match(native.birth, /^[1-9][0-9]{16,18}$/);
+  const executable = await realpath(native.executable);
+  assert.equal(executable, await realpath(config.Node));
+  const args = /^"([^"]+)" "([^"]+)"$/.exec(native.commandLine);
+  assert.ok(args, 'The gateway must have a native Node executable and a single main argument.');
+  assert.equal(normalize(args[1]), normalize(config.Node));
+  const main = normalize(args[2]);
+  assert.equal(main, join(config.Repo, 'apps/api/dist/main.js'));
+  const leases = {};
+  for (const name of leaseNames) {
+    const contents = await readFile(join(config.DataDir, name));
+    const record = parseInspection(contents, name);
+    assert.ok(
+      record?.pid === pid && record.windowsCreationTime === native.birth,
+      `${name} must belong to the running process.`,
+    );
+    leases[name] = createHash('sha256').update(contents).digest('hex');
+  }
+  return { pid, birth: native.birth, executable, main, leases };
+}
+
+async function releaseAliasGateway(start, digest, owner) {
+  const { config, path } = start;
+  if (await listening(config.Port)) {
+    const running = await health(config);
+    assert.ok(
+      digest && running.identity === digest,
+      'Only the configured listener can be drained.',
+    );
+    const url = origin(config) + '/system/shutdown';
+    const request = () => ({ redirect: 'error', signal: AbortSignal.timeout(3000) });
+    const status = await fetch(url, request());
+    assert.equal(status.status, 200);
+    const { phase, activeRunIds, unconfirmedRunIds, controlToken } = await status.json();
+    assert.equal(phase, 'running');
+    assert.ok(Array.isArray(activeRunIds) && activeRunIds.length === 0);
+    assert.ok(Array.isArray(unconfirmedRunIds) && unconfirmedRunIds.length === 0);
+    assert.ok(typeof controlToken === 'string' && controlToken.length > 0);
+    const current = await ownedAliasGateway(config, digest);
+    if (owner) assert.deepEqual(current, owner);
+    owner = current;
+    const drain = await fetch(url, {
+      ...request(),
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-graphgoblin-shutdown-token': controlToken },
+      body: JSON.stringify({ action: 'drain' }),
+    });
+    assert.equal(drain.status, 202);
+  }
+  if (owner) {
+    const deadline = Date.now() + 10_000;
+    let birth;
+    do {
+      birth = await nativeObservation(`
+        $owner = Get-CimInstance Win32_Process -Filter 'ProcessId = ${owner.pid}';
+        if (!$owner) { 'null'; return }
+        if (!$owner.CreationDate) { throw 'No process creation identity'; }
+        ConvertTo-Json -InputObject ($owner.CreationDate.ToFileTimeUtc().ToString([Globalization.CultureInfo]::InvariantCulture)) -Compress
+      `);
+      if (birth !== owner.birth) break;
+      await sleep(100);
+    } while (Date.now() < deadline);
+    assert.ok(
+      birth === null || (/^[1-9][0-9]{16,18}$/.test(birth) && birth !== owner.birth),
+      'The owned PID and birth must disappear after managed drain.',
+    );
+  } else {
+    // Without a verified owner or clean refusal, a gateway may still be binding.
+    await assert.rejects(lstat(join(dirname(path), 'gateway.log')), { code: 'ENOENT' });
+  }
+  assert.equal(await listening(config.Port), false, 'The gateway listener must close.');
+  for (const name of leaseNames) {
+    await assert.rejects(lstat(join(config.DataDir, name)), { code: 'ENOENT' });
+    await assert.rejects(lstat(join(config.DataDir, `${name}.reclaim`)), { code: 'ENOENT' });
+  }
+  return owner ? 'drained-pid-listener-leases' : 'no-gateway-spawned';
+}
+
+function sameFile(current, original) {
+  return (
+    current.dev === original.dev &&
+    current.ino === original.ino &&
+    current.birthtimeNs === original.birthtimeNs
+  );
+}
+
+async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
+  const fixture = await mkdtemp(join(sandbox, `${kind}-`));
+  const alias = join(fixture, 'checkout alias-α');
+  const evidence = {
+    evidence: 'windows-launcher-checkout-alias',
+    kind,
+    requestedLinkType: linkType,
+    fixture,
+    commands: {},
+    cold: [],
+  };
+  const fixtureStat = await lstat(fixture, { bigint: true });
+  let link;
+  let releaseVerified = true;
+  let stage = 'create-alias';
+  let failure;
+  try {
+    await symlink(repo, alias, kind);
+    stage = 'verify-alias';
+    const created = await lstat(alias, { bigint: true });
+    assert.ok(created.isSymbolicLink());
+    assert.equal(await realpath(alias), repo);
+    assert.equal(await realpath(await readlink(alias)), repo);
+    evidence.reparse = await nativeObservation(
+      `
+      $item = Get-Item -LiteralPath $env:GG_TEST_CHECKOUT_ALIAS -Force;
+      [pscustomobject]@{
+        linkType = $item.LinkType
+        directory = [bool]($item.Attributes -band [IO.FileAttributes]::Directory)
+        reparsePoint = [bool]($item.Attributes -band [IO.FileAttributes]::ReparsePoint)
+      } | ConvertTo-Json -Compress
+    `,
+      { GG_TEST_CHECKOUT_ALIAS: alias },
+    );
+    const observedType = evidence.reparse.linkType;
+    assert.ok(observedType === linkType || (kind === 'dir' && observedType === 'SymLink'));
+    assert.ok(evidence.reparse.directory === true && evidence.reparse.reparsePoint === true);
+    link = created;
+    stage = 'configure-fixture';
+    const dataDir = join(fixture, 'store');
+    const wrongDataDir = join(fixture, 'wrong-store');
+    await mkdir(dataDir);
+    await mkdir(wrongDataDir);
+    const port = await freePort();
+    evidence.port = port;
+    const environment = Object.fromEntries(
+      Object.entries(env).filter(([key]) => {
+        const upper = key.toUpperCase();
+        return !upper.startsWith('GG_') && upper !== 'JEV_API_KEY';
+      }),
+    );
+    async function configuration(name, checkout, overrides = {}) {
+      const directory = join(fixture, name);
+      await mkdir(directory);
+      const config = {
+        Repo: checkout,
+        Node: process.execPath,
+        DataDir: dataDir,
+        Port: port,
+        Environment: { GG_LOG_LEVEL: 'info', GG_OLLAMA_ENABLED: 'false' },
+        StartupTimeoutSeconds: 15,
+        WindowTimeoutSeconds: 2,
+        ...overrides,
+      };
+      const path = join(directory, 'launcher.json');
+      await writeFile(path, JSON.stringify(config));
+      return { name, config, path };
+    }
+    const direct = await configuration('direct', repo);
+    const aliased = await configuration('alias', alias);
+    const mismatchStore = await configuration('wrong-store-config', alias, {
+      DataDir: wrongDataDir,
+    });
+    const mismatchSettings = await configuration('wrong-settings-config', alias, {
+      Environment: { ...aliased.config.Environment, GG_REQUIRE_API_KEY: 'true' },
+    });
+    const launch = (name, { path }) =>
+      observeCommand(evidence.commands, name, launchNative(exe, path, environment));
+    const helper = (name, { config }, mode) => {
+      const entry = join(config.Repo, 'apps/api/dist/instance-identity.js');
+      const importing = mode === 'import';
+      const args = importing
+        ? ['--input-type=module', '-e', 'await import(process.argv[1])', pathToFileURL(entry).href]
+        : [entry, ...(mode ? [mode] : [])];
+      const command = execute(config.Node, args, {
+        cwd: config.Repo,
+        env: {
+          ...environment,
+          ...config.Environment,
+          GG_DATA_DIR: config.DataDir,
+          GG_HOST: '127.0.0.1',
+          GG_PORT: importing ? 'invalid' : String(config.Port),
+          GG_WEB_DIST: join(config.Repo, 'apps/web/dist'),
+        },
+        windowsHide: true,
+        timeout: 15_000,
+      });
+      return observeCommand(evidence.commands, name, command);
+    };
+    stage = 'capture-cli';
+    const directIdentity = await helper('direct-identity', direct);
+    const aliasIdentity = await helper('alias-identity', aliased);
+    const state = await helper('alias-store-state', aliased, '--store-state');
+    const imported = await helper('alias-import', aliased, 'import');
+    const entriesBeforeCold = (await readdir(dataDir)).length;
+    evidence.storeEntriesBeforeCold = entriesBeforeCold;
+    const digest =
+      directIdentity.code === 0 &&
+      directIdentity.stderr === '' &&
+      identityLine.test(directIdentity.stdout)
+        ? directIdentity.stdout.slice(0, -1)
+        : undefined;
+    for (const [start, alternate] of [
+      [aliased, direct],
+      [direct, aliased],
+    ]) {
+      stage = `${start.name}-check-free-port`;
+      assert.equal(await listening(port), false, 'The cold launcher must have a free port.');
+      releaseVerified = false;
+      let owner;
+      let roundFailure;
+      const observation = { spelling: start.name };
+      evidence.cold.push(observation);
+      try {
+        // Preserve both CLI probe results and the actual native launch on a failing baseline.
+        stage = `${start.name}-cold`;
+        const launched = await launch(`${start.name}-cold`, start);
+        stage = 'assert-cli';
+        assert.ok(digest, 'Direct identity helper must emit one lowercase digest and LF.');
+        assertOutput(aliasIdentity, directIdentity.stdout, 'Aliased identity helper');
+        assertOutput(state, freeStoreLine, 'Aliased store-state helper');
+        assertOutput(imported, '', 'Aliased import with invalid CLI settings');
+        assert.equal(
+          entriesBeforeCold,
+          0,
+          'The read-only helper and import must leave the store empty.',
+        );
+        stage = `${start.name}-cold-ready`;
+        assertOutput(launched, '', `${start.name} cold launcher`);
+        owner = await ownedAliasGateway(start.config, digest);
+        observation.owner = owner;
+        for (const warm of [start, alternate]) {
+          stage = `${start.name}-cold-${warm.name}-warm`;
+          const result = await launch(stage, warm);
+          assertOutput(result, '', `${warm.name} warm launcher`);
+          assert.deepEqual(await ownedAliasGateway(start.config, digest), owner);
+        }
+        for (const mismatch of [mismatchStore, mismatchSettings]) {
+          stage = `${start.name}-cold-${mismatch.name}`;
+          const refused = await launch(stage, mismatch);
+          assert.equal(refused.code, 1);
+          assert.ok(
+            configRefusal.test(refused.stderr),
+            'Native launcher must refuse the mismatched gateway.',
+          );
+          assert.deepEqual(await ownedAliasGateway(start.config, digest), owner);
+          await assert.rejects(lstat(join(dirname(mismatch.path), 'gateway.log')), {
+            code: 'ENOENT',
+          });
+        }
+        assert.deepEqual(await readdir(wrongDataDir), []);
+      } catch (error) {
+        roundFailure = error;
+      }
+      try {
+        observation.release = await releaseAliasGateway(start, digest, owner);
+        releaseVerified = true;
+      } catch (error) {
+        observation.releaseFailure = error.code ?? 'unknown';
+        if (!roundFailure) {
+          stage = `${start.name}-release`;
+          roundFailure = error;
+        }
+      }
+      if (roundFailure) throw roundFailure;
+    }
+  } catch (error) {
+    failure = error;
+    evidence.failure = {
+      stage,
+      code: error.code ?? null,
+      errno: error.errno,
+      syscall: error.syscall,
+    };
+    if (stage === 'create-alias') {
+      evidence.aliasAbsent = await lstat(alias).then(
+        () => false,
+        (error) => error.code === 'ENOENT',
+      );
+    }
+  }
+  try {
+    if (link && releaseVerified) {
+      assert.equal(dirname(alias), fixture);
+      assert.equal(dirname(fixture), sandbox);
+      assert.equal(await realpath(fixture), fixture);
+      assert.ok(sameFile(await lstat(fixture, { bigint: true }), fixtureStat));
+      const current = await lstat(alias, { bigint: true });
+      assert.ok(current.isSymbolicLink() && sameFile(current, link));
+      assert.equal(await realpath(alias), repo);
+      assert.equal(await realpath(await readlink(alias)), repo);
+      await unlink(alias);
+      evidence.aliasUnlinked = true;
+    }
+  } catch (error) {
+    evidence.unlinkFailure = error.code ?? 'unknown';
+    failure ??= error;
+  }
+  console.log(JSON.stringify(evidence));
+  if (failure) throw failure;
+}
+
+test(
+  'native Windows launcher accepts junction and directory symlink checkout paths',
+  { skip: process.platform !== 'win32', timeout: 240_000 },
+  async (t) => {
+    const repo = await realpath(root);
+    const temp = await realpath(tmpdir());
+    const fromRepo = relative(repo, temp);
+    assert.ok(isAbsolute(fromRepo) || fromRepo === '..' || fromRepo.startsWith(`..${sep}`));
+    const sandbox = await mkdtemp(join(temp, 'graphgoblin-launcher-alias-'));
+    const exe = join(sandbox, 'GraphGoblin.exe');
+    await compileLauncher(
+      join(process.env.WINDIR, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'),
+      exe,
+    );
+    for (const [kind, linkType] of [
+      ['junction', 'Junction'],
+      ['dir', 'SymbolicLink'],
+    ]) {
+      await t.test(`cold and warm native launcher with a ${linkType} checkout`, () =>
+        checkLauncherAlias(exe, sandbox, repo, kind, linkType),
+      );
+    }
   },
 );
 
