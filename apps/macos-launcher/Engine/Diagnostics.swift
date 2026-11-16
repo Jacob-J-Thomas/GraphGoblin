@@ -173,7 +173,7 @@ struct LogDirectory: Sendable {
     func appendLauncherRecord(_ record: Data) throws {
         guard record.count <= 4_096 else { throw FileRefusal.invalid }
         // Open independently so this serialization never shares the gateway's root lock.
-        let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+        let lock = try OwnedDescriptor(Darwin.open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
         else { throw FileRefusal.invalid }
         defer { _ = flock(lock.fd, LOCK_UN) }

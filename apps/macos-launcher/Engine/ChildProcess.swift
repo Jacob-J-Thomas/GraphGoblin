@@ -203,7 +203,7 @@ package struct CapturedOutput {
 
 package func captureReadOnly(
     executable: String, arguments: [String], cwd: String, environment: [String: String],
-    time: AttemptTime, quitting: () -> Bool = { false }, requireExitZero: Bool = true
+    time: AttemptTime, quitting: @escaping () -> Bool = { false }, requireExitZero: Bool = true
 ) throws -> CapturedOutput {
     // Reserve a small part of the same deadline to terminate and reap only this helper.
     let limit = OperationLimit(time: AttemptTime(end: time.end - 40_000_000), quitting: quitting)

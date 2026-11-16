@@ -44,8 +44,8 @@ package struct FileIdentity: Codable, Equatable, Sendable {
     }
 }
 
-package func fileKind(_ metadata: stat, _ type: Int32) -> Bool {
-    metadata.st_mode & mode_t(S_IFMT) == mode_t(type)
+package func fileKind(_ metadata: stat, _ type: mode_t) -> Bool {
+    metadata.st_mode & S_IFMT == type
 }
 
 package func isOwnedFile(_ metadata: stat, privateMode: Bool) -> Bool {
