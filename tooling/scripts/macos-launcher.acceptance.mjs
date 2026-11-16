@@ -203,6 +203,8 @@ async function refused(port) {
     return false;
   } catch (error) {
     if (error?.code === 'ECONNREFUSED') return true;
+    // A connection can reset while shutdown is closing sockets. It proves no release.
+    if (error?.code === 'ECONNRESET') return false;
     throw error;
   }
 }
@@ -316,6 +318,11 @@ async function waitUntil(predicate, budget, failure) {
   throw new Error(failure);
 }
 
+async function drainCheckpoint(fixture, stage, details = {}) {
+  fixture.evidence.drain.push({ stage, at: new Date().toISOString(), ...details });
+  await fixture.writeManifest();
+}
+
 async function drainVerified(fixture, port, fingerprint, owner) {
   const route = '/system/shutdown';
   assert.deepEqual(await processAndLeases(fixture, port, fingerprint, 'drain-before'), owner);
@@ -327,12 +334,15 @@ async function drainVerified(fixture, port, fingerprint, owner) {
   assert.deepEqual(state.unconfirmedRunIds, []);
   assert.ok(typeof state.controlToken === 'string' && state.controlToken.length > 0);
   assert.deepEqual(await processAndLeases(fixture, port, fingerprint, 'drain-rebound'), owner);
+  await drainCheckpoint(fixture, 'post-attempt', { port, pid: owner.pid, birth: owner.birth });
   const drain = await loopback(port, route, {
     body: '{"action":"drain"}',
     token: state.controlToken,
     limit: 8192,
   });
+  await drainCheckpoint(fixture, 'post-response', { status: drain.status });
   assert.equal(drain.status, 202);
+  await drainCheckpoint(fixture, 'checking-listener-and-leases');
   await waitUntil(
     async () =>
       (await refused(port)) &&
@@ -348,6 +358,7 @@ async function drainVerified(fixture, port, fingerprint, owner) {
     15_000,
     'The verified gateway listener and leases did not release.',
   );
+  await drainCheckpoint(fixture, 'listener-and-leases-released');
   await waitUntil(
     async () => {
       const gone = await fixture.run('drain-process-exit', '/bin/ps', [
@@ -370,6 +381,7 @@ async function drainVerified(fixture, port, fingerprint, owner) {
     10_000,
     'The verified gateway process did not exit after drain.',
   );
+  await drainCheckpoint(fixture, 'original-process-gone');
 }
 
 async function captureInstalled(fixture, port, previousID) {
@@ -477,6 +489,7 @@ async function setup(output) {
     nextProcess: 0,
     processes: [],
     cases: [],
+    drain: [],
     root: base,
     app,
     dataDir,
@@ -489,11 +502,20 @@ async function setup(output) {
     LC_ALL: 'C',
     TMPDIR: temporary,
   };
+  let manifestWritten = false;
   return {
     repo,
     node,
     home,
     base,
+    async writeManifest() {
+      await writeFile(join(cfg, 'manifest.json'), JSON.stringify(evidence, null, 2) + '\n', {
+        mode: 0o600,
+        flag: manifestWritten ? 'w' : 'wx',
+        flush: true,
+      });
+      manifestWritten = true;
+    },
     baseIdentity: await ownedDirectory(base),
     app,
     dataDir,
@@ -912,6 +934,7 @@ async function scopedAcceptance(fixture, t) {
     );
 
     stage = 'verified-drain';
+    evidence.stage = stage;
     await drainVerified(fixture, primaryPort, fingerprint, owner);
     owner = undefined;
     const free = await fixture.run(
@@ -925,6 +948,7 @@ async function scopedAcceptance(fixture, t) {
     expectExit(free, 0, 'released store state helper');
     assert.equal(utf8.decode(free.stdout), '{"state":"free"}\n');
     assert.equal(free.stderr.length, 0);
+    await drainCheckpoint(fixture, 'store-state-free');
     passed(
       'Supported drain released both leases, the verified process birth and the loopback listener.',
     );
@@ -944,31 +968,45 @@ async function scopedAcceptance(fixture, t) {
         }
       }
     }
+    evidence.stage = stage;
     if (failure && owner !== undefined) {
-      try {
-        await drainVerified(fixture, primaryPort, fingerprint, owner);
-        cleanup = 'verified gateway drained; failed fixture and evidence retained';
-      } catch (error) {
-        evidence.cleanupError = error.message;
+      if (evidence.drain.some((point) => point.stage === 'post-attempt')) {
+        // An attempted POST may already have initiated drain, even when the response was lost.
+        cleanup = 'fixture preserved after drain attempt';
+      } else {
+        try {
+          await drainVerified(fixture, primaryPort, fingerprint, owner);
+          cleanup = 'verified gateway drained; failed fixture and evidence retained';
+        } catch (error) {
+          evidence.cleanupError = error.message;
+        }
       }
     }
     evidence.outcome = failure ? 'failed' : 'passed';
-    evidence.stage = stage;
     evidence.cleanup = cleanup;
     if (failure) evidence.failure = failure.message;
     evidence.processes.sort((first, second) => first.name.localeCompare(second.name));
-    await writeFile(
-      join(evidence.output, 'manifest.json'),
-      JSON.stringify(evidence, null, 2) + '\n',
-      {
-        mode: 0o600,
-        flag: 'wx',
-      },
-    );
+    await fixture.writeManifest();
     t.diagnostic('Evidence: ' + evidence.output);
   }
   if (failure) throw failure;
 }
+
+test('a reset does not prove that the listener released', async () => {
+  const server = createServer((_request, response) => response.socket.resetAndDestroy());
+  await new Promise((done, fail) => {
+    server.once('error', fail).listen({ host, port: 0 }, done);
+  });
+  const port = server.address().port;
+  try {
+    assert.ok(!protectedPorts.has(port));
+    await assert.rejects(loopback(port, '/healthz', { limit: 4096 }), { code: 'ECONNRESET' });
+    assert.equal(await refused(port), false);
+  } finally {
+    await new Promise((done, fail) => server.close((error) => (error ? fail(error) : done())));
+  }
+  assert.equal(await refused(port), true);
+});
 
 test(
   'macOS public launcher, native headless process and actual gateway',
