@@ -1,0 +1,210 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/apps/api
+
+ ❯ src/routes/thread-disconnect.test.ts (10 tests | 7 failed) 1748ms
+   ❯ historical thread response lifetime (10)
+     × stops at an abandoned before handler boundary 38ms
+     × stops at an abandoned ownership boundary 20ms
+     × stops at an abandoned initial boundary 20ms
+     × stops at an abandoned checkpoint boundary 19ms
+     × stops at an abandoned boundary boundary 18ms
+     × stops after an abandoned page while unrelated health and current reads complete 28ms
+     × handles the same abandoned read rejection 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned before handler boundary
+AssertionError: expected [ 'ownership', 'initial', …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "ownership",
++   "initial",
++   "checkpoint",
++   "boundary",
++   "page",
++   "page",
++   "page",
++ ]
+
+ ❯ src/routes/thread-disconnect.test.ts:234:36
+    232|   ] as const)('stops at an abandoned %s boundary', async (stage, opera…
+    233|     await abandon(stage);
+    234|     expect(observation.operations).toEqual(operations);
+       |                                    ^
+    235|     expect(observation.sends).toBe(0);
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned ownership boundary
+AssertionError: expected [ 'ownership', 'initial', …(5) ] to deeply equal [ 'ownership' ]
+
+- Expected
++ Received
+
+  [
+    "ownership",
++   "initial",
++   "checkpoint",
++   "boundary",
++   "page",
++   "page",
++   "page",
+  ]
+
+ ❯ src/routes/thread-disconnect.test.ts:234:36
+    232|   ] as const)('stops at an abandoned %s boundary', async (stage, opera…
+    233|     await abandon(stage);
+    234|     expect(observation.operations).toEqual(operations);
+       |                                    ^
+    235|     expect(observation.sends).toBe(0);
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned initial boundary
+AssertionError: expected [ 'ownership', 'initial', …(5) ] to deeply equal [ 'ownership', 'initial' ]
+
+- Expected
++ Received
+
+  [
+    "ownership",
+    "initial",
++   "checkpoint",
++   "boundary",
++   "page",
++   "page",
++   "page",
+  ]
+
+ ❯ src/routes/thread-disconnect.test.ts:234:36
+    232|   ] as const)('stops at an abandoned %s boundary', async (stage, opera…
+    233|     await abandon(stage);
+    234|     expect(observation.operations).toEqual(operations);
+       |                                    ^
+    235|     expect(observation.sends).toBe(0);
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned checkpoint boundary
+AssertionError: expected [ 'ownership', 'initial', …(5) ] to deeply equal [ Array(3) ]
+
+- Expected
++ Received
+
+  [
+    "ownership",
+    "initial",
+    "checkpoint",
++   "boundary",
++   "page",
++   "page",
++   "page",
+  ]
+
+ ❯ src/routes/thread-disconnect.test.ts:234:36
+    232|   ] as const)('stops at an abandoned %s boundary', async (stage, opera…
+    233|     await abandon(stage);
+    234|     expect(observation.operations).toEqual(operations);
+       |                                    ^
+    235|     expect(observation.sends).toBe(0);
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned boundary boundary
+AssertionError: expected [ 'ownership', 'initial', …(5) ] to deeply equal [ 'ownership', 'initial', …(2) ]
+
+- Expected
++ Received
+
+  [
+    "ownership",
+    "initial",
+    "checkpoint",
+    "boundary",
++   "page",
++   "page",
++   "page",
+  ]
+
+ ❯ src/routes/thread-disconnect.test.ts:234:36
+    232|   ] as const)('stops at an abandoned %s boundary', async (stage, opera…
+    233|     await abandon(stage);
+    234|     expect(observation.operations).toEqual(operations);
+       |                                    ^
+    235|     expect(observation.sends).toBe(0);
+    236|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops after an abandoned page while unrelated health and current reads complete
+AssertionError: expected [ 'ownership', 'initial', …(5) ] to deeply equal [ 'ownership', 'initial', …(3) ]
+
+- Expected
++ Received
+
+@@ -2,6 +2,8 @@
+    "ownership",
+    "initial",
+    "checkpoint",
+    "boundary",
+    "page",
++   "page",
++   "page",
+  ]
+
+ ❯ src/routes/thread-disconnect.test.ts:245:36
+    243|       expect(await read(current, headers)).toMatchObject({ status: 200…
+    244|     });
+    245|     expect(observation.operations).toEqual([
+       |                                    ^
+    246|       'ownership',
+    247|       'initial',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > handles the same abandoned read rejection
+AssertionError: expected [ Error: Injected read failure ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   Error {
++     "message": "Injected read failure",
++   },
++ ]
+
+ ❯ src/routes/thread-disconnect.test.ts:275:38
+    273|         } else {
+    274|           await abandon('boundary');
+    275|           expect(observation.errors).toEqual([]);
+       |                                      ^
+    276|           expect(observation.sends).toBe(0);
+    277|         }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 3 passed (10)
+   Start at  16:41:33
+   Duration  9.41s (import 50%, transform 31%, tests 19%)
+
+  Transform  transforming modules took 2.83s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261115-runtime\GraphGoblin\apps\api
+

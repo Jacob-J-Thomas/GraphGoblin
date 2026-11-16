@@ -1,0 +1,474 @@
+{
+  "pr": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487",
+    "number": 487,
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "draft": true,
+    "body": "A parent that failed after awaiting a child retained its old current wait in run records, REST and MCP. Both the live failure transition and recovery from an already committed failure event now clear that wait. Park, wake, child completion and failure history remain intact. Already-finalized historical rows are preserved; this change includes no migration or historical rewrite.\n\nCloses #410.\n\nValidation:\n\n- The initial old-source run used an earlier test draft and failed both cases at the stale-wait assertion. Independent review separately verified that the committed regressions fail with exact pre-fix failed-transition argument emulation and pass on the candidate; this probe is not a literal old-source rebuild. The candidate passes 197 focused tests and all 1,814 engine tests, with 96.94% line and 91.22% branch coverage. TypeScript, lint, formatting and diff checks pass. [Implementation evidence](docs/qa/2026-11-15-terminal-wait-implementation/README.md) · [Independent review and evidence qualification](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6901983201)\n- Independent native Windows QA passes W1–W4 on source `4e4501bd92953794bb733a746f7c24d1bcc2452a`: actual child failure, interruption after a committed failure event but before its projection, normal wait/success/cancel/authored-exit controls, and exact preservation of genuine finalized baseline history. SQL, REST get/list and compiled MCP get/list agree. Both native supervisor and wrapper exited 0; owned processes, listeners and run stores were cleaned up. [Candidate evidence](docs/qa/2026-11-15-terminal-wait-candidate/README.md)\n- The current-main baseline reproduced both stale-wait paths. Its first fixture failure and reviewed seed-preparation correction remain recorded separately from the complete second baseline. The correction checkpointed only a verified copy of the closed synthetic database and compared the original run/event values. [Baseline evidence](docs/qa/2026-11-15-terminal-wait-baseline/README.md)\n\nCurrent-head CI run [43758754651](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43758754651) passed: 9,607 tests passed / 41 skipped, 13 coverage packages above the line/branch floors, Browser 481 passed / 1 declared live-provider skip, Windows 14/14 and four template catalogs. The original Gates job hit its 30-minute limit; one unchanged-head Gates-only retry passed all 32 steps, while the three successful companion jobs were carried forward. [#488](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/488) retains the unresolved CI reliability follow-up. The high-severity audit threshold passed with 8 low / 13 moderate advisories; Windows uploaded no native artifact.\n\nClaude Opus 5.5 xhigh returned [READY in scan 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6901983201), with no product correction required. Fresh GPT-6 Astra max returned [SIGN-OFF in scan 2](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6902325285) for head `0d1b935988c4ff06f5091b645210b0cd88703a16` against target `154401c7b47c1e56b62a6daec50e2a3145ea967d`, with no blockers or required corrections. The shared limit is three formal scans. No owner-only acceptance gate applies to #410. Other batch acceptance items remain separate.\n\nThis PR also archives the already-merged #381/#414 final CI and completion evidence for PR #485. Those records describe that earlier change and do not substitute for this PR's gates.",
+    "title": "Clear stale waits when runs fail",
+    "base": "main",
+    "base_sha": "154401c7b47c1e56b62a6daec50e2a3145ea967d",
+    "head": "codex/gg-20261115-terminal-waits",
+    "head_sha": "0d1b935988c4ff06f5091b645210b0cd88703a16",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": "89fa84597f5aa124cf02d2fdebe27e4656ef1516",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-15T20:33:28Z",
+    "updated_at": "2026-11-15T22:21:25Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 2,
+    "changed_files": 229,
+    "additions": 103595,
+    "deletions": 2,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487",
+    "display_title": "Clear stale waits when runs fail"
+  },
+  "ci": {
+    "jobs": [
+      {
+        "id": 132958879679,
+        "name": "Gates",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43758754651,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Reset acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Recovery process acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Chat restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Wait restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Prompt restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Webhook retry acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Current-format migration acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Typecheck",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Lint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Format check",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Layer rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Migration generation is a no-op",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Design token rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          },
+          {
+            "name": "Dependency graph rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20
+          },
+          {
+            "name": "Shipped templates and deliberate-invalid refusal",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          },
+          {
+            "name": "Install Chromium for tooling browser measurements",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22
+          },
+          {
+            "name": "Unit tests with coverage thresholds",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          },
+          {
+            "name": "Licence allowlist",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24
+          },
+          {
+            "name": "Generated docs are current",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25
+          },
+          {
+            "name": "Design token contrast table is current and passing",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 26
+          },
+          {
+            "name": "Dependency audit",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 27
+          },
+          {
+            "name": "Upload coverage reports",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 28
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 54
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 55
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 56
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 57
+          }
+        ]
+      },
+      {
+        "id": 132958881577,
+        "name": "Windows launcher",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43758754651,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Native Windows launcher acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Upload native evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      },
+      {
+        "id": 132958913419,
+        "name": "Template image",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43758754651,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Build the distributed image",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Load installed templates without network or writable storage",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          }
+        ]
+      },
+      {
+        "id": 132958928293,
+        "name": "Browser",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43758754651,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Install Edge",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Functional browser suite (no retries)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Browser coverage and exclusions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Upload browser failure evidence",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 10
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          }
+        ]
+      }
+    ]
+  },
+  "protected460": {
+    "head": "b6ed79eeb289b781c48d3b0f994c1b2577990df9",
+    "state": "open",
+    "hold": "unchanged"
+  },
+  "reportExactReadback": 6902325285
+}

@@ -33,16 +33,20 @@ export async function historicalThread(
   container: Container,
   runId: string,
   at: number,
+  isDisconnected: () => boolean,
 ): Promise<ContextThread | undefined> {
   const { repos } = container;
+  if (isDisconnected()) return undefined;
   let thread = await repos.runs.getInitialThread(runId);
-  if (!thread) return undefined;
+  if (isDisconnected() || !thread) return undefined;
   let after = 0;
   let state: ReplayState = { strict: false };
   // A checkpoint past `at` stays undecoded, so its damage never blocks this read (D-016).
   const checkpoint = await repos.runs.getThreadCheckpoint(runId, at);
+  if (isDisconnected()) return undefined;
   if (checkpoint?.replayState) {
     const [boundary] = await repos.events.read(runId, checkpoint.seq - 1, 1);
+    if (isDisconnected()) return undefined;
     if (boundary?.seq === checkpoint.seq) {
       thread = checkpoint.thread;
       after = checkpoint.seq;
@@ -53,12 +57,14 @@ export async function historicalThread(
     // Sequences are contiguous, so a page never reaches past `at`: a damaged later event must
     // not block an earlier thread (D-016).
     const page = await repos.events.read(runId, after, Math.min(128, at - after));
+    if (isDisconnected()) return undefined;
     if (!page.length) break;
     thread = replayThread(thread, page, at, state);
     state = replayStateAt(page, at, state);
     after = page.at(-1)!.seq;
     // Give cancellation and other requests a turn between historical pages.
     await new Promise<void>((resolve) => setImmediate(resolve));
+    if (isDisconnected()) return undefined;
   }
   return thread;
 }

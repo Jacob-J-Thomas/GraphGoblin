@@ -1,0 +1,50 @@
+# #419 independent native candidate QA
+
+**Result.** At frozen candidate `7b7932f89b038a4635183b6adbc5fefa6df4fa6f`, all eight tests stopped starting repository calls once Fastify observed the unfinished response close. Every already in-flight operation settled on release. The abandoned page-two rejection produced no late error hook, send, write or generic 500. The eleven successful controls matched the accepted baseline byte for byte, and all ten negative controls retained their expected behavior. [Raw candidate summary](../runtime-419-native-preparation/evidence-candidate-first/summary.json) · [Independent offline readback](verify-first.stdout.json) · [Accepted baseline](../runtime-419-native-baseline-first-report/README.md)
+
+## Actual TCP disconnects
+
+Each trace ordered gate entry, the exact client request destroyed, outgoing response close while unfinished with the socket destroyed, gate release and handler settlement. The harness awaited the exact client socket close and recorded `ECONNRESET` before release. The offline verifier checked page arguments and operation-entry and settle steps against the close, plus response writes, `onSend`, Fastify errors and request logs. All eight had zero later entries or attempts to send/write, and no response finished after the close. The yield trace entered the native callback scheduled from compiled `historicalThread` after page one settled. [Raw trace and operation arguments](../runtime-419-native-preparation/evidence-candidate-first/summary.json)
+
+| Gate | Operation that settled after close | Data pages started after close, baseline → candidate |
+| --- | --- | ---: |
+| Before product handler | None | 6 → 0 |
+| Ownership | Ownership | 6 → 0 |
+| Initial thread | Initial thread | 6 → 0 |
+| Checkpoint lookup | Checkpoint lookup | 4 → 0 |
+| Checkpoint boundary | Boundary `after=190, limit=1` | 4 → 0 |
+| Page two | Page two `after=128, limit=128` | 4 → 0 |
+| First inter-page yield | None | 5 → 0 |
+| Page two rejects | Page two `after=128, limit=128` | 0 → 0 |
+
+Baseline also started the one-row boundary read after close in the held checkpoint lookup case. Candidate started zero boundary or metadata reads after close. The disconnecting page-two fault was recorded at the controlled repository boundary, then the handler settled without the baseline’s 500 attempt or level-50 error log. The connected repository fault still emitted the generic 500 and recorded the internal cause. [Candidate traces](../runtime-419-native-preparation/evidence-candidate-first/summary.json) · [Baseline traces](../runtime-419-native-preparation/evidence-baseline-first/summary.json)
+
+The separate `/healthz` and authenticated current-thread requests succeeded while each page-two promise remained held. The harness checked the health runner PID and both response bodies. Observed times were 8.42 ms and 24.84 ms for the successful-page hold and 3.14 ms and 21.79 ms for the rejecting-page hold. [Responsiveness receipts](../runtime-419-native-preparation/evidence-candidate-first/summary.json)
+
+## Connected controls and stored state
+
+All eleven connected positive controls returned the same HTTP 200 status, content type and exact body bytes as the admitted baseline. The verified controls covered the seed, first event, page boundary plus one, cold and checkpointed multi-page histories, explicit normal request-input completion, before-checkpoint replay, replay past the tail, replay before each damaged row, and the real current-thread path. The drained and natural sequence-693 responses each returned the same 754 bytes. The drained trace shows normal incoming request completion while the outgoing response was still open. The past-tail replay stopped at the first empty page after sequence 710. The current read only called ownership and the real manager’s current-read method. [Candidate wire and page receipts](../runtime-419-native-preparation/evidence-candidate-first/summary.json) · [Baseline wire receipts](../runtime-419-native-preparation/evidence-baseline-first/summary.json)
+
+| Connected negative | HTTP and problem code | Route observation |
+| --- | --- | --- |
+| Missing credential | 401 `UNAUTHORIZED` | No product handler |
+| Wrong scope | 403 `FORBIDDEN` | No product handler |
+| Other owner | 404 `RUN_NOT_FOUND` | Ownership lookup only |
+| Missing run | 404 `RUN_NOT_FOUND` | Ownership lookup only |
+| Negative sequence | 400 `VALIDATION_FAILED` | No product handler |
+| Unsafe sequence | 400 `VALIDATION_FAILED` | No product handler |
+| Extraneous query field | 400 `VALIDATION_FAILED` | No product handler |
+| Corrupt stored event | 500 `STORED_EVENT_INVALID` | Real storage decoder rejected sequence 200 |
+| Corrupt stored checkpoint | 500 `STORED_RUN_INVALID` | Real storage decoder rejected the selected sequence-191 snapshot |
+| Connected controlled repository fault | 500 `INTERNAL_ERROR` | Internal diagnostic and generic wire problem |
+
+Across every entered handler, zero additional watched request, response or socket listeners remained at settlement. Four seeded-history digests matched before and after candidate reads, including both damaged fixtures. These checks cover the tracked lifetime hooks and seeded run and event rows. [Negative traces, listener snapshots and history digests](../runtime-419-native-preparation/evidence-candidate-first/summary.json)
+
+## Frozen inputs and cleanup
+
+The verifier independently matched the clean candidate head and tree `e6d5811824f170e36d5a90038486a5531feca255` to the admission, Git and build receipts and confirmed ancestry from integrated main `98692c8a8c7b519e8c83e585e026d595cedc0550`. The forced build child exited 0 with 12 successful Turbo tasks and zero cache hits. The supervisor checked complete inputs before and after launch. Independent readback confirmed the sealed fixture/tooling, Node v22.23.4, index, all 28,553 tracked and 1,231 output path memberships under the 13 output roots, 20 relevant source/manifest files against Git blobs and bound hashes, 19 selected dependency files, 22 resolved workspace links and all 11 loaded entry bytes. The launch and summary bind the retained baseline summary verified at `935f6a4abce16e9633f7342fb35d4bc1ca7e73f8b5c1f0c2f9defae1f989ca3c`. [Full build binding](../runtime-419-build-candidate-first/build-binding.json) · [Build log](../runtime-419-build-candidate-first/build.log) · [Launch admission](../runtime-419-native-candidate-admission-01.json) · [Checksum inventory](input-and-receipt-checksums.json)
+
+Runner 53664 was created at 22:59:54.4085255 UTC and exited 0 at 23:00:00.8347984 UTC on 2026-11-15 without deadline expiry. Both streams separately closed at 23:00:00.8508392 UTC with zero bytes. The supervisor recorded `matrix-finished-for-review` and the harness `assertions-met`. Both fixture lock owner identities matched the runner birth. Fastify and the container closed with zero tracked sockets and no listener address. Exclusive-open helper 45292 opened the fixture database with `FileShare.None`, recorded exit and close 0, and the owned store was empty. Readback at 23:01:17.1049709 UTC found runner 53664, supervisor 33940 and helper 45292 absent and no TCP row for local port 53162. Both independent offline invocations exited 0 on their first attempt with empty stderr. [Native child exit](../runtime-419-launch-execution-candidate-first/child-exit.json) · [Stream close](../runtime-419-launch-execution-candidate-first/child-close.json) · [Supervisor result](../runtime-419-launch-execution-candidate-first/launch-result.json) · [Exact process and TCP readback](process-listener-current-readback.json)
+
+The fixture used compiled production routes composed in instrumented Fastify over real TCP, with real SQLite, manager and API-key handling. Controlled promise gates and synthetic history appended to four provider-free completed runs supplied exact ordering and page counts. For held repository operations, SQLite had returned before the close while the wrapper promise still held the handler. Ordinary gateway startup and browser behavior require separate evidence. This was an independent behavior QA readback of the single admitted native attempt. [Harness scope](../runtime-419-native-preparation/README.md)
+

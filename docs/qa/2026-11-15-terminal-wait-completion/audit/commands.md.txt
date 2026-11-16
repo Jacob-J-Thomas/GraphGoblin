@@ -1,0 +1,87 @@
+# Independent audit command record
+
+Audit: GPT-6 Astra max, formal scan 2/3, PR #487 / #410. All commands below are read-only with respect to the repository, its index and GitHub. Analysis files are written only in `C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2`.
+
+## Environment and identities
+
+Working directory: `C:\Users\98jak\.codex\worktrees\gg-20261115-runtime\GraphGoblin`.
+
+```powershell
+$env:PATH = "$env:USERPROFILE\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64;$env:PATH"
+$env:GIT_OPTIONAL_LOCKS = '0'
+node --version
+git status --porcelain=v2 --branch
+git rev-parse HEAD
+git rev-parse 'HEAD^{tree}'
+git merge-base 154401c7b47c1e56b62a6daec50e2a3145ea967d 0d1b935988c4ff06f5091b645210b0cd88703a16
+git log --format='%H %T %P' 154401c7b47c1e56b62a6daec50e2a3145ea967d..0d1b935988c4ff06f5091b645210b0cd88703a16
+git diff --name-only 154401c7b47c1e56b62a6daec50e2a3145ea967d 0d1b935988c4ff06f5091b645210b0cd88703a16
+git diff --name-only 4e4501bd92953794bb733a746f7c24d1bcc2452a 0d1b935988c4ff06f5091b645210b0cd88703a16
+git cat-file -p 89fa84597f5aa124cf02d2fdebe27e4656ef1516
+git ls-remote origin refs/heads/main refs/heads/codex/gg-20261115-terminal-waits refs/pull/487/head refs/pull/487/merge
+```
+
+Results: Node v22.23.4; clean checkout; exact admitted source/head/target/tree/tested-merge binding; source-to-publication changes only `docs/`. `finalize-audit.mjs` repeats the assertions and captures both full target-to-head diff and the bounded production/test/narrative diff without any repository write. `read-current-remote.ps1` preserves the exact raw GitHub endpoints and final current refs.
+
+## Evidence programs
+
+The complete code of the independent verifier is retained as `inspect-evidence.mjs`. It only reads files and Git metadata, computes SHA-256, parses recorded JSON/logs, and writes external analysis. These were the invocation forms, with each mode run separately:
+
+```powershell
+node C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2\inspect-evidence.mjs integrity
+node C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2\inspect-evidence.mjs shape
+node C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2\inspect-evidence.mjs build-shape
+node C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2\inspect-evidence.mjs native
+node C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2\inspect-evidence.mjs bindings
+node C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2\inspect-evidence.mjs ci
+```
+
+The integrity mode checked the admission digest, every 35+4+1 payload and five packet manifests/maps. The implementation map's distinct `entries/sourceRelativePath` shape was checked separately in `implementation-map-verification.json`. The two API-described source origins were resolved by checking the captured response ID, exact body and destination hashes; `finalize-audit.mjs` independently asserts them again.
+
+The native comparison checks 16 conditions against the accepted baseline/candidate raw matrices, saved W2 landing and crash receipt, plus the history seed's exact hash. No app was started and no SQLite database was opened. The bindings mode hashes existing source/build/runtime/harness files and checks the recorded maps. The CI mode strips ANSI only for numeric log parsing; it does not rewrite the raw logs.
+
+For the coverage artifact, PowerShell's `System.IO.Compression.ZipFile.OpenRead` enumerated each of the 13 entries. Each entry stream was read with `StreamReader`, SHA-256 was computed from its original uncompressed bytes, and `ConvertFrom-Json` read `total.lines.pct` and `total.branches.pct`. The ZIP was closed without extraction or rewriting. Exact entry names, sizes, hashes and metrics are in `coverage-archive-independent-readback.json`.
+
+The first versions and results of two external inspection mistakes remain retained: native MCP list detail comparison, and CI ANSI-aware count parsing. The corrected analyses are described in the report. Neither mistake changed product/source, raw evidence or any test result. Exploratory `rg` path/glob misses and overly broad shape output prompted narrower explicit-path reads; they were not used as evidence of absent files or coverage.
+
+## Source reading
+
+Required documents and relevant source were read using `Get-Content -LiteralPath`, bounded line-number projections and `rg -n`. `rg --files` resolved concrete filenames before adaptive reads. The exact file/byte/hash inventory is in `audit-input-inventory.json`; its roles distinguish inspected source definitions, full changed production/tests, bulk binding hashes and remote responses.
+
+The production trace covered failRun, completeFromLog, execute/recover ordering, terminal-event boundaries, resume/reviewed-child authorization, finalize, wake/input/signal/timer status guards; RunRecordChanges; memory and SQLite update semantics; SQLite admission's atomic child/link transaction; subloop and heartbeat journal fallbacks; authored exits; MCP summary projection; contracts. The full changed tests and relevant existing resume/parity/mapping regressions were read. The native fixture trace covered ordinary/gated gateway composition, exact W2 gate/independent-file-reader/save-before-kill/reopen sequence, resource creation identities, seed copy/checkpoint correction and cleanup assertions. Full opposite-family report, launch/result/exit, emulation setup/config and both probe logs were read.
+
+This source reading is not a claim of line-by-line re-review of every unchanged dependency or all 28,329 files in the recorded build source map.
+
+## Read-only GitHub tools
+
+The GitHub connector was preferred for supported reads. Exact tool arguments:
+
+```json
+{"tool":"get_pr_info","args":{"pr_number":487,"repository_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"get_pr_info","args":{"pr_number":485,"repository_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_issue","args":{"issue_number":410,"repository_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_issue_comments","args":{"issue_number":410,"repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_issue_comments","args":{"issue_number":487,"repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_commit_workflow_runs","args":{"commit_sha":"0d1b935988c4ff06f5091b645210b0cd88703a16","repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_workflow_run_jobs","args":{"run_id":43758754651,"repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_workflow_run_artifacts","args":{"run_id":43758754651,"repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_workflow_job_logs","args":{"job_id":132958879679,"repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_workflow_job_logs","args":{"job_id":132958881577,"repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_workflow_job_logs","args":{"job_id":132958913419,"repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+{"tool":"fetch_workflow_job_logs","args":{"job_id":132958928293,"repo_full_name":"Jacob-J-Thomas/GraphGoblin"}}
+```
+
+Connector log `structuredContent.content` strings were encoded as UTF-8 and compared with the admitted files, including their BOM bytes. `remote-log-equality.json` records all four exact matches. The complete retained remote responses permit independent rechecking.
+
+The connector's branch search returned names rather than commit SHAs; its jobs summary omits attempt timestamps. For these missing details, `read-current-remote.ps1` uses read-only `gh api` for the run, attempt-1/attempt-2 jobs with `per_page=100`, tested merge commit and main ref. No `gh` write command was issued. Its initial and closing runs returned the same source/CI state; the closing time is retained in `final-remote-readback.json`.
+
+## Finalization and seal
+
+```powershell
+& C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2\read-current-remote.ps1
+node C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\review-410-astra-scan2\finalize-audit.mjs
+```
+
+Finalization asserts clean exact local Git identity, current recorded remote identity/CI, all 40 bound-input bytes, descriptive-origin publication fidelity and the full published Opus report. It captures full effective diff, consolidates inventory and writes `audit-seal.json` plus `SHA256SUMS.txt` for every external output except the manifest itself. The final manifest is independently checked with `Get-FileHash -Algorithm SHA256` for each listed path; its own hash is delivered to root.
+
+No package tests, build, provider call, browser, app, native fixture, OS process termination, repository/index/GitHub write, merge or owner acceptance was performed by this audit.

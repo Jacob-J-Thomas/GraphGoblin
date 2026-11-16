@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Historical context-thread requests stop reading run history when the client disconnects (#419).
+  The gateway lets an in-flight read settle without attempting a response.
+
 - A run clears its current wait when it moves to failed, including recovery after a failure
   event was committed before the status write (#410). Park, wake and child events remain in
   the log. Runs already marked failed by an older build can still carry a stale wait.

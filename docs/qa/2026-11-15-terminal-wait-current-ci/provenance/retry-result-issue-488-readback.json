@@ -1,0 +1,54 @@
+{
+  "at": "2026-11-15T21:37:59.087Z",
+  "bodyExact": true,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Action completed."
+      }
+    ],
+    "structuredContent": {
+      "issue": {
+        "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/488",
+        "title": "Diagnose repeated Gates job deadlines before final checks complete",
+        "issue_number": 488,
+        "body": "Two separate PR candidates have reached the Gates job's 30-minute deadline while the coverage command was finishing, preventing the later required checks from running:\n\n- PR #485: [first canceled Gates job](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43745479496). One unchanged-head Gates-only retry passed all required steps; the original failure remains retained.\n- PR #487 at `0d1b935988c4ff06f5091b645210b0cd88703a16`: [Gates job 132948548834](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43758754651/job/132948548834). GitHub explicitly reports “The job has exceeded the maximum execution time of 30m0s.” All 13 coverage groups produced their final summaries (9,607 tests passed / 41 skipped; every package's line and branch thresholds met), and Turbo reported 22 successful tasks. Nevertheless the coverage step is canceled, and licence, generated-docs, contrast and dependency-audit checks are skipped. That is incomplete CI, not a pass.\n\nThe workflow uses `timeout-minutes: 30` for sequential installation, builds, native/API acceptance, static checks and serial package coverage before those last checks. The workflow is unchanged by #487. Its first complete Gates log is retained with SHA-256 `1049ac0f837e9da13649eaa572f3fcba31588a2aa5bb30f84954293b99b59909`; the 13-report coverage archive is `f5a9cc2e9ddc72a79a357a1970a873cd4db321083da2af87f0e48e2c82e38404`.\n\nThe confirmed failure mechanism is the whole-job deadline. The timing contribution of runner variability, individual suites and serial scheduling still needs measurement; do not label this a hung test or a product regression. #453 concerns a different subprocess measurement failure and does not cover this deadline.\n\nAcceptance:\n\n- Compare retained step and suite timings across complete passes and deadline failures at identified commits, runner images and runtime versions.\n- Make all required gates finish reliably within a reviewed bounded workflow budget. Choose a correction from evidence; do not assume that increasing a deadline is the only solution.\n- Preserve the full test workload, coverage thresholds, assertion semantics, no-retry browser policy and every final licence/docs/contrast/audit check. Do not turn skipped checks into success.\n- Retain diagnostic artifacts on timeout/failure and verify that status reporting identifies the incomplete checks accurately.\n- Validate the resulting workflow on actual CI and obtain independent opposite-family review.\n\nDisposition: DEFER-ISSUE, P2 delivery reliability. Parked under backlog; this ticket does not dispatch implementation or waive a gate. #487 has been admitted for exactly one unchanged-head Gates-only retry after diagnosis; any repeat failure requires investigation before further action.\n\nDuplicate check: searched repository issues (open and closed) for Gates/timeout, coverage/30, job/deadline, and title timeout/coverage. No issue representing this whole-job deadline was found. Existing #453 and launcher timeouts #458/#459 are distinct.\n\nRetry outcome: the single unchanged-head Gates-only retry [job 132958879679](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43758754651/job/132958879679) passed all 32 steps on 2026-11-15, including the four previously skipped checks. Its coverage command took 16m8.931s versus 20m21.999s in the canceled attempt, with the same 9,607 passed / 41 skipped tests and unchanged workload. The full retry log SHA-256 is `bced24e9f21912c7aa05640c7c81beaa43e92b27ac55baa8f51a6154c827c89e`. The three companion jobs were carried forward from their original executions. This pass completes #487's CI gate; it does not resolve the repeated job-budget reliability issue.",
+        "state": "open",
+        "user": {
+          "login": "Jacob-J-Thomas",
+          "name": "Jacob-J-Thomas",
+          "email": null,
+          "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+          "id": 92639671
+        },
+        "assignees": null,
+        "labels": [
+          {
+            "name": "type:chore",
+            "color": "CFD3D7",
+            "description": "Maintenance, tooling, or docs"
+          },
+          {
+            "name": "backlog",
+            "color": "9E9E9E",
+            "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+          }
+        ],
+        "milestone": null,
+        "state_reason": null,
+        "comments": 0,
+        "created_at": "2026-11-15T21:09:39Z",
+        "updated_at": "2026-11-15T21:37:58Z",
+        "closed_at": null,
+        "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/488",
+        "display_title": "Diagnose repeated Gates job deadlines before final checks complete"
+      },
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/488",
+      "title": "Diagnose repeated Gates job deadlines before final checks complete",
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/488",
+      "display_title": "Diagnose repeated Gates job deadlines before final checks complete"
+    },
+    "isError": false
+  }
+}

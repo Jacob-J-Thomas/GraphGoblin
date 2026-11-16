@@ -1,0 +1,113 @@
+{
+  "state": "accepted-source-for-native-candidate-and-ci",
+  "at": "2026-11-15T22:52:05.161Z",
+  "headBeforeCommit": "98692c8a8c7b519e8c83e585e026d595cedc0550",
+  "candidateSourceSha256": "9f3fda8c0c13a9724113d686aed952fabdaf376e61a81d6f4b77790d6d865197",
+  "files": [
+    {
+      "path": "apps/api/src/routes/runs.ts",
+      "sha256": "36ea41256853347d2a128fc3881ea55e7071f5557aeb88bb2bc03076fb9593e1",
+      "copy": "source/runs.ts.txt",
+      "bytes": 19590
+    },
+    {
+      "path": "apps/api/src/run-history.ts",
+      "sha256": "9595ea63a217a56b6d6b5a93d7a8b23d22d64488d0fdadc083a7868f6c96f742",
+      "copy": "source/run-history.ts.txt",
+      "bytes": 2756
+    },
+    {
+      "path": "apps/api/src/routes/thread-disconnect.test.ts",
+      "sha256": "1260cb00e9c66895b898541e655b264c25431cda3d7881c50def8524f9339e39",
+      "copy": "source/thread-disconnect.test.ts.txt",
+      "bytes": 12828
+    },
+    {
+      "path": "docs/07-api-and-streaming.md",
+      "sha256": "4aeffdcfda08f0f93acda9f0f27ca8e5d2d8b163fb5e4e2528e3bb386afdcdf5",
+      "copy": "source/07-api-and-streaming.md.txt",
+      "bytes": 105210
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "01ef14a26f9201a7d32963b71d9e5044ad76a5079e9093ea7286782856b05f59",
+      "copy": "source/CHANGELOG.md.txt",
+      "bytes": 162496
+    }
+  ],
+  "finalTestMatchesLiteralBaselineRed": true,
+  "oldProductionGitBlobsMatchRed": true,
+  "sourceReview": "Root read complete production diff, test and relevant API/CHANGELOG changes; no source correction identified.",
+  "receipts": {
+    "focused-final-red": {
+      "startUtc": "2026-11-15T22:41:32.2962106Z",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/routes/thread-disconnect.test.ts --maxWorkers=1",
+      "elapsedMs": 10406,
+      "exitCode": 1,
+      "cwd": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin",
+      "node": "v22.23.4",
+      "sha256": "1b7c2877456d693ae14088dc226dfe171bf7887936d92de2058ba37a37232110"
+    },
+    "focused-green": {
+      "startUtc": "2026-11-15T22:42:44.0100295Z",
+      "exitCode": 0,
+      "node": "v22.23.4",
+      "elapsedMs": 33830,
+      "cwd": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/routes/thread-disconnect.test.ts src/routes/run-history.test.ts src/routes/run-event-paging.test.ts src/thread-history.test.ts --maxWorkers=1",
+      "sha256": "425e1661422297659cc92fbec85cf239c7e5580c247ef07535e7956530b2ee5a"
+    },
+    "candidate-typecheck": {
+      "command": "pnpm.cmd --filter @graphgoblin/api exec tsc -p tsconfig.json --noEmit",
+      "elapsedMs": 24039,
+      "cwd": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin",
+      "startUtc": "2026-11-15T22:42:43.9899156Z",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "sha256": "433b909a96331fb1ccbce59eae52b6b8385072a28a705efefb927f60712fc968"
+    },
+    "candidate-lint": {
+      "exitCode": 0,
+      "cwd": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin",
+      "command": "pnpm.cmd exec eslint apps/api/src/routes/thread-disconnect.test.ts apps/api/src/routes/runs.ts apps/api/src/run-history.ts",
+      "elapsedMs": 18132,
+      "node": "v22.23.4",
+      "startUtc": "2026-11-15T22:42:44.0301256Z",
+      "sha256": "cd3f74550d3a6f7e10d86252f6fb47ccb8cc3b637faf690082a62077313df18a"
+    },
+    "candidate-final-format": {
+      "elapsedMs": 3653,
+      "command": "pnpm.cmd exec prettier --check apps/api/src/routes/thread-disconnect.test.ts apps/api/src/routes/runs.ts apps/api/src/run-history.ts docs/07-api-and-streaming.md CHANGELOG.md",
+      "exitCode": 0,
+      "node": "v22.23.4",
+      "cwd": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin",
+      "startUtc": "2026-11-15T22:44:42.6052078Z",
+      "sha256": "d430eebbd776df6a3b9f355e05919d316c0f88303e623f2c7b9fd2d7cdd98689"
+    },
+    "api-coverage": {
+      "exitCode": 1,
+      "node": "v22.23.4",
+      "cwd": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin",
+      "startUtc": "2026-11-15T22:43:46.4367881Z",
+      "command": "pnpm.cmd test:coverage --filter=@graphgoblin/api --concurrency=1",
+      "elapsedMs": 343063,
+      "sha256": "cb17c0770a634b8cde272962852f704b48eacd24123f4a33d9c00e41520930be"
+    },
+    "reset-tree-isolated-diagnostic": {
+      "exitCode": 0,
+      "cwd": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin",
+      "elapsedMs": 1742,
+      "startUtc": "2026-11-15T22:49:57.0097799Z",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/reset/tree.test.ts --maxWorkers=1",
+      "node": "v22.23.4",
+      "sha256": "7257e515de1a326d2c594135c9fbc04a9a3906cb6b64583fe303236743a138ea"
+    }
+  },
+  "coverageDisposition": "The local full API coverage run remains failed and emitted no totals. Its only failure was EPERM during unchanged reset/tree.test.ts rename setup before product assertions. Isolated unchanged reset suite passed 7/7. Cause is unestablished; no filesystem/source/test/threshold change or full local retry is admitted. Exact-head full CI coverage is still mandatory before formal review and merge.",
+  "remainingGates": [
+    "independent compiled native candidate QA",
+    "current-head CI including coverage floors",
+    "Claude Opus xhigh opposite-family review",
+    "fresh Astra max exact-head/target audit"
+  ]
+}

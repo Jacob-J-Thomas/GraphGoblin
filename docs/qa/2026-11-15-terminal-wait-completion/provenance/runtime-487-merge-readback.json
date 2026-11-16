@@ -1,0 +1,105 @@
+{
+  "merged": true,
+  "merge": "98692c8a8c7b519e8c83e585e026d595cedc0550",
+  "tree": "9439a500040aa4763613549cca6235023916de58",
+  "parents": [
+    "154401c7b47c1e56b62a6daec50e2a3145ea967d",
+    "0d1b935988c4ff06f5091b645210b0cd88703a16"
+  ],
+  "mergedAt": "2026-11-15T22:21:44Z",
+  "pr": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487",
+    "number": 487,
+    "state": "closed",
+    "merged": true,
+    "mergeable": false,
+    "draft": false,
+    "body": "A parent that failed after awaiting a child retained its old current wait in run records, REST and MCP. Both the live failure transition and recovery from an already committed failure event now clear that wait. Park, wake, child completion and failure history remain intact. Already-finalized historical rows are preserved; this change includes no migration or historical rewrite.\n\nCloses #410.\n\nValidation:\n\n- The initial old-source run used an earlier test draft and failed both cases at the stale-wait assertion. Independent review separately verified that the committed regressions fail with exact pre-fix failed-transition argument emulation and pass on the candidate; this probe is not a literal old-source rebuild. The candidate passes 197 focused tests and all 1,814 engine tests, with 96.94% line and 91.22% branch coverage. TypeScript, lint, formatting and diff checks pass. [Implementation evidence](docs/qa/2026-11-15-terminal-wait-implementation/README.md) · [Independent review and evidence qualification](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6901983201)\n- Independent native Windows QA passes W1–W4 on source `4e4501bd92953794bb733a746f7c24d1bcc2452a`: actual child failure, interruption after a committed failure event but before its projection, normal wait/success/cancel/authored-exit controls, and exact preservation of genuine finalized baseline history. SQL, REST get/list and compiled MCP get/list agree. Both native supervisor and wrapper exited 0; owned processes, listeners and run stores were cleaned up. [Candidate evidence](docs/qa/2026-11-15-terminal-wait-candidate/README.md)\n- The current-main baseline reproduced both stale-wait paths. Its first fixture failure and reviewed seed-preparation correction remain recorded separately from the complete second baseline. The correction checkpointed only a verified copy of the closed synthetic database and compared the original run/event values. [Baseline evidence](docs/qa/2026-11-15-terminal-wait-baseline/README.md)\n\nCurrent-head CI run [43758754651](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43758754651) passed: 9,607 tests passed / 41 skipped, 13 coverage packages above the line/branch floors, Browser 481 passed / 1 declared live-provider skip, Windows 14/14 and four template catalogs. The original Gates job hit its 30-minute limit; one unchanged-head Gates-only retry passed all 32 steps, while the three successful companion jobs were carried forward. [#488](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/488) retains the unresolved CI reliability follow-up. The high-severity audit threshold passed with 8 low / 13 moderate advisories; Windows uploaded no native artifact.\n\nClaude Opus 5.5 xhigh returned [READY in scan 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6901983201), with no product correction required. Fresh GPT-6 Astra max returned [SIGN-OFF in scan 2](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487#issuecomment-6902325285) for head `0d1b935988c4ff06f5091b645210b0cd88703a16` against target `154401c7b47c1e56b62a6daec50e2a3145ea967d`, with no blockers or required corrections. The shared limit is three formal scans. No owner-only acceptance gate applies to #410. Other batch acceptance items remain separate.\n\nThis PR also archives the already-merged #381/#414 final CI and completion evidence for PR #485. Those records describe that earlier change and do not substitute for this PR's gates.",
+    "title": "Clear stale waits when runs fail",
+    "base": "main",
+    "base_sha": "154401c7b47c1e56b62a6daec50e2a3145ea967d",
+    "head": "codex/gg-20261115-terminal-waits",
+    "head_sha": "0d1b935988c4ff06f5091b645210b0cd88703a16",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": "98692c8a8c7b519e8c83e585e026d595cedc0550",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-15T20:33:28Z",
+    "updated_at": "2026-11-15T22:21:46Z",
+    "closed_at": "2026-11-15T22:21:45Z",
+    "merged_at": "2026-11-15T22:21:44Z",
+    "commits": 2,
+    "changed_files": 229,
+    "additions": 103595,
+    "deletions": 2,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487",
+    "display_title": "Clear stale waits when runs fail"
+  },
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/410",
+    "title": "A parent failed at its subloop node keeps a stale waiting field",
+    "issue_number": 410,
+    "body": "<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for the third lane, after I08 and the parallel Claude plugin lane. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit, conditional reproduction and explicit owner closure requirements. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\nObserved by the independent behaviour QA of PR #375 (#320, #321) on head `32ae4b8b`; the same code is on `main`, so it is recorded here rather than fixed in that PR.\n\n## What happens\n\nA parent run that fails at its subloop node (its child failed, or the child's failure surfaced through the parent) keeps `waiting` with `kind: child` on its run record after it is `failed`. `GET /runs/{id}` and the MCP `list_runs` summary show the stale wait next to the failed status.\n\n## Where\n\n`failRun` (around `packages/engine/src/run-manager.ts:2673` on the #375 head) and the failed branch of `completeFromLog` (around line 2457) never clear the run's `waiting` field when they move the run to `failed`.\n\n## Expected\n\nA failed (or otherwise terminal) run carries no current wait; the park remains visible in the event history only.\n\n## Reproduce\n\n`docs/qa/2026-10-25-wp-d1-final-qa/probe-stale-waiting.mjs` on PR #375's branch (once merged, on `main`): a parent with a subloop whose child fails; read the parent's run record after it fails.\n\nLow severity: nothing acts on the stale field for a terminal run, but it is misleading in the API and MCP.\n\n## Delivery — 2026-11-15\n\nImplementation: GPT-6.1 Sol xhigh in an isolated branch. Independent native behavior QA: GPT-6.1 Sol xhigh, separate from implementation. Opposite-family review: Claude Opus 5.5 xhigh, followed by a fresh independent GPT-6 Astra max final audit within the shared three-scan limit. Current-head CI and exact-head/target sign-off remain required.\n\nThe current-main baseline at `154401c7b47c1e56b62a6daec50e2a3145ea967d` reproduced stale terminal waits in both live failure and journal reconstruction after a committed failure event but before its projection write. The second native matrix completed with actual harness and supervisor exits 0; SQL, REST and compiled MCP observations agree. Active waiting, successful child completion, stale input refusal, cancellation and authored exits remained correct. A genuine already-finalized historical parent and child retained their exact stored rows and event values across ordinary restart.\n\nThe first matrix stopped after the live reproduction and controls because its historical-seed helper assumed a closed SQLite database had no WAL/SHM. Its original evidence is preserved. A reviewed fixture-only correction derived a standalone seed from a verified closed-store copy, checkpointed only that copy, and checked the witnessed row/event values. No product assertion, timeout or threshold changed. Complete baseline evidence will accompany this PR. This is a diagnostic reproduction, not a passing product result.\n\nThe implementation clears the current wait in the two failure projection paths. It does not migrate or rewrite historical terminal rows, change failure classification/recovery policy, or alter the owner instance. Both new public-manager regressions failed on old source, then passed with the candidate. The implementation passed 197 focused tests and all 1,814 engine tests (96.94% lines, 91.22% branches), plus typecheck, lint and formatting. Independent native candidate QA passed W1–W4: live child failure and event-first recovery clear SQL waiting and omit it from REST/MCP get/list; active wait, success, cancellation and authored-exit controls remain correct; genuine already-finalized historical rows remain byte-equivalent. W2 uses a composed public repository-port gate before interruption and an ordinary compiled gateway restart of the same physical database. The QA supervisor and PowerShell wrapper exited 0; owned processes, four listeners and disposable run stores were cleaned up.\n\n[Draft PR #487](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/487) publishes the source and complete [baseline](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/0d1b935988c4ff06f5091b645210b0cd88703a16/docs/qa/2026-11-15-terminal-wait-baseline/README.md), [implementation](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/0d1b935988c4ff06f5091b645210b0cd88703a16/docs/qa/2026-11-15-terminal-wait-implementation/README.md) and [candidate QA](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/0d1b935988c4ff06f5091b645210b0cd88703a16/docs/qa/2026-11-15-terminal-wait-candidate/README.md) evidence. Publication head: `0d1b935988c4ff06f5091b645210b0cd88703a16`, based on `154401c7b47c1e56b62a6daec50e2a3145ea967d`; product/test inputs remain source `4e4501bd92953794bb733a746f7c24d1bcc2452a`. Full current-head CI, Claude review and fresh Astra final audit remain pending (0/3 formal scans). No merge or issue completion is claimed.\n",
+    "state": "closed",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "aidlc-ready",
+        "color": "0E8A16",
+        "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+      },
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:gpt-6.1-sol",
+        "color": "1D76DB",
+        "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+      },
+      {
+        "name": "review:claude-opus-5.5",
+        "color": "006B75",
+        "description": "Cross-vendor reviewer: Claude Opus 5.5"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:engine",
+        "color": "BFDADC",
+        "description": "Engine and run manager"
+      }
+    ],
+    "milestone": null,
+    "state_reason": "completed",
+    "comments": 1,
+    "created_at": "2026-10-26T04:29:16Z",
+    "updated_at": "2026-11-15T22:21:46Z",
+    "closed_at": "2026-11-15T22:21:46Z",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/410",
+    "display_title": "A parent failed at its subloop node keeps a stale waiting field"
+  },
+  "gitReadback": "From https://github.com/Jacob-J-Thomas/GraphGoblin\n * branch              main       -> FETCH_HEAD\n   154401c7..98692c8a  main       -> origin/main\n98692c8a8c7b519e8c83e585e026d595cedc0550 9439a500040aa4763613549cca6235023916de58 154401c7b47c1e56b62a6daec50e2a3145ea967d 0d1b935988c4ff06f5091b645210b0cd88703a16\n98692c8a8c7b519e8c83e585e026d595cedc0550\trefs/heads/main\n",
+  "asserted": "Actual merge tree equals audited head and tested synthetic tree; actual parents are reviewed target then head; origin/main equals actual merge."
+}
