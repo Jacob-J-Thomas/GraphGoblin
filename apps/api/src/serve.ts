@@ -4,7 +4,7 @@ import { buildApp } from './app.js';
 import { bundledGoblinDist, bundledWebDist, loadConfig } from './config.js';
 import { createContainer } from './container.js';
 import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
-import { createGatewayLogger } from './gateway-logger.js';
+import { createGatewayLogger, managedClientErrorHandler } from './gateway-logger.js';
 import { StoreRefusedError } from './store-refusal.js';
 import type { StartupCause, StartupStage } from './windows-log/guard.js';
 
@@ -80,7 +80,11 @@ export async function serve(options: ServeOptions = {}): Promise<ServeResult> {
     managed?.onStage('recovery');
     await owner.start();
     managed?.onStage('http');
-    const server = await buildApp(owner, { logger });
+    // Managed parser and connection errors keep their response but log only a closed outcome.
+    const server = await buildApp(owner, {
+      logger,
+      ...(managed ? { clientErrorHandler: managedClientErrorHandler } : {}),
+    });
     app = server;
     let closing = false;
     server.addHook('preClose', () => {

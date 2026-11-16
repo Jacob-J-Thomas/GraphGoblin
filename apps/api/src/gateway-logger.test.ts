@@ -2,11 +2,15 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { symbols } from 'pino';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RunRecord } from '@graphgoblin/contracts';
 import { FakeHarness, singleNodeLoop } from '@graphgoblin/engine/testing';
 import { loadConfig } from './config.js';
-import { createGatewayLogger, managedAccessSerializers } from './gateway-logger.js';
+import {
+  createGatewayLogger,
+  managedAccessSerializers,
+  managedClientErrorHandler,
+} from './gateway-logger.js';
 import { createTestApp } from './testing/test-app.js';
 import { openGatewayLog, type GatewayLogWriter } from './windows-log/gateway-log-writer.js';
 
@@ -177,5 +181,106 @@ it('projects only validated access fields from unusual inputs', () => {
   expect(managedAccessSerializers.res({ statusCode: 500 })).toEqual({ statusCode: 500 });
   expect(managedAccessSerializers.res({ statusCode: '500', request: { method: 'GET' } })).toEqual({
     method: 'GET',
+  });
+});
+
+describe('managed client-error handler', () => {
+  /** The real managed logger over a capturing destination, and a fake client connection. */
+  function connection(level = 'trace') {
+    const lines: Record<string, unknown>[] = [];
+    const logger = createGatewayLogger(loadConfig({ GG_LOG_LEVEL: level }), {
+      write: (line: string) => void lines.push(JSON.parse(line) as Record<string, unknown>),
+    });
+    const socket = { destroyed: false, writable: true, write: vi.fn(), destroy: vi.fn() };
+    return { lines, logger, socket };
+  }
+
+  /** A Node parser error carrying request text in every field the standard serializer copies. */
+  function parserError(code: unknown) {
+    return Object.assign(new Error('Parse Error: GG_CLIENT_MESSAGE_CANARY'), {
+      code,
+      bytesParsed: 3,
+      reason: 'GG_CLIENT_REASON_CANARY',
+      rawPacket: Buffer.from('GET /?GG_CLIENT_PACKET_CANARY HTTP/1.1\r\n'),
+      headers: { authorization: 'Bearer GG_CLIENT_HEADER_CANARY' },
+    });
+  }
+
+  it.each([
+    ['ERR_HTTP_REQUEST_TIMEOUT', 'client timeout', 408, 'Request Timeout', 'Client Timeout'],
+    [
+      'HPE_HEADER_OVERFLOW',
+      'client header_overflow',
+      431,
+      'Request Header Fields Too Large',
+      'Exceeded maximum allowed HTTP header size',
+    ],
+    ['HPE_INVALID_METHOD', 'client error', 400, 'Bad Request', 'Client Error'],
+    ['EPIPE', 'client error', 400, 'Bad Request', 'Client Error'],
+  ])(
+    'answers %s with the default response and records only its closed outcome',
+    (code, msg, statusCode, reason, message) => {
+      const { lines, logger, socket } = connection();
+      const error = parserError(code);
+      managedClientErrorHandler.call({ log: logger }, error, socket);
+      const body = JSON.stringify({ error: reason, message, statusCode });
+      expect(socket.write.mock.calls).toEqual([
+        [
+          `HTTP/1.1 ${statusCode} ${reason}\r\nContent-Length: ${body.length}\r\nContent-Type: application/json\r\n\r\n${body}`,
+        ],
+      ]);
+      expect(socket.destroy.mock.calls).toEqual([[error]]);
+      expect(lines).toEqual([
+        {
+          level: 10,
+          time: expect.any(Number),
+          pid: process.pid,
+          hostname: expect.any(String),
+          msg,
+          clientError: { statusCode, code },
+        },
+      ]);
+      expect(JSON.stringify(lines)).not.toContain('CANARY');
+    },
+  );
+
+  it('leaves a reset or already destroyed connection alone, as the default does', () => {
+    const reset = connection();
+    managedClientErrorHandler.call({ log: reset.logger }, parserError('ECONNRESET'), reset.socket);
+    const destroyed = connection();
+    destroyed.socket.destroyed = true;
+    managedClientErrorHandler.call(
+      { log: destroyed.logger },
+      parserError('HPE_INVALID_METHOD'),
+      destroyed.socket,
+    );
+    for (const { lines, socket } of [reset, destroyed]) {
+      expect(lines).toEqual([]);
+      expect(socket.write).not.toHaveBeenCalled();
+      expect(socket.destroy).not.toHaveBeenCalled();
+    }
+  });
+
+  it('closes an unwritable connection and omits any code that is not a Node identifier', () => {
+    for (const code of [undefined, 42, 'hpe_lower', 'HPE GG_CODE_CANARY', 'X'.repeat(65)]) {
+      const { lines, logger, socket } = connection();
+      socket.writable = false;
+      const error = parserError(code);
+      managedClientErrorHandler.call({ log: logger }, error, socket);
+      expect(socket.write).not.toHaveBeenCalled();
+      expect(socket.destroy.mock.calls).toEqual([[error]]);
+      expect(lines).toEqual([
+        expect.objectContaining({ msg: 'client error', clientError: { statusCode: 400 } }),
+      ]);
+      expect(JSON.stringify(lines)).not.toContain('CANARY');
+    }
+  });
+
+  it('keeps the configured level: an info gateway answers without a trace record', () => {
+    const { lines, logger, socket } = connection('info');
+    managedClientErrorHandler.call({ log: logger }, parserError('HPE_INVALID_METHOD'), socket);
+    expect(lines).toEqual([]);
+    expect(socket.write).toHaveBeenCalledOnce();
+    expect(socket.destroy).toHaveBeenCalledOnce();
   });
 });

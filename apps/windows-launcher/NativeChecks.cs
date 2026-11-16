@@ -80,6 +80,10 @@ public static class NativeChecks
         Check(StartupOutcome.ForChildExit(72, null).Message.Contains("was written") && StartupOutcome.ForChildExit(73, null).Message.Contains("no startup diagnostic could be written"), "Written/unwritten import guidance is ambiguous.");
         Check(StartupOutcome.ForChildExit(74, null).Message.Contains("was written") && StartupOutcome.ForChildExit(75, null).Message.Contains("no startup diagnostic could be written"), "Written/unwritten startup guidance is ambiguous.");
         Check(StartupOutcome.ForChildExit(9, null).Message.Contains("exit code 9") && StartupOutcome.ForChildExit(9, null).Message.Contains("No startup diagnostic can be assumed"), "Unknown exit guidance is not fixed.");
+        // A reservation conflict (child 70) and the parent's sharing violation identify no holder:
+        // the guidance names neither a gateway nor another owner and makes shutdown conditional.
+        foreach (LauncherFailure conflict in new[] { StartupOutcome.ForChildExit(70, @"C:\logs"), StartupOutcome.DestinationInUseFailure(@"C:\logs", 0) })
+            Check(conflict.Code == "destination-in-use" && !conflict.Message.Contains("by another GraphGoblin gateway") && conflict.Message.Contains("that process was not identified") && conflict.Message.Contains("If it is a GraphGoblin gateway") && conflict.Message.Contains("once it is released"), "Destination conflict guidance attributes the holder or omits conditional recovery.");
 
         // Rendered locations: rooted, no control or bidi formatting characters, capped.
         Check(Program.RenderPath(@"C:\a\b") == @"C:\a\b", "A plain path was not rendered.");

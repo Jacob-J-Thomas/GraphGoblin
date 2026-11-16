@@ -344,10 +344,14 @@ namespace GraphGoblin.Desktop
             ImportFailedWritten = 72, ImportFailedUnwritten = 73,
             StartupFailedWritten = 74, StartupFailedUnwritten = 75;
 
+        /// <summary>
+        /// Child exit 70 (log reservation unavailable) or the parent's sharing violation on
+        /// gateway.log. Neither identifies the holder, so the guidance is conditional.
+        /// </summary>
         public static LauncherFailure DestinationInUseFailure(string logFolder, int childExit)
         {
             return new LauncherFailure("destination-in-use",
-                "GraphGoblin could not start because its log folder is already in use by another GraphGoblin gateway, which may be an older version that is still running. Shut that gateway down deliberately, then launch again. No process was stopped and no log file was changed.",
+                "GraphGoblin could not start because its log folder is in use: another process holds the folder's log reservation or has gateway.log open, and that process was not identified. If it is a GraphGoblin gateway, possibly an older version still running, shut it down deliberately; otherwise close the program holding the folder or its log. Launch again once it is released. No process was stopped and no gateway log file was changed.",
                 logFolder, null, childExit);
         }
 
@@ -808,11 +812,12 @@ namespace GraphGoblin.Desktop
         }
 
         /// <summary>
-        /// Before a fresh spawn: admit the private physical root and refuse a live writer of an
-        /// existing validated gateway.log, including a legacy gateway on another store and port.
-        /// A deliberately stopped gateway keeps its log until process exit, so a writer is awaited
-        /// until the existing release deadline. The probe reads nothing and never writes,
-        /// truncates or prunes.
+        /// Before a fresh spawn: admit the private physical root and refuse while another handle
+        /// denies a read-only probe of an existing validated gateway.log, such as a legacy
+        /// gateway's writer on another store and port or another program; the sharing violation
+        /// does not identify which. A deliberately stopped gateway keeps its log until process
+        /// exit, so a holder is awaited until the existing release deadline. The probe reads
+        /// nothing and never writes, truncates or prunes.
         /// </summary>
         LogRoot AdmitLogRoot(DateTime releaseDeadline)
         {

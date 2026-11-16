@@ -17,12 +17,15 @@ Startup failures before Pino existed reached the same unbounded file, or nowhere
 complete UTF-8 ending in LF and at most 64 KiB; a larger record becomes a fixed marker. One file
 operation is in flight at a time and queued plus in-flight encoded bytes stay at or below
 256 KiB; excess records are dropped immediately and a bounded drop summary precedes the next
-accepted record. Logging never waits for I/O or capacity and a logging fault never signals,
-restarts or stops the gateway. Rotation closes the active slot, rename-replaces it onto the
-previous slot and recreates the active slot exclusively. There is no staging, spill or TEMP file
-and a denied rename never falls back to truncation. A partial write rolls back to the last complete
-boundary; if that fails the writer stops. After a fault, records are dropped during backoff (1 s
-doubling to 60 s) and the eighth consecutive fault stops the writer until the next gateway start.
+accepted record. Across I/O the writer retains one encoded copy of each of those records, queued
+or in the single buffer of the write in flight: coalescing releases the dequeued records, and a
+failed write releases its buffer with its charge before rolling back. Logging never waits for I/O
+or capacity and a logging fault never signals, restarts or stops the gateway. Rotation closes the
+active slot, rename-replaces it onto the previous slot and recreates the active slot exclusively.
+There is no staging, spill or TEMP file and a denied rename never falls back to truncation. A
+partial write rolls back to the last complete boundary; if that fails the writer stops. After a
+fault, records are dropped during backoff (1 s doubling to 60 s) and the eighth consecutive fault
+stops the writer until the next gateway start.
 Startup accounts the actual opened size, repairs an incomplete trailing record and replaces an
 oversized slot (unbounded history from the earlier launcher) under verified ownership; that
 history may be discarded. The writer's filesystem operations, transitions and flush completion are
@@ -32,9 +35,12 @@ a narrow production seam (`apps/api/src/windows-log/gateway-log-writer.ts`) for 
 listening record and engine diagnostics, including the correlated run/node error name, message and
 stack that ADR-0080's safe public failure refers to. Only HTTP access records are narrowed: their
 request and response serializers carry the method, the registered route template when one
-matched, and the status. Startup failures introduced here use fixed stages (`import`,
-`configuration`, `store`, `recovery`, `http`, `bind`), closed cause codes and fixed text. The
-ordinary shell keeps Pino's default stdout configuration.
+matched, and the status. A malformed request or connection error that Node reports before
+Fastify has a request keeps Fastify's default response (400, 408 or 431) and socket closure, but
+its trace record carries only the fixed outcome, the status and Node's error code, never the
+error's message, raw packet bytes or headers. Startup failures introduced here use fixed stages
+(`import`, `configuration`, `store`, `recovery`, `http`, `bind`), closed cause codes and fixed
+text. The ordinary shell keeps Pino's default stdout configuration.
 
 **Guarded canonical entry.** The launcher still runs exactly `"<Node>" "<Repo>\apps\api\dist\main.js"`.
 `main.js` statically imports only Node built-ins and the built-ins-only guard
@@ -64,14 +70,16 @@ diagnostics.
 
 **Coordinated cutover.** The opaque instance protocol advances to 2, so this launcher refuses warm
 reuse of a still-serving earlier gateway. Before a fresh spawn the launcher validates the same root
-and opens an existing `gateway.log` for read without write sharing. A sharing violation means a
-live writer, including an earlier gateway's inherited append handle on another store and port;
-the launcher waits within its existing startup deadline (a deliberately stopped gateway keeps the
-file until exit) and then reports destination in use without spawning. The probe never writes or
-prunes. Matching current warm reuse, including from another configuration folder, is unchanged.
-The supported upgrade stops the old gateway deliberately and replaces the build and launcher
-together. Concurrent obsolete launchers and same-user or privileged filesystem mutation are outside
-this ownership guarantee, as are cross-user and cross-session guarantees.
+and opens an existing `gateway.log` for read without write sharing. A sharing violation means
+another open handle, such as an earlier gateway's inherited append handle on another store and
+port or another program; the launcher waits within its existing startup deadline (a deliberately
+stopped gateway keeps the file until exit) and then reports destination in use without spawning.
+That outcome, like exit 70, names no holder: its guidance says shutting down a GraphGoblin gateway
+applies only if one holds the folder and to launch again once it is released. The probe never
+writes or prunes. Matching current warm reuse, including from another configuration folder, is
+unchanged. The supported upgrade stops the old gateway deliberately and replaces the build and
+launcher together. Concurrent obsolete launchers and same-user or privileged filesystem mutation
+are outside this ownership guarantee, as are cross-user and cross-session guarantees.
 
 **Detached process and launcher outcomes.** The child receives readable NUL stdin and writable NUL
 stdout/stderr as the only inherited handles. The launcher keeps the `CreateProcess` handle for exit

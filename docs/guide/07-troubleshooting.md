@@ -10,10 +10,13 @@ location is `%LOCALAPPDATA%\GraphGoblin\Launcher`. Each log keeps two files, `ga
 roll off. Under sustained pressure or a write fault the gateway drops log records rather than
 waiting, and a `gateway log records dropped` record counts them (ADR-0081).
 
-- **Log folder already in use:** another GraphGoblin gateway writes this folder's `gateway.log`,
-  possibly an older version still running or one serving another port. Stop that gateway
-  deliberately (its **Shut down** control), then launch again. The launcher waits for a gateway that
-  is still exiting and never stops a process itself.
+- **Log folder in use:** another process holds this folder's log reservation (the
+  `GraphGoblin.GatewayLog.<key>` named pipe a launcher-started gateway keeps while it runs) or has
+  `gateway.log` open without sharing it. The launcher cannot tell which process it is. If a
+  GraphGoblin gateway still uses this folder, possibly an older version or one serving another
+  port, stop it deliberately (its **Shut down** control); otherwise close the program holding the
+  folder or `gateway.log`. Launch again once it is released. The launcher waits within its startup
+  timeout for a holder that is releasing `gateway.log` and never stops a process itself.
 - **Log folder unsafe or unavailable:** the folder must be a local NTFS folder that only your
   account, SYSTEM and Administrators can access, and `gateway.log`, `gateway.log.1`,
   `launcher.log` and `launcher.log.1` must be ordinary files you own, not links. Tools that add other

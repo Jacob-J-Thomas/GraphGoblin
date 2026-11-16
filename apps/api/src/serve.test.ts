@@ -1,12 +1,14 @@
 import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
-import { createServer } from 'node:net';
+import { createConnection, createServer, type AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pino } from 'pino';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { serve, shellFailureOutput, startupFailureCause, type ServeOptions } from './serve.js';
 import { StoreRefusedError } from './store-refusal.js';
 import { eventually, freePort, listening } from './testing/api-subprocess.js';
+import { createTestApp } from './testing/test-app.js';
 import {
   GATEWAY_LOG_PENDING_BYTES,
   nodeLogFileSystem,
@@ -194,4 +196,145 @@ describe('serve with the managed destination', () => {
     expect(env.stages).toEqual(['configuration']);
     expect(startupFailureCause('configuration', failure)).toBe('invalid-configuration');
   });
+
+  it('answers malformed wire requests at managed trace without logging their bytes, then keeps serving', async () => {
+    const env = await environment();
+    vi.stubEnv('GG_LOG_LEVEL', 'trace');
+    const running = await serve({ managed: env.managed });
+    try {
+      // The configured level is kept: Fastify's parser-error records are trace records.
+      expect(running.app.log.level).toBe('trace');
+      expect(await exchange(env.port, MALFORMED)).toBe(
+        clientErrorReply(400, 'Bad Request', 'Client Error'),
+      );
+      expect(await exchange(env.port, OVERFLOW)).toBe(
+        clientErrorReply(
+          431,
+          'Request Header Fields Too Large',
+          'Exceeded maximum allowed HTTP header size',
+        ),
+      );
+      const ordinary = await fetch(`http://127.0.0.1:${env.port}/healthz`);
+      expect(ordinary.status).toBe(200);
+      await ordinary.arrayBuffer();
+
+      expect(await env.writer.settle(5_000)).toBe(true);
+      const records = (await readFile(join(env.logRoot, 'gateway.log'), 'utf8'))
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line) as Record<string, unknown>);
+      // Only the closed outcome, its status and Node's parser code; no error object, message,
+      // header or packet bytes.
+      expect(records.filter((record) => String(record['msg']).startsWith('client '))).toEqual([
+        {
+          level: 10,
+          time: expect.any(Number),
+          pid: process.pid,
+          hostname: expect.any(String),
+          msg: 'client error',
+          clientError: { statusCode: 400, code: 'HPE_INVALID_HEADER_TOKEN' },
+        },
+        {
+          level: 10,
+          time: expect.any(Number),
+          pid: process.pid,
+          hostname: expect.any(String),
+          msg: 'client header_overflow',
+          clientError: { statusCode: 431, code: 'HPE_HEADER_OVERFLOW' },
+        },
+      ]);
+      // Every string and every decoded numeric byte array in every record, not only the text.
+      for (const value of records.flatMap(decodedValues))
+        for (const canary of PARSER_CANARIES) expect(value).not.toContain(canary);
+      expect(records).toContainEqual(
+        expect.objectContaining({
+          msg: 'request completed',
+          res: { method: 'GET', route: '/healthz', statusCode: 200 },
+        }),
+      );
+    } finally {
+      await running.app.close();
+    }
+  }, 60_000);
+});
+
+/** Parser canaries in the URL, query and headers of one short packet. */
+const PARSER_CANARIES = [
+  'GG_PARSER_PATH_CANARY',
+  'GG_PARSER_QUERY_CANARY',
+  'GG_PARSER_BEARER_CANARY',
+  'GG_PARSER_HEADER_CANARY',
+];
+/** Reaches Node's HTTP parser and fails at the invalid header name, before Fastify routes it. */
+const MALFORMED =
+  'GET /healthz/GG_PARSER_PATH_CANARY?probe=GG_PARSER_QUERY_CANARY HTTP/1.1\r\n' +
+  'Host: 127.0.0.1\r\n' +
+  'Authorization: Bearer GG_PARSER_BEARER_CANARY\r\n' +
+  'Bad Header: GG_PARSER_HEADER_CANARY\r\n\r\n';
+/** Exceeds Node's 16 KiB header limit. */
+const OVERFLOW =
+  'GET /healthz?probe=GG_PARSER_QUERY_CANARY HTTP/1.1\r\n' +
+  'Host: 127.0.0.1\r\n' +
+  `X-Fill: GG_PARSER_HEADER_CANARY${'f'.repeat(17 * 1024)}\r\n\r\n`;
+
+/** Fastify's default parser-error response bytes. */
+function clientErrorReply(statusCode: number, error: string, message: string): string {
+  const body = JSON.stringify({ error, message, statusCode });
+  return `HTTP/1.1 ${statusCode} ${error}\r\nContent-Length: ${body.length}\r\nContent-Type: application/json\r\n\r\n${body}`;
+}
+
+/** Send exact bytes and read until the server closes the connection. */
+function exchange(port: number, packet: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const socket = createConnection({ host: '127.0.0.1', port });
+    const chunks: Buffer[] = [];
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(new Error('The server kept the malformed connection open.'));
+    }, 10_000);
+    socket.on('data', (chunk: Buffer) => chunks.push(chunk));
+    // A reset after the response still closes the connection.
+    socket.on('error', () => undefined);
+    socket.on('close', () => {
+      clearTimeout(timer);
+      resolve(Buffer.concat(chunks).toString('latin1'));
+    });
+    socket.write(packet);
+  });
+}
+
+/** Every key and string in a parsed record, with each numeric byte array decoded as Latin-1. */
+function decodedValues(value: unknown): string[] {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) {
+    const bytes = value.every((item) => Number.isInteger(item) && item >= 0 && item <= 255);
+    return value.length > 0 && bytes
+      ? [Buffer.from(value as number[]).toString('latin1')]
+      : value.flatMap(decodedValues);
+  }
+  if (value !== null && typeof value === 'object')
+    return Object.entries(value).flatMap(([key, item]) => [key, ...decodedValues(item)]);
+  return [];
+}
+
+describe('ordinary HTTP construction (control)', () => {
+  it("keeps Fastify's default parser-error handler, which logs the raw packet at trace", async () => {
+    const lines: string[] = [];
+    const logger = pino({ level: 'trace' }, { write: (line: string) => void lines.push(line) });
+    const fixture = await createTestApp({ serverLogger: logger });
+    try {
+      await fixture.app.listen({ host: '127.0.0.1', port: 0 });
+      const { port } = fixture.app.server.address() as AddressInfo;
+      expect(await exchange(port, MALFORMED)).toBe(
+        clientErrorReply(400, 'Bad Request', 'Client Error'),
+      );
+      const record = lines
+        .map((line) => JSON.parse(line) as Record<string, unknown>)
+        .find((line) => line['msg'] === 'client error');
+      // The same input reaches the parser; the default handler's error keeps its packet bytes.
+      expect(decodedValues(record?.['err']).join('\n')).toContain('GG_PARSER_QUERY_CANARY');
+    } finally {
+      await fixture.close();
+    }
+  }, 60_000);
 });

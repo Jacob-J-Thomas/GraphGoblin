@@ -90,11 +90,14 @@ function gate(): Gate {
 /** Real files; each fault is injected only at the operation the production writer reaches. */
 function controlled() {
   const operations: string[] = [];
+  /** Each buffer the writer handed to a write, held weakly so the seam never retains it. */
+  const writeBuffers: WeakRef<Buffer>[] = [];
   const control: {
     stallWrite?: Gate;
     failWrite?: string;
     partialWrite?: number;
     failRename?: string;
+    stallTruncate?: Gate;
     failTruncate?: string;
   } = {};
   const wrap = (path: string, handle: LogFileHandle): LogFileHandle => ({
@@ -102,6 +105,7 @@ function controlled() {
     read: (...args) => handle.read(...args),
     async write(buffer, offset, length, position) {
       operations.push(`write ${position}+${length}`);
+      writeBuffers.push(new WeakRef(buffer));
       if (control.stallWrite) await control.stallWrite.promise;
       if (control.failWrite)
         throw Object.assign(new Error('injected'), { code: control.failWrite });
@@ -115,6 +119,7 @@ function controlled() {
     },
     async truncate(length) {
       operations.push(`truncate ${length}`);
+      if (control.stallTruncate) await control.stallTruncate.promise;
       if (control.failTruncate)
         throw Object.assign(new Error('injected'), { code: control.failTruncate });
       return handle.truncate(length);
@@ -134,8 +139,45 @@ function controlled() {
       return nodeLogFileSystem.rename(from, to);
     },
   };
-  return { fs, control, operations };
+  return { fs, control, operations, writeBuffers };
 }
+
+/** Wait for the writer to reach an operation that completes on libuv's thread pool. */
+async function until(check: () => boolean): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (!check()) {
+    if (Date.now() > deadline) throw new Error('Timed out waiting for the writer operation');
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
+/** Weak references to the buffers `Buffer.from` creates while `act` runs: the encoded records. */
+function encodedDuring(act: () => void): WeakRef<Buffer>[] {
+  const encoded: WeakRef<Buffer>[] = [];
+  const original = Buffer.from;
+  const from = Buffer.from.bind(Buffer) as (...args: unknown[]) => Buffer;
+  Buffer.from = ((...args: unknown[]) => {
+    const bytes = from(...args);
+    encoded.push(new WeakRef(bytes));
+    return bytes;
+  }) as typeof Buffer.from;
+  try {
+    act();
+  } finally {
+    Buffer.from = original;
+  }
+  return encoded;
+}
+
+/** Full collection after the current job, which otherwise keeps every new WeakRef target. */
+async function collect(): Promise<void> {
+  const gc = globalThis.gc;
+  if (!gc) throw new Error('This test needs Node started with --expose-gc (vitest.config.ts)');
+  await new Promise((resolve) => setImmediate(resolve));
+  gc();
+}
+
+const reachable = (refs: WeakRef<Buffer>[]) => refs.map((ref) => ref.deref() !== undefined);
 
 /** Deterministic backoff: the test decides when a suspended writer may retry. */
 function manualSchedule() {
@@ -408,6 +450,117 @@ describe('gateway log queue, faults and acknowledgment', () => {
       dropped: 2,
     });
     expect(written[6]).toBe('{"msg":"after drain"}');
+  });
+
+  it('retains one encoded copy of each record across a held multi-record write', async () => {
+    const root = await scratch();
+    const { fs, control, operations, writeBuffers } = controlled();
+    const { writer: log } = await writer(root, { fs });
+    const firstWrite = gate();
+    const batchWrite = gate();
+    control.stallWrite = firstWrite;
+    try {
+      const first = recordOfBytes(65_536);
+      expect(log.write(first)).toBe(true);
+      await until(() => operations.includes('write 0+65536'));
+      // Three records queue behind the held write; the next cycle writes them as one batch.
+      const queued = [recordOfBytes(65_536), recordOfBytes(65_437), recordOfBytes(100)];
+      let acknowledged: Promise<boolean> = Promise.resolve(false);
+      const encoded = encodedDuring(() => {
+        expect(log.write(queued[0]!)).toBe(true);
+        expect(log.write(queued[1]!)).toBe(true);
+        acknowledged = log.writeAcknowledged(queued[2]!);
+      });
+      expect(encoded).toHaveLength(3);
+      // 131,073 B: retaining both the records and their concatenation would exceed 256 KiB.
+      const batch = 65_536 + 65_437 + 100;
+      expect(log.pendingBytes).toBe(65_536 + batch);
+      control.stallWrite = batchWrite;
+      firstWrite.release();
+      await until(() => operations.includes(`write 65536+${batch}`));
+      expect(log.pendingBytes).toBe(batch);
+      await collect();
+      // The write's own buffer is the one retained copy; the dequeued records are unreachable.
+      expect(reachable(encoded)).toEqual([false, false, false]);
+      expect(reachable(writeBuffers.slice(-1))).toEqual([true]);
+      expect(writeBuffers.at(-1)?.deref()?.length).toBe(batch);
+      // The rest of the combined budget remains available, and nothing beyond it.
+      expect(log.write(recordOfBytes(65_536))).toBe(true);
+      expect(log.write(recordOfBytes(GATEWAY_LOG_PENDING_BYTES - batch - 65_536))).toBe(true);
+      expect(log.pendingBytes).toBe(GATEWAY_LOG_PENDING_BYTES);
+      expect(log.write('\n')).toBe(false);
+      // Acknowledged only once its own batch completes.
+      expect(await Promise.race([acknowledged, Promise.resolve('held')])).toBe('held');
+      batchWrite.release();
+      expect(await acknowledged).toBe(true);
+      expect(await log.settle(5_000)).toBe(true);
+      expect(operations.filter((operation) => operation.startsWith('write'))).toEqual([
+        'write 0+65536',
+        `write 65536+${batch}`,
+        `write ${65_536 + batch}+${GATEWAY_LOG_PENDING_BYTES - batch}`,
+      ]);
+      expect(records(await readFile(active(root)))).toEqual([
+        first.slice(0, -1),
+        ...queued.map((record) => record.slice(0, -1)),
+        recordOfBytes(65_536).slice(0, -1),
+        recordOfBytes(GATEWAY_LOG_PENDING_BYTES - batch - 65_536).slice(0, -1),
+      ]);
+    } finally {
+      // A failed assertion must not leave a write held for the afterEach close.
+      firstWrite.release();
+      batchWrite.release();
+    }
+  });
+
+  it('releases a short multi-record write before its rollback and keeps the rollback safe', async () => {
+    const root = await scratch();
+    const { fs, control, operations, writeBuffers } = controlled();
+    const clock = manualSchedule();
+    const { writer: log, events } = await writer(root, { fs, schedule: clock.schedule });
+    const firstWrite = gate();
+    const batchWrite = gate();
+    const truncation = gate();
+    control.stallWrite = firstWrite;
+    try {
+      log.write('{"msg":"kept"}\n');
+      await until(() => operations.includes('write 0+15'));
+      const queued = [recordOfBytes(65_536), recordOfBytes(65_536)];
+      let lost: Promise<boolean>[] = [];
+      const encoded = encodedDuring(() => {
+        lost = queued.map((record) => log.writeAcknowledged(record));
+      });
+      control.stallWrite = batchWrite;
+      firstWrite.release();
+      await until(() => operations.includes('write 15+131072'));
+      // The batch lands 5 bytes and returns short; its rollback truncation is held.
+      control.partialWrite = 5;
+      control.stallTruncate = truncation;
+      batchWrite.release();
+      await until(() => operations.includes('truncate 15'));
+      expect(await Promise.all(lost)).toEqual([false, false]);
+      expect(events).toContainEqual(
+        expect.objectContaining({ type: 'write', result: 'partial', records: 2, bytesWritten: 5 }),
+      );
+      expect(log.pendingBytes).toBe(0);
+      await collect();
+      // Neither the records nor the write's buffer outlive the charge released with their drop.
+      expect(reachable([...encoded, ...writeBuffers.slice(-1)])).toEqual([false, false, false]);
+      truncation.release();
+      expect(await log.settle(5_000)).toBe(true);
+      expect(events).toContainEqual({
+        type: 'rollback',
+        path: active(root),
+        size: 15,
+        result: 'complete',
+      });
+      expect(log.state).toBe('suspended');
+      expect(records(await readFile(active(root)))).toEqual(['{"msg":"kept"}']);
+    } finally {
+      // A failed assertion must not leave an operation held for the afterEach close.
+      firstWrite.release();
+      batchWrite.release();
+      truncation.release();
+    }
   });
 
   it('acknowledges only the specific completed record and bounds the exit wait at 250 ms', async () => {

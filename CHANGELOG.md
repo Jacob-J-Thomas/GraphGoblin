@@ -8,7 +8,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
   written by the gateway itself so it never waits on logging and keeps working after the launcher
   exits or a log write fails. Run failure details stay in this private log; HTTP access records
-  carry only method, route template and status. The launcher's own `launcher.log` and
+  carry only method, route template and status, and records of malformed requests only their
+  status and Node's error code. The launcher's own `launcher.log` and
   `launcher.log.1` are capped at 256 KiB each. The detached gateway's stdio is NUL. Startup
   failures report whether the log folder is in use or unsafe, whether application modules could
   not load, or which startup stage failed and whether its record was written. The launcher folder

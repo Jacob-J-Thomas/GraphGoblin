@@ -5,8 +5,10 @@
  * Exactly two fixed slots, `gateway.log` and `gateway.log.1`, of at most 4 MiB each. Every
  * record is complete UTF-8 ending in LF and at most 64 KiB; a larger record is replaced by a
  * fixed marker. One file operation is in flight at a time and queued plus in-flight encoded bytes
- * never exceed 256 KiB: excess records are dropped immediately. Logging never waits for I/O or
- * capacity and a logging fault never stops gateway work. There is no staging, spill or TEMP file.
+ * never exceed 256 KiB: excess records are dropped immediately. Across I/O the writer retains one
+ * encoded copy of each such record, either queued or in the in-flight write's buffer, so the
+ * budget bounds the encoded payload it holds. Logging never waits for I/O or capacity and a
+ * logging fault never stops gateway work. There is no staging, spill or TEMP file.
  */
 import { lstat, open, rename } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -242,7 +244,10 @@ export class GatewayLogWriter {
     return this.current;
   }
 
-  /** Encoded bytes queued or in flight; never above {@link GATEWAY_LOG_PENDING_BYTES}. */
+  /**
+   * Encoded bytes queued or in flight; never above {@link GATEWAY_LOG_PENDING_BYTES}. The
+   * writer holds exactly one encoded copy of these bytes across I/O.
+   */
   get pendingBytes(): number {
     return this.queuedBytes + this.inFlightBytes;
   }
@@ -385,50 +390,75 @@ export class GatewayLogWriter {
       if (this.phase !== 'ready') {
         if (!(await this.completeRotation())) return;
       }
-      const first = this.queue[0];
-      if (!first) return;
-      if (this.activeSize > 0 && this.activeSize + first.bytes.length > GATEWAY_LOG_SLOT_BYTES) {
+      // Only the length: a queued record stays referenced by the queue alone across rotation.
+      const next = this.queue[0]?.bytes.length;
+      if (next === undefined) return;
+      if (this.activeSize > 0 && this.activeSize + next > GATEWAY_LOG_SLOT_BYTES) {
         if (!(await this.rotate())) return;
       }
-      await this.writeBatch();
+      const failed = await this.writeBatch();
+      // The failed batch's bytes and their in-flight charge were released before this rollback.
+      if (failed && (await this.rollback(failed.handle, failed.position))) this.fault(failed.code);
     } catch (error) {
       // Defensive: every expected fault is handled where it occurs.
       this.fault(errorCode(error));
     }
   }
 
-  private async writeBatch(): Promise<void> {
-    const batch: Pending[] = [];
+  /**
+   * Dequeue the records for the next write, in order, up to the slot boundary. One record is
+   * written from its own bytes; several are concatenated once. The dequeued records are released
+   * on return, so across I/O the writer holds one encoded copy of each in-flight record, which is
+   * exactly the `inFlightBytes` charge. Only this synchronous copy briefly holds both.
+   */
+  private takeBatch(): { buffer: Buffer; records: number; acks: ((written: boolean) => void)[] } {
+    let records = 0;
     let length = 0;
     for (const item of this.queue) {
-      if (batch.length > 0 && this.activeSize + length + item.bytes.length > GATEWAY_LOG_SLOT_BYTES)
+      if (records > 0 && this.activeSize + length + item.bytes.length > GATEWAY_LOG_SLOT_BYTES)
         break;
-      batch.push(item);
+      records++;
       length += item.bytes.length;
     }
-    this.queue.splice(0, batch.length);
+    const taken = this.queue.splice(0, records);
     this.queuedBytes -= length;
     this.inFlightBytes = length;
-    const buffer =
-      batch.length === 1 && batch[0]
-        ? batch[0].bytes
+    const only = taken.length === 1 ? taken[0] : undefined;
+    return {
+      buffer: only
+        ? only.bytes
         : Buffer.concat(
-            batch.map((item) => item.bytes),
+            taken.map((item) => item.bytes),
             length,
-          );
+          ),
+      records,
+      acks: taken.flatMap((item) => (item.ack ? [item.ack] : [])),
+    };
+  }
+
+  /**
+   * Write the next batch. Its buffer is released with its in-flight charge when the write settles
+   * and no await follows, so a failed batch returns where to roll back to instead of holding its
+   * bytes through the rollback.
+   */
+  private async writeBatch(): Promise<
+    { handle: LogFileHandle; position: number; code: string } | undefined
+  > {
+    const { buffer, records, acks } = this.takeBatch();
+    const length = buffer.length;
     const settle = (written: boolean) => {
       this.inFlightBytes = 0;
-      for (const item of batch) item.ack?.(written);
+      for (const ack of acks) ack(written);
     };
     const discard = (reason: GatewayLogDropReason) => {
-      this.dropped += batch.length;
-      this.notify({ type: 'drop', reason, bytes: length, records: batch.length });
+      this.dropped += records;
+      this.notify({ type: 'drop', reason, bytes: length, records });
       settle(false);
     };
     const handle = (await this.verifyActiveName()) ? this.handle : undefined;
     if (!handle) {
       discard(this.current === 'disabled' ? 'disabled' : 'fault');
-      return;
+      return undefined;
     }
     const position = this.activeSize;
     let bytesWritten = 0;
@@ -444,7 +474,7 @@ export class GatewayLogWriter {
       path: this.activePath,
       position,
       bytes: length,
-      records: batch.length,
+      records,
       bytesWritten,
       result: complete ? 'complete' : code === undefined ? 'partial' : 'failed',
       ...(code === undefined ? {} : { code }),
@@ -453,10 +483,10 @@ export class GatewayLogWriter {
       this.activeSize += length;
       this.faults = 0;
       settle(true);
-      return;
+      return undefined;
     }
     discard('fault');
-    if (await this.rollback(handle, position)) this.fault(code ?? 'PARTIAL_WRITE');
+    return { handle, position, code: code ?? 'PARTIAL_WRITE' };
   }
 
   /** Restore the last complete record boundary, or stop writing this target. */

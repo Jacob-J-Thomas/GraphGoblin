@@ -1429,6 +1429,10 @@ async function exited(pid) {
   throw new Error(`Gateway ${pid} did not exit after its drain.`);
 }
 
+/** A reservation or sharing conflict identifies no holder; shutdown guidance is conditional. */
+const destinationInUse =
+  /log folder is in use: another process holds the folder's log reservation or has gateway\.log open, and that process was not identified\. If it is a GraphGoblin gateway, possibly an older version still running, shut it down deliberately; otherwise close the program holding the folder or its log\. Launch again once it is released\./;
+
 /** Stand-in for the predecessor's inherited FILE_APPEND_DATA handle, held by another process. */
 function holdLegacyAppend(path) {
   const holder = spawn(
@@ -1652,10 +1656,9 @@ test(
           const disjoint = await configuration(install, 'disjoint', { StartupTimeoutSeconds: 1 });
           const refused = await launch(disjoint.path);
           assert.equal(refused.code, 1);
-          assert.match(
-            refused.stderr,
-            /log folder is already in use by another GraphGoblin gateway/,
-          );
+          // A live gateway holds the log here, yet the sharing violation alone does not show it.
+          assert.match(refused.stderr, destinationInUse);
+          assert.doesNotMatch(refused.stderr, /by another GraphGoblin gateway/);
           assert.equal(await listening(disjoint.config.Port), false);
           await assert.rejects(lstat(disjoint.config.DataDir), { code: 'ENOENT' });
           assert.deepEqual(await health(primary.config), owner);
@@ -1695,7 +1698,9 @@ test(
             const before = await readFile(gatewayLog);
             const refused = await launch(blocked.path);
             assert.equal(refused.code, 1);
-            assert.match(refused.stderr, /log folder is already in use/);
+            // The holder here is not a gateway; the same neutral guidance applies.
+            assert.match(refused.stderr, destinationInUse);
+            assert.doesNotMatch(refused.stderr, /by another GraphGoblin gateway/);
             assert.equal(await listening(blocked.config.Port), false);
             await assert.rejects(lstat(blocked.config.DataDir), { code: 'ENOENT' });
             assert.deepEqual(await readFile(gatewayLog), before);
