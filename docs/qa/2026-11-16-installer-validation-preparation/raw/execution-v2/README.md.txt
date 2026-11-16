@@ -1,0 +1,9 @@
+# #436 hosted execution preparation, observer correction
+
+Preparation only. The first hosted run recorded 0 of 32 installer cases after a shortcut-setup failure. It nevertheless retained a classic process trace with usable version-4 payloads. The original observer used the wrong XML location for the process GUID and unreliable property-name sorting for ordered event dictionaries. [First-run report](../launcher/436-hosted-baseline-first/README.md)
+
+Seven executable and template payloads in this packet match the original seal byte-for-byte. The changes are limited to `observe.ps1`, this note and the syntax/derivation receipt. The unchanged supervisor, binder, carrier template, admission shape and inventory code retain their original setup, timeouts, build binding and archive rules. The native driver is a separate seal to admit. [Original execution packet and operating conditions](../launcher-436-execution-preparation/README.md)
+
+The observer selects native system-trace records by provider GUID and independently selects the classic Process `ExtendedTracingInfo/EventGuid`. It requires version 4 on opcode 1/2 before using their payload, ignores rundown and other opcodes, and sorts by typed timestamp plus XML ordinal. It reports the actual provider and event-type GUIDs separately. Unsupported start/end schema fails the witness. The existing canary, ancestry, lifetime, validator and command-line checks remain in place. [Exact observer delta and retained-XML replay](../launcher/436-observer-v2-first-offline/README.md)
+
+The replay matched both canaries, the driver plus eight descendant process lifetimes and both bootstrap receipts. It covers only the failed setup interval from the first run. No new trace, driver, installer or hosted execution occurred. An admitted future matrix must supply its own process trace, exact driver seal and both pre/post execution bindings.
