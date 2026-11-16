@@ -84,52 +84,16 @@ jobs:
         shell: pwsh
         env:
           QA436_PHASE: candidate
-          QA436_NAME: qa436-candidate-first
+          QA436_NAME: qa436-candidate-corrected
           QA436_BASE_COMMIT: be633141be5a0cd2b4f960a46761fabbf2cb82c7
           QA436_BASE_TREE: decd1ca26c9bd63d942e939e65e2b2604d7f2652
-          QA436_PRODUCT_COMMIT: 1e303ba8c6c5b576c2ffe185fa67ac7e5734309f
-          QA436_PRODUCT_TREE: fa152a660493208314b02327e319e531bf4b8dd3
+          QA436_PRODUCT_COMMIT: a73b9a887c50f51d4fc4af54aa806fda42e31abf
+          QA436_PRODUCT_TREE: 0bb9182fa29eecaf196436b4e9e8a19605239c60
           QA436_PACKET: docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution
           QA436_DRIVER: docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native
           QA436_PACKET_SHA: e47289e57831e65eb4b39569cc9e5305318a0ec6165e1a7b87f469e57132b177
           QA436_CARRIER_FILES: |-
-            [
-              ".github/workflows/ci.yml",
-              "docs/qa/.gitattributes",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/README.md",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/coherence-readback.json",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/ProcessTrace.cs",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/admission.example.json",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/bind.mjs",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/carrier-steps.example.yml",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/inventory/artifacts.mjs",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/inventory/common.mjs",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/observe.ps1",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/supervise.ps1",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/invoke.ps1",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/run.ps1",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/version-fixture.cs",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/windows.cs",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/verify-coherence.py",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/HOSTED-SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/carrier-steps.example.yml",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/installer-source-observed.ps1.txt",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/rollback-witness.ps1",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/source-observation.json",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/supervise-rollback.ps1",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-candidate-preparation/source-copy-map.json"
-            ]
+            [".github/workflows/ci.yml"]
           QA436_VALIDATOR_ARGUMENT: '--validate-install'
         run: |
           $ErrorActionPreference = 'Stop'
@@ -251,10 +215,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qa436-candidate-first
+          name: qa436-candidate-corrected
           path: |
-            ${{ runner.temp }}/qa436-candidate-first/evidence/
-            ${{ runner.temp }}/qa436-candidate-first-supervisor/
+            ${{ runner.temp }}/qa436-candidate-corrected/evidence/
+            ${{ runner.temp }}/qa436-candidate-corrected-supervisor/
             ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/build-exit.json
             ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/admission.json
           if-no-files-found: error
@@ -265,7 +229,7 @@ jobs:
         env:
           QA436_ROLLBACK_PACKET: docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback
           QA436_ROLLBACK_HOSTED_MANIFEST_SHA: 1b264ce75a482249ca72083926ab0cae977e36e2ea395d32685442105c238e11
-          QA436_ROLLBACK_INSTALLER_SHA: 2f5874d33465f8a614f08c79e2a5433e0980aad6f9674a226daeaf584f06af1b
+          QA436_ROLLBACK_INSTALLER_SHA: c50646bf4324388b934ddea4c04deb1f55f6919b49c867c0b21ece09cf756d99
         run: |
           $ErrorActionPreference = 'Stop'
           $packet = Join-Path $env:GITHUB_WORKSPACE $env:QA436_ROLLBACK_PACKET
@@ -277,7 +241,7 @@ jobs:
         if: ${{ always() && (steps.qa436_rollback.outcome == 'success' || steps.qa436_rollback.outcome == 'failure' || steps.qa436_rollback.outcome == 'cancelled') }}
         uses: actions/upload-artifact@v4
         with:
-          name: qa436-rollback-first
+          name: qa436-rollback-corrected
           path: ${{ runner.temp }}/qa436-rollback-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
           if-no-files-found: warn
           retention-days: 7
