@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { resolve } from 'node:path';
+import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { bundledGoblinDist, bundledWebDist, loadConfig, type ApiConfig } from './config.js';
 import { canonicalPath } from './canonical-path.js';
@@ -46,8 +46,18 @@ export async function launcherStoreState(config: ApiConfig): ReturnType<typeof d
   return database ? databaseLockState(database) : { state: 'free' };
 }
 
+/** Match Node's entry module when the launcher invokes it through a checkout alias. */
+export function isLauncherIdentityEntry(entry: string | undefined, moduleUrl: string): boolean {
+  if (!entry) return false;
+  try {
+    return realpathSync.native(entry) === realpathSync.native(fileURLToPath(moduleUrl));
+  } catch {
+    return false;
+  }
+}
+
 // This read-only helper loads configuration without opening the store or probing providers.
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isLauncherIdentityEntry(process.argv[1], import.meta.url)) {
   try {
     if (!launcherRuntimeSupported(process.versions.node))
       throw new Error('Node 22.22.2 or later is required');

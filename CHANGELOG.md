@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Windows launcher starts or reuses the configured gateway from a checkout path reached
+  through a directory junction or symbolic link (#435).
+
 - Historical context-thread requests stop reading run history when the client disconnects (#419).
   The gateway lets an in-flight read settle without attempting a response.
 

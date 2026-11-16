@@ -1,8 +1,10 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { loadConfig } from './config.js';
 import {
   instanceIdentity,
+  isLauncherIdentityEntry,
   launcherRuntimeSupported,
   launcherStoreState,
 } from './instance-identity.js';
@@ -13,6 +15,17 @@ let testApp: TestApp | undefined;
 afterEach(async () => {
   await testApp?.close();
   vi.restoreAllMocks();
+});
+
+it('recognizes the entry file by absolute or relative path and quietly refuses other entries', () => {
+  const moduleUrl = new URL('./instance-identity.ts', import.meta.url).href;
+  const entry = fileURLToPath(moduleUrl);
+  expect(isLauncherIdentityEntry(entry, moduleUrl)).toBe(true);
+  expect(isLauncherIdentityEntry(relative(process.cwd(), entry), moduleUrl)).toBe(true);
+  expect(isLauncherIdentityEntry(fileURLToPath(import.meta.url), moduleUrl)).toBe(false);
+  expect(isLauncherIdentityEntry(undefined, moduleUrl)).toBe(false);
+  expect(isLauncherIdentityEntry(entry + '.missing', moduleUrl)).toBe(false);
+  expect(isLauncherIdentityEntry(entry, 'not-a-file-url')).toBe(false);
 });
 
 it('checks both the data directory and external database with the shared read-only policy', async () => {
