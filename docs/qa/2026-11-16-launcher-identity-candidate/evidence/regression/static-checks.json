@@ -1,0 +1,38 @@
+{
+  "baseline": "9fa8b2474c7290adb800c5e26be73511095cae25",
+  "branch": "codex/gg-20261116-launcher-identity",
+  "runtime": "v22.23.4",
+  "file": "tooling/scripts/windows-launcher.acceptance.mjs",
+  "fileSha256": "4cac8f617ebe4d96e8b54c4ba0bfe3c5a4647e284480b97f77fe0e847281c4ee",
+  "fileGitBlob": "b170ecd596ace46532dc50c8c9bf64b1344f0e9a",
+  "patchSha256": "f350d7f0dbb08c4912e883b22fef59f755663e56fc17d05396d04f921534a020",
+  "checks": [
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/tooling exec eslint scripts/windows-launcher.acceptance.mjs",
+      "exitCode": 0,
+      "stdout": "v22.23.4"
+    },
+    {
+      "command": "pnpm.cmd exec prettier --check tooling/scripts/windows-launcher.acceptance.mjs",
+      "exitCode": 0,
+      "stdout": "v22.23.4\r\nChecking formatting...\nAll matched files use Prettier code style!"
+    },
+    {
+      "command": "pnpm.cmd exec node --check tooling/scripts/windows-launcher.acceptance.mjs",
+      "exitCode": 0,
+      "stdout": "v22.23.4"
+    },
+    {
+      "command": "git diff --check -- tooling/scripts/windows-launcher.acceptance.mjs",
+      "exitCode": 0,
+      "stdout": "4CAC8F617EBE4D96E8B54C4BA0BFE3C5A4647E284480B97F77FE0E847281C4EE\r\nF350D7F0DBB08C4912E883B22FEF59F755663E56FC17D05396D04F921534A020\r\nb170ecd596ace46532dc50c8c9bf64b1344f0e9a\n tooling/scripts/windows-launcher.acceptance.mjs | 493 ++++++++++++++++++++++--\n 1 file changed, 469 insertions(+), 24 deletions(-)"
+    },
+    {
+      "command": "git apply --check --reverse windows-launcher.acceptance.patch",
+      "exitCode": 0,
+      "stdout": ""
+    }
+  ],
+  "correction": "A preliminary scoped ESLint run flagged two throws from cleanup finally blocks. The frozen file records the original and cleanup failures in order and rethrows the original failure after diagnostic emission.",
+  "limitations": "Static verification only. No native acceptance, build, staging or commit performed by this worker. The independent Windows run and hosted old-source test-only regression remain required."
+}

@@ -1,0 +1,2697 @@
+{
+  "baseline": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\docs\\qa\\2026-11-15-history-disconnect-baseline\\native-harness\\evidence-baseline-first\\summary.json",
+  "candidate": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\docs\\qa\\2026-11-15-history-disconnect-candidate\\native\\evidence-candidate-first\\summary.json",
+  "baselineSha256": "935f6a4abce16e9633f7342fb35d4bc1ca7e73f8b5c1f0c2f9defae1f989ca3c",
+  "candidateSha256": "bb651598360f7b2395d2fa700dd923c68c71270eb2d426841472185a06f71b3b",
+  "closes": [
+    {
+      "name": "closed-before-handler",
+      "stage": "before-handler",
+      "activeAtClose": [],
+      "baselineCallsAfterClose": [
+        "ownership",
+        "initial",
+        "checkpoint",
+        "page-1",
+        "page-2",
+        "page-3",
+        "page-4",
+        "page-5",
+        "page-6"
+      ],
+      "candidateCallsAfterClose": [],
+      "candidateOperations": [],
+      "baselineWritesAfterClose": [
+        "writeHead",
+        "end"
+      ],
+      "baselineSendsAfterClose": [
+        200
+      ],
+      "baselineErrors": [],
+      "responsiveness": null,
+      "candidateTrace": [
+        {
+          "step": 1,
+          "event": "request-start",
+          "inputComplete": false,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 2,
+          "event": "handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 3,
+          "event": "barrier-entered",
+          "stage": "before-handler",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 4,
+          "event": "client-destroy"
+        },
+        {
+          "step": 5,
+          "event": "response-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true,
+          "active": []
+        },
+        {
+          "step": 6,
+          "event": "input-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 7,
+          "event": "barrier-released",
+          "stage": "before-handler",
+          "reason": "transport close observed"
+        },
+        {
+          "step": 8,
+          "event": "product-handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 9,
+          "event": "handler-settled",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        }
+      ]
+    },
+    {
+      "name": "closed-during-owner",
+      "stage": "ownership",
+      "activeAtClose": [
+        "ownership"
+      ],
+      "baselineCallsAfterClose": [
+        "initial",
+        "checkpoint",
+        "page-1",
+        "page-2",
+        "page-3",
+        "page-4",
+        "page-5",
+        "page-6"
+      ],
+      "candidateCallsAfterClose": [],
+      "candidateOperations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        }
+      ],
+      "baselineWritesAfterClose": [
+        "writeHead",
+        "end"
+      ],
+      "baselineSendsAfterClose": [
+        200
+      ],
+      "baselineErrors": [],
+      "responsiveness": null,
+      "candidateTrace": [
+        {
+          "step": 1,
+          "event": "request-start",
+          "inputComplete": false,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 2,
+          "event": "handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 3,
+          "event": "product-handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 4,
+          "event": "operation-entered",
+          "stage": "ownership",
+          "afterClose": false
+        },
+        {
+          "step": 5,
+          "event": "sqlite-returned",
+          "stage": "ownership"
+        },
+        {
+          "step": 6,
+          "event": "barrier-entered",
+          "stage": "ownership",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 7,
+          "event": "client-destroy"
+        },
+        {
+          "step": 8,
+          "event": "response-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true,
+          "active": [
+            "ownership"
+          ]
+        },
+        {
+          "step": 9,
+          "event": "input-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 10,
+          "event": "barrier-released",
+          "stage": "ownership",
+          "reason": "transport close observed"
+        },
+        {
+          "step": 11,
+          "event": "operation-settled",
+          "stage": "ownership"
+        },
+        {
+          "step": 12,
+          "event": "handler-settled",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        }
+      ]
+    },
+    {
+      "name": "closed-during-initial",
+      "stage": "initial",
+      "activeAtClose": [
+        "initial"
+      ],
+      "baselineCallsAfterClose": [
+        "checkpoint",
+        "page-1",
+        "page-2",
+        "page-3",
+        "page-4",
+        "page-5",
+        "page-6"
+      ],
+      "candidateCallsAfterClose": [],
+      "candidateOperations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        }
+      ],
+      "baselineWritesAfterClose": [
+        "writeHead",
+        "end"
+      ],
+      "baselineSendsAfterClose": [
+        200
+      ],
+      "baselineErrors": [],
+      "responsiveness": null,
+      "candidateTrace": [
+        {
+          "step": 1,
+          "event": "request-start",
+          "inputComplete": false,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 2,
+          "event": "handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 3,
+          "event": "product-handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 4,
+          "event": "operation-entered",
+          "stage": "ownership",
+          "afterClose": false
+        },
+        {
+          "step": 5,
+          "event": "sqlite-returned",
+          "stage": "ownership"
+        },
+        {
+          "step": 6,
+          "event": "operation-settled",
+          "stage": "ownership"
+        },
+        {
+          "step": 7,
+          "event": "operation-entered",
+          "stage": "initial",
+          "afterClose": false
+        },
+        {
+          "step": 8,
+          "event": "sqlite-returned",
+          "stage": "initial"
+        },
+        {
+          "step": 9,
+          "event": "barrier-entered",
+          "stage": "initial",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 10,
+          "event": "client-destroy"
+        },
+        {
+          "step": 11,
+          "event": "response-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true,
+          "active": [
+            "initial"
+          ]
+        },
+        {
+          "step": 12,
+          "event": "input-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 13,
+          "event": "barrier-released",
+          "stage": "initial",
+          "reason": "transport close observed"
+        },
+        {
+          "step": 14,
+          "event": "operation-settled",
+          "stage": "initial"
+        },
+        {
+          "step": 15,
+          "event": "handler-settled",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        }
+      ]
+    },
+    {
+      "name": "closed-during-checkpoint",
+      "stage": "checkpoint",
+      "activeAtClose": [
+        "checkpoint"
+      ],
+      "baselineCallsAfterClose": [
+        "boundary",
+        "page-1",
+        "page-2",
+        "page-3",
+        "page-4"
+      ],
+      "candidateCallsAfterClose": [],
+      "candidateOperations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000007",
+            693
+          ],
+          "afterClose": false
+        }
+      ],
+      "baselineWritesAfterClose": [
+        "writeHead",
+        "end"
+      ],
+      "baselineSendsAfterClose": [
+        200
+      ],
+      "baselineErrors": [],
+      "responsiveness": null,
+      "candidateTrace": [
+        {
+          "step": 1,
+          "event": "request-start",
+          "inputComplete": false,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 2,
+          "event": "handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 3,
+          "event": "product-handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 4,
+          "event": "operation-entered",
+          "stage": "ownership",
+          "afterClose": false
+        },
+        {
+          "step": 5,
+          "event": "sqlite-returned",
+          "stage": "ownership"
+        },
+        {
+          "step": 6,
+          "event": "operation-settled",
+          "stage": "ownership"
+        },
+        {
+          "step": 7,
+          "event": "operation-entered",
+          "stage": "initial",
+          "afterClose": false
+        },
+        {
+          "step": 8,
+          "event": "sqlite-returned",
+          "stage": "initial"
+        },
+        {
+          "step": 9,
+          "event": "operation-settled",
+          "stage": "initial"
+        },
+        {
+          "step": 10,
+          "event": "operation-entered",
+          "stage": "checkpoint",
+          "afterClose": false
+        },
+        {
+          "step": 11,
+          "event": "sqlite-returned",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 12,
+          "event": "barrier-entered",
+          "stage": "checkpoint",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 13,
+          "event": "client-destroy"
+        },
+        {
+          "step": 14,
+          "event": "response-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true,
+          "active": [
+            "checkpoint"
+          ]
+        },
+        {
+          "step": 15,
+          "event": "input-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 16,
+          "event": "barrier-released",
+          "stage": "checkpoint",
+          "reason": "transport close observed"
+        },
+        {
+          "step": 17,
+          "event": "operation-settled",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 18,
+          "event": "handler-settled",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        }
+      ]
+    },
+    {
+      "name": "closed-during-boundary",
+      "stage": "boundary",
+      "activeAtClose": [
+        "boundary"
+      ],
+      "baselineCallsAfterClose": [
+        "page-1",
+        "page-2",
+        "page-3",
+        "page-4"
+      ],
+      "candidateCallsAfterClose": [],
+      "candidateOperations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000007",
+            693
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "boundary",
+          "args": [
+            "00000000000000000000000007",
+            190,
+            1
+          ],
+          "afterClose": false,
+          "rows": 1,
+          "last": 191
+        }
+      ],
+      "baselineWritesAfterClose": [
+        "writeHead",
+        "end"
+      ],
+      "baselineSendsAfterClose": [
+        200
+      ],
+      "baselineErrors": [],
+      "responsiveness": null,
+      "candidateTrace": [
+        {
+          "step": 1,
+          "event": "request-start",
+          "inputComplete": false,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 2,
+          "event": "handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 3,
+          "event": "product-handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 4,
+          "event": "operation-entered",
+          "stage": "ownership",
+          "afterClose": false
+        },
+        {
+          "step": 5,
+          "event": "sqlite-returned",
+          "stage": "ownership"
+        },
+        {
+          "step": 6,
+          "event": "operation-settled",
+          "stage": "ownership"
+        },
+        {
+          "step": 7,
+          "event": "operation-entered",
+          "stage": "initial",
+          "afterClose": false
+        },
+        {
+          "step": 8,
+          "event": "sqlite-returned",
+          "stage": "initial"
+        },
+        {
+          "step": 9,
+          "event": "operation-settled",
+          "stage": "initial"
+        },
+        {
+          "step": 10,
+          "event": "operation-entered",
+          "stage": "checkpoint",
+          "afterClose": false
+        },
+        {
+          "step": 11,
+          "event": "sqlite-returned",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 12,
+          "event": "operation-settled",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 13,
+          "event": "operation-entered",
+          "stage": "boundary",
+          "afterClose": false
+        },
+        {
+          "step": 14,
+          "event": "sqlite-returned",
+          "stage": "boundary",
+          "rows": 1,
+          "first": 191,
+          "last": 191
+        },
+        {
+          "step": 15,
+          "event": "barrier-entered",
+          "stage": "boundary",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 16,
+          "event": "client-destroy"
+        },
+        {
+          "step": 17,
+          "event": "response-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true,
+          "active": [
+            "boundary"
+          ]
+        },
+        {
+          "step": 18,
+          "event": "input-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 19,
+          "event": "barrier-released",
+          "stage": "boundary",
+          "reason": "transport close observed"
+        },
+        {
+          "step": 20,
+          "event": "operation-settled",
+          "stage": "boundary"
+        },
+        {
+          "step": 21,
+          "event": "handler-settled",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        }
+      ]
+    },
+    {
+      "name": "closed-during-page",
+      "stage": "page-2",
+      "activeAtClose": [
+        "page-2"
+      ],
+      "baselineCallsAfterClose": [
+        "page-3",
+        "page-4",
+        "page-5",
+        "page-6"
+      ],
+      "candidateCallsAfterClose": [],
+      "candidateOperations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            693
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000005",
+            128,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 256
+        }
+      ],
+      "baselineWritesAfterClose": [
+        "writeHead",
+        "end"
+      ],
+      "baselineSendsAfterClose": [
+        200
+      ],
+      "baselineErrors": [],
+      "responsiveness": {
+        "healthMs": 8.420200000000477,
+        "currentReadMs": 24.84009999999944
+      },
+      "candidateTrace": [
+        {
+          "step": 1,
+          "event": "request-start",
+          "inputComplete": false,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 2,
+          "event": "handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 3,
+          "event": "product-handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 4,
+          "event": "operation-entered",
+          "stage": "ownership",
+          "afterClose": false
+        },
+        {
+          "step": 5,
+          "event": "sqlite-returned",
+          "stage": "ownership"
+        },
+        {
+          "step": 6,
+          "event": "operation-settled",
+          "stage": "ownership"
+        },
+        {
+          "step": 7,
+          "event": "operation-entered",
+          "stage": "initial",
+          "afterClose": false
+        },
+        {
+          "step": 8,
+          "event": "sqlite-returned",
+          "stage": "initial"
+        },
+        {
+          "step": 9,
+          "event": "operation-settled",
+          "stage": "initial"
+        },
+        {
+          "step": 10,
+          "event": "operation-entered",
+          "stage": "checkpoint",
+          "afterClose": false
+        },
+        {
+          "step": 11,
+          "event": "sqlite-returned",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 12,
+          "event": "operation-settled",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 13,
+          "event": "operation-entered",
+          "stage": "page-1",
+          "afterClose": false
+        },
+        {
+          "step": 14,
+          "event": "sqlite-returned",
+          "stage": "page-1",
+          "rows": 128,
+          "first": 1,
+          "last": 128
+        },
+        {
+          "step": 15,
+          "event": "operation-settled",
+          "stage": "page-1"
+        },
+        {
+          "step": 16,
+          "event": "operation-entered",
+          "stage": "page-2",
+          "afterClose": false
+        },
+        {
+          "step": 17,
+          "event": "sqlite-returned",
+          "stage": "page-2",
+          "rows": 128,
+          "first": 129,
+          "last": 256
+        },
+        {
+          "step": 18,
+          "event": "barrier-entered",
+          "stage": "page-2",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 19,
+          "event": "client-destroy"
+        },
+        {
+          "step": 20,
+          "event": "response-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true,
+          "active": [
+            "page-2"
+          ]
+        },
+        {
+          "step": 21,
+          "event": "input-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 22,
+          "event": "barrier-released",
+          "stage": "page-2",
+          "reason": "transport close observed"
+        },
+        {
+          "step": 23,
+          "event": "operation-settled",
+          "stage": "page-2"
+        },
+        {
+          "step": 24,
+          "event": "handler-settled",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        }
+      ]
+    },
+    {
+      "name": "closed-at-yield",
+      "stage": "yield-1",
+      "activeAtClose": [],
+      "baselineCallsAfterClose": [
+        "page-2",
+        "page-3",
+        "page-4",
+        "page-5",
+        "page-6"
+      ],
+      "candidateCallsAfterClose": [],
+      "candidateOperations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            693
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        }
+      ],
+      "baselineWritesAfterClose": [
+        "writeHead",
+        "end"
+      ],
+      "baselineSendsAfterClose": [
+        200
+      ],
+      "baselineErrors": [],
+      "responsiveness": null,
+      "candidateTrace": [
+        {
+          "step": 1,
+          "event": "request-start",
+          "inputComplete": false,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 2,
+          "event": "handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 3,
+          "event": "product-handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 4,
+          "event": "operation-entered",
+          "stage": "ownership",
+          "afterClose": false
+        },
+        {
+          "step": 5,
+          "event": "sqlite-returned",
+          "stage": "ownership"
+        },
+        {
+          "step": 6,
+          "event": "operation-settled",
+          "stage": "ownership"
+        },
+        {
+          "step": 7,
+          "event": "operation-entered",
+          "stage": "initial",
+          "afterClose": false
+        },
+        {
+          "step": 8,
+          "event": "sqlite-returned",
+          "stage": "initial"
+        },
+        {
+          "step": 9,
+          "event": "operation-settled",
+          "stage": "initial"
+        },
+        {
+          "step": 10,
+          "event": "operation-entered",
+          "stage": "checkpoint",
+          "afterClose": false
+        },
+        {
+          "step": 11,
+          "event": "sqlite-returned",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 12,
+          "event": "operation-settled",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 13,
+          "event": "operation-entered",
+          "stage": "page-1",
+          "afterClose": false
+        },
+        {
+          "step": 14,
+          "event": "sqlite-returned",
+          "stage": "page-1",
+          "rows": 128,
+          "first": 1,
+          "last": 128
+        },
+        {
+          "step": 15,
+          "event": "operation-settled",
+          "stage": "page-1"
+        },
+        {
+          "step": 16,
+          "event": "replay-yield-scheduled",
+          "source": "    at historicalThread (file:///C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin/apps/api/dist/run-history.js:63:15)"
+        },
+        {
+          "step": 17,
+          "event": "replay-yield-callback"
+        },
+        {
+          "step": 18,
+          "event": "barrier-entered",
+          "stage": "yield-1",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 19,
+          "event": "client-destroy"
+        },
+        {
+          "step": 20,
+          "event": "response-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true,
+          "active": []
+        },
+        {
+          "step": 21,
+          "event": "input-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 22,
+          "event": "barrier-released",
+          "stage": "yield-1",
+          "reason": "transport close observed"
+        },
+        {
+          "step": 23,
+          "event": "handler-settled",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        }
+      ]
+    },
+    {
+      "name": "closed-page-rejects",
+      "stage": "page-2",
+      "activeAtClose": [
+        "page-2"
+      ],
+      "baselineCallsAfterClose": [],
+      "candidateCallsAfterClose": [],
+      "candidateOperations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            693
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000005",
+            128,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 256,
+          "error": {
+            "name": "Error",
+            "message": "qa419-synthetic-repository-error"
+          }
+        }
+      ],
+      "baselineWritesAfterClose": [
+        "writeHead",
+        "end"
+      ],
+      "baselineSendsAfterClose": [
+        500
+      ],
+      "baselineErrors": [
+        {
+          "name": "Error",
+          "message": "qa419-synthetic-repository-error",
+          "afterClose": true
+        }
+      ],
+      "responsiveness": {
+        "healthMs": 3.1395000000002256,
+        "currentReadMs": 21.79439999999977
+      },
+      "candidateTrace": [
+        {
+          "step": 1,
+          "event": "request-start",
+          "inputComplete": false,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 2,
+          "event": "handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 3,
+          "event": "product-handler-entry",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 4,
+          "event": "operation-entered",
+          "stage": "ownership",
+          "afterClose": false
+        },
+        {
+          "step": 5,
+          "event": "sqlite-returned",
+          "stage": "ownership"
+        },
+        {
+          "step": 6,
+          "event": "operation-settled",
+          "stage": "ownership"
+        },
+        {
+          "step": 7,
+          "event": "operation-entered",
+          "stage": "initial",
+          "afterClose": false
+        },
+        {
+          "step": 8,
+          "event": "sqlite-returned",
+          "stage": "initial"
+        },
+        {
+          "step": 9,
+          "event": "operation-settled",
+          "stage": "initial"
+        },
+        {
+          "step": 10,
+          "event": "operation-entered",
+          "stage": "checkpoint",
+          "afterClose": false
+        },
+        {
+          "step": 11,
+          "event": "sqlite-returned",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 12,
+          "event": "operation-settled",
+          "stage": "checkpoint"
+        },
+        {
+          "step": 13,
+          "event": "operation-entered",
+          "stage": "page-1",
+          "afterClose": false
+        },
+        {
+          "step": 14,
+          "event": "sqlite-returned",
+          "stage": "page-1",
+          "rows": 128,
+          "first": 1,
+          "last": 128
+        },
+        {
+          "step": 15,
+          "event": "operation-settled",
+          "stage": "page-1"
+        },
+        {
+          "step": 16,
+          "event": "operation-entered",
+          "stage": "page-2",
+          "afterClose": false
+        },
+        {
+          "step": 17,
+          "event": "sqlite-returned",
+          "stage": "page-2",
+          "rows": 128,
+          "first": 129,
+          "last": 256
+        },
+        {
+          "step": 18,
+          "event": "barrier-entered",
+          "stage": "page-2",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": false,
+          "responseFinished": false,
+          "responseDestroyed": false,
+          "socketDestroyed": false
+        },
+        {
+          "step": 19,
+          "event": "client-destroy"
+        },
+        {
+          "step": 20,
+          "event": "response-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true,
+          "active": [
+            "page-2"
+          ]
+        },
+        {
+          "step": 21,
+          "event": "input-close",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        },
+        {
+          "step": 22,
+          "event": "barrier-released",
+          "stage": "page-2",
+          "reason": "transport close observed"
+        },
+        {
+          "step": 23,
+          "event": "operation-settled",
+          "stage": "page-2"
+        },
+        {
+          "step": 24,
+          "event": "handler-settled",
+          "inputComplete": true,
+          "inputEnded": false,
+          "inputAborted": true,
+          "responseFinished": false,
+          "responseDestroyed": true,
+          "socketDestroyed": true
+        }
+      ]
+    }
+  ],
+  "positives": [
+    {
+      "name": "historical-seed",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "ff1103568e5521bb4c0bec93ef67ec07e4e3c5d2bf31edfe3c6fcdff9d23f3f9",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            0
+          ],
+          "afterClose": false
+        }
+      ],
+      "bytes": 522
+    },
+    {
+      "name": "historical-first-event",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "ff1103568e5521bb4c0bec93ef67ec07e4e3c5d2bf31edfe3c6fcdff9d23f3f9",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            1
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            1
+          ],
+          "afterClose": false,
+          "rows": 1,
+          "last": 1
+        }
+      ],
+      "bytes": 522
+    },
+    {
+      "name": "historical-two-pages",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "909b4b65ffd3b75609d22fb44b6dd5a373c337efb0e3d653cc6af1213b0c7bc8",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            129
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000005",
+            128,
+            1
+          ],
+          "afterClose": false,
+          "rows": 1,
+          "last": 129
+        }
+      ],
+      "bytes": 752
+    },
+    {
+      "name": "historical-cold",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "aee16423d25b8bd5746789c2a46bfa4d74acfa9dee77da12476c691711627ddd",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            693
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000005",
+            128,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 256
+        },
+        {
+          "stage": "page-3",
+          "args": [
+            "00000000000000000000000005",
+            256,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 384
+        },
+        {
+          "stage": "page-4",
+          "args": [
+            "00000000000000000000000005",
+            384,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 512
+        },
+        {
+          "stage": "page-5",
+          "args": [
+            "00000000000000000000000005",
+            512,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 640
+        },
+        {
+          "stage": "page-6",
+          "args": [
+            "00000000000000000000000005",
+            640,
+            53
+          ],
+          "afterClose": false,
+          "rows": 53,
+          "last": 693
+        }
+      ],
+      "bytes": 754
+    },
+    {
+      "name": "historical-completed-input",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "aee16423d25b8bd5746789c2a46bfa4d74acfa9dee77da12476c691711627ddd",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            693
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000005",
+            128,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 256
+        },
+        {
+          "stage": "page-3",
+          "args": [
+            "00000000000000000000000005",
+            256,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 384
+        },
+        {
+          "stage": "page-4",
+          "args": [
+            "00000000000000000000000005",
+            384,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 512
+        },
+        {
+          "stage": "page-5",
+          "args": [
+            "00000000000000000000000005",
+            512,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 640
+        },
+        {
+          "stage": "page-6",
+          "args": [
+            "00000000000000000000000005",
+            640,
+            53
+          ],
+          "afterClose": false,
+          "rows": 53,
+          "last": 693
+        }
+      ],
+      "bytes": 754
+    },
+    {
+      "name": "historical-checkpoint",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "c883019ea5e1a4b2d332a7b3036312c45c89bf82e0f3d23a44a9b8d24d714f38",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000007",
+            693
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "boundary",
+          "args": [
+            "00000000000000000000000007",
+            190,
+            1
+          ],
+          "afterClose": false,
+          "rows": 1,
+          "last": 191
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000007",
+            191,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 319
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000007",
+            319,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 447
+        },
+        {
+          "stage": "page-3",
+          "args": [
+            "00000000000000000000000007",
+            447,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 575
+        },
+        {
+          "stage": "page-4",
+          "args": [
+            "00000000000000000000000007",
+            575,
+            118
+          ],
+          "afterClose": false,
+          "rows": 118,
+          "last": 693
+        }
+      ],
+      "bytes": 763
+    },
+    {
+      "name": "historical-before-checkpoint",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "50b0a2df7036fa7bba1e72e3bdcf2cb889a02c9c03adb6dbbf343887dbe65599",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000007",
+            190
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000007",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000007",
+            128,
+            62
+          ],
+          "afterClose": false,
+          "rows": 62,
+          "last": 190
+        }
+      ],
+      "bytes": 761
+    },
+    {
+      "name": "historical-past-tail",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "5fe5c70411fc82b6201c07472b2b3cba99113d3689c003c8cfda325041cfabd4",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            743
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000005",
+            128,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 256
+        },
+        {
+          "stage": "page-3",
+          "args": [
+            "00000000000000000000000005",
+            256,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 384
+        },
+        {
+          "stage": "page-4",
+          "args": [
+            "00000000000000000000000005",
+            384,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 512
+        },
+        {
+          "stage": "page-5",
+          "args": [
+            "00000000000000000000000005",
+            512,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 640
+        },
+        {
+          "stage": "page-6",
+          "args": [
+            "00000000000000000000000005",
+            640,
+            103
+          ],
+          "afterClose": false,
+          "rows": 70,
+          "last": 710
+        },
+        {
+          "stage": "page-7",
+          "args": [
+            "00000000000000000000000005",
+            710,
+            33
+          ],
+          "afterClose": false,
+          "rows": 0
+        }
+      ],
+      "bytes": 754
+    },
+    {
+      "name": "historical-before-bad-event",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "c3bb715cec800744ad42c1e3e55c93221aa873188a5113e39c9055ceece147bd",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000009"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000009"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000009",
+            199
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000009",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000009",
+            128,
+            71
+          ],
+          "afterClose": false,
+          "rows": 71,
+          "last": 199
+        }
+      ],
+      "bytes": 767
+    },
+    {
+      "name": "historical-before-bad-checkpoint",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "8b15127013f0e8a762468b579a3259e4d0998c00c115dcb3965d6fd0eb4ca910",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "0000000000000000000000000B"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "0000000000000000000000000B"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "0000000000000000000000000B",
+            190
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "0000000000000000000000000B",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "0000000000000000000000000B",
+            128,
+            62
+          ],
+          "afterClose": false,
+          "rows": 62,
+          "last": 190
+        }
+      ],
+      "bytes": 782
+    },
+    {
+      "name": "current",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "bodySha256": "4bc7839c2abe6f86a00936d16237efe1c3c74d60c088e172b191443ec71b8e6d",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "current",
+          "args": [
+            "00000000000000000000000007"
+          ],
+          "afterClose": false
+        }
+      ],
+      "bytes": 763
+    }
+  ],
+  "negatives": [
+    {
+      "name": "owner-key-missing",
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "operations": [],
+      "bodyEqual": true
+    },
+    {
+      "name": "wrong-scope",
+      "status": 403,
+      "code": "FORBIDDEN",
+      "operations": [],
+      "bodyEqual": true
+    },
+    {
+      "name": "other-owner",
+      "status": 404,
+      "code": "RUN_NOT_FOUND",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        }
+      ],
+      "bodyEqual": true
+    },
+    {
+      "name": "missing-run",
+      "status": 404,
+      "code": "RUN_NOT_FOUND",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000000"
+          ],
+          "afterClose": false
+        }
+      ],
+      "bodyEqual": true
+    },
+    {
+      "name": "negative-query",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "operations": [],
+      "bodyEqual": true
+    },
+    {
+      "name": "unsafe-query",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "operations": [],
+      "bodyEqual": true
+    },
+    {
+      "name": "extra-query",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "operations": [],
+      "bodyEqual": true
+    },
+    {
+      "name": "corrupt-event",
+      "status": 500,
+      "code": "STORED_EVENT_INVALID",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000009"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000009"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000009",
+            200
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000009",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128
+        },
+        {
+          "stage": "page-2",
+          "args": [
+            "00000000000000000000000009",
+            128,
+            72
+          ],
+          "afterClose": false,
+          "error": {
+            "name": "InvalidStoredRunEventError",
+            "code": "HISTORY_UNREADABLE",
+            "message": "Stored run event does not conform: run 00000000000000000000000009, seq 200, type node.finished"
+          }
+        }
+      ],
+      "bodyEqual": true
+    },
+    {
+      "name": "corrupt-checkpoint",
+      "status": 500,
+      "code": "STORED_RUN_INVALID",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "0000000000000000000000000B"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "0000000000000000000000000B"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "0000000000000000000000000B",
+            191
+          ],
+          "afterClose": false,
+          "error": {
+            "name": "UnreadableRunHistoryError",
+            "code": "HISTORY_UNREADABLE",
+            "message": "Stored run 0000000000000000000000000B has malformed JSON in thread_snapshot"
+          }
+        }
+      ],
+      "bodyEqual": true
+    },
+    {
+      "name": "connected-generic-error",
+      "status": 500,
+      "code": "INTERNAL_ERROR",
+      "operations": [
+        {
+          "stage": "ownership",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "initial",
+          "args": [
+            "00000000000000000000000005"
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "checkpoint",
+          "args": [
+            "00000000000000000000000005",
+            129
+          ],
+          "afterClose": false
+        },
+        {
+          "stage": "page-1",
+          "args": [
+            "00000000000000000000000005",
+            0,
+            128
+          ],
+          "afterClose": false,
+          "rows": 128,
+          "last": 128,
+          "error": {
+            "name": "Error",
+            "message": "qa419-synthetic-repository-error"
+          }
+        }
+      ],
+      "bodyEqual": true
+    }
+  ],
+  "listenerSettlements": {
+    "baseline": [
+      "closed-before-handler",
+      "closed-during-owner",
+      "closed-during-initial",
+      "closed-during-checkpoint",
+      "closed-during-boundary",
+      "closed-during-page",
+      "closed-at-yield",
+      "closed-page-rejects",
+      "historical-seed",
+      "historical-first-event",
+      "historical-two-pages",
+      "historical-cold",
+      "historical-completed-input",
+      "historical-checkpoint",
+      "historical-before-checkpoint",
+      "historical-past-tail",
+      "historical-before-bad-event",
+      "historical-before-bad-checkpoint",
+      "current",
+      "other-owner",
+      "missing-run",
+      "corrupt-event",
+      "corrupt-checkpoint",
+      "connected-generic-error"
+    ],
+    "candidate": [
+      "closed-before-handler",
+      "closed-during-owner",
+      "closed-during-initial",
+      "closed-during-checkpoint",
+      "closed-during-boundary",
+      "closed-during-page",
+      "closed-at-yield",
+      "closed-page-rejects",
+      "historical-seed",
+      "historical-first-event",
+      "historical-two-pages",
+      "historical-cold",
+      "historical-completed-input",
+      "historical-checkpoint",
+      "historical-before-checkpoint",
+      "historical-past-tail",
+      "historical-before-bad-event",
+      "historical-before-bad-checkpoint",
+      "current",
+      "other-owner",
+      "missing-run",
+      "corrupt-event",
+      "corrupt-checkpoint",
+      "connected-generic-error"
+    ]
+  },
+  "history": {
+    "baseline": {
+      "cold": {
+        "id": "00000000000000000000000005",
+        "tail": 710,
+        "target": 693,
+        "beforeReadSha256": "700b441e6ac7558d35b14e862f4e8b6a96d5567c4ce6b41ed7ca798c7dc424ab",
+        "afterReadSha256": "700b441e6ac7558d35b14e862f4e8b6a96d5567c4ce6b41ed7ca798c7dc424ab"
+      },
+      "checked": {
+        "id": "00000000000000000000000007",
+        "tail": 710,
+        "target": 693,
+        "checkpoint": 191,
+        "beforeReadSha256": "b18d3673fd700c1deace5e35e7841392d45f8731e160d4a4b5b918921e930af3",
+        "afterReadSha256": "b18d3673fd700c1deace5e35e7841392d45f8731e160d4a4b5b918921e930af3"
+      },
+      "bad-event": {
+        "id": "00000000000000000000000009",
+        "tail": 710,
+        "target": 693,
+        "damagedEvent": 200,
+        "beforeReadSha256": "a96f0955992cc8fd2b8e3baae232603859cb095a7475bf67b689a9b828106b52",
+        "afterReadSha256": "a96f0955992cc8fd2b8e3baae232603859cb095a7475bf67b689a9b828106b52"
+      },
+      "bad-checkpoint": {
+        "id": "0000000000000000000000000B",
+        "tail": 710,
+        "target": 693,
+        "checkpoint": 191,
+        "beforeReadSha256": "8cfc476b56c1b8cdfcc0ddbf112968c6d0c5cd6bb9096647bc338ed30fcab50a",
+        "afterReadSha256": "8cfc476b56c1b8cdfcc0ddbf112968c6d0c5cd6bb9096647bc338ed30fcab50a"
+      }
+    },
+    "candidate": {
+      "cold": {
+        "id": "00000000000000000000000005",
+        "tail": 710,
+        "target": 693,
+        "beforeReadSha256": "1c99509aa885419db1d1377b856aeca5e5d965a6a84359f715f585254d286ea0",
+        "afterReadSha256": "1c99509aa885419db1d1377b856aeca5e5d965a6a84359f715f585254d286ea0"
+      },
+      "checked": {
+        "id": "00000000000000000000000007",
+        "tail": 710,
+        "target": 693,
+        "checkpoint": 191,
+        "beforeReadSha256": "017fc2634ec25116bee2833c210473ba1d9564bd61b04f08bf0dbf0bb661af2e",
+        "afterReadSha256": "017fc2634ec25116bee2833c210473ba1d9564bd61b04f08bf0dbf0bb661af2e"
+      },
+      "bad-event": {
+        "id": "00000000000000000000000009",
+        "tail": 710,
+        "target": 693,
+        "damagedEvent": 200,
+        "beforeReadSha256": "04ff220edbe09edd1a31112070f0ef11a70b026abb06e5a9513f7a670a5554c7",
+        "afterReadSha256": "04ff220edbe09edd1a31112070f0ef11a70b026abb06e5a9513f7a670a5554c7"
+      },
+      "bad-checkpoint": {
+        "id": "0000000000000000000000000B",
+        "tail": 710,
+        "target": 693,
+        "checkpoint": 191,
+        "beforeReadSha256": "c06149ae445aaff66e79438e49c1818ee17f03a25dfca8bbb885e6566718b527",
+        "afterReadSha256": "c06149ae445aaff66e79438e49c1818ee17f03a25dfca8bbb885e6566718b527"
+      }
+    }
+  },
+  "cleanup": {
+    "baseline": {
+      "fastify": "closed",
+      "container": "closed",
+      "sockets": {
+        "clients": 0,
+        "server": 0
+      },
+      "remainingListener": null,
+      "collectionPasses": 2,
+      "files": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-419-native-preparation\\evidence-baseline-first\\store\\graphgoblin.db"
+      ],
+      "probe": {
+        "pid": 32380,
+        "requestedAt": "2026-11-15T22:28:17.883Z",
+        "executable": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "stdout": "qa-exclusive-open-ok 1\r\n",
+        "stderr": "",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "close": {
+          "code": 0,
+          "signal": null
+        }
+      },
+      "empty": true,
+      "remainingStoreFiles": []
+    },
+    "candidate": {
+      "fastify": "closed",
+      "container": "closed",
+      "sockets": {
+        "clients": 0,
+        "server": 0
+      },
+      "remainingListener": null,
+      "collectionPasses": 2,
+      "files": [
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\runtime-419-native-preparation\\evidence-candidate-first\\store\\graphgoblin.db"
+      ],
+      "probe": {
+        "pid": 45292,
+        "requestedAt": "2026-11-15T23:00:00.441Z",
+        "executable": "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "stdout": "qa-exclusive-open-ok 1\r\n",
+        "stderr": "",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "close": {
+          "code": 0,
+          "signal": null
+        }
+      },
+      "empty": true,
+      "remainingStoreFiles": []
+    }
+  },
+  "bindings": {
+    "baseline": {
+      "api": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\index.js",
+        "sha256": "41684ed0183c4ce5ae20df59edb0bb896fb28d06a19a433ca0c5b91384048e96"
+      },
+      "routes": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\routes\\runs.js",
+        "sha256": "88f6821e82010a34427a603087d512a8dc4ebad6cfec555f73237282ff8089f3"
+      },
+      "history": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\run-history.js",
+        "sha256": "f9001ee5edfda60bcbb234467c7de09186160c6c4823f22463566780618a590d"
+      },
+      "auth": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\plugins\\auth.js",
+        "sha256": "493926800a0d85e9fc01cbd19113e04efaddb553c746742e5c6aadcd10631bde"
+      },
+      "errors": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\plugins\\errors.js",
+        "sha256": "c71b106d47cc5044d69c806f23787cb30690bc0d22d562e5091c0c5d0d091826"
+      },
+      "system": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\routes\\system.js",
+        "sha256": "b939b758ad8f1e9b4244aac501d08bdb8cbbefaeaabc6bdcd02ecf7a281a3aa6"
+      },
+      "contracts": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\packages\\contracts\\dist\\index.js",
+        "sha256": "44f007fa330d7784105483e06682d768b048ffe2c24e80a3ddedb58ca47cfa41"
+      },
+      "domain": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\packages\\domain\\dist\\index.js",
+        "sha256": "fb068a2dc0d3789e8fce6568f3971f974f32af786949bf234bdacba7f120c402"
+      },
+      "testing": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\packages\\engine\\dist\\testing\\index.js",
+        "sha256": "ae1db8d940947acc168875cc375d52172bdbe7dba2e19d1ff764298a270cad34"
+      },
+      "fastify": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\node_modules\\.pnpm\\fastify@5.12.5\\node_modules\\fastify\\fastify.js",
+        "sha256": "31a0ebd3ee5fd9f525ccb37c312e3b94757cf53bfa481f41ee364ce75d83c0ae"
+      },
+      "zodProvider": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\node_modules\\.pnpm\\fastify-type-provider-zod@7_a80668e04107eddad70193c52f24cb4c\\node_modules\\fastify-type-provider-zod\\dist\\esm\\index.js",
+        "sha256": "b37071699218398d80013fbaaf1f5f3265b1205c1cb7582a6e8a9146a1da7b64"
+      }
+    },
+    "candidate": {
+      "api": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\index.js",
+        "sha256": "41684ed0183c4ce5ae20df59edb0bb896fb28d06a19a433ca0c5b91384048e96"
+      },
+      "routes": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\routes\\runs.js",
+        "sha256": "8738a554fe8a47bbb85ca59a87efc6a75314996ae5680908c2865285609c7027"
+      },
+      "history": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\run-history.js",
+        "sha256": "c67fa37db60964092c9b72bb6163b4fce39819b94cc4bc6ad44fd5be8ced7bd1"
+      },
+      "auth": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\plugins\\auth.js",
+        "sha256": "493926800a0d85e9fc01cbd19113e04efaddb553c746742e5c6aadcd10631bde"
+      },
+      "errors": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\plugins\\errors.js",
+        "sha256": "c71b106d47cc5044d69c806f23787cb30690bc0d22d562e5091c0c5d0d091826"
+      },
+      "system": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\apps\\api\\dist\\routes\\system.js",
+        "sha256": "b939b758ad8f1e9b4244aac501d08bdb8cbbefaeaabc6bdcd02ecf7a281a3aa6"
+      },
+      "contracts": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\packages\\contracts\\dist\\index.js",
+        "sha256": "44f007fa330d7784105483e06682d768b048ffe2c24e80a3ddedb58ca47cfa41"
+      },
+      "domain": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\packages\\domain\\dist\\index.js",
+        "sha256": "fb068a2dc0d3789e8fce6568f3971f974f32af786949bf234bdacba7f120c402"
+      },
+      "testing": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\packages\\engine\\dist\\testing\\index.js",
+        "sha256": "ae1db8d940947acc168875cc375d52172bdbe7dba2e19d1ff764298a270cad34"
+      },
+      "fastify": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\node_modules\\.pnpm\\fastify@5.12.5\\node_modules\\fastify\\fastify.js",
+        "sha256": "31a0ebd3ee5fd9f525ccb37c312e3b94757cf53bfa481f41ee364ce75d83c0ae"
+      },
+      "zodProvider": {
+        "file": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261115-runtime\\GraphGoblin\\node_modules\\.pnpm\\fastify-type-provider-zod@7_a80668e04107eddad70193c52f24cb4c\\node_modules\\fastify-type-provider-zod\\dist\\esm\\index.js",
+        "sha256": "b37071699218398d80013fbaaf1f5f3265b1205c1cb7582a6e8a9146a1da7b64"
+      }
+    }
+  }
+}

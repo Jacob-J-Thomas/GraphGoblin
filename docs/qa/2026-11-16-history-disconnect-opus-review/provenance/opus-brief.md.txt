@@ -1,0 +1,19 @@
+# #419 opposite-family review — scan 1 preparation
+
+**Preparation only; no review or verdict.** Do not start until root provides a fresh scan-1 admission after full current-head CI is green. It must bind the actual PR, clean checkout, head/tree/target, actual post-#410 base, current tested merge identity, accepted independent baseline and candidate, and unchanged connected-body controls. Missing or changed inputs mean incomplete. The shared maximum is three formal scans; this is scan 1.
+
+You are Claude Opus 5.5 at xhigh, independently reviewing the GPT-6.1 Sol implementation. Read the live [issue #419](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419), `runtime-419-implementation-brief.md`, `runtime-419-post410-preflight.md`, `runtime-419-native-preparation/README.md`, and the root-admitted source diff and evidence. Re-establish Git identity and inspect the complete effective diff. Product, index and GitHub access is read-only. Root owns fixes, publication, integration and heavy test slots.
+
+## Contract to review
+
+An abandoned historical-thread HTTP request stops before starting further repository work or replay pages after outgoing response disconnection is observed. Do not force-interrupt an already pending repository promise. Check lifecycle before history access and after each asynchronous boundary: ownership, initial thread, checkpoint lookup, optional checkpoint boundary read, page completion and inter-page yield. A response already closed before handler entry must not start replay. At most the operation already in flight may settle; no further page/read may begin after close.
+
+Distinguish outgoing response `close` from a normally completed incoming bodyless GET/keep-alive request. Remove lifecycle listeners on every settled success, error and disconnect path. A pending repository rejection after disconnect is silent: no replacement HTTP error, generic 500, or attempted response write. The connected equivalent keeps the existing error policy. Preserve completed status/content type and exact body bytes, auth and run ownership, current-thread behavior, requested sequence bounds, checkpoint selection/boundary, replay state across pages, missing-thread behavior and isolation of malformed later events/checkpoints. Preserve connected failures and corruption semantics; add no truncation, retries, persistence or arbitrary time limit.
+
+## Evidence and boundaries
+
+Review baseline and candidate raw evidence plus the unchanged connected-body controls. The accepted fixture is instrumented production routes composed with Fastify over actual loopback TCP and file SQLite, using explicitly synthetic long histories, fake clock/IDs and request-scoped `AsyncLocalStorage` barriers. Its page-count and close-order observations do not establish ordinary built-gateway or browser behavior. Verify response bytes against the admitted baseline, actual page arguments, remaining in-flight work at close, no later repository call, listener cleanup, disconnected-versus-connected rejection behavior, and unrelated health/current-thread responsiveness. If the candidate changes the `setImmediate` scheduling seam used by the fixture, report that seam mismatch to root; do not treat a bypass as a pass.
+
+Do not reopen inherited #381/#410 scope or the separate #460 hold. Do not touch owner resources or call application providers. No product/native rerun without a concrete unresolved question and root heavy-slot admission; do not repeat green CI suites without cause. Preserve first failures and limitations.
+
+Write the complete report only to the external root-admitted `full-report.md` path, separate from the runner’s provider-final message. Return READY or CHANGES REQUIRED with exact identities, CI/tested merge, inspected diff/evidence, commands, limitations and supported root causes. This brief itself is not a review verdict.

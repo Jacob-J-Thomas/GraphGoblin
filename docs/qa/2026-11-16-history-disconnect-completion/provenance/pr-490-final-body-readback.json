@@ -1,0 +1,47 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Action completed."
+    }
+  ],
+  "structuredContent": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490",
+    "number": 490,
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "draft": true,
+    "body": "Closes #419.\n\nHistorical-thread replay now stops before starting more repository work after the outgoing response disconnects. An already pending operation may settle; a late rejection does not attempt an error response on the closed connection. Normal completed GETs, connected errors, current-thread reads and historical response bytes retain their behavior. The route removes its close listener on every settled path.\n\nIndependent behavior QA reproduced the defect on integrated main and verified the candidate through compiled production routes over real TCP and file SQLite: all eight disconnect cases stop new calls and writes, eleven successful responses match baseline bytes, and ten negative controls preserve their results. Process exits, stream closure and independent PID/listener readbacks establish owned cleanup. The fixture uses synthetic histories and controlled promise gates after SQL returns; it is not ordinary gateway or browser evidence. [Baseline](docs/qa/2026-11-15-history-disconnect-baseline/README.md) · [Candidate QA](docs/qa/2026-11-15-history-disconnect-candidate/README.md)\n\nValidation:\n- The final regression fixture produced seven intended failures and three passing controls on old source; all 22 focused candidate tests passed. Types, lint, formatting and diff checks passed. [Implementation evidence](docs/qa/2026-11-15-history-disconnect-implementation/README.md)\n- [Current-head CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43773546178) passed on tested merge `387322e7f7d2b2f4a48c149aeaea2fc4f3001996`, whose tree equals publication head `497acaa602959bc828e8f1e90f2dce0a576a3492`. The one unchanged Gates-only retry passed all 32 steps, 9,617 tests with 41 skips, and all 13 line/branch coverage floors. Successful companion jobs carried forward: Browser 481 passes/one live-provider skip/zero retries, Windows 14/14 with no native artifact uploaded, and all four template catalogs. Strict routing performance enforcement was off; the configured audit threshold passed with 8 low/13 moderate findings.\n- [Claude Opus 5.5 xhigh scan 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490#issuecomment-6904020571) returned READY. [Fresh GPT-6 Astra max scan 2](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490#issuecomment-6904383049) returned SIGN-OFF at the exact head and target `98692c8a8c7b519e8c83e585e026d595cedc0550`. No blocker remains; two of three formal scans were used.\n\nThe first CI deadline remains in #488; the unexplained local Windows reset-test rename EPERM remains in #489, without a claimed local full-coverage pass. The focused inter-page-yield regression improvement is parked in #491; accepted native evidence covers that boundary. Static pipelining observations and all review qualifications are preserved in the complete reports.\n\nThis PR also archives the already completed #410 CI, reviews and merge record, with no additional product change. The owner instance and separate PR #460 hold remain untouched. This completes the bounded engineering change, not owner acceptance or the broader batch. [Delivery register](docs/delivery/2026-11-13-four-intents-register.md)\n",
+    "title": "Stop historical thread replay when its response disconnects",
+    "base": "main",
+    "base_sha": "98692c8a8c7b519e8c83e585e026d595cedc0550",
+    "head": "codex/gg-20261115-history-disconnect",
+    "head_sha": "497acaa602959bc828e8f1e90f2dce0a576a3492",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": "387322e7f7d2b2f4a48c149aeaea2fc4f3001996",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-15T23:12:31Z",
+    "updated_at": "2026-11-16T00:59:12Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 2,
+    "changed_files": 263,
+    "additions": 264020,
+    "deletions": 6,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/490",
+    "display_title": "Stop historical thread replay when its response disconnects"
+  },
+  "isError": false
+}
