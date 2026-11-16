@@ -1,0 +1,61 @@
+receipt=C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-438-implementation/receipts/033-heavy-api-coverage-2.json exit=0
+[before-receipt] start
+subloop kill landings:
+delay undefined: leaf waiting at restart; recovery restarts top 0, middle 0, leaf 0
+delay 0: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 10: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 30: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 1
+delay 60: leaf succeeded at restart; recovery restarts top 0, middle 0, leaf 0
+delay 100: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 150: leaf succeeded at restart; recovery restarts top 0, middle 1, leaf 0
+delay 250: leaf succeeded at restart; recovery restarts top 1, middle 0, leaf 0
+[before-receipt] ready
+[before-receipt] kill
+{"status":"published","removed":"structuredTimeoutMs","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+[before-receipt] killed
+[pending-before-run] fixture
+[pending-before-run] key
+[pending-before-run] key-created
+[pending-before-run] storage
+[pending-before-run] start
+[pending-before-run] ready
+[pending-before-run] post
+[pending-before-run] kill
+[pending-before-run] killed
+[pending-before-run] storage
+[pending-before-run] start
+{"status":"draft","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","draftVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"draft":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"draft","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+[pending-before-run] ready
+[pending-before-run] kill
+[pending-before-run] killed
+[after-run] fixture
+[after-run] key
+[after-run] key-created
+[after-run] start
+{"status":"published","removed":"runDeadlineSeconds","http":200,"body":{"loop":{"id":"00000000000000000000000001","ownerId":"local","name":"minimal","currentVersionId":"00000000000000000000000002","createdAt":"2026-10-02T12:00:00.000Z","updatedAt":"2026-10-02T12:00:00.000Z"},"current":{"id":"00000000000000000000000002","loopId":"00000000000000000000000001","version":1,"status":"published","definition":{"schemaVersion":4,"name":"minimal","settings":{"workingDirectory":{"kind":"temp"},"defaults":{"byHarness":{}},"maxNodeVisits":10,"runDeadlineSeconds":null,"structuredTimeoutMs":null,"subloopDepthLimit":8},"variables":{},"nodes":[{"id":"start","label":"Start","ui":{"x":0,"y":0},"kind":"trigger","config":{"type":"manual","exposeTo":["ui","api","mcp"]}},{"id":"done","label":"Done","ui":{"x":0,"y":0},"kind":"exit","config":{"outcome":"success","returns":"none","destinations":[{"kind":"caller"}]}}],"edges":[{"id":"e1","from":{"node":"start","port":"out"},"to":{"node":"done","port":"in"}}]},"createdAt":"2026-10-02T12:00:00.000Z","publishedAt":"2026-10-02T12:00:00.000Z"},"draftToken":"f6293e86731eab69"}}
+[after-run] ready
+[after-run] post
+[after-run] kill
+[after-run] killed
+[after-run] storage
+[after-run] start
+[after-run] ready
+[after-run] kill
+[after-run] killed
+Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+
+ Test Files  132 passed | 2 skipped (134)
+      Tests  2062 passed | 16 skipped (2078)
+   Start at  05:00:13
+   Duration  220.11s (tests 84%, import 15%, transform 1%)
+
+ % Coverage report from v8
+
+=============================== Coverage summary ===============================
+Statements   : 94.02% ( 4770/5073 )
+Branches     : 91.01% ( 3365/3697 )
+Functions    : 91.68% ( 849/926 )
+Lines        : 95.42% ( 4362/4571 )
+================================================================================
+# end: 2026-11-16T11:03:54.049Z exit: 0

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  copyFile,
   link,
   lstat,
   mkdir,
@@ -11,6 +12,7 @@ import {
   readdir,
   readlink,
   realpath,
+  stat,
   symlink,
   unlink,
   writeFile,
@@ -164,6 +166,41 @@ function launchNative(exe, path, environment = env) {
     windowsHide: true,
     timeout: 30_000,
   });
+}
+
+const systemTool = (tool) => join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', tool);
+let currentUserSid;
+/**
+ * Managed log roots must be private (#438). A profile or checkout can inherit access for other
+ * local principals, so every fixture that receives logs restricts its own ACL explicitly.
+ */
+async function privateDirectory(path) {
+  await mkdir(path, { recursive: true });
+  currentUserSid ??= /"(S-1-[0-9-]+)"/.exec(
+    (await execute(systemTool('whoami.exe'), ['/user', '/fo', 'csv', '/nh'], { windowsHide: true }))
+      .stdout,
+  )?.[1];
+  assert.ok(currentUserSid, 'The current user SID must be known.');
+  await execute(
+    systemTool('icacls.exe'),
+    [
+      path,
+      '/inheritance:r',
+      '/grant:r',
+      `*${currentUserSid}:(OI)(CI)F`,
+      '*S-1-5-18:(OI)(CI)F',
+      '*S-1-5-32-544:(OI)(CI)F',
+    ],
+    { windowsHide: true },
+  );
+  return path;
+}
+
+function logRecords(contents) {
+  return contents
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
 }
 
 test(
@@ -403,6 +440,35 @@ test(
       );
     }
     await refuses({ NoShortcuts: true, Environment: { GG_PORT: '9999' } }, /reserved GG_\*/i);
+    await refuses(
+      { NoShortcuts: true, Environment: { GG_Windows_Launcher_Log_Dir: base } },
+      /reserved GG_\*/i,
+    );
+    // Both the installer and its staged native validator require the current guarded build.
+    const staleRepo = join(base, 'stale repo');
+    for (const [file, contents] of [
+      ['apps/api/dist/main.js', 'export const legacyEntry = true;\n'],
+      ['apps/api/dist/instance-identity.js', '// stale helper\n'],
+      ['apps/web/dist/index.html', '<html></html>'],
+    ]) {
+      await mkdir(dirname(join(staleRepo, file)), { recursive: true });
+      await writeFile(join(staleRepo, file), contents);
+    }
+    await mkdir(join(staleRepo, 'apps/windows-launcher'), { recursive: true });
+    await copyFile(
+      join(root, 'apps/windows-launcher/Launcher.cs'),
+      join(staleRepo, 'apps/windows-launcher/Launcher.cs'),
+    );
+    await refuses(
+      { RepoPath: staleRepo },
+      /Build the checkout first: missing apps\/api\/dist\/windows-log\/guard\.js/,
+    );
+    await mkdir(join(staleRepo, 'apps/api/dist/windows-log'));
+    await copyFile(
+      join(root, 'apps/api/dist/windows-log/guard.js'),
+      join(staleRepo, 'apps/api/dist/windows-log/guard.js'),
+    );
+    await refuses({ RepoPath: staleRepo }, /staged launcher configuration was refused/);
     await refuses({ DesktopShortcut: alias }, /distinct files and paths/i);
     await refuses(
       { NodePath: join(base, 'GG_INSTALLER_PRIVATE_PATH_CANARY', 'node.exe') },
@@ -418,7 +484,7 @@ test(
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-'));
     const install = join(base, 'launcher space-α');
-    await mkdir(install);
+    await privateDirectory(install);
     const exe = join(install, 'GraphGoblin.exe');
     const compiler = join(process.env.WINDIR, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe');
     await compileLauncher(compiler, exe);
@@ -443,7 +509,9 @@ test(
     await t.test(
       'concurrent cold starts create one gateway and later clicks reuse its PID',
       async () => {
-        await Promise.all(Array.from({ length: 4 }, () => launch(first.path)));
+        const clicks = await Promise.all(Array.from({ length: 4 }, () => launch(first.path)));
+        // Successful clicks are quiet; the gateway's own stdio is NUL, never a caller pipe.
+        for (const click of clicks) assert.deepEqual([click.stdout, click.stderr], ['', '']);
         const before = await health(first.config);
         assert.match(before.identity, /^[a-f0-9]{64}$/);
         assert.equal(
@@ -455,10 +523,18 @@ test(
         await launch(first.path);
         assert.deepEqual(await health(first.config), before);
         process.kill(Number(before.pid), 0); // launchers have exited; gateway and its log remain independent.
-        assert.match(
-          await readFile(join(install, 'gateway.log'), 'utf8'),
-          /GraphGoblin API listening/,
+        const records = logRecords(await readFile(join(install, 'gateway.log'), 'utf8'));
+        assert.ok(
+          records.some(
+            (record) =>
+              record.msg === 'GraphGoblin API listening' && String(record.pid) === before.pid,
+          ),
         );
+        // Managed access records carry method, route template and status only.
+        for (const record of records.filter((entry) => entry.req || entry.res))
+          for (const key of Object.keys(record.req ?? record.res))
+            assert.ok(['method', 'route', 'statusCode'].includes(key), `access field ${key}`);
+        await assert.rejects(lstat(join(install, 'launcher.log')), { code: 'ENOENT' });
       },
     );
     try {
@@ -1024,7 +1100,7 @@ function sameFile(current, original) {
 }
 
 async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
-  const fixture = await mkdtemp(join(sandbox, `${kind}-`));
+  const fixture = await privateDirectory(await mkdtemp(join(sandbox, `${kind}-`)));
   const alias = join(fixture, 'checkout alias-α');
   const evidence = {
     evidence: 'windows-launcher-checkout-alias',
@@ -1328,5 +1404,352 @@ test(
         );
       }
     }
+  },
+);
+
+/** Complete LF records totalling exactly `bytes`. */
+function completeLines(bytes) {
+  const buffer = Buffer.alloc(bytes, 0x73);
+  for (let index = 99; index < bytes; index += 100) buffer[index] = 0x0a;
+  buffer[bytes - 1] = 0x0a;
+  return buffer;
+}
+
+/** A stopped gateway keeps its log until exit; observe that exact PID disappear. */
+async function exited(pid) {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    try {
+      process.kill(Number(pid), 0);
+    } catch (error) {
+      if (error.code === 'ESRCH') return;
+      throw error;
+    }
+    await sleep(50);
+  }
+  throw new Error(`Gateway ${pid} did not exit after its drain.`);
+}
+
+/** Stand-in for the predecessor's inherited FILE_APPEND_DATA handle, held by another process. */
+function holdLegacyAppend(path) {
+  const holder = spawn(
+    systemTool('WindowsPowerShell/v1.0/powershell.exe'),
+    [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      "$f = New-Object IO.FileStream($env:GG_TEST_HELD, [IO.FileMode]::Append, [Security.AccessControl.FileSystemRights]::AppendData, [IO.FileShare]::ReadWrite, 4096, [IO.FileOptions]::None); [Console]::Out.WriteLine('held'); [void][Console]::In.ReadToEnd(); $f.Dispose()",
+    ],
+    { env: { ...env, GG_TEST_HELD: path }, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] },
+  );
+  const closed = new Promise((resolve) => holder.once('close', resolve));
+  const ready = new Promise((resolve, reject) => {
+    holder.stdout.on('data', (chunk) => {
+      if (String(chunk).includes('held')) resolve();
+    });
+    holder.once('exit', (code) => reject(new Error(`Legacy append holder exited ${code}`)));
+  });
+  return {
+    ready,
+    async release() {
+      holder.stdin.end();
+      await closed;
+    },
+  };
+}
+
+test(
+  'bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names',
+  { skip: process.platform !== 'win32', timeout: 300_000 },
+  async (t) => {
+    await mkdir(join(root, '.tmp'), { recursive: true });
+    const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-logs-'));
+    const install = await privateDirectory(join(base, 'install α'));
+    const canonicalInstall = await realpath(install);
+    // Gateway and launcher inherit an isolated TEMP: a no-write witness for managed log names.
+    const isolatedTemp = join(base, 'isolated temp');
+    await mkdir(isolatedTemp);
+    const environment = { ...env, TEMP: isolatedTemp, TMP: isolatedTemp };
+    const exe = join(install, 'GraphGoblin.exe');
+    const compiler = join(process.env.WINDIR, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe');
+    await compileLauncher(compiler, exe);
+    const launch = (path) =>
+      launchNative(exe, path, environment).then(
+        (result) => ({ code: 0, ...result }),
+        (error) => error,
+      );
+    // The file shares a 20-port pool. Configurations that are refused before any gateway binds
+    // share one port, and each case asserts that nothing ever listens on it.
+    const refusalPort = await freePort();
+    async function configuration(directory, name, overrides = {}) {
+      const config = {
+        Repo: root,
+        Node: process.execPath,
+        DataDir: join(base, `${name}-store`),
+        Port: overrides.Port ?? refusalPort,
+        Environment: { GG_LOG_LEVEL: 'info', GG_OLLAMA_ENABLED: 'false' },
+        StartupTimeoutSeconds: 15,
+        WindowTimeoutSeconds: 2,
+        ...overrides,
+      };
+      const path = join(directory, `${name}.json`);
+      await writeFile(path, JSON.stringify(config));
+      return { config, path };
+    }
+    const gatewayLog = join(install, 'gateway.log');
+    const launcherRecords = async () =>
+      logRecords(await readFile(join(install, 'launcher.log'), 'utf8'));
+    const live = [];
+
+    await t.test('native closed outcomes, launcher pair bounds and NUL stdio checks', async () => {
+      const checks = join(install, 'NativeChecks.exe');
+      await execute(
+        compiler,
+        [
+          '/nologo',
+          '/target:exe',
+          '/platform:x64',
+          '/main:NativeChecks',
+          '/reference:System.Windows.Forms.dll',
+          '/reference:System.Web.Extensions.dll',
+          `/out:${checks}`,
+          join(root, 'apps/windows-launcher/Launcher.cs'),
+          join(root, 'apps/windows-launcher/NativeChecks.cs'),
+        ],
+        { windowsHide: true },
+      );
+      const work = join(base, 'native checks');
+      await mkdir(work);
+      const result = await execute(checks, ['--bounded-log-checks', work, process.execPath], {
+        env: environment,
+        windowsHide: true,
+        timeout: 60_000,
+      });
+      assert.match(result.stdout, /bounded log, closed outcome and NUL stdio checks passed/);
+    });
+
+    await t.test(
+      'a stale built entry beside the current guard module refuses before spawn',
+      async () => {
+        const stale = join(base, 'stale checkout');
+        for (const [file, contents] of [
+          ['apps/api/dist/main.js', 'export const legacyEntry = true;\n'],
+          ['apps/api/dist/instance-identity.js', '// stale helper\n'],
+          ['apps/web/dist/index.html', '<html></html>'],
+        ]) {
+          await mkdir(dirname(join(stale, file)), { recursive: true });
+          await writeFile(join(stale, file), contents);
+        }
+        const guard = join(stale, 'apps/api/dist/windows-log/guard.js');
+        await mkdir(dirname(guard), { recursive: true });
+        await copyFile(join(root, 'apps/api/dist/windows-log/guard.js'), guard);
+        const staleConfig = await configuration(install, 'stale', { Repo: stale });
+        const refused = await launch(staleConfig.path);
+        assert.equal(refused.code, 1);
+        assert.equal(refused.stdout, '');
+        assert.match(refused.stderr, /built gateway does not match this launcher/);
+        await unlink(guard);
+        const missing = await launch(staleConfig.path);
+        assert.equal(missing.code, 1);
+        assert.match(missing.stderr, /not built: apps\/api\/dist\/windows-log\/guard\.js/);
+        assert.equal(await listening(staleConfig.config.Port), false);
+        await assert.rejects(lstat(gatewayLog), { code: 'ENOENT' });
+        await assert.rejects(lstat(staleConfig.config.DataDir), { code: 'ENOENT' });
+        const records = await launcherRecords();
+        assert.deepEqual(
+          records.map((record) => [record.stage, record.code]),
+          [
+            ['configuration', 'configuration-refused'],
+            ['configuration', 'configuration-refused'],
+          ],
+        );
+      },
+    );
+
+    await t.test(
+      'an application startup failure reports its written closed diagnostic (74)',
+      async () => {
+        const corrupt = join(base, 'corrupt.db');
+        await writeFile(corrupt, 'GG_PRIVATE_DB_CANARY deliberately not SQLite');
+        const failing = await configuration(install, 'startup-failure', {
+          Environment: {
+            GG_LOG_LEVEL: 'info',
+            GG_OLLAMA_ENABLED: 'false',
+            GG_DB_URL: 'file:' + corrupt.replaceAll('\\', '/'),
+          },
+          StartupTimeoutSeconds: 60,
+        });
+        const refused = await launch(failing.path);
+        assert.equal(refused.code, 1);
+        assert.match(
+          refused.stderr,
+          /failed during startup\. A startup diagnostic naming the failed stage was written/,
+        );
+        assert.ok(refused.stderr.includes(`Log folder: ${canonicalInstall}`));
+        assert.doesNotMatch(refused.stderr, /CANARY|SQLITE|not a database/i);
+        const last = logRecords(await readFile(gatewayLog, 'utf8')).at(-1);
+        assert.deepEqual(Object.keys(last).sort(), [
+          'cause',
+          'detail',
+          'guidance',
+          'level',
+          'msg',
+          'pid',
+          'stage',
+          'time',
+        ]);
+        assert.deepEqual(
+          [last.msg, last.stage, last.cause],
+          ['GraphGoblin startup failed', 'store', 'store-unavailable'],
+        );
+        const recorded = (await launcherRecords()).at(-1);
+        assert.deepEqual([recorded.code, recorded.childExit], ['startup-failed-logged', 74]);
+        assert.equal(await listening(failing.config.Port), false);
+        await assert.rejects(lstat(join(failing.config.DataDir, 'graphgoblin.lock')), {
+          code: 'ENOENT',
+        });
+      },
+    );
+
+    const primary = await configuration(install, 'primary', { Port: await freePort() });
+    try {
+      await t.test(
+        'one writer per physical root refuses a junction contender and a disjoint store and port',
+        async () => {
+          const started = await launch(primary.path);
+          assert.deepEqual([started.code, started.stdout, started.stderr], [0, '', '']);
+          live.push(primary.config);
+          const owner = await health(primary.config);
+          const logBefore = await stat(gatewayLog, { bigint: true });
+          const alias = join(base, 'log root junction');
+          await symlink(install, alias, 'junction');
+          const contenderStore = join(base, 'contender-store');
+          await mkdir(contenderStore);
+          // The contender exits before binding; it shares the never-bound refusal port.
+          const contenderPort = refusalPort;
+          const contender = await execute(process.execPath, [join(root, 'apps/api/dist/main.js')], {
+            cwd: root,
+            env: {
+              ...environment,
+              GG_WINDOWS_LAUNCHER_LOG_DIR: alias,
+              GG_DATA_DIR: contenderStore,
+              GG_HOST: '127.0.0.1',
+              GG_PORT: String(contenderPort),
+              GG_WEB_DIST: join(root, 'apps/web/dist'),
+              GG_OLLAMA_ENABLED: 'false',
+            },
+            windowsHide: true,
+            timeout: 30_000,
+          }).then(
+            (result) => ({ code: 0, ...result }),
+            (error) => error,
+          );
+          assert.deepEqual([contender.code, contender.stdout, contender.stderr], [70, '', '']);
+          assert.deepEqual(await readdir(contenderStore), []);
+          assert.equal(await listening(contenderPort), false);
+          assert.deepEqual(await health(primary.config), owner);
+          assert.equal((await stat(gatewayLog, { bigint: true })).ino, logBefore.ino);
+
+          const disjoint = await configuration(install, 'disjoint', { StartupTimeoutSeconds: 1 });
+          const refused = await launch(disjoint.path);
+          assert.equal(refused.code, 1);
+          assert.match(
+            refused.stderr,
+            /log folder is already in use by another GraphGoblin gateway/,
+          );
+          assert.equal(await listening(disjoint.config.Port), false);
+          await assert.rejects(lstat(disjoint.config.DataDir), { code: 'ENOENT' });
+          assert.deepEqual(await health(primary.config), owner);
+          assert.equal((await stat(gatewayLog, { bigint: true })).ino, logBefore.ino);
+          const refusal = (await launcherRecords()).at(-1);
+          assert.deepEqual([refusal.code, refusal.childExit], ['destination-in-use', undefined]);
+
+          const otherDirectory = await privateDirectory(join(base, 'other config'));
+          const warm = await configuration(otherDirectory, 'warm', { ...primary.config });
+          const reused = await launch(warm.path);
+          assert.deepEqual([reused.code, reused.stdout, reused.stderr], [0, '', '']);
+          assert.deepEqual(await health(primary.config), owner);
+          await assert.rejects(lstat(join(otherDirectory, 'gateway.log')), { code: 'ENOENT' });
+          await unlink(alias);
+        },
+      );
+
+      await t.test(
+        'deliberate stop, legacy append writer refusal and oversized history replacement',
+        async () => {
+          const first = await health(primary.config);
+          await stop(primary.config);
+          // The stopped gateway keeps its log until process exit; an immediate click waits.
+          const relaunched = await launch(primary.path);
+          assert.deepEqual([relaunched.code, relaunched.stderr], [0, '']);
+          const second = await health(primary.config);
+          assert.notEqual(second.pid, first.pid);
+          await stop(primary.config);
+          await exited(second.pid);
+
+          const blocked = await configuration(install, 'legacy-blocked', {
+            StartupTimeoutSeconds: 1,
+          });
+          const holder = holdLegacyAppend(gatewayLog);
+          try {
+            await holder.ready;
+            const before = await readFile(gatewayLog);
+            const refused = await launch(blocked.path);
+            assert.equal(refused.code, 1);
+            assert.match(refused.stderr, /log folder is already in use/);
+            assert.equal(await listening(blocked.config.Port), false);
+            await assert.rejects(lstat(blocked.config.DataDir), { code: 'ENOENT' });
+            assert.deepEqual(await readFile(gatewayLog), before);
+          } finally {
+            await holder.release();
+          }
+
+          await writeFile(gatewayLog, completeLines(4 * 1024 * 1024 + 100));
+          const replaced = await launch(primary.path);
+          assert.deepEqual([replaced.code, replaced.stderr], [0, '']);
+          const third = await health(primary.config);
+          const bytes = await readFile(gatewayLog);
+          assert.ok(bytes.length < 64 * 1024, 'Oversized stopped-writer history must be replaced.');
+          const records = logRecords(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+          assert.ok(records.some((record) => String(record.pid) === third.pid));
+          await stop(primary.config);
+          await exited(third.pid);
+        },
+      );
+    } finally {
+      for (const config of live) await stop(config);
+    }
+
+    await t.test('unsafe managed names are refused and their targets preserved', async () => {
+      const target = join(base, 'protected target.log');
+      await writeFile(target, 'protected bytes');
+      const previous = join(install, 'gateway.log.1');
+      await unlink(previous).catch(() => undefined);
+      await link(target, previous);
+      const unsafe = await configuration(install, 'unsafe', { StartupTimeoutSeconds: 1 });
+      const before = await readFile(gatewayLog);
+      const refused = await launch(unsafe.path);
+      assert.equal(refused.code, 1);
+      assert.match(refused.stderr, /log folder is unsafe or unavailable/);
+      assert.equal(await readFile(target, 'utf8'), 'protected bytes');
+      assert.equal((await stat(target)).nlink, 2);
+      assert.deepEqual(await readFile(gatewayLog), before);
+      assert.equal(await listening(unsafe.config.Port), false);
+      await unlink(previous);
+    });
+
+    // Fixed inventory and bounds; no managed TEMP, staging or spill names anywhere.
+    assert.deepEqual(
+      (await readdir(isolatedTemp)).filter((name) => /(gateway|launcher)\.log/i.test(name)),
+      [],
+    );
+    const managed = (await readdir(install)).filter((name) => /\.log/i.test(name));
+    for (const name of managed)
+      assert.ok(
+        ['gateway.log', 'gateway.log.1', 'launcher.log', 'launcher.log.1'].includes(name),
+        `Unexpected managed log name ${name}`,
+      );
+    assert.ok((await stat(gatewayLog)).size <= 4 * 1024 * 1024);
+    assert.ok((await stat(join(install, 'launcher.log'))).size <= 256 * 1024);
+    console.log(JSON.stringify({ evidence: 'windows-launcher-bounded-logs', artifacts: base }));
   },
 );

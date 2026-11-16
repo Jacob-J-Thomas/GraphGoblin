@@ -1,3 +1,4 @@
+import type { FastifyBaseLogger } from 'fastify';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -49,6 +50,11 @@ export interface TestAppOptions {
   env?: Record<string, string>;
   /** Exercise real catalog/secret resolution and HTTP transport, retaining fake Codex. */
   realClassifiers?: boolean;
+  /**
+   * A real server logger for both the container and HTTP, as `serve()` composes them. The
+   * returned capturing `logger` then records nothing.
+   */
+  serverLogger?: FastifyBaseLogger;
 }
 
 /** An API over an in-memory database with fake harness, deciders, and structured completion. */
@@ -80,11 +86,11 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<TestA
     ...(!options.realClassifiers ? { classifiers: new FakeClassifierRegistry(jev) } : {}),
     structured,
     startTimers: false,
-    logger,
+    logger: options.serverLogger ?? logger,
     clock,
   });
   await container.start();
-  const app = await buildApp(container, { logger: false });
+  const app = await buildApp(container, { logger: options.serverLogger ?? false });
   await app.ready();
   container.historyCleanup.afterListen();
   await container.historyCleanup.poll();

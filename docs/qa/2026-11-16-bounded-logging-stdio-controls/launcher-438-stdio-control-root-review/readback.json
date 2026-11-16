@@ -1,0 +1,772 @@
+{
+  "schema": "gg438-stdio-control-independent-readback/v1",
+  "reviewedAt": "2026-11-16T10:38:19.5643780Z",
+  "sourceAttempt": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\attempts\\attempt-1",
+  "rawEvidenceSha256": {
+    "admission.json": "5bd54b294809622d868d6077b74f652929ccc179bb75af2211d1c98977fcaebb",
+    "cleanup.json": "af783cc3f665d6810deb08ef56d1bc11ea1e6f4f77e39f9a1971df942d79275a",
+    "closing-binding.json": "d2f760b86866dab101472e1022c19aac23817c749de0a577c8d867f11ae7dad0",
+    "first-failure.json": "d54b0c467916dabbb0f938eadf11e0f45e82469a2babb7c6c835ca7037c06a55",
+    "opening-binding.json": "d2f760b86866dab101472e1022c19aac23817c749de0a577c8d867f11ae7dad0",
+    "positive-checked-slots.json": "332b6159603ba2c0fa0fef5ec0b8b45af6542dffb6d945fbf946d004f1c0c530",
+    "positive-fixture.json": "4407339be6395f2be01484f8782678614facb38bc77663b035f9c888d56b3a2d",
+    "positive-host-process.json": "b2965387d92a605f8d15df26fda2fdff9565abb71214d226df6426e8f7caa0ab",
+    "positive-host-request.json": "cebd5092ff2b7488e9e57cd111e84971bb238abd73c10def43520d836200f615",
+    "positive-host-spawn.json": "a01a56f689e9d2d76b7b0c4088fc720897d8f37bb50aa62725b3afae896f04f7",
+    "positive-host-stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "positive-host-stdout.raw": "d4c162594b2cf56c1f8f24ac23bb72a51159c4e2b90d88f3e47f5ad47f8a1b3d",
+    "positive-observer-process.json": "b68b51d908a5a7a76038eefae1ff90a3630ff5d07c75c9033c170ed18a5c5005",
+    "positive-observer-request.json": "3b6c14fa6c22dc2a7b113e8c751cf6e0535412ef7248d6e0242ee1c3ce78a034",
+    "positive-observer-spawn.json": "391492dce84dea10cd88897985aa9d2d6c8d931f2a8c5c19cd305982a2610fcb",
+    "positive-observer-stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "positive-observer-stdout.raw": "b2e1d470ad0099bacf88c60749ae7754514cf39081eb771ea9dcce5fb30828cc",
+    "result.json": "f2a4a98a1f3a4d49a8e2a8c7cd1469f4e5558449c7341db408ab586081340d8c",
+    "wrong-birth-observer-process.json": "eb212b2e8961dcfb7ad6b43dbd799b7b3f4125fc89ab4d3b03d34ddbe29962ae",
+    "wrong-birth-observer-request.json": "5037275d0474accab6bb1a60779c304faef79fb27624f1299ff3fadbca2bcbbe",
+    "wrong-birth-observer-spawn.json": "d9c7e7155fde2ea08a8c1e3c2152b78ca4e3c209a610b550a729dfafd0be1d2c",
+    "wrong-birth-observer-stderr.raw": "bcbebacc25d0d209a632cf76d8c6d8bc37d0d68de0c6ae9bf89e1ad7ad3e05e0",
+    "wrong-birth-observer-stdout.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wrong-destination-checked-slots.json": "27b8c3aef5d5cbc17f0524dc48189b3ddadeb6f2121c3c6e60dc06dc7ab4f423",
+    "wrong-destination-fixture.json": "ec85f0f0d3b3fb0a3370489bd2b31a982cc25b78d2451661da0aac679593dfcb",
+    "wrong-destination-host-process.json": "fe13f88637b99c08090485c4af98c80b7119aa202230815b5dae61e06995fec6",
+    "wrong-destination-host-request.json": "58911244e7b205a0efbbe9f6f7f7d1bc31e1dcbf65635f992b565e952a97a270",
+    "wrong-destination-host-spawn.json": "47433f5b79af5105d2623d43a193c732fd0fd7c77bc47411361964b62e87ad71",
+    "wrong-destination-host-stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wrong-destination-host-stdout.raw": "498b3e9f8cde5a09e97e8b2e8b29e895c56333d00221042eb666369549fdf26b",
+    "wrong-destination-observer-process.json": "7a4ae32419471cc1c459ac8fedc9a544991ef32a9c8ae92e2a30cf136fb6e667",
+    "wrong-destination-observer-request.json": "5c6dacc2327937d8b347a8cea6997f0f03228ed8ccc39668b0458e5dad57e359",
+    "wrong-destination-observer-spawn.json": "c67a0a204be36bb8256dcd5e05c47cebc1c2bfdf52b9dc8e0b68e76b42447548",
+    "wrong-destination-observer-stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wrong-destination-observer-stdout.raw": "51f8c7ed2c6ef7ed643f0dfad962f6bfcd764d68613295cb69befc7eca06d77e",
+    "wrong-direction-checked-slots.json": "a6a2be74b23fce77c932c0706158ed16e37646fd4a7fdde9a6bacf99e3cded3d",
+    "wrong-direction-fixture.json": "f1d230ebcf7a8449c04ec890ab08ae3a7026fdd55d8086f54dcc0cb69b98534e",
+    "wrong-direction-host-process.json": "9dcaf0acd65e955c9e5b7a7bbfb30e3c39ed8d9786aa1b39e487ee5684286281",
+    "wrong-direction-host-request.json": "f93c8c516dd73ccce5933ddee0027f58ed423021eecf3ee2fe4061e7e524a14e",
+    "wrong-direction-host-spawn.json": "ff27f3acd9f1fb4dcf094b64f6bf3a71db142ff55ebc857931ed6c0c984931db",
+    "wrong-direction-host-stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wrong-direction-host-stdout.raw": "76fac07da91c48d67b1d387080b2392dc25a1f9b0bbeaf0e881ab487d15be6f4",
+    "wrong-direction-observer-process.json": "487e334c1e3147b8c875a4b639c1f915f55c79b02370ddb8ae359fbb99dec4f4",
+    "wrong-direction-observer-request.json": "3e28ca4540ff9d67c62d1170ab44bafd4014dd0cbdf1f48974d661ce76075ec8",
+    "wrong-direction-observer-spawn.json": "56998086f7e562b0a9fd0a7b5586551ef046210192982a85cfcdd7475af6d199",
+    "wrong-direction-observer-stderr.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wrong-direction-observer-stdout.raw": "798e1aa0f5b68e02559222fb450b626b8f883791d3c7fb5391c0f188845af2e9",
+    "wrong-image-observer-process.json": "34f5709601067092bd699b7fac07fa35b25ca8e3ff97d6532d039964487aa75a",
+    "wrong-image-observer-request.json": "e15ef7435695b3055823c8d677750044a30420a723511d5f00f90e060319eb1b",
+    "wrong-image-observer-spawn.json": "c9fa52590e445f85edc80aee1c6f414ce19c6fdad94d25c80f918633884c64f1",
+    "wrong-image-observer-stderr.raw": "0dbf40cb7a685c91da4523f8888939b2ada2b9b7cef486d46345bb515e22de33",
+    "wrong-image-observer-stdout.raw": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "currentBindings": {
+    "hostRelease": "10.0.26300",
+    "nodeVersion": "v22.23.4",
+    "arch": "x64",
+    "hashes": {
+      "driver": {
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\run.mjs",
+        "sha256": "a14348170b6caa3fdc81ddb2c01267103855a890c29fd2206f83d70ea2e68473"
+      },
+      "fixtureSource": {
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\StdioFixtureHost.cs",
+        "sha256": "9a7e56c96dd9b6e5388250cd6ef93f39f77a152f2b768fc43cd4fb2938620759"
+      },
+      "fixtureExe": {
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\StdioFixtureHost.exe",
+        "sha256": "fbc7e56ca09dde2ec4b1a50852fe4489d7da0c815c78b73774c992d65e2dff73"
+      },
+      "fixtureCompileReceipt": {
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\compile-check.json",
+        "sha256": "45957e31360b01684c4e82c19e15ccb53fc86f6256370a2b4cfeed4fec8ade47"
+      },
+      "observerSource": {
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\ObserveStdio.cs",
+        "sha256": "7a59e693663ea7cd3158c300f7ab8f2bf107620a78ca7658d8503118ef114197"
+      },
+      "observerExe": {
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\ObserveStdio.compile-check.exe",
+        "sha256": "34a4a9aa27fee27e5670d3cd105669eb1662e3960e4b95916b664350b2867a91"
+      },
+      "observerCompileReceipt": {
+        "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\compile-check.json",
+        "sha256": "d2e0ad6a3921befec9bdb44eb8995a1e4775b00d8d268fa81e7c1e4c4a95da88"
+      },
+      "node": {
+        "path": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "sha256": "dccc52de28d8df2ee22d2062424f8c563070d95d8ad70c54c4bf01d590dec14f"
+      },
+      "ntdll": {
+        "path": "C:\\Windows\\System32\\ntdll.dll",
+        "sha256": "a0f81bf5c610c0ff0a550adc020a58446f214790c748057bb575042e972e6a34"
+      },
+      "kernel32": {
+        "path": "C:\\Windows\\System32\\kernel32.dll",
+        "sha256": "970e5e15eed7d53c8b88e06ddc71884c31804f1cb5286abf01fbce39b7f0e29f"
+      },
+      "kernelbase": {
+        "path": "C:\\Windows\\System32\\KernelBase.dll",
+        "sha256": "9eb6768c3020992f8f616f7edfead6254dd6d4c6042d1468d790ec3004cb4bbc"
+      }
+    },
+    "admissionSha": "5bd54b294809622d868d6077b74f652929ccc179bb75af2211d1c98977fcaebb"
+  },
+  "publishedDriverStatus": "incomplete",
+  "firstFailure": {
+    "label": "execution or owned scratch cleanup",
+    "at": "2026-11-16T10:28:06.333Z",
+    "message": "Fixture scratch retained files\n+ actual - expected\n\n+ [\n+   'AppData'\n+ ]\n- []\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Fixture scratch retained files\n+ actual - expected\n\n+ [\n+   'AppData'\n+ ]\n- []\n\n    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-438-stdio-preparation/controls/run.mjs:385:10"
+  },
+  "qualifiedControls": [
+    {
+      "mapping": "positive",
+      "fixture": {
+        "schema": "gg438-stdio-fixture/v1",
+        "outcome": "spawned",
+        "mapping": "positive",
+        "pid": 46028,
+        "birthFileTime": "134392983959770767",
+        "executable": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "arguments": [
+          "-e",
+          "setTimeout(() => {}, 30000)"
+        ],
+        "commandLine": "\"C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe\" -e \"setTimeout(() => {}, 30000)\"",
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\attempts\\attempt-1\\scratch",
+        "startupFlags": "0x00000100",
+        "creationFlags": "0x08080000",
+        "inheritHandles": true,
+        "handleListAttribute": "0x00020002",
+        "inheritedHandleRoles": [
+          "nul-read",
+          "nul-write"
+        ],
+        "nul": {
+          "name": "NUL",
+          "shareMode": "0x00000003",
+          "disposition": "0x00000003",
+          "flags": "0x00000080",
+          "readAccess": "0x80000000",
+          "writeAccess": "0x40000000"
+        },
+        "slots": [
+          "nul-read",
+          "nul-write",
+          "nul-write"
+        ]
+      },
+      "observerPid": 47812,
+      "observation": {
+        "schema": "gg438-stdio-observation/v1",
+        "status": "matched",
+        "pid": 46028,
+        "birthFileTime": "134392983959770767",
+        "image": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "machine": "native-amd64",
+        "localStdHandleOffsets": [
+          32,
+          40,
+          48
+        ],
+        "dosNullCurrentTarget": "\\Device\\Null",
+        "slots": [
+          {
+            "slot": "stdin",
+            "remoteHandle": "0xE4",
+            "objectType": "File",
+            "win32FileType": 2,
+            "objectName": "\\Device\\Null",
+            "nameStatus": "observed",
+            "grantedAccess": "0x00120089",
+            "readData": true,
+            "writeData": false,
+            "matches": true
+          },
+          {
+            "slot": "stdout",
+            "remoteHandle": "0x2BC",
+            "objectType": "File",
+            "win32FileType": 2,
+            "objectName": "\\Device\\Null",
+            "nameStatus": "observed",
+            "grantedAccess": "0x00120196",
+            "readData": false,
+            "writeData": true,
+            "matches": true
+          },
+          {
+            "slot": "stderr",
+            "remoteHandle": "0x2BC",
+            "objectType": "File",
+            "win32FileType": 2,
+            "objectName": "\\Device\\Null",
+            "nameStatus": "observed",
+            "grantedAccess": "0x00120196",
+            "readData": false,
+            "writeData": true,
+            "matches": true
+          }
+        ]
+      }
+    },
+    {
+      "control": "wrong-birth-observer",
+      "observerPid": 31848,
+      "observation": {
+        "schema": "gg438-stdio-observation/v1",
+        "status": "inconclusive",
+        "reason": "Target creation FILETIME mismatch",
+        "win32": null
+      }
+    },
+    {
+      "control": "wrong-image-observer",
+      "observerPid": 20764,
+      "observation": {
+        "schema": "gg438-stdio-observation/v1",
+        "status": "inconclusive",
+        "reason": "Target executable mismatch",
+        "win32": null
+      }
+    },
+    {
+      "mapping": "wrong-direction",
+      "fixture": {
+        "schema": "gg438-stdio-fixture/v1",
+        "outcome": "spawned",
+        "mapping": "wrong-direction",
+        "pid": 19940,
+        "birthFileTime": "134392984261130861",
+        "executable": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "arguments": [
+          "-e",
+          "setTimeout(() => {}, 30000)"
+        ],
+        "commandLine": "\"C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe\" -e \"setTimeout(() => {}, 30000)\"",
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\attempts\\attempt-1\\scratch",
+        "startupFlags": "0x00000100",
+        "creationFlags": "0x08080000",
+        "inheritHandles": true,
+        "handleListAttribute": "0x00020002",
+        "inheritedHandleRoles": [
+          "nul-read",
+          "nul-write"
+        ],
+        "nul": {
+          "name": "NUL",
+          "shareMode": "0x00000003",
+          "disposition": "0x00000003",
+          "flags": "0x00000080",
+          "readAccess": "0x80000000",
+          "writeAccess": "0x40000000"
+        },
+        "slots": [
+          "nul-read",
+          "nul-read",
+          "nul-write"
+        ]
+      },
+      "observerPid": 56220,
+      "observation": {
+        "schema": "gg438-stdio-observation/v1",
+        "status": "nonconforming",
+        "pid": 19940,
+        "birthFileTime": "134392984261130861",
+        "image": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "machine": "native-amd64",
+        "localStdHandleOffsets": [
+          32,
+          40,
+          48
+        ],
+        "dosNullCurrentTarget": "\\Device\\Null",
+        "slots": [
+          {
+            "slot": "stdin",
+            "remoteHandle": "0xD0",
+            "objectType": "File",
+            "win32FileType": 2,
+            "objectName": "\\Device\\Null",
+            "nameStatus": "observed",
+            "grantedAccess": "0x00120089",
+            "readData": true,
+            "writeData": false,
+            "matches": true
+          },
+          {
+            "slot": "stdout",
+            "remoteHandle": "0xD0",
+            "objectType": "File",
+            "win32FileType": 2,
+            "objectName": "\\Device\\Null",
+            "nameStatus": "observed",
+            "grantedAccess": "0x00120089",
+            "readData": true,
+            "writeData": false,
+            "matches": false
+          },
+          {
+            "slot": "stderr",
+            "remoteHandle": "0x2A4",
+            "objectType": "File",
+            "win32FileType": 2,
+            "objectName": "\\Device\\Null",
+            "nameStatus": "observed",
+            "grantedAccess": "0x00120196",
+            "readData": false,
+            "writeData": true,
+            "matches": true
+          }
+        ]
+      }
+    },
+    {
+      "mapping": "wrong-destination",
+      "fixture": {
+        "schema": "gg438-stdio-fixture/v1",
+        "outcome": "spawned",
+        "mapping": "wrong-destination",
+        "pid": 37336,
+        "birthFileTime": "134392984562498183",
+        "executable": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "arguments": [
+          "-e",
+          "setTimeout(() => {}, 30000)"
+        ],
+        "commandLine": "\"C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe\" -e \"setTimeout(() => {}, 30000)\"",
+        "cwd": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\attempts\\attempt-1\\scratch",
+        "startupFlags": "0x00000100",
+        "creationFlags": "0x08080000",
+        "inheritHandles": true,
+        "handleListAttribute": "0x00020002",
+        "inheritedHandleRoles": [
+          "nul-read",
+          "nul-write",
+          "pipe-write"
+        ],
+        "nul": {
+          "name": "NUL",
+          "shareMode": "0x00000003",
+          "disposition": "0x00000003",
+          "flags": "0x00000080",
+          "readAccess": "0x80000000",
+          "writeAccess": "0x40000000"
+        },
+        "slots": [
+          "nul-read",
+          "pipe-write",
+          "nul-write"
+        ]
+      },
+      "observerPid": 55156,
+      "observation": {
+        "schema": "gg438-stdio-observation/v1",
+        "status": "nonconforming",
+        "pid": 37336,
+        "birthFileTime": "134392984562498183",
+        "image": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+        "machine": "native-amd64",
+        "localStdHandleOffsets": [
+          32,
+          40,
+          48
+        ],
+        "dosNullCurrentTarget": "\\Device\\Null",
+        "slots": [
+          {
+            "slot": "stdin",
+            "remoteHandle": "0xD4",
+            "objectType": "File",
+            "win32FileType": 2,
+            "objectName": "\\Device\\Null",
+            "nameStatus": "observed",
+            "grantedAccess": "0x00120089",
+            "readData": true,
+            "writeData": false,
+            "matches": true
+          },
+          {
+            "slot": "stdout",
+            "remoteHandle": "0x334",
+            "objectType": "File",
+            "win32FileType": 3,
+            "objectName": null,
+            "nameStatus": "outside-character-device-probe",
+            "grantedAccess": "0x00120196",
+            "readData": false,
+            "writeData": true,
+            "matches": false
+          },
+          {
+            "slot": "stderr",
+            "remoteHandle": "0x2AC",
+            "objectType": "File",
+            "win32FileType": 2,
+            "objectName": "\\Device\\Null",
+            "nameStatus": "observed",
+            "grantedAccess": "0x00120196",
+            "readData": false,
+            "writeData": true,
+            "matches": true
+          }
+        ]
+      }
+    }
+  ],
+  "recordedProcesses": [
+    {
+      "label": "positive-host",
+      "pid": 56688,
+      "born": null,
+      "spawnedAt": "2026-11-16T10:26:35.914Z",
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "at": "2026-11-16T10:27:06.051Z"
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "at": "2026-11-16T10:27:06.051Z"
+      },
+      "stdout": {
+        "bytes": 1041,
+        "captured": 1041,
+        "endAt": "2026-11-16T10:27:06.048Z"
+      },
+      "stderr": {
+        "bytes": 0,
+        "captured": 0,
+        "endAt": "2026-11-16T10:27:06.048Z"
+      },
+      "executable": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\StdioFixtureHost.exe",
+      "args": [
+        "positive",
+        "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+      ]
+    },
+    {
+      "label": "positive-fixture",
+      "pid": 46028,
+      "born": "134392983959770767",
+      "executable": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "-e",
+        "setTimeout(() => {}, 30000)"
+      ],
+      "nativeExit": {
+        "schema": "gg438-stdio-fixture/v1",
+        "outcome": "natural-exit",
+        "mapping": "positive",
+        "pid": 46028,
+        "exitCode": 0
+      },
+      "hostPid": 56688
+    },
+    {
+      "label": "positive-observer",
+      "pid": 47812,
+      "born": null,
+      "spawnedAt": "2026-11-16T10:26:36.061Z",
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "at": "2026-11-16T10:26:36.148Z"
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "at": "2026-11-16T10:26:36.148Z"
+      },
+      "stdout": {
+        "bytes": 953,
+        "captured": 953,
+        "endAt": "2026-11-16T10:26:36.146Z"
+      },
+      "stderr": {
+        "bytes": 0,
+        "captured": 0,
+        "endAt": "2026-11-16T10:26:36.146Z"
+      },
+      "executable": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\ObserveStdio.compile-check.exe",
+      "args": [
+        "46028",
+        "134392983959770767",
+        "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+      ]
+    },
+    {
+      "label": "wrong-birth-observer",
+      "pid": 31848,
+      "born": null,
+      "spawnedAt": "2026-11-16T10:26:36.158Z",
+      "exit": {
+        "code": 2,
+        "signal": null,
+        "at": "2026-11-16T10:26:36.223Z"
+      },
+      "close": {
+        "code": 2,
+        "signal": null,
+        "at": "2026-11-16T10:26:36.223Z"
+      },
+      "stdout": {
+        "bytes": 0,
+        "captured": 0,
+        "endAt": "2026-11-16T10:26:36.221Z"
+      },
+      "stderr": {
+        "bytes": 123,
+        "captured": 123,
+        "endAt": "2026-11-16T10:26:36.220Z"
+      },
+      "executable": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\ObserveStdio.compile-check.exe",
+      "args": [
+        "46028",
+        "134392983959770768",
+        "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+      ]
+    },
+    {
+      "label": "wrong-image-observer",
+      "pid": 20764,
+      "born": null,
+      "spawnedAt": "2026-11-16T10:26:36.231Z",
+      "exit": {
+        "code": 2,
+        "signal": null,
+        "at": "2026-11-16T10:26:36.297Z"
+      },
+      "close": {
+        "code": 2,
+        "signal": null,
+        "at": "2026-11-16T10:26:36.297Z"
+      },
+      "stdout": {
+        "bytes": 0,
+        "captured": 0,
+        "endAt": "2026-11-16T10:26:36.294Z"
+      },
+      "stderr": {
+        "bytes": 116,
+        "captured": 116,
+        "endAt": "2026-11-16T10:26:36.295Z"
+      },
+      "executable": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\ObserveStdio.compile-check.exe",
+      "args": [
+        "46028",
+        "134392983959770767",
+        "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\attempts\\attempt-1\\scratch\\different-node.exe"
+      ]
+    },
+    {
+      "label": "wrong-direction-host",
+      "pid": 54484,
+      "born": null,
+      "spawnedAt": "2026-11-16T10:27:06.060Z",
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "at": "2026-11-16T10:27:36.188Z"
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "at": "2026-11-16T10:27:36.188Z"
+      },
+      "stdout": {
+        "bytes": 1054,
+        "captured": 1054,
+        "endAt": "2026-11-16T10:27:36.186Z"
+      },
+      "stderr": {
+        "bytes": 0,
+        "captured": 0,
+        "endAt": "2026-11-16T10:27:36.186Z"
+      },
+      "executable": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\StdioFixtureHost.exe",
+      "args": [
+        "wrong-direction",
+        "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+      ]
+    },
+    {
+      "label": "wrong-direction-fixture",
+      "pid": 19940,
+      "born": "134392984261130861",
+      "executable": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "-e",
+        "setTimeout(() => {}, 30000)"
+      ],
+      "nativeExit": {
+        "schema": "gg438-stdio-fixture/v1",
+        "outcome": "natural-exit",
+        "mapping": "wrong-direction",
+        "pid": 19940,
+        "exitCode": 0
+      },
+      "hostPid": 54484
+    },
+    {
+      "label": "wrong-direction-observer",
+      "pid": 56220,
+      "born": null,
+      "spawnedAt": "2026-11-16T10:27:06.141Z",
+      "exit": {
+        "code": 1,
+        "signal": null,
+        "at": "2026-11-16T10:27:06.230Z"
+      },
+      "close": {
+        "code": 1,
+        "signal": null,
+        "at": "2026-11-16T10:27:06.230Z"
+      },
+      "stdout": {
+        "bytes": 959,
+        "captured": 959,
+        "endAt": "2026-11-16T10:27:06.227Z"
+      },
+      "stderr": {
+        "bytes": 0,
+        "captured": 0,
+        "endAt": "2026-11-16T10:27:06.227Z"
+      },
+      "executable": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\ObserveStdio.compile-check.exe",
+      "args": [
+        "19940",
+        "134392984261130861",
+        "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+      ]
+    },
+    {
+      "label": "wrong-destination-host",
+      "pid": 24228,
+      "born": null,
+      "spawnedAt": "2026-11-16T10:27:36.197Z",
+      "exit": {
+        "code": 0,
+        "signal": null,
+        "at": "2026-11-16T10:28:06.329Z"
+      },
+      "close": {
+        "code": 0,
+        "signal": null,
+        "at": "2026-11-16T10:28:06.329Z"
+      },
+      "stdout": {
+        "bytes": 1073,
+        "captured": 1073,
+        "endAt": "2026-11-16T10:28:06.327Z"
+      },
+      "stderr": {
+        "bytes": 0,
+        "captured": 0,
+        "endAt": "2026-11-16T10:28:06.327Z"
+      },
+      "executable": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\StdioFixtureHost.exe",
+      "args": [
+        "wrong-destination",
+        "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+      ]
+    },
+    {
+      "label": "wrong-destination-fixture",
+      "pid": 37336,
+      "born": "134392984562498183",
+      "executable": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+      "args": [
+        "-e",
+        "setTimeout(() => {}, 30000)"
+      ],
+      "nativeExit": {
+        "schema": "gg438-stdio-fixture/v1",
+        "outcome": "natural-exit",
+        "mapping": "wrong-destination",
+        "pid": 37336,
+        "exitCode": 0
+      },
+      "hostPid": 24228
+    },
+    {
+      "label": "wrong-destination-observer",
+      "pid": 55156,
+      "born": null,
+      "spawnedAt": "2026-11-16T10:27:36.275Z",
+      "exit": {
+        "code": 1,
+        "signal": null,
+        "at": "2026-11-16T10:27:36.355Z"
+      },
+      "close": {
+        "code": 1,
+        "signal": null,
+        "at": "2026-11-16T10:27:36.355Z"
+      },
+      "stdout": {
+        "bytes": 970,
+        "captured": 970,
+        "endAt": "2026-11-16T10:27:36.352Z"
+      },
+      "stderr": {
+        "bytes": 0,
+        "captured": 0,
+        "endAt": "2026-11-16T10:27:36.352Z"
+      },
+      "executable": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\ObserveStdio.compile-check.exe",
+      "args": [
+        "37336",
+        "134392984562498183",
+        "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe"
+      ]
+    }
+  ],
+  "exactPidReadback": {
+    "checkedAt": "2026-11-16T10:38:19.2736748Z",
+    "query": "ProcessId = 19940 OR ProcessId = 20764 OR ProcessId = 24228 OR ProcessId = 31848 OR ProcessId = 37336 OR ProcessId = 46028 OR ProcessId = 47812 OR ProcessId = 54484 OR ProcessId = 55156 OR ProcessId = 56220 OR ProcessId = 56688",
+    "pids": [
+      19940,
+      20764,
+      24228,
+      31848,
+      37336,
+      46028,
+      47812,
+      54484,
+      55156,
+      56220,
+      56688
+    ],
+    "matches": []
+  },
+  "scratch": {
+    "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-438-stdio-preparation\\controls\\attempts\\attempt-1\\scratch",
+    "retained": true,
+    "traversedLinks": false,
+    "entries": [
+      {
+        "path": "AppData",
+        "directory": true,
+        "reparse": false,
+        "linkType": null,
+        "target": null,
+        "bytes": null,
+        "attributes": "Directory"
+      },
+      {
+        "path": "AppData\\Roaming",
+        "directory": true,
+        "reparse": false,
+        "linkType": null,
+        "target": null,
+        "bytes": null,
+        "attributes": "Directory"
+      }
+    ]
+  },
+  "verdict": {
+    "fiveControlsQualified": true,
+    "recordedProcessesGone": true,
+    "scratchOriginalCleanupCompleted": false,
+    "gatewayObserved": false
+  }
+}

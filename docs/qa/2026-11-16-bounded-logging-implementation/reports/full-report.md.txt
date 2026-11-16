@@ -1,0 +1,160 @@
+# #438 bounded Windows launcher logs — implementation report
+
+Actual Claude Code Opus 5.5 xhigh implementation handoff, 2026-11-16. This report is not independent
+review, behavior QA, CI or acceptance. Root owns index, commits, publication, integration, issue
+state and the subsequent gates (independent Claude behavior QA, all current-head CI, GPT-6.1 Sol
+xhigh opposite-family review, fresh Astra max final audit; shared three-scan cap, 0 used here).
+
+## 1. Admission, scheduling and Git state
+
+- Admission `launcher-438-implementation-admission.json` (state `root-admitted-after-436-merge`)
+  verified exactly before any edit (`receipts/00-admission-verification.json`): checkout
+  `C:\Users\98jak\.codex\worktrees\gg-20261116-bounded-logs\GraphGoblin`, branch
+  `codex/gg-20261116-bounded-logs`, head = origin/main `e21c24be9cef109ef438fd2df4c1583bc570b1cb`,
+  tree `d064706fb48def7bacac5e434f96825c5850d214`, clean status, index sha256 `0dfb2d3c…159d`,
+  all six predecessor paths/bytes/hashes, contract `a1a02313…cf474`, Node v22.23.4 `dccc52de…ec14f`.
+- Heavy slot: release `launcher-438-heavy-slot-release.json` (sha256 `a0d59d30…093a`,
+  `released-to-438-implementation`, same checkout/branch/head) appeared at 10:33:51Z; before that
+  only focused/static work ran. Afterwards every heavy command was run serially, one at a time.
+- No Git state changed: final head/tree/index hash identical to admission
+  (`touched-paths-final.txt`). No stage, commit, reset, checkout, merge, push or GitHub write.
+- Root-owned untracked `docs/qa/2026-11-16-installer-validation-{completion,final-ci,formal-review}/`
+  (appeared 10:03:14Z; release marker confirms root ownership) were not touched.
+- Project Node v22.23.4 first on PATH for every command; pnpm via `pnpm.cmd`.
+
+## 2. Final implementation
+
+**(a) Gateway writer and production seam** — `apps/api/src/windows-log/gateway-log-writer.ts`
+(built-ins only). Exactly `gateway.log` and `gateway.log.1`, 4,194,304 B each; complete UTF-8
+records ≤ 65,536 B including LF, larger records replaced by a fixed marker; one file operation in
+flight; queued + in-flight encoded bytes ≤ 262,144 B, excess dropped immediately with a bounded drop
+summary before the next accepted record. Adoption accounts the opened size, repairs a partial
+trailing record (scanning back in 64 KiB chunks), replaces oversized slots under ownership, refuses
+links/non-regular/multi-link entries untouched. Rotation: verify previous identity → verify active
+name == handle → close → rename-replace → exclusive create. Denied rename drops and backs off, never
+truncates. Partial write → rollback truncate to the committed boundary or disable. Faults back off
+1→60 s; 8 consecutive faults disable until restart. Each batch rechecks name vs handle; a removed
+name is recreated, a foreign one disables the writer and is preserved. No staging/spill/TEMP file.
+`write()` never waits; `writeAcknowledged()` resolves true only for that record's completed bytes;
+`settle(ms)` bounds flushes. The writer exposes no `emit`/`flush`/`end` (Pino duck-types them; found
+and fixed during this work).
+
+**Production seam export/usage:** `openGatewayLog({ root, fs?, observe?, schedule?, now? })`.
+`fs: LogFileSystem` = `lstat`, `open(path,'existing'|'create')`, `rename`, and handle `stat/read/
+write/truncate/close` (default `nodeLogFileSystem`); tests and QA wrap it to stall/fault the exact
+reached operation on real files. `observe(event)` reports every `adopt/write/rollback/rotate/drop/
+suspend/disable` transition with paths and byte counts. `schedule` controls backoff/settle timers.
+Built path: `apps/api/dist/windows-log/gateway-log-writer.js`.
+
+**(b) Guarded entry, Pino composition, private/public, startup** —
+`apps/api/src/main.ts` statically imports only `./entry-point.js` and `./windows-log/guard.js`
+(transitively `gateway-log-writer.js`, `managed-root.js`, all `node:` built-ins; enforced by
+`main-entry.test.ts`) and declares `export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;` (emitted at
+bytes 522–569 of `dist/main.js`). `main()` dynamically imports `serve.js` (former body) and returns
+the same `{ app, container }`; CLI flags dispatch dynamically with unchanged precedence and exit
+codes; import is inert. As physical entry it deletes `GG_WINDOWS_LAUNCHER_LOG_DIR` under every
+spelling in all modes; managed mode only on win32, no CLI flag. The guard (`guard.ts`) resolves the
+root, binds the pipe (70 on EADDRINUSE), runs the read-only privacy query, admits the slots, then
+imports the app (72/73) and serves with stage reporting (74/75); only completed records count as
+written (≤ 250 ms). `serve.ts` reports stages `configuration/store/recovery/http/bind`, flushes
+≤ 250 ms after graceful cleanup, keeps the emergency exit. `gateway-logger.ts`: shell logger
+unchanged; managed logger keeps level and engine records, `req`/`res` serializers carry only method,
+registered route template, status. Instance protocol 2 (`instance-identity.ts`); fingerprint keeps
+canonical `main.js` and PID.
+
+**(c) Windows ownership, native process, installer** — `managed-root.ts`: realpath to a local drive
+path, alias and canonical identities must match, pipe
+`\\.\pipe\GraphGoblin.GatewayLog.<sha256("graphgoblin-gateway-log-root/v1\0dev=…\0ino=…")[:40]>`
+(Node core net, connections destroyed, unref'd, held until exit); privacy via bounded system
+PowerShell (Fixed NTFS, owner and every Allow ACE trusted, no null DACL; managed names not
+reparse/dir/device). `Launcher.cs`: config validation requires the exact marker in the first 4 KiB
+and `apps/api/dist/windows-log/guard.js`; reserved variable refused case-insensitively and set only
+in `GatewayEnvironment`; pre-spawn root/entry validation and legacy read/no-write-share probe (waits
+within the existing release deadline, then destination-in-use, never writes or prunes); NUL stdin
+(read) and NUL stdout/stderr (write) as the only inherited handles; retained `CreateProcess` handle
+via `ChildProcess` (disposed on every return); closed outcomes for 70–75/unknown; closed
+presentation with validated ≤ 260-char locations; `launcher.log`/`.1` (256 KiB each, records
+≤ 4 KiB, one 250 ms `Global\GraphGoblin.LauncherLog.<key>` acquisition, drop on contention/fault).
+Installer requires the guard module; staged `--validate-install` enforces the marker.
+
+**(d) Docs** — ADR-0081 and index; docs 02, 09, 10, 11; guide 01 (logs, privacy, coordinated
+cutover) and 07 (closed outcomes and remedies); CHANGELOG cutover/upgrade note.
+
+Exact native facts for independent QA: `qa-native-facts.md` (sha256 `61399268…05d0`).
+
+## 3. Commands and results (receipts/, logs/, receipt-index.txt)
+
+| # | Command (cwd) | Exit | Notes |
+| --- | --- | --- | --- |
+| 001 | vitest writer (apps/api) | 0 | |
+| 003 | vitest new API files | 1 | **first failure** preserved: `parseMetadata('null')` TypeError (product bug, fixed); host temp dir not private; test bugs |
+| 004/005 | same after fixes | 1/1 | Git Bash `whoami` shadowing; harness throw is public `HARNESS_TURN_FAILED` (used #381 engine fault path instead); route template expectation |
+| 006 | same | 0 | 115 pass |
+| 007/008 | eslint | 1/0 | control-regex, reject type, unsafe return fixed |
+| 009 | NativeChecks --bounded-log-checks | 1 | **first failure** preserved: `RenderPath` threw on control chars in .NET Framework (product bug, fixed) |
+| 010 | same | 0 | |
+| 011/012 | check:deps, check:layers | 0/0 | 0 errors; 4 pre-existing orphan warnings |
+| 014 | vitest serve | 1 | preserved: inject() microtask-only loop; test now yields to libuv; revealed Pino `emit` duck-typing (fixed) |
+| 015–017 | focused API suites | 0 | 118 pass, 1 privilege skip |
+| launcher refusals 1/2/3 | compiled launcher pre-spawn refusals | 1/1/0 | 1 = test design (interactive dialog until 30 s timeout); 2 = accidental unchanged rerun after a failed sed (recorded); 3 = pass |
+| 021 | `pnpm.cmd build` | 0 | 12/12 tasks, no cache |
+| 022 | vitest main/units/shutdown-console (built entry) | 0 | 27 pass, 5 platform skips; includes new 70/71 managed subprocess and marker cases |
+| 023 | tooling launcher-identity.test.mjs | 0 | 2 pass |
+| 025 | `pnpm.cmd test:windows-launcher` | 1 | **first failure** preserved: dir-symlink EPERM (host); new test exhausted the suite's 20-port pool |
+| 027 | same, corrected test | 1 | 23/25 pass; only failure: dir-symlink EPERM at fixture creation (pre-existing host capability) |
+| 029 | api test:coverage | 1 | **first failure** preserved: 4 MiB Buffer `toEqual` 15.96 s → 20 s timeout under load |
+| 033 | api test:coverage, corrected | 0 | 2062 pass, 16 skip; statements 94.02, branches 91.01, functions 91.68, lines 95.42 |
+| 034–039 | api typecheck, api lint, tooling lint, format:check, check:licenses, check:docs | 0 | all pass |
+
+Dispositions: `receipts/acceptance-run-1-disposition.md`, `receipts/api-coverage-run-1-disposition.md`,
+`receipts/focused-launcher-refusals-note.md`. No timeout, threshold, exclusion, retry or assertion
+was weakened; the coverage fix keeps exact byte equality (`Buffer.equals`), the port fix keeps every
+"nothing listens" assertion.
+
+Native acceptance run 2 (bounded-log test, all 6 subtests pass, artifacts `.tmp/windows-launcher-logs-RbCKom`):
+NativeChecks (closed outcomes, 4 KiB records, exact 256 KiB edge, rotation, repair, oversized
+replacement, bounded contention, hard-link refusal, marker edges, NUL stdio character devices and
+retained-handle exit 73); stale `main.js` beside current guard and missing guard refused before spawn
+with closed launcher.log records; corrupt store → 74 guidance, closed record (stage `store`, cause
+`store-unavailable`), no raw text; quiet cold start; junction direct contender exit 70 with empty
+stdio, no store files, owner PID and log identity unchanged; disjoint store/port in the same folder
+refused as in use; warm reuse from another private config folder; deliberate stop → immediate
+relaunch; held legacy append handle refused without spawn and without log change; oversized
+stopped-writer history replaced; hard-linked `gateway.log.1` refused with target intact; isolated
+TEMP received no managed names; inventory limited to the four managed names and within caps. All
+pre-existing launcher, installer (now also stale-entry, missing-guard and mixed-case reserved
+variable refusals), alias-junction and contention tests pass. Post-run: no gateway, holder or
+listener on 4830–4850.
+
+Build hashes: `build-artifacts-sha256.txt` (e.g. `dist/main.js` `3160ac2a…325c`,
+`dist/windows-log/guard.js` `cba6e1d0…355c`). Final source hashes: `touched-paths-final.txt`
+(sha256 `c14ec3ca…c03`). Native acceptance and subprocess tests ran on that build; only test files
+changed after it.
+
+## 4. Coverage gaps and limits (platform / controlled / simulated)
+
+- Directory-symlink checkout case cannot run on this host (EPERM creating the fixture); unchanged,
+  not skipped. CI's Windows runner is expected to exercise it.
+- Disk full, EIO, partial writes and denied renames are injected at the production seam; one real
+  Windows delete-sharing denial during rotation is native. Real volume-full was not produced.
+- Legacy live writer is a PowerShell `FileStream` with the predecessor's AppendData access and
+  ReadWrite sharing, not the actual predecessor gateway; QA's real-predecessor case remains.
+- Foreign-owner/cross-user/cross-session cases not exercised natively (no second identity); privacy
+  refusal exercised with Users allow ACEs; same-user hostile mutation is outside the guarantee.
+- Coverage ran on Windows; CI's authoritative coverage runs on Linux, where Windows-only tests skip
+  and POSIX ones run. Branch total here is 91.01%; Linux result not measured locally.
+- Tooling package coverage not run (only its excluded acceptance file changed); CI Windows job and
+  Gates not run here.
+- Sustained multi-rotation workload after launcher exit through a real gateway is covered only by
+  writer unit tests on real files plus one native oversized/restart case; QA's V2 workload remains.
+
+## 5. Unresolved items for root
+
+1. **Owner profile privacy:** this host's profile grants Allow ACEs to other local principals
+   (CodexSandbox accounts and group, an AppContainer capability SID). By the contract's rule the
+   default `%LOCALAPPDATA%\GraphGoblin\Launcher` here is not private, so the upgraded launcher would
+   refuse with the unsafe-folder outcome (and drop launcher.log records) until that folder's ACL is
+   restricted (guide 07 remedy). Needs root/owner handling before installation; nothing owned was changed.
+2. Focused refusal runs 1–2 displayed the launcher's existing interactive error dialog until a 30 s
+   timeout killed the process; no process remained.
+3. The four-intent register (root-owned) is not updated.

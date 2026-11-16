@@ -4,6 +4,23 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- A gateway started by the Windows launcher writes a bounded private log in the launcher folder
+  (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
+  written by the gateway itself so it never waits on logging and keeps working after the launcher
+  exits or a log write fails. Run failure details stay in this private log; HTTP access records
+  carry only method, route template and status. The launcher's own `launcher.log` and
+  `launcher.log.1` are capped at 256 KiB each. The detached gateway's stdio is NUL. Startup
+  failures report whether the log folder is in use or unsafe, whether application modules could
+  not load, or which startup stage failed and whether its record was written. The launcher folder
+  must be private to your account, SYSTEM and Administrators on a local NTFS drive.
+  **Upgrade:** this is a coordinated cutover. Shut down the running gateway deliberately, rebuild
+  the checkout with Node 22, then rerun `scripts/install-windows-launcher.ps1`. The new launcher
+  refuses to reuse a gateway from an earlier build and refuses to start while an earlier gateway
+  still writes `gateway.log`. Do not keep using an earlier launcher with the new build: it would
+  start an unbounded gateway outside these guarantees. An oversized
+  `gateway.log` or `launcher.log` from an earlier version is cleared on first use. If the folder is
+  reported unsafe, restrict its permissions as described in the troubleshooting guide.
+
 - The Windows installer validates staged launcher files before publishing, including with
   `-NoShortcuts`. It refuses source and destination aliases, gives actionable Node runtime
   guidance, and reports whether restoration was verified after a publication failure (#436).

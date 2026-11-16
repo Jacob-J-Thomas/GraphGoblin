@@ -1,0 +1,61 @@
+{
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/436",
+    "title": "Validate launcher installation before replacing configuration or source shortcuts",
+    "issue_number": 436,
+    "body": "<!-- graphgoblin-dispatch:2026-11-13 -->\n**Current dispatch (2026-11-13):** Released for the fourth lane, after runtime recovery; coordinate with separate owner-held PR #460 without changing its hold. The [new scoped authorization](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6872558885) supersedes older implementation holds below for this bounded work only. Preserve independent review, QA, exact-head audit and conditional reproduction. This bounded issue may close after its engineering gates and merge; owner acceptance and closure on #276/#325 remain separate. Historical plan and evidence follow.\n<!-- /graphgoblin-dispatch:2026-11-13 -->\n\nFollow-up from #433 and [the independent review](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/433#pullrequestreview-5815159382) of `b71c70605a7887557efda15ecaddf11988dcfdb0`.\n\nPriority: P2. The setup script persists configuration before launcher validation, and `-NoShortcuts` skips that validation. A desktop-only PWA source may also equal the default output shortcut and be overwritten. An empty Node path reaches a generic Resolve-Path error. The current rollout uses an explicit valid Node path, the separate original Chrome Apps shortcut and valid default overrides.\n\nAcceptance:\n- Validate every candidate, including `-NoShortcuts`, before publishing configuration or shortcuts.\n- Refuse canonical source/destination shortcut collisions.\n- Missing Node yields an actionable supported-runtime message.\n- Refused input leaves existing configuration and shortcuts byte-identical.\n\nDedup: #35, #36 and #327 are broader parked distribution/setup work; this is a bounded launcher-script follow-up. No matching open or recently closed root-cause issue was found.\n\nOriginal disposition: DEFER-ISSUE, non-blocking for #433. The owner subsequently dispatched this bounded work on 2026-11-13; it is now eligible in the fourth lane after runtime recovery. Launcher delivery order is #435, #436, #438, then #456. This issue does not complete owner acceptance on #276/#325.\n\nDelivery: isolated implementation and cross-family review at xhigh after dispatch; independent QA must verify the listed touched systems. No owner service/store or secrets should be used for regression tests.\n\n\n## Current delivery — 2026-11-16\n\nPR #497 is at final publication `2732dd34457bcd9a7007e89c3fa11fe085af764c`, on target `be633141be5a0cd2b4f960a46761fabbf2cb82c7`. Corrected product `a73b9a887c50f51d4fc4af54aa806fda42e31abf` is unchanged. The ordinary workflow has been restored byte-for-byte; [final CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43829142179) passed all four jobs on attempt 1: Gates 9,619 passed/41 skipped, all 13 coverage groups above both floors; Browser 481 passed/one declared live-provider skip, zero retries; Windows 18/18; Template image catalog smoke. No Windows artifact was uploaded. The verified tested merge is `80c581ebc95de2000c25ed2b5995d5a648fa95ba`, with the same tree as the publication and ordered target/head parents.\n\n[Corrected independent hosted QA](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2732dd34457bcd9a7007e89c3fa11fe085af764c/docs/qa/2026-11-16-installer-validation-candidate-corrected/README.md) passed all 32 public installer cases, including missing default Node discovery. All 28 invalid calls preserved managed bytes and native metadata. The trace matched 49 direct receipts and 399 birth-bounded lifetimes with zero loss and no gateway/Chrome start. The separate actual Windows PowerShell 5.1 public seed and composed production publisher proved restoration after three real replacements and a genuine `0x80070020` sharing failure. All six prior artifacts and native metadata matched afterwards.\n\nActual Claude Code Opus 5.5 xhigh independently supplied private-command behavior QA (29 cases/384 checks); separate GPT-6.1 Sol xhigh performed native QA. Touched systems: Node preflight/diagnostics, staged native validation, Shell Link metadata, physical source/output identity, publication/rollback and PowerShell compatibility. The private-path and default-discovery defects found during QA were corrected; their original failures remain archived. The initial 396-lifetime offline count was corrected to 399 using retained birth intervals after PID/key reuse; no native rerun occurred. Synthetic PWA provenance, composed rollback and owner-acceptance limits remain explicit.\n\nBoth temporary carrier runs hit the unchanged Gates 30-minute deadline. Their [first](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2732dd34457bcd9a7007e89c3fa11fe085af764c/docs/qa/2026-11-16-installer-candidate-other-ci/README.md) and [corrected](https://github.com/Jacob-J-Thomas/GraphGoblin/blob/2732dd34457bcd9a7007e89c3fa11fe085af764c/docs/qa/2026-11-16-installer-corrected-other-ci/README.md) CI packets preserve completed and skipped work; #488 remains parked and unresolved. Neither failure is counted as full CI success.\n\n[Actual Opus formal scan 1](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/497#issuecomment-6912181315) returned READY. Root read the complete report; R1 is parked in #498, unverified cloud-placeholder compatibility U1 in #499, and O1 duplicates #496. Cloud-provider/ReFS behavior remains unverified. Fresh Astra max final exact-head/target scan 2 is running and must sign off before merge. Formal scans: 2/3. This bounded issue may close on engineering merge. Owner acceptance on #276/#325, held PR #460 and later #438/#456 remain separate.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "aidlc-ready",
+        "color": "0E8A16",
+        "description": "Eligible for agent delivery under required review, QA, CI and merge authority."
+      },
+      {
+        "name": "qa:touched-systems",
+        "color": "FBCA04",
+        "description": "QA tests and catalogues every system the change touches, positive and negative"
+      },
+      {
+        "name": "impl:gpt-6.1-sol",
+        "color": "1D76DB",
+        "description": "Implementer: Codex gpt-6.1-sol (default implementation), reasoning xhigh"
+      },
+      {
+        "name": "review:claude-opus-5.5",
+        "color": "006B75",
+        "description": "Cross-vendor reviewer: Claude Opus 5.5"
+      },
+      {
+        "name": "type:bug",
+        "color": "D73A4A",
+        "description": "Something does not work as documented"
+      },
+      {
+        "name": "area:installer",
+        "color": "BFDADC",
+        "description": "Installers and setup"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 1,
+    "created_at": "2026-11-07T21:53:26Z",
+    "updated_at": "2026-11-16T09:11:24Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/436",
+    "display_title": "Validate launcher installation before replacing configuration or source shortcuts"
+  },
+  "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/436",
+  "title": "Validate launcher installation before replacing configuration or source shortcuts",
+  "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/436",
+  "display_title": "Validate launcher installation before replacing configuration or source shortcuts"
+}

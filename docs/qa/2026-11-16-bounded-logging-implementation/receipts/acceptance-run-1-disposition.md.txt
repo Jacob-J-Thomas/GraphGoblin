@@ -1,0 +1,19 @@
+# Native acceptance run 1 disposition (receipt 025, exit 1, preserved in first-failures/)
+
+- Test 3 subtest "SymbolicLink checkout": fixture creation `symlink(repo, alias, 'dir')` -> EPERM
+  (errno -4048) before any launcher/gateway code ran. Host lacks the directory-symlink privilege
+  for this user. Pre-existing #435 test, unchanged by #438 except a private fixture ACL applied
+  after mkdtemp; not weakened or skipped. Expected to recur on this host.
+- Test 5 subtests 4-6: "No disposable Windows launcher test port is available." The suite-wide
+  freePort() pool is 20 non-reused ports; the new #438 test allocated one per configuration and
+  exhausted it. Before exhaustion, subtest 4 passed its contender assertions (launcher cold start
+  quiet; junction direct contender exit 70 with empty stdout/stderr, no store files, port not
+  listening, owner PID and gateway.log identity unchanged) and subtest 5 passed deliberate stop ->
+  immediate relaunch with a new PID. Subtest 5's port failure occurred after starting the legacy
+  holder but before its try/finally; the holder exited when the test process closed its stdin
+  (0 holder processes found afterwards, query excluding itself). No gateway, node or listener on
+  4830-4850 remained.
+- Correction (test code only): one shared never-bound refusal port for configurations that never
+  listen (each still asserts nothing listens), the primary keeps its own port; the blocked
+  configuration is created before the holder, whose readiness wait is inside try/finally.
+- Run 2 executes the corrected file; it is not an unchanged retry.

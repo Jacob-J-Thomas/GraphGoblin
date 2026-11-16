@@ -10,6 +10,12 @@ The Windows installer validates a staged launcher and configuration before publi
 requested files. It checks source and destination identities before creating shortcuts, and
 staged shortcuts reference the final executable and configuration. The installer uses the
 same validation when shortcuts are disabled.
+The detached gateway writes its own bounded private log in the launcher folder: `gateway.log`
+and `gateway.log.1`, 4 MiB each, with complete records of at most 64 KiB, while the launcher keeps
+`launcher.log` and `launcher.log.1`, 256 KiB each. The gateway's stdio is NUL, its entry loads
+dependencies only after reserving its private log folder, and early failures map to closed
+launcher guidance ([ADR-0081](decisions/ADR-0081-bounded-windows-launcher-logs.md)). The launcher
+and installer require the current guarded build, so an earlier gateway is stopped before upgrade.
 The desktop/Start-menu shortcut and actual PWA window share a launcher AppUserModelID and native
 relaunch command, so a pin of that window goes through readiness on a cold start. Its app ID is
 validated against the configured IPv4 loopback origin and current `/app/` manifest ID. Browser

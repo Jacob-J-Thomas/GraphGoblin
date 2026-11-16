@@ -1,0 +1,39 @@
+# command: pnpm.cmd exec vitest run src/windows-log/gateway-log-writer.test.ts --reporter=verbose
+# cwd: C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+# node: /c/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node v22.23.4
+# start: 2026-11-16T11:00:06.334Z
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > writes Pino lines whole and creates only the active slot 12ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > keeps a é-terminated record at, below and above the 64 KiB encoded edge whole or marked 12ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > keeps a €-terminated record at, below and above the 64 KiB encoded edge whole or marked 12ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > keeps a 😀-terminated record at, below and above the 64 KiB encoded edge whole or marked 13ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > replaces a much larger record and keeps lone surrogates valid UTF-8 9ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > fills an adopted nonempty active slot exactly to 4 MiB, then rotates by rename-replace 27ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > rotates before a record that would exceed the slot by one byte 18ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > repairs an interrupted trailing record, including a split multibyte character 6ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > finds a boundary more than one record-limit back in under-cap legacy history 11ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > replaces oversized legacy slots only when admitted, after the old writer is gone 24ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > keeps an oversized slot untouched when it cannot be replaced 18ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > refuses unsafe managed names before opening or modifying them 6ms
+ ↓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > refuses a dangling or live link at a managed name and preserves its target 3ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > caps combined in-flight and queued bytes at exactly 256 KiB without waiting 12ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > acknowledges only the specific completed record and bounds the exit wait at 250 ms 521ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > rolls a real partial write back to the last complete boundary and recovers 11ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > disables the target when a partial write cannot be rolled back 3ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > drops on disk full with finite backoff and stops after the fault limit 5ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > drops on denied rotation and never truncates the full active slot 25ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > stops writing and preserves a foreign entry that replaced the active name 5ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > refuses rotation onto a previous slot it did not admit 17ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > recreates a removed active name at the fixed path 5ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > is a plain Pino destination: Pino finds no emit, flush or end hook to call 62ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > closes idempotently and refuses later records 2ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log with real Windows sharing > drops on a native delete-sharing denial during rotation and keeps both slots 237ms
+
+ Test Files  1 passed (1)
+      Tests  24 passed | 1 skipped (25)
+   Start at  05:00:07
+   Duration  1.43s (tests 89%, transform 6%, import 4%, worker 1%)
+
+# end: 2026-11-16T11:00:08.545Z exit: 0

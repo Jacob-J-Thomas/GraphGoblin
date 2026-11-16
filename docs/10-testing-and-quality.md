@@ -16,6 +16,19 @@ without stopping it. Matching identities and PID-only records (including a prote
 refused with unchanged lock bytes and no gateway startup. The read-only helper names the refused
 path and distinguishes live ownership from unverifiable identity with the probe's failure cause.
 Eight repeated silent-TCP trials require refusal without a gateway log write or store acquisition.
+Bounded log cases (#438, ADR-0081) use explicitly private fixture folders: a stale built entry
+beside a current guard module and a missing guard refuse before spawning, in the launcher and the
+staged installer; a corrupt store yields the written-diagnostic startup outcome; a direct
+contender through a junction to a live gateway's log folder exits 70 without touching the pair; a
+disjoint store and port sharing that folder, and a held legacy append handle, are refused without
+spawning; a deliberately stopped gateway relaunches immediately; oversized stopped-writer history
+is replaced; a hard-linked managed name is refused with its target intact; and an isolated
+TEMP receives no managed log names. `NativeChecks --bounded-log-checks` covers the closed
+outcomes, rendered locations, 4 KiB records, exact 256 KiB slot edge, rotation, tail repair,
+bounded mutex contention, the built-entry marker edges and NUL stdio with the retained
+CreateProcess handle. The gateway writer's exact record, slot, queue, fault, rotation and 250 ms
+acknowledgment edges are unit tests over its production filesystem seam, including a native
+delete-sharing denial during rotation.
 They establish native routes and ABI behavior; actual installed Chrome/taskbar pin behavior is
 tracked separately with native shell evidence. No live provider turn or owner service/store is
 used. The existing cross-platform coverage thresholds and general CI gates remain unchanged.

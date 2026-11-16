@@ -1,0 +1,46 @@
+{
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/498",
+    "title": "Retain Windows installer reinstall and stage-cleanup regressions in CI",
+    "issue_number": 498,
+    "body": "Priority: P3. Follow-up from actual Claude Code Opus 5.5 xhigh formal scan 1 of PR #497 at head `2732dd34457bcd9a7007e89c3fa11fe085af764c`, root cause R1.\n\nThe permanent Windows PowerShell 5.1 installer acceptance test installs into absent destinations. It does not retain a same-path reinstall regression for the File.Replace branch, pinned-shortcut publication or successful stage-directory cleanup. The exact current candidate has separate hosted reinstall/pinned coverage and a composed rollback witness; this is a future regression-coverage gap, not an observed current failure.\n\nAcceptance:\n- Add a second public PS5.1 installation over the same disposable outputs with an actually changed environment setting. Verify updated configuration, final shortcut metadata/AppUserModelID, unchanged source and aliases, and an empty store.\n- Cover an explicitly supplied disposable pinned-shortcut destination.\n- Assert no owned gg-launcher-stage-* directory remains at the installation and shortcut anchors after success.\n- Evaluate a bounded production rollback regression using a genuine Windows sharing handle; preserve native process/cleanup receipts and do not weaken the safe refusal or identity checks.\n- Preserve coverage and ordinary CI budgets and use no owner installation, Desktop, shortcuts or store.\n\nDedup: all-state issue searches for installer/reinstall, gg-launcher-stage and related terms found no matching issue. #496 is artifact retention, #436 delivers current validation/publication correctness, and neither owns this ongoing test-strength gap.\n\nDisposition: DEFER-ISSUE, parked under backlog without a pickup gate. This does not expand the dispatched four-intent batch. Follow docs/15 and opposite-family review when separately dispatched.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "type:chore",
+        "color": "CFD3D7",
+        "description": "Maintenance, tooling, or docs"
+      },
+      {
+        "name": "area:installer",
+        "color": "BFDADC",
+        "description": "Installers and setup"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-16T09:08:31Z",
+    "updated_at": "2026-11-16T09:08:31Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/498",
+    "display_title": "Retain Windows installer reinstall and stage-cleanup regressions in CI"
+  },
+  "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/498",
+  "title": "Retain Windows installer reinstall and stage-cleanup regressions in CI",
+  "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/498",
+  "display_title": "Retain Windows installer reinstall and stage-cleanup regressions in CI"
+}
