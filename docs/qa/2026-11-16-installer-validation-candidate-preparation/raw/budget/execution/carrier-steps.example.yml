@@ -1,0 +1,135 @@
+# Merge only the reviewed portions into the existing Windows launcher job.
+# Its checkout needs fetch-depth: 0 to bind the post-435 base and carrier ancestry.
+# Keep install and ordinary native-launcher acceptance. This preserves the existing build command.
+- name: 'Build with #436 run receipt'
+  shell: pwsh
+  run: |
+    $ErrorActionPreference = 'Stop'
+    $env:GIT_OPTIONAL_LOCKS = '0'
+    function Read-Git([string[]]$Arguments) {
+      $value = & git.exe @Arguments
+      if ($LASTEXITCODE -ne 0) { throw 'Git identity query failed.' }
+      $value
+    }
+    $checkout = (Get-Item -LiteralPath $env:GITHUB_WORKSPACE).FullName
+    $node = (Get-Command node.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+    $nodeVersion = & $node --version
+    if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v22\.\d+\.\d+$' -or
+        [version]$nodeVersion.Substring(1) -lt [version]'22.22.2') { throw 'Bind supported Node 22.' }
+    $head = Read-Git @('rev-parse','HEAD')
+    $tree = Read-Git @('rev-parse','HEAD^{tree}')
+    if ($head -cne $env:GITHUB_SHA -or (Read-Git @('status','--porcelain=v1','--untracked-files=all'))) {
+      throw 'The actual workflow checkout differs from the admitted source.'
+    }
+    $index = Read-Git @('rev-parse','--path-format=absolute','--git-path','index')
+    $before = (Get-FileHash -Algorithm SHA256 -LiteralPath $index).Hash.ToLowerInvariant()
+    $control = Join-Path $env:RUNNER_TEMP "qa436-carrier-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+    if (Test-Path -LiteralPath $control) { throw 'Carrier control directory already exists.' }
+    New-Item -ItemType Directory -Path $control | Out-Null
+    $beforeStart = [DateTime]::UtcNow.ToString('o')
+    $PSNativeCommandUseErrorActionPreference = $false
+    & pnpm.cmd build
+    $buildExit = $LASTEXITCODE
+    $ended = [DateTime]::UtcNow.ToString('o')
+    $receipt = [ordered]@{
+      schema='gg436-hosted-build-exit/v1'; command='pnpm.cmd build'; exitCode=$buildExit
+      checkout=$checkout; head=$head; tree=$tree; githubRunId=$env:GITHUB_RUN_ID; githubRunAttempt=$env:GITHUB_RUN_ATTEMPT
+      startedUtc=$beforeStart; exitedUtc=$ended; nodePath=$node; nodeVersion=$nodeVersion
+      nodeSha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $node).Hash.ToLowerInvariant()
+      beforeIndexSha256=$before; afterIndexSha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $index).Hash.ToLowerInvariant()
+    }
+    $receiptPath = Join-Path $control 'build-exit.json'
+    [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json -Depth 6)+[char]10,[Text.UTF8Encoding]::new($false))
+    Add-Content -LiteralPath $env:GITHUB_ENV -Value "QA436_CONTROL=$control"
+    if ($buildExit -ne 0) { exit $buildExit }
+    if ($receipt.beforeIndexSha256 -cne $receipt.afterIndexSha256 -or
+        (Read-Git @('rev-parse','HEAD')) -cne $head -or
+        (Read-Git @('status','--porcelain=v1','--untracked-files=all'))) { throw 'Build changed the bound source.' }
+
+# Existing native launcher acceptance remains outside the installer observer interval.
+- name: 'Admitted #436 hosted installer and process-start observation'
+  shell: pwsh
+  env:
+    QA436_PHASE: candidate
+    QA436_NAME: qa436-candidate-first
+    QA436_BASE_COMMIT: ROOT_VERIFIED_POST_435_MAIN
+    QA436_BASE_TREE: ROOT_VERIFIED_POST_435_TREE
+    QA436_PRODUCT_COMMIT: ROOT_REVIEWED_PRODUCT_COMMIT
+    QA436_PRODUCT_TREE: ROOT_REVIEWED_PRODUCT_TREE
+    QA436_PACKET: ROOT_APPROVED_RELATIVE_EXECUTION_PACKET_DIRECTORY
+    QA436_DRIVER: ROOT_APPROVED_RELATIVE_SEALED_DRIVER_DIRECTORY
+    QA436_PACKET_SHA: ROOT_VERIFIED_EXECUTION_MANIFEST_SHA256
+    QA436_CARRIER_FILES: '["EXACT_ADMITTED_RELATIVE_PATH_PER_CARRIER_CHANGE"]'
+    QA436_VALIDATOR_ARGUMENT: ROOT_VERIFIED_CANDIDATE_VALIDATOR_ARGUMENT
+  run: |
+    $ErrorActionPreference = 'Stop'
+    $env:GIT_OPTIONAL_LOCKS = '0'
+    $workspace = (Get-Item -LiteralPath $env:GITHUB_WORKSPACE).FullName
+    $packet = (Get-Item -LiteralPath (Join-Path $workspace $env:QA436_PACKET)).FullName
+    $driver = (Get-Item -LiteralPath (Join-Path $workspace $env:QA436_DRIVER)).FullName
+    $utf8 = [Text.UTF8Encoding]::new($false)
+    $requiredDriverSha = '92633a444b327c8d9128aec387119fc5e7570093feece51d2aa57f647fce1fba'
+    foreach ($item in @(@{path=$packet; digest=$env:QA436_PACKET_SHA}, @{path=$driver; digest=$requiredDriverSha})) {
+      $manifest = Join-Path $item.path 'SHA256SUMS.txt'
+      if ((Get-FileHash -Algorithm SHA256 -LiteralPath $manifest).Hash.ToLowerInvariant() -cne $item.digest) {
+        throw 'Reviewed manifest digest mismatch.'
+      }
+      foreach ($line in Get-Content -LiteralPath $manifest) {
+        if ($line -cnotmatch '^([a-f0-9]{64})  ([A-Za-z0-9_./-]+)$' -or
+            $Matches[2].StartsWith('/') -or $Matches[2].Contains('..')) { throw 'Unsafe manifest member.' }
+        $expected = $Matches[1]
+        $boundFile = Get-Item -LiteralPath (Join-Path $item.path $Matches[2]) -Force
+        if ($boundFile.PSIsContainer -or ($boundFile.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
+            (Get-FileHash -Algorithm SHA256 -LiteralPath $boundFile.FullName).Hash.ToLowerInvariant() -cne $expected) {
+          throw 'Reviewed fixture or carrier bytes differ.'
+        }
+      }
+    }
+    $receiptPath = Join-Path $env:QA436_CONTROL 'build-exit.json'
+    $build = Get-Content -Raw -LiteralPath $receiptPath | ConvertFrom-Json -AsHashtable
+    if ($build.exitCode -ne 0 -or $build.head -cne $env:GITHUB_SHA) { throw 'Build proof did not complete.' }
+    $knownChrome = @(
+      foreach ($programFiles in @([Environment]::GetFolderPath('ProgramFiles'), [Environment]::GetFolderPath('ProgramFilesX86'))) {
+        if ($programFiles) {
+          $application = Join-Path $programFiles 'Google\Chrome\Application'
+          $binary = Join-Path $application 'chrome.exe'
+          $proxy = Join-Path $application 'chrome_proxy.exe'
+          if ((Test-Path -LiteralPath $binary -PathType Leaf) -and (Test-Path -LiteralPath $proxy -PathType Leaf)) {
+            (Get-Item -LiteralPath $proxy).FullName
+          }
+        }
+      }
+    ) | Select-Object -Unique
+    if (@($knownChrome).Count -ne 1) { throw 'Expected one checked image Chrome proxy and adjacent browser.' }
+    $proxyPath = @($knownChrome)[0]
+    $powerShell = (Get-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe')).FullName
+    $compiler = (Get-Item -LiteralPath (Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe')).FullName
+    $decoder = (Get-Item -LiteralPath (Join-Path $env:SystemRoot 'System32\tracerpt.exe')).FullName
+    $admission = [ordered]@{
+      schema='gg436-hosted-admission/v1'; state='root-admitted'; phase=$env:QA436_PHASE
+      checkout=$workspace; expectedCommit=$build.head; expectedTree=$build.tree
+      baseCommit=$env:QA436_BASE_COMMIT; baseTree=$env:QA436_BASE_TREE
+      productCommit=$env:QA436_PRODUCT_COMMIT; productTree=$env:QA436_PRODUCT_TREE
+      githubRunId=$env:GITHUB_RUN_ID; githubRunAttempt=$env:GITHUB_RUN_ATTEMPT
+      evidenceName=$env:QA436_NAME; driverDirectory=$driver; driverManifestSha256=$requiredDriverSha
+      packetManifestSha256=$env:QA436_PACKET_SHA; carrierOnlyPaths=@(ConvertFrom-Json $env:QA436_CARRIER_FILES)
+      validatorArgument=if ($env:QA436_VALIDATOR_ARGUMENT) { $env:QA436_VALIDATOR_ARGUMENT }
+      buildReceipt=[ordered]@{path=$receiptPath; sha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $receiptPath).Hash.ToLowerInvariant()}
+      tools=[ordered]@{node=$build.nodePath; powershell=$powerShell; compiler=$compiler; tracerpt=$decoder; chromeProxy=$proxyPath
+        chrome=(Get-Item -LiteralPath (Join-Path (Split-Path -Parent $proxyPath) 'chrome.exe')).FullName}
+    }
+    $path = Join-Path $env:QA436_CONTROL 'admission.json'
+    [IO.File]::WriteAllText($path,($admission | ConvertTo-Json -Depth 10)+[char]10,$utf8)
+    $sha = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+    & $powerShell -NoLogo -NoProfile -NonInteractive -STA -File (Join-Path $packet 'supervise.ps1') -Admission $path -AdmissionSha256 $sha
+    exit $LASTEXITCODE
+- name: 'Retain #436 evidence'
+  if: always()
+  uses: actions/upload-artifact@v4
+  with:
+    name: qa436-candidate-first
+    path: |
+      ${{ runner.temp }}/qa436-candidate-first/evidence/
+      ${{ runner.temp }}/qa436-candidate-first-supervisor/
+      ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/
+    if-no-files-found: error

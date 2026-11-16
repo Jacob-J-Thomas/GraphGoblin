@@ -83,79 +83,54 @@ jobs:
       - name: 'Admitted #436 hosted installer and process-start observation'
         shell: pwsh
         env:
-          QA436_PHASE: baseline
-          QA436_NAME: qa436-baseline-bound
+          QA436_PHASE: candidate
+          QA436_NAME: qa436-candidate-first
           QA436_BASE_COMMIT: be633141be5a0cd2b4f960a46761fabbf2cb82c7
           QA436_BASE_TREE: decd1ca26c9bd63d942e939e65e2b2604d7f2652
-          QA436_PRODUCT_COMMIT: be633141be5a0cd2b4f960a46761fabbf2cb82c7
-          QA436_PRODUCT_TREE: decd1ca26c9bd63d942e939e65e2b2604d7f2652
-          QA436_PACKET: docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3
-          QA436_DRIVER: docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2
-          QA436_PACKET_SHA: b134339e89f697440e3884b771143db2538d26453791a5cfdea4f36488132495
+          QA436_PRODUCT_COMMIT: 1e303ba8c6c5b576c2ffe185fa67ac7e5734309f
+          QA436_PRODUCT_TREE: fa152a660493208314b02327e319e531bf4b8dd3
+          QA436_PACKET: docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution
+          QA436_DRIVER: docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native
+          QA436_PACKET_SHA: e47289e57831e65eb4b39569cc9e5305318a0ec6165e1a7b87f469e57132b177
           QA436_CARRIER_FILES: |-
             [
               ".github/workflows/ci.yml",
               "docs/qa/.gitattributes",
-              "docs/qa/2026-11-16-installer-validation-preparation/README.md",
-              "docs/qa/2026-11-16-installer-validation-preparation/bound-baseline-source-copy-map.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/com-probe-source-copy-map.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/corrected-baseline-source-copy-map.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/com-probe/PropertyStoreProbe.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/com-probe/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/com-probe/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/com-probe/carrier-steps.yml",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/com-probe/probe.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/com-probe/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/ProcessTrace.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/admission.example.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/bind.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/carrier-steps.example.yml",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/inventory/artifacts.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/inventory/common.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/observe.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/supervise.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/ProcessTrace.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/admission.example.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/bind.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/carrier-steps.example.yml",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/inventory/artifacts.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/inventory/common.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/observe.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/supervise.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/ProcessTrace.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/admission.example.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/bind.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/carrier-steps.example.yml",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/inventory/artifacts.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/inventory/common.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/observe.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/supervise.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2/invoke.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2/run.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2/version-fixture.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2/windows.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/invoke.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/run.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/version-fixture.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/windows.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/source-copy-map.json"
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/README.md",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/README.md.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/SHA256SUMS.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/coherence-readback.json",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/ProcessTrace.cs",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/README.md.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/SHA256SUMS.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/admission.example.json",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/bind.mjs",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/carrier-steps.example.yml",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/inventory/artifacts.mjs",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/inventory/common.mjs",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/observe.ps1",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/supervise.ps1",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/execution/syntax-readback.json",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/README.md.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/SHA256SUMS.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/invoke.ps1",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/run.ps1",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/syntax-readback.json",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/version-fixture.cs",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/native/windows.cs",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/budget/verify-coherence.py",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/HOSTED-SHA256SUMS.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/README.md.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/SHA256SUMS.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/carrier-steps.example.yml",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/installer-source-observed.ps1.txt",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/rollback-witness.ps1",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/source-observation.json",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/supervise-rollback.ps1",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/syntax-readback.json",
+              "docs/qa/2026-11-16-installer-validation-candidate-preparation/source-copy-map.json"
             ]
-          QA436_VALIDATOR_ARGUMENT: ''
+          QA436_VALIDATOR_ARGUMENT: '--validate-install'
         run: |
           $ErrorActionPreference = 'Stop'
           $env:GIT_OPTIONAL_LOCKS = '0'
@@ -217,7 +192,7 @@ jobs:
             'windows.cs'
           )
           $utf8 = [Text.UTF8Encoding]::new($false)
-          $requiredDriverSha = 'ea5250650dc7f7b7815dd88c20476c50931ef29ae93467da1169c930aab47c1a'
+          $requiredDriverSha = '92633a444b327c8d9128aec387119fc5e7570093feece51d2aa57f647fce1fba'
           foreach ($item in @(@{path=$packet; digest=$env:QA436_PACKET_SHA}, @{path=$driver; digest=$requiredDriverSha})) {
             $manifest = Join-Path $item.path 'SHA256SUMS.txt'
             if ((Get-FileHash -Algorithm SHA256 -LiteralPath $manifest).Hash.ToLowerInvariant() -cne $item.digest) {
@@ -276,13 +251,36 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qa436-baseline-bound
+          name: qa436-candidate-first
           path: |
-            ${{ runner.temp }}/qa436-baseline-bound/evidence/
-            ${{ runner.temp }}/qa436-baseline-bound-supervisor/
+            ${{ runner.temp }}/qa436-candidate-first/evidence/
+            ${{ runner.temp }}/qa436-candidate-first-supervisor/
             ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/build-exit.json
             ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/admission.json
           if-no-files-found: error
+      - name: 'Observe #436 Windows publication rollback'
+        id: qa436_rollback
+        shell: pwsh
+        timeout-minutes: 7
+        env:
+          QA436_ROLLBACK_PACKET: docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback
+          QA436_ROLLBACK_HOSTED_MANIFEST_SHA: 1b264ce75a482249ca72083926ab0cae977e36e2ea395d32685442105c238e11
+          QA436_ROLLBACK_INSTALLER_SHA: 2f5874d33465f8a614f08c79e2a5433e0980aad6f9674a226daeaf584f06af1b
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $packet = Join-Path $env:GITHUB_WORKSPACE $env:QA436_ROLLBACK_PACKET
+          $supervisor = Join-Path $packet 'supervise-rollback.ps1'
+          & $supervisor -HostedManifestSha256 $env:QA436_ROLLBACK_HOSTED_MANIFEST_SHA -InstallerSha256 $env:QA436_ROLLBACK_INSTALLER_SHA
+          exit $LASTEXITCODE
+
+      - name: 'Retain #436 rollback witness'
+        if: ${{ always() && (steps.qa436_rollback.outcome == 'success' || steps.qa436_rollback.outcome == 'failure' || steps.qa436_rollback.outcome == 'cancelled') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa436-rollback-first
+          path: ${{ runner.temp }}/qa436-rollback-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+          if-no-files-found: warn
+          retention-days: 7
   gates:
     name: Gates
     runs-on: ubuntu-latest
