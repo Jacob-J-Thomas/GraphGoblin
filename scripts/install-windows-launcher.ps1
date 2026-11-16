@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [string]$RepoPath = (Split-Path $PSScriptRoot -Parent),
-    [string]$NodePath = (Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source,
+    [string]$NodePath = (Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source),
     [string]$DataDir = $(if ($env:GG_DATA_DIR) { $env:GG_DATA_DIR } else { Join-Path $env:USERPROFILE '.graphgoblin' }),
     [ValidateRange(1, 65535)][int]$Port = 4747,
     [string]$PwaShortcut,

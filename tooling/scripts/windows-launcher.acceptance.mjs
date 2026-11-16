@@ -266,6 +266,25 @@ test(
       & $request.installer @options`,
         { installer, options: { ...options, ...overrides } },
       );
+    async function invokeWithNodeDiscovery(childPath, overrides = {}) {
+      const discoveredOptions = { ...options, ...overrides };
+      delete discoveredOptions.NodePath;
+      return runPowerShell(
+        `$ErrorActionPreference = 'Stop'
+      Set-StrictMode -Version Latest
+      $request = $env:GG_INSTALLER_FIXTURE | ConvertFrom-Json
+      $env:PATH = $request.childPath
+      $options = @{}
+      foreach ($property in $request.options.PSObject.Properties) { $options[$property.Name] = $property.Value }
+      if ($options.ContainsKey('Environment')) {
+        $settings = @{}
+        foreach ($property in $options.Environment.PSObject.Properties) { $settings[$property.Name] = $property.Value }
+        $options.Environment = $settings
+      }
+      & $request.installer @options`,
+        { installer, options: discoveredOptions, childPath },
+      );
+    }
     const sourceBefore = await readFile(source);
     await invoke();
     assert.deepEqual(await readFile(source), sourceBefore);
@@ -313,6 +332,38 @@ test(
       assert.deepEqual(await readdir(store), []);
       if (stagedOutput) await assert.rejects(lstat(stagedOutput), { code: 'ENOENT' });
     }
+    const noNodePath = [join(system, 'System32'), system].join(';');
+    await assert.rejects(invokeWithNodeDiscovery(noNodePath), (error) => {
+      assert.equal(error.code, 1);
+      assert.match(
+        error.stderr,
+        /Node was not found\. Install Node 22.*-NodePath.*run the installer again\./is,
+      );
+      assert.doesNotMatch(error.stderr, /PropertyNotFoundException|property.+Source|\.Source/i);
+      return true;
+    });
+    assert.deepEqual(await snapshot(), before);
+    assert.deepEqual(await readdir(store), []);
+
+    const discoveredInstall = join(base, 'discovered install');
+    const discoveredStore = join(base, 'discovered store');
+    await mkdir(discoveredStore);
+    const nodeAvailablePath = [dirname(process.execPath), join(system, 'System32'), system].join(
+      ';',
+    );
+    await invokeWithNodeDiscovery(nodeAvailablePath, {
+      DataDir: discoveredStore,
+      InstallDir: discoveredInstall,
+      NoShortcuts: true,
+      Port: port,
+    });
+    const discoveredExe = join(discoveredInstall, 'GraphGoblin.exe');
+    const discoveredConfig = JSON.parse(await readFile(discoveredExe + '.json', 'utf8'));
+    assert.equal(discoveredConfig.Node, await realpath(process.execPath));
+    assert.equal(discoveredConfig.Port, port);
+    assert.deepEqual(await readdir(discoveredStore), []);
+    assert.deepEqual(await readFile(source), sourceBefore);
+
     const drive = base.slice(0, 2);
     const driveRelativeConfig = `${drive}${relative(base, configPath)}`;
     const rootRelativeConfig = configPath.slice(2);

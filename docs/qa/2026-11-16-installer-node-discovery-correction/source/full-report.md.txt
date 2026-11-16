@@ -1,0 +1,21 @@
+# PR497 missing-Node discovery correction
+
+This packet records a bounded local correction on the `gg-20261115-runtime/GraphGoblin` worktree at base `596bbb654acab323e96c446d646eeccd5ffc9b07`. The change is limited to [`scripts/install-windows-launcher.ps1`](after/install-windows-launcher.ps1.txt) and [`tooling/scripts/windows-launcher.acceptance.mjs`](after/windows-launcher.acceptance.mjs.txt); the exact before/after snapshots and [diff](source-diff.patch) are retained. These edits are uncommitted and are not part of Actions run `43819015672`, which tested head `596bbb654acab323e96c446d646eeccd5ffc9b07`.
+
+## Change and focused evidence
+
+When `-NodePath` is omitted and `node.exe` is not on `PATH`, the parameter default now uses `Select-Object -ExpandProperty Source`. An empty discovery result passes to the existing `Get-InstallerNode` guard, which emits its missing-Node guidance, instead of dereferencing `.Source` under caller `Set-StrictMode -Version Latest`. Explicit `-NodePath` values continue through the existing validation path.
+
+The acceptance test now omits `NodePath` in both cases. With only the Windows system directories on the child `PATH`, it asserts exit code 1, the missing-Node guidance mentioning Node 22 and `-NodePath`, no `.Source`/`PropertyNotFoundStrict` error, an unchanged installed-file snapshot, and an empty store. The regex does not independently require the literal `22.22.2`; existing installer acceptance cases cover version-floor refusals. A positive default-discovery control exposes the known Node directory in the child `PATH`, then checks successful installation, the discovered executable path, and the valid PWA's existing port.
+
+- [Pre-fix regression output](focused-prefixed.log) failed because the original default raised `PropertyNotFoundStrict` on `.Source`; [exit receipt](focused-prefixed-exit.json).
+- [First post-fix attempt](focused-postfix.log) reached the positive control but was refused because its fixture used a different port from the app ID in the valid PWA shortcut. This was a test-fixture mismatch, not a product failure; [exit receipt](focused-postfix-exit.json).
+- After the positive fixture reused the PWA's valid port, the [focused PS5.1 group](focused-final.log) passed 1/1 with exit 0 under Node `v22.23.4`; [command and exit receipt](focused-final-exit.json). It exercises the real Windows PowerShell 5.1 installer path and the valid default-discovery control.
+
+The focused test ran before the documented formatting-only MJS edit. No test was rerun after formatting. Scoped ESLint passed; the initial Prettier check failed, then the MJS file was formatted and the final scoped Prettier check passed. Both initial and final `git diff --check` passed. See the [lint receipt](scoped-lint-exit.json), [initial format result](scoped-format-exit.json), [format write](scoped-format-write.log), [final format result](scoped-format-final-exit.json), and [diff checks](git-diff-check-final-exit.json).
+
+## Scope and current CI boundary
+
+Only the two listed files differ from the worktree base. No full build, coverage, or full repository gate was run for this correction. The concurrent carrier CI run remains separate evidence: at 07:09:55 UTC, Template image and Browser had succeeded, Gates remained in coverage, and the separately owned Windows launcher job had failed at its hosted installer step. Its detailed Windows evidence is outside this packet. None of those results include these uncommitted local edits. The candidate therefore still needs the root-owned source freeze and current-head workflow after incorporation.
+
+Exact source hashes and byte counts are recorded in [before](source-before.json) and [after](source-after.json) receipts; [`source-copy-map.json`](source-copy-map.json) maps the external snapshots to their checkout paths. [SHA256SUMS.txt](SHA256SUMS.txt) seals all packet files other than itself.
