@@ -263,9 +263,10 @@ struct LogDirectory: Sendable {
 
 func admissionDocument(path: String, identity: FileIdentity) throws -> String {
     guard identity.isCanonical else { throw FileRefusal.invalid }
+    // The consumer reads named fields. Foundation's sorted writer uses locale-sensitive collation.
     let document = try JSONSerialization.data(withJSONObject: [
         "version": 1, "root": path, "device": identity.device, "inode": identity.inode
-    ], options: [.sortedKeys, .withoutEscapingSlashes])
+    ], options: [.withoutEscapingSlashes])
     guard document.count <= 4_096, let text = String(data: document, encoding: .utf8) else {
         throw FileRefusal.invalid
     }
