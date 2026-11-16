@@ -1,0 +1,45 @@
+name: macOS 15 Darwin log capability
+
+on:
+  push:
+    branches: [codex/456-macos-logcap]
+    paths:
+      - .github/workflows/macos-logcap.yml
+      - .github/fixtures/macos-logcap/**
+
+permissions:
+  contents: read
+
+jobs:
+  darwin-logcap:
+    runs-on: macos-15
+    timeout-minutes: 6
+    steps:
+      - name: Initialize private evidence directory
+        shell: bash
+        run: |
+          umask 077
+          evidence="$RUNNER_TEMP/gg456-logcap-evidence"
+          mkdir -m 700 "$evidence"
+          printf 'ref=%s\nsha=%s\nrun=%s\nattempt=%s\nimageOS=%s\nimageVersion=%s\nrunnerOS=%s\nrunnerArch=%s\nrunnerEnvironment=%s\n' \
+            "$GITHUB_REF" "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" \
+            "${ImageOS-}" "${ImageVersion-}" "$RUNNER_OS" "$RUNNER_ARCH" "$RUNNER_ENVIRONMENT" \
+            > "$evidence/setup.txt"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.2'
+          architecture: arm64
+      - name: Admit and observe the sealed native fixture
+        run: node .github/fixtures/macos-logcap/stage-hosted.mjs
+      - name: Retain raw native evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: darwin-logcap-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/gg456-logcap-evidence/
+          retention-days: 7
+          if-no-files-found: error
