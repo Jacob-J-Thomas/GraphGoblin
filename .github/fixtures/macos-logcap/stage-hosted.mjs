@@ -180,10 +180,14 @@ try {
   const parent = join(home, '.gg456-logcap-ci-' + token);
   mkdirSync(parent, { mode: 0o700 });
   const env = { HOME: home, PATH: '/usr/bin:/bin:/usr/sbin:/sbin', LANG: 'en_US.UTF-8' };
-  const preflight = async (label, executable, args) => {
+  const preflight = async (label, executable, args, allowedStderr) => {
     const run = await capture(label, executable, args, { cwd: parent, env: { ...env, HOME: parent } });
     requireSuccess(run, label);
-    assert.equal(run.stderr.length, 0, label + ' stderr');
+    if (allowedStderr && run.stderr.length > 0) {
+      assert.match(run.stderr.toString('latin1'), allowedStderr, label + ' stderr');
+    } else {
+      assert.equal(run.stderr.length, 0, label + ' stderr');
+    }
     return text(run.stdout).trim();
   };
   privateDirectory(parent);
@@ -201,7 +205,8 @@ try {
   await preflight('sdk-version', '/usr/bin/xcrun', ['--sdk', 'macosx', '--show-sdk-version']);
   const swiftc = await preflight('swift-path', '/usr/bin/xcrun', ['--sdk', 'macosx', '--find', 'swiftc']);
   assert(sdk.startsWith('/') && swiftc.startsWith('/'), 'absolute selected SDK and Swift paths');
-  await preflight('swift-version', swiftc, ['--version']);
+  await preflight('swift-version', swiftc, ['--version'],
+    /^swift-driver version: [0-9]+(?:\.[0-9]+)+ ?(?:\r?\n)?$/u);
   const node = realpathSync(process.execPath);
   retain('runtime.json', json({ platform: process.platform, arch: process.arch, uid, versions: process.versions,
     node, sdk, physicalSdk: realpathSync(sdk), swiftc, physicalSwiftc: realpathSync(swiftc) }));
