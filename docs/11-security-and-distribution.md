@@ -69,6 +69,14 @@ As an engineering parameter, Windows publication uses six attempts with five del
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
+A gateway started by the Windows launcher keeps its private server log in the launcher folder,
+which must be a local NTFS folder accessible only to the operator, SYSTEM and Administrators.
+Retention is bounded to two 4 MiB gateway files and two 256 KiB launcher files. The gateway log
+keeps engine diagnostics such as run failure stacks; its HTTP access records carry only the
+method, route template and status, records of malformed requests only their status and Node's
+error code, and launcher messages and new startup records use fixed text with validated
+locations (ADR-0081).
+
 On Windows, ownership files also record the OS process creation identity (`windowsCreationTime`).
 A successfully observed different identity proves that a PID has been reused and permits the
 same guarded reclamation as a dead PID. Recovery guards are nonempty directories with immutable

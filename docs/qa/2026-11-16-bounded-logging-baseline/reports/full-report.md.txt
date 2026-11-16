@@ -1,0 +1,206 @@
+# #438 native baseline, corrected V3 attempt 3: full report
+
+**Verdict: BASELINE OBSERVED in native behavior.**
+
+- The suite invocation itself is **INCOMPLETE**: it exited 1 because of a single cleanup-only assertion, the known `Content.IE5` junction. The original exit 1 stands as history.
+- Root's separately admitted, nonrecursive junction continuation then reached `attested-retained`. I validated its evidence independently (§7).
+- This is not a whole-suite pass.
+
+**Scope and conventions:**
+- Author: actual Claude Code Opus 5.5 (`claude-opus-5-5`, xhigh). This is independent behavior QA and used zero formal scans.
+- One admitted invocation, run once and never retried. No candidate assessment, formal sign-off, owner acceptance or batch completion.
+- Paths are relative to the batch root `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch`. `E/` means `launcher-438-native-preparation-v3/attempts/baseline-attempt-3/evidence/`.
+- Detailed tables are in `detail-tables.md`: the timeline, all 25 process records, the identity proofs, the 31 samples and the controls matrix.
+
+## 1. Summary
+
+- **The V3 transport correction worked.** All 15 `native.cim` PowerShell 5.1 calls exited 0 with **0 bytes of stderr**. V2 had failed at this exact step on 616 B of progress CLIXML. The helper still asserts exit 0 and empty stderr.
+- **Every native behavior check ran and passed.** The driver reached all 31 observations. `result.json` has no `firstFailure` and no `bindingError`. The closing binding is byte-identical to the opening one (`b5f93cad…`).
+- **The baseline defect was observed.**
+  - The single `gateway.log` grew without limit: from 1,652 B to **8,660,042 B after 6,400 requests**, which exceeds `2 × 4 MiB = 8,388,608`.
+  - It kept one file id throughout, with zero rotations and no `gateway.log.1`. Final size: 8,668,765 B.
+  - The cold launcher had exited 0 before the held work and the pressure began. The gateway kept serving, and the held run then succeeded.
+- **Cleanup released every owned identity and port.**
+  - Three harness drains each returned 202, with the exact birth absent afterwards.
+  - Leases and reclaim guards were absent, and the held Script's birth was absent.
+  - Ports 63308, 63368 and 63412 were free.
+  - All 25 exit/close pairs were consistent, and the launcher-child census was empty.
+- **The sole cleanup error was the expected junction.** `confirmOwnedCleanup` rejected `disposable/profile/AppData/Local/Microsoft/Windows/INetCache/Content.IE5` at `windows.mjs:28`. As designed, the exclusive probe and the deletion did not run, and the tree was retained. Because of that one error, the driver, wrapper, PS7 and invoker all exited 1.
+
+## 2. Inputs confirmed before execution (`pre-execution-preflight.json`)
+
+| Input | Expected SHA-256 | Observed |
+|---|---|---|
+| V3 `SHA256SUMS.txt` | `514e46c9…c92f` | match; all 13 payloads verify |
+| `launcher-438-baseline-binding-02.json` | `85a77468…20de` | match (unchanged) |
+| `launcher-438-baseline-admission-03.json` | `65e8885e…9ea2` | match; `baseline-attempt-3` |
+| `launcher-438-baseline-invocation-correction-03.json` | `daa69b9c…44a1` | match |
+| `launcher-438-baseline-invoke-03.mjs` | `67eb71db…a71c` | match |
+| V3 `native.mjs` | `d365f69e…74d` | match; equals admission `nativeModuleSha256` |
+| helper controls `result.json` | `f0c63501…012a` | match; `status: passed` |
+| private fixture-root receipt | `d0f4f456…df52` | match |
+| V3 `launch.ps1` / PS7 7.6.9 `pwsh.exe` | `6c0ae205…4864` / `2a6769a3…2233` | match |
+
+- **readBound references.** All 13 bound references satisfy readBound semantics: realpath equals resolve, the entry is a file, nlink is 1 and the hash matches.
+- **Attempt unused.** No V3 `receipts/` or `attempts/` directory existed, and `launcher-438-baseline-invocation-03` was absent.
+- **Delta check (V3 against V2).** The only differences are:
+  - `native.mjs` line 106, which adds the `$ProgressPreference = 'SilentlyContinue';\n` prefix;
+  - `binding.mjs` lines 77 and 121, which hold the two V3 paths;
+  - the `nativeModuleSha256` in the example admission.
+  - `run.mjs`, `windows.mjs` and the other payloads are byte-identical.
+- **Shell.** Node v22.23.4 first on PATH, `NODE_OPTIONS` absent, `GIT_OPTIONAL_LOCKS=0`.
+- **Checkout.** Lock-free Git reads: HEAD and `origin/main` are `e21c24be…`, the tree is `d064706f…`, status has 0 lines and the index is `42f54132…`.
+- **Owner listener.** The owner's 4747 listener (PID 19500) was present before the run and left untouched.
+
+## 3. Exact execution
+
+```
+node C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-438-baseline-invoke-03.mjs
+```
+
+- **How it ran.** Once, from the frozen checkout, in a background shell. I monitored that same process until it finished (`invoke-console.txt`).
+- **Processes.** Start 10:24:17.372Z, with PS7 PID 32560 and runner node PID 26280.
+- **Driver window.** 10:24:18.215 → 10:25:18.321Z.
+- **Exits.** All recorded 1, and both raw streams are empty:
+  - wrapper exit 1 at 10:25:18.344Z, capture 0/0;
+  - PS7 exit and close 1 at 10:25:18.383/.384Z;
+  - invoker exit 1 at 10:25:18.423Z.
+- **Bounds.** Wall time ≈ 61 s, against the 25-minute bound. No timeout receipt exists.
+
+## 4. Native observations (harness-asserted unless marked)
+
+**Cold gateway.**
+- PID 28040, parent cold launcher 50532, birth FILETIME `134392982735994450`, port 63308, store-a.
+- `/healthz` identity `fc26b83e…e088` equals the canonical helper output; phase `running`.
+- The executable resolves to the bound Node 22.23.4. argv is `[node, <checkout>\apps/api/dist/main.js]`, with no extra arguments.
+- Both leases record the same pid and FILETIME, and the SQLite header is valid.
+- The proof was re-asserted deep-equal after pressure, after the warm and wrong-store launches, and twice inside `stop()`.
+
+**Invalid bearer.**
+- 401 `application/problem+json`, code `UNAUTHORIZED`.
+- Health was identical before and after.
+
+**Held work.**
+- Script PID 20988: parent = gateway 28040, executable = node.
+- After pressure:
+  - the run was still `running`;
+  - the Script CIM identity was deep-equal;
+  - the latest tail contained `request completed`.
+- On release the run reached `succeeded` (10:24:42.000Z).
+
+**Pressure and bytes.**
+
+| Item | Value |
+|---|---|
+| Requests | 6,400 (25 × 256, 12 workers) in about 2.0 s, against limits of 100,000 / 180,000 ms |
+| First per-file-cap breach | 4,504,015 B at 3,328 requests |
+| Peak | 8,660,042 B at 6,400 requests; the aggregate oracle fired and the loop broke |
+| Oracle result | `baselineWouldFailCandidateBytes: true`, `rotations: 0`, no unstable samples |
+| Post-refusal / restart / final sizes | 8,664,212 / 8,667,536 / 8,668,765 B |
+| Launcher log | 870 B |
+
+**Controls.**
+- Warm launcher 50840: exit 0, gateway unchanged.
+- Wrong-store launcher 53796:
+  - exit 1, 405 B of stderr: "Port 63308 belongs to an unrelated or differently configured service … No process was stopped.";
+  - store-b empty;
+  - a 434 B launcher-owned diagnostic.
+- Occupied port 63368, with an owned unrelated server:
+  - launcher 32220 exit 1;
+  - the server still answered 200 and store-port was empty;
+  - the server closed and the port was refused afterwards.
+- The unrelated canary is unchanged.
+
+**Drain, restart and shell.**
+- **Cold stop.** The tokened POST returned 202 and the listener closed. CIM for 28040 returned `{}`. Both leases, both `.reclaim` guards and the Script birth are absent.
+- **Clean restart.** Launcher 44400 exited 0. Gateway 43376 (same identity, born `134392982941278550`) passed the full proof and drained with 202.
+- **Ordinary shell.**
+  - A direct `node apps\api\dist\main.js` (PID 42676, parent = runner 26280, port 63412) passed the proof and drained with 202.
+  - It exited 0, and its stdout contains `GraphGoblin API listening`.
+  - The launcher-owned rows before and after the shell were deep-equal.
+
+**Independent log readback (after root's continuation; `log-readback.json`).**
+- `gateway.log` is 8,668,765 B and holds 12,866 parseable records:
+  - only from PIDs 28040 and 43376;
+  - 6,431 completed requests (200 ×6,426, 201 ×1, 202 ×3, 401 ×1);
+  - zero records carrying an authorization header;
+  - no ordinary-shell records.
+- `launcher.log` holds exactly the two refusal diagnostics (63308 and 63368).
+
+## 5. Process dispositions
+
+- All 25 harness-spawned children have matching exit and close codes, and none timed out:
+  - 3 identity runs;
+  - 5 launchers, with exit codes 0, 0, 1, 1, 0;
+  - 1 direct shell;
+  - 15 CIM queries;
+  - 1 census.
+- The product-spawned gateways and the Script have harness-asserted birth absence.
+- **Independent checks (not harness assertions):**
+  - 10:25:40Z: no recorded PID existed, the three owned ports had no listener, and 4747 was still the owner's 19500.
+  - 10:29:09Z: zero children of any recorded PID.
+  - 10:34:08Z: the same state again, after root's continuation.
+- **Qualification.** The `windows.mjs` launcher-child census (process 025) still emitted 616 B of progress-only CLIXML on stderr, with exit 0 and empty stdout. Those helpers did not receive the V3 prefix and do not assert stderr. "No rows" is therefore inferred from exit 0 plus empty stdout under `$ErrorActionPreference='Stop'`. My own censuses and root's agree.
+
+## 6. Original harness cleanup (`E/cleanup.json`, `f97af2ef…`)
+
+The file records:
+- 3 gateway exits and 3 free ports;
+- `childCensus.rows: []`, for parents 50532, 50840, 53796, 32220 and 44400;
+- exactly one error: an `AssertionError` whose message is the exact `Content.IE5` path, at `windows.mjs:28` → `confirmOwnedCleanup` → `run.mjs:577`;
+- `exclusive` and `disposableRemoved` are absent.
+
+While root's continuation was pending, I did not traverse, bypass, remove or open anything under the disposable tree.
+
+## 7. Root junction continuation (independently validated)
+
+- **Inputs.** `launcher-438-profile-cleanup-preparation/root-admission.json` (`61476436…`) differs from the proposal only in `state: root-admitted` and `behaviorReviewed: true`. Its pins match `continue.ps1` (`494917ab…`) and `Metadata.cs` (`f2fd8b74…`).
+- **Receipt.** `continuation-receipt.jsonl` (`c58e5dfb…`) shows the stages admitted, owned, before, pre-unlink and unlink-requested (`recursive: false`). The run ended in `attested-retained` at 10:32:31.837Z, and there is no `first-failure` stage.
+- **External result.** `launcher-438-baseline-03-root-cleanup.json` (`81def343…`, 10:32:45Z) has `cleanup-verified`, `originalDriverExit: 1`, `continuationExit: 0`, `disposableRetained`, `rawEvidenceUnchanged` and `targetUnchanged`.
+
+My independent checks (`continuation-check.json`, `continuation-diff.json`):
+- **Bound inputs.** All 17 bound inputs still hash to the admitted values. I had also recomputed them before root ran.
+- **Ownership.** Root's owned set (4 births, 5 launchers, 3 ports) matches my reading of the evidence. Absence held three times: no matching birth, no PID reuse, no launcher children, no listeners.
+- **Exclusive holds.** The SQLite DB, WAL and SHM files in store-a and store-shell (6 files) were held exclusively before and after the unlink, with identical ids and sizes.
+- **Inventory diff.** From 55 to 54 entries. The only differences are:
+  - the removed reparse entry `Content.IE5` (attributes 0x2416, id `AC86786A:0052000000015418`);
+  - the expected mtime change on its parent `INetCache` directory.
+- **Target.** `IE` and its `container.dat` (0 B) are unchanged. No reparse entry and no multi-link file remains, and no lock or reclaim file exists.
+- **State now.** `lstat(Content.IE5)` is ENOENT. `IE` is an ordinary directory, and the tree is retained.
+- **Result.** Cleanup is attested by root's continuation. The original harness verdict remains `incomplete`, with exit 1.
+
+## 8. Post-run state
+
+- **Checkout.** Unchanged: HEAD/main `e21c24be…`, tree `d064706f…`, status 0 lines, index `42f54132…`.
+- **V3 seal.** Still `514e46c9…`, and all 13 payloads verify.
+- **Prior evidence.** The V2 payloads verify. The V2 attempt-2 `first-failure`, `cleanup` and `result` files and the root drain result are unchanged.
+- **`baseline-attempt-3` is consumed.**
+- **Owner and scope.** I did not touch any owner install, store, profile, registry entry, credential or port 4747/4748. There was no Git or GitHub mutation, build, provider or agent.
+
+## 9. Evidence classes and limitations
+
+- **Native observations:** PIDs, births, argv, leases, HTTP statuses, byte sizes and file ids, and exit/close codes.
+- **Harness assertions:** the `run.mjs` checks that passed (`detail-tables.md` §E).
+- **Independent read-only checks:** my preflight, censuses, hashes, log parsing and continuation validation.
+- **Source assertions:** my reading of `run.mjs`, `windows.mjs`, `inventory.mjs` and `continue.ps1`. Baseline samples use `enforce=false`, so `safe` is true by construction.
+- **Controlled evidence:** root's helper controls. I read their receipt and did not re-run them.
+- **Unexecuted candidate cases:** `verifySanitized`, candidate diagnostics, `nativeFallback`, `legacy`, `sharedDestination`, rotations ≥ 3 and raw dumps. I make no claim about them.
+- **Inferences:**
+  - That the launcher exited before the work began rests on outcome-record mtimes.
+  - The empty census rows are inferred from exit 0 plus empty stdout.
+  - The continuation's process exit code 0 is root's statement. I corroborated it with the final receipt stage and the on-disk state.
+  - Origin of the WinINet/PowerShell profile folders (`INetCache`, `History.IE5`, `StartupProfileData-NonInteractive`): **not established**.
+
+## 10. Files in this directory (checksummed in `SHA256SUMS.txt`)
+
+- `full-report.md`, `detail-tables.md`
+- `pre-execution-preflight.json`, `pre-launch-census.json`
+- `invoke-console.txt`
+- `process-digest.json`
+- `post-run-census-1.json`, `post-run-children-census.txt`, `post-run-census-2.json`
+- `continuation-check.json`, `continuation-diff.json`
+- `log-readback.json`
+- `evidence-inventory.json` (every input, receipt, runtime, retained-tree and continuation file with size, nlink and SHA-256; `master.key` hashes omitted)
+- `qa-readonly-scripts/`
+
+The session harness's `launch.json`, `events.jsonl`, `latest.md` and any final `result.json`, `exit.json`, `stderr.log` and `provider-final-message.md` are not mine and are not in the manifest.

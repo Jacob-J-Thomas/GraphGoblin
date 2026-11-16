@@ -1,0 +1,131 @@
+# Final exact-head audit — issue #436 / PR #497
+
+**Verdict: SIGN-OFF.** I found no introduced, reachable, material in-scope blocker in the admitted patch. The current source satisfies the bounded installer-validation contract, with the evidence and limitations below. No product correction or third formal scan is requested by this audit.
+
+This is the mandatory fresh independent final audit, **formal scan 2 of the shared maximum of 3**. The preceding actual Claude Code Opus 5.5 xhigh scan was scan 1 and returned READY. Its complete original report and root dispositions were read, hash-verified and independently assessed, rather than treated as approval by themselves.
+
+## Exact identity and reviewer
+
+| Item | Audited value |
+| --- | --- |
+| Repository / PR | Jacob-J-Thomas/GraphGoblin / #497 |
+| Checkout | C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin |
+| Branch | codex/gg-20261116-installer-validation |
+| Final head | `2732dd34457bcd9a7007e89c3fa11fe085af764c` |
+| Actual target main | `be633141be5a0cd2b4f960a46761fabbf2cb82c7` |
+| Final tree | `d064706fb48def7bacac5e434f96825c5850d214` |
+| Tested synthetic merge | `80c581ebc95de2000c25ed2b5995d5a648fa95ba` |
+| Merge parents, in order | `be633141be5a0cd2b4f960a46761fabbf2cb82c7`, then `2732dd34457bcd9a7007e89c3fa11fe085af764c` |
+| Tested merge tree | `d064706fb48def7bacac5e434f96825c5850d214`, identical to head |
+| Corrected product | `a73b9a887c50f51d4fc4af54aa806fda42e31abf` |
+| Actual auditor dispatch | `gpt-6-astra`, reasoning effort `max`, fresh `fork_turns: none`, returned task `/root/audit_436_final` |
+
+The model/effort evidence is the successful collaboration dispatch recorded by root in `launcher-436-astra-dispatch-receipt.json`. The collaboration API exposes no additional provider runtime result payload; this report does not pretend to have independently inspected one. I was dispatched as the independent Astra max auditor, not as an implementation or QA worker.
+
+Local Git was clean on admission and after offline verification. The index digest did not change. Direct `git ls-remote` reads independently matched both remote refs; the merge-base is the admitted target. Live connector PR readbacks, including the readback at **2026-11-16 09:21:40 UTC**, showed the same head, target and synthetic merge, open, draft and unmerged. Saved live snapshots are included here. This verdict applies to these exact identities; root owns the final integration readback and any later change.
+
+## Contract and effective scope
+
+The public installer must validate every candidate, including `-NoShortcuts`, before publishing configuration or shortcuts; refuse physical source/output collisions; provide actionable supported-Node guidance; and leave refused existing artifacts intact. Its admitted transaction additionally stages on the destination volume and either restores verified originals after publication failure or retains uncertain recovery artifacts.
+
+Private `--validate-install` and `--stage-shortcut` argument paths must be fully qualified. Public PowerShell relative inputs retain their resolution behavior. Gateway lifecycle, helper timeouts, log retention, owner resources, stored formats and dependencies are outside this change.
+
+The effective target-to-head diff has 561 files: six active product/test/document files, the delivery register, `docs/qa/.gitattributes`, and 553 added evidence/preparation files across 20 packet directories. There are no other modified active paths. The ordinary CI workflow is byte-identical to target. All six worktree files match both the head Git blobs and corrected-product blobs, and match the frozen manifest's exact bytes and SHA-256 values. The manifest itself matches its admitted digest. The five production publisher declarations also match the frozen declaration hashes.
+
+The historical register entry's pending-gates and 0/3 statements are its publication checkpoint; they are not represented as current review status. The live PR/issue carry the subsequent CI and review state. The proposed final-CI packet is external and not part of the audited Git tree; it was validated separately as supporting evidence.
+
+## Independent source assessment
+
+### Preparation, paths and publication
+
+I read the complete installer, complete launcher source, the full added acceptance test and shared helpers, all three active document diffs and relevant surrounding guide/ADR context.
+
+The installer now performs runtime/build preflight, physical path and alias checks, staged compilation, PWA inspection, config construction, native validation and shortcut staging before entering publication. `-NoShortcuts` still constructs and natively validates the full configuration. Missing default Node discovery uses a null-safe projection; the earlier inherited-StrictMode failure is corrected.
+
+Physical comparisons seed both canonical-path and volume/file-ID sets with the source. Existing leaf aliases, hard links, duplicate destinations and nested source/output paths are rejected; missing leaves resolve through their nearest existing ancestor. The adjacent-config rule remains explicit after resolving an installation-directory junction. The source's identity and digest are rechecked before publication.
+
+These checks provide the accepted local Windows/NTFS behavior. They do not prove global uniqueness on ReFS, cloud-provider semantics, or immunity to arbitrary hostile concurrent filesystem replacement. No such expanded safety claim is made.
+
+### Transaction and recovery
+
+The publisher rereads each destination's canonical path and identity, plus its digest when present. It records an attempted entry before native I/O, which matters when a replacement partially progresses before throwing. Existing files use `File.Replace`; absent files use `File.Move`. A published destination must have the staged file's identity and digest.
+
+Recovery traverses attempted entries in reverse, including the failing entry. It preserves an unchanged original; restores a verified backup into an absent destination or over the verified staged replacement; and deletes a new destination only when it remains the verified staged file. Unknown or changed state yields `recovery-required`, retaining stages. The user messages distinguish no replaced files, verified restoration and uncertain recovery. Created parent directories can remain after refusal; the messages make no directory-rollback promise.
+
+I checked this reasoning against Microsoft's replacement semantics, including the backup-renamed partial-failure case, the replacement's resulting file ID, and the same-volume requirement. The implementation's per-output staging and recovery branches are consistent with those semantics. [Microsoft ReplaceFileW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew)
+
+Cleanup is limited to stages whose current directory identity, path and non-reparse classification still match the owned stage. It deletes top-level files and the directory without recursive traversal. The code deliberately retains uncertain recovery material. Successful stage-removal regression coverage remains the known R1 follow-up; I do not infer comprehensive cleanup proof from artifact snapshots alone.
+
+### Native private modes, diagnostics and resources
+
+The new private dispatch occurs before the ordinary launcher configuration/logging/mutex/gateway/PWA path. Exact arity/position checks reject malformed invocations. The fully-qualified predicate rejects drive-relative and current-drive-root-relative arguments. The staged shortcut contains the final executable, adjacent final config argument, working directory, icon and AppUserModelID; it never relies on a temporary target after publication.
+
+Known configuration failures use bounded fixed messages; unexpected serializer/file/COM exceptions use a fixed fallback. The public wrapper suppresses captured native details and supplies its own fixed actionable messages. The numeric Node version included in guidance is syntax-bounded before use.
+
+Installer child calls use argument quoting, asynchronous pipe reads and explicit 10/30/15-second Node/compiler/native deadlines, with bounded post-exit pipe waits. COM work is inside short-lived staged native invocations, with existing COM-release logic. This is not a generalized hostile-process tree or arbitrary-output memory limit, and I did not expand the contract to one. Existing gateway/helper behavior is unchanged.
+
+### Tests and documentation
+
+The new permanent actual Windows PowerShell 5.1 test exercises publication, final shortcut metadata, real hard-link refusal, preserved six-file snapshots, empty disposable stores, strict private-path diagnostics, path-echo canaries, and missing/available default Node discovery under StrictMode. The rejected private inputs use valid underlying fixtures, avoiding an unrelated missing-file false positive.
+
+Same-path `File.Replace`, pinned-output publication and composed rollback have exact-source external evidence, but the permanent test does not preserve all of those cases. R1 accurately records the future regression gap. The three active docs describe validation, aliases, `-NoShortcuts` and recovery guidance consistently. No contract/schema/ADR decision change or dependency addition is hidden in this patch.
+
+## CI and native evidence independently checked
+
+Live read-only GitHub calls returned the sole PR-triggered CI run **43829142179**, completed successfully, and all four successful jobs. Root-captured full run metadata binds attempt **1** to the admitted head. All four decoded job logs identify the exact synthetic merge above.
+
+| Gate | Accepted evidence |
+| --- | --- |
+| Gates, job 133169945076 | 32 steps, all successful. Independently summed 13 test-result groups: 9,619 passed / 41 skipped. |
+| Coverage | Reopened all 13 ZIP summaries, checked member hashes and recomputed floors: minimum lines 95.00%, branches 90.70%; all at least 90%. |
+| Browser, job 133169945528 | 481 passed / 1 declared live-provider skip; one worker, zero retries, hosted Linux Edge. |
+| Windows, job 133169945534 | 18 passed, zero failed/skipped, including the actual PS5.1 installer regression. |
+| Template image, job 133169945487 | All steps passed; four installed template catalogs loaded in the read-only, no-network smoke check. |
+
+The Gates log retains 8 low and 13 moderate dependency advisories and four warning-only dependency-graph findings. The configured gates passed; the result is not zero-advisory or zero-warning certification. Browser strict performance, screenshots and profiling modes were off. The Windows upload warned that no matching files existed; the live artifact API returned only coverage artifact **14208778425**, whose digest and 22,037-byte size match the retained ZIP. No nonexistent Windows archive is credited.
+
+I read the complete final-CI README and root receipt, verified all **18 source-copy mappings** and **20 packet seal rows**, and verified the receipt's cited file hashes. The original Opus report's 28-step sentence is a transcription error; the actual Gates denominator is **32**.
+
+For corrected hosted QA, I read the full original report, README, all 32 case outcomes, execution disposition, rollback readback and root acceptance. I reopened both ZIPs and verified **all 898 matrix plus 64 rollback members** against their inventories. I also verified all **136 file members** in the corrected private-CLI component archive.
+
+I performed two additional offline checks against the retained raw archives:
+
+- **Trace reconstruction:** independently rebuilt the driver's descendant family from chronological process births, active parent lifetimes and matching ends. It yields all **399** rooted lifetimes with an end before the closing canary. The derived set matches the supervisor only after reconstruction. All 49 direct child receipt triples plus the driver agree with native exit records and closed streams. PID/key reuse accounts for the historical 396-count discrepancy. The bounded interval contains no Chrome/proxy or gateway Node-main start.
+- **Rollback reconstruction:** verified four identical complete binding copies, the five production declaration hashes, actual PS5.1 seed/witness receipts, three ordered real replacements and a changed config, the subsequent **0x80070020** sharing failure while the handle remained open, production `restored`, and all **six** restored artifacts' bytes, native identities and link metadata.
+
+Those are fresh offline validations of retained native evidence, not new native runs. The matrix is PS7; the public seed, component regression and permanent regression provide their separately stated PS5.1 evidence. Rollback is a composed production publisher witness, not timed interruption of the entire public installer. The trace covers the matrix, not rollback. The retained PartitionInfo header-extension decode error 15005 remains a qualification; the classic process records and bracketing canaries decoded. The real Chrome image used a synthetic profile and prepared Shell Link; no browser-created PWA or owner UI acceptance follows.
+
+The earlier private-path failure, first hosted discovery failure, positive-fixture correction and both carrier Gates deadline failures remain preserved. I read their relevant reports/receipts and checked the retained packet seals. No failed carrier is counted as final CI success, and #471/#488 remain separate unresolved debt.
+
+## Review dispositions
+
+| Signature / item | Independent final disposition |
+| --- | --- |
+| R1 — permanent reinstall/pin/cleanup regression gap | **DEFER-ISSUE, #498.** Live issue is open and parked without a pickup gate. Exact-source current evidence covers reinstall/pin and composed rollback; the remaining concern is future regression protection, with no demonstrated current defect. |
+| U1 — all reparse attributes treated as links | **DEFER-ISSUE, #499**, accepted as a credible unverified P2 compatibility investigation, not dismissed. See analysis below. |
+| O1 — absent Windows CI artifact | **DUPLICATE-STALE, #496.** Live existing parked issue covers the same evidence-retention gap. Workflow bytes are unchanged; no new issue or implementation is needed here. |
+| Earlier private-path F1 and StrictMode discovery failure | Corrected before the frozen final product, with independent affected evidence and permanent controls. No new contrary evidence found. |
+| Component observations D1–D5 | NO-CHANGE dispositions remain supported: partial staging cannot publish on error; exact-token routing preserves the ordinary path; safe fallback is intentional; final config adjacency is enforced; both policies deliberately validate the same configuration. |
+
+**U1 is a real coverage boundary.** The source tests `FILE_ATTRIBUTE_REPARSE_POINT`, not a specific name-surrogate tag. Microsoft's cloud-file documentation distinguishes those concepts and says placeholder reparse points are exposed to system-root processes; Windows PowerShell 5.1 therefore provides a credible route to refusal. That conclusion is a source-and-documentation inference, not a native OneDrive observation. [Microsoft cloud-file compatibility](https://learn.microsoft.com/en-us/windows/win32/cfApi/build-a-cloud-file-sync-engine#compatibility-with-applications-that-use-reparse-points), [name-surrogate semantics](https://learn.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-isreparsetagnamesurrogate)
+
+I accept root's deferral because the admitted defect correction is validation and preservation, this concern is conservative refusal/possible retained staging rather than a demonstrated corrupting or unsafe publication path, ordinary local source/output paths remain available, and #499 carries concrete isolated-provider verification and documentation acceptance criteria. The live PR and issue explicitly retain the limitation. This does **not** establish cloud support, close U1, authorize an owner Desktop/provider probe, or authorize weakening identity checks.
+
+The Opus ReFS aside is not relied on: a digest match does not repair a nonunique filesystem identity assumption. Current native acceptance is limited to the recorded Windows/NTFS contexts. No ReFS behavior was exercised here.
+
+## Audit method, provenance and limits
+
+The audit used only read-only repository/Git/GitHub/source reads and small offline archive readers. Git ran with `GIT_OPTIONAL_LOCKS=0`; the selected project Node reports v22.23.4. No product/native suite, provider turn, other reviewer, service, installer, CI retry, owner port/store/Desktop, repository/index mutation or GitHub write was performed. All audit writes are in this new external directory.
+
+`offline-verification.json` records the mechanical checks. Across the 20 added packet directories, **18 root packet seals containing 444 rows** verified; the two preparation directories have no root `SHA256SUMS.txt`, which is explicitly recorded rather than called a seal pass. The archived 996-row source-seal acceptance is root's earlier receipt; my separate verification of all 962 ZIP members must not be relabeled as rerunning that entire source-packet seal. Earlier #435 evidence is treated as inherited immutable evidence, not independently re-reviewed product behavior.
+
+One first invocation of my offline rollback reader assumed a stream-close receipt also contained `exitCode`. It stopped with `KeyError`; the actual exit code is in the separate exit receipt. The initial reader and failure receipt are preserved, the assumption was corrected, and the offline check then passed. A separate long-command Windows write-limit failure occurred before a process was created; the same stored API results were saved through the file patch tool. Neither event is a product/native execution failure or native retry.
+
+Required instructions, exact source and human-inspected evidence are listed in `inspected-evidence.md`; hashed mechanically opened inputs are listed in `mechanical-evidence-inventory.json`. Live API snapshots, the three offline readers and their results are retained here. `SHA256SUMS.txt` seals this audit packet except itself.
+
+## Delivery boundary
+
+This signs off **PR #497 at head 2732dd34457bcd9a7007e89c3fa11fe085af764c against target be633141be5a0cd2b4f960a46761fabbf2cb82c7**, with tree d064706fb48def7bacac5e434f96825c5850d214 and tested merge 80c581ebc95de2000c25ed2b5995d5a648fa95ba.
+
+Root retains publication, integration, merge and issue-closure authority. Issue #436 may close after the remaining delivery actions and all gates are satisfied. Owner acceptance/closure on #276/#325 is untouched, held PR #460 remains held, and #438 followed by #456 retain their own implementation and verification gates. This audit declares neither owner acceptance nor overall four-intent batch completion.
+

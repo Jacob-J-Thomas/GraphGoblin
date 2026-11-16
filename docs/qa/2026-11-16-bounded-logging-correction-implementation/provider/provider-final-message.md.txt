@@ -1,0 +1,38 @@
+I've implemented all three corrections in the correction checkout, and the allowed checks pass. The focused API tests, the no-emit typecheck, lint and format checks were run; the C# changes have not been compiled and nothing native was run. HEAD is still `4dbb0dc1`, with uncommitted changes in 15 files. The diff hash `dd69ad2c…` matches the saved `source.diff`, and neither `docs/qa` nor `dist/` was created. No Git, index, GitHub, build, coverage, native, provider or process actions were taken.
+
+**Changed files:**
+- **API code:** `gateway-logger.ts`, `app.ts`, `serve.ts`, `windows-log/gateway-log-writer.ts`.
+- **API tests:** `gateway-logger.test.ts`, `serve.test.ts`, `windows-log/gateway-log-writer.test.ts`.
+- **Launcher:** `Launcher.cs` (message text and two comments only), `NativeChecks.cs`.
+- **Acceptance script:** `tooling/scripts/windows-launcher.acceptance.mjs`.
+- **Docs:** `docs/guide/07-troubleshooting.md`, ADR-0081, `docs/10`, `docs/11`, `CHANGELOG.md`.
+
+**1. Parser-error privacy.** In managed mode only, `serve()` now gives Fastify its own handler for errors that Node reports before a request exists.
+- **What it does:** it copies Fastify's default behaviour exactly: the 400/408/431 responses, the early return on a reset or already-closed socket, and closing the connection. The difference is the trace record, which now holds only `{ clientError: { statusCode, code } }`. `code` is included only if it looks like a Node error code (`^[A-Z][A-Z0-9_]{0,63}$`).
+- **What is unchanged:** Pino's error serializer, so the private engine error name, message and stack stay in the log; the configured log level; and Fastify's default handler in shell mode and `createTestApp`.
+- **First failure (unmodified code):** the managed log record held `err.message` and the whole 177-byte `rawPacket` as a list of numbers. Decoded, it contained all four canaries (path, query, bearer token, header).
+- **After the fix:** a real malformed packet and a header-overflow packet each get Fastify's exact 400 or 431 response bytes, and the connection closes. A normal `/healthz` request afterwards returns 200. The client-error records contain only the allowed fields. No key, string or decoded byte array in any record contains a canary.
+- **Control:** an app built the ordinary way still logs the raw packet at trace.
+- **Unit tests:** they cover the 408, ECONNRESET, closed-socket, unwritable-socket and rejected-code cases, and info level.
+- **Gap:** the 408 timeout is tested only with a fake socket.
+
+**2. Encoded-data cap.** A new synchronous `takeBatch()` takes the records off the queue and joins them into one buffer before any await, so the original record buffers are released immediately. `writeBatch()` now holds only that one buffer and returns as soon as the write settles. A failed write hands its rollback position back to `cycle()` instead of waiting on the rollback while still holding the bytes. `cycle()` now keeps only the next record's length across rotation. Ordering, one write in flight, per-record acknowledgements, drops, limits, rollback and backoff are unchanged.
+- **Test 1:** it reproduces the reviewer's example: records of 65,536, 65,437 and 100 bytes behind a held write. The record buffers are captured as weak references, the test waits one event-loop turn and forces a full garbage collection, then checks which buffers are still reachable. With the joined write held, the three record buffers are freed and only its own 131,073-byte buffer remains. The rest of the 256 KiB budget then fills exactly, and the next record is dropped.
+- **Test 2:** a short multi-record write is followed by a held rollback. Neither the records nor the write buffer are still reachable.
+- **Results:** on the old code both tests failed with `[true, true, true]`. On the new code both pass, and they passed in 5 of 5 repeated runs.
+- **Reasoning, not tested:** that this holds at every other await point (rotation, recreating a removed file) is argued from the source. The brief moment during the synchronous join, Pino's temporary strings and allocator overhead are outside the contract.
+- **Gap:** native throughput was not re-measured.
+
+**3. Destination conflict guidance.** The launcher message no longer names a holder. It now says another process holds the folder's log reservation or has `gateway.log` open and was not identified. It tells the operator to shut down a GraphGoblin gateway only if one is the holder, otherwise to close the program holding it, and to launch again once it is released. Return codes, ownership, process handles and lifetime are unchanged. The troubleshooting guide and ADR say the same thing.
+- **Checks added, not run:** `NativeChecks` now checks the text for both the child exit-70 case and the parent sharing-violation case. In the acceptance script, the live-gateway case and the non-gateway append-holder case now require the new sentence and reject the old wording.
+
+**Check results:** typecheck (no-emit), ESLint and Prettier on all authored files, and `node --check` on the acceptance script all exit 0. The final focused run has 58 passed and 1 skip, which is the existing symlink test that skips without symlink privilege. The writer test file also includes the existing PowerShell file-sharing test, and it passed.
+
+**Left for root:**
+- Compiling the C#, then running `NativeChecks` and the Windows acceptance script.
+- `tsc -b`, which builds `dist/`, so I didn't run it.
+- `main.test.ts`, which needs `dist/main.js`; it also covers unmanaged `serve()`, which I didn't run.
+- The guard and managed-root tests, which call icacls and PowerShell, and coverage.
+- Independent native QA: re-running the plain Node pipe holder (supplemental N-9) and a real legacy writer.
+
+Everything is in `C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-438-correction-implementation-02\`; open `README.md` first. The folder also holds `source.diff`, `logs/00…13` (first failures in 01 and 02), `commands.tsv`, `red-rawpacket-decoded.txt` and `SHA256SUMS.txt`.

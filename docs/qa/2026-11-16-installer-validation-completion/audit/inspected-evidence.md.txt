@@ -1,0 +1,67 @@
+# Actually inspected evidence — final audit of #436 / PR #497
+
+This inventory distinguishes semantic review from mechanical integrity validation. A file being hashed does not mean every line was manually read. No native/product test was executed in this audit.
+
+Roots:
+
+- Repository: `C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin`
+- External batch: `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch`
+- Audit output: `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/audit-436-astra-final`
+
+## Instructions and authority read
+
+- Repository `AGENTS.md`, `docs/README.md`, `docs/15-issue-workflow.md`: complete.
+- `docs/12-implementation-plan.md`: initial milestone/runtime context, first 85 lines; no claim to a full plan review.
+- `docs/delivery/2026-11-13-four-intents-register.md`: authority, gates and routing at lines 1–34; #435/#436 checkpoints at lines 376–400; heading/issue lookup for navigation.
+- `docs/decisions/ADR-0064-windows-desktop-launcher.md`: complete.
+- `C:/Users/98jak/.codex/skills/run-agentic-pr-pipeline/references/review-policy.md`: complete. This was the required bounded audit policy; no extra workflow or delegation was started.
+- Batch `launcher-436-astra-final-preparation.md`, `launcher-436-opus-formal-preparation.md`, `launcher-436-opus-formal-dispatch.md`: complete.
+- Batch `launcher-436-astra-dispatch-receipt.json`: complete, exact model/effort dispatch and API visibility boundary.
+- Historical memory registry `C:/Users/98jak/.codex/memories/MEMORY.md`: targeted search, lines 139–142 used only to reinforce the separate owner-acceptance/#460 boundary; current authority was re-established from live repository/dispatch. No historical acceptance result was used as current evidence.
+
+## Active source review
+
+- `scripts/install-windows-launcher.ps1`: complete final source, including path helper C#, child invocation, preparation, transaction, reverse recovery and cleanup; five exact declaration hashes recomputed offline.
+- `apps/windows-launcher/Launcher.cs`: complete final source plus target-to-head diff. Changed private dispatch/predicate/configuration-refusal paths were reviewed in surrounding startup, shell COM and relaunch context; unchanged gateway code was context, not a new lifecycle audit.
+- `tooling/scripts/windows-launcher.acceptance.mjs`: complete added test/diff plus shared imports/helpers through the added test. The unrelated remainder was not rereviewed as new code.
+- `docs/09-frontend-and-pwa.md`, `CHANGELOG.md`: complete active diffs.
+- `docs/guide/01-install-and-first-run.md`: complete active diff and Windows-launcher surroundings at lines 44–105.
+- `docs/qa/.gitattributes`: relevant added packet rules.
+- Six active files were verified against Git head, corrected product a73b9a887c50f51d4fc4af54aa806fda42e31abf and the frozen source manifest, byte-for-byte.
+
+## Preceding review and corrected QA read
+
+- Batch `review-436-opus-scan1/full-report.md`: complete original; SHA-256 a2db5fb598ba266008ddc55b9a4a9c7bf6d90ba8c69e92cacc0bc2765ec802be.
+- Batch `review-436-opus-scan1/root-dispositions.md`: complete; SHA-256 5d66ba7fd55a8d162f6d47450e8f853ef8d7e0f3b7674362c045539f1ea17f3f.
+- Batch `launcher-436-discovery-corrected-candidate-source.json`: complete; its admitted SHA-256 c1586347fc360764babc193ff85b39147a687fc8808d6aaf27669d8348913c40 was independently read back.
+- `docs/qa/2026-11-16-installer-validation-candidate-corrected/`: complete README, original full report, case TSV, execution disposition, rollback readback and provenance root receipt. Complete retained lifetime and rollback verifier sources were read. Both member inventories were mechanically checked against every ZIP member. Raw matrix XML/observer/receipt data and raw rollback receipts/state/bindings were independently revalidated by the new offline readers in this directory.
+- `docs/qa/2026-11-16-installer-validation-candidate-preparation/raw/rollback/rollback-witness.ps1`: the native admission checks and composed production delegate/failure/restoration seam, especially first 46 and lines 211–285; no claim to a fresh execution or complete harness audit.
+- `docs/qa/2026-11-16-installer-private-cli-corrected/`: complete README and original full report; complete archive file-member integrity validation.
+- `docs/qa/2026-11-16-installer-private-cli-first/root-triage.json`: complete; D1–D5 and F1 portions of the original report inspected.
+- Complete READMEs for `2026-11-16-installer-validation-baseline`, `2026-11-16-installer-validation-candidate-first-failure`, `2026-11-16-installer-node-discovery-correction`, `2026-11-16-installer-candidate-other-ci`, and `2026-11-16-installer-corrected-other-ci`.
+
+## CI and publication evidence
+
+- Batch `proposed/docs/qa/2026-11-16-installer-validation-final-ci/README.md`: complete. Its entire 18-file source-copy map and 20-row seal were verified.
+- Batch `launcher/436-final-ci-root-acceptance.json`: complete and all cited file digests checked; admitted SHA-256 97d4d2390ebe2cbf67f80f1317b21618e716ad612d6a1cba4d7bf057f32c8418.
+- Batch `launcher/436-final-ci/`: full structured run/jobs/coverage metadata parsed; all 13 coverage summaries reopened and recomputed. Decoded Gates/Browser/Windows/Template logs were searched and relevant checkout/runtime/test/gate/warning/result sections read. This is not a claim to manually reading every unrelated test line.
+- All 18 existing top-level packet seals across the 20 added directories verified, 444 rows total. The two preparation directories have no root seal and are explicitly recorded as such. Six active paths plus the effective 561-file change inventory were independently established with Git. No previous QA file is modified/deleted by this patch.
+- Git checks: status/branch/head/tree, merge-base, synthetic merge object and ordered parents, active-file Git blob comparisons, unchanged target workflow bytes, effective name-status diff, remote head/target reads, index digest before/after and final `git diff --check`.
+
+## Live read-only service evidence
+
+- GitHub connector: PR #497 metadata, exact-head workflow runs, four-job run status/steps, final artifact inventory, issue #436 and parked follow-ups #496/#498/#499. Saved snapshots are `live-*.json`. A final metadata read at 2026-11-16 09:21:40 UTC retained the same head/base/merge. A subsequent direct remote-ref read also matched.
+- Official Microsoft references: [cloud placeholder compatibility](https://learn.microsoft.com/en-us/windows/win32/cfApi/build-a-cloud-file-sync-engine#compatibility-with-applications-that-use-reparse-points), [name-surrogate tags](https://learn.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-isreparsetagnamesurrogate), and [ReplaceFileW](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew). Relevant compatibility and failure/identity semantics were read; these establish documentation evidence only.
+
+## Audit-produced evidence
+
+- `verify-offline.py` / `offline-verification.json`: integrity, identity, effective diff, seals, source copies, all corrected archive members, private archive members, coverage and raw test totals.
+- `mechanical-evidence-inventory.json`: path, byte count, SHA-256 and purpose for 511 inputs opened by that verifier. Additional semantic/raw ZIP reads are described above and in their dedicated scripts/results.
+- `verify-retained-lifetimes.py` / `retained-lifetime-verification.json`: independent chronological active-parent/birth reconstruction from retained XML, 399 lifetimes and 50 driver/direct exit matches.
+- `verify-retained-rollback.py` / `retained-rollback-verification.json`: four exact source/build bindings, five declarations, real prior native receipts and six restored artifacts.
+- `verify-retained-rollback.initial.py` / `offline-rollback-initial-failure.json`: preserved initial auditor-only receipt-schema assumption and correction; no native execution occurred.
+- `offline-write-fallback.json`: preserved Windows command-line transport limit when saving already-returned API snapshots; the file tool wrote the same captured results.
+- `final-readback.json`: final remote/local/index/required-artifact checks before sealing.
+- `finalize-audit.py`: exact final readback and all-file SHA-256 seal writer/verifier; it performs no repository or GitHub mutation.
+- `full-report.md`: full substantive verdict, findings/dispositions and limitations.
+- `SHA256SUMS.txt`: all audit files except itself.

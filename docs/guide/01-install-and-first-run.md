@@ -104,6 +104,19 @@ stopped the gateway while leaving the PWA open, use the desktop shortcut or the 
 **Open new window** action to invoke readiness again. Focusing a window does not supervise or
 restart a stopped/crashed backend.
 
+The launcher folder also holds the logs: the gateway's private server log `gateway.log` with one
+previous file `gateway.log.1` (4 MiB each), and the launcher's own `launcher.log` and
+`launcher.log.1` (256 KiB each). The folder must be private to your account, SYSTEM and
+Administrators on a local NTFS drive; the default folder under your profile normally is. Logs
+never fill the disk: older records roll off and records are dropped rather than slowing the
+gateway. Run failures keep their full private details there.
+
+Upgrading to this version is a coordinated cutover: shut down the running gateway deliberately,
+rebuild the checkout, then rerun the installer so the build and launcher change together. This
+launcher refuses to reuse a gateway started by an earlier build and refuses to start a second
+gateway while an earlier one still writes `gateway.log`. An oversized `gateway.log` left by an
+earlier version is cleared when the new gateway first starts.
+
 Repeated/concurrent clicks reuse one matching gateway. An older build with only plain health, an
 unrelated listener or a different configured store is refused with a diagnostic. Stop an older
 gateway through deliberate shutdown before the first launch of this version. Closing every

@@ -30,6 +30,8 @@ import { registerOllamaRoutes } from './routes/ollama.js';
 export interface BuildAppOptions {
   /** Fastify logger option; a pino instance for production, `false` in tests. */
   logger?: FastifyServerOptions['logger'] | FastifyBaseLogger;
+  /** Handler for errors on a connection before a request exists; Fastify's default if omitted. */
+  clientErrorHandler?: FastifyServerOptions['clientErrorHandler'];
 }
 
 export async function buildApp(
@@ -43,6 +45,7 @@ export async function buildApp(
     (typeof loggerOption === 'object' && !('child' in loggerOption))
       ? { logger: loggerOption ?? false }
       : { loggerInstance: loggerOption }),
+    ...(options.clientErrorHandler ? { clientErrorHandler: options.clientErrorHandler } : {}),
     bodyLimit: 8 * 1024 * 1024,
     trustProxy: false,
   });

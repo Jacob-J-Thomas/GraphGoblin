@@ -1,0 +1,768 @@
+--- v3/binding.mjs
++++ v4/binding.mjs
+@@ -52,10 +52,37 @@
+   assert(!Object.keys(process.env).some((key) => key.toUpperCase() === 'NODE_OPTIONS'));
+   const raw = await readBound({ path, sha256: digest }, batch);
+   const cfg = JSON.parse(raw.toString('utf8'));
+-  assert.equal(cfg.schema, 'gg438-native-admission/v1');
+-  assert(['baseline', 'candidate'].includes(cfg.mode));
+-  assert.match(cfg.attempt, /^(?:baseline|candidate)-attempt-[1-9][0-9]*$/u);
+-  assert(cfg.attempt.startsWith(cfg.mode + '-'));
++  assert.equal(cfg.schema, 'gg438-native-candidate-admission/v4');
++  assert.equal(cfg.mode, 'candidate');
++  assert.match(cfg.attempt, /^candidate-attempt-[1-9][0-9]*$/u);
++  assert.deepEqual(cfg.contract, {
++    path: under(batch, 'launcher-438-final-contract.md'),
++    sha256: 'a1a02313635d959a16dbfa26b770722c72bbe3e11bbc390ecd0e76d28a4cf474',
++  });
++  await readBound(cfg.contract, batch);
++  const baselineHelpers = {
++    'inventory.mjs': '8dcb53f991b13d815bd97bcae7046aa73a8d90efae20c491ec84b35935bb03d1',
++    'binding.mjs': 'd807d1f993f126684362f3764fd38987822ea793b0d735af47fb01beb38dd3fb',
++    'workload.mjs': '4419c0577ac7c0bc2a2d94986ca018c8c162065e8e0036c3b86520ede17acb8d',
++    'windows.mjs': 'f9cfdf993c15f7e53db1caf6837b29b3073c533804623fa08c77c6f5e3a20cd5',
++  };
++  const dependencies = Object.entries(baselineHelpers).map(([file, sha256]) => ({
++    path: under(batch, 'launcher-438-native-preparation-v3/' + file), sha256,
++  }));
++  assert.deepEqual(cfg.stdio, {
++    path: under(batch, 'launcher-438-stdio-preparation/ObserveStdio.compile-check.exe'),
++    sha256: '34a4a9aa27fee27e5670d3cd105669eb1662e3960e4b95916b664350b2867a91',
++  });
++  dependencies.push(cfg.contract, cfg.stdio,
++    { path: under(suite, 'controls.mjs'), sha256: cfg.controlsModuleSha256 },
++    { path: under(suite, 'run.mjs'), sha256: cfg.runnerSha256 },
++    { path: under(suite, 'binding.mjs'), sha256: cfg.bindingModuleSha256 });
++  for (const dependency of dependencies) await readBound(dependency, batch);
++  const helpers = {};
++  for (const file of ['inventory', 'workload', 'windows']) {
++    helpers[file] = await import(pathToFileURL(
++      under(batch, 'launcher-438-native-preparation-v3/' + file + '.mjs')).href);
++  }
+   const binding = JSON.parse((await readBound(cfg.binding, batch)).toString('utf8'));
+   assert.equal(binding.schema, 'gg438-native-source-build/v1');
+   assert.equal(binding.node.path, node);
+@@ -65,7 +92,7 @@
+   assert(commitPattern.test(binding.actualMain) && commitPattern.test(binding.actualMainTree));
+   assert(shaPattern.test(binding.indexSha256));
+   const worktreeRoot = await realpath(join(profile, '.codex', 'worktrees'));
+-  assert(isAbsolute(binding.checkout) && within(worktreeRoot, binding.checkout));
++  assert.equal(binding.checkout, under(worktreeRoot, 'gg-20261116-bounded-logs/GraphGoblin'));
+   assert.equal(await realpath(binding.checkout), binding.checkout);
+   assert(isAbsolute(binding.git.path));
+   await readBound(binding.git);
+@@ -74,13 +101,13 @@
+   await readBound(common, batch);
+   const { collectArtifacts } = await boundModule('runtime-410-build-preparation/artifacts.mjs',
+     cfg.artifactModuleSha256);
+-  const nativeLib = await boundModule('launcher-438-native-preparation-v3/native.mjs',
++  const nativeLib = await boundModule('launcher-438-candidate-qa-preparation/native.mjs',
+     cfg.nativeModuleSha256);
+-  return { cfg, binding, node, nativeLib, raw, path, digest, collectArtifacts, common };
++  return { cfg, binding, node, nativeLib, raw, path, digest, collectArtifacts, common, dependencies, ...helpers };
+ }
+ 
+ export async function verify(job) {
+-  const { cfg, binding, collectArtifacts } = job;
++  const { cfg, binding, collectArtifacts, dependencies } = job;
+   const git = (...args) => execFileSync(binding.git.path,
+     ['--no-optional-locks', '-c', 'core.fsmonitor=false', '-c', 'core.untrackedCache=false', ...args], {
+     encoding: 'utf8', cwd: binding.checkout, windowsHide: true, shell: false, timeout: 30_000,
+@@ -118,8 +145,8 @@
+   for (const ref of [binding.node, binding.git, binding.launcher, binding.buildReceipt,
+     binding.buildLog, binding.launcherBuildReceipt, cfg.binding, job.common,
+     { path: under(batch, 'runtime-410-build-preparation/artifacts.mjs'), sha256: cfg.artifactModuleSha256 },
+-    { path: under(batch, 'launcher-438-native-preparation-v3/native.mjs'), sha256: cfg.nativeModuleSha256 },
+-    { path: job.path, sha256: job.digest }]) {
++    { path: under(batch, 'launcher-438-candidate-qa-preparation/native.mjs'), sha256: cfg.nativeModuleSha256 },
++    ...dependencies, { path: job.path, sha256: job.digest }]) {
+     await readBound(ref, [binding.git, binding.node].includes(ref) ? undefined : batch);
+   }
+   for (const ref of [binding.buildExit, binding.launcherBuildExit]) {
+--- v3/native.mjs
++++ v4/native.mjs
+@@ -65,10 +65,17 @@
+       stderrBytes += chunk.length;
+       if (stderrBytes <= cap) stderr.push(chunk);
+     });
++    child.stdout.once('end', () => {
++      record.stdoutEnd = { at: new Date().toISOString(), bytes: stdoutBytes };
++    });
++    child.stderr.once('end', () => {
++      record.stderrEnd = { at: new Date().toISOString(), bytes: stderrBytes };
++    });
+     child.on('error', (error) => { record.spawnError = error; });
+-    child.once('exit', (code, signal) => { record.exit = { code, signal }; });
++    child.once('exit', (code, signal) => { record.exit = { code, signal }; record.exitAt = new Date().toISOString(); });
+     child.once('close', (code, signal) => {
+       record.close = { code, signal };
++      record.closeAt = new Date().toISOString();
+       closed.resolve();
+     });
+     if (input !== undefined) {
+@@ -86,8 +93,14 @@
+       }
+       throw error;
+     } finally {
+-      record.stdout = Buffer.concat(stdout).toString('utf8');
+-      record.stderr = Buffer.concat(stderr).toString('utf8');
++      const rawStdout = Buffer.concat(stdout);
++      const rawStderr = Buffer.concat(stderr);
++      record.stdout = rawStdout.toString('utf8');
++      record.stderr = rawStderr.toString('utf8');
++      await Promise.all([
++        writeFile(receiptPrefix + '-stdout.raw', rawStdout, { flag: 'wx' }),
++        writeFile(receiptPrefix + '-stderr.raw', rawStderr, { flag: 'wx' }),
++      ]);
+       record.stdoutBytes = stdoutBytes;
+       record.stderrBytes = stderrBytes;
+       await writeFile(receiptPrefix + '-outcome.json', JSON.stringify(record, (_key, value) =>
+--- v3/run.mjs
++++ v4/run.mjs
+@@ -1,49 +1,33 @@
+ import assert from 'node:assert/strict';
+-import { lstat, mkdir, open, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
++import { lstat, mkdir, open, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+ import { createServer } from 'node:http';
+ import { dirname, join } from 'node:path';
+ import { admit, describe, save, sha, suite, under, verify, within } from './binding.mjs';
+-import { fixtureLayout, gatewayCap, pinoRecords, sample, tail } from './inventory.mjs';
+-import { authCanary, healthy, invalidAuthorization, queryCanary, releaseWork, request, startWork,
+-  traffic, workState } from './workload.mjs';
+-import { confirmLauncherChildrenAbsent, confirmOwnedCleanup, withReadSharingDenial } from './windows.mjs';
++import { privateRootReadback, observeStdio, privateFailure } from './controls.mjs';
+ 
+ const [admission, digest, ...extra] = process.argv.slice(2);
+ assert.deepEqual(extra, []);
+ const job = await admit(admission, digest);
+ const { binding, cfg, node, nativeLib } = job;
+ const { bounded, createNative, observe, refused, selectPort } = nativeLib;
+-const candidate = cfg.mode === 'candidate';
++const { fixtureLayout, gatewayCap, pinoRecords, sample, tail } = job.inventory;
++const { authCanary, healthy, invalidAuthorization, queryCanary, releaseWork, request, startWork,
++  traffic, workState } = job.workload;
++const { confirmLauncherChildrenAbsent, confirmOwnedCleanup } = job.windows;
+ const limits = cfg.pressure;
+-for (const [key, minimum, maximum] of [
+-  ['requests', 4000, 125000], ['batch', 64, 1024], ['workers', 1, 24], ['milliseconds', 15000, 210000],
+-]) assert(Number.isInteger(limits[key]) && limits[key] >= minimum && limits[key] <= maximum, key);
++assert.deepEqual(limits, { requests: 100000, batch: 256, workers: 12, milliseconds: 180000 });
+ assert.equal(cfg.definitionFormat, 4, 'Recheck the authored fixture on a changed definition format');
+-assert.match(cfg.gatewayEntry, /^apps\/api\/dist\/[A-Za-z0-9_-]+\.js$/u);
+-assert(Array.isArray(cfg.gatewayArguments) && cfg.gatewayArguments.length <= 12);
+-if (!candidate) {
+-  assert.deepEqual(cfg.gatewayArguments, []);
+-  assert.equal(cfg.gatewayEntry, 'apps/api/dist/main.js');
+-  assert.deepEqual(cfg.launcherConfig, {});
+-  assert.deepEqual(cfg.gatewayEnvironment, {});
+-}
+-if (candidate) {
+-  assert(['tail', 'replace'].includes(cfg.legacyPolicy));
+-  const required = ['wrongStore', 'occupiedPort'];
+-  assert(typeof cfg.faults.sharedDestination === 'boolean');
+-  if (cfg.faults.sharedDestination) required.push('sharedDestination');
+-  if (cfg.faults.nativeFallback !== null) {
+-    assert.equal(cfg.faults.nativeFallback.kind, 'read-share-denies-write-delete');
+-    assert(['persists', 'drops'].includes(cfg.faults.nativeFallback.expected));
+-    required.push('fallbackOutcome');
+-    if (cfg.faults.nativeFallback.expected === 'persists') required.push('fallbackLog');
+-  }
+-  for (const key of required) {
+-    const names = cfg.diagnostics[key];
+-    assert(Array.isArray(names) && names.length > 0 && names.length <= 10);
+-    assert(names.every((text) => typeof text === 'string' && text.length > 0 && text.length <= 180));
+-  }
+-}
++assert.equal(cfg.gatewayEntry, 'apps/api/dist/main.js');
++assert.deepEqual(cfg.gatewayArguments, []);
++assert.deepEqual(cfg.launcherConfig, {});
++assert.deepEqual(cfg.gatewayEnvironment, {});
++assert.equal(cfg.legacyPolicy, 'replace');
++assert.deepEqual(cfg.logs, {
++  gateway: { directory: 'install', active: 'gateway.log', previous: 'gateway.log.1', temporary: [] },
++  launcher: { directory: 'install', active: 'launcher.log', previous: 'launcher.log.1', temporary: [] },
++  fallback: { directory: 'temp', active: 'launcher.log', previous: 'launcher.log.1', temporary: [] },
++});
++const foreignListener = 'belongs to an unrelated or differently configured service (or an older GraphGoblin build)';
+ const attempts = join(suite, 'attempts');
+ await mkdir(attempts, { recursive: true });
+ assert.equal(await realpath(attempts), attempts);
+@@ -73,7 +57,7 @@
+ const result = { mode: cfg.mode, startedAt: new Date().toISOString(), observations, processResults };
+ const cleanup = { gateways: [], ports: [], errors: [] };
+ const primaryConfigCanary = 'qa438-private-config-42d8050e';
+-const retainedCanaries = [primaryConfigCanary, authCanary, queryCanary];
++const accessCanaries = [primaryConfigCanary, authCanary, queryCanary];
+ let native;
+ let opening;
+ 
+@@ -84,52 +68,25 @@
+   return path;
+ }
+ 
+-async function checkedSample(label, { enforce = candidate } = {}) {
+-  const observed = await sample(roles, enforce, label, entries);
++async function checkedSample(label) {
++  const observed = await sample(roles, true, label, entries);
+   await put('inventory-' + (observations.length + 1).toString().padStart(4, '0') + '.json', observed);
+   observations.push(observed);
+-  if (!observed.unstable) assert(observed.safe, observed.violations.concat(observed.unexpected).join('; '));
++  if (!observed.unstable) {
++    assert(observed.safe, observed.violations.concat(observed.unexpected).join('; '));
++    assert(observed.rows.filter((row) => row.key === 'fallback').every((row) => row.id === undefined),
++      'Managed TEMP must stay absent');
++  }
+   return observed;
+ }
+ 
+-function productInput(value, tokens) {
+-  if (typeof value === 'string') {
+-    const expanded = value.replace(/%([A-Z]+)%/gu, (_, key) => {
+-      assert(Object.hasOwn(tokens, key), 'Unknown fixture token: ' + key);
+-      return tokens[key];
+-    });
+-    assert(!/[\0\r\n"]/u.test(expanded) && expanded.length <= 1000);
+-    return expanded;
+-  }
+-  assert(typeof value === 'boolean' || Number.isSafeInteger(value));
+-  return value;
+-}
+-
+-function extras(input, tokens, reserved = {}) {
+-  assert(input && typeof input === 'object' && !Array.isArray(input));
+-  return Object.fromEntries(Object.entries(input).map(([key, value]) => {
+-    assert(/^[A-Za-z][A-Za-z0-9_]*$/u.test(key) &&
+-      !/key|secret|token|credential|password|provider|codex|claude|ollama|proxy|defaults|db_url/iu.test(key));
+-    assert(!Object.keys(reserved).some((name) => name.toLowerCase() === key.toLowerCase()), key);
+-    return [key, productInput(value, tokens)];
+-  }));
+-}
+-
+-function configFor(data, port, shell = false) {
+-  const tokens = { INSTALL: install, TEMP: temp, DATA: data, DISPOSABLE: disposable };
+-  const safeConfig = {
++function configFor(data, port) {
++  return {
+     Repo: binding.checkout, Node: node, DataDir: data, Port: port,
+     LauncherAppUserModelId: 'GraphGoblin.QA438.Isolated', StartupTimeoutSeconds: 25, WindowTimeoutSeconds: 2,
+-  };
+-  const environment = { GG_LOG_LEVEL: 'info', GG_REQUIRE_API_KEY: 'false',
+-    GG_OLLAMA_ENABLED: 'false', GG_SWAGGER_UI: 'false' };
+-  const added = extras(shell ? {} : cfg.gatewayEnvironment, tokens, {
+-    ...environment, GG_HOST: true, GG_PORT: true, GG_DATA_DIR: true, GG_WEB_DIST: true, GG_GOBLIN_DIST: true,
+-  });
+-  assert(Object.entries(added).every(([key, value]) => key.startsWith('GG_') && typeof value === 'string'));
+-  return {
+-    ...safeConfig, ...extras(shell ? {} : cfg.launcherConfig, tokens, { ...safeConfig, Environment: true }),
+-    Environment: { ...environment, ...added },
++    Environment: {
++      GG_LOG_LEVEL: 'info', GG_REQUIRE_API_KEY: 'false', GG_OLLAMA_ENABLED: 'false', GG_SWAGGER_UI: 'false',
++    },
+   };
+ }
+ 
+@@ -145,8 +102,8 @@
+   throw new Error('Could not obtain a distinct fixture loopback port');
+ }
+ 
+-async function writeConfig(label, config) {
+-  const path = under(install, label + '.' + primaryConfigCanary + '.json');
++async function writeConfig(label, config, root = install) {
++  const path = under(root, label + '.' + primaryConfigCanary + '.json');
+   entries.add(path);
+   await save(path, config);
+   return path;
+@@ -159,8 +116,12 @@
+   if (current) current.nativeLabel = label;
+   const observed = await call;
+   processResults.push({ label, pid: observed.pid, code: observed.exit.code, stdoutBytes: observed.stdoutBytes,
+-    stderrBytes: observed.stderrBytes });
++    stderrBytes: observed.stderrBytes, exitAt: observed.exitAt, closeAt: observed.closeAt,
++    stdoutEnd: observed.stdoutEnd, stderrEnd: observed.stderrEnd });
+   assert.equal(observed.exit.code, expected, observed.stderr);
++  assert.equal(observed.stdoutEnd?.bytes, observed.stdoutBytes, 'Launcher stdout EOF missing');
++  assert.equal(observed.stderrEnd?.bytes, observed.stderrBytes, 'Launcher stderr EOF missing');
++  if (expected === 0) assert.deepEqual([observed.stdoutBytes, observed.stderrBytes], [0, 0]);
+   return observed;
+ }
+ 
+@@ -190,10 +151,8 @@
+   assert.equal(await realpath(proc.executable), node);
+   const argv = [...proc.commandLine.matchAll(/"([^"]*)"|([^"\s]+)/gu)].map((match) => match[1] ?? match[2]);
+   assert.equal(await realpath(argv[0]), node);
+-  assert.equal(await realpath(argv[1]), join(binding.checkout, current.direct ? 'apps/api/dist/main.js' : cfg.gatewayEntry));
+-  const tokens = { INSTALL: install, TEMP: temp, DATA: config.DataDir, DISPOSABLE: disposable };
+-  assert.deepEqual(argv.slice(2), current.direct ? [] : cfg.gatewayArguments.map((argument) =>
+-    productInput(argument, tokens)));
++  assert.equal(await realpath(argv[1]), join(binding.checkout, cfg.gatewayEntry));
++  assert.deepEqual(argv.slice(2), []);
+   const leases = [];
+   for (const name of lockNames) {
+     const file = join(config.DataDir, name);
+@@ -273,7 +232,7 @@
+ async function shellControl() {
+   const label = 'ordinary-shell';
+   const port = await choosePort();
+-  const config = configFor(stores[3], port, true);
++  const config = configFor(stores[3], port);
+   const expected = await fingerprint(config, label);
+   const current = { label, config, expected, direct: true, nativeLabel: label };
+   const before = await checkedSample('before-shell');
+@@ -299,14 +258,19 @@
+ async function sustained(current) {
+   const first = await checkedSample('before-pressure');
+   assert(!first.unstable);
+-  const readiness = await tail(gatewayActive);
+-  assert(readiness.includes('GraphGoblin API listening'), 'No startup record reached the real file');
++  const readiness = await observe('completed startup log', async () => {
++    const bytes = await tail(gatewayActive);
++    return pinoRecords(bytes).some((entry) => entry.msg === 'GraphGoblin API listening') ? bytes : false;
++  }, 5000);
+   await writeFile(join(evidence, 'initial-gateway.tail'), readiness, { flag: 'wx' });
+   await traffic(current.config.Port, current.proof.health, 1, 1, 0);
+-  const firstAccess = await tail(gatewayActive);
+-  assert(pinoRecords(firstAccess).some((value) => value.msg === 'request completed'));
++  const firstAccess = await observe('completed projected access log', async () => {
++    const bytes = await tail(gatewayActive);
++    return pinoRecords(bytes).some((entry) => entry.msg === 'request completed' &&
++      entry.res?.route === '/healthz') ? bytes : false;
++  }, 5000);
+   await writeFile(join(evidence, 'first-access.tail'), firstAccess, { flag: 'wx' });
+-  if (candidate) await verifySanitized(firstAccess, current.config.DataDir);
++  verifyAccess(firstAccess, current.config.DataDir);
+   await authorizationControl(current);
+   const held = await startWork({ port: current.config.Port, directory: workdir, node,
+     definitionFormat: cfg.definitionFormat, observe }, (state) => { current.work = state; });
+@@ -314,10 +278,14 @@
+   assert.equal(held.scriptIdentity.parentPid, current.proof.health.pid);
+   assert.equal(await realpath(held.scriptIdentity.executable), node);
+   await put('work-held.json', held);
+-  let rotations = 0;
+-  let previous = first;
++  const rotations = [];
++  const pressureStart = await checkedSample('pressure-origin');
++  assert(!pressureStart.unstable);
++  let previous = pressureStart;
++  let calibration = null;
+   let sent = 0;
+-  const deadline = performance.now() + limits.milliseconds;
++  const startMs = performance.now();
++  const deadline = startMs + limits.milliseconds;
+   while (sent < limits.requests && performance.now() < deadline) {
+     const count = Math.min(limits.batch, limits.requests - sent);
+     await traffic(current.config.Port, current.proof.health, count, limits.workers, sent);
+@@ -328,23 +296,34 @@
+     const oldCurrent = slot(previous, 'active');
+     const newCurrent = slot(sample, 'active');
+     const history = slot(sample, 'previous');
+-    if (oldCurrent.id && newCurrent.id && history.id &&
+-      (oldCurrent.id !== newCurrent.id || oldCurrent.bytes > newCurrent.bytes)) rotations++;
++    if (!calibration && sent >= 2048 && newCurrent.id === slot(pressureStart, 'active').id) {
++      const bytes = newCurrent.bytes - slot(pressureStart, 'active').bytes;
++      const estimatedRequests = bytes > 0 ? Math.ceil(sent * (3 * gatewayCap / bytes)) : null;
++      calibration = { sent, observedBytes: bytes, estimatedRequests, elapsedMs: performance.now() - startMs };
++    }
++    if (oldCurrent.id && newCurrent.id && oldCurrent.id !== newCurrent.id &&
++        history.id === oldCurrent.id) {
++      rotations.push({ previous: previous.label, next: sample.label, closedId: oldCurrent.id,
++        newActiveId: newCurrent.id, retainedBytes: history.bytes });
++    }
+     previous = sample;
+-    if (candidate ? rotations >= 3 : sample.gateway > 2 * gatewayCap) break;
+-  }
+-  const pressure = { sent, rotations, last: previous, baselineWouldFailCandidateBytes: previous.violations.length > 0 };
++    if (rotations.length >= 3) break;
++  }
++  const elapsedMs = performance.now() - startMs;
++  const pressure = { sent, elapsedMs, rotations, calibration,
++    calibrationLimitation: 'Early file growth can include earlier pending bytes and omit bytes still pending or dropped.',
++    last: previous };
+   await put('pressure-summary.json', pressure);
+-  if (candidate) assert(rotations >= 3, 'Workload did not observe three rotations');
+-  else assert(previous.gateway > 2 * gatewayCap && pressure.baselineWouldFailCandidateBytes,
+-    'Insufficient old-writer pressure or ineffective negative oracle');
++  assert(sent <= limits.requests, 'Workload exceeded the fixed request budget');
++  assert(elapsedMs <= limits.milliseconds, 'Workload exceeded the fixed elapsed budget');
++  assert(rotations.length >= 3, 'Workload did not observe three active-to-previous identity moves');
+   assert.equal((await workState(current.config.Port, held)).status, 'running');
+   assert.deepEqual(await native.cim(held.scriptPid), held.scriptIdentity);
+   assert.deepEqual(await gatewayProof(current), current.proof);
+   const latest = await tail(gatewayActive);
+   await writeFile(join(evidence, 'latest-gateway.tail'), latest, { flag: 'wx' });
+   assert(pinoRecords(latest).some((value) => value.msg === 'request completed'), 'Recent request record missing');
+-  if (candidate) await verifySanitized(latest, current.config.DataDir);
++  verifyAccess(latest, current.config.DataDir);
+   await releaseWork(held);
+   await observe('held run succeeds after rotation', async () =>
+     (await workState(current.config.Port, held)).status === 'succeeded', 15_000);
+@@ -365,7 +344,7 @@
+     authorizationCanaryPresentInCapturedTail: bytes.includes(authCanary),
+     completed401RecordInCapturedTail: pinoRecords(bytes).some((value) =>
+       value.msg === 'request completed' && value.res?.statusCode === 401),
+-    interpretation: 'A negative header match is limited to captured bytes. The inspected baseline Fastify request serializer omits Authorization.',
++    interpretation: 'A negative header match is limited to captured access records. The reached-serializer supplement covers its exact input.',
+   };
+   await put('invalid-authorization-observation.json', observed);
+   assert.deepEqual(before, current.proof.health);
+@@ -373,23 +352,49 @@
+   assert.match(denied.contentType ?? '', /^application\/problem\+json\b/u);
+   assert.equal(JSON.parse(denied.body).code, 'UNAUTHORIZED');
+   assert.deepEqual(after, current.proof.health);
+-  if (candidate) await verifySanitized(bytes, current.config.DataDir);
+-}
+-
+-async function verifySanitized(bytes, store) {
+-  for (const text of [...retainedCanaries, store, store.replaceAll('\\', '\\\\')]) {
+-    assert(!bytes.includes(text), 'Canary escaped to a recorded diagnostic destination');
+-  }
+-}
+-
+-function requireText(output, expected, label) {
+-  assert(expected.every((part) => output.includes(part)), 'Missing bound diagnostic for ' + label);
++  verifyAccess(bytes, current.config.DataDir);
++}
++
++function verifyAccess(bytes, store) {
++  const records = pinoRecords(bytes).filter((row) =>
++    row.msg === 'incoming request' || row.msg === 'request completed');
++  assert(records.length > 0, 'No reached access record was retained');
++  for (const row of records) {
++    const isRequest = row.msg === 'incoming request';
++    const projection = isRequest ? row.req : row.res;
++    assert(projection && typeof projection === 'object');
++    assert(Object.keys(projection).every((field) =>
++      (isRequest ? ['method', 'route'] : ['method', 'route', 'statusCode']).includes(field)));
++    const raw = JSON.stringify(row);
++    for (const value of [...accessCanaries, store, store.replaceAll('\\', '\\\\')]) {
++      assert(!raw.includes(value), 'Canary escaped to a reached access record');
++    }
++  }
++}
++
++function verifyLauncher(output, diagnostic, config) {
++  assert(output.stderr.includes(foreignListener));
++  assert(output.stderr.includes('Configuration: ' + config));
++  const record = pinoRecords(diagnostic).at(-1);
++  assert.deepEqual([record.stage, record.code, record.config], ['gateway', 'foreign-listener', config]);
++  assert.equal(record.childExit, undefined);
++  for (const value of [record.config, record.logFolder, record.lock].filter(Boolean)) {
++    assert(value.length <= 260 && !/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(value));
++  }
++  for (const value of [authCanary, queryCanary]) {
++    assert(!output.stderr.includes(value) && !JSON.stringify(record).includes(value));
++  }
+ }
+ 
+ async function nativeControls(current, file) {
+   const warm = await launch('warm', file, 0);
+   assert.notEqual(warm.pid, current.proof.health.pid);
+   assert.deepEqual(await gatewayProof(current), current.proof);
++  const other = await directory(join(disposable, 'other-config'));
++  const otherConfig = await writeConfig('warm-other-root', current.config, other);
++  await launch('warm-other-root', otherConfig, 0);
++  assert.deepEqual(await gatewayProof(current), current.proof);
++  assert.deepEqual(await readdir(other), [otherConfig.slice(other.length + 1)]);
+   const wrong = await writeConfig('wrong-store', configFor(stores[1], current.config.Port));
+   const refused = await launch('wrong-store', wrong, 1);
+   assert.deepEqual(await gatewayProof(current), current.proof);
+@@ -397,10 +402,7 @@
+   const diagnostic = await tail(launcherActive, 256 * 1024);
+   assert(diagnostic.length > 0, 'No launcher-owned diagnostic for actual refusal');
+   await writeFile(join(evidence, 'launcher-diagnostic.tail'), diagnostic, { flag: 'wx' });
+-  if (candidate) {
+-    requireText(refused.stderr, cfg.diagnostics.wrongStore, 'wrong store');
+-    await verifySanitized(Buffer.concat([diagnostic, Buffer.from(refused.stderr)]), current.config.DataDir);
+-  }
++  verifyLauncher(refused, diagnostic, wrong);
+   const server = createServer((_, reply) => {
+     reply.writeHead(200, { 'content-type': 'application/json' });
+     reply.end('{"status":"ok"}');
+@@ -415,10 +417,7 @@
+     const response = await launch('occupied-port', foreign, 1);
+     assert.equal((await request(port, '/healthz')).status, 200);
+     assert.deepEqual(await readdir(stores[2]), []);
+-    if (candidate) {
+-      requireText(response.stderr, cfg.diagnostics.occupiedPort, 'occupied port');
+-      await verifySanitized(Buffer.from(response.stderr), stores[2]);
+-    }
++    verifyLauncher(response, await tail(launcherActive, 256 * 1024), foreign);
+   } finally {
+     if (server.listening) {
+       server.closeAllConnections();
+@@ -429,52 +428,6 @@
+   assert(await nativeLib.refused(port));
+   await checkedSample('post-refusals');
+   assert.equal(await readFile(unrelated, 'utf8'), canary);
+-  if (candidate && cfg.faults.sharedDestination) {
+-    const otherPort = await choosePort();
+-    const other = await writeConfig('shared-root', configFor(stores[1], otherPort));
+-    const contention = await launch('shared-root', other, 1);
+-    requireText(contention.stderr, cfg.diagnostics.sharedDestination, 'shared gateway log destination');
+-    await verifySanitized(Buffer.from(contention.stderr), stores[1]);
+-    assert(await nativeLib.refused(otherPort));
+-    assert.deepEqual(await gatewayProof(current), current.proof);
+-    assert.deepEqual(await readdir(stores[1]), []);
+-    await checkedSample('shared-destination-refused');
+-  }
+-}
+-
+-async function nativeFallback(port) {
+-  const fault = cfg.faults.nativeFallback;
+-  if (fault === null) return;
+-  assert.equal(fault.kind, 'read-share-denies-write-delete');
+-  assert(['persists', 'drops'].includes(fault.expected));
+-  const fallback = roles.find((slot) => slot.key === 'fallback' && slot.role === 'active');
+-  const marker = under(workdir, 'primary-denial-ready');
+-  const release = under(workdir, 'primary-denial-release');
+-  const malformed = await writeConfig('fallback-invalid-config', []);
+-  const before = await checkedSample('before-primary-denial');
+-  const oldPrimary = await tail(launcherActive);
+-  const oldFallback = await tail(fallback.file);
+-  assert(oldPrimary.length > 0 && !before.unstable);
+-  const outcome = await withReadSharingDenial(native, evidence, launcherActive, marker, release, observe,
+-    async () => {
+-      const refusal = await launch('primary-diagnostic-unwritable', malformed, 1);
+-      const onFault = await checkedSample('primary-denied');
+-      assert(!onFault.unstable);
+-      assert.deepEqual(await tail(launcherActive), oldPrimary);
+-      assert(await refused(port), 'Invalid configuration unexpectedly started a gateway');
+-      requireText(refusal.stderr, cfg.diagnostics.fallbackOutcome, 'launcher fallback');
+-      const replacement = await tail(fallback.file);
+-      if (fault.expected === 'persists') {
+-        assert.notDeepEqual(replacement, oldFallback);
+-        requireText(replacement.toString('utf8'), cfg.diagnostics.fallbackLog, 'managed TEMP diagnostic');
+-      } else assert.deepEqual(replacement, oldFallback);
+-      await verifySanitized(Buffer.concat([replacement, Buffer.from(refusal.stderr)]), stores[0]);
+-      return { expected: fault.expected, before, onFault };
+-    });
+-  const restored = await launch('primary-diagnostic-restored', malformed, 1);
+-  requireText(restored.stderr, cfg.diagnostics.fallbackOutcome, 'restored launcher diagnostic');
+-  assert.notDeepEqual(await tail(launcherActive), oldPrimary);
+-  await put('native-fallback.json', { ...outcome, after: await checkedSample('primary-restored') });
+ }
+ 
+ async function legacy(config, file) {
+@@ -487,12 +440,17 @@
+   await writeFile(gatewayActive, padding);
+   await put('legacy-seed.json', { bytes: padding.length, sha256: sha(padding), marker });
+   const restarted = await boot(config, file, 'legacy-restart');
++  const gatewaySlots = roles.filter((slot) => slot.key === 'gateway');
++  const logs = await observe('completed legacy restart startup log for the serving PID', async () => {
++    const slotBytes = await Promise.all(gatewaySlots.map((slot) => tail(slot.file)));
++    const found = slotBytes.some((bytes) => pinoRecords(bytes).some((entry) =>
++      entry.pid === restarted.proof.health.pid && entry.msg === 'GraphGoblin API listening'));
++    return found ? Buffer.concat(slotBytes) : false;
++  }, 5000);
+   const during = await checkedSample('legacy-after-readiness');
+   assert(!during.unstable);
+-  const logs = Buffer.concat(await Promise.all(roles.filter((slot) => slot.key === 'gateway')
+-    .map((slot) => tail(slot.file))));
+-  assert(logs.includes('GraphGoblin API listening'));
+-  assert.equal(logs.includes(marker), cfg.legacyPolicy === 'tail');
++  await writeFile(join(evidence, 'legacy-restart-gateway.tail'), logs, { flag: 'wx' });
++  assert(!logs.includes(marker), 'Oversized stopped history was retained');
+   await stop(restarted);
+ }
+ 
+@@ -508,31 +466,39 @@
+   native.envForProduct = { ...native.env, PATH: dirname(node) + ';' + native.env.PATH,
+     TEMP: temp, TMP: temp, USERPROFILE: profile, APPDATA: await directory(join(profile, 'Roaming')),
+     LOCALAPPDATA: await directory(join(profile, 'Local')) };
++  await put('install-privacy.json', await privateRootReadback(native, install));
+   const port = await choosePort();
+   const config = configFor(stores[0], port);
+   const file = await writeConfig('primary', config);
+   const primary = await boot(config, file, 'cold');
++  await put('gateway-stdio.json', await observeStdio(native, evidence, cfg.stdio.path, node, primary.proof));
++  assert.deepEqual(await gatewayProof(primary), primary.proof);
+   await sustained(primary);
++  await privateFailure({ port, pid: primary.proof.health.pid, request, observe, put, tail, pinoRecords,
++    files: roles.filter((slot) => slot.key === 'gateway').map((slot) => slot.file) });
+   await nativeControls(primary, file);
+   await stop(primary);
+-  if (candidate) {
+-    await nativeFallback(port);
+-    await legacy(config, file);
+-  }
++  await legacy(config, file);
+   const restarted = await boot(config, file, 'clean-restart');
+   await checkedSample('clean-restart');
+   await stop(restarted);
+   await shellControl();
+   const final = await checkedSample('final-managed-files');
+   assert(!final.unstable);
+-  if (candidate) {
+-    for (const [index, slot] of final.rows.entries()) {
+-      if (!slot.id) continue;
+-      const bytes = await readFile(slot.file);
+-      assert.equal(bytes.length, slot.bytes);
+-      await writeFile(join(evidence, 'managed-' + index + '.raw'), bytes, { flag: 'wx' });
+-      for (const store of stores) await verifySanitized(bytes, store);
+-    }
++  for (const [index, slot] of final.rows.entries()) {
++    if (!slot.id) continue;
++    const bytes = await readFile(slot.file);
++    assert.equal(bytes.length, slot.bytes);
++    assert.equal(bytes.at(-1), 10);
++    pinoRecords(bytes);
++    const recordCap = slot.stream === 'gateway' ? 65536 : 4096;
++    let offset = 0;
++    while (offset < bytes.length) {
++      const next = bytes.indexOf(10, offset);
++      assert(next >= 0 && next + 1 - offset <= recordCap);
++      offset = next + 1;
++    }
++    await writeFile(join(evidence, 'managed-' + index + '.raw'), bytes, { flag: 'wx' });
+   }
+   assert.equal(await readFile(unrelated, 'utf8'), canary);
+ } catch (error) {
+@@ -576,9 +542,7 @@
+       assert.deepEqual(cleanup.childCensus.rows, []);
+       cleanup.exclusive = await confirmOwnedCleanup(native, disposable, stores, evidence);
+       assert.equal(dirname(disposable), attempt);
+-      await rm(disposable, { recursive: true });
+-      await assert.rejects(lstat(disposable), { code: 'ENOENT' });
+-      cleanup.disposableRemoved = true;
++      cleanup.disposableRetained = true;
+     } catch (error) { cleanup.errors.push(describe(error)); }
+   }
+   await put('cleanup.json', cleanup);
+--- v3/launch.ps1
++++ v4/launch.ps1
+@@ -2,7 +2,7 @@
+ param(
+     [Parameter(Mandatory)][string]$Admission,
+     [Parameter(Mandatory)][ValidatePattern('^[a-f0-9]{64}$')][string]$Sha256,
+-    [Parameter(Mandatory)][ValidatePattern('^(baseline|candidate)-attempt-[1-9][0-9]*$')][string]$ReceiptName
++    [Parameter(Mandatory)][ValidatePattern('^candidate-attempt-[1-9][0-9]*$')][string]$ReceiptName
+ )
+ 
+ $ErrorActionPreference = 'Stop'
+@@ -19,7 +19,7 @@
+     throw 'Admission digest changed'
+ }
+ $admitted = Get-Content -LiteralPath $Admission -Raw | ConvertFrom-Json
+-if ($admitted.schema -cne 'gg438-native-admission/v1' -or $admitted.attempt -cne $ReceiptName) {
++if ($admitted.schema -cne 'gg438-native-candidate-admission/v4' -or $admitted.attempt -cne $ReceiptName) {
+     throw 'Wrong execution admission'
+ }
+ $receipts = Join-Path $PSScriptRoot 'receipts'
+@@ -37,6 +37,13 @@
+ }
+ 
+ $runner = Join-Path $PSScriptRoot 'run.mjs'
++$runnerHash = (Get-FileHash -LiteralPath $runner -Algorithm SHA256).Hash.ToLowerInvariant()
++$bindingHash = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'binding.mjs') -Algorithm SHA256).Hash.ToLowerInvariant()
++$controlsHash = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'controls.mjs') -Algorithm SHA256).Hash.ToLowerInvariant()
++if ($runnerHash -cne $admitted.runnerSha256 -or $bindingHash -cne $admitted.bindingModuleSha256 -or
++    $controlsHash -cne $admitted.controlsModuleSha256) {
++    throw 'Candidate runner or binding module digest changed'
++}
+ $info = [Diagnostics.ProcessStartInfo]::new($projectNode)
+ $info.WorkingDirectory = $PSScriptRoot
+ $info.UseShellExecute = $false
+--- /dev/null
++++ v4/controls.mjs
+@@ -0,0 +1,102 @@
++import assert from 'node:assert/strict';
++
++export async function privateRootReadback(native, root) {
++  const reply = await native.runPowerShell('read disposable install root owner and access', String.raw`
++$ErrorActionPreference = 'Stop'
++$acl = Get-Acl -LiteralPath $env:QA438_FIXTURE_LOG_ROOT
++$user = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
++$owner = $acl.GetOwner([Security.Principal.SecurityIdentifier]).Value
++$allowed = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]) |
++  Where-Object AccessControlType -eq Allow | ForEach-Object { $_.IdentityReference.Value } | Sort-Object -Unique)
++[Console]::WriteLine(([ordered]@{user=$user; owner=$owner; allowed=$allowed; sddl=$acl.Sddl} | ConvertTo-Json -Compress))
++`, { extraEnv: { QA438_FIXTURE_LOG_ROOT: root } });
++  const observed = JSON.parse(reply.stdout);
++  assert.equal(observed.owner, observed.user);
++  assert.deepEqual(observed.allowed.sort(), [observed.user, 'S-1-5-18', 'S-1-5-32-544'].sort());
++  assert(typeof observed.sddl === 'string' && observed.sddl.length > 0);
++  return { root, ...observed };
++}
++
++export async function observeStdio(native, evidence, observer, node, { health, proc }) {
++  const acquired = await native.runPowerShell('exact Win32 gateway birth for stdio observation', String.raw`
++$ErrorActionPreference = 'Stop'
++$owned = Get-Process -Id ([int]$env:QA438_GATEWAY_PID) -ErrorAction Stop
++try {
++  $birth = $owned.StartTime.ToUniversalTime().ToFileTimeUtc().ToString([Globalization.CultureInfo]::InvariantCulture)
++  [Console]::WriteLine($birth)
++} finally { $owned.Dispose() }
++`, { extraEnv: { QA438_GATEWAY_PID: String(health.pid) } });
++  const birth = acquired.stdout.trim();
++  assert.match(birth, /^[1-9][0-9]{16,18}$/u);
++  const diff = BigInt(birth) - BigInt(proc.creationFileTime);
++  assert(diff > -10n && diff < 10n, 'Native process birth and WMI birth disagree');
++  const result = await native.run('gateway NUL stdio observer', observer, [String(health.pid), birth, node],
++    evidence, { input: '', timeout: 9000, reapReadOnly: true });
++  assert.deepEqual([result.exit.code, result.stderr], [0, '']);
++  const observation = JSON.parse(result.stdout);
++  assert.deepEqual([observation.schema, observation.status, observation.pid, observation.birthFileTime],
++    ['gg438-stdio-observation/v1', 'matched', health.pid, birth]);
++  assert.deepEqual(observation.slots.map((slot) => slot.slot), ['stdin', 'stdout', 'stderr']);
++  for (const slot of observation.slots) {
++    assert.deepEqual([slot.objectName, slot.win32FileType, slot.matches], ['\\Device\\Null', 2, true]);
++    assert.equal(slot[slot.slot === 'stdin' ? 'readData' : 'writeData'], true);
++  }
++  return { nativeBirth: birth, cimBirth: proc.creationFileTime, observation };
++}
++
++export async function privateFailure({ port, pid, request, observe, put, tail, pinoRecords, files }) {
++  // Same failure boundary as the independently executed #381 a2-final-thread fixture.
++  const definition = {
++    schemaVersion: 4, name: 'QA 438 private engine diagnostics',
++    nodes: [
++      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++      { id: 'mut', kind: 'mutate', label: 'QA mutation', config: { operations: [
++        { op: 'set', path: '/vars/qaBefore', value: { kind: 'literal', value: true } },
++        { op: 'set', path: '/vars', value: { kind: 'literal', value: 7 } },
++      ] } },
++      { id: 'done', kind: 'exit', label: 'Done',
++        config: { outcome: 'success', returns: 'vars', destinations: [{ kind: 'caller' }] } },
++    ],
++    edges: [
++      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'mut' } },
++      { id: 'e2', from: { node: 'mut', port: 'out' }, to: { node: 'done' } },
++    ],
++  };
++  async function json(path, expected, options) {
++    const response = await request(port, path, options);
++    const raw = await response.text();
++    assert.equal(response.status, expected, raw);
++    return JSON.parse(raw);
++  }
++  const post = (body) => ({ method: 'POST', headers: { 'content-type': 'application/json' },
++    body: JSON.stringify(body) });
++  await put('private-failure-fixture.json', definition);
++  const { loop } = await json('/loops', 201, post({ definition }));
++  assert.equal((await request(port, '/loops/' + loop.id + '/publish', { method: 'POST' })).status, 200);
++  const { run: { id } } = await json('/loops/' + loop.id + '/runs', 202, post({}));
++  const run = await observe('private diagnostic public failure', async () => {
++    const record = await json('/runs/' + id, 200);
++    return record.status === 'failed' ? record : false;
++  }, 12000);
++  const events = await json('/runs/' + id + '/events?limit=100', 200);
++  await put('private-failure-public.json', { run, events });
++  assert.deepEqual(run.failure, { code: 'INTERNAL_ERROR', message: 'node mut produced an invalid patch',
++    nodeId: 'mut', resumable: false });
++  assert.equal(events.hasMore, false);
++  const failed = events.items.find((event) => event.type === 'run.failed');
++  assert.deepEqual(failed.failure, run.failure);
++  const record = await observe('retained correlated private error', async () => {
++    for (const path of files) {
++      const entry = pinoRecords(await tail(path)).find((value) => value.runId === id &&
++        value.nodeId === 'mut' && value.msg === 'node produced an invalid patch');
++      if (entry) return { path, entry };
++    }
++    return false;
++  }, 5000);
++  await put('private-failure-private.json', record);
++  assert.equal(record.entry.pid, pid);
++  const error = record.entry.error;
++  for (const key of ['name', 'message', 'stack']) assert(typeof error?.[key] === 'string' && error[key].length > 0);
++  assert.doesNotMatch(JSON.stringify({ run, events }), /"stack"\s*:/u);
++  assert(!JSON.stringify({ run, events }).includes(JSON.stringify(error.stack)));
++}

@@ -1,0 +1,176 @@
+# #438 baseline attempt 3: detail tables
+
+These tables support `full-report.md`. Paths are relative to the batch root `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch`. `E/` means `launcher-438-native-preparation-v3/attempts/baseline-attempt-3/evidence/`. Times are UTC on 2026-11-16. A time without a source field is the write time (mtime) of the named evidence file.
+
+## A. Timeline
+
+| UTC | Event | Source |
+|---|---|---|
+| 10:24:17.372 | Shell start: Node v22.23.4, NODE_OPTIONS absent, GIT_OPTIONAL_LOCKS=0 | `invoke-console.txt` |
+| 10:24:17.522 / .538 | Invoker requested; PS7 7.6.9 PID 32560 spawned | `launcher-438-baseline-invocation-03/{requested,launch}.json` |
+| 10:24:17.958 / .977 | Wrapper requested; runner node PID 26280 born 10:24:17.9770351Z | `receipts/baseline-attempt-3/{requested,launch}.json` |
+| 10:24:18.215 | Driver `startedAt` | `E/result.json` |
+| 10:24:29.350 | Opening binding (verify ≈11.1 s) | `E/opening-binding.json` |
+| 10:24:29.376 | Canonical identity (cold), PID 39900, exit 0 → `fc26b83e…e088` | `E/process-001-*` |
+| 10:24:30.675 → 10:24:36.745 | Cold launcher PID 50532, exit/close 0, 0/0 stream bytes | `E/process-002-*` |
+| 10:24:33.599 | Gateway PID 28040 born, parent 50532, port 63308 | CIM `E/process-003-outcome.json` |
+| 10:24:36.760 | CIM PS5.1 PID 35656, exit 0, stdout 582 B, **stderr 0 B** (the V3 correction held) | `E/process-003-*` |
+| 10:24:37.477 | `cold-gateway.json` proof: health identity, phase, parent, exe, argv, two leases, SQLite header | `E/cold-gateway.json` |
+| 10:24:37.479 | Sample `before-pressure`: gateway 1,652 B | `E/inventory-0001.json` |
+| 10:24:37.498 / .516 | First-access tail; invalid bearer → 401 | `E/first-access.tail`, `E/invalid-authorization-*` |
+| 10:24:37.587 | Held run started; Script PID 20988 born 10:24:37.649 (parent 28040) | `E/work-after-pressure.json`, `E/work-held.json` |
+| 10:24:38.609 → 10:24:40.471 | Pressure samples `pressure-256` … `pressure-6400` (25 batches) | `E/inventory-0002…0026.json` |
+| 10:24:40.473 | `pressure-summary.json`: sent 6,400, gateway 8,660,042 B | `E/pressure-summary.json` |
+| 10:24:41.903 | Latest tail (523,224 B; 389 completed 200 records) | `E/latest-gateway.tail` |
+| 10:24:42.000 / .086 | Held run `succeeded` / record written | `E/work-after-pressure.json` |
+| 10:24:42.087 → 10:24:43.486 | Warm launcher PID 50840, exit 0 | `E/process-007-*` |
+| 10:24:44.172 → 10:24:45.570 | Wrong-store launcher PID 53796, exit 1, stderr 405 B | `E/process-009-*` |
+| 10:24:46.281 | Launcher diagnostic tail (434 B) | `E/launcher-diagnostic.tail` |
+| 10:24:46.285 → 10:24:47.688 | Occupied-port launcher PID 32220, exit 1, stderr 407 B (port 63368) | `E/process-011-*` |
+| 10:24:47.694 | Sample `post-refusals`: gateway 8,664,212 B, launcher 870 B | `E/inventory-0027.json` |
+| 10:24:49.889 | Cold stop: drain 202, birth absent, leases absent, Script absent | `E/cold-exit-readback.json` |
+| 10:24:49.889 → 10:24:57.671 | Clean restart: identity PID 53788; launcher PID 44400 exit 0 | `E/process-015/016-*` |
+| 10:24:54.128 | Gateway PID 43376 born, parent 44400, port 63308 | `E/clean-restart-gateway.json` |
+| 10:24:58.494 / 10:24:59.994 | Sample `clean-restart` 8,667,536 B; stop: drain 202 | `E/inventory-0028.json`, `E/clean-restart-exit-readback.json` |
+| 10:25:01.344 | Ordinary shell node PID 42676 (parent runner 26280), port 63412, born 10:25:01.348 | `E/process-021-*`, `E/ordinary-shell-gateway.json` |
+| 10:25:06.727 / .730 | Shell stop: drain 202; samples `after-shell` = `before-shell`; `final-managed-files` | `E/ordinary-shell-exit-readback.json`, `E/inventory-0029…0031.json` |
+| 10:25:06.733 → 10:25:07.429 | Launcher-child census PS5.1 PID 51172: exit 0, rows [] | `E/process-025-*` |
+| 10:25:07.443 | `cleanup.json`: one error, the exact Content.IE5 path at `windows.mjs:28` | `E/cleanup.json` |
+| 10:25:18.320 | Closing binding, byte-identical to opening | `E/closing-binding.json` |
+| 10:25:18.321 | `result.json` `status: incomplete`, no firstFailure, no bindingError | `E/result.json` |
+| 10:25:18.344 | Wrapper exit receipt: runner exit 1; capture 0/0 | `receipts/baseline-attempt-3/{exit,capture}.json` |
+| 10:25:18.383 / .384 | PS7 exit 1 / close 1; both raw streams empty (`e3b0c442…`) | `launcher-438-baseline-invocation-03/{exit,close}.json` |
+| 10:25:18.423 | Shell end, invoker exit 1 | `invoke-console.txt` |
+
+## B. Every harness-spawned process (25 records, `E/process-NNN-*`)
+
+All 25 have `exit.code == close.code`. No `*-timeout.json` exists. No attempt is missing an outcome.
+
+| # | Label | PID | Executable | Exit/close | stdout / stderr bytes |
+|---|---|---|---|---|---|
+| 001 | canonical identity cold | 39900 | node.exe | 0/0 | 65 / 0 |
+| 002 | cold | 50532 | GraphGoblinBaseline.exe | 0/0 | 0 / 0 |
+| 003 | CIM 28040 | 35656 | powershell.exe 5.1 | 0/0 | 582 / 0 |
+| 004 | CIM 20988 (Script) | 48416 | powershell.exe | 0/0 | 1258 / 0 |
+| 005 | CIM 20988 (post-pressure deepEqual) | 46828 | powershell.exe | 0/0 | 1258 / 0 |
+| 006 | CIM 28040 (post-pressure proof) | 1796 | powershell.exe | 0/0 | 582 / 0 |
+| 007 | warm | 50840 | GraphGoblinBaseline.exe | 0/0 | 0 / 0 |
+| 008 | CIM 28040 (after warm) | 53284 | powershell.exe | 0/0 | 582 / 0 |
+| 009 | wrong-store | 53796 | GraphGoblinBaseline.exe | 1/1 | 0 / 405 |
+| 010 | CIM 28040 (after wrong-store) | 56456 | powershell.exe | 0/0 | 582 / 0 |
+| 011 | occupied-port | 32220 | GraphGoblinBaseline.exe | 1/1 | 0 / 407 |
+| 012 | CIM 28040 (stop re-proof) | 15848 | powershell.exe | 0/0 | 582 / 0 |
+| 013 | CIM 28040 (birth absent) | 34240 | powershell.exe | 0/0 | 6 (`e30=` = `{}`) / 0 |
+| 014 | CIM 20988 (Script absent) | 40012 | powershell.exe | 0/0 | 6 / 0 |
+| 015 | canonical identity clean-restart | 53788 | node.exe | 0/0 | 65 / 0 |
+| 016 | clean-restart | 44400 | GraphGoblinBaseline.exe | 0/0 | 0 / 0 |
+| 017 | CIM 43376 | 57168 | powershell.exe | 0/0 | 582 / 0 |
+| 018 | CIM 43376 (stop re-proof) | 49448 | powershell.exe | 0/0 | 582 / 0 |
+| 019 | CIM 43376 (birth absent) | 55788 | powershell.exe | 0/0 | 6 / 0 |
+| 020 | canonical identity ordinary-shell | 40140 | node.exe | 0/0 | 65 / 0 |
+| 021 | ordinary-shell (direct `main.js`) | 42676 | node.exe | 0/0 | 2078 / 0 |
+| 022 | CIM 42676 | 5100 | powershell.exe | 0/0 | 574 / 0 |
+| 023 | CIM 42676 (stop re-proof) | 49332 | powershell.exe | 0/0 | 574 / 0 |
+| 024 | CIM 42676 (birth absent) | 46708 | powershell.exe | 0/0 | 6 / 0 |
+| 025 | launcher-child census (`windows.mjs`) | 51172 | powershell.exe | 0/0 | 0 / **616** |
+
+The 616 B on stderr of record 025 is progress-only CLIXML (`Preparing modules for first use.` ×2, `Completed`). That is the same transport artifact that failed V2. The `windows.mjs` helpers did not get the V3 prefix, and they do not assert empty stderr. The census therefore passed on exit 0 with empty stdout, which means zero `ParentProcessId` rows. The first-use progress record itself is not a CIM error.
+
+Processes started by the product rather than by the harness:
+- gateway 28040 (from cold launcher 50532)
+- gateway 43376 (from clean-restart launcher 44400)
+- Script 20988 (from gateway 28040)
+
+## C. Gateway identity proofs (harness-asserted unless noted)
+
+| Gateway | PID / parent | Birth FILETIME | Port / store | Health identity | Lease SHA-256 (`graphgoblin.lock`, `graphgoblin.db.graphgoblin.lock`) |
+|---|---|---|---|---|---|
+| cold | 28040 / 50532 | 134392982735994450 | 63308 / store-a | `fc26b83e…e088` | `20d93bb4…`, `0819bc20…` |
+| clean-restart | 43376 / 44400 | 134392982941278550 | 63308 / store-a | `fc26b83e…e088` | `faade659…`, `cfb65f27…` |
+| ordinary-shell | 42676 / 26280 (runner) | 134392983013480980 | 63412 / store-shell | `d2d0c0fe…c5ac` | `e0b3c015…`, `636c2174…` |
+
+For each gateway, `gatewayProof` asserted the following:
+- realpath(executable) = bound node;
+- argv[0] = node and argv[1] = `<checkout>/apps/api/dist/main.js`;
+- no extra args;
+- both leases `pid` = health pid and `windowsCreationTime` = CIM FILETIME;
+- SQLite header `SQLite format 3\0`.
+
+The proof was re-asserted deep-equal after pressure, after warm, after wrong-store, and twice more in `stop()`.
+
+## D. Inventory samples (31; none unstable)
+
+Baseline mode samples with `enforce = false`, so `safe` is true by construction. `violations` is the candidate oracle applied passively.
+
+| Sample(s) | Gateway aggregate B | Launcher B | Violations |
+|---|---|---|---|
+| 0001 before-pressure | 1,652 | 0 | none |
+| 0002 pressure-256 | 351,283 | 0 | none |
+| 0013 pressure-3072 | 4,157,685 | 0 | none |
+| 0014 pressure-3328 | 4,504,015 | 0 | `gateway.log` > 4,194,304 cap |
+| 0025 pressure-6144 | 8,313,711 | 0 | `gateway.log` |
+| 0026 pressure-6400 | **8,660,042** | 0 | `gateway.log`, `gateway aggregate bytes` (> 8,388,608) → loop break |
+| 0027 post-refusals | 8,664,212 | 870 | both |
+| 0028 clean-restart | 8,667,536 | 870 | both |
+| 0029/0030 before/after-shell | 8,668,765 | 870 | both (rows deep-equal) |
+| 0031 final-managed-files | 8,668,765 | 870 | both |
+
+`gateway.log` kept file id `2894493802:671317819454995735` in all 31 samples. `gateway.log.1` and `launcher.log.1` never existed. Rotations: 0.
+
+## E. Controls: executed (actual) vs. not applicable
+
+**Executed, with harness assertions passed:**
+- admit and opening verify
+- fixture directories and the unrelated canary
+- port choice with refused pre-checks (63308, 63368, 63412; never 4747/4748)
+- canonical identity ×3
+- cold `--ensure-gateway` exit 0
+- full `gatewayProof`
+- before-pressure sample and initial tail with `GraphGoblin API listening`
+- first access record
+- invalid bearer: 401, `application/problem+json`, `UNAUTHORIZED`, health unchanged before and after
+- held Script work: Script parent = gateway and executable = node
+- pressure loop and the negative byte oracle
+- after pressure:
+  - work still `running`
+  - Script CIM identity deep-equal
+  - gatewayProof deep-equal
+  - latest tail has `request completed`
+- release, then run `succeeded`
+- warm launch exit 0, with a different PID and the gateway unchanged
+- wrong-store exit 1, gateway unchanged, store-b empty, non-empty launcher-owned diagnostic
+- occupied-port with an owned unrelated server: exit 1, the server still answers 200, store-port empty, server closed and port refused afterwards
+- post-refusals sample and canary unchanged
+- harness drain of cold: tokened POST 202, listener closed, exact birth absent, leases and `.reclaim` absent, Script birth absent
+- clean restart: boot, proof, sample, drain
+- ordinary shell:
+  - direct gateway proof with parent = runner
+  - drain
+  - shell exit 0, stdout contains `GraphGoblin API listening`
+  - launcher-owned rows unchanged
+- final sample and canary
+- `finally` checks:
+  - stop() of all three gateways (cached)
+  - three owned ports free
+  - 25 exit/close pairs consistent
+  - launcher-child census empty
+- closing verify equal to opening
+
+**Executed but stopped by a cleanup assertion:** `confirmOwnedCleanup` inventory reached the `Content.IE5` junction and asserted `!isSymbolicLink()` at `windows.mjs:28`. Consequently the PowerShell no-reparse/exclusive SQLite probe and `rm(disposable)` did not run, and `disposableRemoved` is absent.
+
+## F. QA helper provenance note
+
+- **Census script edit.** After the pre-launch census, I changed `qa-readonly-scripts/census.ps1` in one way only: its `-Ports int[]` parameter became a comma-separated `-PortList` string, because `-File` cannot bind an array. The process pattern and the output shape are unchanged. `pre-launch-census.json` came from the earlier form, which used the default ports 4747/4748.
+- **Read-only scripts.** All my scripts only read and print to stdout. I redirected their output into this directory.
+- **Disposable-tree reads.** `logcheck.mjs` and `inventory.mjs` read the disposable tree only after root's continuation had reached `attested-retained`.
+
+**Candidate-only, not applicable to baseline:**
+- `verifySanitized`
+- candidate diagnostics text
+- `nativeFallback`
+- `legacy`
+- `sharedDestination`
+- the rotations ≥ 3 oracle
+- managed raw dumps
+
+I make no claim about any of these.

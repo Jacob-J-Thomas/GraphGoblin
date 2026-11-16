@@ -1,0 +1,21 @@
+{
+  "schema": "gg438-candidate-core-archive-exclusions/v1",
+  "excludedInputs": [
+    {
+      "source": "launcher-438-candidate-binding-01.json",
+      "bytes": 4580756,
+      "sha256": "8202421f8a0bda13d2f46467af88a060539b75111e9fabbbc38f461fcc7cf7ff",
+      "reason": "Full 30,020-source / 13-root / 1,255-output binding is retained externally; compact preflight/opening/closing bindings and its exact hash are in the copied report/evidence."
+    }
+  ],
+  "excludedClasses": [
+    {
+      "source": "launcher-438-candidate-opus-execution-01/02/events.jsonl, result.json, stderr.log, latest.md, launch.json",
+      "reason": "Private provider/session state or duplicate status output; not copied."
+    },
+    {
+      "source": "launcher-438-candidate-qa-preparation/attempts/candidate-attempt-2/disposable/**",
+      "reason": "Fixture stores and owned disposable state, including SQLite DB/WAL/SHM/master.key; not copied or read for this archive."
+    }
+  ]
+}

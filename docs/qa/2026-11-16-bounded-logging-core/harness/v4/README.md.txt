@@ -1,0 +1,24 @@
+# #438 independent candidate QA preparation
+
+Root must review these bytes and admit the frozen candidate before execution. The package contains an external native V4 driver for the core case and a separate [execution matrix](full-report.md) for all remaining native and controlled checks. Zero candidate native observations or formal scans were made in this preparation.
+
+## Candidate driver
+
+- [run.mjs](run.mjs) specializes the sealed V3 baseline driver for the selected candidate. It pins the existing request/time budget, confirms actual active-to-previous file identity moves, checks native caller exit and both stream EOFs, uses the qualified native stdio helper, reaches the #381 public/private failure and verifies retained records. It checks reached access records separately from diagnostics and accepts validated operator path fields. The TEMP layout is an absence witness only.
+- [controls.mjs](controls.mjs) contains the install-root privacy readback, stdio invocation and provider-free #381 stimulus. The root admission must cover the original qualified observer and [host control readback](../launcher-438-stdio-control-root-review/full-report.md). The observer does not inspect the launcher's explicit inherited-handle list or retained process handle.
+- [binding.mjs](binding.mjs), [native.mjs](native.mjs) and [launch.ps1](launch.ps1) preserve the V3 source/build admission, process isolation, guarded capture and case receipts. The V4 manifest binds the original V3 modules it imports through the admission; the original files remain sealed. Initial source changes are shown in [v3-to-v4.patch](v3-to-v4.patch); the two additional cleanup identity checks are recorded under Root review 02 in the [execution matrix](full-report.md).
+
+## Root inputs
+
+1. Supply the clean exact candidate freeze, opening/closing source and build inventory and current Node/Git/launcher compiler and build receipts. The source/build binding uses the existing [V3 schema example](../launcher-438-native-preparation-v3/binding.example.json) with `mode` set to `candidate`, a frozen descendant of the root-admitted actual main and the candidate checkout designated in the driver. The implementer checkout's current dirty state is outside admission.
+2. Use a fresh [candidate admission](admission.example.json) with the candidate binding path and digest filled. Admit and hash the wrapper, example, matrix and runner. Do not reuse the historical baseline admission as a candidate binding. Rehash base/wrapper and reviewed helper bytes against the manifest. If remote main moves, explicitly rebind or record an independent immutable predecessor proof before its standalone case.
+3. Apply the fixture-private DACL to this named external V4 suite only before creating attempts so child directories inherit. Record root, owner and pre/post SDDL. Use the same three explicit inherited allow principals in the [root V3 readback](../launcher-438-native-v3-private-fixture-root.json). The V4 driver verifies the physical install child readback before cold launch. Use exact bound PowerShell 7 wrapper and ASCII stdout/stderr receipts. Do not apply a DACL to the batch, checkout or owner install.
+4. After root admission and scheduling, invoke the reviewed PowerShell 7 wrapper with `-NoProfile -NonInteractive -File <absolute V4 launch.ps1> -Admission <absolute admitted JSON> -Sha256 <lowercase SHA-256> -ReceiptName candidate-attempt-1`. The wrapper uses project Node v22.23.4 and records the exact command, PID, exit, stream capture and raw output. The attempt driver puts evidence and its retained disposable tree under a new `attempts/candidate-attempt-1`. Keep baseline and supplement attempts separate.
+5. Author and hash only the missing fixtures from the execution matrix under new owned trees. Require no owner paths, credentials, stores, ports 4747/4748, shortcuts or registry inputs. Run one nominal attempt per case under the independent provider. Preserve all first failures and capture reports before any scoped cleanup continuation.
+
+A native run that completes behavioral cases may still need independent retained-tree cleanup authentication. The V4 driver does no recursive deletion. Existing cleanup rules refuse a reparse entry and preserve it for root to verify before any exact guarded unlink. The older V3 baseline first failure and cleanup continuation remain untouched. [Baseline closure](../launcher-438-baseline-03-root-cleanup.json)
+
+
+## Root review 03: core harness API correction
+
+Core attempt 1 stopped before product execution because createNative omitted its existing runPowerShell method from its returned API. Root review 03 adds only that export. Original 12-file packet and consumed attempt remain preserved. The V3-to-V4 patch is historical and omits this export correction. No product, build, index, thresholds or assertions changed.

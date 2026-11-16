@@ -1,0 +1,617 @@
+# #438 supplemental attempt 1: independent behavior QA execution report
+
+Independent actual Claude Code Opus 5.5 xhigh behavior QA worker (`claude-opus-5-5`). I did not implement the candidate or author this packet. This report records one execution of the root-admitted supplemental invocation `launcher-438-supplemental-invocation-01` (`supplemental-attempt-1`). It is behavior QA, not a formal code review, and gives no merge, owner, issue or batch acceptance. Formal scans remain 0 of 3.
+
+## Outcome
+
+- **Invocation:** terminal. The invoker exited 0 with 0 B stderr. All five modules ran once, in order, each verified as wrapper exit 0, exit equal to close and both streams at EOF before the next module started. `remaining: []`.
+- **Driver result:** all five `result.json` have `status: observed`, `firstFailure` absent and `bindingError` absent. There is no `first-failure.json` and no `timeout.json` anywhere.
+- **Cases:** 34 of 34 reported `passed`. No case was skipped after a failure, so no case is unreached.
+- **Skipped variants:** two, both in `n19-n20-unsafe-names`: `gateway-active-file-symlink` and `gateway-active-dangling-symlink`. Symbolic-link creation was refused with EPERM. They were **not exercised** and are not counted as passes.
+- **Bindings:** for every module the opening binding equals the closing one, and the five opening receipts are byte-identical (`58e50373…`). The predecessor's own opening and closing readbacks also matched.
+- **Cleanup:**
+  - every case recorded zero cleanup errors;
+  - all 18 owned gateways were drained through their own API, and their exact births were absent afterwards;
+  - all 53 fixture ports refused connections;
+  - all 10 holders exited 0 and were gone after release;
+  - the driver attested SQLite exclusive-open for every case with stores.
+- **Retained reparse entries (tree kept, nothing deleted):**
+  - 5 exact WinINet `Content.IE5` mount points, each attested to its physical sibling `IE` (`retained-known-windows-cache-junction`);
+  - 13 intentional fixture links;
+  - no unknown reparse entries.
+- **My readbacks after the run:**
+  - none of the 29 exact recorded PIDs exists (18 gateways compared by PID and birth, 5 wrappers, 5 runners, 1 Script);
+  - all 53 ports still refuse;
+  - Git identity, the index, the 38-row manifest and every admitted digest are unchanged.
+
+## 1. Exact command, admission and bindings
+
+I executed the command once from Git Bash, with canonical quoted paths. It ran as a background tool task with a 2-hour tool limit, and I monitored that same process until it exited:
+
+```
+'C:\Users\98jak\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe' 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-438-supplemental-root-tools\invoke-supplemental.mjs' 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-438-supplemental-invocation-01.json' 'dcaa2afc459cc21c8502147d5cb87389eae808ca479d470d4ce9fcb0d35a2afb'
+```
+
+**Environment:**
+
+- `NODE_OPTIONS` and `GG_WINDOWS_LAUNCHER_LOG_DIR` were absent (case-insensitive scan). I also `unset` both.
+- The inherited PATH listed `/c/Users/98jak/bin` first, although `node` already resolved to project v22.23.4. I prepended the project Node directory explicitly.
+- stdin was `/dev/null`. The cwd was the frozen checkout.
+
+**Console receipts** ([invoker-console.\*](invoker-console.stdout)):
+
+| Field | Value |
+| --- | --- |
+| Start | `2026-11-16T13:43:13.910Z` |
+| End | `13:55:52.853Z` |
+| Exit | `0` |
+| stdout | 1 JSON line (525 B), equal to `summary.json` plus `output` |
+| stderr | 0 B |
+
+Before the run I rehashed every bound input. All matched the brief and the admission: [preflight.json](preflight.json).
+
+| Item | Value |
+| --- | --- |
+| Checkout | `C:\Users\98jak\.codex\worktrees\gg-20261116-bounded-logs\GraphGoblin` |
+| HEAD / tree / origin/main | `1c04263bcbfd93056e77ee98a9c5d705df26ea88` / `332d414fea68cb2fffdd1c2baca620491ce1f341` / `e21c24be9cef109ef438fd2df4c1583bc570b1cb` |
+| Index / porcelain | `0340a3df59595535e1c4ef69d4b811143571cc2d7c81e381ce53d6e4678c00c7` / 0 lines. Read with `--no-optional-locks` before and after |
+| Invocation plan / admission | `dcaa2afc…2afb` / `dc6b5f20…19bc` (`gg438-supplemental-admission/v1`, admitted by root at `13:40:23.077Z`) |
+| Invoker / `freeze.mjs` helpers | `0fe558b8…f6df0` / `bc9359c8…dc6e83` |
+| Manifest | `781c9738…918795`, 38 rows, all `OK` before and after |
+| Wrapper `launch.ps1` / PS7 7.6.9 / Node | `83514dd7…22177` / `2a6769a3…2b233` / `dccc52de…ec14f` |
+| Candidate binding / candidate launcher | `8202421f…c7ff` / `launcher-438-candidate-compile-01\GraphGoblin.exe` `98b17be7…06e9` |
+| Baseline binding / predecessor launcher | `85a77468…20de` / `launcher-438-baseline-compile-01\GraphGoblinBaseline.exe` `57b4fad9…23aa` |
+| Helper (helper-frozen-02) | source `8b33a3d4…c2f`, receipt `0b14cc50…774`, executable `aa182d0e…e87` |
+| Frozen source checks | `50f1ae4a…8f25` (89/89, root receipt) |
+| Contract | `a1a02313…cf474` |
+| Modules | `common` `3a8e52c0…`, writer `bb11055a…`, guard `88247cc4…`, startup `777e7881…`, sharing `76dfaa62…`, predecessor `5dbd0e9e…` |
+| Reused pins | All 9 match the admission (V4 binding/native/controls, V3 binding/inventory/workload/windows, runtime-410 artifacts/common) |
+
+**Fixture parent:**
+
+- `attempts\` had zero children before the run.
+- Each module's admission readback matched the admitted owner `…-1002` and the protected SDDL exactly. The Allow set was exactly {operator, `S-1-5-18`, `S-1-5-32-544`}.
+- `receipts\` and `launcher-438-supplemental-invocation-01\` were absent before the run.
+
+**Driver binding.** Every module ran `verify` at opening and closing. Opening equals closing in all five, and the opening values are identical across modules:
+
+| Field | Value |
+| --- | --- |
+| head / tree / actualMain | `1c04263b…` / `332d414f…` / `e21c24be…` |
+| index | `0340a3df…` |
+| Sources / output roots / outputs | 30,020 / 13 / 1,255 |
+| Artifact inventory | `cba40dd3…2bee` |
+| Launcher | `98b17be7…06e9` |
+
+**Predecessor binding.** `native-predecessor` also read back the predecessor at both ends: head `e21c24be…`, tree `d064706f…`, 29,739 sources rehashed, artifact inventory `0e4f2fb9…d51f` and launcher `57b4fad9…`. Opening and closing were equal.
+
+- The opening took 185,975 ms and the closing 10,513 ms. Both passed the same assertions. I attribute the gap to the warm file cache, but that is an inference.
+
+## 2. Process chain, exits, EOF and close
+
+| Module | Wrapper pwsh PID | Spawn → exit/close (UTC) | Runner node PID | Runner exit | stdout / stderr | EOF (out / err) | `complete` |
+| --- | ---: | --- | ---: | ---: | --- | --- | --- |
+| writer-controls | 50584 | 13:43:14.279 → 13:43:50.348 / .348 | 17824 | 0 | 0 / 0 B | .333 / .335 | true |
+| guard-controls | 23836 | 13:43:50.454 → 13:45:04.435 / .435 | 40592 | 0 | 0 / 0 B | .421 / .421 | true |
+| native-startup | 56612 | 13:45:04.532 → 13:47:59.315 / .316 | 55584 | 0 | 0 / 0 B | .301 / .302 | true |
+| native-sharing | 364 | 13:47:59.415 → 13:51:25.246 / .246 | 53132 | 0 | 0 / 0 B | .232 / .232 | true |
+| native-predecessor | 46956 | 13:51:25.342 → 13:55:52.806 / .806 | 31564 | 0 | 0 / 0 B | .792 / .792 | true |
+
+- Every `close.json` has exit code equal to close code, a null signal, stream digests of the empty file (`e3b0c442…`), and EOF and write-close before close.
+- Every wrapper `capture.json` is 0/0 B.
+
+**Driver spawns (392, all in the per-module and per-case `process-*` receipts):**
+
+| Executable | Count |
+| --- | ---: |
+| Windows PowerShell (holders, ACL/metadata/no-follow readbacks, CIM, census, store probes) | 251 |
+| Project Node (direct guarded/shell children, guard composition children, pipe holder, identity helper) | 58 |
+| Compiled `LauncherLogControl.exe` (keys, mutex holder, edges, cleanup inventory) | 41 |
+| Candidate launcher `GraphGoblin.exe` | 41 |
+| Predecessor `GraphGoblinBaseline.exe` | 1 |
+
+- All 392 have `exit` equal to `close`.
+- All 392 have EOF byte counts equal to the captured byte counts.
+- No spawn has a timeout or termination request.
+- Every non-zero exit is an expected refusal or outcome code (section 4).
+
+Windows reused PID 364: it was a short-lived `direct-store-failure` child in N-4 and later the native-sharing wrapper. Identities in this report are PID plus birth wherever the receipts carry a birth.
+
+## 3. First failure and unreached cases
+
+There was no first failure: `firstFailure` is absent in all five results and no `first-failure.json` exists. No case has `skipped-after-first-failure`, so no case was left unreached.
+
+## 4. Per-module and per-case outcomes
+
+Evidence levels:
+
+- **native:** actual candidate or predecessor processes.
+- **fault-injected build:** one hash-bound delta in an external shadow, run through the actual entry and launcher.
+- **controlled:** built production modules with one wrapped seam and real file I/O.
+- **compiled control:** the helper compiled with the frozen `Launcher.cs`.
+- **source-only.**
+
+No implementer or hosted test is counted anywhere in this report.
+
+### 4.1 writer-controls (controlled: built `gateway-log-writer.js`, wrapped `nodeLogFileSystem` and `schedule`)
+
+**C-1 `c1-record-boundary`: passed (controlled).** 14 inputs.
+
+- Records of exactly 65,535 and 65,536 B, ending in é, € or 😀, were written verbatim. The charge equals the written bytes.
+- These inputs each became exactly the 122 B `oversizedMarker` with no payload:
+  - the 65,537 B record;
+  - the three records whose character straddles byte 65,536 (65,540 and 65,541 B inputs);
+  - LF-less 65,536.
+- LF-less 65,535 was written as 65,536 B with the LF.
+- A lone surrogate at 65,536 was written verbatim, with U+FFFD as its 3-byte replacement.
+- Every `write()` call returned in ≤ 0.55 ms.
+
+**C-2 `c2-slot-boundary`: passed (controlled).**
+
+| Seed offset | Behavior |
+| --- | --- |
+| −1 | Appended in place; same ID; 4,194,303 B |
+| 0 | Appended in place; same ID; 4,194,304 B |
+| +1 | Close/rename/create completed; the old active ID and bytes moved to `gateway.log.1`; the new active holds exactly the 1,000 B record |
+
+- Only the two slot names exist afterwards.
+- Adopted sizes were exact.
+- Stopped oversized slots (4,194,305 B each) were replaced under ownership. Both IDs were kept, with 0 B previous and a 35 B active.
+- Torn tails in both slots were repaired to the 10,000 B boundary.
+
+**C-3 `c3-queue-saturation`: passed (controlled, held real write).**
+
+- One 65,536 B write was held and three 65,536 B records were queued, for 262,144 B pending. A 12 B record then dropped synchronously with a `pending-limit` drop event while the write was still held.
+- The drain order was kept. The writes were [65,536, 196,608, 135], where 135 = a 94 B drop summary plus 41 B for the next record. The summary's charge equals its bytes.
+- Boundary: pending 261,144 B plus a 1,000 B probe was accepted; 261,145 B was dropped.
+- The marker charge under a stall was 122 B.
+- `maxInFlight` was 1 and `preWriteFits` held for every reached write.
+
+**C-5 `c5-faults`: passed (controlled; injected codes, real files; `schedule` faked for backoff bookkeeping, no wall waits).**
+
+| Fault | Observed |
+| --- | --- |
+| Injected ENOSPC | 0 B written, no rollback, suspended 1,000 ms, a later drop summary of 2 |
+| Real 993/1,000 B short write | Rolled back by the writer's own truncate to the seed |
+| Short write with failing truncate | Disabled (`rollback-failed`); reopen did `tail-repaired` |
+| Injected EPERM rename after the exact close | Nothing truncated; a later rotation moved the old ID |
+| Injected EIO on create after a real rename | Previous-only state; a fresh open adopted it (`kept` / `created`) |
+| Repeated faults | Backoff 1,000/2,000/4,000/8,000/16,000/32,000/60,000 ms, then disabled at the 8th fault (`fault-limit`); the unrelated file was unchanged |
+
+Real disk-full was not exercised.
+
+**C-5/N-15 `c5-real-sharing-denial`: passed (real Windows sharing at the production seam).**
+
+- A PowerShell holder (PID 46736) opened `gateway.log.1` for Read with ReadWrite sharing and no Delete.
+- The real rename-replace failed with native code **EPERM**, and both slots were unchanged.
+- After release the rotation succeeded, and the old active ID moved to previous.
+- The holder exited 0 and was gone.
+
+**C-7 `c7-name-swap`: passed (controlled hostile mutation, outside the ownership guarantee).**
+
+- With a barrier before the name check, the active or previous name was swapped for a hardlink to a sentinel (`nlink` 2).
+- The writer disabled with `active-slot-changed` or `previous-slot-changed`.
+- No rename happened in the previous variant. The sentinel and the displaced bytes are intact.
+
+### 4.2 guard-controls (controlled: production guard, writer, managed-root, `serve`, gateway-logger)
+
+**C-4 `c4-import-flush`: passed.** Real missing-module import.
+
+| Variant | Exit | `delay` | delay → decision | Closed record |
+| --- | ---: | ---: | ---: | --- |
+| Unheld | 72 | 250 | 1.39 ms | Exactly one `import`/`module-not-found`, exact closed key set |
+| Held | 73 | 250 | 256.48 ms | Exit decided while the write was stalled |
+
+**C-4 `c4-startup-flush`: passed.** Real built `serve()` with a non-SQLite store.
+
+| Variant | Exit | `delay` | delay → decision | Closed record |
+| --- | ---: | ---: | ---: | --- |
+| Unheld | 74 | 250 | 1.60 ms | `store`/`store-unavailable`, exact key set |
+| Held | 75 | 250 | 266.09 ms | Exit decided while the write was stalled |
+
+- Both held decisions fall inside the 220–500 ms host window.
+- In both held variants the harness opened the stall only **after** the decision. The record then landed after the decided exit (`closedRecordsAfterExit: 1`) and the exit codes stayed 73/75. This is the planned "recorded, does not change the code" observation. It is not evidence that the production process writes after deciding.
+- `maxInFlight` was 1 in every variant.
+
+**C-4 `c4-graceful-flush`: passed.** Real `serve` drain with the access-record write held.
+
+- `beforeExit` was entered with `stalled: true` and 2,746 B pending.
+- Exactly one `schedule(250)` occurred after `beforeExit`.
+- `settle` resolved `false` 253.4 ms later.
+- `beforeExit` → exit took 254.5 ms. The held write never resumed before exit.
+- The gateway (PID 47596) exited 0 through the API drain.
+
+**C-6 `c6-stall-liveness`: passed.** Real HTTP and Script work while the write was held.
+
+- Gateway PID 44788. The stall ran from 3,048 ms to the parent release at 4,347 ms.
+- During the stall: two `/healthz` calls returned 200 with the same identity, and Script run `01M7J9MFJAQKE26F1X219M7V2Q` (Script PID 52588) was created, run and reached `succeeded`.
+- Pending grew from 870 to 3,485 B across 6 held samples. The C-6 assertion bound is 262,144 B; the cap itself is shown by C-3, not C-6.
+- After release the queue drained to 0 and the drain exit was 0.
+
+**C-8 `c8-privacy-metadata`: passed (controlled; no native foreign-owner coverage).** The predicates match the reached evidence:
+
+- **Genuine query:** the unchanged production `metadataScript` ran through the bounded native runner in the case env (`process-003`). Its stdout is byte-identical to `c8-genuine-metadata.json` (`46cb112e…`). It shows owner `…-1002`, rules {SY, BA, operator}, an NTFS fixed drive and an ordinary `gateway.log`, and `assertPrivateLogRoot` passed.
+- **Mutated variants:** each was refused with the exact reason.
+
+| Variant | Reason |
+| --- | --- |
+| `root-owner` | `not-private` |
+| `root-users-allow` | `not-private` |
+| `entry-owner` | `unsafe-entry` |
+| `entry-users-allow` | `unsafe-entry` |
+
+- **Composed guard:**
+  - the second genuine query (`process-004`, identical stdout bytes) was served with the owner swapped to a foreign SID;
+  - the guard returned **71**, with `openLog` and the application never called;
+  - `served` was true and exactly 2 queries ran;
+  - the slots were unchanged;
+  - the pipe reserved and released cleanly afterwards.
+- Both queries exited 0. Their 392 B stderr is Windows PowerShell's CLIXML progress record ("Preparing modules for first use.") from the fresh case profile.
+
+**C-9/N-3 `c9-serializer-input`: passed (controlled read-only receipt; real Fastify/Pino/writer).**
+
+| Stimulus | Status | Route | Canary reached the serializer input |
+| --- | ---: | --- | --- |
+| query | 400 | `/runs/:id` | URL |
+| auth | 401 | `/healthz` | Authorization |
+| version | 404 | none | Accept-Version |
+| body | 400 | `/loops` | POST body (present at completion; `bodyAtIncoming: false`, `bodyAtCompletion: true`) |
+
+- All four stimuli are exercised; `skippedVariants` is empty.
+- Outputs carry only method/route(/statusCode) and equal the written access records by reqId.
+- No canary appears in any access record, and no other record contains a canary.
+- The gateway (PID 49812) was drained with exit 0.
+
+### 4.3 native-startup (actual candidate launcher and entry; shadows only where noted)
+
+**`n3-access-projection`: passed (native).** Cold launcher (exit 0, 0/0 B), gateway PID 35448 with a listening record within 5 s.
+
+| Stimulus | reqId | Status | Projection |
+| --- | --- | ---: | --- |
+| query | `req-4` | 400 | `{GET, /runs/:id}` |
+| auth | `req-5` | 401 | `{GET, /healthz}` |
+| version | `req-6` | 404 | No route field (unregistered template `null`) |
+| body | `req-7` | 400 | `{POST, /loops}` |
+
+- No canary and no store path appears in the reached access records.
+- `otherRecordsWithCanary` is 0 for every stimulus.
+
+**`n4-configuration`: passed (native).**
+
+- The ordinary shell exited 1 and showed `Q438RAWSTART` in raw stderr.
+- The direct guarded run exited **74** with 0/0 B output. It wrote exactly one closed `configuration`/`invalid-configuration` record, and the canary appears in neither slot.
+- The launcher with the same override refused `helper-refused` (no `childExit`) before log admission. No `gateway.log` was created and the port refused.
+
+**`n4-store-failure`: passed (native, real non-SQLite store).**
+
+- Launcher exit 1, stderr 621 B: "GraphGoblin failed during startup. A startup diagnostic naming the failed stage was written to gateway.log in the log folder. …", followed by canonical `Log folder:` and `Configuration:` lines.
+- The record shows `startup-failed-logged` with `childExit` **74**.
+- There is exactly one closed `store`/`store-unavailable` record.
+- No path or byte canary appears in stderr, the launcher record or the closed record. Private mentions: 0.
+- No lock was left. The direct run also exited 74.
+
+**`n4-store-held`: passed (native).**
+
+- A direct guarded child on the store held by a live shell gateway (PID 42128) exited **74** with `store`/`store-held`.
+- The owner's health was unchanged, and the shell was drained with exit 0.
+
+**`n5-import-outcomes`: passed (native plus fault-injected build).**
+
+- The positive same-layout shadow booted (gateway PID 47160) and was drained.
+- The shadow without `serve.js`:
+  - direct run: **72** with one `import`/`module-not-found` record;
+  - native: `import-failed-logged`/72, stderr "could not load its application modules. A startup diagnostic was written to gateway.log…".
+- With a full 4 MiB active and the previous held (Read, share ReadWrite, no Delete):
+  - direct run: **73**;
+  - native: `import-failed-unlogged`/73;
+  - both slots are byte- and ID-identical and opened exclusively afterwards.
+- Shadow `node_modules` junctions point to the candidate's own `node_modules`. No `QA438_INCONCLUSIVE` was raised.
+
+**`n4-startup-unlogged`: passed (native sharing denial plus real corrupt store).**
+
+- Direct run: **75**.
+- Native: `startup-failed-unlogged`/75, with the message "…no startup diagnostic could be written. Run node apps\api\dist\main.js…".
+- The slots were unchanged and opened exclusively afterwards.
+
+**`n22-unknown-exit`: passed (fault-injected build; `serve.js` = `process.exit(79);`).**
+
+- Direct run: 79 with no closed record.
+- Native: `unknown-exit`/79, stderr "…unrecognized status (exit code 79). No startup diagnostic can be assumed.…". No startup or import records exist.
+
+**`n6-stale-entry`: passed (native validator).**
+
+- The predecessor `main.js` (baseline-bound bytes) has no marker in bytes 0–4095. The frozen entry has the marker at offset 522.
+- In the stale shadow, both `--validate-install` and `--ensure-gateway` refused with "built gateway does not match this launcher" (`configuration`/`configuration-refused`).
+- The marker-valid control validated with exit 0 and no output.
+- No `gateway.log`, store or listener was created.
+- `--expected-app-id` returned `nifeilbehniohmbogbbpilopoecgbopk`.
+- The public installer script was not run.
+
+**`n21-reserved-environment`: passed (native).**
+
+- Both config spellings (`GG_windows_launcher_log_dir` and `GG_WINDOWS_LAUNCHER_LOG_DIR`) were refused with `configuration-refused` and the reserved-variable text.
+- The instance fingerprint is identical with and without the variable.
+- The lowercase opt-in activated managed mode: gateway PID 52924 wrote its listening record into the root.
+- The real Script witness saw `{reserved: false, inherited: true}`.
+- Helper-environment exclusion remains source-only.
+
+**`n23-shell-and-cli`: passed (native).**
+
+- The shell gateway (PID 28832) printed ordinary Pino output with the raw query URL on stdout.
+- `--preflight` (0), `--create-api-key` (2, usage path) and `--reset` (0, dry run) gave identical output with and without the launcher variable.
+- `--preflight` through the `dist-alias` junction equals the canonical run.
+- The seeded managed names are untouched.
+
+### 4.4 native-sharing (actual candidate launcher; real holders; compiled control)
+
+**Native C-1/C-2 `c1-c2-launcher-log-control`: passed (compiled control around the frozen `LauncherLog.Build`/`Append`; synthetic text kept apart from product text).**
+
+- **Record edges (é, €, 😀):**
+  - with locations, records were exactly 4,095 and 4,096 B;
+  - at 4,097 B the 125 B of locations were dropped (3,972 B), leaving the message intact;
+  - a location-free record of exactly 4,096 B was kept;
+  - a location-free 4,097 B record and a straddling one were omitted whole.
+- **Product text:** a record built with 5,000-character paths came to 708 B with capped fields.
+- **RenderPath:** a long path renders as 260 code units keeping the end. A surrogate pair is not split (259). Unsafe locations are suppressed.
+- **Slot edges at 262,144 B:**
+
+| Offset | Behavior |
+| --- | --- |
+| −1 | 261,318 + 825 B: appended in place |
+| 0 | 261,321 + 823 B: appended in place |
+| +1 | 261,320 + 825 B: rotated; active ID moved to `launcher.log.1` |
+
+The helper asserts internally and the driver required exit 0.
+
+**`n7-n8-n9-one-writer`: passed (native).**
+
+- **Keys:** the compiled `LogRoot.Admit` keys for the root and its junction alias are equal, and a distinct root differs. Built `resolveLogRoot` agrees.
+  - Node `dev`/`ino` equal Win32 volume `2894493802` and index `562949962249665`.
+  - Independent recomputation reproduces both names: pipe `GraphGoblin.GatewayLog.7f81a448…` and mutex `Global\GraphGoblin.LauncherLog.b54c398f…`.
+- **Live owner** (gateway PID 37964) plus a native launcher contender through the junction: `destination-in-use`, classified as a **parent legacy-sharing refusal** (no `childExit`), stderr "log folder is already in use".
+- **Direct opted-in contender** through the junction: exit **70** with 0/0 B output.
+- **Owner after both:** the owner proof is unchanged; the active ID and prefix bytes are unchanged; every appended record carries PID 37964; `gateway.log.1` is still absent.
+- **Pipe:** a cooperating Node pipe holder on the exact key gave native `destination-in-use` with `childExit` **70**. Neither slot was created.
+- **Limit:** the launcher-through-junction route was decided by the parent's legacy-sharing probe. Child-side alias equivalence is shown by the direct contender (70) and by the key triangulation.
+
+**`n14-partial-utf8`: passed (native, 6 launcher-started gateways).**
+
+- Fragments `F0`, `F0 9F`, `F0 9F 98` and `E2 82`: the 4,096 B complete prefix survived byte-exact, the fragment was removed, the file ID was kept and every record parses as fatal-UTF-8 JSON.
+- The previous-only root kept its ID and bytes (8,192 B).
+- The torn previous was repaired to its 8,192 B boundary.
+
+**`n16-held-active-read`: passed (native).**
+
+- With the active held Read/share Read, the parent probe passed and the child exited **71**.
+- The launcher reported `destination-unavailable`/71, stderr "log folder is unsafe or unavailable".
+- The direct run also exited 71.
+- The file was unchanged and opened exclusively afterwards.
+
+**`n17-launcher-pair-held`: passed (native).**
+
+- With both 262,144 B launcher slots held Read/share Read, two malformed-config refusals each exited 1 with closed stderr (366 B), and the pair was unchanged.
+- After release one refusal rotated: the old active ID became `launcher.log.1` (262,144 B).
+- The new active (379 B) holds exactly one `configuration`/`unexpected` record.
+
+**`n18-launcher-mutex`: passed (native, same session).**
+
+- The helper held `Global\GraphGoblin.LauncherLog.3281a6e1…`.
+- Uncontended runs took 91.1 and 89.0 ms. The run under the hold, through the junction spelling, took 342.2 ms: 252.1 ms beyond the baseline, inside the 150–2000 ms host window.
+- The contended record was dropped and `launcher.log` was unchanged. A record was written after release (2 records total).
+
+**`n19-n20-unsafe-names`: passed for the exercised variants (native).**
+
+Exercised: 7 variants.
+
+| Variant | Launcher | Direct | Notes |
+| --- | --- | ---: | --- |
+| `gateway-previous-hardlink` | `destination-unavailable`, no `childExit` | 71 | |
+| `gateway-active-hardlink` | `destination-unavailable`, no `childExit` | 71 | |
+| `gateway-active-junction` | `destination-unavailable`, no `childExit` | 71 | Attributes 0x410 |
+| `gateway-active-directory` | `destination-unavailable`, no `childExit` | 71 | |
+| `root-users-ace` | stderr-only; no `launcher.log` in the non-private root | 71 | |
+| `launcher-hardlink` | Closed stderr; unchanged | | |
+| `launcher-junction` | Closed stderr; unchanged | | |
+
+- For every exercised entry, Node lstat and the Windows no-follow attributes, owner and SDDL are unchanged, and the protected sentinels are intact.
+- The Users ACE was added only on that exact fixture directory. Cleanup removed it and asserted the exact original SDDL, with no error.
+- **Skipped variants, not exercised:** `gateway-active-file-symlink` and `gateway-active-dangling-symlink` (EPERM on symlink creation). No claim.
+- A foreign SID was not exercised natively.
+
+**`n15-live-rotation-denial`: passed (native).**
+
+- 3 MiB seed. Owner gateway PID 53488 with held Script work (run `01M7JA0ANEG5CJ0ESE7Z95REM4`).
+- Pressure brought the active to 4,100,605 B.
+- With the previous held without delete sharing, 17 samples over 1.12 s showed the same active ID at **4,194,174 B** (≤ 4,194,304, never shrinking) while bursts continued. The previous was unchanged and the work was still `running`.
+- After release, a distinct rotation happened within 1,262 ms: the stuck ID moved to previous and the new active held 50,438 B.
+- The owner proof was unchanged and the work `succeeded`.
+- Totals: 12,288 requests in 8,230 ms.
+- The native denial code is inferred from C-5r (EPERM). The native bounds here are sampled.
+
+### 4.5 native-predecessor (actual frozen e21c launcher and gateway, executed in place)
+
+**`baseline-opening-readback`: passed.** Head, tree and index are unchanged, 29,739 sources rehashed, artifacts `0e4f2fb9…`, launcher `57b4fad9…`, and `origin/main` was observed at `e21c24be…` (recorded only).
+
+**`n11-n12-n13-live-predecessor`: passed (native, real predecessor writer).**
+
+- **Predecessor:** `GraphGoblinBaseline.exe` (exit 0, 0/0 B) started gateway PID 50132, which appended its raw access line with the history sentinel. Its held Script work was run `01M7JA7AR2BB703VDD1WT3GGXW`.
+- **N-11:** the candidate on the same root, with a disjoint store/port and a 2 s bound, refused `destination-in-use` with no `childExit`.
+  - The contender store stayed empty and its port refused.
+  - The predecessor's active ID (`…1125899915672170`) and its first 4,085 B were unchanged.
+  - The predecessor kept serving and appending.
+- **N-12:** a candidate warm launch against the serving predecessor gave `foreign-listener`, and the predecessor proof was unchanged.
+- **N-12 source-only control:** the `instanceIdentity` diff is exactly `protocol: 1,` → `protocol: INSTANCE_PROTOCOL,`, with `INSTANCE_PROTOCOL = 2`.
+- **N-13:**
+  - 3,328 requests drove the predecessor active (same ID) from 4,085 B to 4,503,918 B;
+  - the held work `succeeded`, then the predecessor was drained;
+  - the stopped size was 4,506,432 B;
+  - the candidate restart (gateway PID 54296) wrote its listening record within 5 s;
+  - the sentinel is absent from both slots;
+  - the slots are ≤ 4 MiB and parse (active 9 records, previous 0 records);
+  - the candidate gateway was then drained.
+
+**`n23-cli-parity`: passed (native).** Candidate and predecessor gave equal normalized output for the three CLI calls:
+
+| Call | Exit | stdout / stderr (normalized) |
+| --- | ---: | --- |
+| `--preflight` | 0 | 859 / 0 |
+| `--create-api-key` | 2 | 0 / 116 |
+| `--reset` | 0 | 592 / 0 |
+
+**`baseline-closing-readback`: passed.** The values equal the opening (`observedRemoteMain` is excluded by design and was also unchanged).
+
+## 5. Native codes, identities, log bounds and work liveness
+
+**Child exit codes the candidate launcher read natively:**
+
+| Code | Case |
+| ---: | --- |
+| 70 | N-9 pipe holder |
+| 71 | N-16 |
+| 72 / 73 | N-5 |
+| 74 | N-4 store failure |
+| 75 | N-4 unlogged |
+| 79 | N-22 unknown exit |
+
+**Direct guarded exits:** 70 (N-7 direct contender), 71 (N-16 and 5 N-19 variants), 72/73 (N-5), 74 (N-4 ×3), 75 (N-4 unlogged), 79 (N-22).
+
+**Launcher refusals without a child exit:**
+
+| Code | Cases |
+| --- | --- |
+| `destination-in-use` | N-7 alias, N-11 |
+| `foreign-listener` | N-12 |
+| `helper-refused` | N-4 |
+| `configuration-refused` | N-6, N-21 |
+| `destination-unavailable` | N-19 |
+
+**Gateways.** 18 gateways were proven by health identity, CIM birth, argv, both leases and the SQLite header, then drained through the API with the exact birth absent afterwards:
+
+- 6 direct children, each with exit 0: 47596, 44788, 49812, 42128, 52924, 28832;
+- 12 launcher-started: 35448, 47160, 37964, 51280, 52416, 43060, 37608, 15040, 46012, 53488, 50132 (predecessor), 54296.
+
+**Log bounds:**
+
+- **Pre-write ceilings** come only from the controlled seam: C-1, C-2, C-3, and the `preWriteFits`/`maxInFlight ≤ 1` checks in writer and guard.
+- **Native bounds are sampled observations:**
+  - N-15 active ≤ 4,194,174 B under the hold;
+  - N-13 slots ≤ 4 MiB after replacement;
+  - N-17 launcher slots of 262,144 B;
+  - compiled-control launcher records ≤ 4,096 B.
+
+**Work liveness:** held real Script work completed on the same owned gateway under three conditions:
+
+- a held writer operation (C-6);
+- a held rotation denial (N-15);
+- the live predecessor (N-11).
+
+## 6. Cleanup and retained state
+
+**Driver cleanup** (per case, in `case-result.json`): 0 errors in all 34 cases.
+
+| Item | Result |
+| --- | --- |
+| Gateways drained | 18 |
+| Ports refused | 53 |
+| Holders exited 0 and gone | 10 |
+| Held-work releases | C-6, N-15, N-11 |
+| Users ACE restored to the exact original SDDL | N-19 |
+| Launcher child census | 0 rows in every case that has one |
+| SQLite exclusive-open attested | Owned-store check ran in all 19 cases with stores; 54 present store files opened exclusively (cases whose stores never got a database had 0) |
+| TEMP witness | No managed names |
+| No-follow inventory | No unexpected reparse |
+
+**Retained reparse entries (18, no deletion, tree kept):**
+
+- **5 exact `profile\AppData\Local\Microsoft\Windows\INetCache\Content.IE5` mount points** (`n3-access-projection`, `n5-import-outcomes`, `n7-n8-n9-one-writer`, `n14-partial-utf8`, `n15-live-rotation-denial`).
+  - Each has disposition `retained-known-windows-cache-junction` and tag `0xa0000003`.
+  - Each substitute/print name is the physical sibling `IE`. The link and target have distinct IDs on volume `ac86786a`, and the physical ancestry IDs are recorded.
+- **13 intentional links:**
+  - 8 shadow `node_modules` junctions to the candidate checkout's `node_modules` and `apps\api\node_modules` (N-5 ×4, N-22 ×2, N-6 ×2);
+  - 1 `dist-alias` to the candidate's `apps\api\dist` (N-23);
+  - 2 `install-alias` junctions to fixture roots (N-7, N-18);
+  - 2 N-19 junction names (`gateway.log` and `launcher.log`) to fixture `targets\`.
+- None was followed, unlinked or deleted by me.
+
+**My readbacks after exit (read-only):**
+
+- **13:59:16Z:** `--no-optional-locks` HEAD/tree/origin/main/index are unchanged, porcelain is 0 lines and the manifest is 38/38 OK. The plan, admission, both bindings, invoker and helper executable rehash unchanged.
+- **13:59:22Z:** all 53 fixture ports returned `ECONNREFUSED` on exact loopback connects. The list excluded 4747/4748. [post-run-ports.json](post-run-ports.json)
+- **13:59:40Z:** exact `Win32_Process` lookups by PID found none of the 29 recorded PIDs. [post-run-pids.json](post-run-pids.json)
+- **Fixture trees:** 575 directories, 1,783 files and 136,585,066 B, by metadata only. No store, key or database contents were read.
+
+## 7. Evidence limits (kept explicit)
+
+**Not exercised:**
+
+- the two EPERM symlink variants;
+- a native foreign-SID owner (C-8 is controlled only);
+- cross-user, cross-session or hostile pipe squatting;
+- simultaneous fresh-binder races;
+- external or fatal termination;
+- nonlocal filesystems;
+- real disk-full (ENOSPC was injected);
+- the public installer script flow;
+- dialog presentation;
+- #458/#460 helper streams.
+
+**Source-only (not in this invocation):**
+
+- the launcher's explicit inherited-handle list and handle close on every return (the V4 core observed only the gateway's NUL std slots);
+- helper-environment exclusion of the reserved variable;
+- the N-12 protocol diff.
+
+**Host windows, not product oracles:**
+
+- C-4 220–500 ms (observed 256.5, 266.1 and 254.5 ms);
+- N-18 150–2000 ms (observed 252.1 ms).
+
+**Inferences:**
+
+- N-15 denial is inferred from bounded, size- and ID-stable samples, with the native code taken from C-5r (EPERM).
+- The N-7/N-8 launcher route was the parent legacy-sharing probe (section 4.4).
+- C-6 pending peaked at 3,485 B, so the 256 KiB cap is shown only by C-3.
+
+**Same-user scope:** N-9 holders and N-18 mutex holders are cooperating same-user processes in the same session.
+
+**Shadows:** N-5, N-22 and N-6 are fault-injected external shadows that copy frozen bytes, plus junctions into the candidate's own dependencies. They are not changes to the candidate checkout.
+
+**Implementer evidence:** acceptance scripts, `NativeChecks.cs` and the `*.test.ts` suites are not counted. No hosted CI result is used here.
+
+## 8. Deviations and disclosures
+
+- **One execution, no retries.** I made no product, index, build, harness or Git change, ran no pnpm builds or tests, used no browser or provider, and did not touch owner stores, services, installation or ports 4747/4748. I sent no signals, deleted nothing and did not change any ACL.
+- **Monitoring:** I watched progress by listing and reading receipts as they appeared. One poll used an unmatched glob and failed inside my own `node -e` before any read. One later poll was moved to the background by the tool timeout and ended on its own.
+- **My own scripts** are in [tools/](tools/): `analyze.mjs` and `inventory.mjs` read receipts only, and `pid-readback.ps1` does exact-PID `Win32_Process` lookups.
+
+## 9. Outstanding gates (none satisfied by this report)
+
+- Root review of these supplemental receipts, and of the separately completed V4 core plus its root-admitted cleanup continuation. Both are outside this execution and were neither rerun nor reverified here.
+- All exact current-head CI for `1c04263b…`. I did not check it.
+- The GPT-6.1 Sol xhigh opposite-family formal review.
+- A fresh independent Astra max final verdict naming the exact head and target.
+- Formal scans used: 0 of 3.
+- Root owns any correction, continuation, publication and merge. The overall batch remains incomplete.
+
+## 10. Evidence
+
+- [evidence-inventory.json](evidence-inventory.json) covers:
+  - SHA-256 and bytes for the 32 outer invocation files (`launcher-438-supplemental-invocation-01`);
+  - the 30 wrapper receipt files (`receipts\supplemental-attempt-1-*`);
+  - all 2,211 driver evidence files (4,140,197 B) under `attempts\supplemental-attempt-1\*\{evidence,cases\*\evidence}`;
+  - a per-case no-follow fixture summary (counts, bytes and reparse names only).
+- [analysis.json](analysis.json) covers the per-module and per-case statuses, observed values and cleanup, and all 392 spawn receipts (exit/close/EOF).
+- **Key hashes:**
+
+| File | SHA-256 |
+| --- | --- |
+| `summary.json` | `31a8999d…c6f8` |
+| Opening bindings (all 5) | `58e50373…ee32` |
+| `result.json` writer | `0342d71b…e4ab` |
+| `result.json` guard | `d3e7b582…bf14` |
+| `result.json` startup | `05622f62…5e41` |
+| `result.json` sharing | `89e1ad8f…11dd5` |
+| `result.json` predecessor | `7682b3b4…624b` |
+
+- [SHA256SUMS.txt](SHA256SUMS.txt) seals this report, the inventory, the analysis, the preflight, the post-run readbacks, the console receipts and `tools/`.
+- **Excluded** as private session streams: `events.jsonl`, `latest.md`, `launch.json`, `result.json` and `provider-final-message.md` in this directory. No disposable `master.key` or SQLite contents and no real owner data were read, copied or published.

@@ -1,0 +1,29 @@
+I ran the corrected V4 core attempt (`candidate-attempt-2`) once. Every behavior stage passed against the frozen candidate, with no first failure. The attempt is still recorded as `incomplete` (runner and wrapper exit 1, invoker `complete: true`, exit 1) because the known `Content.IE5` junction stopped cleanup after all behavior had finished.
+
+**Run:** the exact admitted command, once, from Git Bash with backslash paths. `NODE_OPTIONS` was unset. I put the project Node directory first on PATH explicitly, because the inherited PATH listed `~/bin` first. All bound input hashes matched admission 02 before the run. The attempt-2, receipts-2 and invocation-02 directories did not exist beforehand. The run took 12:02:07 to 12:03:42 UTC.
+
+**Observed behavior:**
+- **Rotations:** three file identity moves from active to previous at 34,048 requests in 8.4 s, within the 100,000-request / 180 s budget. Across 142 file samples, the largest slot was 4,194,219 B (cap 4,194,304) and the largest pair 8,388,332 B (cap 8,388,608). No managed TEMP file appeared, every record parsed as valid UTF-8 JSON, and no record exceeded its cap. These are sampled bounds only.
+- **Held work:** the Script node ran on gateway 44704 through all three rotations, which happened after the launcher had exited. After release it succeeded.
+- **NUL std slots:** the observer saw stdin readable and stdout/stderr writable NUL on the gateway. This qualification is host-bound; I make no claim about the launcher's inherited-handle list.
+- **#381:** the public run and its `run.failed` event show the fixed `INTERNAL_ERROR` with no stack. The private `gateway.log` record has the same PID, run ID and node `mut`, plus `error.name`/`message`/`stack`.
+- **Access records:** they hold only method, route template and status. The query canary and padding, the bearer canary and the store path are absent from every access record. The 401 control behaved as expected.
+- **Launches and restarts:** warm and alternate-config warm launches exited 0 with no output and left the gateway unchanged. Wrong-store and foreign-listener launches exited 1 with the fixed `foreign-listener` text and one launcher record each. Four exact drains completed. The oversized legacy seed was replaced on restart. The clean restart and the ordinary-shell control behaved as expected.
+- **Bindings:** opening and closing are byte-identical (`6b682329…`). HEAD, tree, main, index and the V4 manifest were unchanged afterwards.
+
+**Cleanup and remaining state:**
+- The only error is the cleanup check at `windows.mjs:28`, which refused the `profile\AppData\Local\Microsoft\Windows\INetCache\Content.IE5` junction. Its target is the sibling `INetCache\IE`, inside the fixture. Because of this, the driver never ran its SQLite exclusive-open check.
+- My read-only checks afterwards found all 50 recorded PIDs gone and fixture ports 64062, 58199 and 58336 refusing connections. No lease or reclaim files remain, and the junction is the only reparse entry in the 58-entry tree.
+- I did not unlink, delete, kill, change ACLs or open the stores exclusively.
+- **Decision for root:** whether to admit an exact cleanup continuation (unlink only the junction, confirm the target unchanged, attest SQLite exclusive-open).
+
+**Not covered by this run:** the 250 ms exit flush, startup exit codes 70–75, contention, sharing denial, unsafe names/ACLs, CLI flags and real predecessor-writer proof. The supplemental native rows (N-3 to N-23), controlled rows C-1 to C-9, current-head CI, the Sol opposite-family review and a fresh Astra MAX audit remain with root. Formal scans used: 0 of 3. This is not a verdict or completion claim.
+
+Files are in `launcher-438-candidate-opus-execution-02`:
+- full-report.md
+- evidence-inventory.json
+- preflight.json
+- invoker-console.*
+- SHA256SUMS.txt
+
+The provider session files, fixture keys and databases are excluded from the seal.

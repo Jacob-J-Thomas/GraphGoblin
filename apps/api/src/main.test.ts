@@ -1,8 +1,9 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { main } from './main.js';
 import { createApiProcessFixture, eventually, listening } from './testing/api-subprocess.js';
@@ -21,6 +22,101 @@ const noLock = (path: string) => expect(access(path)).rejects.toMatchObject({ co
 // Node force-kills children on Windows for SIGINT/SIGTERM; JS handlers never run there.
 // Linux CI supplies the native signal evidence. No captured callbacks or stubbed process.exit.
 const nativeSignals = describe.skipIf(process.platform !== 'linux');
+const icacls = join(process.env['SystemRoot'] ?? 'C:\\Windows', 'System32', 'icacls.exe');
+const whoami = join(process.env['SystemRoot'] ?? 'C:\\Windows', 'System32', 'whoami.exe');
+
+describe('built entry and the reserved Windows launcher variable (#438)', () => {
+  it('emits the exact protocol declaration within 4 KiB beside the guard module', async () => {
+    const built = fileURLToPath(new URL('../dist/main.js', import.meta.url));
+    const head = (await readFile(built)).subarray(0, 4096).toString('latin1');
+    expect(head).toContain('export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;');
+    await access(fileURLToPath(new URL('../dist/windows-log/guard.js', import.meta.url)));
+  });
+
+  it('consumes the variable for CLI commands, which keep their ordinary output', async () => {
+    const f = await fixture();
+    const logs = join(f.dataDir, 'cli-logs');
+    await mkdir(logs);
+    const command = f.run(['--create-api-key', 'reserved variable'], {
+      gg_Windows_Launcher_Log_Dir: logs,
+    });
+    expect(await command.waitForExit()).toEqual({ code: 0, signal: null });
+    expect(command.stdout).toMatch(/gg_[A-Za-z0-9_-]+/);
+    expect(await readdir(logs)).toEqual([]);
+  }, 60_000);
+
+  it.skipIf(process.platform === 'win32')(
+    'ignores the Windows-only variable elsewhere and keeps shell logging',
+    async () => {
+      const f = await fixture();
+      const token = await f.createKey();
+      const logs = join(f.dataDir, 'shell-logs');
+      await mkdir(logs);
+      const child = f.run([], { GG_WINDOWS_LAUNCHER_LOG_DIR: logs });
+      await f.ready(child, token);
+      expect(await readdir(logs)).toEqual([]);
+    },
+    60_000,
+  );
+
+  it.runIf(process.platform === 'win32')(
+    'logs only to the private pair, refuses an unsafe folder (71) and a second owner (70)',
+    async () => {
+      const execute = promisify(execFile);
+      const f = await fixture();
+      const token = await f.createKey();
+      const unsafe = join(f.dataDir, 'unsafe-logs');
+      await mkdir(unsafe);
+      await execute(icacls, [unsafe, '/grant', '*S-1-5-32-545:(OI)(CI)(R)'], { windowsHide: true });
+      const refused = f.run([], { GG_WINDOWS_LAUNCHER_LOG_DIR: unsafe });
+      expect(await refused.waitForExit()).toEqual({ code: 71, signal: null });
+      expect([refused.stdout, refused.stderr]).toEqual(['', '']);
+      expect(await readdir(unsafe)).toEqual([]);
+      await noLock(f.lockPath);
+
+      const logs = join(f.dataDir, 'private-logs');
+      await mkdir(logs);
+      const sid = /"(S-1-[0-9-]+)"/.exec(
+        (await execute(whoami, ['/user', '/fo', 'csv', '/nh'], { windowsHide: true })).stdout,
+      )?.[1];
+      expect(sid).toBeDefined();
+      await execute(
+        icacls,
+        [
+          logs,
+          '/inheritance:r',
+          '/grant:r',
+          `*${sid}:(OI)(CI)F`,
+          '*S-1-5-18:(OI)(CI)F',
+          '*S-1-5-32-544:(OI)(CI)F',
+        ],
+        { windowsHide: true },
+      );
+      const child = f.run([], { GG_WINDOWS_LAUNCHER_LOG_DIR: logs });
+      await eventually(async () => {
+        if (child.exited) throw new Error('managed gateway exited before readiness');
+        return listening(f.port);
+      });
+      const response = await fetch(`http://127.0.0.1:${f.port}/loops?probe=GG_QUERY_CANARY`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(response.status).toBe(200);
+      const contender = f.run([], { GG_WINDOWS_LAUNCHER_LOG_DIR: logs });
+      expect(await contender.waitForExit()).toEqual({ code: 70, signal: null });
+      expect([contender.stdout, contender.stderr]).toEqual(['', '']);
+      await eventually(async () =>
+        (await readFile(join(logs, 'gateway.log'), 'utf8')).includes('"statusCode":200'),
+      );
+      const log = await readFile(join(logs, 'gateway.log'), 'utf8');
+      expect(log).toContain('GraphGoblin API listening');
+      expect(log).not.toContain('GG_QUERY_CANARY');
+      expect(log).not.toContain(token);
+      expect([child.stdout, child.stderr]).toEqual(['', '']);
+      expect((await readdir(logs)).sort()).toEqual(['gateway.log']);
+    },
+    60_000,
+  );
+});
 
 describe('built API entry and startup failures', () => {
   it('holds ownership while listening and releases it on supported HTTP close', async () => {

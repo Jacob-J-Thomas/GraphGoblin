@@ -1,0 +1,316 @@
+# #436 / PR #497 — formal opposite-family review, scan 1 of 3
+
+## Verdict: READY
+
+No introduced P0, P1 or confirmed P2 defect was found in the six active paths. One unresolved diagnostic (U1) and one P3 test-strength follow-up candidate (R1) are listed below for root triage. A pre-existing CI workflow observation (O1) is outside this PR's scope. Nothing here requires a product change before merge on current evidence. U1 is the item most likely to show up on a real owner desktop. Root should decide whether a bounded native check comes before merge.
+
+## Identity
+
+| Item | Value |
+| --- | --- |
+| Checkout | `C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin`, branch `codex/gg-20261116-installer-validation`, clean (0 porcelain lines, rechecked at the start and end) |
+| Head | `2732dd34457bcd9a7007e89c3fa11fe085af764c` |
+| Tree | `d064706fb48def7bacac5e434f96825c5850d214` |
+| Target (actual main) | `be633141be5a0cd2b4f960a46761fabbf2cb82c7` (also the merge-base) |
+| Tested synthetic merge | `80c581ebc95de2000c25ed2b5995d5a648fa95ba`, tree `d064706f…`, parents target then head (read from the Git object) |
+| Corrected product | `a73b9a887c50f51d4fc4af54aa806fda42e31abf` |
+| Reviewer | Claude Code, model `claude-opus-5-5`. `launch.json` in this directory records effort `xhigh`; I cannot observe the effort setting from inside the session. |
+| Implementation under review | GPT-6.1 Sol xhigh implementation with a narrow GPT-6 Luna xhigh correction (per the preparation) |
+| Formal scans | This is scan 1 of the shared maximum of 3. No prior formal scan. |
+
+There was no admission mismatch: branch, head, tree, clean status, target, merge parents and merge tree all matched the dispatch.
+
+## What I read and checked
+
+Required reading, read in full: the formal preparation; the pipeline review policy; `AGENTS.md`; `docs/README.md`; `docs/15-issue-workflow.md`; and the #436 and #435-lane entries of `docs/delivery/2026-11-13-four-intents-register.md` (lines 376–400).
+
+Source, read in full at head and diffed against the target:
+
+- `scripts/install-windows-launcher.ps1`: a full read of the head version (457 lines) and of the target version.
+- `apps/windows-launcher/Launcher.cs`: a full read, plus its diff.
+- `tooling/scripts/windows-launcher.acceptance.mjs`: the new test in full, plus its shared helpers.
+- The three doc diffs: `docs/09-frontend-and-pwa.md`, `docs/guide/01-install-and-first-run.md` (with the surrounding section) and `CHANGELOG.md`.
+- For context only: ADR-0064 and the repo-wide uses of the private CLI flags.
+
+Read-only Git checks, all run with `GIT_OPTIONAL_LOCKS=0`:
+
+- **Six active paths.** Each blob's SHA-256 and byte count at head equals the frozen manifest `launcher-436-discovery-corrected-candidate-source.json`. The manifest's own SHA-256 is `c1586347…3c40`, which matches. Each blob also equals the corresponding blob in `a73b9a8`.
+- **Effective diff from target to head.** 561 files changed, 103,170 insertions and 82 deletions:
+  - the six active paths;
+  - the register, as an append-only change: the one "modified" line at 380 has identical words;
+  - `docs/qa/.gitattributes`, with 20 added `-text -whitespace` packet rules;
+  - 553 added files across 20 `docs/qa` packet directories.
+  - No other `docs/qa` file is modified or deleted. There is no `.github` difference: the `ci.yml` blob equals the target's.
+- **Carrier chain.**
+  - `a73b9a8 → fb57110` changes only `.github/workflows/ci.yml`.
+  - `fb57110 → 2732dd3` changes only `ci.yml` (restored), the register, `.gitattributes` and added QA files.
+  - The only product change since the initial product `1e303ba8` is the one-line discovery fix plus 51 test lines (`596bbb6 → a73b9a8`).
+- **Rollback declarations.** I recomputed offline, with project Node v22.23.4 and `tools/function-hashes.mjs`, the LF-normalised extents of the five rollback declarations at head:
+  - `Initialize-InstallerPaths` (lines 80–157, here-string included), `Get-InstallerPath`, `Get-InstallerDigest`, `Test-InstallerFile` and `Publish-LauncherArtifacts`.
+  - All five equal the manifest's hashes (`745c7993…`, `422f2e3e…`, `574337d0…`, `394d79e7…`, `4a05cc1d…`).
+  - The head file contains no CR bytes.
+- **Rollback witness delegate.** It (`rollback-witness.ps1` lines 222–262) calls the same `[IO.File]::Replace($Entry.Staged, $Entry.Original.Path, $Entry.Backup)` as the production default `PublishOne`. The `File.Move` branch for new entries was not exercised by the witness.
+
+Final CI evidence, read offline from `launcher/436-final-ci/` and the root receipt:
+
+- **Jobs.** All four jobs report completed/success on head `2732dd3` (`jobs-github-api.json`).
+- **Windows job.** It checked out `80c581eb` and ran 18 tests: 18 passed, 0 failed, 0 skipped. The new test "Windows PowerShell 5.1 installer validates before replacing native launcher files" is `ok 1` (11.6 s).
+- **Gates.** All 28 steps succeeded. Summing the 13 Vitest result lines in the decoded log gives 9,619 passed and 41 skipped. The dependency audit reported 8 low and 13 moderate.
+- **Coverage.** The ZIP's SHA-256 is `3cac7f52…1270`, which matches. I extracted it into `coverage-extract/` and read all 13 `coverage-summary.json` members (`tools/coverage-floors.mjs`). The lowest line coverage is 95.0 (plugin-claude) and the lowest branch coverage is 90.7 (api). All are at or above 90.
+- **Browser.** 481 passed and 1 skipped, Edge, zero retries, one worker.
+- **Template image.** All steps succeeded.
+
+Hosted QA, read offline:
+
+- **Corrected candidate packet.** I read:
+  - the README and the full report;
+  - the case TSV (4 `positive-met` and 28 `refusal-met`);
+  - the execution disposition (49 direct calls = 32 + 15 + 1 + 1);
+  - the rollback readback (3 completed `File.Replace` calls, then `0x80070020`, `restored`, and all 6 files equal in bytes, link metadata and file ID);
+  - the checkout/merge JSON and the root acceptance.
+- **Packet integrity.**
+  - Both ZIPs match their stated SHA-256 and byte counts (`909dc861…`, 1,654,443 bytes; `8c6453f3…`, 188,204 bytes).
+  - The full report's SHA-256 `d8301972…` equals the receipt.
+  - All 34 packet seal rows verify after CR stripping.
+  - I did not re-open the 962 ZIP members.
+- **Private-CLI corrected QA and Opus behaviour-QA root triage.** D1–D5 are dispositioned NO-CHANGE and F1 is fixed. I treat these as settled.
+- **Discovery-correction packet.** The README and diff. The focused run came before a format-only MJS edit. The final Windows CI ran on the final bytes.
+- **First-failure packet.** The README is read and all 21 seal rows verify, so the history is preserved.
+- **Baseline packet.** The README only.
+
+No suite reruns, native processes, providers, agents, services, installations or GitHub calls were made. I did not touch the checkout, index or owner resources.
+
+## Contract restated
+
+The public installer validates and stages every candidate before publishing any managed artifact, including with `-NoShortcuts`. It also:
+
+- refuses physical collisions between the PWA source and the outputs;
+- gives fixed, actionable Node guidance;
+- preserves existing config and shortcuts on refusal;
+- restores verified originals after a publication failure, or retains the stage folders when recovery cannot be verified;
+- bounds its child processes and uses same-volume staging;
+- builds shortcuts that point at the final target;
+- requires fully qualified paths for the private `--validate-install` and `--stage-shortcut` modes, while public relative inputs keep their resolution.
+
+Out of scope: owner resources, stored format, dependencies, gateway lifecycle, log retention and helper timeouts.
+
+## Independent analysis of the active paths
+
+### Validation and publication ordering
+
+Nothing under a managed output path is written before `Publish-LauncherArtifacts`. The old unconditional `New-Item $InstallDir` and the in-place `IPersistFile.Save` of each shortcut are gone. Before publication the installer, in order:
+
+1. Checks the runtime and the built checkout.
+2. Resolves and alias-checks every destination.
+3. Compiles into a GUID stage under the executable's nearest existing ancestor.
+4. Inspects the PWA source: target, app ID, profile, origin and AppUserModelID.
+5. Writes the staged config and validates it natively with `--validate-install`.
+6. Stages each shortcut beside its own destination anchor.
+7. Re-reads every staged identity and digest.
+8. Re-verifies the PWA source by ID and digest.
+
+`-NoShortcuts` takes the same route with only the executable and config.
+
+### The publisher
+
+`Publish-LauncherArtifacts` handles each entry as follows:
+
+- **Before publishing.** It re-reads the destination's resolved path and ID, and its digest if the file exists. It records the attempt before the native I/O. `File.Replace` handles existing originals and `File.Move` handles new entries.
+- **After publishing.** It verifies that the destination now carries the staged ID and digest.
+- **Recovery** runs in reverse order:
+  - an untouched original is skipped;
+  - an original moved to `.previous` is moved back if the destination is absent, or swapped back with `Replace` if the destination is the stage;
+  - a new entry is deleted only if it is the verified stage;
+  - anything else marks the run unverified.
+
+I walked through how the three return values map to user messages:
+
+- `publication-refused`: nothing attempted was changed. Directories created by `CreateDirectory` may remain, but no file was replaced, which matches the message.
+- `restored`: at least one entry was reverted and all were verified.
+- `recovery-required`: any entry could not be verified. Its stages are retained.
+
+I found no path where the reported status is untruthful. I also checked the `File.Replace` failure modes:
+
+- A sharing violation leaves the original in place. This is the witness case.
+- `ERROR_UNABLE_TO_MOVE_REPLACEMENT_2` leaves the original under the backup name and the destination missing, which the Move-back branch handles.
+- A post-swap digest mismatch caused by a concurrent writer ends in `recovery-required`.
+
+Hard-linked originals elsewhere keep their other link name, because `Replace` renames rather than writing through. That is safer than the old in-place save.
+
+### Aliases and identity
+
+Each identity is the volume serial plus the 64-bit file index, together with the `GetFinalPathNameByHandle` path, read with zero access and backup semantics. Nonexistent leaves inherit the resolved path of their nearest existing ancestor, so junction and symlink parents collapse to one physical path. Destinations are refused for:
+
+- duplicate paths, compared ordinal and case-insensitive;
+- duplicate IDs, which catches hard links;
+- one path nested inside another;
+- directories, reparse-point leaves, and non-`.lnk` shortcut outputs.
+
+The source is seeded into both sets. The config must sit next to the executable after resolution. This covers the baseline collision classes: exact path, case variant, junction, hard link, pairwise outputs, pin, config and the default Desktop.
+
+ReFS's non-unique 64-bit index could at worst cause over-refusal, because every match also requires a digest.
+
+### Bounded children
+
+`Invoke-InstallerProcess` uses CRT-correct argument quoting, reads both pipes asynchronously and enforces a timeout:
+
+| Child | Timeout |
+| --- | --- |
+| Node | 10 s |
+| `csc` | 30 s |
+| Staged launcher | 15 s |
+
+On timeout the child is killed and the installer waits up to 2 s for its pipes. COM work runs in the short-lived staged launcher, so it is bounded by that child's lifetime. `PrepareInstallation` never shows a MessageBox and prints only fixed text. The other private calls use the existing quiet path.
+
+### Stage cleanup
+
+Cleanup deletes only stages whose ID, path and non-link status still match what the installer created. It deletes only the files at the top level, then the directory itself, non-recursively. Stages are retained exactly when the outcome is `recovery-required`, or after an unexpected failure once publication has begun.
+
+### StrictMode
+
+The corrected default uses `-ExpandProperty`. I statically reviewed the shortcut branch and the recovery branch under an inherited `Set-StrictMode -Version Latest` and found no uninitialised-variable or missing-property hazards. The permanent test covers the discovery path, including a full `-NoShortcuts` publish under StrictMode.
+
+### `Launcher.cs`
+
+The diff adds:
+
+- a `ConfigurationRefusal` subclass, caught by the existing `catch (Exception)` in `Main`, so normal-path behaviour is unchanged;
+- the private dispatch;
+- the fully-qualified predicate.
+
+Staged shortcuts target `GetFullPath(finalExe)` with `--config "<finalExe>.json"`. Together with the installer's adjacency rule, that is consistent with `RelaunchCommand`'s default-config detection.
+
+### Test strength
+
+Negative controls are strong:
+
+- refusals compare the bytes of 6 files and check that the store stays empty;
+- the hard-link alias is real;
+- a canary path must not be echoed;
+- the private refusals require exact stderr and empty stdout;
+- the StrictMode missing-Node control reproduces the original failure on old source (per the correction packet).
+
+The gaps are in R1.
+
+### Documentation
+
+The 09 doc, the guide and the CHANGELOG describe the behaviour accurately. No ADR is required: this is hardening within ADR-0064's decision.
+
+## Root-cause ledger
+
+### R1 — `windows-installer/permanent-regression-misses-replace-and-stage-cleanup` (P3, follow-up candidate)
+
+- **Evidence.** The permanent Windows PowerShell 5.1 test publishes only into absent destinations, so it exercises only `File.Move`:
+  - the first `invoke()` into a new install dir with new `Desktop`/`Programs` fixture dirs;
+  - the discovery positive into a new `discovered install` dir.
+- **What CI never exercises:**
+  - the same-path reinstall branch: `File.Replace` plus the check that the replaced destination carries the staged ID and digest;
+  - `-PinnedShortcut`;
+  - any restore branch.
+- **What CI never asserts:** that `gg-launcher-stage-*` folders are removed after a successful run.
+- **Where these are covered instead:** external hosted QA at this exact source (cases 02 and 03 and the composed rollback witness) and a local PS7 implementation smoke check (`installer-smoke-ps7.ps1` line 41 checks for stage remnants). The hosted matrix snapshots named artifacts, not directory listings.
+- **Impact.** This concerns future change safety. Re-running the installer to reconfigure is the documented upgrade route ("Preserve required overrides when reconfiguring"). A later edit to `Publish-LauncherArtifacts` or to cleanup could break that route, or leave stage folders on users' Desktop and Start menu, without the Windows CI job noticing. There is no current defect.
+- **Proposed disposition.** P3 follow-up issue; root dedupes. Not introduced as a defect, and not needed to merge safely.
+- **Acceptance criteria.** Add a second public Windows PowerShell 5.1 invocation over the already-installed outputs. Use a changed `-Environment` value so the config bytes differ. Assert:
+  - the config is updated;
+  - the source and its alias are byte-identical;
+  - the shortcut target, arguments and AppUserModelID are correct;
+  - the store is empty;
+  - no `gg-launcher-stage-*` directory remains under the install dir or the shortcut anchors.
+- **Optional addition.** A held-handle restore case. Node's default share modes cannot create the needed sharing violation, so it would need a PowerShell helper.
+
+### U1 — `windows-installer/reparse-attribute-treated-as-link` (unresolved diagnostic for root admission; not a confirmed finding)
+
+**Concrete code.** `PathIdentity.IsLink = (GetFileAttributes(path) & 0x400) != 0` (installer line 150). This treats every reparse point as a link, including non-link tags such as cloud-file placeholders. The following consumers refuse or skip any item that carries the attribute:
+
+| Line | Consumer | Behaviour |
+| --- | --- | --- |
+| 328 | Destination check | Refuses with "Choose a regular output file with the required shortcut extension." |
+| 252 | `New-InstallerStage` | Throws a generic IOException |
+| 405 | Staged candidate check | Throws a generic IOException |
+| 174 | `Test-InstallerFile` | Fails; used for the pre-publication, post-publication, recovery and final source checks |
+| 447 | Stage cleanup | Silently skips the stage |
+
+**Why it matters.** The default `-DesktopShortcut` is `[Environment]::GetFolderPath('Desktop')\GraphGoblin.lnk`. With OneDrive Known Folder Move, a common Windows 11 setup, that folder is inside a OneDrive sync root. The target code overwrote shortcuts with `IPersistFile.Save` and never classified reparse points, so any effect below is introduced by this PR.
+
+**If Windows exposes the reparse attribute of a synced placeholder to `powershell.exe`:**
+
+- Re-running the installer with default paths would be refused deterministically once the earlier launcher shortcut has synced. The refusal message is misleading.
+- A stage folder created on that Desktop could be converted by the sync client before the `finally` block runs. It would then be left behind silently after a successful run.
+- A `-PwaShortcut` stored on such a Desktop would fail the final source check with "The PWA shortcut changed during preparation."
+
+**Not established.** Whether the attribute is visible to this process depends on Windows' placeholder compatibility mode. I could not verify this without a native run, which this review is not allowed to do. Hosted runners have no OneDrive, and no packet covers this case. AF_UNIX socket files and other non-link reparse tags behave the same way, but they are not realistic destinations.
+
+**Proposed disposition.** Root decides whether to authorise a bounded, read-only native observation. That would read the attributes and reparse tag, from Windows PowerShell 5.1, of:
+
+- an already-synced file in a OneDrive-backed Desktop;
+- a freshly created folder in that Desktop, after a few seconds.
+
+Then:
+
+- **If the attribute is exposed:** this is an introduced P2 failure on the reinstall path. It is refusal-only with no data loss, and a workaround exists: a different `-DesktopShortcut`, or deleting the old shortcut. Either:
+  - fix it in this PR by narrowing link classification to name-surrogate tags (symlink and mount point) or explicitly handling placeholders with actionable guidance, while keeping in mind how `File.Replace` behaves on placeholders; or
+  - record a documented limitation with a follow-up issue. Merge safety is not threatened, so a follow-up is defensible.
+- **If the attribute is not exposed:** close U1.
+
+Owner acceptance on #276/#325 on a real desktop is where this would otherwise first appear.
+
+### O1 — `ci/windows-native-evidence-upload-excludes-hidden-tmp` (pre-existing, outside this PR's scope; follow-up candidate for root dedupe)
+
+- **Evidence.** The Windows job's upload step logs `path: .tmp/windows-launcher-*/` with `include-hidden-files: false` and then "No files were found". The acceptance tests create their directories with `mkdtemp(join(root, '.tmp', 'windows-launcher-…'))` and never remove them, so matching directories do exist when the step runs.
+- **Likely cause.** `actions/upload-artifact@v4` excludes hidden path components by default, and `.tmp` is one. I did not test this; it rests on the action's documented default and the log.
+- **Scope.** The workflow is byte-identical to the target. The same "no artifact" symptom is recorded for earlier runs (register line 310). This is not this PR's root cause.
+- **Proposed disposition.** P3 follow-up candidate: native Windows CI evidence is never retained. Root dedupes it against existing CI or evidence issues.
+
+## Considered and not admitted
+
+- **`File.Replace` identity semantics.** These are empirically covered: the post-publication check requires the staged ID; witness IDs and bytes were restored; hosted cases 02 and 03 updated the same paths.
+- **`continue` inside `try` in the recovery loop.** It continues the `for` loop as intended.
+- **Leftovers.** Directories created by `CreateDirectory` survive a refused publication. A success-time cleanup that hits a still-mapped old executable leaves a stage folder silently. Both are rare and harmless, and the user-facing messages make no claim about directories.
+- **AppUserModelID input.** It is now derived from the resolved executable path, so it changes only when the install dir is reached through a junction or `subst`. The product is unreleased.
+- **Relative `-InstallDir` and `-DataDir`.** These still resolve against the process working directory, while shortcut inputs now resolve against the PowerShell location. This is pre-existing, and the contract explicitly retains public relative resolution. Shortcut inputs improved.
+- **Transient stage folders on Desktop, Start menu and TaskBar.** These follow from the contracted same-volume staging.
+- **Previously settled items.** D1–D5 are settled. `\\?\` and `\\.\` acceptance was already disclosed (it counts as fully qualified). I found no new contrary evidence.
+- **Guide wording.** The guide dropped "does not install Chrome, Node, the PWA or providers", but ADR-0064 still says it.
+- **Success output.** It no longer prints the executable path or store. This is not material.
+- **Recovery guidance.** The `recovery-required` text says to keep the stage folders but does not explain that `<name>.previous` is the prior file. This is an observation only; the path is rare, and the names sit beside their outputs.
+- **Untested `-DataDir` default under StrictMode.** The StrictMode test passes `-DataDir` explicitly, so the `$env:GG_DATA_DIR` default is not exercised there. `$env:` provider reads are not uninitialised-variable errors under StrictMode, so I raise no finding.
+
+## Evidence and documentation fidelity
+
+The register's #436 section (lines 388–400) agrees with the packets and receipts I read:
+
+- product and target;
+- 22 baseline differences across 32 cases;
+- F1, with 29 cases and 384 checks;
+- the case06 first failure and the correction;
+- the corrected run: 4 positive and 28 refusal cases, 49 receipts, 399 lifetimes, the 396 discrepancy preserved, 962 ZIP members and 996 seal rows;
+- the Windows PowerShell 5.1 witness: three replacements, `0x80070020`, `restored`, six files matched;
+- the carrier `fb57110`, merge `0b0d26d5`, tree `be7faa55`, and the workflow-only difference;
+- 0 of 3 scans used.
+
+The final CI run 43829142179 is not in the register yet, as expected at this point. The corrected README states the right qualifications:
+
+- PowerShell 7 matrix;
+- Windows PowerShell 5.1 seed, witness and permanent test;
+- a composed rollback, not timed interruption;
+- the real Chrome proxy image with a synthetic profile;
+- the PartitionInfo 15005 decoder error;
+- no owner UI acceptance.
+
+The historical failures remain and are sealed: the first candidate, the Gates deadlines (#488), and the first private-CLI run.
+
+## Limitations
+
+- No native execution. U1 is unverified for that reason, and no behaviour was observed beyond the retained evidence.
+- Job metadata comes from root-captured GitHub API JSON; I made no GitHub calls.
+- I verified the hosted ZIPs only by digest and size and by the packet seal. I did not re-extract their 962 members; root's receipt covers that.
+- The #435 and #419 packets added by this branch were checked only for presence and their `.gitattributes` rules, as immutable earlier evidence.
+- Effort is taken from `launch.json`, not observed directly.
+- This scan is not owner acceptance. It does not replace the fresh Astra max final audit.
+
+## Files written (external only)
+
+- `review-436-opus-scan1/full-report.md`: this report.
+- `review-436-opus-scan1/tools/function-hashes.mjs` and `tools/head-installer.ps1.txt`: the offline declaration-hash check and the head script it hashed.
+- `review-436-opus-scan1/tools/coverage-floors.mjs` and `coverage-extract/`: the offline coverage-floor readback from artifact 14208778425.

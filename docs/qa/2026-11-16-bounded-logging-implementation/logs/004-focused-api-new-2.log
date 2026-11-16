@@ -1,0 +1,62 @@
+# command: pnpm.cmd exec vitest run src/windows-log src/gateway-logger.test.ts src/serve.test.ts src/main-entry.test.ts src/instance-identity.test.ts
+# cwd: C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+# node: /c/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node v22.23.4
+# start: 2026-11-16T09:58:15.959Z
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+
+ ❯ src/windows-log/guard.test.ts (15 tests | 1 failed) 671ms
+   ❯ production guard dependencies on Windows (2)
+     × admits a private root, writes the import record and refuses a same-root contender with 70 74ms
+ ❯ src/windows-log/managed-root.test.ts (38 tests | 3 failed) 764ms
+   ❯ native Windows log root metadata (4)
+     × resolves a junction alias to the same pipe key and admits a private profile directory 71ms
+     × refuses a junction, a directory and a shared ACL at the exact managed names 71ms
+     × runs the real bounded PowerShell query 43ms
+ ❯ src/gateway-logger.test.ts (4 tests | 1 failed) 1685ms
+   × keeps the correlated private #381 diagnostic and narrows real access records to method, route and status 1669ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/gateway-logger.test.ts > keeps the correlated private #381 diagnostic and narrows real access records to method, route and status
+AssertionError: expected { code: 'HARNESS_TURN_FAILED', …(5) } to match object { code: 'INTERNAL_ERROR', …(2) }
+(8 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "INTERNAL_ERROR",
+-   "message": "An unexpected error interrupted the run. See the server logs for this run.",
++   "code": "HARNESS_TURN_FAILED",
++   "message": "harness turn failed: GG_PRIVATE_RUN_CANARY unexpected engine fault",
+    "nodeId": "infer",
+  }
+
+ ❯ src/gateway-logger.test.ts:84:21
+     82|     const failure = run.json<RunRecord>().failure;
+     83|     // The public failure is the safe #381 projection.
+     84|     expect(failure).toMatchObject({
+       |                     ^
+     85|       code: 'INTERNAL_ERROR',
+     86|       message: 'An unexpected error interrupted the run. See the serve…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/windows-log/guard.test.ts > production guard dependencies on Windows > admits a private root, writes the import record and refuses a same-root contender with 70
+ FAIL  src/windows-log/managed-root.test.ts > native Windows log root metadata > resolves a junction alias to the same pipe key and admits a private profile directory
+ FAIL  src/windows-log/managed-root.test.ts > native Windows log root metadata > refuses a junction, a directory and a shared ACL at the exact managed names
+ FAIL  src/windows-log/managed-root.test.ts > native Windows log root metadata > runs the real bounded PowerShell query
+Error: Command failed: whoami /user /fo csv /nh
+whoami: extra operand ‘/user’
+Try 'whoami --help' for more information.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+
+ Test Files  3 failed | 4 passed (7)
+      Tests  5 failed | 110 passed | 1 skipped (116)
+   Start at  03:58:16
+   Duration  18.98s (tests 55%, import 29%, transform 16%)
+
+# end: 2026-11-16T09:58:35.946Z exit: 1

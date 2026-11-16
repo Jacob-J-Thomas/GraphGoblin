@@ -1,0 +1,91 @@
+{
+  "id": "01M7J3SHYVV36NAKC0C3BBPYWZ",
+  "ownerId": "local",
+  "loopId": "01M7J3SHXKV4RY1H15S1AM6M3W",
+  "versionId": "01M7J3SHXKV4RY1H15S1AM6M3X",
+  "pinned": {
+    "source": "published",
+    "version": 1,
+    "name": "Independent #438 held work",
+    "label": "Independent #438 held work v1",
+    "defaults": {
+      "owner": {
+        "byHarness": {}
+      },
+      "process": {
+        "byHarness": {
+          "codex": {
+            "model": "gpt-6-luna",
+            "effort": "low"
+          }
+        }
+      }
+    },
+    "limits": {
+      "maxNodeVisits": 10,
+      "runDeadlineSeconds": null,
+      "structuredTimeoutMs": null
+    },
+    "classifiers": {}
+  },
+  "invocationId": "01M7J3SHYVV36NAKC0C3BBPYX0",
+  "status": "succeeded",
+  "iteration": 1,
+  "outcome": "success",
+  "createdAt": "2026-11-16T12:02:31.003Z",
+  "startedAt": "2026-11-16T12:02:31.032Z",
+  "finishedAt": "2026-11-16T12:02:42.293Z",
+  "finalizedAt": "2026-11-16T12:02:42.301Z",
+  "lastEventSeq": 12,
+  "recovery": {
+    "observedSeq": 12,
+    "resume": {
+      "allowed": false,
+      "code": "RUN_FINISHED",
+      "message": "This run has finished. Resume only continues paused runs or supported failures."
+    },
+    "replayDefault": {
+      "allowed": false,
+      "code": "REPLAY_NODE_NOT_REACHED",
+      "message": "This run never reached this node."
+    },
+    "replay": [
+      {
+        "nodeId": "start",
+        "label": "Start",
+        "action": {
+          "allowed": true
+        },
+        "effects": [
+          {
+            "nodeId": "hold",
+            "label": "Hold work",
+            "kind": "script"
+          }
+        ]
+      },
+      {
+        "nodeId": "hold",
+        "label": "Hold work",
+        "action": {
+          "allowed": true
+        },
+        "effects": [
+          {
+            "nodeId": "hold",
+            "label": "Hold work",
+            "kind": "script"
+          }
+        ]
+      },
+      {
+        "nodeId": "done",
+        "label": "Done",
+        "action": {
+          "allowed": true
+        },
+        "effects": []
+      }
+    ]
+  }
+}

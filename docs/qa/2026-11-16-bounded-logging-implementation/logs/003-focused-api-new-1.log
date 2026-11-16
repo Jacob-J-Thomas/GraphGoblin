@@ -1,0 +1,118 @@
+# command: pnpm.cmd exec vitest run src/windows-log src/gateway-logger.test.ts src/serve.test.ts src/main-entry.test.ts src/instance-identity.test.ts
+# cwd: C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+# node: /c/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node v22.23.4
+# start: 2026-11-16T09:56:46.408Z
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+
+ ❯ src/windows-log/guard.test.ts (15 tests | 1 failed) 1064ms
+   ❯ production guard dependencies on Windows (2)
+     × admits a private root, writes the import record and refuses a same-root contender with 70 455ms
+ ❯ src/windows-log/managed-root.test.ts (37 tests | 3 failed) 1410ms
+   ❯ log root privacy metadata (24)
+     × treats null as unverifiable 9ms
+   ❯ native Windows log root metadata (3)
+     × resolves a junction alias to the same pipe key and admits a private profile directory 491ms
+     × refuses a junction, a directory and a shared ACL at the exact managed names 421ms
+ ❯ src/gateway-logger.test.ts (4 tests | 1 failed) 3844ms
+   × keeps the correlated private #381 diagnostic and narrows real access records to method, route and status 3829ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/gateway-logger.test.ts > keeps the correlated private #381 diagnostic and narrows real access records to method, route and status
+TypeError: Cannot read properties of undefined (reading 'failure')
+ ❯ src/gateway-logger.test.ts:82:52
+     80|     await fixture.idle();
+     81|     const run = await fixture.app.inject(`/runs/${runId}`);
+     82|     const failure = run.json<{ run: RunRecord }>().run.failure;
+       |                                                    ^
+     83|     // The public failure is the safe #381 projection.
+     84|     expect(failure).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/windows-log/guard.test.ts > production guard dependencies on Windows > admits a private root, writes the import record and refuses a same-root contender with 70
+AssertionError: expected 71 to be 72 // Object.is equality
+
+- Expected
++ Received
+
+- 72
++ 71
+
+ ❯ src/windows-log/guard.test.ts:331:64
+    329|     const failing = () =>
+    330|       Promise.reject(Object.assign(new Error(CANARY), { code: 'ERR_MOD…
+    331|     expect(await runManagedGateway(root, production(failing))).toBe(Ma…
+       |                                                                ^
+    332|     const [record] = await lines(root);
+    333|     expect(record).toMatchObject({ stage: 'import', cause: 'module-not…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/windows-log/managed-root.test.ts > log root privacy metadata > treats null as unverifiable
+AssertionError: expected error to be instance of LogRootRefusedError
+
+- Expected:
+[Function LogRootRefusedError]
+
++ Received:
+TypeError {
+  "message": "Cannot read properties of null (reading 'rootRules')",
+}
+
+ ❯ src/windows-log/managed-root.test.ts:195:48
+    193|     ['null', 'null'],
+    194|   ])('treats %s as unverifiable', (_name, output) => {
+    195|     expect(() => parseMetadata(output, NAMES)).toThrow(LogRootRefusedE…
+       |                                                ^
+    196|   });
+    197|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/windows-log/managed-root.test.ts > native Windows log root metadata > resolves a junction alias to the same pipe key and admits a private profile directory
+LogRootRefusedError: managed gateway log root refused (not-private)
+ ❯ assertPrivateLogRoot src/windows-log/managed-root.ts:327:11
+    325|   const trusted = trustedPrincipals(metadata.user);
+    326|   if (!privateSecurity(metadata.rootOwner, metadata.rootNullDacl, meta…
+    327|     throw new LogRootRefusedError('not-private');
+       |           ^
+    328|   for (const name of names) {
+    329|     const entry = metadata.entries[name];
+ ❯ inspectLogRoot src/windows-log/managed-root.ts:352:3
+ ❯ src/windows-log/managed-root.test.ts:252:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/windows-log/managed-root.test.ts > native Windows log root metadata > refuses a junction, a directory and a shared ACL at the exact managed names
+AssertionError: expected LogRootRefusedError: managed gateway log … { reason: '…' } to deeply equal ObjectContaining{…}
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "reason": "unsafe-entry",
++ LogRootRefusedError {
++   "message": "managed gateway log root refused (not-private)",
++   "reason": "not-private",
++   "name": "LogRootRefusedError",
+  }
+
+ ❯ src/windows-log/managed-root.test.ts:262:46
+    260|     await mkdir(join(root, 'target'));
+    261|     await symlink(join(root, 'target'), join(root, 'gateway.log.1'), '…
+    262|     await expect(inspectLogRoot(root, NAMES)).rejects.toEqual(refusal(…
+       |                                              ^
+    263|
+    264|     const directory = await privateRoot();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed | 4 passed (7)
+      Tests  5 failed | 109 passed | 1 skipped (115)
+   Start at  03:56:47
+   Duration  18.80s (tests 52%, import 38%, transform 10%)
+
+# end: 2026-11-16T09:57:06.345Z exit: 1

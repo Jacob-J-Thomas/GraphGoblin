@@ -1,0 +1,276 @@
+# #438 V4 core candidate attempt 1: independent behavior QA execution report
+
+Independent actual Claude Code Opus 5.5 xhigh behavior QA worker. I did not implement the candidate. This report records one execution of the root-admitted V4 core candidate attempt. It is behavior QA, not a formal review. Formal scans remain 0 of 3. It gives no verdict, merge or owner acceptance.
+
+## Outcome
+
+- **Attempt status:** `incomplete`.
+  - Runner exit: 1.
+  - Wrapper exit: 1.
+  - Outer invoker: `complete: true`, exit 1.
+- **Primary failure:** a defect in the V4 QA harness, not in the candidate. This was the first step after the opening source/build binding.
+  - `controls.mjs` `privateRootReadback` calls `native.runPowerShell`.
+  - The bound `native.mjs` (SHA-256 `becbc431…9ece`) defines `runPowerShell` only inside `createNative`. Its return value is `{ env, run, cim, closeStore }`.
+- **First failed predicate:** `TypeError: native.runPowerShell is not a function`.
+  - Stack: `controls.mjs:4:30` ← `run.mjs:471:43`.
+  - This was the install-root privacy readback, before port selection.
+- **Zero candidate product observations.** No candidate behavior predicate was evaluated, so nothing about the candidate passed or failed in this attempt.
+  - No config file was written and no port was allocated.
+  - No launcher (`GraphGoblin.exe`), gateway (`main.js`), instance-identity helper, Script node or stdio observer was spawned.
+  - No managed log slot was created.
+- **Cleanup:** the driver's own cleanup recorded zero errors.
+  - There were no gateways, ports or launcher children.
+  - The no-reparse/exclusive probe checked 12 entries: 0 reparse points, 0 SQLite files.
+  - The `Content.IE5` junction condition did not arise, so no root cleanup continuation is needed for this attempt.
+- **Bindings:** the opening and closing source/build bindings are byte-identical, SHA-256 `6b682329…05a7`.
+
+## 1. Exact command, runtime and inputs
+
+Admitted command, as written in the brief:
+
+```
+"C:/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node.exe" "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-438-candidate-freeze-root-tools/invoke-v4.mjs" "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-438-candidate-root-invocation-01.json" "85df64b3c74247cff4b7c157c75b7b645c8f354d9f1c6bd20f021ed7d543723e"
+```
+
+Executed once, from Git Bash. It used the same executable, script, plan file and digest. The paths were in canonical Windows backslash form:
+
+```
+'C:\Users\98jak\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe' 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-438-candidate-freeze-root-tools\invoke-v4.mjs' 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-438-candidate-root-invocation-01.json' '85df64b3c74247cff4b7c157c75b7b645c8f354d9f1c6bd20f021ed7d543723e'
+```
+
+Why the backslash form:
+
+- The invoker passes the plan path to `launcher-438-candidate-freeze-preparation/common.mjs` `absolute()`. That function asserts `normalize(path) === path`.
+- Before running, I checked this with project Node `path.normalize` and no product involvement:
+  - `C:/…/launcher-438-candidate-root-invocation-01.json` → `normalizedEqual=false`. The invoker would refuse the forward-slash rendering before any side effect.
+  - The backslash form → `true`.
+- The root-tools README documents the same backslash form, built with PS7 `Join-Path`.
+- This is recorded in [preflight.json](preflight.json).
+
+Environment:
+
+- Project Node directory first on PATH.
+- `NODE_OPTIONS` absent. The invoker and the runner both asserted this.
+- No Git or PowerShell from PATH. Every tool uses its own bound absolute path.
+- I started the command at 11:50:31.693Z and it returned at 11:50:53.467Z with exit 1.
+- The invoker console wrote this stdout line: `{"complete":true,"pid":52796,"exitCode":1,"output":"…\\launcher-438-candidate-invocation-01"}`.
+- The invoker console stderr was empty.
+- These are in [invoker-console.\*](invoker-console.stdout).
+
+Bound identities, rehashed by me before the run. The driver re-verified them in its opening and closing binding.
+
+| Item | Value |
+| --- | --- |
+| Checkout | `C:\Users\98jak\.codex\worktrees\gg-20261116-bounded-logs\GraphGoblin`, branch `codex/gg-20261116-bounded-logs` |
+| HEAD / tree | `1c04263bcbfd93056e77ee98a9c5d705df26ea88` / `332d414fea68cb2fffdd1c2baca620491ce1f341` |
+| origin/main / tree (actual main, merged #436) | `e21c24be9cef109ef438fd2df4c1583bc570b1cb` / `d064706fb48def7bacac5e434f96825c5850d214` |
+| Index | `…\.git\worktrees\GraphGoblin34\index`, SHA-256 `0340a3df59595535e1c4ef69d4b811143571cc2d7c81e381ce53d6e4678c00c7`, porcelain status empty |
+| Project Node | v22.23.4, `dccc52de28d8df2ee22d2062424f8c563070d95d8ad70c54c4bf01d590dec14f` |
+| PS7 | `C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime…\pwsh.exe` 7.6.9, `2a6769a3330dc1084d0154bfde7d164ab750ca7f700f313f9d417c1be78b2233` |
+| Git (bound) | `C:\Program Files\Git\bin\git.exe`, `fec691d80fccc35fcc309fbc9f720536c1d795b8a562ec169f28c9923da9600f` |
+| Build receipt (forced, 12 tasks, 0 cache) | `a853fa6b84a69560115245e83fa29982dd29a62acbd756b7f0f5de2464bbb31f`; log `63d9ea00…2909`; exit `1d311f38…a363` |
+| Source-build | `3858fb27cf83dcd0e88941926fdc11c004270440161b9d98d3314ebedce6e543` |
+| Compiled launcher (Framework64 GUI AMD64) | `launcher-438-candidate-compile-01\GraphGoblin.exe`, `98b17be71be48d8402d34d345ce8842a170deb4e7703930da3509705ef2106e9`; compile receipt `7710d737…5884`, exit `a65ae75f…e05a` |
+| Candidate binding | `8202421f8a0bda13d2f46467af88a060539b75111e9fabbbc38f461fcc7cf7ff` |
+| Native admission | `9d7fa982f964b7ff7c8883e66317a4c5c147b4020fdbda5d98f89e48c7bbf486` |
+| Root invocation plan / invoker | `85df64b3…723e` / `8dfb58115d8b5dcd86e50bcc8c7095c593288023e0ef837ea46aac6ce9b5ac80` |
+| V4 manifest / runner / wrapper | `8f6b1ca1…3a4b` (all 11 rows rehashed equal) / `fd07b72b…b325` / `5b82d428…438b` |
+| `native.mjs` / `controls.mjs` / `binding.mjs` | `becbc431…9ece` / `07b46702…b69e` / `e8b3109f…955a` |
+| V3 helpers (`inventory`, `workload`, `windows`, `binding`) | `8dcb53f9…d1`, `4419c057…b8d`, `f9cfdf99…cd5`, `d807d1f9…dd3fb` (equal to admission pins) |
+| Contract | `a1a02313635d959a16dbfa26b770722c72bbe3e11bbc390ecd0e76d28a4cf474` |
+| Private fixture receipt / stdio qualification / observer exe | `1c702bcb…1dfb` / `dc5c9a06…5024` / `34a4a9aa…7a91` |
+| Root freeze / V4 root review 02 | `21e98135…3adc` / `8224f088…20d5f` |
+
+Before the run, `launcher-438-candidate-invocation-01`, `…qa-preparation/attempts` and `…qa-preparation/receipts` were all absent, so the attempt was unconsumed.
+
+## 2. Process chain, exits, EOF and close
+
+| Layer | PID | Start (UTC) | Exit (UTC) | Exit / close | Streams |
+| --- | ---: | --- | --- | --- | --- |
+| My Git Bash → project Node invoker | n/a | 11:50:31.693 | 11:50:53.467 | 1 | stdout 1 JSON line, stderr 0 B |
+| Invoker → PS7 wrapper (`launch.ps1`) | 52796 | spawned 11:50:31.969 | exit 11:50:53.417; close 11:50:53.417 | 1 / 1, signal null; `complete: true` | stdout 0 B EOF 11:50:53.405 (write closed .408); stderr 0 B EOF 11:50:53.406 (write closed .408) |
+| Wrapper → project Node runner (`run.mjs`) | 15200 | created 11:50:32.445 | 11:50:53.375 | 1 | stdout 0 B, stderr 0 B (`capture.json`); no `timeout.json` |
+| Runner → Windows PowerShell 5.1 cleanup probe "owned no-reparse and SQLite exclusive handles" | 39500 | requested 11:50:42.282 | 11:50:43.037 | 0 / 0, signal null | stdout `qa438-exclusive 12 0\r\n` (22 B, EOF 11:50:43.031); stderr 0 B (EOF 11:50:43.031) |
+
+No other process was spawned; `processRecords` holds exactly one record.
+
+- `result.json` has `processResults: []` and `observations: []`.
+- At 11:51:56.568Z, a read-only `Get-Process` scoped to these exact PIDs (52796, 15200, 39500) found all three absent.
+
+Driver timeline, from evidence mtimes and recorded times:
+
+| Time (UTC) | Event |
+| --- | --- |
+| 11:50:32.588 | Runner `startedAt` |
+| 11:50:32.590 | `admission.json` (byte copy of the admission, SHA equal) |
+| 11:50:42.260 | `opening-binding.json`. Full source/output verify took about 9.7 s |
+| 11:50:42.271 | Fixture directories created and the unrelated canary `install/qa438-unrelated.keep` written |
+| 11:50:42.274 | `first-failure.json` |
+| 11:50:42.276 | `first-failure-file-readback.json` = `[]`. All six managed slot paths were absent or empty |
+| 11:50:43.040 | `cleanup.json` |
+| 11:50:53.348 | `closing-binding.json`. Verify took about 10.3 s |
+| 11:50:53.349 | `result.json`, status `incomplete` |
+
+## 3. Primary failure and first failed predicate
+
+`evidence/first-failure.json`:
+
+```
+TypeError: native.runPowerShell is not a function
+    at privateRootReadback (file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-438-candidate-qa-preparation/controls.mjs:4:30)
+    at file:///C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-438-candidate-qa-preparation/run.mjs:471:43
+```
+
+Static readback of the bound bytes. This is my reading of the files, not an execution:
+
+- In `native.mjs` (V4, `becbc431…`), `async function runPowerShell(…)` is defined at line 118 inside `createNative`. Line 204 is `return { env, run, cim, closeStore };`. `runPowerShell` is never exposed.
+- The V3 `native.mjs` has the same shape: definition at line 105, return at line 191. No V3 module calls `native.runPowerShell` from outside, so the V3 baseline never reached this path.
+- `v3-to-v4.patch` changes `native.mjs` only to add stream-end, exit and close timestamps and raw stream receipts. It does not touch the return object.
+- `controls.mjs` was new in V4. It calls `native.runPowerShell` at two sites:
+  - line 4, `privateRootReadback`, which failed here;
+  - line 21, `observeStdio`, the gateway birth for the NUL stdio observer. That call would have failed the same way.
+- `syntax-readback.json` records only static `node --check` parsing. That cannot detect a missing runtime member.
+- I compared every `native.*`/`nativeLib.*` member used in `run.mjs`, `controls.mjs` and V3 `windows.mjs`:
+  - `cim`, `env` and `run` are returned by `createNative`.
+  - `envForProduct` is assigned by `run.mjs:468`.
+  - `refused` is exported.
+  - `runPowerShell` is the only unresolved member. Its two call sites are listed above.
+  - This is a static check. Later steps may still fail in ways it cannot show.
+
+The candidate's product code was not reached. The failure is entirely in the admitted QA harness.
+
+## 4. Per-case observed outcomes
+
+| Case / expected behavior from the brief and V4 matrix | Observed |
+| --- | --- |
+| Opening source/build binding (30,020 tracked files raw, 13 output roots / 1,255 outputs, launcher, receipts) | **Passed** (driver). Values in section 6 |
+| Install-root privacy readback (owner = operator, Allow = operator/SYSTEM/Admins) | **Not evaluated.** Harness `TypeError` before the readback ran. This is the first failure. See section 7 for my separate read-only ACL readback |
+| N-1/N-10/N-22 cold launch, served health/app, PID/FILETIME/identity, both leases, SQLite header, quiet launcher (0/0 B), separate exit/EOF/close | Not reached. No launcher or gateway spawned |
+| Actual NUL stdin/stdout/stderr slots via the qualified observer | Not reached. It would also have hit the missing `runPowerShell` at `controls.mjs:21` |
+| Three active-to-previous identity moves within 100,000 requests / 180,000 ms; strict pair caps; complete UTF-8 JSON records | Not reached. 0 requests, 0 inventory samples, no managed slot existed |
+| Held real Script node continues on the same gateway and succeeds after rotation | Not reached. No run created, no Script PID |
+| #381 private correlated error name/message/stack vs safe public `INTERNAL_ERROR` | Not reached |
+| Access projection limited to method/route template/status; invalid-bearer 401 control; canaries absent | Not reached |
+| Warm reuse from same and alternate config roots; wrong-store and foreign-listener refusals with closed launcher diagnostics | Not reached |
+| Exact owned drain, legacy oversized seed then restart recovery, clean restart, ordinary shell control | Not reached |
+| Final managed files: record caps 65,536 / 4,096 B, trailing LF, JSON parse | Not reached. No managed files exist |
+| No managed TEMP fallback | No TEMP output exists. The fixture `temp` directory is empty, but no product ran, so this is not a behavior observation |
+| Closing binding equal to opening | **Passed** (driver) |
+| Driver cleanup (gateways, ports, child census, exclusive store/no-reparse) | **Passed with zero errors**. Trivial, because nothing was launched. See section 5 |
+
+## 5. Pressure, IDs, caps, current work, stderr and stdio provenance
+
+- **Pressure:** none. `sent` = 0. No `pressure-summary.json`, no calibration, no rotations, no file identities.
+- **Caps and slots:** `gateway.log`, `gateway.log.1`, `launcher.log`, `launcher.log.1` and the TEMP pair were absent. `first-failure-file-readback.json` = `[]`.
+- **Current work:** none. No loop, run, Script PID or release marker.
+- **Product stderr/exit:** no product process existed. The only product-adjacent stream was the cleanup probe, which had 22 B stdout and 0 B stderr.
+- **Stdio:** the gateway NUL-slot observation was not performed, and no launcher handle-list or retained-process-handle claim is made. The stdio observer remains qualified only on its host-bound controls (`launcher-438-stdio-control-root-review`).
+
+## 6. Opening and closing bindings
+
+Both files are 509 B with SHA-256 `6b682329d02c8faaca0ff1298b3b9813ba8716b993983befab55e16a130105a7`, so they are byte-identical:
+
+```
+head 1c04263bcbfd93056e77ee98a9c5d705df26ea88   tree 332d414fea68cb2fffdd1c2baca620491ce1f341
+actualMain e21c24be9cef109ef438fd2df4c1583bc570b1cb   index 0340a3df59595535e1c4ef69d4b811143571cc2d7c81e381ce53d6e4678c00c7
+sourceFiles 30020   outputRoots 13   outputFiles 1255
+artifactInventorySha256 cba40dd31e5abd7595498dac7f0ae798ca3ccf0185abe552264f7287909f2bee
+launcherSha256 98b17be71be48d8402d34d345ce8842a170deb4e7703930da3509705ef2106e9
+```
+
+After the run, I independently re-read HEAD, tree, origin/main, the index SHA-256 and porcelain status (0 lines) with `--no-optional-locks`. All were unchanged.
+
+## 7. Cleanup, quantified
+
+`evidence/cleanup.json` from the driver:
+
+| Field | Value |
+| --- | --- |
+| `gateways` | `[]` |
+| `ports` | `[]` |
+| `errors` | `[]` |
+| `childCensus` | `parentPids: []`, `rows: []`. No launcher was recorded, so the census returned early without a CIM query |
+| `exclusive` | `entries: 12`, `exclusiveStoreFiles: []`, `probePid: 39500` |
+| `disposableRetained` | `true` |
+
+Retained disposable tree. I ran a no-follow `find -P` inventory and it matches the driver's 12 entries:
+
+- The root `disposable`.
+- `install`, which holds `qa438-unrelated.keep` (30 B, SHA-256 `ee6e8898…6291`, the canary text only).
+- `profile`, `profile/Local`, `profile/Roaming`.
+- `store-a`, `store-b`, `store-port`, `store-shell`, all empty.
+- `temp` (empty) and `work` (empty).
+
+Counts: 0 reparse entries, 0 SQLite files, 0 key files, 0 managed log files. Because no launcher or PowerShell ran with the fixture profile, the known WinINet `Content.IE5` junction was not created. Root therefore has no exact-cleanup continuation to review for this attempt. Retention of the tree is root's call under the V4 policy. I did not unlink, delete or kill anything.
+
+My own read-only observations, separate from driver evidence:
+
+- **PID liveness:** a `Get-Process` scoped to PIDs 52796, 15200 and 39500 found all three absent.
+- **Install directory ACL,** read with a driver-equivalent minimal environment (SystemRoot/WINDIR/PATH/TEMP/TMP only, System32 Windows PowerShell 5.1). Result in [post-run-install-acl-readback-cleanenv.json](post-run-install-acl-readback-cleanenv.json):
+  - Owner and current user are both `S-1-5-21-…-1002`.
+  - Allow SIDs are exactly `S-1-5-18`, `S-1-5-21-…-1002` and `S-1-5-32-544`, all inherited (`OICIID`).
+  - Attributes: `Directory`.
+  - These values would satisfy the `privateRootReadback` assertions. That is my readback, not a driver pass.
+- **My first ACL readback attempt failed.** It ran with my shell's inherited `PSModulePath`, which lists PS7 module directories first, and returned `CouldNotAutoloadMatchingModule` for `Get-Acl`. The 0-byte [post-run-install-acl-readback.json](post-run-install-acl-readback.json) and [the error note](post-run-install-acl-readback.attempt1-error.txt) are retained. This is specific to my environment. The driver's `createNative` passes a minimal env without `PSModulePath`.
+- **Empty working folder:** [ps-temp](ps-temp) is the empty TEMP/TMP directory I gave that PowerShell call. It stayed empty.
+
+## 8. Deviations, disclosures and limits
+
+- **Argument form:** canonical backslashes, explained in section 1. Same files and digest.
+- **Early `git status`:** before preflight I ran one plain `git status --porcelain` without `--no-optional-locks`. The index SHA-256 still equalled `0340a3df…` afterwards, and again after the run. The driver's opening and closing checks also passed.
+- **Display-only read:** I used `node -e` once to pretty-print `process-001-outcome.json`.
+- **Run count:** one execution. No retries and no edits to any harness, source, build or index. No Git or index writes, builds, tests, browsers, provider calls, owner stores/ports/paths, or ports 4747/4748.
+- **No candidate claims:** this attempt gives no native evidence for any #438 behavior, positive or negative. Source, standin and API coverage evidence from preparation were not used to infer candidate behavior.
+- **Out of scope here:** foreign SID, hostile pipe squatting, other sessions, external or fatal termination and nonlocal filesystems. These are outside V4 in any case.
+
+## 9. What root needs to decide next
+
+1. **Harness correction.** `createNative` must expose `runPowerShell`, or `controls.mjs` must use an exported equivalent. The fix belongs in the V4 suite's `native.mjs` or `controls.mjs`. Both are bound by the manifest (`8f6b1ca1…`), the admission (`nativeModuleSha256`, `controlsModuleSha256`) and the root invocation plan. A correction therefore needs root review, a new manifest and a new admission.
+2. **Attempt-1 is consumed.**
+   - `attempts/candidate-attempt-1` and `receipts/candidate-attempt-1` exist. The invoker asserts that both are ENOENT.
+   - `launcher-438-candidate-invocation-01` exists, and the invoker uses `mkdir` without `recursive`.
+   - A further core attempt therefore needs a new attempt name and a new invocation output directory, under a new root admission.
+   - The suite DACL receipt covers the suite directory, and children inherit, as observed above.
+3. **No cleanup continuation is needed** for attempt-1. Nothing remains live: no processes, listeners, leases or reparse entries.
+
+## 10. Remaining required QA and gates
+
+None of these was satisfied by this attempt.
+
+- **V4 core** (N-1/N-10/N-22 plus the V4-covered N-2, stdio, alternate-config warm and legacy-oversized rows) still needs a successful native run on the corrected, readmitted harness.
+- **Supplemental native rows** from the V4 matrix:
+  - N-3 access stimuli;
+  - N-4 startup store/config;
+  - N-5/N-22 early-import and unknown exits;
+  - N-5/N-4 unlogged 73/75;
+  - N-6 stale entry with leftover sentinel;
+  - N-7/N-8/N-9 junction and pipe contention;
+  - N-11/N-12/N-13 live predecessor, warm negative and oversized rollover;
+  - N-14 incomplete-UTF-8 repair;
+  - N-15 rotation sharing denial;
+  - N-16 read-share 71;
+  - N-17/N-18 native pair full/unwritable and mutex contention;
+  - N-19/N-20 unsafe names and broad ACL;
+  - N-21 reserved environment key;
+  - N-23 ordinary shell and CLI.
+  - The N0-1/N0-2 baseline reuse is bound separately.
+- **Controlled production-seam rows:** C-1 through C-9.
+- **Gates:**
+  - all exact current-head CI;
+  - separate independent QA closure;
+  - the GPT-6.1 Sol xhigh opposite-family review;
+  - a fresh independent Astra max final verdict naming the exact head and target.
+  - Formal scans used: 0 of 3.
+
+## 11. Evidence
+
+Raw evidence and checksums are in [evidence-inventory.json](evidence-inventory.json):
+
+- outer invocation receipts (6 files);
+- wrapper receipts (6);
+- attempt evidence (12);
+- the retained-tree inventory.
+
+Bound-input rehashes before the run are in [preflight.json](preflight.json). [SHA256SUMS.txt](SHA256SUMS.txt) covers this directory's derived files.
+
+Excluded as private provider/session streams: `events.jsonl`, `latest.md`, `launch.json` and `provider-final-message.md` in this directory. The tree has no disposable keys or databases. No real data was copied.

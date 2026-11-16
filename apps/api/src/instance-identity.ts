@@ -1,10 +1,16 @@
 import { createHash } from 'node:crypto';
-import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { bundledGoblinDist, bundledWebDist, loadConfig, type ApiConfig } from './config.js';
 import { canonicalPath } from './canonical-path.js';
 import { dataDirLockState, databaseLockState } from './data-dir-lock.js';
+import { isPhysicalEntry } from './entry-point.js';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
+
+/**
+ * Opaque instance protocol. 2 is the bounded Windows log cutover (#438): a launcher refuses warm
+ * reuse of a still-serving earlier gateway, which must be stopped deliberately before upgrade.
+ */
+export const INSTANCE_PROTOCOL = 2;
 
 /** The launcher shares the repository's supported installation runtime floor. */
 export function launcherRuntimeSupported(version: string): boolean {
@@ -22,7 +28,7 @@ export function instanceIdentity(config: ApiConfig): string {
   return createHash('sha256')
     .update(
       JSON.stringify({
-        protocol: 1,
+        protocol: INSTANCE_PROTOCOL,
         runtime: canonicalPath(process.execPath),
         node: process.version,
         entry: canonicalPath(fileURLToPath(new URL('./main.js', import.meta.url))),
@@ -47,14 +53,7 @@ export async function launcherStoreState(config: ApiConfig): ReturnType<typeof d
 }
 
 /** Match Node's entry module when the launcher invokes it through a checkout alias. */
-export function isLauncherIdentityEntry(entry: string | undefined, moduleUrl: string): boolean {
-  if (!entry) return false;
-  try {
-    return realpathSync.native(entry) === realpathSync.native(fileURLToPath(moduleUrl));
-  } catch {
-    return false;
-  }
-}
+export const isLauncherIdentityEntry = isPhysicalEntry;
 
 // This read-only helper loads configuration without opening the store or probing providers.
 if (isLauncherIdentityEntry(process.argv[1], import.meta.url)) {

@@ -1,0 +1,1012 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index e4f8a408..40958082 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -8,7 +8,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
+   written by the gateway itself so it never waits on logging and keeps working after the launcher
+   exits or a log write fails. Run failure details stay in this private log; HTTP access records
+-  carry only method, route template and status. The launcher's own `launcher.log` and
++  carry only method, route template and status, and records of malformed requests only their
++  status and Node's error code. The launcher's own `launcher.log` and
+   `launcher.log.1` are capped at 256 KiB each. The detached gateway's stdio is NUL. Startup
+   failures report whether the log folder is in use or unsafe, whether application modules could
+   not load, or which startup stage failed and whether its record was written. The launcher folder
+diff --git a/apps/api/src/app.ts b/apps/api/src/app.ts
+index 6b017dea..f995686f 100644
+--- a/apps/api/src/app.ts
++++ b/apps/api/src/app.ts
+@@ -30,6 +30,8 @@ import { registerOllamaRoutes } from './routes/ollama.js';
+ export interface BuildAppOptions {
+   /** Fastify logger option; a pino instance for production, `false` in tests. */
+   logger?: FastifyServerOptions['logger'] | FastifyBaseLogger;
++  /** Handler for errors on a connection before a request exists; Fastify's default if omitted. */
++  clientErrorHandler?: FastifyServerOptions['clientErrorHandler'];
+ }
+ 
+ export async function buildApp(
+@@ -43,6 +45,7 @@ export async function buildApp(
+     (typeof loggerOption === 'object' && !('child' in loggerOption))
+       ? { logger: loggerOption ?? false }
+       : { loggerInstance: loggerOption }),
++    ...(options.clientErrorHandler ? { clientErrorHandler: options.clientErrorHandler } : {}),
+     bodyLimit: 8 * 1024 * 1024,
+     trustProxy: false,
+   });
+diff --git a/apps/api/src/gateway-logger.test.ts b/apps/api/src/gateway-logger.test.ts
+index 224a1c55..469b5042 100644
+--- a/apps/api/src/gateway-logger.test.ts
++++ b/apps/api/src/gateway-logger.test.ts
+@@ -2,11 +2,15 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
+ import { symbols } from 'pino';
+-import { afterEach, expect, it, vi } from 'vitest';
++import { afterEach, describe, expect, it, vi } from 'vitest';
+ import type { RunRecord } from '@graphgoblin/contracts';
+ import { FakeHarness, singleNodeLoop } from '@graphgoblin/engine/testing';
+ import { loadConfig } from './config.js';
+-import { createGatewayLogger, managedAccessSerializers } from './gateway-logger.js';
++import {
++  createGatewayLogger,
++  managedAccessSerializers,
++  managedClientErrorHandler,
++} from './gateway-logger.js';
+ import { createTestApp } from './testing/test-app.js';
+ import { openGatewayLog, type GatewayLogWriter } from './windows-log/gateway-log-writer.js';
+ 
+@@ -179,3 +183,104 @@ it('projects only validated access fields from unusual inputs', () => {
+     method: 'GET',
+   });
+ });
++
++describe('managed client-error handler', () => {
++  /** The real managed logger over a capturing destination, and a fake client connection. */
++  function connection(level = 'trace') {
++    const lines: Record<string, unknown>[] = [];
++    const logger = createGatewayLogger(loadConfig({ GG_LOG_LEVEL: level }), {
++      write: (line: string) => void lines.push(JSON.parse(line) as Record<string, unknown>),
++    });
++    const socket = { destroyed: false, writable: true, write: vi.fn(), destroy: vi.fn() };
++    return { lines, logger, socket };
++  }
++
++  /** A Node parser error carrying request text in every field the standard serializer copies. */
++  function parserError(code: unknown) {
++    return Object.assign(new Error('Parse Error: GG_CLIENT_MESSAGE_CANARY'), {
++      code,
++      bytesParsed: 3,
++      reason: 'GG_CLIENT_REASON_CANARY',
++      rawPacket: Buffer.from('GET /?GG_CLIENT_PACKET_CANARY HTTP/1.1\r\n'),
++      headers: { authorization: 'Bearer GG_CLIENT_HEADER_CANARY' },
++    });
++  }
++
++  it.each([
++    ['ERR_HTTP_REQUEST_TIMEOUT', 'client timeout', 408, 'Request Timeout', 'Client Timeout'],
++    [
++      'HPE_HEADER_OVERFLOW',
++      'client header_overflow',
++      431,
++      'Request Header Fields Too Large',
++      'Exceeded maximum allowed HTTP header size',
++    ],
++    ['HPE_INVALID_METHOD', 'client error', 400, 'Bad Request', 'Client Error'],
++    ['EPIPE', 'client error', 400, 'Bad Request', 'Client Error'],
++  ])(
++    'answers %s with the default response and records only its closed outcome',
++    (code, msg, statusCode, reason, message) => {
++      const { lines, logger, socket } = connection();
++      const error = parserError(code);
++      managedClientErrorHandler.call({ log: logger }, error, socket);
++      const body = JSON.stringify({ error: reason, message, statusCode });
++      expect(socket.write.mock.calls).toEqual([
++        [
++          `HTTP/1.1 ${statusCode} ${reason}\r\nContent-Length: ${body.length}\r\nContent-Type: application/json\r\n\r\n${body}`,
++        ],
++      ]);
++      expect(socket.destroy.mock.calls).toEqual([[error]]);
++      expect(lines).toEqual([
++        {
++          level: 10,
++          time: expect.any(Number),
++          pid: process.pid,
++          hostname: expect.any(String),
++          msg,
++          clientError: { statusCode, code },
++        },
++      ]);
++      expect(JSON.stringify(lines)).not.toContain('CANARY');
++    },
++  );
++
++  it('leaves a reset or already destroyed connection alone, as the default does', () => {
++    const reset = connection();
++    managedClientErrorHandler.call({ log: reset.logger }, parserError('ECONNRESET'), reset.socket);
++    const destroyed = connection();
++    destroyed.socket.destroyed = true;
++    managedClientErrorHandler.call(
++      { log: destroyed.logger },
++      parserError('HPE_INVALID_METHOD'),
++      destroyed.socket,
++    );
++    for (const { lines, socket } of [reset, destroyed]) {
++      expect(lines).toEqual([]);
++      expect(socket.write).not.toHaveBeenCalled();
++      expect(socket.destroy).not.toHaveBeenCalled();
++    }
++  });
++
++  it('closes an unwritable connection and omits any code that is not a Node identifier', () => {
++    for (const code of [undefined, 42, 'hpe_lower', 'HPE GG_CODE_CANARY', 'X'.repeat(65)]) {
++      const { lines, logger, socket } = connection();
++      socket.writable = false;
++      const error = parserError(code);
++      managedClientErrorHandler.call({ log: logger }, error, socket);
++      expect(socket.write).not.toHaveBeenCalled();
++      expect(socket.destroy.mock.calls).toEqual([[error]]);
++      expect(lines).toEqual([
++        expect.objectContaining({ msg: 'client error', clientError: { statusCode: 400 } }),
++      ]);
++      expect(JSON.stringify(lines)).not.toContain('CANARY');
++    }
++  });
++
++  it('keeps the configured level: an info gateway answers without a trace record', () => {
++    const { lines, logger, socket } = connection('info');
++    managedClientErrorHandler.call({ log: logger }, parserError('HPE_INVALID_METHOD'), socket);
++    expect(lines).toEqual([]);
++    expect(socket.write).toHaveBeenCalledOnce();
++    expect(socket.destroy).toHaveBeenCalledOnce();
++  });
++});
+diff --git a/apps/api/src/gateway-logger.ts b/apps/api/src/gateway-logger.ts
+index 00438cc8..632bcb77 100644
+--- a/apps/api/src/gateway-logger.ts
++++ b/apps/api/src/gateway-logger.ts
+@@ -1,7 +1,10 @@
++import type { FastifyBaseLogger } from 'fastify';
+ import { pino, type DestinationStream, type Logger } from 'pino';
+ import type { ApiConfig } from './config.js';
+ 
+ const METHOD = /^[A-Z]{1,16}$/;
++/** Node's error codes, such as `HPE_INVALID_HEADER_TOKEN`; never request text. */
++const ERROR_CODE = /^[A-Z][A-Z0-9_]{0,63}$/;
+ 
+ interface RequestLike {
+   method?: unknown;
+@@ -34,6 +37,69 @@ export const managedAccessSerializers = {
+   }),
+ };
+ 
++/** The parts of Node's `net.Socket` a client-error handler uses. */
++export interface ClientSocket {
++  readonly destroyed: boolean;
++  readonly writable: boolean;
++  write(data: string): unknown;
++  destroy(error?: Error): unknown;
++}
++
++interface ClientErrorOutcome {
++  label: string;
++  statusCode: number;
++  reason: string;
++  message: string;
++}
++
++/** Fastify's default client-error outcomes: log label, status, reason phrase and body message. */
++function clientErrorOutcome(code: unknown): ClientErrorOutcome {
++  switch (code) {
++    case 'ERR_HTTP_REQUEST_TIMEOUT':
++      return {
++        label: 'timeout',
++        statusCode: 408,
++        reason: 'Request Timeout',
++        message: 'Client Timeout',
++      };
++    case 'HPE_HEADER_OVERFLOW':
++      return {
++        label: 'header_overflow',
++        statusCode: 431,
++        reason: 'Request Header Fields Too Large',
++        message: 'Exceeded maximum allowed HTTP header size',
++      };
++    default:
++      return { label: 'error', statusCode: 400, reason: 'Bad Request', message: 'Client Error' };
++  }
++}
++
++/**
++ * Managed-mode `clientErrorHandler` (#438). Node reports a malformed request or connection error
++ * before Fastify has a request, with the parser's raw packet on the error; Fastify's default
++ * handler logs that error at trace through Pino's standard `err` serializer, which copies it.
++ * This keeps the default's response, status and socket closure and records only the fixed
++ * outcome, the status and Node's error code, never the error's message, packet bytes or headers.
++ */
++export function managedClientErrorHandler(
++  this: { log: Pick<FastifyBaseLogger, 'trace'> },
++  error: Error & { code?: unknown },
++  socket: ClientSocket,
++): void {
++  // A reset or already destroyed connection has nothing to answer, as in Fastify's default.
++  if (error.code === 'ECONNRESET' || socket.destroyed) return;
++  const { label, statusCode, reason, message } = clientErrorOutcome(error.code);
++  const code = typeof error.code === 'string' && ERROR_CODE.test(error.code) ? error.code : null;
++  this.log.trace({ clientError: { statusCode, ...(code ? { code } : {}) } }, `client ${label}`);
++  if (socket.writable) {
++    const body = JSON.stringify({ error: reason, message, statusCode });
++    socket.write(
++      `HTTP/1.1 ${statusCode} ${reason}\r\nContent-Length: ${body.length}\r\nContent-Type: application/json\r\n\r\n${body}`,
++    );
++  }
++  socket.destroy(error);
++}
++
+ /**
+  * The gateway's Pino logger. A shell keeps Pino's default stdout configuration. The Windows
+  * launcher's detached gateway writes the same private engine diagnostics to the bounded
+diff --git a/apps/api/src/serve.test.ts b/apps/api/src/serve.test.ts
+index a09c841a..3ae2e976 100644
+--- a/apps/api/src/serve.test.ts
++++ b/apps/api/src/serve.test.ts
+@@ -1,12 +1,14 @@
+ import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
+-import { createServer } from 'node:net';
++import { createConnection, createServer, type AddressInfo } from 'node:net';
+ import { tmpdir } from 'node:os';
+ import { join } from 'node:path';
++import { pino } from 'pino';
+ import { afterEach, describe, expect, it, vi } from 'vitest';
+ import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
+ import { serve, shellFailureOutput, startupFailureCause, type ServeOptions } from './serve.js';
+ import { StoreRefusedError } from './store-refusal.js';
+ import { eventually, freePort, listening } from './testing/api-subprocess.js';
++import { createTestApp } from './testing/test-app.js';
+ import {
+   GATEWAY_LOG_PENDING_BYTES,
+   nodeLogFileSystem,
+@@ -194,4 +196,145 @@ describe('serve with the managed destination', () => {
+     expect(env.stages).toEqual(['configuration']);
+     expect(startupFailureCause('configuration', failure)).toBe('invalid-configuration');
+   });
++
++  it('answers malformed wire requests at managed trace without logging their bytes, then keeps serving', async () => {
++    const env = await environment();
++    vi.stubEnv('GG_LOG_LEVEL', 'trace');
++    const running = await serve({ managed: env.managed });
++    try {
++      // The configured level is kept: Fastify's parser-error records are trace records.
++      expect(running.app.log.level).toBe('trace');
++      expect(await exchange(env.port, MALFORMED)).toBe(
++        clientErrorReply(400, 'Bad Request', 'Client Error'),
++      );
++      expect(await exchange(env.port, OVERFLOW)).toBe(
++        clientErrorReply(
++          431,
++          'Request Header Fields Too Large',
++          'Exceeded maximum allowed HTTP header size',
++        ),
++      );
++      const ordinary = await fetch(`http://127.0.0.1:${env.port}/healthz`);
++      expect(ordinary.status).toBe(200);
++      await ordinary.arrayBuffer();
++
++      expect(await env.writer.settle(5_000)).toBe(true);
++      const records = (await readFile(join(env.logRoot, 'gateway.log'), 'utf8'))
++        .split('\n')
++        .filter(Boolean)
++        .map((line) => JSON.parse(line) as Record<string, unknown>);
++      // Only the closed outcome, its status and Node's parser code; no error object, message,
++      // header or packet bytes.
++      expect(records.filter((record) => String(record['msg']).startsWith('client '))).toEqual([
++        {
++          level: 10,
++          time: expect.any(Number),
++          pid: process.pid,
++          hostname: expect.any(String),
++          msg: 'client error',
++          clientError: { statusCode: 400, code: 'HPE_INVALID_HEADER_TOKEN' },
++        },
++        {
++          level: 10,
++          time: expect.any(Number),
++          pid: process.pid,
++          hostname: expect.any(String),
++          msg: 'client header_overflow',
++          clientError: { statusCode: 431, code: 'HPE_HEADER_OVERFLOW' },
++        },
++      ]);
++      // Every string and every decoded numeric byte array in every record, not only the text.
++      for (const value of records.flatMap(decodedValues))
++        for (const canary of PARSER_CANARIES) expect(value).not.toContain(canary);
++      expect(records).toContainEqual(
++        expect.objectContaining({
++          msg: 'request completed',
++          res: { method: 'GET', route: '/healthz', statusCode: 200 },
++        }),
++      );
++    } finally {
++      await running.app.close();
++    }
++  }, 60_000);
++});
++
++/** Parser canaries in the URL, query and headers of one short packet. */
++const PARSER_CANARIES = [
++  'GG_PARSER_PATH_CANARY',
++  'GG_PARSER_QUERY_CANARY',
++  'GG_PARSER_BEARER_CANARY',
++  'GG_PARSER_HEADER_CANARY',
++];
++/** Reaches Node's HTTP parser and fails at the invalid header name, before Fastify routes it. */
++const MALFORMED =
++  'GET /healthz/GG_PARSER_PATH_CANARY?probe=GG_PARSER_QUERY_CANARY HTTP/1.1\r\n' +
++  'Host: 127.0.0.1\r\n' +
++  'Authorization: Bearer GG_PARSER_BEARER_CANARY\r\n' +
++  'Bad Header: GG_PARSER_HEADER_CANARY\r\n\r\n';
++/** Exceeds Node's 16 KiB header limit. */
++const OVERFLOW =
++  'GET /healthz?probe=GG_PARSER_QUERY_CANARY HTTP/1.1\r\n' +
++  'Host: 127.0.0.1\r\n' +
++  `X-Fill: GG_PARSER_HEADER_CANARY${'f'.repeat(17 * 1024)}\r\n\r\n`;
++
++/** Fastify's default parser-error response bytes. */
++function clientErrorReply(statusCode: number, error: string, message: string): string {
++  const body = JSON.stringify({ error, message, statusCode });
++  return `HTTP/1.1 ${statusCode} ${error}\r\nContent-Length: ${body.length}\r\nContent-Type: application/json\r\n\r\n${body}`;
++}
++
++/** Send exact bytes and read until the server closes the connection. */
++function exchange(port: number, packet: string): Promise<string> {
++  return new Promise((resolve, reject) => {
++    const socket = createConnection({ host: '127.0.0.1', port });
++    const chunks: Buffer[] = [];
++    const timer = setTimeout(() => {
++      socket.destroy();
++      reject(new Error('The server kept the malformed connection open.'));
++    }, 10_000);
++    socket.on('data', (chunk: Buffer) => chunks.push(chunk));
++    // A reset after the response still closes the connection.
++    socket.on('error', () => undefined);
++    socket.on('close', () => {
++      clearTimeout(timer);
++      resolve(Buffer.concat(chunks).toString('latin1'));
++    });
++    socket.write(packet);
++  });
++}
++
++/** Every key and string in a parsed record, with each numeric byte array decoded as Latin-1. */
++function decodedValues(value: unknown): string[] {
++  if (typeof value === 'string') return [value];
++  if (Array.isArray(value)) {
++    const bytes = value.every((item) => Number.isInteger(item) && item >= 0 && item <= 255);
++    return value.length > 0 && bytes
++      ? [Buffer.from(value as number[]).toString('latin1')]
++      : value.flatMap(decodedValues);
++  }
++  if (value !== null && typeof value === 'object')
++    return Object.entries(value).flatMap(([key, item]) => [key, ...decodedValues(item)]);
++  return [];
++}
++
++describe('ordinary HTTP construction (control)', () => {
++  it("keeps Fastify's default parser-error handler, which logs the raw packet at trace", async () => {
++    const lines: string[] = [];
++    const logger = pino({ level: 'trace' }, { write: (line: string) => void lines.push(line) });
++    const fixture = await createTestApp({ serverLogger: logger });
++    try {
++      await fixture.app.listen({ host: '127.0.0.1', port: 0 });
++      const { port } = fixture.app.server.address() as AddressInfo;
++      expect(await exchange(port, MALFORMED)).toBe(
++        clientErrorReply(400, 'Bad Request', 'Client Error'),
++      );
++      const record = lines
++        .map((line) => JSON.parse(line) as Record<string, unknown>)
++        .find((line) => line['msg'] === 'client error');
++      // The same input reaches the parser; the default handler's error keeps its packet bytes.
++      expect(decodedValues(record?.['err']).join('\n')).toContain('GG_PARSER_QUERY_CANARY');
++    } finally {
++      await fixture.close();
++    }
++  }, 60_000);
+ });
+diff --git a/apps/api/src/serve.ts b/apps/api/src/serve.ts
+index b4923308..e77f9fb4 100644
+--- a/apps/api/src/serve.ts
++++ b/apps/api/src/serve.ts
+@@ -4,7 +4,7 @@ import { buildApp } from './app.js';
+ import { bundledGoblinDist, bundledWebDist, loadConfig } from './config.js';
+ import { createContainer } from './container.js';
+ import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
+-import { createGatewayLogger } from './gateway-logger.js';
++import { createGatewayLogger, managedClientErrorHandler } from './gateway-logger.js';
+ import { StoreRefusedError } from './store-refusal.js';
+ import type { StartupCause, StartupStage } from './windows-log/guard.js';
+ 
+@@ -80,7 +80,11 @@ export async function serve(options: ServeOptions = {}): Promise<ServeResult> {
+     managed?.onStage('recovery');
+     await owner.start();
+     managed?.onStage('http');
+-    const server = await buildApp(owner, { logger });
++    // Managed parser and connection errors keep their response but log only a closed outcome.
++    const server = await buildApp(owner, {
++      logger,
++      ...(managed ? { clientErrorHandler: managedClientErrorHandler } : {}),
++    });
+     app = server;
+     let closing = false;
+     server.addHook('preClose', () => {
+diff --git a/apps/api/src/windows-log/gateway-log-writer.test.ts b/apps/api/src/windows-log/gateway-log-writer.test.ts
+index b424e35d..afee9d45 100644
+--- a/apps/api/src/windows-log/gateway-log-writer.test.ts
++++ b/apps/api/src/windows-log/gateway-log-writer.test.ts
+@@ -90,11 +90,14 @@ function gate(): Gate {
+ /** Real files; each fault is injected only at the operation the production writer reaches. */
+ function controlled() {
+   const operations: string[] = [];
++  /** Each buffer the writer handed to a write, held weakly so the seam never retains it. */
++  const writeBuffers: WeakRef<Buffer>[] = [];
+   const control: {
+     stallWrite?: Gate;
+     failWrite?: string;
+     partialWrite?: number;
+     failRename?: string;
++    stallTruncate?: Gate;
+     failTruncate?: string;
+   } = {};
+   const wrap = (path: string, handle: LogFileHandle): LogFileHandle => ({
+@@ -102,6 +105,7 @@ function controlled() {
+     read: (...args) => handle.read(...args),
+     async write(buffer, offset, length, position) {
+       operations.push(`write ${position}+${length}`);
++      writeBuffers.push(new WeakRef(buffer));
+       if (control.stallWrite) await control.stallWrite.promise;
+       if (control.failWrite)
+         throw Object.assign(new Error('injected'), { code: control.failWrite });
+@@ -115,6 +119,7 @@ function controlled() {
+     },
+     async truncate(length) {
+       operations.push(`truncate ${length}`);
++      if (control.stallTruncate) await control.stallTruncate.promise;
+       if (control.failTruncate)
+         throw Object.assign(new Error('injected'), { code: control.failTruncate });
+       return handle.truncate(length);
+@@ -134,9 +139,46 @@ function controlled() {
+       return nodeLogFileSystem.rename(from, to);
+     },
+   };
+-  return { fs, control, operations };
++  return { fs, control, operations, writeBuffers };
+ }
+ 
++/** Wait for the writer to reach an operation that completes on libuv's thread pool. */
++async function until(check: () => boolean): Promise<void> {
++  const deadline = Date.now() + 5_000;
++  while (!check()) {
++    if (Date.now() > deadline) throw new Error('Timed out waiting for the writer operation');
++    await new Promise((resolve) => setTimeout(resolve, 5));
++  }
++}
++
++/** Weak references to the buffers `Buffer.from` creates while `act` runs: the encoded records. */
++function encodedDuring(act: () => void): WeakRef<Buffer>[] {
++  const encoded: WeakRef<Buffer>[] = [];
++  const original = Buffer.from;
++  const from = Buffer.from.bind(Buffer) as (...args: unknown[]) => Buffer;
++  Buffer.from = ((...args: unknown[]) => {
++    const bytes = from(...args);
++    encoded.push(new WeakRef(bytes));
++    return bytes;
++  }) as typeof Buffer.from;
++  try {
++    act();
++  } finally {
++    Buffer.from = original;
++  }
++  return encoded;
++}
++
++/** Full collection after the current job, which otherwise keeps every new WeakRef target. */
++async function collect(): Promise<void> {
++  const gc = globalThis.gc;
++  if (!gc) throw new Error('This test needs Node started with --expose-gc (vitest.config.ts)');
++  await new Promise((resolve) => setImmediate(resolve));
++  gc();
++}
++
++const reachable = (refs: WeakRef<Buffer>[]) => refs.map((ref) => ref.deref() !== undefined);
++
+ /** Deterministic backoff: the test decides when a suspended writer may retry. */
+ function manualSchedule() {
+   const timers: { ms: number; run(): void; cancelled: boolean }[] = [];
+@@ -410,6 +452,117 @@ describe('gateway log queue, faults and acknowledgment', () => {
+     expect(written[6]).toBe('{"msg":"after drain"}');
+   });
+ 
++  it('retains one encoded copy of each record across a held multi-record write', async () => {
++    const root = await scratch();
++    const { fs, control, operations, writeBuffers } = controlled();
++    const { writer: log } = await writer(root, { fs });
++    const firstWrite = gate();
++    const batchWrite = gate();
++    control.stallWrite = firstWrite;
++    try {
++      const first = recordOfBytes(65_536);
++      expect(log.write(first)).toBe(true);
++      await until(() => operations.includes('write 0+65536'));
++      // Three records queue behind the held write; the next cycle writes them as one batch.
++      const queued = [recordOfBytes(65_536), recordOfBytes(65_437), recordOfBytes(100)];
++      let acknowledged: Promise<boolean> = Promise.resolve(false);
++      const encoded = encodedDuring(() => {
++        expect(log.write(queued[0]!)).toBe(true);
++        expect(log.write(queued[1]!)).toBe(true);
++        acknowledged = log.writeAcknowledged(queued[2]!);
++      });
++      expect(encoded).toHaveLength(3);
++      // 131,073 B: retaining both the records and their concatenation would exceed 256 KiB.
++      const batch = 65_536 + 65_437 + 100;
++      expect(log.pendingBytes).toBe(65_536 + batch);
++      control.stallWrite = batchWrite;
++      firstWrite.release();
++      await until(() => operations.includes(`write 65536+${batch}`));
++      expect(log.pendingBytes).toBe(batch);
++      await collect();
++      // The write's own buffer is the one retained copy; the dequeued records are unreachable.
++      expect(reachable(encoded)).toEqual([false, false, false]);
++      expect(reachable(writeBuffers.slice(-1))).toEqual([true]);
++      expect(writeBuffers.at(-1)?.deref()?.length).toBe(batch);
++      // The rest of the combined budget remains available, and nothing beyond it.
++      expect(log.write(recordOfBytes(65_536))).toBe(true);
++      expect(log.write(recordOfBytes(GATEWAY_LOG_PENDING_BYTES - batch - 65_536))).toBe(true);
++      expect(log.pendingBytes).toBe(GATEWAY_LOG_PENDING_BYTES);
++      expect(log.write('\n')).toBe(false);
++      // Acknowledged only once its own batch completes.
++      expect(await Promise.race([acknowledged, Promise.resolve('held')])).toBe('held');
++      batchWrite.release();
++      expect(await acknowledged).toBe(true);
++      expect(await log.settle(5_000)).toBe(true);
++      expect(operations.filter((operation) => operation.startsWith('write'))).toEqual([
++        'write 0+65536',
++        `write 65536+${batch}`,
++        `write ${65_536 + batch}+${GATEWAY_LOG_PENDING_BYTES - batch}`,
++      ]);
++      expect(records(await readFile(active(root)))).toEqual([
++        first.slice(0, -1),
++        ...queued.map((record) => record.slice(0, -1)),
++        recordOfBytes(65_536).slice(0, -1),
++        recordOfBytes(GATEWAY_LOG_PENDING_BYTES - batch - 65_536).slice(0, -1),
++      ]);
++    } finally {
++      // A failed assertion must not leave a write held for the afterEach close.
++      firstWrite.release();
++      batchWrite.release();
++    }
++  });
++
++  it('releases a short multi-record write before its rollback and keeps the rollback safe', async () => {
++    const root = await scratch();
++    const { fs, control, operations, writeBuffers } = controlled();
++    const clock = manualSchedule();
++    const { writer: log, events } = await writer(root, { fs, schedule: clock.schedule });
++    const firstWrite = gate();
++    const batchWrite = gate();
++    const truncation = gate();
++    control.stallWrite = firstWrite;
++    try {
++      log.write('{"msg":"kept"}\n');
++      await until(() => operations.includes('write 0+15'));
++      const queued = [recordOfBytes(65_536), recordOfBytes(65_536)];
++      let lost: Promise<boolean>[] = [];
++      const encoded = encodedDuring(() => {
++        lost = queued.map((record) => log.writeAcknowledged(record));
++      });
++      control.stallWrite = batchWrite;
++      firstWrite.release();
++      await until(() => operations.includes('write 15+131072'));
++      // The batch lands 5 bytes and returns short; its rollback truncation is held.
++      control.partialWrite = 5;
++      control.stallTruncate = truncation;
++      batchWrite.release();
++      await until(() => operations.includes('truncate 15'));
++      expect(await Promise.all(lost)).toEqual([false, false]);
++      expect(events).toContainEqual(
++        expect.objectContaining({ type: 'write', result: 'partial', records: 2, bytesWritten: 5 }),
++      );
++      expect(log.pendingBytes).toBe(0);
++      await collect();
++      // Neither the records nor the write's buffer outlive the charge released with their drop.
++      expect(reachable([...encoded, ...writeBuffers.slice(-1)])).toEqual([false, false, false]);
++      truncation.release();
++      expect(await log.settle(5_000)).toBe(true);
++      expect(events).toContainEqual({
++        type: 'rollback',
++        path: active(root),
++        size: 15,
++        result: 'complete',
++      });
++      expect(log.state).toBe('suspended');
++      expect(records(await readFile(active(root)))).toEqual(['{"msg":"kept"}']);
++    } finally {
++      // A failed assertion must not leave an operation held for the afterEach close.
++      firstWrite.release();
++      batchWrite.release();
++      truncation.release();
++    }
++  });
++
+   it('acknowledges only the specific completed record and bounds the exit wait at 250 ms', async () => {
+     const root = await scratch();
+     const { fs, control } = controlled();
+diff --git a/apps/api/src/windows-log/gateway-log-writer.ts b/apps/api/src/windows-log/gateway-log-writer.ts
+index c8806ddb..9a2d5438 100644
+--- a/apps/api/src/windows-log/gateway-log-writer.ts
++++ b/apps/api/src/windows-log/gateway-log-writer.ts
+@@ -5,8 +5,10 @@
+  * Exactly two fixed slots, `gateway.log` and `gateway.log.1`, of at most 4 MiB each. Every
+  * record is complete UTF-8 ending in LF and at most 64 KiB; a larger record is replaced by a
+  * fixed marker. One file operation is in flight at a time and queued plus in-flight encoded bytes
+- * never exceed 256 KiB: excess records are dropped immediately. Logging never waits for I/O or
+- * capacity and a logging fault never stops gateway work. There is no staging, spill or TEMP file.
++ * never exceed 256 KiB: excess records are dropped immediately. Across I/O the writer retains one
++ * encoded copy of each such record, either queued or in the in-flight write's buffer, so the
++ * budget bounds the encoded payload it holds. Logging never waits for I/O or capacity and a
++ * logging fault never stops gateway work. There is no staging, spill or TEMP file.
+  */
+ import { lstat, open, rename } from 'node:fs/promises';
+ import { join } from 'node:path';
+@@ -242,7 +244,10 @@ export class GatewayLogWriter {
+     return this.current;
+   }
+ 
+-  /** Encoded bytes queued or in flight; never above {@link GATEWAY_LOG_PENDING_BYTES}. */
++  /**
++   * Encoded bytes queued or in flight; never above {@link GATEWAY_LOG_PENDING_BYTES}. The
++   * writer holds exactly one encoded copy of these bytes across I/O.
++   */
+   get pendingBytes(): number {
+     return this.queuedBytes + this.inFlightBytes;
+   }
+@@ -385,50 +390,75 @@ export class GatewayLogWriter {
+       if (this.phase !== 'ready') {
+         if (!(await this.completeRotation())) return;
+       }
+-      const first = this.queue[0];
+-      if (!first) return;
+-      if (this.activeSize > 0 && this.activeSize + first.bytes.length > GATEWAY_LOG_SLOT_BYTES) {
++      // Only the length: a queued record stays referenced by the queue alone across rotation.
++      const next = this.queue[0]?.bytes.length;
++      if (next === undefined) return;
++      if (this.activeSize > 0 && this.activeSize + next > GATEWAY_LOG_SLOT_BYTES) {
+         if (!(await this.rotate())) return;
+       }
+-      await this.writeBatch();
++      const failed = await this.writeBatch();
++      // The failed batch's bytes and their in-flight charge were released before this rollback.
++      if (failed && (await this.rollback(failed.handle, failed.position))) this.fault(failed.code);
+     } catch (error) {
+       // Defensive: every expected fault is handled where it occurs.
+       this.fault(errorCode(error));
+     }
+   }
+ 
+-  private async writeBatch(): Promise<void> {
+-    const batch: Pending[] = [];
++  /**
++   * Dequeue the records for the next write, in order, up to the slot boundary. One record is
++   * written from its own bytes; several are concatenated once. The dequeued records are released
++   * on return, so across I/O the writer holds one encoded copy of each in-flight record, which is
++   * exactly the `inFlightBytes` charge. Only this synchronous copy briefly holds both.
++   */
++  private takeBatch(): { buffer: Buffer; records: number; acks: ((written: boolean) => void)[] } {
++    let records = 0;
+     let length = 0;
+     for (const item of this.queue) {
+-      if (batch.length > 0 && this.activeSize + length + item.bytes.length > GATEWAY_LOG_SLOT_BYTES)
++      if (records > 0 && this.activeSize + length + item.bytes.length > GATEWAY_LOG_SLOT_BYTES)
+         break;
+-      batch.push(item);
++      records++;
+       length += item.bytes.length;
+     }
+-    this.queue.splice(0, batch.length);
++    const taken = this.queue.splice(0, records);
+     this.queuedBytes -= length;
+     this.inFlightBytes = length;
+-    const buffer =
+-      batch.length === 1 && batch[0]
+-        ? batch[0].bytes
++    const only = taken.length === 1 ? taken[0] : undefined;
++    return {
++      buffer: only
++        ? only.bytes
+         : Buffer.concat(
+-            batch.map((item) => item.bytes),
++            taken.map((item) => item.bytes),
+             length,
+-          );
++          ),
++      records,
++      acks: taken.flatMap((item) => (item.ack ? [item.ack] : [])),
++    };
++  }
++
++  /**
++   * Write the next batch. Its buffer is released with its in-flight charge when the write settles
++   * and no await follows, so a failed batch returns where to roll back to instead of holding its
++   * bytes through the rollback.
++   */
++  private async writeBatch(): Promise<
++    { handle: LogFileHandle; position: number; code: string } | undefined
++  > {
++    const { buffer, records, acks } = this.takeBatch();
++    const length = buffer.length;
+     const settle = (written: boolean) => {
+       this.inFlightBytes = 0;
+-      for (const item of batch) item.ack?.(written);
++      for (const ack of acks) ack(written);
+     };
+     const discard = (reason: GatewayLogDropReason) => {
+-      this.dropped += batch.length;
+-      this.notify({ type: 'drop', reason, bytes: length, records: batch.length });
++      this.dropped += records;
++      this.notify({ type: 'drop', reason, bytes: length, records });
+       settle(false);
+     };
+     const handle = (await this.verifyActiveName()) ? this.handle : undefined;
+     if (!handle) {
+       discard(this.current === 'disabled' ? 'disabled' : 'fault');
+-      return;
++      return undefined;
+     }
+     const position = this.activeSize;
+     let bytesWritten = 0;
+@@ -444,7 +474,7 @@ export class GatewayLogWriter {
+       path: this.activePath,
+       position,
+       bytes: length,
+-      records: batch.length,
++      records,
+       bytesWritten,
+       result: complete ? 'complete' : code === undefined ? 'partial' : 'failed',
+       ...(code === undefined ? {} : { code }),
+@@ -453,10 +483,10 @@ export class GatewayLogWriter {
+       this.activeSize += length;
+       this.faults = 0;
+       settle(true);
+-      return;
++      return undefined;
+     }
+     discard('fault');
+-    if (await this.rollback(handle, position)) this.fault(code ?? 'PARTIAL_WRITE');
++    return { handle, position, code: code ?? 'PARTIAL_WRITE' };
+   }
+ 
+   /** Restore the last complete record boundary, or stop writing this target. */
+diff --git a/apps/windows-launcher/Launcher.cs b/apps/windows-launcher/Launcher.cs
+index dbefcc27..3827b876 100644
+--- a/apps/windows-launcher/Launcher.cs
++++ b/apps/windows-launcher/Launcher.cs
+@@ -344,10 +344,14 @@ namespace GraphGoblin.Desktop
+             ImportFailedWritten = 72, ImportFailedUnwritten = 73,
+             StartupFailedWritten = 74, StartupFailedUnwritten = 75;
+ 
++        /// <summary>
++        /// Child exit 70 (log reservation unavailable) or the parent's sharing violation on
++        /// gateway.log. Neither identifies the holder, so the guidance is conditional.
++        /// </summary>
+         public static LauncherFailure DestinationInUseFailure(string logFolder, int childExit)
+         {
+             return new LauncherFailure("destination-in-use",
+-                "GraphGoblin could not start because its log folder is already in use by another GraphGoblin gateway, which may be an older version that is still running. Shut that gateway down deliberately, then launch again. No process was stopped and no log file was changed.",
++                "GraphGoblin could not start because its log folder is in use: another process holds the folder's log reservation or has gateway.log open, and that process was not identified. If it is a GraphGoblin gateway, possibly an older version still running, shut it down deliberately; otherwise close the program holding the folder or its log. Launch again once it is released. No process was stopped and no log file was changed.",
+                 logFolder, null, childExit);
+         }
+ 
+@@ -808,11 +812,12 @@ namespace GraphGoblin.Desktop
+         }
+ 
+         /// <summary>
+-        /// Before a fresh spawn: admit the private physical root and refuse a live writer of an
+-        /// existing validated gateway.log, including a legacy gateway on another store and port.
+-        /// A deliberately stopped gateway keeps its log until process exit, so a writer is awaited
+-        /// until the existing release deadline. The probe reads nothing and never writes,
+-        /// truncates or prunes.
++        /// Before a fresh spawn: admit the private physical root and refuse while another handle
++        /// denies a read-only probe of an existing validated gateway.log, such as a legacy
++        /// gateway's writer on another store and port or another program; the sharing violation
++        /// does not identify which. A deliberately stopped gateway keeps its log until process
++        /// exit, so a holder is awaited until the existing release deadline. The probe reads
++        /// nothing and never writes, truncates or prunes.
+         /// </summary>
+         LogRoot AdmitLogRoot(DateTime releaseDeadline)
+         {
+diff --git a/apps/windows-launcher/NativeChecks.cs b/apps/windows-launcher/NativeChecks.cs
+index 8d91ce38..e6e78d8a 100644
+--- a/apps/windows-launcher/NativeChecks.cs
++++ b/apps/windows-launcher/NativeChecks.cs
+@@ -80,6 +80,10 @@ public static class NativeChecks
+         Check(StartupOutcome.ForChildExit(72, null).Message.Contains("was written") && StartupOutcome.ForChildExit(73, null).Message.Contains("no startup diagnostic could be written"), "Written/unwritten import guidance is ambiguous.");
+         Check(StartupOutcome.ForChildExit(74, null).Message.Contains("was written") && StartupOutcome.ForChildExit(75, null).Message.Contains("no startup diagnostic could be written"), "Written/unwritten startup guidance is ambiguous.");
+         Check(StartupOutcome.ForChildExit(9, null).Message.Contains("exit code 9") && StartupOutcome.ForChildExit(9, null).Message.Contains("No startup diagnostic can be assumed"), "Unknown exit guidance is not fixed.");
++        // A reservation conflict (child 70) and the parent's sharing violation identify no holder:
++        // the guidance names neither a gateway nor another owner and makes shutdown conditional.
++        foreach (LauncherFailure conflict in new[] { StartupOutcome.ForChildExit(70, @"C:\logs"), StartupOutcome.DestinationInUseFailure(@"C:\logs", 0) })
++            Check(conflict.Code == "destination-in-use" && !conflict.Message.Contains("by another GraphGoblin gateway") && conflict.Message.Contains("that process was not identified") && conflict.Message.Contains("If it is a GraphGoblin gateway") && conflict.Message.Contains("once it is released"), "Destination conflict guidance attributes the holder or omits conditional recovery.");
+ 
+         // Rendered locations: rooted, no control or bidi formatting characters, capped.
+         Check(Program.RenderPath(@"C:\a\b") == @"C:\a\b", "A plain path was not rendered.");
+diff --git a/docs/10-testing-and-quality.md b/docs/10-testing-and-quality.md
+index 9ea0025f..3beb8e2a 100644
+--- a/docs/10-testing-and-quality.md
++++ b/docs/10-testing-and-quality.md
+@@ -21,14 +21,20 @@ beside a current guard module and a missing guard refuse before spawning, in the
+ staged installer; a corrupt store yields the written-diagnostic startup outcome; a direct
+ contender through a junction to a live gateway's log folder exits 70 without touching the pair; a
+ disjoint store and port sharing that folder, and a held legacy append handle, are refused without
+-spawning; a deliberately stopped gateway relaunches immediately; oversized stopped-writer history
+-is replaced; a hard-linked managed name is refused with its target intact; and an isolated
+-TEMP receives no managed log names. `NativeChecks --bounded-log-checks` covers the closed
++spawning, with guidance that names no holder; a deliberately stopped gateway relaunches
++immediately; oversized stopped-writer history is replaced; a hard-linked managed name is refused
++with its target intact; and an isolated TEMP receives no managed log names.
++`NativeChecks --bounded-log-checks` covers the closed
+ outcomes, rendered locations, 4 KiB records, exact 256 KiB slot edge, rotation, tail repair,
+ bounded mutex contention, the built-entry marker edges and NUL stdio with the retained
+ CreateProcess handle. The gateway writer's exact record, slot, queue, fault, rotation and 250 ms
+ acknowledgment edges are unit tests over its production filesystem seam, including a native
+-delete-sharing denial during rotation.
++delete-sharing denial during rotation; weak references and a forced collection show that a held
++multi-record write, and its rollback after a short write, keep no encoded copy beyond the counted
++256 KiB. A managed gateway at trace level answers malformed wire requests with Fastify's default
++status and closes them, records only the outcome, status and parser code (no canary in any string
++or decoded byte array) and then serves an ordinary request; ordinary construction keeps Fastify's
++default handler as the control.
+ They establish native routes and ABI behavior; actual installed Chrome/taskbar pin behavior is
+ tracked separately with native shell evidence. No live provider turn or owner service/store is
+ used. The existing cross-platform coverage thresholds and general CI gates remain unchanged.
+diff --git a/docs/11-security-and-distribution.md b/docs/11-security-and-distribution.md
+index 3666c941..52959aff 100644
+--- a/docs/11-security-and-distribution.md
++++ b/docs/11-security-and-distribution.md
+@@ -73,8 +73,9 @@ A gateway started by the Windows launcher keeps its private server log in the la
+ which must be a local NTFS folder accessible only to the operator, SYSTEM and Administrators.
+ Retention is bounded to two 4 MiB gateway files and two 256 KiB launcher files. The gateway log
+ keeps engine diagnostics such as run failure stacks; its HTTP access records carry only the
+-method, route template and status, and launcher messages and new startup records use fixed text
+-with validated locations (ADR-0081).
++method, route template and status, records of malformed requests only their status and Node's
++error code, and launcher messages and new startup records use fixed text with validated
++locations (ADR-0081).
+ 
+ On Windows, ownership files also record the OS process creation identity (`windowsCreationTime`).
+ A successfully observed different identity proves that a PID has been reused and permits the
+diff --git a/docs/decisions/ADR-0081-bounded-windows-launcher-logs.md b/docs/decisions/ADR-0081-bounded-windows-launcher-logs.md
+index a8dc310e..c8993856 100644
+--- a/docs/decisions/ADR-0081-bounded-windows-launcher-logs.md
++++ b/docs/decisions/ADR-0081-bounded-windows-launcher-logs.md
+@@ -17,12 +17,15 @@ Startup failures before Pino existed reached the same unbounded file, or nowhere
+ complete UTF-8 ending in LF and at most 64 KiB; a larger record becomes a fixed marker. One file
+ operation is in flight at a time and queued plus in-flight encoded bytes stay at or below
+ 256 KiB; excess records are dropped immediately and a bounded drop summary precedes the next
+-accepted record. Logging never waits for I/O or capacity and a logging fault never signals,
+-restarts or stops the gateway. Rotation closes the active slot, rename-replaces it onto the
+-previous slot and recreates the active slot exclusively. There is no staging, spill or TEMP file
+-and a denied rename never falls back to truncation. A partial write rolls back to the last complete
+-boundary; if that fails the writer stops. After a fault, records are dropped during backoff (1 s
+-doubling to 60 s) and the eighth consecutive fault stops the writer until the next gateway start.
++accepted record. Across I/O the writer retains one encoded copy of each of those records, queued
++or in the single buffer of the write in flight: coalescing releases the dequeued records, and a
++failed write releases its buffer with its charge before rolling back. Logging never waits for I/O
++or capacity and a logging fault never signals, restarts or stops the gateway. Rotation closes the
++active slot, rename-replaces it onto the previous slot and recreates the active slot exclusively.
++There is no staging, spill or TEMP file and a denied rename never falls back to truncation. A
++partial write rolls back to the last complete boundary; if that fails the writer stops. After a
++fault, records are dropped during backoff (1 s doubling to 60 s) and the eighth consecutive fault
++stops the writer until the next gateway start.
+ Startup accounts the actual opened size, repairs an incomplete trailing record and replaces an
+ oversized slot (unbounded history from the earlier launcher) under verified ownership; that
+ history may be discarded. The writer's filesystem operations, transitions and flush completion are
+@@ -32,9 +35,12 @@ a narrow production seam (`apps/api/src/windows-log/gateway-log-writer.ts`) for
+ listening record and engine diagnostics, including the correlated run/node error name, message and
+ stack that ADR-0080's safe public failure refers to. Only HTTP access records are narrowed: their
+ request and response serializers carry the method, the registered route template when one
+-matched, and the status. Startup failures introduced here use fixed stages (`import`,
+-`configuration`, `store`, `recovery`, `http`, `bind`), closed cause codes and fixed text. The
+-ordinary shell keeps Pino's default stdout configuration.
++matched, and the status. A malformed request or connection error that Node reports before
++Fastify has a request keeps Fastify's default response (400, 408 or 431) and socket closure, but
++its trace record carries only the fixed outcome, the status and Node's error code, never the
++error's message, raw packet bytes or headers. Startup failures introduced here use fixed stages
++(`import`, `configuration`, `store`, `recovery`, `http`, `bind`), closed cause codes and fixed
++text. The ordinary shell keeps Pino's default stdout configuration.
+ 
+ **Guarded canonical entry.** The launcher still runs exactly `"<Node>" "<Repo>\apps\api\dist\main.js"`.
+ `main.js` statically imports only Node built-ins and the built-ins-only guard
+@@ -64,14 +70,16 @@ diagnostics.
+ 
+ **Coordinated cutover.** The opaque instance protocol advances to 2, so this launcher refuses warm
+ reuse of a still-serving earlier gateway. Before a fresh spawn the launcher validates the same root
+-and opens an existing `gateway.log` for read without write sharing. A sharing violation means a
+-live writer, including an earlier gateway's inherited append handle on another store and port;
+-the launcher waits within its existing startup deadline (a deliberately stopped gateway keeps the
+-file until exit) and then reports destination in use without spawning. The probe never writes or
+-prunes. Matching current warm reuse, including from another configuration folder, is unchanged.
+-The supported upgrade stops the old gateway deliberately and replaces the build and launcher
+-together. Concurrent obsolete launchers and same-user or privileged filesystem mutation are outside
+-this ownership guarantee, as are cross-user and cross-session guarantees.
++and opens an existing `gateway.log` for read without write sharing. A sharing violation means
++another open handle, such as an earlier gateway's inherited append handle on another store and
++port or another program; the launcher waits within its existing startup deadline (a deliberately
++stopped gateway keeps the file until exit) and then reports destination in use without spawning.
++That outcome, like exit 70, names no holder: its guidance says shutting down a GraphGoblin gateway
++applies only if one holds the folder and to launch again once it is released. The probe never
++writes or prunes. Matching current warm reuse, including from another configuration folder, is
++unchanged. The supported upgrade stops the old gateway deliberately and replaces the build and
++launcher together. Concurrent obsolete launchers and same-user or privileged filesystem mutation
++are outside this ownership guarantee, as are cross-user and cross-session guarantees.
+ 
+ **Detached process and launcher outcomes.** The child receives readable NUL stdin and writable NUL
+ stdout/stderr as the only inherited handles. The launcher keeps the `CreateProcess` handle for exit
+diff --git a/docs/guide/07-troubleshooting.md b/docs/guide/07-troubleshooting.md
+index 54960f5e..8ef0d6c9 100644
+--- a/docs/guide/07-troubleshooting.md
++++ b/docs/guide/07-troubleshooting.md
+@@ -10,10 +10,13 @@ location is `%LOCALAPPDATA%\GraphGoblin\Launcher`. Each log keeps two files, `ga
+ roll off. Under sustained pressure or a write fault the gateway drops log records rather than
+ waiting, and a `gateway log records dropped` record counts them (ADR-0081).
+ 
+-- **Log folder already in use:** another GraphGoblin gateway writes this folder's `gateway.log`,
+-  possibly an older version still running or one serving another port. Stop that gateway
+-  deliberately (its **Shut down** control), then launch again. The launcher waits for a gateway that
+-  is still exiting and never stops a process itself.
++- **Log folder in use:** another process holds this folder's log reservation (the
++  `GraphGoblin.GatewayLog.<key>` named pipe a launcher-started gateway keeps while it runs) or has
++  `gateway.log` open without sharing it. The launcher cannot tell which process it is. If a
++  GraphGoblin gateway still uses this folder, possibly an older version or one serving another
++  port, stop it deliberately (its **Shut down** control); otherwise close the program holding the
++  folder or `gateway.log`. Launch again once it is released. The launcher waits within its startup
++  timeout for a holder that is releasing `gateway.log` and never stops a process itself.
+ - **Log folder unsafe or unavailable:** the folder must be a local NTFS folder that only your
+   account, SYSTEM and Administrators can access, and `gateway.log`, `gateway.log.1`,
+   `launcher.log` and `launcher.log.1` must be ordinary files you own, not links. Tools that add other
+diff --git a/tooling/scripts/windows-launcher.acceptance.mjs b/tooling/scripts/windows-launcher.acceptance.mjs
+index 70ed43a6..91e0f4e2 100644
+--- a/tooling/scripts/windows-launcher.acceptance.mjs
++++ b/tooling/scripts/windows-launcher.acceptance.mjs
+@@ -1429,6 +1429,10 @@ async function exited(pid) {
+   throw new Error(`Gateway ${pid} did not exit after its drain.`);
+ }
+ 
++/** A reservation or sharing conflict identifies no holder; shutdown guidance is conditional. */
++const destinationInUse =
++  /log folder is in use: another process holds the folder's log reservation or has gateway\.log open, and that process was not identified\. If it is a GraphGoblin gateway, possibly an older version still running, shut it down deliberately; otherwise close the program holding the folder or its log\. Launch again once it is released\./;
++
+ /** Stand-in for the predecessor's inherited FILE_APPEND_DATA handle, held by another process. */
+ function holdLegacyAppend(path) {
+   const holder = spawn(
+@@ -1652,10 +1656,9 @@ test(
+           const disjoint = await configuration(install, 'disjoint', { StartupTimeoutSeconds: 1 });
+           const refused = await launch(disjoint.path);
+           assert.equal(refused.code, 1);
+-          assert.match(
+-            refused.stderr,
+-            /log folder is already in use by another GraphGoblin gateway/,
+-          );
++          // A live gateway holds the log here, yet the sharing violation alone does not show it.
++          assert.match(refused.stderr, destinationInUse);
++          assert.doesNotMatch(refused.stderr, /by another GraphGoblin gateway/);
+           assert.equal(await listening(disjoint.config.Port), false);
+           await assert.rejects(lstat(disjoint.config.DataDir), { code: 'ENOENT' });
+           assert.deepEqual(await health(primary.config), owner);
+@@ -1695,7 +1698,9 @@ test(
+             const before = await readFile(gatewayLog);
+             const refused = await launch(blocked.path);
+             assert.equal(refused.code, 1);
+-            assert.match(refused.stderr, /log folder is already in use/);
++            // The holder here is not a gateway; the same neutral guidance applies.
++            assert.match(refused.stderr, destinationInUse);
++            assert.doesNotMatch(refused.stderr, /by another GraphGoblin gateway/);
+             assert.equal(await listening(blocked.config.Port), false);
+             await assert.rejects(lstat(blocked.config.DataDir), { code: 'ENOENT' });
+             assert.deepEqual(await readFile(gatewayLog), before);

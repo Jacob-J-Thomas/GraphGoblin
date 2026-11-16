@@ -1,0 +1,46 @@
+{
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/499",
+    "title": "Characterize cloud-placeholder compatibility in the Windows installer",
+    "issue_number": 499,
+    "body": "Priority: P2 compatibility investigation. Follow-up from actual Claude Code Opus 5.5 xhigh formal scan 1 of PR #497 at head `2732dd34457bcd9a7007e89c3fa11fe085af764c`, diagnostic U1. No native OneDrive reproduction or data-loss finding is claimed.\n\nThe new installer uses FILE_ATTRIBUTE_REPARSE_POINT as its IsLink predicate and refuses such output/staged/source leaves. A cloud placeholder is not necessarily a path surrogate. This can refuse a synced GraphGoblin.lnk or PWA source, or retain a stage converted by a sync provider. The default Desktop shortcut makes a redirected cloud Desktop a relevant compatibility surface. Current QA covers disposable local NTFS cases, not a real cloud sync root.\n\nMicrosoft documents that cloud placeholder reparse information can be exposed to sync engines and programs installed beneath the Windows system directory. Windows PowerShell 5.1 normally runs there, so the source-level concern has a credible route; this is an inference from documentation, not an executed installer result. [Cloud files compatibility documentation](https://learn.microsoft.com/en-us/windows/win32/cfApi/build-a-cloud-file-sync-engine#compatibility-with-applications-that-use-reparse-points), [name-surrogate tag semantics](https://learn.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-isreparsetagnamesurrogate).\n\nAcceptance:\n- In a disposable authorized cloud sync root, record actual attribute/tag visibility under supported PS5.1 and PS7 for hydrated, dehydrated and newly staged files/folders. Bind runtime, provider and filesystem versions.\n- Reproduce or reject the predicted public installer refusal, source preservation and cleanup behavior without touching the owner's Desktop, shortcuts, provider state or real files.\n- Select a safe bounded policy: supported cloud-file operations only after validating actual replace/rollback/identity behavior, or an explicit actionable limitation and safe local-destination guidance. Do not simply allow all reparse tags.\n- Retain refusal of path-surrogate collisions and all source/data preservation guarantees. Prove supported reinstall, denied replacement and cleanup with exact native evidence and permanent regressions.\n- Align installation/upgrade documentation with the proven supported boundary.\n\nDisposition: DEFER-ISSUE. Refusal preserves data, and explicit ordinary local shortcut/source paths remain available; current engineering acceptance does not claim OneDrive support. This issue preserves an unverified compatibility limit rather than waiving a known corrupting path. It is parked under backlog with no pickup gate and does not expand the four-intent dispatch. The final PR audit independently assesses this disposition.\n\nDedup: all-state OneDrive and gg-launcher-stage searches returned no matching issue; installer/reinstall search returned only unrelated #456/#39. #498 tracks permanent local reinstall/cleanup coverage, a different root cause.",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "type:research",
+        "color": "D4C5F9",
+        "description": "Evaluation or decision work, no implementation"
+      },
+      {
+        "name": "area:installer",
+        "color": "BFDADC",
+        "description": "Installers and setup"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-16T09:09:03Z",
+    "updated_at": "2026-11-16T09:09:03Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/499",
+    "display_title": "Characterize cloud-placeholder compatibility in the Windows installer"
+  },
+  "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/499",
+  "title": "Characterize cloud-placeholder compatibility in the Windows installer",
+  "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/499",
+  "display_title": "Characterize cloud-placeholder compatibility in the Windows installer"
+}

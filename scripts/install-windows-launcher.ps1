@@ -262,7 +262,8 @@ try {
     $RepoPath = (Resolve-Path -LiteralPath $RepoPath).Path
     $DataDir = [IO.Path]::GetFullPath($DataDir)
     $InstallDir = [IO.Path]::GetFullPath($InstallDir)
-    foreach ($file in @('apps/api/dist/main.js', 'apps/api/dist/instance-identity.js', 'apps/web/dist/index.html')) {
+    # The staged native validator also requires the exact bounded-log protocol in the built entry.
+    foreach ($file in @('apps/api/dist/main.js', 'apps/api/dist/instance-identity.js', 'apps/api/dist/windows-log/guard.js', 'apps/web/dist/index.html')) {
         if (![IO.File]::Exists((Join-Path $RepoPath $file))) { Refuse-LauncherInstall "Build the checkout first: missing $file" }
     }
     $desktop = [Environment]::GetFolderPath('Desktop')

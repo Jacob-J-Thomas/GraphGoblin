@@ -1,0 +1,98 @@
+# label: 02-red-writer-test
+# cwd: /c/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin
+# started: 2026-11-16T16:14:22Z
+# node: v22.23.4
+# command: pnpm --filter @graphgoblin/api exec vitest run src/windows-log/gateway-log-writer.test.ts
+# ---- output ----
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin/apps/api
+
+(node:16284) Warning: Closing file descriptor 4 on garbage collection
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:16284) [DEP0137] DeprecationWarning: Closing a FileHandle object on garbage collection is deprecated. Please close FileHandle objects explicitly using FileHandle.prototype.close(). In the future, an error will be thrown if a file descriptor is closed during garbage collection.
+(node:16284) Warning: Closing file descriptor 4 on garbage collection
+ ❯ src/windows-log/gateway-log-writer.test.ts (27 tests | 2 failed | 1 skipped) 41282ms
+   ❯ gateway log queue, faults and acknowledgment (13)
+     × retains one encoded copy of each record across a held multi-record write 20056ms
+     × releases a short multi-record write before its rollback and keeps the rollback safe 20049ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > retains one encoded copy of each record across a held multi-record write
+AssertionError: expected [ true, true, true ] to deeply equal [ false, false, false ]
+
+- Expected
++ Received
+
+  [
+-   false,
+-   false,
+-   false,
++   true,
++   true,
++   true,
+  ]
+
+ ❯ src/windows-log/gateway-log-writer.test.ts:483:32
+    481|     await collect();
+    482|     // The write's own buffer is the one retained copy; the dequeued r…
+    483|     expect(reachable(encoded)).toEqual([false, false, false]);
+       |                                ^
+    484|     expect(reachable(writeBuffers.slice(-1))).toEqual([true]);
+    485|     expect(writeBuffers.at(-1)?.deref()?.length).toBe(batch);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > retains one encoded copy of each record across a held multi-record write
+ FAIL  src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > releases a short multi-record write before its rollback and keeps the rollback safe
+Error: Hook timed out in 20000ms.
+If this is a long-running hook, pass a timeout value as the last argument or configure it globally with "hookTimeout".
+ ❯ src/windows-log/gateway-log-writer.test.ts:36:1
+     34| const roots: string[] = [];
+     35| const writers: GatewayLogWriter[] = [];
+     36| afterEach(async () => {
+       | ^
+     37|   for (const writer of writers.splice(0)) await writer.close();
+     38|   for (const root of roots.splice(0))
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > releases a short multi-record write before its rollback and keeps the rollback safe
+AssertionError: expected [ true, true, true ] to deeply equal [ false, false, false ]
+
+- Expected
++ Received
+
+  [
+-   false,
+-   false,
+-   false,
++   true,
++   true,
++   true,
+  ]
+
+ ❯ src/windows-log/gateway-log-writer.test.ts:539:64
+    537|     await collect();
+    538|     // Neither the records nor the write's buffer outlive the charge r…
+    539|     expect(reachable([...encoded, ...writeBuffers.slice(-1)])).toEqual…
+       |                                                                ^
+    540|     control.stallTruncate.release();
+    541|     expect(await log.settle(5_000)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 24 passed | 1 skipped (27)
+   Start at  10:14:23
+   Duration  41.65s (tests 100%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261116-bounded-logs-corrections\GraphGoblin\apps\api
+
+# ---- end ----
+# ended: 2026-11-16T16:15:05Z
+# exit: 1

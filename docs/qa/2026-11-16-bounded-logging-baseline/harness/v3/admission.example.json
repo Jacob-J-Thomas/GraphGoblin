@@ -1,0 +1,40 @@
+{
+  "schema": "gg438-native-admission/v1",
+  "mode": "candidate",
+  "attempt": "candidate-attempt-1",
+  "binding": {
+    "path": "<absolute root-reviewed binding in QA batch>",
+    "sha256": "<binding SHA-256>"
+  },
+  "artifactModuleSha256": "479b4a723e12f7d11da926d99c83ced2ab9e26e5eedffc7dd74000c65a806226",
+  "artifactCommonSha256": "54f0a901a702eb78de69a6f0df7f9293e358689cb9a7af1016f906317da03ae4",
+  "nativeModuleSha256": "d365f69e8eb35ec256669b413d54920ef8c3c0d82270d786f9c86a8454f5b74d",
+  "gatewayEntry": "<relative actual guarded entry under apps/api/dist>",
+  "gatewayArguments": [],
+  "launcherConfig": {},
+  "gatewayEnvironment": {},
+  "definitionFormat": 4,
+  "pressure": {
+    "requests": 100000,
+    "batch": 256,
+    "workers": 12,
+    "milliseconds": 180000
+  },
+  "logs": {
+    "gateway": {"directory": "<relative actual gateway log root under disposable>", "active": "gateway.log", "previous": "gateway.log.1", "temporary": []},
+    "launcher": {"directory": "<relative actual launcher log root under disposable>", "active": "launcher.log", "previous": "launcher.log.1", "temporary": []},
+    "fallback": {"directory": "<actual approved relative path equal to temp or below it>", "active": "launcher.log", "previous": "launcher.log.1", "temporary": []}
+  },
+  "legacyPolicy": "<tail or replace from the candidate upgrade contract>",
+  "diagnostics": {
+    "wrongStore": ["<candidate safe diagnostic substring>"],
+    "occupiedPort": ["<candidate safe diagnostic substring>"],
+    "sharedDestination": ["<candidate safe diagnostic substring if case selected>"],
+    "fallbackOutcome": ["<candidate safe diagnostic substring if case selected>"],
+    "fallbackLog": ["<candidate safe fallback log substring if persistence selected>"]
+  },
+  "faults": {
+    "sharedDestination": false,
+    "nativeFallback": null
+  }
+}

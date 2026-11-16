@@ -1,0 +1,24 @@
+# #438 independent stdio control readback
+
+All five disposable controls qualify the observer for the bound native Windows AMD64 host, build 10.0.26300 and project Node v22.23.4. The original driver remains `incomplete` because its empty-scratch assertion found `AppData` after the controls completed. The retained directory contains only ordinary `AppData` and `AppData\Roaming` directories. A separate no-follow inventory found zero files and zero reparse entries. [Independent receipt](readback.json) · [Original result](../launcher-438-stdio-preparation/controls/attempts/attempt-1/evidence/result.json)
+
+## Native observations
+
+| Control | Host PID | Exact Node PID and creation FILETIME | Observer PID and exit | Observation |
+| --- | ---: | --- | --- | --- |
+| Positive | 56688 | 46028 / `134392983959770767` | 47812 / 0 | All three slots were `File`/CHAR at `\Device\Null`. Stdin mask `0x00120089` grants read data. Both output masks `0x00120196` grant write data. |
+| Wrong direction | 54484 | 19940 / `134392984261130861` | 56220 / 1 | Stdout was readable NUL at `0x00120089` and lacked write data. Stdin and stderr matched. |
+| Wrong destination | 24228 | 37336 / `134392984562498183` | 55156 / 1 | Stdout was a writable PIPE at `0x00120196`. Stdin and stderr matched. |
+| Wrong birth | — | Positive fixture, supplied FILETIME plus one | 31848 / 2 | Exact creation-time refusal, with empty stdout and no slot observations. |
+| Wrong image | — | Positive fixture, supplied distinct fixture-local executable path | 20764 / 2 | Exact executable refusal, with empty stdout and no slot observations. |
+
+Each fixture host's raw stdout binds its Node child PID and native creation FILETIME to the exact `node.exe -e` timer, start flags and per-slot mapping. All three hosts waited on their retained process handle until the child exited naturally with 0. Their own exit and close receipts also record 0. For all eight direct host and observer children, the request and spawn records match the process outcomes, the raw channel lengths match the receipts, and stdout and stderr each record EOF. All five observers completed in 65–89 ms, with neither timeout nor termination recorded. [Fixture host source](../launcher-438-stdio-preparation/controls/StdioFixtureHost.cs) · [Driver source](../launcher-438-stdio-preparation/controls/run.mjs) · [Exact process records](readback.json)
+
+The three handle observations identified offsets 32, 40 and 48. The observer source derives them from its own distinct local pipe handles, checks the target PID, FILETIME, image, native AMD64 and same user, and queries temporary noninheritable duplicates with the original access masks. The successful NUL observation qualifies the internal device-name query for this host. The controls distinguish an actual NUL device from both the wrong access mask and a writable pipe. [Observer source](../launcher-438-stdio-preparation/ObserveStdio.cs) · [Observer scope and platform limits](../launcher-438-stdio-preparation/full-report.md)
+
+## Provenance and retained scratch
+
+Both binding receipts have SHA-256 `d2f760b86866dab101472e1022c19aac23817c749de0a577c8d867f11ae7dad0`. The admitted JSON and all 11 bound source, executable, compiler-receipt, runtime and selected System32 inputs rehashed to their admitted digests. The 52 raw evidence files rehashed unchanged across this review. At 10:38:19 UTC, one Win32_Process query filtered to the 11 recorded host, observer and fixture PIDs returned zero rows. The eight short-lived direct children have spawn/exit/close receipts and no recorded native creation FILETIME. Their absence check used only those recorded PIDs. [Provenance and live readback](readback.json)
+
+The only published driver error was its post-control empty-directory assertion at `run.mjs:385`. The inspection identified the two directories without following links. Scratch and original evidence were retained. No rerun, deletion or product launch occurred. This qualifies the observer controls. Still pending are the candidate launcher's actual NUL slots, its caller EOF while the same gateway remains live, and the separate retained-child-handle checks. [Original cleanup](../launcher-438-stdio-preparation/controls/attempts/attempt-1/evidence/cleanup.json) · [First failure](../launcher-438-stdio-preparation/controls/attempts/attempt-1/evidence/first-failure.json)
+

@@ -1,0 +1,46 @@
+{
+  "issue": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496",
+    "title": "Restore downloadable Windows launcher acceptance artifacts in CI",
+    "issue_number": 496,
+    "body": "Priority: P3. The Windows launcher CI job's upload-artifact step reports no files for `.tmp/windows-launcher-*/`; the run artifact listing confirms no Windows archive in the #419 and #435 evidence. Current #435 native alias records are preserved in structured job stdout, which was independently inspected; its acceptance does not rely on a nonexistent archive. Default hidden-directory exclusion is a plausible cause, not yet verified. The new alias sandbox is under OS TEMP and also needs an explicit evidence-only retention policy.\n\nAcceptance:\n- Establish why the actual uploader finds no files on a disposable hosted Windows run.\n- Publish bounded useful native evidence with an explicit safe path, excluding gateway keys, credentials, live stores and directory links to the checkout.\n- Verify the uploaded archive by downloading it, checking its contents and linking it to the exact tested head/run/job.\n- Preserve stdout diagnostics and declared handling when a failed test leaves a process or link requiring later investigation.\n\nDeferred as a pre-existing CI evidence-retention issue; #488 concerns a Gates deadline and is a different root cause. Review observation O2.\n\nOrigin: Claude Opus 5.5 xhigh formal scan 1 of PR #492 at `6f383da798872aa0e6bd1e0de1fdcd4e702de9ae` (full report in the PR conversation). Open and closed issue searches for symlink, entry, inert and artifact found no matching root cause.\n\nDisposition: DEFER-ISSUE; parked under `backlog`, with no pickup gate. This follow-up does not expand the authorized four-intent batch or block #435. Preserve docs/15 delivery and independent opposite-family review when separately dispatched.\n",
+    "state": "open",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "assignees": null,
+    "labels": [
+      {
+        "name": "type:chore",
+        "color": "CFD3D7",
+        "description": "Maintenance, tooling, or docs"
+      },
+      {
+        "name": "area:installer",
+        "color": "BFDADC",
+        "description": "Installers and setup"
+      },
+      {
+        "name": "backlog",
+        "color": "9E9E9E",
+        "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+      }
+    ],
+    "milestone": null,
+    "state_reason": null,
+    "comments": 0,
+    "created_at": "2026-11-16T03:08:27Z",
+    "updated_at": "2026-11-16T03:08:27Z",
+    "closed_at": null,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496",
+    "display_title": "Restore downloadable Windows launcher acceptance artifacts in CI"
+  },
+  "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496",
+  "title": "Restore downloadable Windows launcher acceptance artifacts in CI",
+  "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496",
+  "display_title": "Restore downloadable Windows launcher acceptance artifacts in CI"
+}

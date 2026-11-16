@@ -125,7 +125,9 @@ The API binds to localhost by default. Codex authentication is whatever `codex l
 The optional [Windows launcher](decisions/ADR-0064-windows-desktop-launcher.md) is transient native
 desktop/taskbar glue: it starts or reuses this built gateway, waits for identity and readiness,
 opens/focuses its installed Chrome PWA and exits. It adds no resident supervisor or MCP daemon.
-MCP stdio remains client-owned and HTTP remains an explicitly selected transport.
+MCP stdio remains client-owned and HTTP remains an explicitly selected transport. A gateway it
+starts owns a bounded private log in the launcher folder through an in-process writer and a
+named-pipe reservation of that folder ([ADR-0081](decisions/ADR-0081-bounded-windows-launcher-logs.md)).
 
 ### Post-1.0: hosted (Draft)
 

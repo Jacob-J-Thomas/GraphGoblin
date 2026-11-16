@@ -1,0 +1,43 @@
+# command: pnpm.cmd exec vitest run src/serve.test.ts
+# cwd: C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+# node: /c/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node v22.23.4
+# start: 2026-11-16T10:18:41.146Z
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+
+ ❯ src/serve.test.ts (19 tests | 1 failed) 1837ms
+   ❯ serve with the managed destination (4)
+     × keeps serving while every log write is stalled, within the pending-byte bound 348ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/serve.test.ts > serve with the managed destination > keeps serving while every log write is stalled, within the pending-byte bound
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/serve.test.ts:156:22
+    154|         expect((await running.app.inject('/healthz')).statusCode).toBe…
+    155|       expect(performance.now() - started).toBeLessThan(15_000);
+    156|       expect(writes).toBe(1);
+       |                      ^
+    157|       expect(env.writer.pendingBytes).toBeLessThanOrEqual(GATEWAY_LOG_…
+    158|       expect(await env.writer.settle(250)).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)
+   Start at  04:18:41
+   Duration  7.42s (import 45%, transform 30%, tests 26%)
+
+  Transform  transforming modules took 2.12s · 30% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+# end: 2026-11-16T10:18:49.404Z exit: 1

@@ -1,0 +1,11 @@
+# API coverage run 1 disposition (receipt 029, exit 1, preserved in first-failures/)
+
+Single failure: `gateway-log-writer.test.ts > keeps an oversized slot untouched when it cannot be
+replaced` timed out at the package's unchanged 20 s test timeout. All other 2061 tests passed.
+Investigation (receipt investigate-oversized-timing-1, verbose reporter, isolated file): that test
+alone took 15,960 ms while every other test in the file took < 600 ms. Cause: Vitest element-wise
+deep equality `expect(buffer).toEqual(buffer)` over two 4,194,314-byte Buffers; under coverage
+instrumentation and parallel forks it exceeded 20 s. Product code was not involved (the
+assertion runs after openGatewayLog rejected).
+Correction (test only): exact byte equality kept via `Buffer.equals`; no timeout, retry, coverage
+or exclusion change. Run 2 executes the corrected file.

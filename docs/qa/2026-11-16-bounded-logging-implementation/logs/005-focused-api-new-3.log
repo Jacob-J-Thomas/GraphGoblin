@@ -1,0 +1,199 @@
+# command: pnpm.cmd exec vitest run src/windows-log src/gateway-logger.test.ts src/serve.test.ts src/main-entry.test.ts src/instance-identity.test.ts
+# cwd: C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+# node: /c/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node v22.23.4
+# start: 2026-11-16T10:00:02.715Z
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/apps/api
+
+ ❯ src/gateway-logger.test.ts (4 tests | 1 failed) 1603ms
+   × keeps the correlated private #381 diagnostic and narrows real access records to method, route and status 1589ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/gateway-logger.test.ts > keeps the correlated private #381 diagnostic and narrows real access records to method, route and status
+AssertionError: expected [ { level: 30, …(6) }, …(11) ] to deep equally contain ObjectContaining{…}
+
+- Expected:
+ObjectContaining {
+  "msg": "incoming request",
+  "req": {
+    "method": "POST",
+    "route": "/loops/:loopId/runs",
+  },
+}
+
++ Received:
+[
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "incoming request",
+    "pid": 37724,
+    "req": {
+      "method": "POST",
+      "route": "/loops",
+    },
+    "reqId": "req-1",
+    "time": 1794823210221,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "request completed",
+    "pid": 37724,
+    "reqId": "req-1",
+    "res": {
+      "method": "POST",
+      "route": "/loops",
+      "statusCode": 201,
+    },
+    "responseTime": 31.90850000000046,
+    "time": 1794823210254,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "incoming request",
+    "pid": 37724,
+    "req": {
+      "method": "POST",
+      "route": "/loops/:id/publish",
+    },
+    "reqId": "req-2",
+    "time": 1794823210255,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "request completed",
+    "pid": 37724,
+    "reqId": "req-2",
+    "res": {
+      "method": "POST",
+      "route": "/loops/:id/publish",
+      "statusCode": 200,
+    },
+    "responseTime": 15.949499999999716,
+    "time": 1794823210271,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "incoming request",
+    "pid": 37724,
+    "req": {
+      "method": "POST",
+      "route": "/loops/:id/runs",
+    },
+    "reqId": "req-3",
+    "time": 1794823210272,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "request completed",
+    "pid": 37724,
+    "reqId": "req-3",
+    "res": {
+      "method": "POST",
+      "route": "/loops/:id/runs",
+      "statusCode": 202,
+    },
+    "responseTime": 26.845299999999952,
+    "time": 1794823210299,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "incoming request",
+    "pid": 37724,
+    "req": {
+      "method": "GET",
+      "route": "/loops",
+    },
+    "reqId": "req-4",
+    "time": 1794823210302,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "request completed",
+    "pid": 37724,
+    "reqId": "req-4",
+    "res": {
+      "method": "GET",
+      "route": "/loops",
+      "statusCode": 401,
+    },
+    "responseTime": 5.332900000000336,
+    "time": 1794823210307,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "incoming request",
+    "pid": 37724,
+    "req": {
+      "method": "GET",
+      "route": "/runs/:id",
+    },
+    "reqId": "req-5",
+    "time": 1794823210350,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "request completed",
+    "pid": 37724,
+    "reqId": "req-5",
+    "res": {
+      "method": "GET",
+      "route": "/runs/:id",
+      "statusCode": 200,
+    },
+    "responseTime": 18.352200000000266,
+    "time": 1794823210368,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "incoming request",
+    "pid": 37724,
+    "req": {
+      "method": "GET",
+    },
+    "reqId": "req-6",
+    "time": 1794823210371,
+  },
+  {
+    "hostname": "DESKTOP-RQPA3QI",
+    "level": 30,
+    "msg": "request completed",
+    "pid": 37724,
+    "reqId": "req-6",
+    "res": {
+      "method": "GET",
+      "statusCode": 404,
+    },
+    "responseTime": 0.759700000000521,
+    "time": 1794823210372,
+  },
+]
+
+ ❯ src/gateway-logger.test.ts:113:20
+    111|       );
+    112|     }
+    113|     expect(access).toContainEqual(
+       |                    ^
+    114|       expect.objectContaining({
+    115|         msg: 'incoming request',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 6 passed (7)
+      Tests  1 failed | 114 passed | 1 skipped (116)
+   Start at  04:00:03
+   Duration  18.23s (tests 60%, import 27%, transform 13%)
+
+# end: 2026-11-16T10:00:21.981Z exit: 1

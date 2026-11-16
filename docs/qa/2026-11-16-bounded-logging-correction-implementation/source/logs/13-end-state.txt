@@ -1,0 +1,59 @@
+# label: 13-end-state
+# cwd: /c/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin
+# started: 2026-11-16T16:24:33Z
+# node: v22.23.4
+# command: bash -c git\ rev-parse\ HEAD\;\ git\ rev-parse\ HEAD\^\{tree\}\;\ git\ status\ --porcelain=v1\ --untracked-files=all\;\ echo\ \"docs/qa\ present:\ \$\(test\ -e\ docs/qa\ \&\&\ echo\ yes\ \|\|\ echo\ no\)\"\;\ echo\ \"apps/api/dist\ present:\ \$\(test\ -e\ apps/api/dist\ \&\&\ echo\ yes\ \|\|\ echo\ no\)\"\;\ git\ diff\ --stat\;\ git\ diff\ --name-only\ \|\ while\ read\ f\;\ do\ printf\ \"%s\ \ %s\\n\"\ \"\$\(sha256sum\ \"\$f\"\ \|\ cut\ -d\"\ \"\ -f1\)\"\ \"\$f\"\;\ done
+# ---- output ----
+4dbb0dc185a9419fcebabd85e199dd554c382b4f
+6fb222d5b1e70ae6aa16c9702a36f12241c82a89
+ M CHANGELOG.md
+ M apps/api/src/app.ts
+ M apps/api/src/gateway-logger.test.ts
+ M apps/api/src/gateway-logger.ts
+ M apps/api/src/serve.test.ts
+ M apps/api/src/serve.ts
+ M apps/api/src/windows-log/gateway-log-writer.test.ts
+ M apps/api/src/windows-log/gateway-log-writer.ts
+ M apps/windows-launcher/Launcher.cs
+ M apps/windows-launcher/NativeChecks.cs
+ M docs/10-testing-and-quality.md
+ M docs/11-security-and-distribution.md
+ M docs/decisions/ADR-0081-bounded-windows-launcher-logs.md
+ M docs/guide/07-troubleshooting.md
+ M tooling/scripts/windows-launcher.acceptance.mjs
+docs/qa present: no
+apps/api/dist present: no
+ CHANGELOG.md                                       |   3 +-
+ apps/api/src/app.ts                                |   3 +
+ apps/api/src/gateway-logger.test.ts                | 109 ++++++++++++++-
+ apps/api/src/gateway-logger.ts                     |  66 +++++++++
+ apps/api/src/serve.test.ts                         | 145 ++++++++++++++++++-
+ apps/api/src/serve.ts                              |   8 +-
+ .../api/src/windows-log/gateway-log-writer.test.ts | 155 ++++++++++++++++++++-
+ apps/api/src/windows-log/gateway-log-writer.ts     |  78 +++++++----
+ apps/windows-launcher/Launcher.cs                  |  17 ++-
+ apps/windows-launcher/NativeChecks.cs              |   4 +
+ docs/10-testing-and-quality.md                     |  14 +-
+ docs/11-security-and-distribution.md               |   5 +-
+ .../ADR-0081-bounded-windows-launcher-logs.md      |  42 +++---
+ docs/guide/07-troubleshooting.md                   |  11 +-
+ tooling/scripts/windows-launcher.acceptance.mjs    |  15 +-
+ 15 files changed, 606 insertions(+), 69 deletions(-)
+adcc09a2532b8dff449e1a4290c544e7f8c9a515c935890597b306d25853e07f  CHANGELOG.md
+f165dde3f56a703475e6f7cb31210058ccfd8306487734c7741a77f92fc67a09  apps/api/src/app.ts
+07cfdee579795b9138822df9bc6f98f5c8f81edf920f95895e5ded14d444b388  apps/api/src/gateway-logger.test.ts
+2d58d0279122bfe363a5e38d2f21280fe5bde1dbd826aa098e306ecb0d8b94ad  apps/api/src/gateway-logger.ts
+0dcad2728081819fe90cc41c8bdec3d0a58905918e29c937525751f1032e0fbe  apps/api/src/serve.test.ts
+35f27be14bae55b1c4168235e58a50554e65c0c6df8598fb9b70fca9223e0246  apps/api/src/serve.ts
+720ea5845f29ea468b0cf6f07a29bd16ca1ff37249c4ec0e069ae709a3ad4380  apps/api/src/windows-log/gateway-log-writer.test.ts
+751f7ca8e17148e32164e7f5492a7ebb83189a1e7785679b6f5bd455f447124b  apps/api/src/windows-log/gateway-log-writer.ts
+270bca3bc63f14bfdebd4e194fa2d9c6d57a475b364cb6b26b48da064fdf3e6d  apps/windows-launcher/Launcher.cs
+038d2dfce15b63a9359859a5ee6d3c9ca90ffc37b612136721b459008bece081  apps/windows-launcher/NativeChecks.cs
+51f8b855bd9847cbf6eba63c28abd17ec9e17616a382fb76e865e3e5e051cd26  docs/10-testing-and-quality.md
+f018ab59d2067413102cf5f5c171f60b7ea4a870f161d71a887bcc016a8758d9  docs/11-security-and-distribution.md
+57b6e59bdac92305baf792d9fe6e96f4d46a16f97d9880c081f9f7d1218e86e1  docs/decisions/ADR-0081-bounded-windows-launcher-logs.md
+89cc9068094d5b2192234c9144d7612704699dc3af3c0dbe791a671a670d4339  docs/guide/07-troubleshooting.md
+81947917d9450fc3de9eb2fe65b44125c18b64b988151509ecbdf0b030d0c3ad  tooling/scripts/windows-launcher.acceptance.mjs
+# ---- end ----
+# ended: 2026-11-16T16:24:34Z
+# exit: 0

@@ -1,0 +1,235 @@
+# command: pnpm.cmd test:windows-launcher
+# cwd: C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin
+# node: /c/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node v22.23.4
+# start: 2026-11-16T10:36:49.427Z
+$ node --test tooling/scripts/windows-launcher.acceptance.mjs
+TAP version 13
+# Subtest: Windows PowerShell 5.1 installer validates before replacing native launcher files
+ok 1 - Windows PowerShell 5.1 installer validates before replacing native launcher files
+  ---
+  duration_ms: 14442.5298
+  type: 'test'
+  ...
+# Subtest: native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+    # Subtest: concurrent cold starts create one gateway and later clicks reuse its PID
+    ok 1 - concurrent cold starts create one gateway and later clicks reuse its PID
+      ---
+      duration_ms: 12165.1149
+      type: 'test'
+      ...
+    # Subtest: wrong store and changed gateway settings are refused without stopping the live gateway
+    ok 2 - wrong store and changed gateway settings are refused without stopping the live gateway
+      ---
+      duration_ms: 4270.1698
+      type: 'test'
+      ...
+    # Subtest: same database under a different data directory cannot acquire a second gateway
+    ok 3 - same database under a different data directory cannot acquire a second gateway
+      ---
+      duration_ms: 5227.0367
+      type: 'test'
+      ...
+# {"evidence":"native-shell-shortcut-cold-route","beforePid":"47676","afterPid":"54108"}
+    # Subtest: normal drain releases ownership and a shell shortcut cold start runs the launcher
+    ok 4 - normal drain releases ownership and a shell shortcut cold start runs the launcher
+      ---
+      duration_ms: 6953.1819
+      type: 'test'
+      ...
+    # Subtest: native HWND COM relaunch command preserves the cold launcher route
+    ok 5 - native HWND COM relaunch command preserves the cold launcher route
+      ---
+      duration_ms: 6990.8843
+      type: 'test'
+      ...
+    # Subtest: cross-process HWND metadata survives stamper exit and relaunches
+    ok 6 - cross-process HWND metadata survives stamper exit and relaunches
+      ---
+      duration_ms: 6403.43
+      type: 'test'
+      ...
+    # Subtest: plain-health HTTP listener is refused and kept alive
+    ok 7 - plain-health HTTP listener is refused and kept alive
+      ---
+      duration_ms: 1432.4468
+      type: 'test'
+      ...
+    # Subtest: a silent TCP listener never permits a gateway spawn across repeated clicks
+    ok 8 - a silent TCP listener never permits a gateway spawn across repeated clicks
+      ---
+      duration_ms: 23873.279
+      type: 'test'
+      ...
+    # Subtest: malformed store ownership is preserved and refused before starting a gateway
+    ok 9 - malformed store ownership is preserved and refused before starting a gateway
+      ---
+      duration_ms: 4423.9826
+      type: 'test'
+      ...
+    # Subtest: reused live PID in both locks and guards permits exactly one cold gateway
+    ok 10 - reused live PID in both locks and guards permits exactly one cold gateway
+      ---
+      duration_ms: 11114.8493
+      type: 'test'
+      ...
+# {"evidence":"protected-system-pid-reuse","selected":{"pid":1088,"name":"csrss.exe","windowsCreationTime":"134388595618752230","deniedOperation":"Process.HasExited","errorCode":5},"gatewayPid":"40028"}
+    # Subtest: a protected system PID with a different verified identity is recovered without touching that process
+    ok 11 - a protected system PID with a different verified identity is recovered without touching that process
+      ---
+      duration_ms: 14038.0544
+      type: 'test'
+      ...
+# {"evidence":"windows-launcher-native","artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-4L6JZp"}
+    # Subtest: matching and unknown identities preserve locks, guards and the live process
+    ok 12 - matching and unknown identities preserve locks, guards and the live process
+      ---
+      duration_ms: 17613.3964
+      type: 'test'
+      ...
+    1..12
+ok 2 - native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+  ---
+  duration_ms: 114868.4928
+  type: 'test'
+  ...
+# {"evidence":"windows-launcher-checkout-alias","kind":"junction","requestedLinkType":"Junction","fixture":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\graphgoblin-launcher-alias-JWdGjQ\\\\junction-Z4NqBF","commands":{"direct-identity":{"code":0,"signal":null,"stdout":"c754fb3ff1af1e2dc41c8c4face84aec4940c4da1c68ec40e7df6e95f82d7e22\\n","stderr":""},"alias-identity":{"code":0,"signal":null,"stdout":"c754fb3ff1af1e2dc41c8c4face84aec4940c4da1c68ec40e7df6e95f82d7e22\\n","stderr":""},"alias-store-state":{"code":0,"signal":null,"stdout":"{\\"state\\":\\"free\\"}\\n","stderr":""},"alias-import":{"code":0,"signal":null,"stdout":"","stderr":""},"alias-cold":{"code":0,"signal":null,"stdout":"","stderr":""},"alias-cold-alias-warm":{"code":0,"signal":null,"stdout":"","stderr":""},"alias-cold-direct-warm":{"code":0,"signal":null,"stdout":"","stderr":""},"alias-cold-wrong-store-config":{"code":1,"signal":null,"stdout":"","stderr":"unrelated or differently configured service"},"alias-cold-wrong-settings-config":{"code":1,"signal":null,"stdout":"","stderr":"unrelated or differently configured service"},"direct-cold":{"code":0,"signal":null,"stdout":"","stderr":""},"direct-cold-direct-warm":{"code":0,"signal":null,"stdout":"","stderr":""},"direct-cold-alias-warm":{"code":0,"signal":null,"stdout":"","stderr":""},"direct-cold-wrong-store-config":{"code":1,"signal":null,"stdout":"","stderr":"unrelated or differently configured service"},"direct-cold-wrong-settings-config":{"code":1,"signal":null,"stdout":"","stderr":"unrelated or differently configured service"}},"cold":[{"spelling":"alias","owner":{"pid":52488,"birth":"134392991476391930","executable":"C:\\\\Users\\\\98jak\\\\.claude\\\\codex-runs\\\\GraphGoblin\\\\runtime\\\\node-v22.23.4-win-x64\\\\node.exe","main":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\graphgoblin-launcher-alias-JWdGjQ\\\\junction-Z4NqBF\\\\checkout alias-α\\\\apps\\\\api\\\\dist\\\\main.js","leases":{"graphgoblin.lock":"c8d256432dd3895cae88d71fa5b64372213e2882a452312fc800bf757b212a40","graphgoblin.db.graphgoblin.lock":"cc4336a1ecdc76bee620756f7f849b085a0236b6dd11336d656c8f5197c1531f"}},"release":"drained-pid-listener-leases"},{"spelling":"direct","owner":{"pid":53520,"birth":"134392991642515430","executable":"C:\\\\Users\\\\98jak\\\\.claude\\\\codex-runs\\\\GraphGoblin\\\\runtime\\\\node-v22.23.4-win-x64\\\\node.exe","main":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\apps\\\\api\\\\dist\\\\main.js","leases":{"graphgoblin.lock":"eff7d9b165abd1c06abd39f73c78c3d618386c391e5d69e4c3a3de8678b348c3","graphgoblin.db.graphgoblin.lock":"a4fedcb8600136f5430055c43c470c90d35678d95582704e65da7f201a9c2cd8"}},"release":"drained-pid-listener-leases"}],"reparse":{"linkType":"Junction","directory":true,"reparsePoint":true},"port":4845,"storeEntriesBeforeCold":0,"aliasUnlinked":true}
+# Subtest: native Windows launcher accepts junction and directory symlink checkout paths
+    # Subtest: cold and warm native launcher with a Junction checkout
+    ok 1 - cold and warm native launcher with a Junction checkout
+      ---
+      duration_ms: 37058.0841
+      type: 'test'
+      ...
+# {"evidence":"windows-launcher-checkout-alias","kind":"dir","requestedLinkType":"SymbolicLink","fixture":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\graphgoblin-launcher-alias-JWdGjQ\\\\dir-RYKLAZ","commands":{},"cold":[],"failure":{"stage":"create-alias","code":"EPERM","errno":-4048,"syscall":"symlink"},"aliasAbsent":true}
+    # Subtest: cold and warm native launcher with a SymbolicLink checkout
+    not ok 2 - cold and warm native launcher with a SymbolicLink checkout
+      ---
+      duration_ms: 26.8572
+      type: 'test'
+      location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261116-bounded-logs\\GraphGoblin\\tooling\\scripts\\windows-launcher.acceptance.mjs:1332:15'
+      failureType: 'testCodeFailure'
+      error: "EPERM: operation not permitted, symlink 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261116-bounded-logs\\GraphGoblin' -> 'C:\\Users\\98jak\\AppData\\Local\\Temp\\graphgoblin-launcher-alias-JWdGjQ\\dir-RYKLAZ\\checkout alias-α'"
+      code: 'EPERM'
+      stack: |-
+        async symlink (node:internal/fs/promises:1001:10)
+        async checkLauncherAlias (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1119:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1332:7)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    1..2
+not ok 3 - native Windows launcher accepts junction and directory symlink checkout paths
+  ---
+  duration_ms: 37293.0341
+  type: 'test'
+  location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261116-bounded-logs\\GraphGoblin\\tooling\\scripts\\windows-launcher.acceptance.mjs:1314:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# {"evidence":"independent-api-lock-contention","trial":1,"results":[{"status":"refused","pid":51176,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":54248,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":53856},{"status":"refused","pid":56020,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":39120,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-1"}
+# {"evidence":"independent-api-lock-contention","trial":2,"results":[{"status":"refused","pid":16604,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":20368},{"status":"refused","pid":33368,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":34976,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":7396,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-2"}
+# {"evidence":"independent-api-lock-contention","trial":3,"results":[{"status":"refused","pid":53132,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":47572},{"status":"refused","pid":38044,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":57232,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":52000,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-YoGGkd\\\\trial-3"}
+# Subtest: independent API processes never share ownership while reclaiming a reused PID
+ok 4 - independent API processes never share ownership while reclaiming a reused PID
+  ---
+  duration_ms: 6383.6188
+  type: 'test'
+  ...
+# Subtest: bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names
+    # Subtest: native closed outcomes, launcher pair bounds and NUL stdio checks
+    ok 1 - native closed outcomes, launcher pair bounds and NUL stdio checks
+      ---
+      duration_ms: 1035.4413
+      type: 'test'
+      ...
+    # Subtest: a stale built entry beside the current guard module refuses before spawn
+    ok 2 - a stale built entry beside the current guard module refuses before spawn
+      ---
+      duration_ms: 339.1828
+      type: 'test'
+      ...
+    # Subtest: an application startup failure reports its written closed diagnostic (74)
+    ok 3 - an application startup failure reports its written closed diagnostic (74)
+      ---
+      duration_ms: 6045.3835
+      type: 'test'
+      ...
+    # Subtest: one writer per physical root refuses a junction contender and a disjoint store and port
+    not ok 4 - one writer per physical root refuses a junction contender and a disjoint store and port
+      ---
+      duration_ms: 5858.0144
+      type: 'test'
+      location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261116-bounded-logs\\GraphGoblin\\tooling\\scripts\\windows-launcher.acceptance.mjs:1612:15'
+      failureType: 'testCodeFailure'
+      error: 'No disposable Windows launcher test port is available.'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        freePort (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:112:9)
+        configuration (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1485:21)
+        TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1648:34)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1612:7)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: deliberate stop, legacy append writer refusal and oversized history replacement
+    not ok 5 - deliberate stop, legacy append writer refusal and oversized history replacement
+      ---
+      duration_ms: 6306.7901
+      type: 'test'
+      location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261116-bounded-logs\\GraphGoblin\\tooling\\scripts\\windows-launcher.acceptance.mjs:1672:15'
+      failureType: 'testCodeFailure'
+      error: 'No disposable Windows launcher test port is available.'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        freePort (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:112:9)
+        configuration (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1485:21)
+        TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1687:33)
+        process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1672:7)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    # Subtest: unsafe managed names are refused and their targets preserved
+    not ok 6 - unsafe managed names are refused and their targets preserved
+      ---
+      duration_ms: 2.4885
+      type: 'test'
+      location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261116-bounded-logs\\GraphGoblin\\tooling\\scripts\\windows-launcher.acceptance.mjs:1718:13'
+      failureType: 'testCodeFailure'
+      error: 'No disposable Windows launcher test port is available.'
+      code: 'ERR_TEST_FAILURE'
+      stack: |-
+        freePort (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:112:9)
+        configuration (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1485:21)
+        TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1724:28)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async TestContext.<anonymous> (file:///C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1718:5)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+# {"evidence":"windows-launcher-bounded-logs","artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261116-bounded-logs\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-logs-DhBQmt"}
+    1..6
+not ok 5 - bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names
+  ---
+  duration_ms: 19853.4654
+  type: 'test'
+  location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261116-bounded-logs\\GraphGoblin\\tooling\\scripts\\windows-launcher.acceptance.mjs:1460:1'
+  failureType: 'subtestsFailed'
+  error: '3 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..5
+# tests 25
+# suites 0
+# pass 19
+# fail 6
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 482770.955
+[ELIFECYCLE] Command failed with exit code 1.
+# end: 2026-11-16T10:44:52.506Z exit: 1

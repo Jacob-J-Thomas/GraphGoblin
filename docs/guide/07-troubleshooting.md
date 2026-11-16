@@ -2,9 +2,41 @@
 
 ## Windows launcher
 
-The launcher reports the failed step in a dialog and records it in `launcher.log` next to
-`GraphGoblin.exe`. `gateway.log` there retains stdout/stderr from gateways it started, including
-startup refusal. The default location is `%LOCALAPPDATA%\GraphGoblin\Launcher`.
+The launcher reports the failed step in a dialog (stderr with `--ensure-gateway`) and records a
+closed JSON record in `launcher.log` next to its configuration. A gateway it started writes its
+private server log, including run failure details, to `gateway.log` in the same folder. The default
+location is `%LOCALAPPDATA%\GraphGoblin\Launcher`. Each log keeps two files, `gateway.log` and
+`gateway.log.1` (4 MiB each) and `launcher.log` and `launcher.log.1` (256 KiB each); older records
+roll off. Under sustained pressure or a write fault the gateway drops log records rather than
+waiting, and a `gateway log records dropped` record counts them (ADR-0081).
+
+- **Log folder in use:** another process holds this folder's log reservation (the
+  `GraphGoblin.GatewayLog.<key>` named pipe a launcher-started gateway keeps while it runs) or has
+  `gateway.log` open without sharing it. The launcher cannot tell which process it is. If a
+  GraphGoblin gateway still uses this folder, possibly an older version or one serving another
+  port, stop it deliberately (its **Shut down** control); otherwise close the program holding the
+  folder or `gateway.log`. Launch again once it is released. The launcher waits within its startup
+  timeout for a holder that is releasing `gateway.log` and never stops a process itself.
+- **Log folder unsafe or unavailable:** the folder must be a local NTFS folder that only your
+  account, SYSTEM and Administrators can access, and `gateway.log`, `gateway.log.1`,
+  `launcher.log` and `launcher.log.1` must be ordinary files you own, not links. Tools that add other
+  local accounts to your profile's permissions make it non-private. Restrict the launcher folder,
+  for example from Command Prompt
+  `icacls "%LOCALAPPDATA%\GraphGoblin\Launcher" /inheritance:r /grant:r "%USERNAME%:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F"`,
+  then check `icacls` lists no other account, and remove or rename a refused link yourself. Refused
+  files are never changed. When the launcher log itself cannot be written, the dialog or stderr is
+  the only record.
+- **Application modules could not be loaded:** the build is incomplete or was made for another
+  Node runtime. Run `pnpm install` and `pnpm build` with Node 22 in the checkout. The message says
+  whether a startup record was written to `gateway.log`.
+- **Failed during startup:** read the last `GraphGoblin startup failed` record in `gateway.log`.
+  Its `stage` (`configuration`, `store`, `recovery`, `http` or `bind`) and `cause` name the step;
+  for full error text run `node apps\api\dist\main.js` in the checkout from a terminal with the same
+  GG_* settings. When the message says no record could be written, use that terminal run.
+- **Unrecognized startup exit:** the gateway exited before readiness without a known outcome, so
+  no record is assumed. Run it from a terminal as above.
+- **Built gateway does not match this launcher:** the checkout was built before this launcher
+  version. Stop the running gateway, rebuild and reinstall the launcher together.
 
 - **Port belongs to another or differently configured service:** check the configured checkout,
   Node runtime, port, `GG_DB_URL`, store and GG_* overrides. The launcher refuses plain health from
@@ -25,9 +57,9 @@ startup refusal. The default location is `%LOCALAPPDATA%\GraphGoblin\Launcher`.
   Instrumentation availability. The cached self query retries once (twenty seconds per attempt);
   foreign-PID queries remain bounded to five seconds. Refusals name the exact path and probe cause.
   A denied, failed or timed-out query does not bypass ownership.
-- **Exited during startup:** read `gateway.log`; common causes are a held/malformed store lock,
-  invalid settings or unsupported stored data. Correct the stated cause and retry. No reset is
-  implicit in a launch.
+- **Exited during startup:** read the startup record in `gateway.log`; common causes are a
+  held/malformed store lock, invalid settings or unsupported stored data. Correct the stated cause
+  and retry. No reset is implicit in a launch.
 - **Readiness deadline elapsed:** the process is left running. Check its log and launch again to
   observe readiness; there is no automatic kill/restart loop.
 - **PWA belongs to another origin:** install the Chrome app from the exact configured

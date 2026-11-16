@@ -1,0 +1,140 @@
+# #438 candidate facts for independent behavior QA
+
+Implementation handoff from actual Claude Code Opus 5.5 xhigh. These are source-derived facts about
+the candidate, not executed QA evidence. Bind them to the exact candidate head/build that root
+publishes. Relative paths are in the admitted checkout
+`C:\Users\98jak\.codex\worktrees\gg-20261116-bounded-logs\GraphGoblin`.
+
+## Process entry and argv
+
+- Detached gateway command line (unchanged): `"<Node>" "<Repo>\apps\api\dist\main.js"`, exactly one
+  script argument, built by `NativeProcess.Start` in `apps/windows-launcher/Launcher.cs`.
+- Built entry: `apps/api/dist/main.js`. Static imports: `./entry-point.js`, `./windows-log/guard.js`
+  (which imports `./gateway-log-writer.js`, `./managed-root.js`); all others are `node:` built-ins.
+  Dynamic: `./serve.js` (server), `./preflight.js`, `./create-api-key.js`, `./reset/reset.js`.
+- Marker: the exact bytes `export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;` must lie wholly within
+  the first 4096 bytes of `apps/api/dist/main.js` (`Configuration.HasLogProtocol`).
+- Required built files (launcher `Configuration.Validate` and installer pre-check):
+  `apps/api/dist/main.js`, `apps/api/dist/instance-identity.js`,
+  `apps/api/dist/windows-log/guard.js`, `apps/web/dist/index.html`. The installer's staged
+  `--validate-install` runs the same native validator (marker included).
+- Physical-entry detection: `isPhysicalEntry(process.argv[1], import.meta.url)` compares
+  `realpathSync.native` of both (`apps/api/src/entry-point.ts`), so checkout aliases work.
+- Managed mode activates only when: entry is physical, no `--preflight`/`--create-api-key`/`--reset`
+  flag, `GG_WINDOWS_LAUNCHER_LOG_DIR` present (any case), and `process.platform === 'win32'`. The
+  variable is deleted from `process.env` under every spelling in all entry modes before any
+  application module loads. Import of `main.js` is inert (variable untouched).
+- Instance identity fingerprint keeps canonical `main.js` and the serving PID; `protocol` advanced
+  from 1 to 2 (`INSTANCE_PROTOCOL`, `apps/api/src/instance-identity.ts`).
+
+## Environment
+
+- Launcher sets `GG_WINDOWS_LAUNCHER_LOG_DIR=<canonical root>` only in `Configuration.GatewayEnvironment`
+  (after `ChildEnvironment()`), never for the identity/store helper. Inherited `GG_*` are filtered
+  case-insensitively; a config `Environment` key equal to it in any case is refused
+  ("... is reserved for the launcher.").
+- The value is the launcher's `GetFinalPathNameByHandle` path of the configuration folder.
+
+## Log root, reservation and keys
+
+- Root = folder of the launcher configuration JSON (default `%LOCALAPPDATA%\GraphGoblin\Launcher`).
+- Gateway (Node): `realpath` (libuv native) → must match `^[A-Za-z]:\\`; `stat({bigint})` dev
+  (volume serial) and ino (64-bit file index), ino ≠ 0.
+- Pipe: `\\.\pipe\GraphGoblin.GatewayLog.` + first 40 hex of
+  `sha256("graphgoblin-gateway-log-root/v1\0dev=<dev>\0ino=<ino>")` (decimal). Node core `net`
+  server, `pauseOnConnect`, every socket destroyed, `unref()`ed, held until process exit.
+- Launcher mutex: `Global\GraphGoblin.LauncherLog.` + first 40 hex of
+  `sha256("graphgoblin-launcher-log-root/v1\0dev=<volume serial>\0ino=<64-bit index>")`, one
+  `WaitOne(250 ms)` (abandoned counts as acquired).
+- Privacy (both sides): drive type Fixed, format NTFS; root not a reparse point; owner ∈ {user,
+  S-1-5-18, S-1-5-32-544, TrustedInstaller}; every Allow ACE (inherited or explicit) ∈ {user,
+  S-1-5-18, S-1-5-32-544, TrustedInstaller, S-1-3-0, S-1-3-4}; null DACL refused. Same rules for
+  present managed names, which must also be regular, not directory/device/reparse, single link.
+- Gateway order: resolve root → bind pipe (EADDRINUSE → 70) → PowerShell metadata of root and
+  `gateway.log`, `gateway.log.1` → slot admission → dynamic import. Nothing touches a managed name
+  before the bind. Metadata query: `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe
+  -NoProfile -NonInteractive -EncodedCommand ...`, 20 s timeout, 256 KiB output cap, read-only.
+
+## Gateway writer (production seam)
+
+- Module `apps/api/src/windows-log/gateway-log-writer.ts` (built `dist/windows-log/gateway-log-writer.js`).
+- `openGatewayLog({ root, fs?, observe?, schedule?, now? })` → `GatewayLogWriter`.
+  `fs: LogFileSystem` wraps exactly `lstat(path)`, `open(path, 'existing'|'create')` (r+ / wx+),
+  `rename(from, to)`, and handle `stat/read/write/truncate/close`; default `nodeLogFileSystem`.
+  `observe(event)` receives every transition: `adopt`, `write` (position, bytes, records,
+  bytesWritten, complete|partial|failed, code), `rollback`, `rotate` (close|rename|create),
+  `drop` (pending-limit|suspended|disabled|fault|closed), `suspend` (faults, delayMs), `disable`.
+- Writer API: `write(chunk): boolean` (Pino stream; never waits), `writeAcknowledged(record):
+  Promise<boolean>` (true only when that record's bytes completed), `settle(ms): Promise<boolean>`,
+  `close()`, getters `state`, `pendingBytes`, `size`. No `emit`/`flush`/`end` (Pino duck-types).
+- Constants: slot 4,194,304 B; record 65,536 B including LF; pending 262,144 B (queued + in
+  flight, markers and drop summaries included); exit flush 250 ms; backoff 1,2,4,8,16,32,60 s;
+  8 consecutive faults → disabled until restart.
+- Marker: `{"level":40,"time":<ms>,"pid":<pid>,"msg":"gateway log record omitted: it exceeded the 65536-byte record limit"}\n`.
+- Drop summary: `{"level":40,"time":<ms>,"pid":<pid>,"msg":"gateway log records dropped","dropped":<n>}\n`,
+  enqueued before the next accepted record when it fits.
+- Adoption: previous slot then active. Oversized (> 4 MiB) slot truncated to 0 under ownership;
+  otherwise trailing partial record truncated to the last LF (scans back in 64 KiB chunks; none →
+  0). Active created with exclusive create if absent. Identity of name vs handle compared.
+- Rotation: verify previous is absent or the admitted/rotated identity; verify active name ==
+  handle; close; `rename(active, previous)` (MoveFileEx replace); exclusive create of active.
+  Denied rename → drop queue, backoff, no truncation; retried later.
+- Every batch: `lstat(active)` must equal the handle identity; absent name → recreate; foreign
+  entry → disable and preserve it.
+
+## Startup records and exits
+
+- Closed record: `{"level":50,"time","pid","msg":"GraphGoblin startup failed"|"GraphGoblin application import failed","stage","cause","detail","guidance"}`.
+  Stages: `import`, `configuration`, `store`, `recovery`, `http`, `bind`. Causes: see
+  `STARTUP_CAUSES` in `apps/api/src/windows-log/guard.ts`.
+- Exits before readiness: 70 in use (pipe EADDRINUSE); 71 unsafe/unavailable (root, metadata,
+  slot admission, other bind error); 72/73 dynamic import failure with/without the record
+  acknowledged within 250 ms; 74/75 `serve()` rejection likewise. Cleanup (`app.close`,
+  `container.stop`) completes before the record is written.
+- Graceful exit after shutdown: `server.close` → `owner.dispose` → `writer.settle(250)` →
+  `process.exit(0)`. Emergency (`abandoned`) exit unchanged (no flush wait).
+
+## Managed Pino projection
+
+- `createGatewayLogger(config, destination)` (`apps/api/src/gateway-logger.ts`): level from config;
+  serializers `req` → `{method?, route?}`, `res` → `{method?, route?, statusCode?}`; route only from
+  `request.routeOptions.url`; method only `^[A-Z]{1,16}$`. Engine records and `err` unchanged.
+
+## Native launcher
+
+- `NativeProcess.Start`: stdin `CreateFile("NUL", GENERIC_READ, share RW)`, stdout = stderr =
+  `CreateFile("NUL", GENERIC_WRITE, share RW)`; `PROC_THREAD_ATTRIBUTE_HANDLE_LIST` = exactly those
+  two; flags `CREATE_NO_WINDOW|CREATE_NEW_PROCESS_GROUP|CREATE_UNICODE_ENVIRONMENT|EXTENDED_STARTUPINFO_PRESENT`
+  (unchanged). Returns `ChildProcess` (pid + process handle); thread handle closed immediately;
+  process handle closed by `using` on every return.
+- Before spawn (`Gateway.AdmitLogRoot`): root admission + `gateway.log.1`/`gateway.log` entry
+  validation (71-equivalent refusal `destination-unavailable`), then legacy probe:
+  `CreateFile(gateway.log, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT)`.
+  `ERROR_SHARING_VIOLATION` → retry every 200 ms until the existing release deadline
+  (`StartupTimeoutSeconds` from the first probe), then `destination-in-use` without spawning.
+- Outcome codes (launcher.log `code`): `destination-in-use`, `destination-unavailable`,
+  `import-failed-logged`, `import-failed-unlogged`, `startup-failed-logged`,
+  `startup-failed-unlogged`, `unknown-exit`, plus pre-existing closed refusals
+  (`configuration-refused`, `foreign-listener`, `store-held`, `store-unverified`, ...). Unexpected
+  exceptions → `unexpected` with fixed text naming the step.
+- Rendered locations: rooted, no C0/C1/format/line/paragraph separator characters, ≤ 260 chars
+  (leading `…` keeps the end). Fields: `Log folder:`, `Configuration:`; lock path inside the
+  closed ownership text.
+- `launcher.log` records: `{"time","pid","outcome":"refused","stage","code","childExit"?,"message","config","logFolder"?,"lock"?}\n`,
+  ≤ 4096 bytes (locations dropped first if needed). Slots 262,144 B each; oversized history
+  replaced; partial tail repaired; rotation close → `MoveFileEx(REPLACE_EXISTING)` → `CREATE_NEW`.
+  Written only on failure (success is quiet).
+
+## Honest coverage notes for QA
+
+- Gateway writer faults (ENOSPC, EIO, partial write, rename denial) are injected at the production
+  seam; one native delete-sharing denial during rotation is real (PowerShell holder). Real
+  disk-full is not exercised.
+- Legacy live-writer refusal in the candidate acceptance uses a PowerShell `FileStream` with
+  `FileSystemRights.AppendData` (the predecessor's access/sharing), not the real predecessor
+  gateway. QA's real-predecessor case remains required.
+- Foreign-owner and cross-user/session cases are not exercised natively (no second identity);
+  privacy refusal is exercised with a Users allow ACE.
+- On this host the user profile (and therefore `%TEMP%` and the default launcher folder) inherits
+  Allow ACEs for other local principals (CodexSandbox accounts, a capability SID), so the
+  contract's privacy rule refuses those folders; fixtures restrict their own ACLs explicitly.

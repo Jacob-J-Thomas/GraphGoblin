@@ -1,0 +1,11 @@
+# Focused launcher refusal checks: run history
+
+- Run 1 (`logs/*-focused-launcher-refusals-1.log`, preserved in `first-failures/`): cases 1-2
+  passed; case 3 used `--config <file> --surprise` without `--ensure-gateway`, so the candidate
+  launcher showed its pre-existing interactive error dialog and waited until the 30 s execFile
+  timeout killed it (exit null). Test-design error, not a product defect.
+- Run 2 (`logs/*-focused-launcher-refusals-2.log`): ACCIDENTAL UNCHANGED RERUN. A sed edit failed
+  silently, so the script was identical and the same dialog/timeout recurred. Recorded, not used
+  as evidence of anything beyond run 1.
+- Run 3: script corrected to use quiet `--ensure-gateway --surprise`.
+- After run 1 no `GraphGoblin.exe` process remained (Win32_Process query empty).

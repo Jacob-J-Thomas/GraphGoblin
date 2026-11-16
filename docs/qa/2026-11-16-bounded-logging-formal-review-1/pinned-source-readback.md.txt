@@ -1,0 +1,32 @@
+# Pinned source and review readback
+
+## Dependency bytes inspected
+
+The files below are from the isolated PR #500 checkout's installed dependency resolution. SHA-256 identifies the entire file. The excerpt notes locate the precise execution chain.
+
+| Source | Version | Bytes | SHA-256 | Location |
+| --- | --- | ---: | --- | --- |
+| `apps/api/node_modules/fastify/fastify.js` | Fastify 5.12.5 | 34,573 | `31a0ebd3ee5fd9f525ccb37c312e3b94757cf53bfa481f41ee364ce75d83c0ae` | 452–453 attaches the client error handler, 918 chooses the default and 963–1000 handles the error. Line 992 logs the error at trace. |
+| `apps/api/node_modules/pino/pino.js` | Pino 10.3.1 | 6,319 | `31c425b5c0cdab46d86df72353cb25247c0e419dc00c3ca8c6574cf1601a6a22` | 51–63 installs the default standard error serializer. |
+| `apps/api/node_modules/pino/lib/tools.js` | Pino 10.3.1 | 12,936 | `437ca8153a832d35e03375eccac3676e301a8937862e776fb6c3a3f25ac7bf9b` | 169–175 uses the field serializer and 351–353 merges supplied serializers with defaults. |
+| `node_modules/.pnpm/pino-std-serializers@7.1.0/node_modules/pino-std-serializers/lib/err.js` | 7.1.0 | 1,254 | `7fa8d55b7285d66ddbf3552d78f6f0fc9fcb07a6d0bfd7d7977d96d9e45fbb32` | 21–39 retains message/stack and copies additional enumerable fields. |
+| `pnpm-lock.yaml` | PR head | 348,217 | `3fda48ff6e5a65af5a280ede5364ea23ae21fb32c068e3e1cf8835c12a0916df` | Recorded Fastify, Pino and serializer resolutions. |
+
+Node v22.23.4 primary source assigns `rawPacket` directly and dispatches parser errors through `clientError`. This happens before a structurally valid Fastify request is required. The configuration schema allows trace and defaults to info at `apps/api/src/config.ts:23–25`. The report's failing request is a source-derived, synthetically specified scenario. It was not sent during the read-only review. [Node HTTP server](https://github.com/nodejs/node/blob/v22.23.4/lib/_http_server.js#L859-L890) · [Node HTTP parser preparation](https://github.com/nodejs/node/blob/v22.23.4/lib/_http_common.js#L266-L269) · [Node clientError contract](https://github.com/nodejs/node/blob/v22.23.4/doc/api/http.md#event-clienterror)
+
+## Supported writer transition
+
+Three original record buffers of 65,536 B each are live in `batch` while the 196,608 B compacted write buffer is live. The `settle` callback walks `batch` after the write and retains its array across both awaits. Its entry objects still hold `bytes`. The source-derived simultaneous encoded payload is thus 393,216 B. This calculation uses the exact coalesced write size recorded in supplemental C-3, lines 162–168, and the production source, `gateway-log-writer.ts:400–459`. A two-record coalesced batch can reach exactly 131,072 B before copying, so a multi-record batch must exceed that amount to violate the cap solely through duplication. For example, three complete records of 65,536 B, 65,437 B and 100 B reach 131,073 B. The comparison assumes an otherwise empty queue.
+
+## Worktree, source freeze and hosted identity
+
+- Worktree `C:\Users\98jak\.codex\worktrees\gg-20261116-bounded-logs\GraphGoblin`.
+- Opening and closing observed clean status, head `4dbb0dc185a9419fcebabd85e199dd554c382b4f`, tree `6fb222d5b1e70ae6aa16c9702a36f12241c82a89` and target tree `d064706fb48def7bacac5e434f96825c5850d214`.
+- Closing index SHA-256 `cbee8891016ffb669cdb5dca734115be784671e48705054a8528f97513257e28` matches the pre-review publication proof's index hash.
+- Read-only `git ls-remote` returned `e21c24be9cef109ef438fd2df4c1583bc570b1cb` for `refs/heads/main`, `4dbb0dc185a9419fcebabd85e199dd554c382b4f` for `refs/pull/500/head`, and `dcf097ed963fdbad8c83efd6cc22aa02bb13a3ed` for `refs/pull/500/merge`.
+- Terminal CI evidence read from external `launcher-438-hosted-publication-first` includes `synthetic-merge.json`, `job-metadata/run-response-terminal.json`, `job-metadata/jobs-api-terminal.json`, the four decoded job logs and the coverage ZIP and member map. The root's live terminal observation at 15:15 UTC admitted this formal scan. The review read the isolated checkout, retained QA and CI captures, and remote Git refs. Owner resources stayed outside the review.
+
+- Readback of the finalized external CI packet under proposed/docs/qa/2026-11-16-bounded-logging-final-ci verified 23 manifest rows and these SHA-256 values.
+  - README.md 79b4ca5a168fd29b0d6f9b3872da69b9907bd7223f9ba8a9ce57b94f5102665d
+  - source-copy-map.json 51669150ec9f3b665f15c9177fa0fe181723840da166dee48d44bc44d9c7bc5f
+  - SHA256SUMS.txt e4762f2c8110473e4b394081c1c9f269c512e099a001d7e01079b761984b13fa
