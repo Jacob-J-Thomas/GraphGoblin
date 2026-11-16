@@ -12,6 +12,7 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   running. Managed replacement preserves the installation identity; alternate app names keep
   independent identities and logs. Private gateway logs share the existing bounded writer,
   with a Darwin directory reservation and a local-key check after both writer leases.
+  Installation and cold launch tolerate malformed inherited locale values.
   **Setup:** an existing store needs its owned local `master.key`; external database paths and
   shell-only master-key overrides are unsupported by this launcher. Keep Node and the checkout
   at their saved paths or rerun the installer. No format change or migration. Part of #456 and

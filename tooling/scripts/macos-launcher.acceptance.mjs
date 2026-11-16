@@ -553,7 +553,7 @@ function gatewayEnv(fixture, port, dataDir = fixture.dataDir) {
   };
 }
 
-function install(fixture, port, label) {
+function install(fixture, port, label, locale = {}) {
   // The script is the public entry, with its admitted toolchain and exact typed install flags.
   return fixture.run(
     label,
@@ -570,7 +570,7 @@ function install(fixture, port, label) {
       String(port),
       '--disable-ollama',
     ],
-    { timeout: 150_000 },
+    { timeout: 150_000, env: { ...fixture.env, ...locale } },
   );
 }
 
@@ -705,7 +705,9 @@ async function scopedAcceptance(fixture, t) {
     spare = await bindForeign(new Set([primaryPort]));
     otherPort = spare.port;
     evidence.ports = { primary: primaryPort, contender: otherPort };
-    const clean = await install(fixture, primaryPort, 'public-install');
+    const installerLocale = { LANG: 'en_US.UTF-8', LC_ALL: 'ggcanary17544768eaef' };
+    evidence.installerLocale = installerLocale;
+    const clean = await install(fixture, primaryPort, 'public-install', installerLocale);
     expectExit(clean, 0, 'public install');
     installed = await captureInstalled(fixture, primaryPort);
     evidence.installation = installed;
@@ -721,7 +723,7 @@ async function scopedAcceptance(fixture, t) {
       'usage',
     );
     passed(
-      'Public install validated its staged bundle and published a receipt-bound alternate app.',
+      'Public install with a malformed inherited locale validated and published a receipt-bound alternate app.',
     );
 
     stage = 'foreign-loopback';

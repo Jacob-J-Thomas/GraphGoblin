@@ -116,7 +116,8 @@ package struct LauncherConfiguration: Sendable {
         ]
         if let codexBinary { object["codexBinary"] = codexBinary }
         if let claudeBinary { object["claudeBinary"] = claudeBinary }
-        return try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys, .withoutEscapingSlashes])
+        // Configuration readers ignore member order, so avoid locale-sensitive key sorting.
+        return try JSONSerialization.data(withJSONObject: object, options: [.withoutEscapingSlashes])
     }
 
     package var database: String {

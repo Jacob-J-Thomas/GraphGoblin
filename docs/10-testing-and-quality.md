@@ -4,7 +4,8 @@
 launcher** CI job on arm64 macOS 15. The job records the exact checkout and toolchain, builds
 the application, runs the affected API tests, runs the Swift engine/installer/presentation
 suites under full Xcode and exercises the public installer and real gateway with an alternate
-bundle, disposable stores and non-owner ports. Native test output and failure evidence are
+bundle, disposable stores and non-owner ports. It covers malformed inherited locales during
+public installation and concurrent cold launch. Native test output and failure evidence are
 retained for seven days. Swift coverage output is additional evidence; it does not replace
 the existing TypeScript/JavaScript V8 gates or their thresholds.
 
