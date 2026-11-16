@@ -1,0 +1,219 @@
+# #435 formal scan 1 — Claude Opus 5.5 xhigh opposite-family review of PR #492
+
+## Verdict
+
+**READY.** No introduced in-scope blocker was found. The product correction is minimal, correct and fail-closed. The permanent native regression discriminates old from fixed source on both genuine Windows link types. Current-head CI is green on the exact tested merge. Three non-blocking, in-scope P3 recommendations (R1–R3) and several pre-existing or out-of-scope observations (O1–O7) follow, kept separate. No mandatory owner step is inferred for #435.
+
+## Identity
+
+| Item | Value | How re-established |
+| --- | --- | --- |
+| Reviewer | Claude Opus 5.5 (`claude-opus-5-5`), effort `xhigh` | Runner `launch.json` (model `claude-opus-5-5`, effort `xhigh`, pid 50788); I cannot introspect effort independently |
+| Implementer family | GPT-6.1 Sol xhigh (`impl:gpt-6.1-sol`) | Issue #435 labels; opposite family confirmed |
+| Checkout | `C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin`, branch `codex/gg-20261116-launcher-identity` | `git status --porcelain=v1 -b` empty at start and at end |
+| Publication head | `6f383da798872aa0e6bd1e0de1fdcd4e702de9ae`, tree `decd1ca26c9bd63d942e939e65e2b2604d7f2652` | `git rev-parse HEAD HEAD^{tree}`; `git ls-remote` branch and `refs/pull/492/head`; `gh pr view 492` headRefOid |
+| Target | `9fa8b2474c7290adb800c5e26be73511095cae25`, tree `88ade580c80b2139b5d1bf51449dca10e33184f1` | `git ls-remote origin refs/heads/main`; local `origin/main` |
+| Tested merge | `5e386d5cc9ed4b022d15ade32d04fcd89c367688`, tree `decd1ca2…` (= head), parents target then head | `git cat-file -p`; `refs/pull/492/merge`; `gh pr view` potentialMergeCommit |
+| Source candidate | `c75e277695dae260f0e14279cff8705bab84ef4c`, tree `640fab8634a8c0cad547a70a750150ba14d4259d` | `git rev-parse c75e2776^{tree}`; `git diff --name-only c75e2776 6f383da7` = 379 paths, all under `docs/` |
+| Test-only baseline head | `08e60a0ae6d6b7cae853326825365760166f3ad3` (parent = target; only the native test changed), tree `1796a01a…` | `git diff --stat 9fa8b247 08e60a0a`; hosted synthetic merge `07738c4d…` has the same tree |
+| PR state | #492 OPEN, draft, mergeable CLEAN, no reviews or comments | `gh pr view 492` (read-only) |
+
+There was no drift. Head, tree, target and tested merge equal the dispatch values.
+
+## Scope reviewed (all six effective files, completely)
+
+The effective diff from target to head outside `docs/qa/` is seven paths: the six named files plus the appended delivery register. `c75e2776..6f383da7` changes only `docs/` (378 `docs/qa` paths plus the register). The native regression `tooling/scripts/windows-launcher.acceptance.mjs` is byte-identical at `08e60a0a`, `c75e2776` and `6f383da7` (SHA-256 `4cac8f61…c4ee`). The helper source is identical at `c75e2776` and `6f383da7` (SHA-256 `3f294ee9…68e0`).
+
+1. **`apps/api/src/instance-identity.ts`.** `resolve(argv[1]) === fileURLToPath(import.meta.url)` is replaced by the exported `isLauncherIdentityEntry(entry, moduleUrl)`. It returns `false` for a missing entry and otherwise compares `realpathSync.native(entry)` with `realpathSync.native(fileURLToPath(moduleUrl))`. Any throw, including an invalid URL or ENOENT, returns `false`. `instanceIdentity`, `launcherStoreState`, `launcherRuntimeSupported`, configuration loading, the stdout format and the invalid-config path are unchanged.
+2. **`apps/api/src/instance-identity.test.ts`.** One new unit test covers absolute, relative, different existing file, undefined, missing file and non-file URL inputs. The 12 pre-existing tests are untouched, giving 13 in total; current-head Gates shows `src/instance-identity.test.ts (13 tests)` passing.
+3. **`tooling/scripts/launcher-identity.test.mjs`.** `launcherEnvironment()` is extracted unchanged. A new test creates a junction on Windows (`dir` symlink elsewhere) under a realpathed temp dir whose name contains a space, `α` and `%`. It asserts that direct and alias digests are byte-equal, store-state through the alias is free, invalid configuration through the alias exits 1 with the original diagnostic, an aliased import with invalid config is inert, and the data directory stays empty. Cleanup unlinks the junction before any recursive removal. The original test is unchanged.
+4. **`tooling/scripts/windows-launcher.acceptance.mjs`.**
+   - `compileLauncher` and `launchNative` are extracted with identical arguments and options: same csc flags, `cwd: root`, default `env`, `windowsHide`, `timeout: 30_000`.
+   - A new `win32` test (240 s) compiles the launcher into an OS-temp sandbox. It asserts the sandbox is outside the checkout, so no repository-internal cycle is possible.
+   - For `junction` and `dir`, it creates a real link and verifies it with `lstat`, `realpath`, `readlink` and PowerShell `LinkType` plus Directory/ReparsePoint attributes.
+   - It captures direct, alias, store-state and import helper output, then runs aliased-first and direct-first cold rounds on the same isolated store and port.
+   - For every cold round it checks same-spelling and cross-spelling warm reuse and wrong-store/wrong-settings refusals. Exact PID, birth time, executable, main argv and lease hashes are checked via CIM after each step.
+   - Release is an exact-identity, authenticated drain followed by PID/birth, listener, lease and reclaim disappearance checks. The link is unlinked only after verified release and same-inode checks on the link and fixture. A capability refusal (`create-alias`) fails the test rather than skipping it.
+5. **`docs/09-frontend-and-pwa.md`.** Two sentences say the helper resolves through junctions and symbolic links and that real and aliased paths identify the same gateway for the same configuration. This is accurate (see the semantics section).
+6. **`CHANGELOG.md`.** One Unreleased entry referencing #435, in the established format.
+
+Also read: the appended register sections (#419 completion and the #435 checkpoint); `docs/qa/.gitattributes` additions (`-text -whitespace` for the six new packets, matching convention); `apps/windows-launcher/Launcher.cs` (unchanged; helper and gateway invocation, `Probe`, `Ensure`, mutexes); `apps/api/src/canonical-path.ts`, `config.ts` and the `main.ts` guard; `scripts/install-windows-launcher.ps1` (how `Repo` is persisted); ADR-0064 and ADR-0069; `docs/10`, the guide and troubleshooting.
+
+## Correctness and physical-path semantics
+
+**Root cause confirmed.** Node expands `process.argv[1]` to an absolute path but keeps the alias spelling, while the ESM loader realpaths the main module, so `import.meta.url` carries the physical path. The old guard therefore failed through any directory link, and the helper exited 0 with no output. The launcher's `ReadHelper` regex then refused with "could not be checked".
+
+The installer persists `Repo` via `Resolve-Path`, which does not resolve junctions, so an aliased checkout reaches the launcher configuration. This is the user path the fix addresses.
+
+I confirmed the Node mechanism on this host with a self-contained probe (diagnostic D3, below). Through a junction, `argv[1]` was the alias spelling and `import.meta.url` the real path: the old guard was `false` and the native-realpath guard `true`. Direct absolute and relative entries were `true` for both guards.
+
+**The fix is self-consistent.** Both sides of the comparison pass through the same `realpathSync.native` call, so:
+
+- case and 8.3 short names are normalized identically;
+- subst or mapped drives are normalized identically;
+- a different existing file can never compare equal.
+
+**Fail-closed.** Any resolution failure is treated as "not the entry", so the helper stays inert. The launcher refuses with its existing generic message and never spawns. The unchanged try/catch keeps "invalid configuration → exit 1 + fixed stderr" once the guard matches.
+
+**Inert import is preserved.** `routes/system.ts` imports the module inside every gateway, where `argv[1]` is `main.js`, whose realpath differs. Unit, built and native controls all observe inert import (but see R2 on control strength).
+
+**Fingerprint and identity are unchanged.** `instanceIdentity` is untouched. Every `Repo`-derived field is canonical:
+
+- `entry` is `canonicalPath` of the loader-realpathed URL;
+- `webDist`, `dataDir` and a file `dbUrl` go through `canonicalPath`;
+- `goblinDist` defaults from the realpathed `import.meta.url`;
+- `codexBinary` and `claudeBinary` come verbatim from the shared `Environment`, which is identical across spellings because launcher configs differ only by `Repo`.
+
+So docs/09's "same gateway for the same configuration" holds. Hosted evidence shows identical direct and alias digests for both link types and cross-spelling warm reuse.
+
+**No new filesystem dependency.** `canonicalPath` already calls `realpathSync.native` and rethrows non-ENOENT errors. `instanceIdentity`, which the launcher always calls first, therefore already failed on any filesystem where native realpath fails. See O6 for the cosmetic exit-code difference.
+
+**Store ownership and no-write behavior are unchanged.** `launcherStoreState` and data-dir locking are untouched. Built and native tests assert the stores stay empty before cold launch, and the alternate wrong store stays empty.
+
+**Races and reuse.** The helper is stateless. The launcher serializes on `Local\GraphGoblin.Launch.<hash(DataDir)>` and `Local\GraphGoblin.Port.<port>`. Neither key includes `Repo`, so concurrent alias and direct launches for the same store and port serialize, and no cross-spelling double-spawn path exists.
+
+**Side effects.** The only change is two synchronous `realpath` syscalls at module evaluation (including in the gateway via `routes/system.ts`): no writes and no network. A hang would require `argv[1]` on an unreachable filesystem, from which Node could not have loaded the module.
+
+## Tests, negative controls and evidence provenance
+
+**Built-helper regression (`launcher-identity.test.mjs`).**
+
+- Red run: the published test bytes (`724ef436…`, equal to the retained `built-regression-before.mjs.txt`) failed exactly the three intended soft assertions on the old compiled helper (lines 66, 67, 70: alias digest, alias store-state, alias invalid-config). The direct, import and read-only controls passed (receipt exit 1; log read).
+- Green run: the candidate passed 2/2 (log SHA `5d6531ef…` matches its receipt). Before and after bindings are identical: head c75, index `db1dfc64…`, binding `b247b045…`, test `724ef436…`, compiled helper `bc5581e2…`.
+- The compiled helper in this worktree has SHA `bc5581e2…` and contains the new guard.
+- Current-head Gates (Linux, `dir` symlink) shows `scripts/launcher-identity.test.mjs (2 tests)` passing.
+
+**Hosted old-source baseline.** Run 43787801176, job 133039259616; test-only merge `07738c4d` with parents `9fa8b247` then `08e60a0a`, tree equal to `08e60a0a`.
+
+- The in-repo log is 52,654 bytes, SHA `119b5186…`.
+- TAP shows 17 tests: 14 pass, 3 fail (the two alias subtests and their parent), 0 skipped.
+- My decode (D1) shows genuine `Junction` and `SymbolicLink` with Directory+ReparsePoint. Direct helpers produced digests; alias identity and alias store-state were exit 0 with empty output. Alias cold refused, exit 1, with the exact "could not be checked" diagnostic. Release was `no-gateway-spawned`, the failure stage was `assert-cli`, and both aliases were unlinked.
+- The regression therefore discriminates the defect on both link types.
+
+**Hosted fixed source.** Run 43790735875 attempt 1, Windows job 133048320156.
+
+- Packet `launcher/435-hosted-candidate-ci`: all 17 manifest rows verify; manifest SHA `44e530ea…`. The decoded log is 53,877 bytes, SHA `58b62eb4…`, with a leading UTF-8 BOM and a final CRLF.
+- Raw TAP: 17 tests, 17 pass, 0 fail/cancelled/skipped, `duration_ms 175785.8981`. Both `Junction` and `SymbolicLink` subtests are `ok`.
+- My decode (D1) of both alias records shows:
+  - genuine link types with reparse attributes;
+  - identical 65-byte direct and alias digests per type (`ea6d6f4b…` and `b2bec491…`);
+  - alias store-state `{"state":"free"}\n`, inert import, store empty before cold;
+  - 4 cold starts with distinct PID/birth pairs: 1596/134392689920462180, 9404/134392690042327940, 8072/134392690209603230, 8252/134392690331393420;
+  - the alias cold `main.js` argv is the true alias spelling (`…\checkout alias-α\apps\api\dist\main.js`), and the direct argv is `D:\a\GraphGoblin\GraphGoblin\…`;
+  - 8 warm launches exit 0; 8 wrong-store/wrong-settings refusals exit 1 with the mismatched-service diagnostic;
+  - 4 `drained-pid-listener-leases` releases, `aliasUnlinked: true`, no `failure` key.
+- This matches the packet's `independent-readback.json`. The retained first-inspector failure (`ReferenceError: tapEscape is not defined`, exit 1) and the corrected exit 0 are as described.
+- The alias was a C:-temp link to the D:-drive checkout, so cross-volume links were exercised.
+
+**Current-head CI.** Live read-only check via `gh api`: run 43790735875, run 890, attempt 1, completed, success. It is the only run for this head. All four jobs succeeded on attempt 1:
+
+- **Gates:** 32 steps. I summed the 13 Vitest groups from the raw log: 9,619 passed and 41 skipped.
+- **Browser:** 14 steps; only the conditional failure-upload step was skipped. 482 tests: 481 passed, 1 skipped.
+- **Template image:** 6 steps; the read-only/no-network container check ran.
+- **Windows launcher:** 12 steps.
+
+The coverage readback has all 13 members ≥ 90/90 (API 95.8/90.7, tooling 96.89/91.67, web 98.6/94.31).
+
+**Local candidate native QA.** I read the independent report README. It is consistent: direct and junction matrix, 46 triplets, CIM identity snapshots, two authenticated drains and the independent absent-process/TCP readback. External build binding `launcher/435-build-candidate-first/build-binding.json`: 4,372,892 bytes, SHA `b247b045…`, head c75, tree `640fab86…`, 28,809 sources, 1,231 outputs, 13 roots, 14 runtime entries, 19 dependencies and 22 links. Its compiled-helper entry is `bc5581e2…`.
+
+**In-repo packets.** With CR stripped from the CRLF manifests, all rows verify: baseline 69/69, implementation 25/25, candidate 186/186. Manifest and map SHAs match root acceptance (`310457af…`/`c2ad1af3…`, `b2681b1c…`/`3434e9c6…`, `fe4d529d…`/`cd5fe107…`). No secret-like strings were found in the three #435 packets. Raw `.mjs`/`.cjs`/`.ps1` copies sit under `docs/qa`, which is in `.prettierignore` and outside every lint/test/type package root.
+
+**Register facts.** PR #490 merged at 00:59:43Z as `9fa8b247` with parents `98692c8a` then `497acaa6`. #419 is closed as completed. Run 43773546178 attempt 1 Gates was cancelled; attempt 2 succeeded. #488 is open and #491 is open with `backlog`. All match the appended text.
+
+## Findings
+
+### Introduced in-scope blockers
+
+None.
+
+### In-scope, non-blocking recommendations (P3)
+
+**R1 — `docs/10-testing-and-quality.md` was not updated for the new native case and its host prerequisite.**
+
+- *Root cause.* The opening paragraph enumerates what `pnpm test:windows-launcher` covers. This PR adds the junction/directory-symlink alias case without updating that list. The case also creates a new, deliberate host requirement. Without directory-symlink privilege (a non-elevated host without Developer Mode, as this batch's own local host showed with EPERM), `symlink(repo, alias, 'dir')` throws at `create-alias` and the SymbolicLink subtest fails rather than skips. That is correct per the brief (never relabel capability refusal), but it is undocumented.
+- *Impact.* Developer confusion only; CI is unaffected. AGENTS.md asks to keep the relevant numbered doc in sync.
+- *Disposition.* Add one or two sentences to docs/10: what the alias case covers, and that it requires symlink-creation capability and fails rather than skips without it. This is docs-only and could be folded in before the Astra final audit without touching product or test bytes. Alternatively, root may explicitly defer it.
+
+**R2 — The inert-import controls in the built and native tests take trivially-false paths.**
+
+- *Root cause.* The built test imports under `-e` with no script, so `argv[1]` is `undefined`. The native test passes a `file:` URL string as `argv[1]`, and `realpathSync.native` returns ENOENT. Neither exercises the realpath comparison against a different existing entry file. Probe D3 confirmed both paths.
+- *Coverage that does exist.* That branch is covered by the unit test (`isLauncherIdentityEntry(fileURLToPath(import.meta.url), moduleUrl) === false`) and implicitly by every gateway start.
+- *Impact.* None on the current correctness claim; the inert-import property is observed. The controls are weaker than their names suggest.
+- *Disposition.* No change required. Optional strengthening: a built control that runs a real wrapper script as `argv[1]` which imports the aliased helper.
+
+**R3 — Records: PR body, issue and in-repo packets still describe fixed-source symlink acceptance and CI as pending.**
+
+- *Root cause.* At publication time, PR #492's body said fixed-source genuine symlink acceptance "remains a hosted Windows gate". The issue #435 checkpoint says CI "is in progress". The candidate packet and register say "not yet observed / pending". All were accurate when written. The fixed-source hosted pass now exists only in the external batch packet.
+- *Requirement.* `qa:touched-systems` (docs/15) requires pass/fail results with evidence in both the PR and the issue.
+- *Disposition.* Root-owned. Record the run 43790735875 / job 133048320156 result in the PR and the issue before merge. Archive the hosted candidate packet and this review in the next publication, per this batch's #419 precedent. While there, change "…formal review (0 of 3 scans used) remains pending" in the register to "remain".
+
+### Pre-existing or out-of-scope observations (no action required for #435)
+
+**O1 — The same entry-guard defect exists in repository gate scripts (follow-up candidate, P2/P3, unverified impact).**
+
+- `tooling/scripts/gen-docs.mjs:110` (backing `docs:generate` and `check:docs`) and `tooling/scripts/check-migrations.mjs:104` (backing `check:migrations`) use the `resolve(argv[1])` vs `import.meta.url` pattern. `tooling/perf/summary.mjs:375` uses a close variant.
+- Probe D3 confirms the Node-level mechanism on 22.23.4. Run through an aliased path, these scripts would exit 0 without doing anything, which for `check:docs` and `check:migrations` is a vacuous gate pass.
+- I did not verify whether pnpm passes an aliased cwd to Node. CI uses real directories and is unaffected. `apps/api` `main.ts` and `emit-openapi.ts` use basename-regex guards; `apps/mcp` and the plugin CLIs use realpath guards. Both kinds are alias-safe.
+- *Disposition.* Dedupe, then file a separate issue. Do not absorb into #435. A bounded diagnostic could be admitted: run `pnpm check:docs` from a disposable junction to a disposable clone, never this checkout.
+
+**O2 — The Windows job's `upload-artifact` step finds no files (pre-existing; seen in the #419 and #435 runs).**
+
+- The path is `.tmp/windows-launcher-*/`. A plausible but unverified cause is `actions/upload-artifact@v4`'s default exclusion of hidden files and directories (≥ v4.4).
+- The new alias test writes its sandbox to `%TEMP%` and records evidence in the job log, so it is unaffected.
+- *Disposition.* Optional CI follow-up; not #435.
+
+**O3 — Native-suite residue.**
+
+- The new test leaves `%TEMP%\graphgoblin-launcher-alias-*`: compiled exe, drained stores, configs, gateway logs. This is consistent with the original suite's no-delete design and avoids recursive deletion near a link to the checkout.
+- When release cannot be verified, the link is deliberately kept so a possibly live gateway's cwd is never pulled out from under it.
+- After a failed local run, remove any leftover link itself (not recursively through it). Informational.
+
+**O4 — Port-window headroom.** The original suite uses 14 ports of the fixed 20-port window starting at 4830; hosted alias ports were 4844 and 4845. The new test uses 2, leaving 4 spare. `GG_TEST_PORT_START` exists for crowded hosts. Informational.
+
+**O5 — Four near-duplicate entry guards across apps.** `isLauncherIdentityEntry` uses `realpathSync.native`, matching `canonicalPath`; the mcp and plugin CLIs use JS `realpathSync`. Both are correct for this purpose. Consolidation would cross app boundaries and is a separate refactor. Informational.
+
+**O6 — Filesystems where `realpathSync.native` fails (some RAM-disk/virtual drives, volume-GUID-only mounts).**
+
+- The guard now degrades to inert (exit 0, no output) instead of the old explicit exit 1 plus diagnostic.
+- This is not a new failure class: the old `instanceIdentity` → `canonicalPath` → native realpath already failed there. The launcher reads the digest first and shows the same generic refusal either way.
+- Explicit dispatch (the issue's alternative) would remove guard ambiguity but is a broader design change. Informational.
+
+**O7 — Run-level CI qualifications are carried forward, not reopened.** Audit 8 low / 13 moderate (threshold passed); Browser optional strict performance off, with drag p95 33.3–33.4 ms above the optional 17 ms target; one declared live-provider skip; no native artifact. None is attributable to this diff.
+
+## Commands and evidence inspected (all read-only except diagnostics D1–D3)
+
+- **Git** (`GIT_OPTIONAL_LOCKS=0`): `status --porcelain=v1 -b`, `rev-parse` (HEAD, trees, parents), `ls-remote origin` (main, PR head/merge, branch), `cat-file -p` (5e386d5, 9fa8b247), `diff --stat/--name-only` (target..head, target..08e60a0a, 08e60a0a..c75e2776, c75e2776..6f383da7), full diffs of all six files plus the register and `.gitattributes`, `git show` blob hashes at 08e60a0a, c75e2776 and 6f383da7.
+- **GitHub** (read-only `gh`): issue 435 (body, labels, comments), PR 492 (state, draft, head, potential merge, body, comments, reviews), PR 490, issues 419, 488 and 491; `actions/runs/43790735875` and its jobs (steps and conclusions); runs for the head SHA; `actions/runs/43773546178` and its attempt-1 jobs.
+- **Source read in full:** the six effective files, `canonical-path.ts`, relevant `config.ts` and `main.ts` sections, the `Launcher.cs` gateway/helper/probe/mutex sections, the entry guards in `apps/mcp` and the plugin CLIs, `install-windows-launcher.ps1` (Repo handling), `ci.yml` (job/step map), `tooling/vitest.config.mjs`, `eslint.config.js` ignores, `.prettierignore`.
+- **Governance:** AGENTS.md, docs/README.md, docs/15, the batch register (rules and appended sections), the launcher brief, dispatch and spec.
+- **Evidence:**
+  - in-repo baseline, implementation and candidate READMEs plus manifests (verified);
+  - old-build red receipt and log; candidate green receipts and log;
+  - hosted old-source log and checkout identity;
+  - external `435-publication-root-admission`, `435-source-root-acceptance`, `435-current-ci-root-acceptance`, `435-coverage-root-readback`, `435-hosted-candidate-root-acceptance`, `435-candidate-and-hosted-baseline-root-acceptance`, `435-baseline-and-implementation-publication-root-acceptance`, `435-candidate-publication-root-acceptance`;
+  - the hosted candidate packet: README, `SHA256SUMS` (verified), decoded log (hash, BOM, CRLF, TAP), inspector exits, readback;
+  - the local native independent report; the candidate build binding (hash and structure);
+  - current-CI Gates, Browser and Template decoded logs (spot checks and totals).
+
+## Reviewer diagnostics written (all under `review-435-opus-scan1/diag/`)
+
+| ID | File | SHA-256 | Purpose |
+| --- | --- | --- | --- |
+| D1 | `decode-alias-records.mjs` | `6b4b6442…eebf` | Independent Node 22 TAP-unescape and parse of the alias evidence lines in a raw job log |
+| D1a | `hosted-candidate-alias-decoded.json` | `6d3d8d96…ca35` | D1 output for fixed-source job 133048320156 |
+| D1b | `hosted-baseline-alias-decoded.json` | `f79023a6…7b34e`* | D1 output for old-source job 133039259616 (in-repo log) |
+| D3 | `run-probe.mjs`, `probe-real/probe.mjs` | `ba7b8c2e…4f56`, `f984ebe7…dd` | Self-contained Node semantics probe. It creates a junction only between two folders inside `diag/`, imports no product code, writes only `node-entry-guard-probe.json`, then unlinks the junction (verified absent) |
+| D3a | `node-entry-guard-probe.json` | `8b96e1d4…e434` | Probe output: Node v22.23.4, win32 |
+
+\*Full digests are in `sha256sum` output: D1b is `f79023a64d28eb3e4f10922fc4dd65d39d6d755d88816506a1ca69312527b34e`. Others: `6b4b644269136ee7214a19262568651daef74f0bb334abbb76dab8f61ffeeebf`, `6d3d8d961040fde98c4193a8dc08a8bd4ac1a0a1400412bb68d6de74cf8cca35`, `ba7b8c2e86e44f6101f1b3cbadf7804b0c8272a282f91aafa05f704565004f56`, `f984ebe75450ccdd29b8cdca7e88c16e807da6dd604bdc7009ca977497bc18dd`, `8b96e1d4b0ed3a1c33fb9a2d1511495bfd34c1d0d7b00197aa2b52b9bde9e434`.
+
+Nothing else was written. There were no product, checkout, index, Git, GitHub, CI, provider or owner-resource operations. I ran no native or heavy suites, and ports 4747/4748 were not touched. The checkout was clean at `6f383da7` both before and after.
+
+## Limitations
+
+- I did not execute the product helper, launcher, gateway, built tests or native suite. Behavioral conclusions rest on reading the source plus the retained raw logs, receipts and hashes listed above, together with my independent TAP decoding.
+- Hosted cleanup outcomes are in-run assertions and records from the bound Windows run, not an independent later host snapshot.
+- The local true-symlink case was never executed (EPERM). Fixed-source symlink behavior rests on the single hosted run.
+- Effort level (`xhigh`) is taken from the runner's launch metadata.
+- The O1 impact through pnpm and the O2 cause are unverified hypotheses, marked as such.
+- I did not review held PR #460 or #436/#438/#456 scope, and none is absorbed. Owner acceptance for #276/#325 remains separate. #435 may close on engineering completion after merge.

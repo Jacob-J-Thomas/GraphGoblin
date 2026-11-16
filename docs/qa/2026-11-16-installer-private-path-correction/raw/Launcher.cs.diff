@@ -1,0 +1,47 @@
+diff --git "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-436-private-path-correction\\before\\Launcher.cs" "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-436-private-path-correction\\after\\Launcher.cs"
+index 5a82a212..dfc19afc 100644
+--- "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-436-private-path-correction\\before\\Launcher.cs"
++++ "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-436-private-path-correction\\after\\Launcher.cs"
+@@ -144,12 +144,12 @@ namespace GraphGoblin.Desktop
+                 bool validate = args.Length == 3 && args[0] == "--validate-install" && args[1] == "--config";
+                 bool stage = args.Length == 4 && args[0] == "--stage-shortcut";
+                 if (!validate && !stage) throw new ConfigurationRefusal("Invalid staged launcher arguments.");
+-                if (!Path.IsPathRooted(args[2])) throw new ConfigurationRefusal("Invalid staged launcher configuration path.");
++                if (!IsFullyQualifiedWindowsPath(args[2])) throw new ConfigurationRefusal("Invalid staged launcher configuration path.");
+                 var config = new JavaScriptSerializer().Deserialize<Configuration>(File.ReadAllText(args[2]));
+                 config.Validate(false);
+                 if (stage)
+                 {
+-                    if (!Path.IsPathRooted(args[1]) || !Path.IsPathRooted(args[3]) ||
++                    if (!IsFullyQualifiedWindowsPath(args[1]) || !IsFullyQualifiedWindowsPath(args[3]) ||
+                         !string.Equals(Path.GetExtension(args[1]), ".lnk", StringComparison.OrdinalIgnoreCase))
+                         throw new ConfigurationRefusal("Invalid staged shortcut or final launcher path.");
+                     string finalExe = Path.GetFullPath(args[3]);
+@@ -163,6 +163,27 @@ namespace GraphGoblin.Desktop
+             return 1;
+         }
+ 
++        static bool IsFullyQualifiedWindowsPath(string path)
++        {
++            if (string.IsNullOrEmpty(path)) return false;
++            if (path.Length >= 3 &&
++                ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) &&
++                path[1] == ':' && IsDirectorySeparator(path[2])) return true;
++
++            if (path.Length < 5 || !IsDirectorySeparator(path[0]) || !IsDirectorySeparator(path[1])) return false;
++            int serverEnd = path.IndexOfAny(new[] { '\\', '/' }, 2);
++            if (serverEnd <= 2) return false;
++            int shareStart = serverEnd + 1;
++            if (shareStart >= path.Length || IsDirectorySeparator(path[shareStart])) return false;
++            int shareEnd = path.IndexOfAny(new[] { '\\', '/' }, shareStart);
++            return shareEnd < 0 || shareEnd > shareStart;
++        }
++
++        static bool IsDirectorySeparator(char value)
++        {
++            return value == '\\' || value == '/';
++        }
++
+         public static string Hash(string value)
+         {
+             using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(value))).Replace("-", "").ToLowerInvariant();

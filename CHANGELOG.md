@@ -4,6 +4,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Windows installer validates staged launcher files before publishing, including with
+  `-NoShortcuts`. It refuses source and destination aliases, gives actionable Node runtime
+  guidance, and reports whether restoration was verified after a publication failure (#436).
+
 - The Windows launcher starts or reuses the configured gateway from a checkout path reached
   through a directory junction or symbolic link (#435).
 

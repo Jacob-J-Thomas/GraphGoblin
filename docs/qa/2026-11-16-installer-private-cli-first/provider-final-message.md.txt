@@ -1,0 +1,23 @@
+I ran the QA matrix once. Cases C01–C10 passed every check, but C11a found a real gap: the private CLI accepts a config path that is relative to the drive's current directory (`C:rel-config\...`). Of 300 checks, 298 passed. Both failures are in C11a, and the run stopped there as required, so C11b never ran. This is bounded component QA only, not overall QA acceptance, CI, formal review, owner acceptance or completion of #436.
+
+**Integrity:** all six candidate files matched the expected manifest before, during and after the run (installer `2f5874d3…`, `Launcher.cs` `e1171d84…`). HEAD stayed `36048e8f`, and the Git index hash (`7ff181e6…`) and staged state were unchanged. I made no edits to product files, tests, repository docs, the index or GitHub.
+
+**How it ran:** system Windows PowerShell 5.1 ran my own harness, and the Framework64 C# compiler built the exact candidate `Launcher.cs` with the installer's own compiler flags. That made 25 child processes, each with its PID and start time, its exit within the 20-second limit (slowest 190 ms) and its raw output recorded. None hung or was killed. Fake `node.exe`, `chrome_proxy.exe` and final `GraphGoblin.exe` files (stand-ins that only record being run, not real Node or Chrome) were never started. Links were read back with the existing independent shortcut-reading helper (`windows.cs`, hash checked).
+
+**What was observed directly:**
+- **Valid `--validate-install`:** exit 0 with completely empty output. No log files, no store directory, no gateway or browser start, and nothing in the fixture folder changed, including folder timestamps.
+- **Bad configs and malformed arguments (16 cases):** exit 1 with one short fixed message. No test marker string or path was echoed back and nothing was created. Arguments that combine a private flag with `--ensure-gateway` were refused and did not start a gateway.
+- **`--stage-shortcut` (ASCII, and Unicode with spaces):** the link was written only at the requested staging path. It points at the final EXE (normalised, so `sub\..\` was resolved) with `--config "<final>.json"`, the final folder as working directory, the configured icon and the expected app identity. No final files were created, and existing final files were unchanged.
+
+**Finding F1 (low):** `--validate-install --config C:rel-config\GraphGoblin.exe.json` returned exit 0 and validated a file resolved from the current directory; it should have refused with "Invalid staged launcher configuration path." The cause is the `Path.IsPathRooted` check at `Launcher.cs:147` and `:152`, which accepts paths that are not fully qualified. The installer always passes full paths, so it can't hit this. From reading the source only, the same gap probably affects the staging paths (C11b, not run).
+
+**Harness defect:** after the C11a stop, my harness threw an `ArgumentException` at its own line 521. All evidence had already been written, so I didn't fix or rerun it; a rerun would have repeated the failing product case. Its only effects are exit code 2 instead of 1 and two missing count fields, which can be recovered from the evidence.
+
+**Another process changed the checkout:** between 23:52 and 23:57 local, something else modified `docs/delivery/2026-11-13-four-intents-register.md` and `docs/qa/.gitattributes` and added `docs/qa/2026-11-16-*` folders. This was before my harness ran, and none of my writes went there. I left those files untouched.
+
+**Limits:** this was one local host. There was no process-creation tracing and no UI automation. Whether the launcher creates its named locks (mutexes) can't be checked after exit, so that is not observed. I didn't check side effects outside the fixture.
+
+Files are in `C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-436-opus-behavior-qa`:
+- full-report.md
+- work\harness\
+- work\run-01\

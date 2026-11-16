@@ -71,11 +71,17 @@ powershell -ExecutionPolicy Bypass -File scripts/install-windows-launcher.ps1 `
 
 The default launcher directory is `%LOCALAPPDATA%\GraphGoblin\Launcher`. The script compiles a
 small .NET Framework executable and creates desktop and Start-menu shortcuts. It uses the
-existing build and installed PWA; it does not install Chrome, Node, the PWA or providers. Save the
-original Chrome shortcut elsewhere before replacing a desktop shortcut that points directly at
-Chrome. Supply `-RepoPath`, `-Port`, `-InstallDir`, `-DesktopShortcut` or `-StartMenuShortcut` when
+existing GraphGoblin build and installed Chrome PWA. Keep the Chrome source shortcut distinct
+from the launcher outputs. If the Desktop shortcut is the only Chrome source, choose a separate
+`-DesktopShortcut` destination or pass a separate copy as `-PwaShortcut`. Supply
+`-RepoPath`, `-Port`, `-InstallDir`, `-DesktopShortcut` or `-StartMenuShortcut` when
 needed. A different port requires installing the PWA from that exact IPv4 loopback origin; the
 installer and launcher verify its Chrome app ID against the shipped `/app/` manifest identity.
+
+The installer validates the staged launcher and configuration before changing installed files.
+`-NoShortcuts` still validates the configuration and publishes only the launcher and its config.
+If a publication failure leaves restoration unverified, keep the `gg-launcher-stage-*` folders
+near the requested outputs for recovery.
 
 For process settings beyond the explicit paths and port, invoke the script from PowerShell with
 `-Environment @{ GG_REQUIRE_API_KEY = 'true'; GG_DB_URL = 'file:D:/graphgoblin-data/graphgoblin.db' }`.

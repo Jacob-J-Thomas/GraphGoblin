@@ -1,0 +1,181 @@
+[
+  {
+    "issue": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493",
+      "title": "Document Windows launcher's native symlink test prerequisite",
+      "issue_number": 493,
+      "body": "Priority: P3. The permanent native launcher acceptance suite now verifies genuine junctions and directory symbolic links, but docs/10-testing-and-quality.md does not describe those cases or their host requirement. On Windows without directory-symlink creation capability, the suite fails at create-alias (EPERM on this host); it deliberately does not skip the required case. Hosted Windows passed both link types.\n\nAcceptance:\n- Update the native suite description in docs/10 with alias helper, cold/warm, refusal and cleanup coverage.\n- Explain the required symlink-creation capability and that its absence is a failing prerequisite, not passing or skipped product evidence.\n- Keep setup guidance consistent with actual supported Windows behavior, without requiring developers to weaken host security settings.\n\nDeferred because this is developer test setup documentation, while behavior is documented in docs/09 and #435's full native acceptance has passed. Review finding R1.\n\nOrigin: Claude Opus 5.5 xhigh formal scan 1 of PR #492 at `6f383da798872aa0e6bd1e0de1fdcd4e702de9ae` (full report in the PR conversation). Open and closed issue searches for symlink, entry, inert and artifact found no matching root cause.\n\nDisposition: DEFER-ISSUE; parked under `backlog`, with no pickup gate. This follow-up does not expand the authorized four-intent batch or block #435. Preserve docs/15 delivery and independent opposite-family review when separately dispatched.\n",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "type:chore",
+          "color": "CFD3D7",
+          "description": "Maintenance, tooling, or docs"
+        },
+        {
+          "name": "area:installer",
+          "color": "BFDADC",
+          "description": "Installers and setup"
+        },
+        {
+          "name": "backlog",
+          "color": "9E9E9E",
+          "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 0,
+      "created_at": "2026-11-16T03:08:25Z",
+      "updated_at": "2026-11-16T03:08:25Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493",
+      "display_title": "Document Windows launcher's native symlink test prerequisite"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493",
+    "title": "Document Windows launcher's native symlink test prerequisite",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493",
+    "display_title": "Document Windows launcher's native symlink test prerequisite"
+  },
+  {
+    "issue": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494",
+      "title": "Strengthen the built launcher identity helper's inert-import control",
+      "issue_number": 494,
+      "body": "Priority: P3. In the current built regression, the helper is imported under `node -e` with no script argv[1]. The native suite imports with a file-URL string in argv[1], which cannot resolve as a filesystem entry. Both correctly observe inert import, but neither built control exercises the comparison against a different existing entry file. The unit test covers that branch and every real gateway startup imports this helper from a different main file; no product defect is established.\n\nAcceptance:\n- Run a real wrapper entry file which imports the built helper through an alias, with invalid configuration to make accidental execution observable.\n- Assert no helper stdout, no configuration evaluation and no store mutation; retain direct-execution positive/negative controls.\n- Demonstrate the wrapper's actual argv[1] is a different existing file and test the intended regression without duplicating broad native runs.\n\nDeferred because current correctness is established and this is a stronger focused regression control. Review finding R2.\n\nOrigin: Claude Opus 5.5 xhigh formal scan 1 of PR #492 at `6f383da798872aa0e6bd1e0de1fdcd4e702de9ae` (full report in the PR conversation). Open and closed issue searches for symlink, entry, inert and artifact found no matching root cause.\n\nDisposition: DEFER-ISSUE; parked under `backlog`, with no pickup gate. This follow-up does not expand the authorized four-intent batch or block #435. Preserve docs/15 delivery and independent opposite-family review when separately dispatched.\n",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "type:chore",
+          "color": "CFD3D7",
+          "description": "Maintenance, tooling, or docs"
+        },
+        {
+          "name": "area:installer",
+          "color": "BFDADC",
+          "description": "Installers and setup"
+        },
+        {
+          "name": "backlog",
+          "color": "9E9E9E",
+          "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 0,
+      "created_at": "2026-11-16T03:08:26Z",
+      "updated_at": "2026-11-16T03:08:26Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494",
+      "display_title": "Strengthen the built launcher identity helper's inert-import control"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494",
+    "title": "Strengthen the built launcher identity helper's inert-import control",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494",
+    "display_title": "Strengthen the built launcher identity helper's inert-import control"
+  },
+  {
+    "issue": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/495",
+      "title": "Diagnose repository check entry guards through aliased checkout paths",
+      "issue_number": 495,
+      "body": "Priority: P2/P3 pending reproduction. `tooling/scripts/gen-docs.mjs`, `tooling/scripts/check-migrations.mjs` and `tooling/perf/summary.mjs` compare a resolved argv entry spelling with a loader-realpathed module URL. A self-contained Node 22.23.4 junction probe confirms these spellings can differ, making this lexical guard false. Actual pnpm invocation and repository gate bypass have NOT been reproduced. CI used real directories; no current CI result is invalidated by this observation.\n\nPotential impact: invoking the scripts through an alias may exit zero before doing their work, including docs or migration checks.\n\nAcceptance:\n- Reproduce actual supported pnpm commands from a disposable aliased checkout, with deliberate invalid generated docs/migration inputs as discriminating negative controls.\n- Record direct versus alias argv/cwd behavior and exit/output; distinguish a direct Node invocation from an actual pnpm gate path.\n- If the defect is reachable, fix entry dispatch and add bounded regressions for each affected command; otherwise record why the actual invocation is safe and close with evidence.\n- Preserve inert import and normal direct invocation; do not change gate thresholds or owner files.\n\nDeferred because these are pre-existing tooling entry points outside #435's launcher helper contract. Review observation O1.\n\nOrigin: Claude Opus 5.5 xhigh formal scan 1 of PR #492 at `6f383da798872aa0e6bd1e0de1fdcd4e702de9ae` (full report in the PR conversation). Open and closed issue searches for symlink, entry, inert and artifact found no matching root cause.\n\nDisposition: DEFER-ISSUE; parked under `backlog`, with no pickup gate. This follow-up does not expand the authorized four-intent batch or block #435. Preserve docs/15 delivery and independent opposite-family review when separately dispatched.\n",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "type:bug",
+          "color": "D73A4A",
+          "description": "Something does not work as documented"
+        },
+        {
+          "name": "backlog",
+          "color": "9E9E9E",
+          "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 0,
+      "created_at": "2026-11-16T03:08:27Z",
+      "updated_at": "2026-11-16T03:08:27Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/495",
+      "display_title": "Diagnose repository check entry guards through aliased checkout paths"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/495",
+    "title": "Diagnose repository check entry guards through aliased checkout paths",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/495",
+    "display_title": "Diagnose repository check entry guards through aliased checkout paths"
+  },
+  {
+    "issue": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496",
+      "title": "Restore downloadable Windows launcher acceptance artifacts in CI",
+      "issue_number": 496,
+      "body": "Priority: P3. The Windows launcher CI job's upload-artifact step reports no files for `.tmp/windows-launcher-*/`; the run artifact listing confirms no Windows archive in the #419 and #435 evidence. Current #435 native alias records are preserved in structured job stdout, which was independently inspected; its acceptance does not rely on a nonexistent archive. Default hidden-directory exclusion is a plausible cause, not yet verified. The new alias sandbox is under OS TEMP and also needs an explicit evidence-only retention policy.\n\nAcceptance:\n- Establish why the actual uploader finds no files on a disposable hosted Windows run.\n- Publish bounded useful native evidence with an explicit safe path, excluding gateway keys, credentials, live stores and directory links to the checkout.\n- Verify the uploaded archive by downloading it, checking its contents and linking it to the exact tested head/run/job.\n- Preserve stdout diagnostics and declared handling when a failed test leaves a process or link requiring later investigation.\n\nDeferred as a pre-existing CI evidence-retention issue; #488 concerns a Gates deadline and is a different root cause. Review observation O2.\n\nOrigin: Claude Opus 5.5 xhigh formal scan 1 of PR #492 at `6f383da798872aa0e6bd1e0de1fdcd4e702de9ae` (full report in the PR conversation). Open and closed issue searches for symlink, entry, inert and artifact found no matching root cause.\n\nDisposition: DEFER-ISSUE; parked under `backlog`, with no pickup gate. This follow-up does not expand the authorized four-intent batch or block #435. Preserve docs/15 delivery and independent opposite-family review when separately dispatched.\n",
+      "state": "open",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "assignees": null,
+      "labels": [
+        {
+          "name": "type:chore",
+          "color": "CFD3D7",
+          "description": "Maintenance, tooling, or docs"
+        },
+        {
+          "name": "area:installer",
+          "color": "BFDADC",
+          "description": "Installers and setup"
+        },
+        {
+          "name": "backlog",
+          "color": "9E9E9E",
+          "description": "Parked until further notice: agents do not pick it up; it carries no gate label"
+        }
+      ],
+      "milestone": null,
+      "state_reason": null,
+      "comments": 0,
+      "created_at": "2026-11-16T03:08:27Z",
+      "updated_at": "2026-11-16T03:08:27Z",
+      "closed_at": null,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496",
+      "display_title": "Restore downloadable Windows launcher acceptance artifacts in CI"
+    },
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496",
+    "title": "Restore downloadable Windows launcher acceptance artifacts in CI",
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496",
+    "display_title": "Restore downloadable Windows launcher acceptance artifacts in CI"
+  }
+]

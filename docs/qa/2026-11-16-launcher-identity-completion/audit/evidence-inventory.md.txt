@@ -1,0 +1,38 @@
+# #435 final audit evidence inventory
+
+This inventory describes what this audit actually inspected. Full paths, byte counts and SHA-256 values for active files, copied QA publication files and every manifest member are in source-and-evidence-inventory.json. SHA256SUMS.txt seals this audit directory except the manifest itself.
+
+## Independent current observations
+
+- git-admission.json / git-final-readback.json: clean checkout, Node version, exact head/tree, remote main/PR head/merge and ordered tested-merge parents.
+- github-pr.json, github-main.json, github-run.json, github-jobs.json, github-runs.json, github-final-readback.json: fresh read-only connector GETs, last readback 03:19:32 UTC.
+- github-issue.json, github-comment.json, github-issue493.json through github-issue496.json: current criteria/body, full published scan1/dispositions and parked follow-ups.
+- github-held460.json: boundary-only state/head readback; no held-patch review.
+- github-artifacts.json: live listing and coverage ZIP digest; no native archive.
+- windows-job-133048320156-fresh.log: fresh decoded connector string, exact UTF-8 bytes including BOM and CRLF. Log download, not new execution.
+
+Snapshots store API payloads, not raw HTTP wire bytes. Initial saved timestamps are save times, not invented exact fetch timestamps. Final Git and connector observation/save times are retained.
+
+## Source and integration inspection
+
+Complete effective six-file diff and helper, unit, built-helper and native acceptance implementations; affected docs/09 and changelog sections. Supporting reads: canonical-path.ts, config.ts, system-route import, main-entry context, C# Configuration/ChildEnvironment/ReadHelper/Ensure/Probe/StoreHasLiveOwner and process ownership paths, installer Repo handling, current ci.yml, docs/10 prerequisites, .prettierignore, QA attributes and register additions. No application source was executed.
+
+Governance: live AGENTS.md, docs/README.md, docs/15, implementation-plan context, batch gates/current entries, ADR-0064/0069, Astra/Opus briefs and dispatch, scan1 report/dispositions/launch/exit, root-recorded Astra spawn receipt. Receipt: ../launcher-435-astra-spawn-receipt.json, outside this directory.
+
+## Offline verification outputs
+
+- offline-verification.mjs / offline-verification.json: Node 22 exact source binding, 377 QA Git-blob comparisons, seven complete manifests, identical old/fixed native test bytes, fresh/retained Windows log equality, TAP roundtrip, alias counts/owners, current gate/artifact identities, report/comment completeness and build binding.
+- decoded-native-records.json: independently derived candidate/baseline JSON from unchanged TAP logs; not raw stdout.
+- coverage-zip-readback.json: all 13 ZIP members opened with .NET streams and checked against both 90% floors, without extraction/product execution.
+- ci-and-local-readback.mjs / ci-and-local-readback.json: direct 13-group totals, Windows checkout/build, Browser invocation/totals, four template records, retained Gates/Browser log equality to root captures, local native summary and independent-cleanup metadata.
+- offline-verification-first.mjs / offline-first-failure.json: first audit-only map-count error preserved. Final inspector corrects only the map count; no product test repeated.
+
+## Retained input packets
+
+Audited-checkout inputs: docs/qa/2026-11-16-launcher-identity-baseline, -implementation and -candidate READMEs, maps/manifests, red regression receipt/log/test copy, green before/after/run/log, independent native report/readback, raw candidate summary, hosted old-source log/metadata. Prior #419 CI/completion/review hashes checked as documentary provenance.
+
+External-batch inputs: launcher/435-hosted-candidate-ci packet and 17-row manifest; 435-current-ci Gates/Browser/Template logs and coverage ZIP; source/publication/current-CI/coverage/native root acceptances; candidate full build-binding JSON; review-435-opus-scan1 report/dispositions/launch/exit/publication context. Artifacts parsed offline; no provider/native replay, live-store read or CI retry.
+
+## Limits
+
+New observations are Git/GitHub state and independent artifact checks. This audit does not newly execute the product or inspect the hosted machine after teardown. Native accepted paths are real/junction/genuine directory symlink. 8.3/subst/mapped drives remain unverified; actual pnpm gate bypass is not established. CI retains its LIVE skip, non-strict performance qualification, low/moderate advisories and absent Windows archive. Owner acceptance and held PR #460 stay outside sign-off.

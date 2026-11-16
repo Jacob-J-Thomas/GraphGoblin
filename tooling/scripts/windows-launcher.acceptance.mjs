@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFile, spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
+  link,
   lstat,
   mkdir,
   mkdtemp,
@@ -164,6 +165,200 @@ function launchNative(exe, path, environment = env) {
     timeout: 30_000,
   });
 }
+
+test(
+  'Windows PowerShell 5.1 installer validates before replacing native launcher files',
+  { skip: process.platform !== 'win32', timeout: 120_000 },
+  async () => {
+    await mkdir(join(root, '.tmp'), { recursive: true });
+    const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-installer-'));
+    const install = join(base, 'installed space α');
+    const store = join(base, 'store');
+    await mkdir(store);
+    const exe = join(install, 'GraphGoblin.exe');
+    const installer = join(root, 'scripts/install-windows-launcher.ps1');
+    const system = process.env.SystemRoot;
+    const powerShell = join(system, 'System32/WindowsPowerShell/v1.0/powershell.exe');
+    const compiler = join(system, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe');
+    const fixture = join(base, 'fixture.exe');
+    await compileLauncher(compiler, fixture);
+    const source = join(base, 'Chrome source.lnk');
+    const proxy = join(base, 'chrome_proxy.exe');
+    await writeFile(proxy, 'Inert Shell Link target fixture');
+    const desktop = join(base, 'Desktop/GraphGoblin.lnk');
+    const programs = join(base, 'Programs/GraphGoblin.lnk');
+    const port = await freePort();
+    const options = {
+      RepoPath: root,
+      NodePath: process.execPath,
+      DataDir: store,
+      Port: port,
+      PwaShortcut: source,
+      InstallDir: install,
+      DesktopShortcut: desktop,
+      StartMenuShortcut: programs,
+    };
+    function runPowerShell(script, request) {
+      return execute(
+        powerShell,
+        [
+          '-NoLogo',
+          '-NoProfile',
+          '-NonInteractive',
+          '-STA',
+          '-EncodedCommand',
+          Buffer.from(script, 'utf16le').toString('base64'),
+        ],
+        {
+          env: { ...env, GG_INSTALLER_FIXTURE: JSON.stringify(request) },
+          cwd: base,
+          windowsHide: true,
+          timeout: 40_000,
+        },
+      );
+    }
+    const chromeId = (
+      await execute(fixture, ['--expected-app-id', String(port)], { windowsHide: true })
+    ).stdout.trim();
+    await runPowerShell(
+      `$ErrorActionPreference = 'Stop'
+      $request = $env:GG_INSTALLER_FIXTURE | ConvertFrom-Json
+      $shell = New-Object -ComObject WScript.Shell
+      $shortcut = $shell.CreateShortcut($request.source)
+      $shortcut.TargetPath = $request.proxy
+      $shortcut.Arguments = $request.arguments
+      $shortcut.Save()`,
+      { source, proxy, arguments: `--profile-directory="Default" --app-id=${chromeId}` },
+    );
+    const fixtureConfig = join(base, 'fixture.json');
+    await writeFile(
+      fixtureConfig,
+      JSON.stringify({
+        Repo: root,
+        Node: process.execPath,
+        DataDir: store,
+        Port: port,
+        Environment: {},
+        StartupTimeoutSeconds: 30,
+        WindowTimeoutSeconds: 2,
+        LauncherAppUserModelId: 'Chrome.PwaFixture',
+      }),
+    );
+    await execute(
+      fixture,
+      ['--ensure-gateway', '--config', fixtureConfig, '--stamp-shortcut', source],
+      {
+        windowsHide: true,
+      },
+    );
+
+    const invoke = (overrides = {}) =>
+      runPowerShell(
+        `$ErrorActionPreference = 'Stop'
+      $request = $env:GG_INSTALLER_FIXTURE | ConvertFrom-Json
+      $options = @{}
+      foreach ($property in $request.options.PSObject.Properties) { $options[$property.Name] = $property.Value }
+      if ($options.ContainsKey('Environment')) {
+        $settings = @{}
+        foreach ($property in $options.Environment.PSObject.Properties) { $settings[$property.Name] = $property.Value }
+        $options.Environment = $settings
+      }
+      & $request.installer @options`,
+        { installer, options: { ...options, ...overrides } },
+      );
+    const sourceBefore = await readFile(source);
+    await invoke();
+    assert.deepEqual(await readFile(source), sourceBefore);
+    const config = JSON.parse(await readFile(exe + '.json', 'utf8'));
+    const configPath = exe + '.json';
+    const validConfig = await execute(fixture, ['--validate-install', '--config', configPath], {
+      cwd: base,
+      windowsHide: true,
+    });
+    assert.equal(validConfig.stdout, '');
+    assert.equal(validConfig.stderr, '');
+    for (const output of [desktop, programs]) {
+      const inspected = JSON.parse(
+        (await execute(exe, ['--inspect-shortcut', output], { windowsHide: true })).stdout,
+      );
+      assert.equal(await realpath(inspected.TargetPath), await realpath(exe));
+      assert.equal(inspected.Arguments, `--config "${await realpath(exe)}.json"`);
+      const id = await execute(exe, ['--read-shortcut-id', output], { windowsHide: true });
+      assert.equal(id.stdout.trim(), config.LauncherAppUserModelId);
+    }
+
+    const alias = join(base, 'same source hard link.lnk');
+    await link(source, alias);
+    const files = [exe, exe + '.json', source, alias, desktop, programs];
+    const snapshot = () => Promise.all(files.map((file) => readFile(file)));
+    const before = await snapshot();
+    async function refuses(overrides, expected) {
+      await assert.rejects(invoke(overrides), (error) => {
+        assert.equal(error.code, 1);
+        assert.match(error.stderr, expected);
+        assert.doesNotMatch(error.stdout + error.stderr, /GG_INSTALLER_PRIVATE_PATH_CANARY/);
+        return true;
+      });
+      assert.deepEqual(await snapshot(), before);
+      assert.deepEqual(await readdir(store), []);
+    }
+    async function refusesPrivate(args, expected, stagedOutput) {
+      await assert.rejects(execute(fixture, args, { cwd: base, windowsHide: true }), (error) => {
+        assert.equal(error.code, 1);
+        assert.equal(error.stderr, `${expected}\r\n`);
+        assert.equal(error.stdout, '');
+        return true;
+      });
+      assert.deepEqual(await snapshot(), before);
+      assert.deepEqual(await readdir(store), []);
+      if (stagedOutput) await assert.rejects(lstat(stagedOutput), { code: 'ENOENT' });
+    }
+    const drive = base.slice(0, 2);
+    const driveRelativeConfig = `${drive}${relative(base, configPath)}`;
+    const rootRelativeConfig = configPath.slice(2);
+    await refusesPrivate(
+      ['--validate-install', '--config', driveRelativeConfig],
+      'Invalid staged launcher configuration path.',
+    );
+    await refusesPrivate(
+      ['--validate-install', '--config', rootRelativeConfig],
+      'Invalid staged launcher configuration path.',
+    );
+
+    const stageDir = join(base, 'private path staging');
+    await mkdir(stageDir);
+    for (const [kind, privatePath] of [
+      ['drive-relative', (absolute) => `${drive}${relative(base, absolute)}`],
+      ['root-relative', (absolute) => absolute.slice(2)],
+    ]) {
+      const shortcut = join(stageDir, `${kind}.lnk`);
+      const invalidShortcut = privatePath(shortcut);
+      await refusesPrivate(
+        ['--stage-shortcut', invalidShortcut, configPath, exe],
+        'Invalid staged shortcut or final launcher path.',
+        shortcut,
+      );
+
+      const finalExe = join(stageDir, `${kind}-launcher.exe`);
+      await refusesPrivate(
+        [
+          '--stage-shortcut',
+          join(stageDir, `${kind}-final.lnk`),
+          configPath,
+          privatePath(finalExe),
+        ],
+        'Invalid staged shortcut or final launcher path.',
+        join(stageDir, `${kind}-final.lnk`),
+      );
+    }
+    await refuses({ NoShortcuts: true, Environment: { GG_PORT: '9999' } }, /reserved GG_\*/i);
+    await refuses({ DesktopShortcut: alias }, /distinct files and paths/i);
+    await refuses(
+      { NodePath: join(base, 'GG_INSTALLER_PRIVATE_PATH_CANARY', 'node.exe') },
+      /Node.+22\.22\.2.+-NodePath/is,
+    );
+  },
+);
 
 test(
   'native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route',
