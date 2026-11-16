@@ -1,0 +1,24 @@
+# Place after the candidate matrix and its separate upload within the hosted Windows job.
+- name: 'Observe #436 Windows publication rollback'
+  id: qa436_rollback
+  shell: pwsh
+  timeout-minutes: 7
+  env:
+    QA436_ROLLBACK_PACKET: ROOT_APPROVED_RAW_ROLLBACK_PACKET
+    QA436_ROLLBACK_HOSTED_MANIFEST_SHA: ROOT_APPROVED_HOSTED_MEMBER_MANIFEST_SHA256
+    QA436_ROLLBACK_INSTALLER_SHA: ROOT_APPROVED_FROZEN_INSTALLER_FILE_SHA256
+  run: |
+    $ErrorActionPreference = 'Stop'
+    $packet = Join-Path $env:GITHUB_WORKSPACE $env:QA436_ROLLBACK_PACKET
+    $supervisor = Join-Path $packet 'supervise-rollback.ps1'
+    & $supervisor -HostedManifestSha256 $env:QA436_ROLLBACK_HOSTED_MANIFEST_SHA -InstallerSha256 $env:QA436_ROLLBACK_INSTALLER_SHA
+    exit $LASTEXITCODE
+
+- name: 'Retain #436 rollback witness'
+  if: ${{ always() && (steps.qa436_rollback.outcome == 'success' || steps.qa436_rollback.outcome == 'failure' || steps.qa436_rollback.outcome == 'cancelled') }}
+  uses: actions/upload-artifact@v4
+  with:
+    name: qa436-rollback-first
+    path: ${{ runner.temp }}/qa436-rollback-${{ github.run_id }}-${{ github.run_attempt }}/evidence/
+    if-no-files-found: warn
+    retention-days: 7

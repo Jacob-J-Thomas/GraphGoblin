@@ -1,0 +1,47 @@
+# #436 corrected hosted candidate
+
+The corrected matrix passed all 32 cases on the admitted product. The public installer passed four supported routes and all 28 refusal cases, including the missing-Node diagnostic that failed in run 896. The bounded ETW trace covered the complete matrix. A separate Windows PowerShell 5.1 witness verified production rollback after a completed final replacement and a genuine Windows sharing violation. [Windows job 133152816074](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43823828028/job/133152816074) · [First candidate failure](../436-hosted-candidate-first/README.md)
+
+## Public installer matrix
+
+| Criterion | Hosted readback |
+| --- | --- |
+| Supported routes | Cases 01–04 passed first install, same-path update with an existing pin, `-NoShortcuts` update and default Node discovery. Independent checks read the four x64 executables, exact checkout/runtime/store/origin config, Unicode source and output paths, native target, working directory, final config argv, icon and AppUserModelID. |
+| Native staged validation | Real descendant PIDs 2952, 3588, 2640 and 9052 executed `--validate-install --config` against the corresponding adjacent staged configs. Case 03 used the real validator and performed no shortcut staging. Its Desktop, Programs and pin remained unchanged. |
+| Missing-Node guidance | Case 06 omitted `NodePath` and used `C:\Windows\System32;C:\Windows`. It returned exit 1 with fixed Node 22.22.2 guidance and `-NodePath`. The strict-mode property error and synthetic canaries were absent. |
+| Refusals and file preservation | All 28 invalid calls were nonzero with their expected diagnostics. Full before/after snapshots agree, covering file identities, bytes and native properties. Independent readback checked 288 raw before/after files and 90 seed files. All 32 listener readbacks were absent. |
+| Canonical collisions | Cases 24–31 refused exact-source, case-variant, junction, hard-link, pairwise output, pin, config and default Desktop collisions. Source aliases matched original native volume/file ID and digest before attempted installation. Cleanup verified and removed the exact original hosted Desktop fixture. |
+
+The matrix itself used x64 STA PowerShell 7. Its 49 direct calls comprised 32 installer invocations, 15 valid seed installs, one Node version check and the fixture compiler. The scheduling stopwatch recorded 321.0971929 seconds within the 450-second candidate schedule. Driver PID 3760 was born at 07:31:26.1151048 UTC, exited 0 at 07:36:47.6012691 and closed both streams separately at 07:36:47.6404103 with zero bytes. Every direct child had an actual exit/close with no timeout. [Case-by-case readback](case-readback.tsv) · [Native binary and argv checks](binary-argv-readback.json)
+
+## ETW capture and PID reuse
+
+The named classic Process session stopped successfully with zero event, log-buffer and real-time-buffer losses. It wrote 322 buffers to a 21,102,592-byte sequential ETL below the 32 MiB cap. The raw XML has 441 version-4 starts and 440 version-4 ends, with rundown excluded from lifetime pairing. Native decoder PID 1376 exited 0 and closed its streams separately. The XML retains a PartitionInfo header-extension decode error 15005. The classic process payloads and both canaries decoded successfully.
+
+Canary PIDs 9124 and 4060 bracketed the complete driver interval. Independent Windows argv parsing matched both canaries, the outer driver and all 49 direct child receipts. No Chrome or gateway Node main birth appeared in the bounded matrix interval. Every one of the 399 driver-rooted starts had one end with the same PID, process key, parent and image before the next same-PID birth and before the closing canary. Native End exit statuses independently agree with the driver and all 49 actual child exit/close receipts.
+
+The first offline verifier reported 396 paired lifetimes because its match window extended past later births with reused PID and process key. The raw native events show three clean successive lives for PID 8984 and two for PID 2352. Pairing in each birth-to-next-birth interval resolved all three apparent ambiguities. The initial output, the exact reused histories and the stricter offline result are retained. No new trace was recorded. [Initial discrepancy](key-end-first-discrepancy.json) · [Lifetime and exit proof](lifetimes-readback.json)
+
+## Actual sharing failure and composed rollback
+
+Both rollback children ran x64 STA Windows PowerShell 5.1.26100.33648. Seed PID 5408 ran the bound public installer once to establish the prior executable, config, Desktop and Programs links, pin and source. Observation PID 3740 loaded the five exact hashed top-level declarations from the corrected installer and exercised the real production publisher through its delegate seam.
+
+The executable, config and Desktop replacements completed in order. The final config changed from `info` to `warn`, with the changed bytes read back and archived before the later Programs operation. The witness held the verified original `Programs 雪.lnk` with read access and read sharing. The real `File.Replace` then failed with `System.IO.IOException`, HRESULT `0x80070020`. Production returned `restored` while the handle remained open. The witness disposed its handle and independently compared all six old and restored binaries byte-for-byte, plus native link metadata and original file IDs. All matched. Stage remnants are retained.
+
+For the rollback supervisor, both full binder children, the public seed and composed witness emitted actual PID/birth, exit 0 and separate pipe-close receipts. Their admitted waits were 60, 200, 45 and 60 seconds, each with its own 10-second pipe allowance. Rollback bindings before and after match the matrix closing binding byte-for-byte. The public seed demonstrates real Windows PowerShell 5.1 install behavior. The observed mutation/failure/restoration sequence applies to the composed publisher. Continuous process-start coverage applies to the preceding matrix interval. [Ordered rollback readback](rollback-readback.json)
+
+## Exact checkout, artifacts and scope
+
+The actual merge was `0b0d26d5d23e88b0b004c66f2155470a24c6ebcd`, tree `be7faa5571a4065740a1212c58b0e54e8342a79f`, with ordered parents `be633141be5a0cd2b4f960a46761fabbf2cb82c7` and `fb57110dd3807871c5e1ed5e4c09f4b3d55dfb3c`. The tested product was `a73b9a887c50f51d4fc4af54aa806fda42e31abf`, tree `0bb9182fa29eecaf196436b4e9e8a19605239c60`. Its six frozen candidate blobs matched the checkout. The only product-to-carrier difference was the workflow. Independent Git readback also verified all 31 inherited raw prepared objects and the corrected installer SHA-256 `c50646bf4324388b934ddea4c04deb1f55f6919b49c867c0b21ece09cf756d99`, five unchanged rollback declarations and all 19 active sealed members.
+
+The hosted build on Node 22.23.4 had actual exit 0 and matching index digests. The matrix and rollback binding copies are identical at 158,585 bytes, SHA-256 `8f094646dd799b476709323d86f8faebe5384dab575a2dafbdb5af6b948fb288`. They bind 29,669 tracked paths, target/product/checkout identities, 1,231 output files across 13 roots, selected dependency/runtime inputs and exact seals. The native driver separately compared its own loaded-file digest map before and after.
+
+The ordinary Windows suite passed 18 tests with zero skipped, including the Windows PowerShell 5.1 installer regression. Each of its three contention trials had one winner and four expected refusals. Other CI jobs have separate results. The PWA input here was an independently prepared native Shell Link using the real image Chrome proxy. Browser-created PWA provenance and physical interruption recovery were outside this run.
+
+| Exact run 43823828028, attempt 1 evidence | Bytes | Members | SHA-256 |
+| --- | ---: | ---: | --- |
+| Matrix artifact 14206620250 | 1,654,443 | 898 | `909dc86147effb494a69d819f43e9e2c0ebb4317da2867a87e5f0d4c3a689a8c` |
+| Rollback artifact 14205449836 | 188,204 | 64 | `8c6453f333b77e6b93ebee681a4fb24cab118f9b5089f32b03f895e796172db9` |
+| Decoded Windows job log | 97,116 | — | `534543ec2b26cbdb113344cb3a02ac6e32e4e7a6cac696c13a8e59311046caad` |
+
+Raw Windows job log bytes retain their leading BOM and terminal CRLF. Both ZIPs and every member were checked against hashes. The case TSV and disposition JSON were saved before a console-only Python preview encountered its code page's inability to render a Greek path. Both files were read back directly. No retry or product change was made during this readback.

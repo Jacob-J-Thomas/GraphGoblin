@@ -1,0 +1,319 @@
+# #436 independent behaviour QA: the candidate launcher's private installer CLI
+
+Worker: Claude Opus 5.5 (xhigh). This is a bounded component QA run on the frozen, GPT-authored #436 candidate. It is not a PR review, full CI, owner acceptance, overall QA acceptance or completion of #436.
+
+Scope covers only the new private launcher boundary:
+
+- `GraphGoblin.exe --validate-install --config <stagedJSON>`
+- `GraphGoblin.exe --stage-shortcut <stagedLNK> <stagedJSON> <finalEXE>`
+
+The hosted public-installer 32-case matrix and the publisher rollback belong to another QA worker. This run did not execute or touch either one.
+
+## 1. Outcome at a glance
+
+The single run executed 22 of 23 planned launcher children. **C01–C10 passed every assertion. C11a, a strictness probe, failed** and is retained as the first unexpected result. Under the stop rule, C11b was not executed. Of 300 recorded checks, 298 passed. The 2 failures are both in C11a.
+
+| Area | Result | Basis |
+| --- | --- | --- |
+| Valid `--validate-install` | Exit 0; stdout and stderr were both 0 bytes. The fixture tree was byte-, attribute- and mtime-identical, including directory mtimes. No `launcher.log` or `gateway.log`, no store directory, and no Node, Chrome or final-EXE canary invocation. | Observed natively (C01) |
+| Malformed or invalid config | Exit 1 with one fixed CRLF-terminated stderr line, ≤134 bytes, no BOM and no stdout. No canary token or fixture path was echoed, and nothing was created. | Observed natively (C02a, C02b, C03, C04, C05, C09) |
+| Malformed private argv | Exit 1 with fixed text. Each argv carrying an exact private token was captured by the strict parser, including combinations with `--ensure-gateway`. None fell through to gateway or browser start. | Observed natively (C06a–k) |
+| Staged shortcut | The link was written only at the requested staging path. It embeds the canonical final EXE target, `--config "<finalEXE>.json"`, the final directory as working directory, the configured icon and the configured final-path AppUserModelID. Final files were not created, and existing final files were unchanged. This held for ASCII and for Unicode-plus-space paths. | Observed natively (C07, C08), decoded with the independent IShellLinkW and property-store helper |
+| Unwritable staging parent | Fixed fallback text, nothing created, no echo. | Observed natively (C10) |
+| **Not-fully-qualified path strictness** | **`--validate-install --config C:rel-config\GraphGoblin.exe.json` was accepted (exit 0) and resolved against the current directory.** | **Observed natively (C11a). Finding F1** |
+
+## 2. Introduced candidate finding
+
+### F1 (low): private CLI accepts drive-relative paths as "rooted"
+
+**Reproduction (observed):** the child working directory was `<RUN>\fx\child-cwd` on drive C:, and it contained `rel-config\GraphGoblin.exe.json`, a byte copy of the valid staged config with SHA-256 `70d189b6…`. The command was:
+
+```
+<RUN>\fx\stage-exe\GraphGoblin.exe --validate-install --config C:rel-config\GraphGoblin.exe.json
+```
+
+| | Expected (strict private shape) | Observed |
+| --- | --- | --- |
+| Exit | 1 | **0** |
+| stderr | `Invalid staged launcher configuration path.` + CRLF | **0 bytes** |
+| stdout | 0 bytes | 0 bytes |
+| Side effects | none | none (tree unchanged, no canary record) |
+
+The child was PID 15948, born 2026-11-16T05:59:37.3524591Z. It exited at 05:59:37.4251598Z after 72 ms, and its streams closed within 0 ms. Evidence: `work/run-01/receipts/25-C11a.receipt.json`, `.stdout.bin`, `.stderr.bin` and `matrix-outcome.json` → `firstFailure`.
+
+**Cause (source reading, consistent with the observation):** `PrepareInstallation` guards the staged config with `Path.IsPathRooted(args[2])` at `Launcher.cs:147`. It guards the staged link and final EXE the same way at `Launcher.cs:152`. On .NET Framework, `IsPathRooted` is also true for drive-relative paths (`C:x`) and root-relative paths (`\x`), which are not fully qualified. The config was therefore read relative to the process's current directory and validated.
+
+**Reach and impact:** low, and not reachable through the candidate installer (source reading). The installer builds `$stagedConfig`, the staged link path and `$exe` from `Get-InstallerPath` / `GetFinalPathNameByHandle` results (installer lines 247–255, 336, 343–344, 396–398). Those are always fully qualified. The weakness is that the boundary is looser than its "strict argument shapes" contract and its own refusal text claim.
+
+**Not executed:** C11b, the same probe for a drive-relative `finalEXE` under `--stage-shortcut`, was not run because of the stop rule. A **source-only inference, not observed:** `Path.GetFullPath(args[3])` would canonicalise such a path against the current directory and embed it as the link target, config argument and working directory. A drive- or root-relative `stagedLNK` would be passed unnormalised to `IPersistFile.Save`.
+
+**Suggested remediation (design critique):** require fully qualified paths for all three path arguments. Accept only drive-absolute `X:\…` or UNC `\\server\share\…`. .NET Framework 4.x has no `Path.IsPathFullyQualified`, so this needs an explicit predicate. Keep the existing `GetFullPath` canonicalisation of `finalEXE`, which C08 showed works for `sub\..\`. If the owner wants the boundary pinned, a C11a/C11b-style negative case could be added to the permanent Windows PowerShell 5.1 group.
+
+No other candidate defect was observed in scope.
+
+## 3. Provenance and integrity
+
+### Candidate manifest
+
+The six-path manifest was verified four times, every time against the `candidate-source.json` values:
+
+1. In Bash at session start.
+2. Inside the harness immediately before compilation.
+3. Inside the harness after the matrix.
+4. In Bash after the run.
+
+All six paths matched every time:
+
+| Path | SHA-256 | Bytes |
+| --- | --- | --- |
+| `scripts/install-windows-launcher.ps1` | `2f5874d33465f8a614f08c79e2a5433e0980aad6f9674a226daeaf584f06af1b` | 23983 |
+| `apps/windows-launcher/Launcher.cs` | `e1171d840ff332e22826194edbef251e5d46688c2af3ff6bc3dc0f76c6e60091` | 38775 |
+| `tooling/scripts/windows-launcher.acceptance.mjs` | `9e8572882ebbb602bf3af153edf6f9685ffdc1dc372a7f209292ad69e8aa39ba` | 48575 |
+| `docs/09-frontend-and-pwa.md` | `d5db487253b51e1c199bbfb008495ceeff1d857f09e9419a57d1375f95c89ef8` | 322767 |
+| `docs/guide/01-install-and-first-run.md` | `7aeae3810784e0eb569985dac63d2a6c14c90fc4a74ea03ed66d7d2ddbab2a9c` | 22130 |
+| `CHANGELOG.md` | `014cd3de87d8ec64f5e4a7be5ba01d62cf6d47d1a9250b1a533289c20d2f9114` | 162920 |
+
+The harness also re-hashed `Launcher.cs` immediately before and after the `csc` child. It was identical.
+
+### Checkout state
+
+- HEAD is `36048e8f40cda520c2ec7b5865d3ff8c5bae6624` and the tree is `382dcd6fa76f8b04a914787e08d9291d1672d088`. This is only the baseline carrier; the candidate is the frozen, uncommitted bytes listed above.
+- Worktree index: `C:/Users/98jak/source/repos/GraphGoblin/.git/worktrees/GraphGoblin33/index`, SHA-256 `7ff181e6866875a05fbfd9bed5438ed81a46933e4c11bc4ca44e4ab2c36e8c09` before and after execution. There were no staged changes.
+- **Honest note:** I ran two plain `git status` / `git diff --stat` reads at session start, before switching to `--no-optional-locks`. Git can opportunistically refresh index stat data during such reads. The index hash above was recorded after them and did not change across execution.
+
+**Concurrent changes by another actor** in the shared checkout, outside the six-path manifest:
+
+- Modified: `docs/delivery/2026-11-13-four-intents-register.md` (mtime 2026-11-15 23:52:17 −0600) and `docs/qa/.gitattributes` (23:54:51 −0600).
+- Added: many untracked `docs/qa/2026-11-16-*` evidence directories (newest file 23:57:16 −0600).
+
+These are all within my session but before my harness started at 23:59:33 −0600 (05:59:33Z). Every write I made was under `launcher-436-opus-behavior-qa/`. I did not read, change or revert these files. The candidate manifest was unaffected.
+
+### Independent helper and harness
+
+- The independent helper `launcher-436-native-v2-preparation/windows.cs` hashed `28455c8a6eb9b793f17c58014060085052156a9175dd2c670a91f4d8f33f0222` before and after the run. That matches its `SHA256SUMS.txt`.
+- I read the helper and compiled it into my own run directory. Its hosted-only driver files (`run.ps1`, `invoke.ps1`) were not run.
+- My harness `work/harness/qa-harness.ps1` hashed `d22ff2639281d698cde333b2df8f2f8797d76f5591a696fa4962a6aab31d7064` before and after the run.
+- My canary source `work/harness/canary.cs` hashed `ea96abbe98eee094cf7a40bfd1c6b828f34166387e83a050eb3a2228bf747393` before and after the run.
+- Both files are ASCII-only. Non-ASCII fixture names are built from code points.
+
+## 4. Environment and tools (observed)
+
+- **Host:** Windows 11 Pro, `Microsoft Windows NT 10.0.26300.0`.
+- **Harness process:** system `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe`, PowerShell 5.1.26100.9818, Desktop edition, 64-bit, STA, CLR 4.0.30319.42000. Harness PID 48736, born 05:59:33.1195833Z.
+- **Execution policy:** effective policy Unrestricted (CurrentUser scope), so no bypass flag was used.
+- **PSModulePath:** set for the harness process only to `C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules`. PowerShell 5.1 appended `C:\Program Files\WindowsPowerShell\Modules` itself. The inherited value placed PowerShell 7 module paths first and made 5.1 module autoload fail; that was seen in a pre-run read-only probe and is consistent with the implementation note about `Get-FileHash`. The harness relies on .NET APIs plus core cmdlets and `ConvertTo-Json`.
+- **Compiler:** `C:\WINDOWS\Microsoft.NET\Framework64\v4.0.30319\csc.exe`, FileVersion `14.8.10001.0 built by: bd501acdc000004`.
+- **Port:** fixed port 47936 in the fixture config. No listener was opened or needed. Ports 4747 and 4748 were not used.
+- **Node:** project Node `v22.23.4` was used only afterwards, to read the JSON evidence.
+
+## 5. Harness design
+
+**Exclusive run root.** `work/run-01` was refused if it already existed and was created fresh. It contains:
+
+- `tools/`: compiled canary and helper.
+- `fx/`: the fixture, which is the only tree snapshotted.
+- `receipts/`: raw evidence.
+
+**Compilation.** Three children compiled, in order:
+
+1. The inert canary.
+2. The independent IShellLinkW helper (`/target:library`, loaded with `Assembly.LoadFile`, so no `Add-Type` hidden compiler child).
+3. The exact candidate `Launcher.cs`, with **the installer's exact `csc` argument list**: `/nologo /target:winexe /optimize+ /platform:x64 /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll /out:<RUN>\fx\stage-exe\GraphGoblin.exe <checkout>\apps\windows-launcher\Launcher.cs`.
+
+The launcher was verified to be an x64 PE image. Its SHA-256 is `05dcc34c4a3379874d6ba3239c4156850c0d1b41e889268aff34017fc316ceb3` (33280 bytes). `csc` exited 0 and printed three pre-existing CS0649 warnings for the `Gateway.Ownership` fields.
+
+**Child receipts.** Every child was started with `UseShellExecute=false` and `CreateNoWindow`. Stdin was redirected and closed; stdout and stderr were copied as raw bytes from the base streams.
+
+- Argv was built with **the candidate installer's own quoting expression**. Before spawning, it was verified to round-trip through `CommandLineToArgvW`, using the helper's `SplitArguments`.
+- Recorded per child: PID and birth (`Process.StartTime` from the owned handle, ISO and FILETIME), a wait of ≤20 s, stream close of ≤5 s, the actual exit code and exit time, raw `.stdout.bin` and `.stderr.bin` files with SHA-256, and a UTF-8 decode.
+- Hang policy: re-verify PID and birth on the owned handle, then `Kill()` only that process, never a tree. **No hang occurred and nothing was killed.**
+
+**Snapshot assertions.** Before and after every launcher child, the whole `fx` tree was recorded: path, type, attributes, size, mtime and SHA-256 per file, plus attributes and mtime per directory, including the root. Each case declares its permitted change set up front:
+
+- Empty for every validation and refusal case.
+- For C07 and C08, only `added:<staged link>` (required) and `changed:<staging dir mtime>`.
+
+After decoding a staged link, a third snapshot proved that the decoding itself did not mutate anything.
+
+**Other per-child checks:** exit code, 0-byte stdout, stderr exactly equal to the expected fixed bytes, stderr ≤512 bytes, no `GG436QA_CANARY` token in UTF-8 or UTF-16LE, no fixture path fragment echoed, no canary invocation record, store directory still absent, and no `*.log` anywhere in `fx`.
+
+**Frozen plan.** The full matrix and its expectations were written to `matrix-plan.json` before the first launcher child ran. The stop rule ends the matrix at the first failed check.
+
+**Pre-run development.** Before the single execution I made three pre-execution edits to the harness, with no candidate execution yet:
+
+1. Parenthesised the C07/C08 permitted-change arrays, because PowerShell's comma operator binds tighter than `+`.
+2. Renamed the diff field from `Keys` to `Changes` and added setup guards.
+3. Replaced an `if`-expression assignment that would have produced `$null` for an empty `byte[]`.
+
+I also ran parse-only checks with 5.1's `Parser.ParseFile` (0 errors), a `ConvertTo-Json` format probe, and two read-only PowerShell 5.1 version and policy probes. None of these involved the candidate.
+
+## 6. Fixture: controlled and labelled
+
+`<RUN>` = `C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-436-opus-behavior-qa\work\run-01`.
+
+| Fixture | Honest label |
+| --- | --- |
+| `fx\node-canary\node.exe` | **Inert compiled canary, not Node.** Any start appends `<exe>.invoked.txt` and exits 86. |
+| `fx\chrome-canary\chrome_proxy.exe` | **Inert compiled canary, not Chrome.** Same behaviour. |
+| `fx\final α x\GraphGoblin.exe` (+ `.json` placeholder) | **Inert canary copy** standing in for a previously published launcher, so any accidental start of the final EXE is recorded. |
+| `fx\repo-inert\apps\api\dist\{main,instance-identity}.js`, `apps\web\dist\index.html` | Placeholder text files that only satisfy `Configuration.Validate` existence checks; never executed |
+| `fx\store-must-stay-absent` | The configured `DataDir`; must never exist |
+| `fx\existing-outputs\Desktop\GraphGoblin.lnk` | A previously installed output link written by the **independent helper**, not the candidate, to detect shortcut mutation |
+| Icon paths (`pwa-icons\GraphGoblin.ico,0`; `icons, α set\GraphGoblin.ico,2`) | Nonexistent placeholder strings. B contains a comma and a Greek letter in the directory name. |
+| `ChromeAppId` `jjcecblmanebodnfnmjifimldahjpadf` | Computed by the harness as Chromium's double SHA-256 of `http://127.0.0.1:47936/app/`. C01's success shows native agreement with the candidate's own computation, and C09 shows refusal on mismatch. |
+| `LauncherAppUserModelId` A `GraphGoblin.ef0384ab05bb9e5b1e9f8575`, B `GraphGoblin.041ba250a6f921855ed9605b` | Installer derivation (`GraphGoblin.` + first 24 hex of SHA-256(UTF-8(upper(finalEXE)))) computed by the harness. The candidate copies the configured value. |
+| Configs | Written with PowerShell 5.1 `[ordered]@{…} \| ConvertTo-Json -Depth 10` and UTF-8 without BOM, the same as the installer. Canary token for this run: `GG436QA_CANARY_738232c95a46`. |
+
+## 7. Exact invocations and receipts
+
+Top-level invocation from Git Bash, run once:
+
+```
+PSModulePath='C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules' \
+/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -NoLogo -NoProfile -NonInteractive -STA \
+  -File 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-436-opus-behavior-qa\work\harness\qa-harness.ps1' \
+  -RunRoot 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-436-opus-behavior-qa\work\run-01' \
+  -Checkout 'C:\Users\98jak\.codex\worktrees\gg-20261115-runtime\GraphGoblin' \
+  -HelperSource 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-436-native-v2-preparation\windows.cs' \
+  -CanarySource 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-436-opus-behavior-qa\work\harness\canary.cs' \
+  -Port 47936  > work/harness-run-01.stdout.txt 2> work/harness-run-01.stderr.txt
+```
+
+The run started at 2026-11-16T05:59:33.098Z and finished at 05:59:37.601Z. The harness exited with code 2 (see §9). Its stderr was 0 bytes.
+
+Every child had cwd `<RUN>\fx\child-cwd`, except the compiler children, which used `<RUN>\tools`. All 25 children exited within their limit, closed their streams within ≤5 ms, and were not killed; `hasExitedAtRelease` was true for all. Times are UTC on 2026-11-16, and "Wait" is milliseconds.
+
+| # | Case | PID | Birth | Exit | Wait | stderr (exact text, CRLF-terminated unless empty) | Argv |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | S1 | 36744 | 05:59:33.6438993 | 0 | 155 | (empty) | `csc /nologo /target:winexe /platform:x64 /optimize+ /out:<RUN>\tools\inert-canary.exe …\work\harness\canary.cs` |
+| 2 | S2 | 16092 | 05:59:33.8675644 | 0 | 164 | (empty) | `csc /nologo /target:library /platform:x64 /optimize+ /out:<RUN>\tools\InstallerQa.Windows.dll …\launcher-436-native-v2-preparation\windows.cs` |
+| 3 | S3 | 30900 | 05:59:34.1505666 | 0 | 190 | (empty; 726 B stdout: 3×CS0649) | the installer's exact `csc` list (§5) |
+| 4 | C01 | 53916 | 05:59:34.8313764 | 0 | 71 | (empty) | `--validate-install --config <RUN>\fx\stage-exe\GraphGoblin.exe.json` |
+| 5 | C02a | 47084 | 05:59:34.9846007 | 1 | 74 | `The staged launcher configuration or shortcut could not be prepared.` | `--validate-install --config …\configs\malformed.json` (truncated JSON carrying canary) |
+| 6 | C02b | 57180 | 05:59:35.1035792 | 1 | 69 | same fallback | `--validate-install --config …\configs\type-mismatch.json` (`"Port": "<canary>"`) |
+| 7 | C03 | 49448 | 05:59:35.2108286 | 1 | 66 | `GG_PORT is owned by the launcher's explicit configuration fields.` | `--validate-install --config …\configs\reserved-override.json` (`GG_PORT` = canary value) |
+| 8 | C04 | 42796 | 05:59:35.3165623 | 1 | 68 | `Invalid launcher paths, port or timeouts. Re-run install-windows-launcher.ps1.` | `--validate-install --config …\configs\GG436QA_CANARY_…_CFGDIR\GraphGoblin.exe.json` (missing canary-named Repo) |
+| 9 | C05 | 12480 | 05:59:35.4320693 | 1 | 50 | same fallback | `--validate-install --config …\configs\GG436QA_CANARY_…_ABSENTDIR\GraphGoblin.exe.json` (absent dir) |
+| 10 | C06a | 47208 | 05:59:35.5206256 | 1 | 51 | `Invalid staged launcher arguments.` | `--validate-install --config` |
+| 11 | C06b | 26364 | 05:59:35.6099305 | 1 | 48 | same | `--validate-install GG436QA_CANARY_…_ARGV <validA>` |
+| 12 | C06c | 54788 | 05:59:35.6966833 | 1 | 48 | same | `--validate-install --config <validA> --ensure-gateway` |
+| 13 | C06d | 50436 | 05:59:35.7843881 | 1 | 44 | same | `--ensure-gateway --validate-install --config <validA>` |
+| 14 | C06e | 41088 | 05:59:35.8711791 | 1 | 48 | same | `--config <validA> --validate-install` |
+| 15 | C06f | 55976 | 05:59:35.9569821 | 1 | 52 | `Invalid staged launcher configuration path.` | `--validate-install --config GG436QA_CANARY_…_REL\GraphGoblin.exe.json` |
+| 16 | C06g | 11976 | 05:59:36.0454604 | 1 | 49 | `Invalid staged launcher arguments.` | `--stage-shortcut <RUN>\fx\stage-f\GraphGoblin.lnk <validA>` |
+| 17 | C06h | 18144 | 05:59:36.1335278 | 1 | 51 | same | `--stage-shortcut …\stage-f\GraphGoblin.lnk <validA> <finalA> --ensure-gateway` |
+| 18 | C06i | 39200 | 05:59:36.2322617 | 1 | 67 | `Invalid staged shortcut or final launcher path.` | `--stage-shortcut GG436QA_CANARY_…_RELLNK.lnk <validA> <finalA>` |
+| 19 | C06j | 55720 | 05:59:36.3399853 | 1 | 64 | same | `--stage-shortcut …\stage-f\GG436QA_CANARY_…_EXT.txt <validA> <finalA>` |
+| 20 | C06k | 24392 | 05:59:36.4505523 | 1 | 69 | same | `--stage-shortcut …\stage-f\GraphGoblin.lnk <validA> GG436QA_CANARY_…_RELEXE\GraphGoblin.exe` |
+| 21 | C07 | 56356 | 05:59:36.5666477 | 0 | 140 | (empty) | `--stage-shortcut <RUN>\fx\stage-a\GraphGoblin.lnk <validA> <RUN>\fx\final-first-install\GraphGoblin.exe` |
+| 22 | C08 | 44532 | 05:59:36.8598439 | 0 | 152 | (empty) | `--stage-shortcut "<RUN>\fx\stage α b\GraphGoblin.lnk" …\configs\valid-b.json "<RUN>\fx\final α x\sub\..\GraphGoblin.exe"` |
+| 23 | C09 | 39220 | 05:59:37.0849311 | 1 | 71 | `The installed Chrome PWA belongs to another origin. Install GraphGoblin from http://127.0.0.1:47937/app/ and configure its shortcut.` | `--stage-shortcut …\stage-c\GraphGoblin.lnk …\configs\origin-mismatch.json <finalA>` (canary in ChromeProfile) |
+| 24 | C10 | 40368 | 05:59:37.1993460 | 1 | 99 | same fallback | `--stage-shortcut <RUN>\fx\GG436QA_CANARY_…_ABSENTSTAGE\GraphGoblin.lnk <validA> <finalA>` |
+| 25 | C11a | 15948 | 05:59:37.3524591 | **0** | 72 | **(empty)**; expected `Invalid staged launcher configuration path.` | `--validate-install --config C:rel-config\GraphGoblin.exe.json` |
+
+Notes on the table:
+
+- `<validA>` is `<RUN>\fx\stage-exe\GraphGoblin.exe.json`, the valid config adjacent to the launcher, like the installer's `$stagedConfig`. `<finalA>` is `<RUN>\fx\final-first-install\GraphGoblin.exe`.
+- Raw stderr is UTF-8 without BOM, ending in `0d0a`. For example, C06a is `496e76…7473 2e0d0a` (36 bytes).
+- C06c, C06d, C06e and C06h deliberately pair a private token with the default config adjacent to the EXE, or with `--ensure-gateway`. A fall-through to the normal launcher would have started the Node canary. Nothing was recorded.
+
+## 8. Staged-link decoding (C07, C08)
+
+Decoded with the independent helper:
+
+- `IShellLinkW` via `IPersistFile.Load`.
+- The property store via `SHGetPropertyStoreFromParsingName` (read, AppUserModel key 5).
+- `CommandLineToArgvW`.
+- `GetFinalPathNameByHandleW` and the file ID.
+
+Separately, the raw bytes were checked for the MS-SHLLINK header `4C000000` plus the ShellLink CLSID, and for the UTF-16LE AppUserModelID.
+
+| Property | C07 (first install, final dir absent) | C08 (Unicode/space, `sub\..\` argv, existing final files) |
+| --- | --- | --- |
+| Written path (canonical, exact case) | `<RUN>\fx\stage-a\GraphGoblin.lnk` (3219 B, `6092694b…08f9`) | `<RUN>\fx\stage α b\GraphGoblin.lnk` (3573 B, `e202ec2c…011d`) |
+| Target | `<RUN>\fx\final-first-install\GraphGoblin.exe` | `<RUN>\fx\final α x\GraphGoblin.exe` (normalised) |
+| Arguments | `--config "<RUN>\fx\final-first-install\GraphGoblin.exe.json"` | `--config "<RUN>\fx\final α x\GraphGoblin.exe.json"` |
+| `CommandLineToArgvW` | `[--config, …\final-first-install\GraphGoblin.exe.json]` | `[--config, …\final α x\GraphGoblin.exe.json]` |
+| Working directory | `<RUN>\fx\final-first-install` | `<RUN>\fx\final α x` |
+| Icon | `<RUN>\fx\pwa-icons\GraphGoblin.ico,0` | `<RUN>\fx\icons, α set\GraphGoblin.ico,2` (split at last comma) |
+| AppUserModelID (property store + raw bytes) | `GraphGoblin.ef0384ab05bb9e5b1e9f8575` | `GraphGoblin.041ba250a6f921855ed9605b` |
+| Staged config path referenced in link | no (`stage-exe` absent from UTF-16LE bytes) | no (`valid-b.json` absent) |
+| Final files | final dir, EXE and JSON were not created | existing final EXE canary and JSON unchanged; no link or `sub` directory created; final EXE canary not invoked |
+| Tree diff | exactly `added:\stage-a\GraphGoblin.lnk` and `changed:\stage-a` (dir mtime) | exactly `added:\stage α b\GraphGoblin.lnk` and `changed:\stage α b` |
+
+C08 also shows natively that the candidate's own `IPersistFile.Save` plus property-store AppUserModelID stamp succeeded at a Greek-letter and space staging path on this host.
+
+## 9. Harness and tool failures (retained, not repaired, not rerun)
+
+**Harness post-processing defect.** After C11a's failure was recorded and the loop stopped, the harness threw `System.ArgumentException: Argument types do not match` at `qa-harness.ps1:521` (`$ran = @($script:CaseResults).Count`). This happened under Windows PowerShell 5.1. It occurred **after** the post-run manifest, helper and `Launcher.cs` re-verification at lines 516–520, and the `finally` block still wrote `matrix-outcome.json`, including `firstFailure`, all 300 checks, all case records and all 25 child summaries.
+
+Effects:
+
+- The harness exit code is 2 (harness error) instead of the designed 1 (product case failure).
+- The `casesPlanned` and `casesExecuted` fields are missing. They are recoverable from the evidence: 23 planned in `plan`, 22 executed in `cases`.
+
+I did not repair or rerun. A rerun would have re-executed the failing product case C11a, which the brief prohibits, and the evidence is complete without one.
+
+There were no setup or tool failures. All three compiles exited 0. The helper loaded, every argv round-tripped, and no child hung.
+
+## 10. Native observations vs controlled fixtures
+
+**Observed natively (real OS, runtime or tool behaviour):**
+
+- The genuine Windows PowerShell 5.1 process and the Framework64 `csc` compile of the exact candidate source with the installer's flags.
+- Real process creation, PIDs and births, exit codes and raw pipe bytes from the compiled candidate winexe.
+- Real NTFS state: hashes, attributes, file and directory mtimes, final path and file ID.
+- Real Shell Link COM persistence and property-store reads.
+- `CommandLineToArgvW` and raw MS-SHLLINK bytes.
+- Relative-path resolution against the child's current directory (C11a).
+
+**Controlled fixtures:** the inert canaries at the Node, ChromeProxy and final-EXE paths, the placeholder repo files, nonexistent icon paths, synthetic configs and canary tokens, the harness-computed `ChromeAppId` and AUMIDs, and the helper-written pre-existing desktop link. No real Node, Chrome, gateway, browser, PWA, owner profile or store was present or used.
+
+## 11. Design critique (source reading; not observed unless stated)
+
+- **D1. Non-atomic staged write on failure.** `CreateShortcut` saves the `.lnk` and only then stamps the AUMID (`Launcher.cs:466–468`). If the stamp fails, a link without AUMID remains at the staging path, and the process exits 1 with the generic fallback. The installer treats a non-zero exit as a refusal and deletes its owned stage folders, so no defective link would be published. As a component contract, though, "writes the requested staging path" is not all-or-nothing. Not exercised: there is no safe in-scope fault injection.
+- **D2. Token-membership dispatch.** `args.Contains("--validate-install") || args.Contains("--stage-shortcut")` routes before the strict positional parse. Observed (C06c/d/e/h): every argv containing an exact token was captured and refused, with no fall-through. Case variants such as `--Validate-Install` are not private tokens and reach the pre-existing normal launcher path, which writes `launcher.log` and shows a MessageBox for unknown arguments. That is pre-existing behaviour, not introduced, and was deliberately not exercised because it raises a modal dialog.
+- **D3. Single fallback text.** Malformed JSON, a type mismatch, a missing config and a shell-link write failure all share one fallback message (C02a/b, C05, C10). This is safe and echo-free, but it is undifferentiated. The installer replaces it with its own fixed refusal anyway, so the only cost is diagnosability.
+- **D4. Config argument derived from the final EXE.** The staged link's config argument comes from `finalEXE + ".json"`, not from `stagedJSON` (observed in C07/C08). Correctness therefore depends on the installer publishing the staged JSON to exactly `<finalEXE>.json`. The installer enforces adjacency (`$destinations[1].Path -ine "$exe.json"`, line 338).
+- **D5. Same validation for both policies.** `--validate-install` uses `Validate(false)`, so `-NoShortcuts` installs still require the Chrome/PWA fields. This matches the implementation note.
+
+## 12. Limits
+
+- **Host:** a single local host (Windows 11 Pro 10.0.26300, PowerShell 5.1.26100.9818, `csc` 14.8.10001.0). This is not the hosted image or the public installer, and not the 32-case matrix or rollback.
+- **Process creation:** no ETW or other process-creation trace. Accidental launch detection relies on canary records at the configured Node, ChromeProxy and final-EXE paths, plus direct-child receipts. A start of some other binary, for example a shell default-browser launch, would not be detected.
+- **Named mutexes:** the launch and port mutexes cannot be observed after process exit, and their absence was **not observed**. Observed instead: no store directory, no logs, no canary invocation, and prompt exit (≤152 ms). Source shows that private dispatch returns before the mutex code.
+- **Dialogs:** no UI automation was used. Every child exited within 190 ms with redirected streams, which is inconsistent with a blocking modal dialog but is not a direct UI observation.
+- **Outside the fixture:** side effects outside `fx` were not observed (registry, shell caches, Jump Lists, CLR usage logs under `%LOCALAPPDATA%`). Owner profile, desktop, Start menu and store were intentionally not inspected.
+- **Icons:** icon files were nonexistent placeholders, and icon rendering was not tested.
+- **Not executed:** C11b, under the stop rule.
+- **Concurrent checkout activity** by another actor occurred outside the manifest, as reported in §3.
+
+## 13. Execution and cleanup
+
+- One harness execution and 25 owned children. None hung, none was killed, and all had exited by release.
+- After the run, `tasklist` showed no `GraphGoblin.exe` or `inert-canary.exe` process.
+- No network or provider calls, no listeners, and no credential reads.
+- No changes to the product, permanent tests, repository docs, Git index or GitHub state.
+- **Retained as evidence, not deleted:** `work/run-01` (fixture with the compiled candidate, canary copies and two staged links; receipts; plan; outcome), `work/harness/*` and `work/harness-run-01.*`.
+- **Written by this worker:** only `work/` and this `full-report.md`. The runner-owned `events.jsonl`, `launch.json` and `latest.md` were not written.
+
+## 14. Evidence index
+
+All paths are relative to `launcher-436-opus-behavior-qa/`.
+
+| File | SHA-256 |
+| --- | --- |
+| `work/harness/qa-harness.ps1` | `d22ff2639281d698cde333b2df8f2f8797d76f5591a696fa4962a6aab31d7064` |
+| `work/harness/canary.cs` | `ea96abbe98eee094cf7a40bfd1c6b828f34166387e83a050eb3a2228bf747393` |
+| `work/run-01/matrix-plan.json` (frozen before execution) | `8c7c96ddaffeb2c3723f1fa88522aa53cd374a996b15a86322940db02d468bbe` |
+| `work/run-01/matrix-outcome.json` | `8b1ab9b3485d6355119f6a0ba31be61bd3135ac4627256ae8ee61b125bf18d56` |
+| `work/run-01/harness-progress.log` | `404b1e33403f698fce3e301715533c07cdc2eef2a917d88436947b41571269fa` |
+| `work/harness-run-01.stdout.txt` | `0e1182ef6d9e91d39b486755d50ca09deb30bbe017037268fb93ddb15cfaa38a` |
+| `work/harness-run-01.stderr.txt` (0 B) | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `work/harness-run-01.exitcode.txt` (`exit=2`) | `5f8bd21203fdbe78b3339b6c8102f5a67cea53316e7b8797aa7aea63e498d985` |
+| `work/run-01/tools/inert-canary.exe` | `576c84fb7faecf3e7dd34729910db7973ccac8214be525ba507d6953746b9088` |
+| `work/run-01/tools/InstallerQa.Windows.dll` | `518a4d6a633a970ccc6f1834a46a7c245dfbcfa10f3e53cfcb226e24654165bf` |
+| `work/run-01/fx/stage-exe/GraphGoblin.exe` (candidate build) | `05dcc34c4a3379874d6ba3239c4156850c0d1b41e889268aff34017fc316ceb3` |
+| `work/run-01/fx/stage-a/GraphGoblin.lnk` | `6092694bf6083f651764571ecff5f87aa53d4e5c16a1b8880e529a3f8bda08f9` |
+| `work/run-01/fx/stage α b/GraphGoblin.lnk` | `e202ec2ced73e05c4bb668cd6cb0aa61c12db64ec3b8aef0c9b2c5ae0106011d` |
+| `work/run-01/receipts/` | 75 files (25 × receipt JSON, raw stdout and raw stderr) |

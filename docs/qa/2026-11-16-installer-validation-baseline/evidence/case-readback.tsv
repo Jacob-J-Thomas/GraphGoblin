@@ -1,0 +1,33 @@
+case	status	mutation	exit	changed_artifacts	problems	listener_after	verified_binary_copies
+01	positive-met		0	exe,config,desktop,programs		False	6
+02	positive-met		0	exe,config,desktop,programs,pin		False	7
+03	positive-met		0	exe,config		False	7
+04	positive-met		0	exe,config,desktop,programs		False	6
+05	baseline-difference	blank-node	1		Expected diagnostic category was absent. | Installer exposed a generic path-resolution refusal.	False	4
+06	baseline-difference	missing-node-discovery	1		Expected diagnostic category was absent.	False	4
+07	baseline-difference	missing-node	1		Expected diagnostic category was absent. | Installer echoed a diagnostic canary.	False	14
+08	refusal-met	old-runtime	1			False	4
+09	refusal-met	wrong-major	1			False	4
+10	baseline-difference	malformed-runtime	1		Installer echoed a diagnostic canary.	False	4
+11	refusal-met	failed-runtime	1			False	4
+12	refusal-met	missing-built-helper	1			False	14
+13	refusal-met	compile-failure	1			False	14
+14	baseline-difference	reserved-environment	1	exe,config	Final artifact bytes or presence changed.	False	14
+15	baseline-difference	reserved-no-shortcuts	0	exe,config	Installer returned zero for invalid input. | Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	14
+16	refusal-met	missing-source	1			False	4
+17	baseline-difference	wrong-proxy	1	exe	Final artifact bytes or presence changed.	False	16
+18	baseline-difference	missing-app-id	1	exe	Final artifact bytes or presence changed.	False	7
+19	baseline-difference	missing-profile	1	exe	Final artifact bytes or presence changed.	False	7
+20	baseline-difference	wrong-origin	1	exe	Final artifact bytes or presence changed.	False	16
+21	baseline-difference	missing-app-user-model-id	1	exe	Final artifact bytes or presence changed.	False	7
+22	baseline-difference	missing-pin	1	exe,config	Final artifact bytes or presence changed.	False	14
+23	baseline-difference	directory-destination	1	exe,config,desktop	Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	16
+24	baseline-difference	same-source	0	exe,config,source,programs	Installer returned zero for invalid input. | Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	14
+25	baseline-difference	case-source	0	exe,config,source,programs,sourceAlias	Installer returned zero for invalid input. | Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	9
+26	baseline-difference	junction-source	0	exe,config,source,programs,sourceAlias	Installer returned zero for invalid input. | Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	9
+27	baseline-difference	hardlink-source	0	exe,config,source,programs,sourceAlias	Installer returned zero for invalid input. | Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	9
+28	baseline-difference	pairwise-destination	0	exe,config,desktop	Installer returned zero for invalid input. | Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	14
+29	baseline-difference	pin-destination	0	exe,config,desktop,programs	Installer returned zero for invalid input. | Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	14
+30	baseline-difference	config-destination	1	exe,config	Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	14
+31	baseline-difference	default-desktop	0	exe,config,programs,defaultDesktop	Installer returned zero for invalid input. | Final artifact bytes or presence changed. | Expected diagnostic category was absent.	False	9
+32	baseline-difference	unlaunchable-node	1		Expected diagnostic category was absent.	False	4

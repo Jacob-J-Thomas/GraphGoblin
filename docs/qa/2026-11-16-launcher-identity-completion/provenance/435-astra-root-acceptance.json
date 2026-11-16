@@ -1,0 +1,506 @@
+{
+  "rootFullReportRead": true,
+  "manifestEntriesVerified": 29,
+  "reportSha256": "797075d5f29c9803164d3dafadd65ee778d011c73aa70376c676d028d9c9e0f9",
+  "manifestSha256": "90d48aed824899419966ae9f0257947bf6df9558e6cf385bb6de226e2d38789d",
+  "verdict": "SIGN-OFF",
+  "formalScansComplete": 2,
+  "cap": 3,
+  "exactPublishedComment": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492#issuecomment-6906437749",
+    "body": "Root accepts the fresh GPT-6 Astra max **SIGN-OFF** below for the exact unchanged PR head and target. Full report read; all 29 audit manifest entries independently verified. No new finding, blocker, diagnostic or waiver. Current CI and integration identities remain unchanged. Formal review budget: **2 of 3 scans complete** (Opus xhigh READY, fresh Astra max SIGN-OFF). Root will now perform the authorized #435 integration; owner acceptance for #276/#325, held PR #460 and later launcher work remain separate.\n\nFull report SHA-256: `797075d5f29c9803164d3dafadd65ee778d011c73aa70376c676d028d9c9e0f9`. The report below is unchanged.\n\n---\n\n# PR #492 / issue #435 — fresh final exact-head/target audit\n\n**SIGN-OFF.** I found no introduced in-scope blocker and no outstanding engineering acceptance gap for the bounded checkout-alias correction. This verdict covers publication head **6f383da798872aa0e6bd1e0de1fdcd4e702de9ae** against actual main **9fa8b2474c7290adb800c5e26be73511095cae25**, with the identical-tree tested merge identified below. It does not approve a different head or integration context, install anything, complete the four-intent batch, or complete owner acceptance.\n\nThis is **formal scan 2 of the shared maximum 3**. Scan 1 was the completed Claude Opus 5.5 xhigh review, not behavioral QA or CI. The current audit is a fresh **GPT-6 Astra / max** session. The root's orchestration receipt records successful collaboration.spawn_agent arguments fork_turns=none, model=gpt-6-astra, reasoning_effort=max, returning /root/audit_435_final. That is the available actual assignment evidence; it is not provider-internal runtime attestation or independent introspection of reasoning effort. Receipt: ../launcher-435-astra-spawn-receipt.json.\n\nFinal independent readback: **2026-11-16 03:19:31–03:19:32 UTC**. The checkout remained clean, PR #492 remained open/draft and mergeable, and current-head CI remained successful on attempt 1.\n\n## Exact identity and admission\n\n| Identity | Independently verified value |\n| --- | --- |\n| Checkout | C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin |\n| Branch | codex/gg-20261116-launcher-identity |\n| Publication head | 6f383da798872aa0e6bd1e0de1fdcd4e702de9ae |\n| Publication tree | decd1ca26c9bd63d942e939e65e2b2604d7f2652 |\n| Actual target/main | 9fa8b2474c7290adb800c5e26be73511095cae25 |\n| Target tree | 88ade580c80b2139b5d1bf51449dca10e33184f1 |\n| Tested merge | 5e386d5cc9ed4b022d15ade32d04fcd89c367688 |\n| Tested merge tree | decd1ca26c9bd63d942e939e65e2b2604d7f2652, exactly the publication tree |\n| Tested merge parents, ordered | 9fa8b2474c7290adb800c5e26be73511095cae25, then 6f383da798872aa0e6bd1e0de1fdcd4e702de9ae |\n| Source candidate | c75e277695dae260f0e14279cff8705bab84ef4c |\n| Source candidate tree | 640fab8634a8c0cad547a70a750150ba14d4259d |\n| Old-source native-test-only head | 08e60a0ae6d6b7cae853326825365760166f3ad3; its only change from target is the permanent native regression |\n| Supported audit runtime | Project Node v22.23.4; read-only Git used GIT_OPTIONAL_LOCKS=0 |\n\nIndependent connector GETs, git ls-remote, local Git objects and the actual Windows checkout log agree. Final readbacks are retained in git-final-readback.json and github-final-readback.json; initial snapshots are retained too. I did not fetch into or update refs, stage, unstage, commit, push, or modify product files.\n\nI read the three review briefs/dispatches, live AGENTS.md, docs/README.md, docs/15-issue-workflow.md, the four-intent register's scope/gates and current launcher checkpoints, implementation-plan context, ADR-0064 and ADR-0069. The current issue admits engineering closure after gates and merge; #276/#325 retain separate owner acceptance.\n\n## Effective scope and source assessment\n\nThe target-to-head diff has 385 paths. Its active implementation/test/documentation change is these six paths, plus documentary publication under docs/qa and the delivery register:\n\n- apps/api/src/instance-identity.ts\n- apps/api/src/instance-identity.test.ts\n- tooling/scripts/launcher-identity.test.mjs\n- tooling/scripts/windows-launcher.acceptance.mjs\n- docs/09-frontend-and-pwa.md\n- CHANGELOG.md\n\nI reviewed the complete effective diff, the helper and test implementations, the native suite's added group and unchanged surrounding cases, and the affected documentation. I inspected the unchanged configuration/canonicalization and C# helper, readiness, process and ownership call paths that establish the integration behavior. The source-candidate-to-publication diff has 379 documentary paths only. Every six-file candidate/publication Git-blob digest agrees. The permanent native regression is byte-identical at the old-source test-only head, source candidate and publication head: SHA-256 4cac8f617ebe4d96e8b54c4ba0bfe3c5a4647e284480b97f77fe0e847281c4ee.\n\nThe root cause is supported by old source and actual negative controls: a lexical absolute argv path can preserve the checkout alias while the loaded ESM module URL names its resolved path. The old guard returned false and exited successfully without protocol output. The native launcher correctly rejected that empty result.\n\nThe correction compares both existing files using the same realpathSync.native operation. A missing entry, invalid module URL or resolution error returns false. It does not accept a partly resolved entry or add a permissive fallback. Once the files match, the existing runtime check, configuration parsing, digest/store-state dispatch, newline and invalid-configuration diagnostic execute unchanged.\n\ninstanceIdentity, launcherRuntimeSupported, launcherStoreState, configuration schema, fingerprint field order, secret exclusion and store ownership algorithms are unchanged. The fingerprint still canonicalizes runtime, main entry, data directory, file database and shell paths. The new guard performs filesystem reads, not store acquisition or mutation. It adds no dependency, format, migration, installer, logging, provider or UI behavior.\n\nThe C# launcher still supplies the configured repo as cwd, invokes helper and main through that spelling, applies the same environment, validates the digest, checks ownership and refuses an unrelated/configuration-mismatched listener. The native test's extracted compile/launch functions preserve original arguments, cwd, environment, hidden-window setting and deadline. Nothing absorbs the separate timeout work held in PR #460.\n\nThe docs/09 addition and changelog describe the demonstrated real/junction/symlink behavior. No new architecture decision or compatibility path was introduced. The docs/10 prerequisite omission remains a recorded nonblocking follow-up.\n\n## Acceptance and regression evidence\n\n| Criterion | Evidence assessed | Result |\n| --- | --- | --- |\n| Entry detection/direct invocation | Unit absolute/relative, different-existing-file, undefined/missing and invalid-URL cases; full 13-test identity file in current CI | Established for admitted contract |\n| Exact alias protocol | Built regression, local compiled helper matrix, freshly downloaded hosted native log | Same 65-byte lowercase SHA-256 plus LF, empty stderr, existing store-state JSON |\n| Invalid configuration/inert import | Final regression red on old source and green on fixed source; unit different-entry case; actual gateway imports | Preserved; focused built import control limitation retained under #494 |\n| Native cold starts | Genuine Junction and SymbolicLink, alias-first and direct-first | Four distinct PID/birth identities |\n| Same/cross-path warm reuse | Two warm invocations per cold gateway with exact owner/lease checks | Eight successful reuses |\n| Wrong store/settings refusal | Two mismatches per cold gateway, original identity/lease preservation and no alternate startup | Eight refusals, original gateway preserved |\n| Managed release | Exact-owner recheck, authenticated drain, PID/birth/listener/lease/reclaim disappearance and safe alias unlink | Four bound hosted releases; local candidate also has later independent host readback |\n| Read-only helper | Empty prelaunch stores in built/local/hosted evidence; source inspection | Established for tested paths; no store writes added |\n\nThe unchanged final built-helper regression failed its three intended assertions on the old compiled helper: alias identity, alias store state and invalid-configuration rejection. Existing/direct controls passed. I read the red log and exit-1 receipt and verified its retained test bytes match the published regression. The candidate passed 2/2; its log hash matches the exit-0 receipt. Before/after candidate bindings are identical, and the current compiled helper still matches recorded SHA-256 bc5581e2e9941f842ddec8da2e26200cbb316d3c295148cc9aad3b995b42bd45.\n\nHosted old-source run 43787801176 / job 133039259616 created both genuine link types, then observed silent alias helper output and native cold refusal. It reported 14 passes, 3 expected failures and no skips. Later positive cases were not reached. This is a discriminating negative control, not candidate success.\n\nFor fixed source I independently fetched the current Windows log through the GitHub connector. Its **53,877 UTF-8 bytes**, including leading BOM and final CRLF, equal both the retained candidate log and root's separate captured log string. SHA-256: 58b62eb41d88d9962a6e0cebbd0ac193793b10a52945cd2004054ba6bb6eecb4. The checkout record names the exact tested merge above, Node v22.23.4 and 12 successful build tasks.\n\nI independently decoded both alias JSON records and required exact roundtrip through the actual Node 22.23.4 TAP escape function. decoded-native-records.json is derived data, not raw stdout. The raw log remains unchanged. Both records confirm the requested Windows link type plus Directory/ReparsePoint flags. Alias-cold main argv contains the actual alias spelling. Recorded owners:\n\n- Junction alias: PID 1596, creation FILETIME 134392689920462180.\n- Junction direct: PID 9404, creation FILETIME 134392690042327940.\n- SymbolicLink alias: PID 8072, creation FILETIME 134392690209603230.\n- SymbolicLink direct: PID 8252, creation FILETIME 134392690331393420.\n\nThe native assertions validate executable, main argv, serving identity, PID/birth and two lease-byte hashes, then recheck after each warm invocation and refusal. I inspected the assertions, not just result labels. Cleanup retains an uncertain gateway/link for investigation and unlinks only after release and matching fixture/link identity. The required alias capability refusal deliberately fails rather than skips.\n\nThe accepted local candidate report is separate evidence: real compiled launcher/gateway over TCP and file SQLite, direct/junction matrix, both HTTP shells and static asset hashes, 46 subprocess triplets, managed drains and later independent absent-process/listener readback. Its 4,372,892-byte external build binding hashes to b247b045d4394c976b7339df1ada61b0399677d847e740b4d2b19c4c4ff114f6, binding 28,809 tracked files, 1,231 outputs, 13 roots, 19 dependency files and 22 workspace links. I checked identity/counts/hash, relevant helper binding, raw candidate summary and independent report. Its historical candidate index digest is not claimed to be the publication index.\n\n## Current-head gates\n\n[CI run 43790735875](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43790735875) is the only pull-request workflow run returned for this head. It is successful at attempt 1, with all four jobs on this head and no retry:\n\n| Job | ID | Independently assessed result |\n| --- | --- | --- |\n| Gates | 133048320097 | All 32 reported steps succeeded. Thirteen Vitest totals sum to 9,619 passed / 41 skipped. |\n| Browser | 133048319866 | 481 passed / one declared LIVE-provider skip, zero retries, one worker. |\n| Windows launcher | 133048320156 | 17/17, zero failure/skip/cancellation, 175785.8981 ms, including both genuine aliases. |\n| Template image | 133048319973 | Four independent starter/implementation/review/qa drafts loaded from the read-only, no-network image. |\n\nI opened every coverage summary directly from the retained ZIP and checked all 13 line/branch floors. The fresh GitHub artifact listing binds artifact 14192079834, 22,040 bytes, to SHA-256 68506d5c108574bcbdd11856ddea6d02940345f8045496a7b4fcc84c01095a27; the downloaded ZIP matches. API is 95.8% lines / 90.7% branches; tooling 96.89% / 91.67%; web 98.6% / 94.31%. No threshold or exclusion changed.\n\nRetained Gates and Browser decoded logs match root's independent connector captures byte for byte. I summed all 13 groups, confirmed the 13-test identity and 2-test built-helper files, and inspected the workflow and template results. Job statuses are fresh; those two full logs were read from retained captures, unlike the additionally fresh Windows download.\n\nQualifications remain explicit: the audit threshold passed with 8 low / 13 moderate advisories, not zero advisories. Optional strict routing mode was off; frame p95 samples 33.3–33.4 ms do not meet the optional 17 ms strict target. This is neither a strict-performance pass nor a controlled before/after regression conclusion. Browser's conditional failure artifact step was skipped. Windows found no upload files and the live run listing contains only coverage; there is no native artifact. Hosted acceptance rests on the bound structured log and assertions.\n\n## Scan 1 dispositions and findings\n\n**New introduced in-scope blockers: none. New actionable findings: none. No unresolved execution diagnostic is required.**\n\nI read the complete Opus report and root dispositions and verified report SHA-256 284eb4f6df116ed337b8942d75b2cb34657404cbd03d6bdeccc3c22d024ccacd. Launch/exit receipts record claude-opus-5-5, xhigh, exit 0. A fresh GET of [comment 6906188155](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492#issuecomment-6906188155) contains the complete report and root disposition. Line-ending normalization applied only to comparing published text, not to hashing the report.\n\n| Prior finding | Final audit disposition |\n| --- | --- |\n| R1, docs/10 coverage/prerequisite | Accept DEFER-ISSUE to [#493](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493). A real developer-documentation gap; runtime behavior and capable-host acceptance are established. |\n| R2, built inert-import control strength | Accept DEFER-ISSUE to [#494](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494). Built/native controls use undefined-entry or file-URL error paths; unit different-existing-file and actual gateway imports establish current correctness. A wrapper entry would strengthen regression discrimination. |\n| R3, pending CI/symlink statements | Accept DUPLICATE-STALE for live PR/issue concern. Fresh bodies include current CI and genuine symlink acceptance. Committed packets/register identify prepublication checkpoints. Root will archive final completion evidence in the next lane, consistent with append-only delivery history. |\n| O1, other tooling entry guards | Accept conditional DEFER-ISSUE to [#495](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/495). Direct Node semantics do not establish actual pnpm gate bypass. None is claimed or used to invalidate CI. |\n| O2, missing native archive | Accept DEFER-ISSUE to [#496](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496). Missing artifact confirmed; hidden-path exclusion remains an unverified possible cause. |\n| O3–O7 | Accept NO-CHANGE/informational with root qualifications. No introduced cleanup, port-allocation, cross-app-refactor, supported-filesystem or CI defect established. |\n\nFresh GETs confirm #493–#496 are open, parked with backlog and no pickup gate. They do not expand the batch or authorize implementation.\n\nI do **not** adopt stronger statements about 8.3, subst, mapped drives or availability/race behavior as tested guarantees. Native acceptance covers real paths, Junction and SymbolicLink. Catching realpath errors preserves conservative refusal but does not prove all remote/virtual filesystems or races safe or available. Raw QA JSON/YAML/JavaScript/TypeScript ignore entries preserve bytes; QA Markdown is not blanket-excluded from formatting.\n\n## Evidence integrity, limitations and handoff\n\nsource-and-evidence-inventory.json records all **377** QA publication files checked byte-for-byte against exact head Git blobs, all six active-path hashes and every manifest row read. Seven manifests verified: historical #419 current CI (52), completion (44), Opus archive (26), #435 baseline (69), implementation (25), candidate (186), and external fixed-source hosted packet (17). Previous #419 source copies remain archived evidence, not new active product changes.\n\nThis audit executed only read-only Git/GitHub, file reads/hashes, archive parsing and audit-only offline inspectors under the new external directory. It reran no product test, native suite, build, browser, provider call or CI job, spawned no reviewers, and touched no owner process, port, store, installation or index. Accepted native/CI executions were inspected, not performed by this audit.\n\nThe first audit-only inspector used .length for the workspace-links map. It stopped at that check with exit 1 after earlier checks; original script/diagnostic are retained as offline-verification-first.mjs and offline-first-failure.json. Correcting only the inspector to count Object.keys produced the recorded exit-0 verification. Oversized evidence-save attempts hit command/tool-size limits; smaller per-record saves succeeded. These were audit transport/inspection corrections, not product fixes or acceptance reruns. Initial evidence path lookups were corrected from the actual inventory.\n\nOriginal failures remain preserved: local true-symlink EPERM occurred before product execution; the first baseline CIM progress/CLIXML failure did not prove cleanup and required separately documented exact-identity managed recovery; the progress-only diagnostic correction, original lint failure and prior offline parser/command-alias failures remain distinct. Their history is not rewritten as first-pass success.\n\nHosted cleanup is established by source-bound in-run assertions. This audit did not inspect the hosted machine after teardown. Local candidate has its own later independent host readback. HTTP shell/asset evidence is not interactive PWA/taskbar acceptance. No native 8.3/subst/mapped-drive, filesystem-race, physical reboot, new provider or owner-acceptance coverage is claimed.\n\nPR #460 remains owner-held, open at b6ed79eeb289b781c48d3b0f994c1b2577990df9, independently read during this audit. It is outside this verdict. #436/#438/#456 were not implemented or reviewed here. Owner acceptance/closure on #276/#325 stays separate. Root retains publication and integration authority.\n\n**Final gate disposition: SIGN-OFF at the exact head/target/tested merge above.** Root may use this report for #435's remaining publication/integration steps under existing authority. Changed source or target context needs the required auditor confirmation; this verdict does not silently carry over.\n",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "id": 6906437749,
+    "pull_request_review_id": null,
+    "in_reply_to_id": null,
+    "created_at": null,
+    "updated_at": null,
+    "review": null,
+    "side": null,
+    "line": null,
+    "start_line": null,
+    "path": null,
+    "body_html": "<p dir=\"auto\">Root accepts the fresh GPT-6 Astra max <strong>SIGN-OFF</strong> below for the exact unchanged PR head and target. Full report read; all 29 audit manifest entries independently verified. No new finding, blocker, diagnostic or waiver. Current CI and integration identities remain unchanged. Formal review budget: <strong>2 of 3 scans complete</strong> (Opus xhigh READY, fresh Astra max SIGN-OFF). Root will now perform the authorized <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6264578426\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/435/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435\">#435</a> integration; owner acceptance for <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5901055199\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/276\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/276/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/276\">#276</a>/<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5902517497\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/325\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/325/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/325\">#325</a>, held PR <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6383465957\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/460\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/pull/460/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460\">#460</a> and later launcher work remain separate.</p>\n<p dir=\"auto\">Full report SHA-256: <code class=\"notranslate\">797075d5f29c9803164d3dafadd65ee778d011c73aa70376c676d028d9c9e0f9</code>. The report below is unchanged.</p>\n<hr>\n<h1 dir=\"auto\">PR <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6412391134\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/492\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/pull/492/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492\">#492</a> / issue <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6264578426\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/435/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435\">#435</a> — fresh final exact-head/target audit</h1>\n<p dir=\"auto\"><strong>SIGN-OFF.</strong> I found no introduced in-scope blocker and no outstanding engineering acceptance gap for the bounded checkout-alias correction. This verdict covers publication head <strong><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/6f383da798872aa0e6bd1e0de1fdcd4e702de9ae/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/6f383da798872aa0e6bd1e0de1fdcd4e702de9ae\"><tt>6f383da</tt></a></strong> against actual main <strong><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/9fa8b2474c7290adb800c5e26be73511095cae25/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/9fa8b2474c7290adb800c5e26be73511095cae25\"><tt>9fa8b24</tt></a></strong>, with the identical-tree tested merge identified below. It does not approve a different head or integration context, install anything, complete the four-intent batch, or complete owner acceptance.</p>\n<p dir=\"auto\">This is <strong>formal scan 2 of the shared maximum 3</strong>. Scan 1 was the completed Claude Opus 5.5 xhigh review, not behavioral QA or CI. The current audit is a fresh <strong>GPT-6 Astra / max</strong> session. The root's orchestration receipt records successful collaboration.spawn_agent arguments fork_turns=none, model=gpt-6-astra, reasoning_effort=max, returning /root/audit_435_final. That is the available actual assignment evidence; it is not provider-internal runtime attestation or independent introspection of reasoning effort. Receipt: ../launcher-435-astra-spawn-receipt.json.</p>\n<p dir=\"auto\">Final independent readback: <strong>2026-11-16 03:19:31–03:19:32 UTC</strong>. The checkout remained clean, PR <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6412391134\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/492\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/pull/492/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492\">#492</a> remained open/draft and mergeable, and current-head CI remained successful on attempt 1.</p>\n<h2 dir=\"auto\">Exact identity and admission</h2>\n<markdown-accessiblity-table><table role=\"table\">\n<thead>\n<tr>\n<th>Identity</th>\n<th>Independently verified value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Checkout</td>\n<td>C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin</td>\n</tr>\n<tr>\n<td>Branch</td>\n<td>codex/gg-20261116-launcher-identity</td>\n</tr>\n<tr>\n<td>Publication head</td>\n<td><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/6f383da798872aa0e6bd1e0de1fdcd4e702de9ae/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/6f383da798872aa0e6bd1e0de1fdcd4e702de9ae\"><tt>6f383da</tt></a></td>\n</tr>\n<tr>\n<td>Publication tree</td>\n<td>decd1ca26c9bd63d942e939e65e2b2604d7f2652</td>\n</tr>\n<tr>\n<td>Actual target/main</td>\n<td><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/9fa8b2474c7290adb800c5e26be73511095cae25/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/9fa8b2474c7290adb800c5e26be73511095cae25\"><tt>9fa8b24</tt></a></td>\n</tr>\n<tr>\n<td>Target tree</td>\n<td>88ade580c80b2139b5d1bf51449dca10e33184f1</td>\n</tr>\n<tr>\n<td>Tested merge</td>\n<td><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/5e386d5cc9ed4b022d15ade32d04fcd89c367688/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/5e386d5cc9ed4b022d15ade32d04fcd89c367688\"><tt>5e386d5</tt></a></td>\n</tr>\n<tr>\n<td>Tested merge tree</td>\n<td>decd1ca26c9bd63d942e939e65e2b2604d7f2652, exactly the publication tree</td>\n</tr>\n<tr>\n<td>Tested merge parents, ordered</td>\n<td><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/9fa8b2474c7290adb800c5e26be73511095cae25/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/9fa8b2474c7290adb800c5e26be73511095cae25\"><tt>9fa8b24</tt></a>, then <a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/6f383da798872aa0e6bd1e0de1fdcd4e702de9ae/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/6f383da798872aa0e6bd1e0de1fdcd4e702de9ae\"><tt>6f383da</tt></a></td>\n</tr>\n<tr>\n<td>Source candidate</td>\n<td><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/c75e277695dae260f0e14279cff8705bab84ef4c/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/c75e277695dae260f0e14279cff8705bab84ef4c\"><tt>c75e277</tt></a></td>\n</tr>\n<tr>\n<td>Source candidate tree</td>\n<td>640fab8634a8c0cad547a70a750150ba14d4259d</td>\n</tr>\n<tr>\n<td>Old-source native-test-only head</td>\n<td><a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/08e60a0ae6d6b7cae853326825365760166f3ad3/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/08e60a0ae6d6b7cae853326825365760166f3ad3\"><tt>08e60a0</tt></a>; its only change from target is the permanent native regression</td>\n</tr>\n<tr>\n<td>Supported audit runtime</td>\n<td>Project Node v22.23.4; read-only Git used GIT_OPTIONAL_LOCKS=0</td>\n</tr>\n</tbody>\n</table></markdown-accessiblity-table>\n<p dir=\"auto\">Independent connector GETs, git ls-remote, local Git objects and the actual Windows checkout log agree. Final readbacks are retained in git-final-readback.json and github-final-readback.json; initial snapshots are retained too. I did not fetch into or update refs, stage, unstage, commit, push, or modify product files.</p>\n<p dir=\"auto\">I read the three review briefs/dispatches, live AGENTS.md, docs/README.md, docs/15-issue-workflow.md, the four-intent register's scope/gates and current launcher checkpoints, implementation-plan context, ADR-0064 and ADR-0069. The current issue admits engineering closure after gates and merge; <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5901055199\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/276\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/276/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/276\">#276</a>/<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5902517497\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/325\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/325/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/325\">#325</a> retain separate owner acceptance.</p>\n<h2 dir=\"auto\">Effective scope and source assessment</h2>\n<p dir=\"auto\">The target-to-head diff has 385 paths. Its active implementation/test/documentation change is these six paths, plus documentary publication under docs/qa and the delivery register:</p>\n<ul dir=\"auto\">\n<li>apps/api/src/instance-identity.ts</li>\n<li>apps/api/src/instance-identity.test.ts</li>\n<li>tooling/scripts/launcher-identity.test.mjs</li>\n<li>tooling/scripts/windows-launcher.acceptance.mjs</li>\n<li>docs/09-frontend-and-pwa.md</li>\n<li>CHANGELOG.md</li>\n</ul>\n<p dir=\"auto\">I reviewed the complete effective diff, the helper and test implementations, the native suite's added group and unchanged surrounding cases, and the affected documentation. I inspected the unchanged configuration/canonicalization and C# helper, readiness, process and ownership call paths that establish the integration behavior. The source-candidate-to-publication diff has 379 documentary paths only. Every six-file candidate/publication Git-blob digest agrees. The permanent native regression is byte-identical at the old-source test-only head, source candidate and publication head: SHA-256 4cac8f617ebe4d96e8b54c4ba0bfe3c5a4647e284480b97f77fe0e847281c4ee.</p>\n<p dir=\"auto\">The root cause is supported by old source and actual negative controls: a lexical absolute argv path can preserve the checkout alias while the loaded ESM module URL names its resolved path. The old guard returned false and exited successfully without protocol output. The native launcher correctly rejected that empty result.</p>\n<p dir=\"auto\">The correction compares both existing files using the same realpathSync.native operation. A missing entry, invalid module URL or resolution error returns false. It does not accept a partly resolved entry or add a permissive fallback. Once the files match, the existing runtime check, configuration parsing, digest/store-state dispatch, newline and invalid-configuration diagnostic execute unchanged.</p>\n<p dir=\"auto\">instanceIdentity, launcherRuntimeSupported, launcherStoreState, configuration schema, fingerprint field order, secret exclusion and store ownership algorithms are unchanged. The fingerprint still canonicalizes runtime, main entry, data directory, file database and shell paths. The new guard performs filesystem reads, not store acquisition or mutation. It adds no dependency, format, migration, installer, logging, provider or UI behavior.</p>\n<p dir=\"auto\">The C# launcher still supplies the configured repo as cwd, invokes helper and main through that spelling, applies the same environment, validates the digest, checks ownership and refuses an unrelated/configuration-mismatched listener. The native test's extracted compile/launch functions preserve original arguments, cwd, environment, hidden-window setting and deadline. Nothing absorbs the separate timeout work held in PR <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6383465957\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/460\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/pull/460/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460\">#460</a>.</p>\n<p dir=\"auto\">The docs/09 addition and changelog describe the demonstrated real/junction/symlink behavior. No new architecture decision or compatibility path was introduced. The docs/10 prerequisite omission remains a recorded nonblocking follow-up.</p>\n<h2 dir=\"auto\">Acceptance and regression evidence</h2>\n<markdown-accessiblity-table><table role=\"table\">\n<thead>\n<tr>\n<th>Criterion</th>\n<th>Evidence assessed</th>\n<th>Result</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Entry detection/direct invocation</td>\n<td>Unit absolute/relative, different-existing-file, undefined/missing and invalid-URL cases; full 13-test identity file in current CI</td>\n<td>Established for admitted contract</td>\n</tr>\n<tr>\n<td>Exact alias protocol</td>\n<td>Built regression, local compiled helper matrix, freshly downloaded hosted native log</td>\n<td>Same 65-byte lowercase SHA-256 plus LF, empty stderr, existing store-state JSON</td>\n</tr>\n<tr>\n<td>Invalid configuration/inert import</td>\n<td>Final regression red on old source and green on fixed source; unit different-entry case; actual gateway imports</td>\n<td>Preserved; focused built import control limitation retained under <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6413321089\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/494/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494\">#494</a></td>\n</tr>\n<tr>\n<td>Native cold starts</td>\n<td>Genuine Junction and SymbolicLink, alias-first and direct-first</td>\n<td>Four distinct PID/birth identities</td>\n</tr>\n<tr>\n<td>Same/cross-path warm reuse</td>\n<td>Two warm invocations per cold gateway with exact owner/lease checks</td>\n<td>Eight successful reuses</td>\n</tr>\n<tr>\n<td>Wrong store/settings refusal</td>\n<td>Two mismatches per cold gateway, original identity/lease preservation and no alternate startup</td>\n<td>Eight refusals, original gateway preserved</td>\n</tr>\n<tr>\n<td>Managed release</td>\n<td>Exact-owner recheck, authenticated drain, PID/birth/listener/lease/reclaim disappearance and safe alias unlink</td>\n<td>Four bound hosted releases; local candidate also has later independent host readback</td>\n</tr>\n<tr>\n<td>Read-only helper</td>\n<td>Empty prelaunch stores in built/local/hosted evidence; source inspection</td>\n<td>Established for tested paths; no store writes added</td>\n</tr>\n</tbody>\n</table></markdown-accessiblity-table>\n<p dir=\"auto\">The unchanged final built-helper regression failed its three intended assertions on the old compiled helper: alias identity, alias store state and invalid-configuration rejection. Existing/direct controls passed. I read the red log and exit-1 receipt and verified its retained test bytes match the published regression. The candidate passed 2/2; its log hash matches the exit-0 receipt. Before/after candidate bindings are identical, and the current compiled helper still matches recorded SHA-256 bc5581e2e9941f842ddec8da2e26200cbb316d3c295148cc9aad3b995b42bd45.</p>\n<p dir=\"auto\">Hosted old-source run 43787801176 / job 133039259616 created both genuine link types, then observed silent alias helper output and native cold refusal. It reported 14 passes, 3 expected failures and no skips. Later positive cases were not reached. This is a discriminating negative control, not candidate success.</p>\n<p dir=\"auto\">For fixed source I independently fetched the current Windows log through the GitHub connector. Its <strong>53,877 UTF-8 bytes</strong>, including leading BOM and final CRLF, equal both the retained candidate log and root's separate captured log string. SHA-256: 58b62eb41d88d9962a6e0cebbd0ac193793b10a52945cd2004054ba6bb6eecb4. The checkout record names the exact tested merge above, Node v22.23.4 and 12 successful build tasks.</p>\n<p dir=\"auto\">I independently decoded both alias JSON records and required exact roundtrip through the actual Node 22.23.4 TAP escape function. decoded-native-records.json is derived data, not raw stdout. The raw log remains unchanged. Both records confirm the requested Windows link type plus Directory/ReparsePoint flags. Alias-cold main argv contains the actual alias spelling. Recorded owners:</p>\n<ul dir=\"auto\">\n<li>Junction alias: PID 1596, creation FILETIME 134392689920462180.</li>\n<li>Junction direct: PID 9404, creation FILETIME 134392690042327940.</li>\n<li>SymbolicLink alias: PID 8072, creation FILETIME 134392690209603230.</li>\n<li>SymbolicLink direct: PID 8252, creation FILETIME 134392690331393420.</li>\n</ul>\n<p dir=\"auto\">The native assertions validate executable, main argv, serving identity, PID/birth and two lease-byte hashes, then recheck after each warm invocation and refusal. I inspected the assertions, not just result labels. Cleanup retains an uncertain gateway/link for investigation and unlinks only after release and matching fixture/link identity. The required alias capability refusal deliberately fails rather than skips.</p>\n<p dir=\"auto\">The accepted local candidate report is separate evidence: real compiled launcher/gateway over TCP and file SQLite, direct/junction matrix, both HTTP shells and static asset hashes, 46 subprocess triplets, managed drains and later independent absent-process/listener readback. Its 4,372,892-byte external build binding hashes to b247b045d4394c976b7339df1ada61b0399677d847e740b4d2b19c4c4ff114f6, binding 28,809 tracked files, 1,231 outputs, 13 roots, 19 dependency files and 22 workspace links. I checked identity/counts/hash, relevant helper binding, raw candidate summary and independent report. Its historical candidate index digest is not claimed to be the publication index.</p>\n<h2 dir=\"auto\">Current-head gates</h2>\n<p dir=\"auto\"><a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43790735875\">CI run 43790735875</a> is the only pull-request workflow run returned for this head. It is successful at attempt 1, with all four jobs on this head and no retry:</p>\n<markdown-accessiblity-table><table role=\"table\">\n<thead>\n<tr>\n<th>Job</th>\n<th>ID</th>\n<th>Independently assessed result</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Gates</td>\n<td>133048320097</td>\n<td>All 32 reported steps succeeded. Thirteen Vitest totals sum to 9,619 passed / 41 skipped.</td>\n</tr>\n<tr>\n<td>Browser</td>\n<td>133048319866</td>\n<td>481 passed / one declared LIVE-provider skip, zero retries, one worker.</td>\n</tr>\n<tr>\n<td>Windows launcher</td>\n<td>133048320156</td>\n<td>17/17, zero failure/skip/cancellation, 175785.8981 ms, including both genuine aliases.</td>\n</tr>\n<tr>\n<td>Template image</td>\n<td>133048319973</td>\n<td>Four independent starter/implementation/review/qa drafts loaded from the read-only, no-network image.</td>\n</tr>\n</tbody>\n</table></markdown-accessiblity-table>\n<p dir=\"auto\">I opened every coverage summary directly from the retained ZIP and checked all 13 line/branch floors. The fresh GitHub artifact listing binds artifact 14192079834, 22,040 bytes, to SHA-256 68506d5c108574bcbdd11856ddea6d02940345f8045496a7b4fcc84c01095a27; the downloaded ZIP matches. API is 95.8% lines / 90.7% branches; tooling 96.89% / 91.67%; web 98.6% / 94.31%. No threshold or exclusion changed.</p>\n<p dir=\"auto\">Retained Gates and Browser decoded logs match root's independent connector captures byte for byte. I summed all 13 groups, confirmed the 13-test identity and 2-test built-helper files, and inspected the workflow and template results. Job statuses are fresh; those two full logs were read from retained captures, unlike the additionally fresh Windows download.</p>\n<p dir=\"auto\">Qualifications remain explicit: the audit threshold passed with 8 low / 13 moderate advisories, not zero advisories. Optional strict routing mode was off; frame p95 samples 33.3–33.4 ms do not meet the optional 17 ms strict target. This is neither a strict-performance pass nor a controlled before/after regression conclusion. Browser's conditional failure artifact step was skipped. Windows found no upload files and the live run listing contains only coverage; there is no native artifact. Hosted acceptance rests on the bound structured log and assertions.</p>\n<h2 dir=\"auto\">Scan 1 dispositions and findings</h2>\n<p dir=\"auto\"><strong>New introduced in-scope blockers: none. New actionable findings: none. No unresolved execution diagnostic is required.</strong></p>\n<p dir=\"auto\">I read the complete Opus report and root dispositions and verified report SHA-256 284eb4f6df116ed337b8942d75b2cb34657404cbd03d6bdeccc3c22d024ccacd. Launch/exit receipts record claude-opus-5-5, xhigh, exit 0. A fresh GET of <a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492#issuecomment-6906188155\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/pull/492/hovercard\">comment 6906188155</a> contains the complete report and root disposition. Line-ending normalization applied only to comparing published text, not to hashing the report.</p>\n<markdown-accessiblity-table><table role=\"table\">\n<thead>\n<tr>\n<th>Prior finding</th>\n<th>Final audit disposition</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>R1, docs/10 coverage/prerequisite</td>\n<td>Accept DEFER-ISSUE to <a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/493/hovercard\">#493</a>. A real developer-documentation gap; runtime behavior and capable-host acceptance are established.</td>\n</tr>\n<tr>\n<td>R2, built inert-import control strength</td>\n<td>Accept DEFER-ISSUE to <a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/494/hovercard\">#494</a>. Built/native controls use undefined-entry or file-URL error paths; unit different-existing-file and actual gateway imports establish current correctness. A wrapper entry would strengthen regression discrimination.</td>\n</tr>\n<tr>\n<td>R3, pending CI/symlink statements</td>\n<td>Accept DUPLICATE-STALE for live PR/issue concern. Fresh bodies include current CI and genuine symlink acceptance. Committed packets/register identify prepublication checkpoints. Root will archive final completion evidence in the next lane, consistent with append-only delivery history.</td>\n</tr>\n<tr>\n<td>O1, other tooling entry guards</td>\n<td>Accept conditional DEFER-ISSUE to <a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/495\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/495/hovercard\">#495</a>. Direct Node semantics do not establish actual pnpm gate bypass. None is claimed or used to invalidate CI.</td>\n</tr>\n<tr>\n<td>O2, missing native archive</td>\n<td>Accept DEFER-ISSUE to <a href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/496/hovercard\">#496</a>. Missing artifact confirmed; hidden-path exclusion remains an unverified possible cause.</td>\n</tr>\n<tr>\n<td>O3–O7</td>\n<td>Accept NO-CHANGE/informational with root qualifications. No introduced cleanup, port-allocation, cross-app-refactor, supported-filesystem or CI defect established.</td>\n</tr>\n</tbody>\n</table></markdown-accessiblity-table>\n<p dir=\"auto\">Fresh GETs confirm <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6413320956\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/493/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493\">#493</a>–<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6413321384\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/496/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496\">#496</a> are open, parked with backlog and no pickup gate. They do not expand the batch or authorize implementation.</p>\n<p dir=\"auto\">I do <strong>not</strong> adopt stronger statements about 8.3, subst, mapped drives or availability/race behavior as tested guarantees. Native acceptance covers real paths, Junction and SymbolicLink. Catching realpath errors preserves conservative refusal but does not prove all remote/virtual filesystems or races safe or available. Raw QA JSON/YAML/JavaScript/TypeScript ignore entries preserve bytes; QA Markdown is not blanket-excluded from formatting.</p>\n<h2 dir=\"auto\">Evidence integrity, limitations and handoff</h2>\n<p dir=\"auto\">source-and-evidence-inventory.json records all <strong>377</strong> QA publication files checked byte-for-byte against exact head Git blobs, all six active-path hashes and every manifest row read. Seven manifests verified: historical <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6038616940\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/419/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419\">#419</a> current CI (52), completion (44), Opus archive (26), <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6264578426\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/435/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435\">#435</a> baseline (69), implementation (25), candidate (186), and external fixed-source hosted packet (17). Previous <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6038616940\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/419/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/419\">#419</a> source copies remain archived evidence, not new active product changes.</p>\n<p dir=\"auto\">This audit executed only read-only Git/GitHub, file reads/hashes, archive parsing and audit-only offline inspectors under the new external directory. It reran no product test, native suite, build, browser, provider call or CI job, spawned no reviewers, and touched no owner process, port, store, installation or index. Accepted native/CI executions were inspected, not performed by this audit.</p>\n<p dir=\"auto\">The first audit-only inspector used .length for the workspace-links map. It stopped at that check with exit 1 after earlier checks; original script/diagnostic are retained as offline-verification-first.mjs and offline-first-failure.json. Correcting only the inspector to count Object.keys produced the recorded exit-0 verification. Oversized evidence-save attempts hit command/tool-size limits; smaller per-record saves succeeded. These were audit transport/inspection corrections, not product fixes or acceptance reruns. Initial evidence path lookups were corrected from the actual inventory.</p>\n<p dir=\"auto\">Original failures remain preserved: local true-symlink EPERM occurred before product execution; the first baseline CIM progress/CLIXML failure did not prove cleanup and required separately documented exact-identity managed recovery; the progress-only diagnostic correction, original lint failure and prior offline parser/command-alias failures remain distinct. Their history is not rewritten as first-pass success.</p>\n<p dir=\"auto\">Hosted cleanup is established by source-bound in-run assertions. This audit did not inspect the hosted machine after teardown. Local candidate has its own later independent host readback. HTTP shell/asset evidence is not interactive PWA/taskbar acceptance. No native 8.3/subst/mapped-drive, filesystem-race, physical reboot, new provider or owner-acceptance coverage is claimed.</p>\n<p dir=\"auto\">PR <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6383465957\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/460\" data-hovercard-type=\"pull_request\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/pull/460/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460\">#460</a> remains owner-held, open at <a class=\"commit-link\" data-hovercard-type=\"commit\" data-hovercard-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/b6ed79eeb289b781c48d3b0f994c1b2577990df9/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/commit/b6ed79eeb289b781c48d3b0f994c1b2577990df9\"><tt>b6ed79e</tt></a>, independently read during this audit. It is outside this verdict. <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6264578568\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/436\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/436/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/436\">#436</a>/<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6264578834\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/438\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/438/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/438\">#438</a>/<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6278942131\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/456/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456\">#456</a> were not implemented or reviewed here. Owner acceptance/closure on <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5901055199\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/276\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/276/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/276\">#276</a>/<a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"5902517497\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/325\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/325/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/325\">#325</a> stays separate. Root retains publication and integration authority.</p>\n<p dir=\"auto\"><strong>Final gate disposition: SIGN-OFF at the exact head/target/tested merge above.</strong> Root may use this report for <a class=\"issue-link js-issue-link\" data-error-text=\"Failed to load title\" data-id=\"6264578426\" data-permission-text=\"Title is private\" data-url=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435\" data-hovercard-type=\"issue\" data-hovercard-url=\"/Jacob-J-Thomas/GraphGoblin/issues/435/hovercard\" href=\"https://github.com/Jacob-J-Thomas/GraphGoblin/issues/435\">#435</a>'s remaining publication/integration steps under existing authority. Changed source or target context needs the required auditor confirmation; this verdict does not silently carry over.</p>"
+  },
+  "liveAdmission": {
+    "pr": {
+      "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492",
+      "number": 492,
+      "state": "open",
+      "merged": false,
+      "mergeable": true,
+      "draft": true,
+      "body": "Closes #435. Owner acceptance for #276/#325 remains separate.\n\nThe Windows launcher refused a valid checkout reached through a directory junction or symbolic link because its identity helper compared two different path spellings and exited without output. The helper now compares the physical entry files, so either spelling emits the same identity and starts or reuses the matching gateway. Inert imports, configuration/runtime refusals, store checks and fingerprint contents stay intact.\n\nThe permanent Windows acceptance suite independently creates and verifies a real junction and directory symbolic link, then exercises helper output, native cold starts in both directions, same/cross-path warm reuse, wrong-store/settings refusals, exact process ownership and managed cleanup. Its test-only baseline commit `08e60a0ae6d6b7cae853326825365760166f3ad3` reproduced helper silence and native cold refusal through both genuine link types in [Windows CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43787801176/job/133039259616); the unchanged original cases passed. The same native test bytes are included with the fix.\n\nValidation before publication: 13/13 focused API tests, API types and scoped lint/format passed. The exact final built-helper regression failed its three intended assertions on old source and passed 2/2 on the candidate. Independent GPT-6.1 Sol xhigh native QA verified the built gateway through direct and junction paths, both cold starts, warm reuse and mismatch refusals, real TCP/file SQLite, both shell assets, two authenticated drains and independent process/port/store cleanup. Local directory-symlink creation returned EPERM before product execution; the hosted fixed-source Windows result below closes that local verification gap. The initial baseline diagnostic failure and exact-identity recovery, original lint failure and offline inspector corrections are retained.\n\nEvidence: [baseline](docs/qa/2026-11-16-launcher-identity-baseline/README.md), [implementation](docs/qa/2026-11-16-launcher-identity-implementation/README.md), and [candidate native QA plus hosted old-source reproduction](docs/qa/2026-11-16-launcher-identity-candidate/README.md). This publication also archives the already merged #419 final CI/reviews/completion, without changing that implementation.\n\n[Publication-head CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43790735875) passed all four jobs on attempt 1 without retry: 9,619 tests / 41 skips and all 13 coverage floors; Browser 481 passes / one declared LIVE skip with zero retries; Windows 17/17 including both genuine link types; and all four distributed templates. The fixed-source hosted native run verified four cold starts, eight warm reuses, eight mismatch refusals and four managed drains. Optional strict routing performance was off; recorded frame p95 samples were 33.3–33.4 ms, so no strict-performance pass is claimed. The audit threshold passed with 8 low / 13 moderate advisories, and Windows uploaded no native artifact.\n\nClaude Opus 5.5 xhigh formal scan 1 returned READY with no introduced blocker. Root dispositions and the full report are in the PR conversation; nonblocking follow-ups #493–#496 are parked. Fresh Astra max exact-head/target sign-off remains required before merge; one of three formal scans is complete. Source candidate is `c75e277695dae260f0e14279cff8705bab84ef4c`, based on `9fa8b2474c7290adb800c5e26be73511095cae25`. The separate PR #460 owner merge hold and owner instance/store remain untouched. This PR does not install the batch or complete broader intent acceptance.\n",
+      "title": "Fix Windows launcher checkout alias detection",
+      "base": "main",
+      "base_sha": "9fa8b2474c7290adb800c5e26be73511095cae25",
+      "head": "codex/gg-20261116-launcher-identity",
+      "head_sha": "6f383da798872aa0e6bd1e0de1fdcd4e702de9ae",
+      "head_repo_id": 1403707890,
+      "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+      "merge_commit_sha": "5e386d5cc9ed4b022d15ade32d04fcd89c367688",
+      "user": {
+        "login": "Jacob-J-Thomas",
+        "name": "Jacob-J-Thomas",
+        "email": null,
+        "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+        "id": 92639671
+      },
+      "requested_reviewers": null,
+      "requested_team_reviewers": null,
+      "diff": null,
+      "comments": null,
+      "created_at": "2026-11-16T01:42:18Z",
+      "updated_at": "2026-11-16T03:09:21Z",
+      "closed_at": null,
+      "merged_at": null,
+      "commits": 3,
+      "changed_files": 385,
+      "additions": 37985,
+      "deletions": 35,
+      "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492",
+      "display_title": "Fix Windows launcher checkout alias detection"
+    },
+    "jobs": {
+      "jobs": [
+        {
+          "id": 133048319866,
+          "name": "Browser",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43790735875,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install (frozen lockfile)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Install Edge",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Functional browser suite (no retries)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Browser coverage and exclusions",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Upload browser failure evidence",
+              "status": "completed",
+              "conclusion": "skipped",
+              "number": 10
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            }
+          ]
+        },
+        {
+          "id": 133048319973,
+          "name": "Template image",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43790735875,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Build the distributed image",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Load installed templates without network or writable storage",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            }
+          ]
+        },
+        {
+          "id": 133048320097,
+          "name": "Gates",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43790735875,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install (frozen lockfile)",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Reset acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Recovery process acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Chat restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "Wait restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "Prompt restart acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Webhook retry acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Current-format migration acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "Typecheck",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Lint",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Format check",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Layer rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Migration generation is a no-op",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Design token rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Dependency graph rules",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 20
+            },
+            {
+              "name": "Shipped templates and deliberate-invalid refusal",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 21
+            },
+            {
+              "name": "Install Chromium for tooling browser measurements",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 22
+            },
+            {
+              "name": "Unit tests with coverage thresholds",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 23
+            },
+            {
+              "name": "Licence allowlist",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 24
+            },
+            {
+              "name": "Generated docs are current",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 25
+            },
+            {
+              "name": "Design token contrast table is current and passing",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 26
+            },
+            {
+              "name": "Dependency audit",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 27
+            },
+            {
+              "name": "Upload coverage reports",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 28
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 54
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 55
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 56
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 57
+            }
+          ]
+        },
+        {
+          "id": 133048320156,
+          "name": "Windows launcher",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 43790735875,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Install",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "Native Windows launcher acceptance",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "Upload native evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Post Run pnpm/action-setup@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            }
+          ]
+        }
+      ]
+    },
+    "git": {
+      "chunk_id": "32a0ea",
+      "wall_time_seconds": 1.517075,
+      "exit_code": 0,
+      "original_token_count": 66,
+      "output": "## codex/gg-20261116-launcher-identity...origin/codex/gg-20261116-launcher-identity\n9fa8b2474c7290adb800c5e26be73511095cae25\trefs/heads/main\n6f383da798872aa0e6bd1e0de1fdcd4e702de9ae\trefs/pull/492/head\n5e386d5cc9ed4b022d15ade32d04fcd89c367688\trefs/pull/492/merge\n"
+    }
+  }
+}

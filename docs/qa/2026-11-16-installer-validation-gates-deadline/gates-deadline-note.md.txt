@@ -1,0 +1,24 @@
+# PR #497 baseline-carrier Gates deadline (run attempt 1)
+
+This focused packet preserves the original Gates cancellation for Actions run 43804982239, attempt 1. It does not include or reinterpret the later retry.
+
+## Identity and timing
+
+- PR #497 head: `36048e8f40cda520c2ec7b5865d3ff8c5bae6624`.
+- Tested synthetic merge: `190ef604417887325ab557edd31884cbed68cd26`, tree `382dcd6fa76f8b04a914787e08d9291d1672d088`; parents are main/product baseline `be633141be5a0cd2b4f960a46761fabbf2cb82c7` and carrier head `36048e8f40cda520c2ec7b5865d3ff8c5bae6624`.
+- Run 43804982239, attempt 1, started at 2026-11-16 04:35:04Z and completed with overall failure at 05:05:42Z.
+- Gates job 133093663934 started at 04:35:26Z and concluded cancelled at 05:05:41Z. The coverage step was cancelled at 05:05:38Z.
+- The official check annotation states: “The job has exceeded the maximum execution time of 30m0s.” The deadline, rather than an inferred test failure, is the recorded Gates cancellation cause.
+
+The workflow steps before coverage completed successfully. The coverage upload step also succeeded at 05:05:39Z and attached artifact 14198683680 (12,897 bytes, SHA-256 `67b8d48f45af67fb67dcba4435c43a77a2690beef1d191b10f81921d8fa395f4`). Its ZIP contains nine package `coverage-summary.json` files listed in [artifact-member-inventory.json](artifact-member-inventory.json). These are partial outputs: the coverage step did not finish, and this packet does not establish all package coverage gates passed. Licence, generated-docs, design-token-contrast, and dependency-audit steps were skipped.
+
+The overall run attempt also had a separate failed Windows launcher job; its evidence is retained in the neighboring [Windows baseline packet](../436-hosted-baseline-bound/README.md). This note attributes only the Gates job result to the 30-minute deadline. The main/product parent remained `be633141`; this evidence collection made no source changes or reruns. Full required CI remains necessary, and this deadline is not a gate waiver.
+
+## Retained evidence
+
+- [gates-133093663934.decoded.log](gates-133093663934.decoded.log) is the complete connector-decoded Gates job log as saved here (267,119 bytes; SHA-256 `5f735221bbfff08487ceca23e45664561c925ffc589ce2397a94f82f0dcd92a2`). Its checksum covers the saved UTF-8 file.
+- [jobs-attempt1.json](jobs-attempt1.json) preserves the original job and step timestamps and outcomes. [run-attempt1-readback.json](run-attempt1-readback.json) records the attempt-specific terminal run readback. [gates-check-annotations.json](gates-check-annotations.json) preserves the official check annotations.
+- [artifact-14198683680.zip](artifact-14198683680.zip) is the original partial coverage artifact. Its member names, uncompressed sizes, and SHA-256 values are in [artifact-member-inventory.json](artifact-member-inventory.json).
+- [checkout-merge.json](checkout-merge.json), [run-43804982239.json](run-43804982239.json), and [artifacts-connector-response.json](artifacts-connector-response.json) preserve the tested merge, initial run metadata snapshot, and artifact listing.
+
+[SHA256SUMS.txt](SHA256SUMS.txt) hashes every packet file except itself. No issue comment or issue update was made.

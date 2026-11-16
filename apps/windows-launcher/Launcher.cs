@@ -15,6 +15,11 @@ using System.Windows.Forms;
 
 namespace GraphGoblin.Desktop
 {
+    sealed class ConfigurationRefusal : Exception
+    {
+        public ConfigurationRefusal(string message) : base(message) { }
+    }
+
     public sealed class Configuration
     {
         public string Repo { get; set; }
@@ -38,22 +43,22 @@ namespace GraphGoblin.Desktop
                 !Path.IsPathRooted(DataDir ?? "") || Port < 1 || Port > 65535 ||
                 StartupTimeoutSeconds < 1 || StartupTimeoutSeconds > 300 ||
                 WindowTimeoutSeconds < 1 || WindowTimeoutSeconds > 120)
-                throw new Exception("Invalid launcher paths, port or timeouts. Re-run install-windows-launcher.ps1.");
+                throw new ConfigurationRefusal("Invalid launcher paths, port or timeouts. Re-run install-windows-launcher.ps1.");
             foreach (string file in new[] { "apps/api/dist/main.js", "apps/api/dist/instance-identity.js", "apps/web/dist/index.html" })
                 if (!File.Exists(Path.Combine(Repo, file)))
-                    throw new Exception("The configured checkout is not built: " + file + ". Build it with Node 22 before launching.");
+                    throw new ConfigurationRefusal("The configured checkout is not built: " + file + ". Build it with Node 22 before launching.");
             Environment = Environment ?? new Dictionary<string, string>();
             foreach (var item in Environment)
                 if (!item.Key.StartsWith("GG_", StringComparison.Ordinal) || item.Value == null || item.Key.IndexOfAny(new[] { '=', '\0' }) >= 0 || item.Value.Contains("\0"))
-                    throw new Exception("Launcher Environment must contain GG_* string overrides only.");
+                    throw new ConfigurationRefusal("Launcher Environment must contain GG_* string overrides only.");
             foreach (string key in new[] { "GG_HOST", "GG_PORT", "GG_DATA_DIR", "GG_WEB_DIST" })
-                if (Environment.ContainsKey(key)) throw new Exception(key + " is owned by the launcher's explicit configuration fields.");
+                if (Environment.ContainsKey(key)) throw new ConfigurationRefusal(key + " is owned by the launcher's explicit configuration fields.");
             if (!gatewayOnly && (!File.Exists(ChromeProxy ?? "") || string.IsNullOrWhiteSpace(ChromeProfile) ||
                 !System.Text.RegularExpressions.Regex.IsMatch(ChromeAppId ?? "", "^[a-p]{32}$") ||
                 string.IsNullOrWhiteSpace(PwaAppUserModelId) || string.IsNullOrWhiteSpace(LauncherAppUserModelId)))
-                throw new Exception("The installed Chrome PWA is not configured. Re-run install-windows-launcher.ps1 with its shortcut.");
+                throw new ConfigurationRefusal("The installed Chrome PWA is not configured. Re-run install-windows-launcher.ps1 with its shortcut.");
             if (!gatewayOnly && ChromeAppId != Program.ChromeAppId(Port))
-                throw new Exception("The installed Chrome PWA belongs to another origin. Install GraphGoblin from http://127.0.0.1:" + Port + "/app/ and configure its shortcut.");
+                throw new ConfigurationRefusal("The installed Chrome PWA belongs to another origin. Install GraphGoblin from http://127.0.0.1:" + Port + "/app/ and configure its shortcut.");
         }
 
         public SortedDictionary<string, string> ChildEnvironment()
@@ -80,6 +85,8 @@ namespace GraphGoblin.Desktop
             // change a nonexistent console code page; explicitly encode only our pipe writers.
             Console.SetOut(new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true });
             Console.SetError(new StreamWriter(Console.OpenStandardError(), new UTF8Encoding(false)) { AutoFlush = true });
+            if (args.Contains("--validate-install") || args.Contains("--stage-shortcut"))
+                return PrepareInstallation(args);
             string configFile = Application.ExecutablePath + ".json";
             bool gatewayOnly = args.Contains("--ensure-gateway");
             bool quiet = gatewayOnly || args.Any(arg => new[] { "--read-shortcut-id", "--inspect-shortcut", "--expected-app-id", "--create-shortcut", "--stamp-shortcut" }.Contains(arg));
@@ -128,6 +135,53 @@ namespace GraphGoblin.Desktop
                 if (!quiet) MessageBox.Show(message, "GraphGoblin could not open", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return 1;
             }
+        }
+
+        static int PrepareInstallation(string[] args)
+        {
+            try
+            {
+                bool validate = args.Length == 3 && args[0] == "--validate-install" && args[1] == "--config";
+                bool stage = args.Length == 4 && args[0] == "--stage-shortcut";
+                if (!validate && !stage) throw new ConfigurationRefusal("Invalid staged launcher arguments.");
+                if (!IsFullyQualifiedWindowsPath(args[2])) throw new ConfigurationRefusal("Invalid staged launcher configuration path.");
+                var config = new JavaScriptSerializer().Deserialize<Configuration>(File.ReadAllText(args[2]));
+                config.Validate(false);
+                if (stage)
+                {
+                    if (!IsFullyQualifiedWindowsPath(args[1]) || !IsFullyQualifiedWindowsPath(args[3]) ||
+                        !string.Equals(Path.GetExtension(args[1]), ".lnk", StringComparison.OrdinalIgnoreCase))
+                        throw new ConfigurationRefusal("Invalid staged shortcut or final launcher path.");
+                    string finalExe = Path.GetFullPath(args[3]);
+                    ShellIdentity.CreateShortcut(args[1], finalExe, "--config " + Quote(finalExe + ".json"),
+                        config.IconLocation, config.LauncherAppUserModelId);
+                }
+                return 0;
+            }
+            catch (ConfigurationRefusal error) { Console.Error.WriteLine(error.Message); }
+            catch (Exception) { Console.Error.WriteLine("The staged launcher configuration or shortcut could not be prepared."); }
+            return 1;
+        }
+
+        static bool IsFullyQualifiedWindowsPath(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            if (path.Length >= 3 &&
+                ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) &&
+                path[1] == ':' && IsDirectorySeparator(path[2])) return true;
+
+            if (path.Length < 5 || !IsDirectorySeparator(path[0]) || !IsDirectorySeparator(path[1])) return false;
+            int serverEnd = path.IndexOfAny(new[] { '\\', '/' }, 2);
+            if (serverEnd <= 2) return false;
+            int shareStart = serverEnd + 1;
+            if (shareStart >= path.Length || IsDirectorySeparator(path[shareStart])) return false;
+            int shareEnd = path.IndexOfAny(new[] { '\\', '/' }, shareStart);
+            return shareEnd < 0 || shareEnd > shareStart;
+        }
+
+        static bool IsDirectorySeparator(char value)
+        {
+            return value == '\\' || value == '/';
         }
 
         public static string Hash(string value)

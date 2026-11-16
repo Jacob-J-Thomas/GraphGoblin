@@ -1,0 +1,282 @@
+# Install and make a first run
+
+## Check prerequisites
+
+Install Git, Node 22 LTS (22.22.2 or later), pnpm, and the Codex CLI. The repository pins pnpm 12.8.1 and the Codex SDK to 0.160.0. The API runs Codex turns through the CLI bundled with that SDK; you need your own Codex CLI to log in and, for the [Codex plugin](05-mcp-and-codex-plugin.md), version 0.117.0 or newer (verified with 0.160.0). Claude Code is an optional, separately installed harness for native Windows only; GraphGoblin does not install or bundle its CLI. Check the standard prerequisites in PowerShell or Bash:
+
+```powershell
+git --version
+node --version
+pnpm.cmd --version
+codex --version
+codex login
+codex login status
+```
+
+PowerShell blocks in this guide call `pnpm.cmd`, because Windows PowerShell's default execution policy blocks the `pnpm.ps1` shim. If it blocks `codex.ps1` too, call `codex.cmd`. Bash blocks use `pnpm` and `codex`.
+
+Select Node 22.22.2 or later on PATH for the whole shell before installing, building or starting GraphGoblin. Confirm `node --version` reports `v22.22.2` or later; root `devEngines.runtime` enforces `^22.22.2` with `onFail: error`, so every pnpm command refuses an older Node 22 and other majors (several development dependencies need 22.22.2). The built app itself runs on any Node 22: restart a running instance from a Node 22 shell; Settings → Preflight reports Node as failed under any other major. `.nvmrc` selects 22 for version managers; CI uses the latest 22.x. See [ADR-0040](../decisions/ADR-0040-node-22-runtime-baseline.md) and [ADR-0058](../decisions/ADR-0058-node-22-patch-floor-for-development.md).
+
+Run the API as the same operating-system user who logged into Codex. GraphGoblin uses that login and stores no Codex credentials.
+
+To use Claude Code, install and sign in to the native Windows CLI as the same operating-system
+user who runs the API. The adapter accepts version `2.1.285` or newer with the required capabilities and fails closed on
+older versions, missing capabilities or unsupported platforms. It looks for `%USERPROFILE%\.local\bin\claude.exe`; set `GG_CLAUDE_BINARY`
+to the owner-installed executable when it is elsewhere. Run `claude auth login`, then confirm
+**Harness preflight** in Settings. GraphGoblin reports the safe authentication category only; do
+not share raw CLI authentication output. CLI capability and login checks are reported independently.
+Opus 5.5 and Fable 5.1 follow the same technical readiness checks. See [Claude Code in harness integration](../06-harness-integration.md#claude-code-adapter-26).
+
+There are three ways to install: the install script (recommended), the container image, or the manual steps the script performs. All of them start from a clone. Replace the repository URL placeholder with the clone URL from your repository host:
+
+```powershell
+git clone <repository-url> GraphGoblin
+Set-Location GraphGoblin
+```
+
+## Install with the script
+
+The install script checks Node 22 LTS (22.x) and pnpm, prints `codex login status`, runs `pnpm install --frozen-lockfile` and `pnpm build`, creates the data directory, runs the [first-run preflight](#check-readiness-and-run-the-starter-graph), and prints the start command and the UI address. It needs no administrator rights and is safe to run again; it exits non-zero when a prerequisite is missing, a step fails, or a preflight check fails. In PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1
+```
+
+In Bash (Linux, macOS, or Git Bash on Windows):
+
+```bash
+bash scripts/install.sh
+```
+
+The data directory is `~/.graphgoblin` unless `GG_DATA_DIR` is set when you run the script (and when you start the API). A missing or logged-out Codex CLI fails its harness check. A missing or logged-out Claude CLI is a warning while no Claude defaults are configured; it fails preflight if you configure a Claude default. Run the relevant login command as the API user and check **Harness preflight** again.
+
+Then start the API from the repository root and open the address it printed:
+
+```powershell
+pnpm.cmd start
+```
+
+## Optional Windows desktop and taskbar launcher
+
+After building the checkout, start it once with the intended configuration and install
+`http://127.0.0.1:4747/app/` as a Chrome app. Then configure the launcher with that app's original
+Chrome shortcut and the exact Node 22 runtime you use for GraphGoblin:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/install-windows-launcher.ps1 `
+  -NodePath 'C:\path\to\node22\node.exe' `
+  -DataDir 'D:\graphgoblin-data' `
+  -PwaShortcut 'C:\path\to\Chrome Apps\GraphGoblin.lnk'
+```
+
+The default launcher directory is `%LOCALAPPDATA%\GraphGoblin\Launcher`. The script compiles a
+small .NET Framework executable and creates desktop and Start-menu shortcuts. It uses the
+existing GraphGoblin build and installed Chrome PWA. Keep the Chrome source shortcut distinct
+from the launcher outputs. If the Desktop shortcut is the only Chrome source, choose a separate
+`-DesktopShortcut` destination or pass a separate copy as `-PwaShortcut`. Supply
+`-RepoPath`, `-Port`, `-InstallDir`, `-DesktopShortcut` or `-StartMenuShortcut` when
+needed. A different port requires installing the PWA from that exact IPv4 loopback origin; the
+installer and launcher verify its Chrome app ID against the shipped `/app/` manifest identity.
+
+The installer validates the staged launcher and configuration before changing installed files.
+`-NoShortcuts` still validates the configuration and publishes only the launcher and its config.
+If a publication failure leaves restoration unverified, keep the `gg-launcher-stage-*` folders
+near the requested outputs for recovery.
+
+For process settings beyond the explicit paths and port, invoke the script from PowerShell with
+`-Environment @{ GG_REQUIRE_API_KEY = 'true'; GG_DB_URL = 'file:D:/graphgoblin-data/graphgoblin.db' }`.
+Only supplied overrides are persisted; shell `GG_*` variables are not copied. The launcher clears
+inherited `GG_*`, supplies its configured host/port/store/web directory and prepends the selected
+Node directory to PATH. Preserve required overrides when reconfiguring. The JSON next to the
+executable is per-user configuration; keep credentials in GraphGoblin's existing credential/secret
+stores rather than adding them to shortcuts.
+
+Use the new desktop shortcut. Once its PWA window opens, remove the old direct Chrome taskbar pin
+and pin the new running GraphGoblin button. Both routes now go through readiness before opening
+or focusing the installed PWA. The launcher gives the PWA window its own stable taskbar identity
+and relaunch command; simply pinning Chrome's original shortcut bypasses this step. The optional
+`-PinnedShortcut` parameter can rewrite a known existing GraphGoblin pin file, but Explorer may
+cache the old route, so verify an actual cold taskbar click or replace the pin. The installer does
+not claim a successful taskbar test from a shortcut-file update.
+
+An ordinary taskbar click while its PWA is already open focuses that window. If you deliberately
+stopped the gateway while leaving the PWA open, use the desktop shortcut or the taskbar's
+**Open new window** action to invoke readiness again. Focusing a window does not supervise or
+restart a stopped/crashed backend.
+
+Repeated/concurrent clicks reuse one matching gateway. An older build with only plain health, an
+unrelated listener or a different configured store is refused with a diagnostic. Stop an older
+gateway through deliberate shutdown before the first launch of this version. Closing every
+GraphGoblin window leaves gateway execution running. Launching during drain reopens the PWA for
+the existing shutdown controls; it never cancels or forces that drain. See
+[launcher troubleshooting](07-troubleshooting.md#windows-launcher) and
+[ADR-0064](../decisions/ADR-0064-windows-desktop-launcher.md).
+
+## Run the container image
+
+The image holds the API, the web app, and the Codex CLI, for one user on a trusted network. Build and start it with Docker Compose from the repository root:
+
+```bash
+docker compose up -d --build
+```
+
+The compose file publishes port 4747 on the host's loopback only, keeps the data directory in the `graphgoblin-data` volume (`/data` in the container), and mounts your Codex login (`~/.codex`) into the container, so run `codex login` on the host first. The image does not contain Claude Code; its native-Windows adapter refuses the container platform. To use an OpenAI API key instead, set `OPENAI_API_KEY` in the compose file's `environment`. Check readiness while the server runs; stop it before creating a key with a one-off container using the same volume, then restart:
+
+```bash
+docker compose exec graphgoblin node apps/api/dist/main.js --preflight
+docker compose stop graphgoblin
+docker compose run --rm graphgoblin node apps/api/dist/main.js --create-api-key owner
+docker compose up -d graphgoblin
+```
+
+Without Compose:
+
+```bash
+docker build -t graphgoblin .
+docker run -d --name graphgoblin -p 127.0.0.1:4747:4747 -v graphgoblin-data:/data -v "$HOME/.codex:/home/node/.codex" graphgoblin
+```
+
+Inside the container the API listens on `0.0.0.0`, so it warns that it is reachable beyond localhost without API keys. Keep the port on the host's loopback, or set `GG_REQUIRE_API_KEY=true` before publishing it more widely. On a Linux host the mounted `.codex` directory must be readable and writable by uid 1000, the container's `node` user. See [Security and distribution](../11-security-and-distribution.md#container-image-decided-by-implementation-wp-f2) for the image's layout and size.
+
+## Install manually
+
+The script's steps, by hand:
+
+```powershell
+pnpm.cmd install --frozen-lockfile
+pnpm.cmd build
+node apps/api/dist/main.js --preflight
+```
+
+## Start the API and web app
+
+From the repository root:
+
+```powershell
+pnpm.cmd start
+```
+
+With no configuration the API listens on `127.0.0.1:4747`, keeps its data in `~/.graphgoblin`, and serves the web app this checkout built (`apps/web/dist`). Set variables from the table below to change that. For example, in PowerShell:
+
+```powershell
+$env:GG_DATA_DIR = 'D:\graphgoblin-data'
+$env:GG_DEFAULTS = '{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
+pnpm.cmd start
+```
+
+In Bash:
+
+```bash
+export GG_DATA_DIR="$HOME/graphgoblin-data"
+export GG_DEFAULTS='{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}'
+pnpm start
+```
+
+Run one API process per data directory and SQLite database file. The API takes `<data-directory>/graphgoblin.lock` and `<database-file>.graphgoblin.lock` before opening the database, applying migrations, or recovering runs. If its PID is still alive, a second start exits 1 with `another GraphGoblin process holds <path>`, even on a different port or with another `GG_DATA_DIR` pointing at the same external database. Directory junction/symlink aliases resolve to the same ownership path; a database with multiple hard links is refused. A dead PID's lock, or one naming this process's own PID without an in-process hold, is replaced automatically; a malformed lock or an owner whose death cannot be verified is refused. Stop the API before `--create-api-key` or a confirmed reset, which take the same writer locks. Read-only `--preflight` can run alongside a server. Keep the same `GG_DATA_DIR` with an external `GG_DB_URL` so the database and its master key/artifacts stay together.
+
+`pnpm --filter @graphgoblin/api start` is equivalent. The start scripts run the built entry point. Its source and runtime paths are:
+
+```text
+apps/api/src/main.ts
+apps/api/dist/main.js
+```
+
+To run that entry directly, keep the same environment and use the repository root:
+
+```powershell
+node apps/api/dist/main.js
+```
+
+| Variable                 | Default and use                                                                                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GG_HOST`                | `127.0.0.1`. Change it only when you intend to accept remote connections; the API logs a warning when it listens beyond localhost without API keys.                                                                       |
+| `GG_PORT`                | `4747`. Choose another free port if needed.                                                                                                                                                                               |
+| `GG_DATA_DIR`            | `~/.graphgoblin` (`/data` in the container image). A relative value is resolved from the process working directory.                                                                                                       |
+| `GG_DB_URL`              | `file:<data-directory>/graphgoblin.db`. Override it only to keep the database elsewhere.                                                                                                                                  |
+| `GG_WEB_DIST`            | Unset: the checkout's `apps/web/dist` when it has been built. Point it at another built web directory, or set it empty to serve no UI.                                                                                    |
+| `GG_REQUIRE_API_KEY`     | `false`. Set `true` to require a key on [every non-public route][public-routes]; the web app then asks for one. See [the first key](06-settings-and-secrets.md#create-api-keys).                                          |
+| `GG_MASTER_KEY`          | Unset. Base64 of 32 bytes; otherwise the key lives in `<data-directory>/master.key`. See [Preserve the master key](06-settings-and-secrets.md#preserve-the-master-key).                                                   |
+| `GG_DEFAULTS`            | JSON harness-keyed defaults, e.g. `{"byHarness":{"codex":{"model":"gpt-6-luna","effort":"low"}}}`. Old default-model/effort environment variables are rejected with upgrade guidance.                                     |
+| `GG_CODEX_BINARY`        | Unset, so the SDK uses its bundled Codex binary. Set an absolute native executable path to override it.                                                                                                                   |
+| `GG_MAX_CONCURRENT_RUNS` | `4`, range 1 to 64. Runs executing at once; parked runs do not count.                                                                                                                                                     |
+| `GG_TIMER_POLL_MS`       | `1000`. How often timers, cron schedules, and poll triggers are checked.                                                                                                                                                  |
+| `GG_HOOK_RATE_LIMIT`     | `60`. Webhook deliveries accepted per endpoint per minute.                                                                                                                                                                |
+| `GG_LOG_LEVEL`           | `info`. One of `fatal`, `error`, `warn`, `info`, `debug`, `trace`, or `silent`.                                                                                                                                           |
+| `GG_SWAGGER_UI`          | `true`. Serves interactive API documentation at `/docs`; the OpenAPI document is always at `/openapi.json`.                                                                                                               |
+| `GG_JEV_API_KEY`         | Unset. Seeds the encrypted `jev-api-key` secret at startup only when absent; the secret store wins. Falls back to `JEV_API_KEY` only when unset, not when empty. See [secrets](06-settings-and-secrets.md#store-secrets). |
+| `JEV_API_KEY`            | Unset. Fallback seed for `jev-api-key` only when `GG_JEV_API_KEY` is unset. Existing secrets are never overwritten.                                                                                                       |
+
+For a fresh store, startup seeds the Jev secret from `GG_JEV_API_KEY`, else from `JEV_API_KEY`. The seed log names the variable actually used (`seeded jev-api-key from GG_JEV_API_KEY` or `seeded jev-api-key from JEV_API_KEY`), never its value. An empty seed or an existing secret produces no seed log line.
+
+Boolean variables accept `true`, `false`, `1`, `0`, `yes`, or `no`. An invalid value stops startup with an `invalid configuration` message.
+
+The default data directory and built web directory are:
+
+```text
+~/.graphgoblin
+apps/web/dist
+```
+
+Earlier development builds defaulted to `./data` under the working directory. If you kept data there, set `GG_DATA_DIR` to that directory, or stop the API and move its contents to `~/.graphgoblin`.
+
+Open the UI. The server root redirects here:
+
+```text
+http://127.0.0.1:4747/app/
+```
+
+If this returns 404, check the web-directory setting and confirm that the built directory contains the shell:
+
+```text
+apps/web/dist/index.html
+```
+
+With `GG_REQUIRE_API_KEY=true` the [public shell][public-routes] still loads and asks for an API key on the first 401; paste a key [created on the command line](06-settings-and-secrets.md#the-first-key-from-the-command-line). The key is kept in this browser until you choose **Forget key** in Settings.
+
+## Check readiness and run the starter graph
+
+The first-run preflight checks Node, the data directory, the master key, the database and pending migrations, the Codex harness (installed and logged in), the optional Jev key, and the default model. Each check is `ok`, `WARN` (works, or is set up on first start), or `FAIL` (runs will not work until it is fixed). It changes nothing and is safe before the first start. From the repository root, with the same environment as the server:
+
+```powershell
+node apps/api/dist/main.js --preflight
+```
+
+It prints a table and exits 1 when any check failed. Before the first start the master key and database are warnings, because the start creates them. While the API runs, the same report is available over HTTP (`GET /system/preflight` needs a key when keys are required; see [Public routes][public-routes]):
+
+```bash
+curl -sS http://127.0.0.1:4747/system/preflight
+```
+
+**Settings → Harness preflight** in the UI, and `GET /harness/preflight`, show the Codex check alone.
+
+1. Open **Loops**, enter a name in **New loop name**, and click **Create**. The editor opens on a starter graph that connects a manual trigger to an exit.
+2. Click **Publish**, then **Open in Runs**, and click **Start run**. The inspector opens and should show a succeeded run.
+3. Follow [Build a loop](02-build-a-loop.md) to insert an inference node and have Codex produce a result.
+
+## Locate your data
+
+Under the configured data directory, the API creates these files and directories:
+
+```text
+~/.graphgoblin/
+  graphgoblin.db
+  graphgoblin.db-wal    (may exist while SQLite uses WAL)
+  graphgoblin.db-shm    (may exist)
+  graphgoblin.lock      (PID and start time; held while the API owns the directory)
+  graphgoblin.db.graphgoblin.lock  (exclusive SQLite-file owner; next to an external GG_DB_URL too)
+  master.key
+  artifacts/<kind>/<content-hash>
+  workspaces/<run-id>/
+```
+
+SQLite holds definitions, versions, runs, events, settings, encrypted secrets, API-key hashes, and trigger state. Artifacts hold transcripts and other stored payloads. Temporary workspaces live under the data directory; fixed workspaces can live elsewhere. The master-key file is created on first start unless you supply `GG_MASTER_KEY`; preserve it with the database. See [Back up and restore](06-settings-and-secrets.md#back-up-and-restore).
+
+## Stop and restart safely
+
+Press **Ctrl+C** once in the API terminal (or send SIGTERM) to start a normal drain ([ADR-0049](../decisions/ADR-0049-deliberate-shutdown.md)). The gateway stops starting independent work but keeps HTTP, the browser app and the inspector open, and lets running work, including Codex and Claude turns, scripts and the children they start, reach its result. Queued independent runs, waits and paused runs stay recorded for the next start. When nothing is left running, the gateway closes its streams and HTTP, closes SQLite, releases its lock and exits. Meanwhile every open browser page shows the drain, links the active runs and offers **Keep waiting**, which sets no timer, and **Force stop**, which asks for confirmation. After the grace period (five minutes by default, `GG_SHUTDOWN_GRACE_MS`) the log and the pages say that the grace has elapsed; nothing is interrupted until you choose. A later Ctrl+C, at least one second after the first, forces too. Force interrupts the active work and records it as `RUN_INTERRUPTED_BY_STOP`, which is never resumed automatically. If force cannot confirm that a process stopped, the gateway stays in `force-failed` and holds its lock until you choose **Force exit** or press Ctrl+C again. See [Gateway is draining](07-troubleshooting.md#gateway-is-draining-224). Let the process exit before starting another API or creating a key against the same data directory. After an abrupt exit, the next start replaces the lock only if its recorded PID is dead.
+
+Restart with the same environment and start command. Boot applies pending migrations, recovers active runs, restores timers, and re-arms published triggers. Paused runs stay paused. A script that was executing when the process stopped abruptly is not run again: its run fails with `SCRIPT_OUTCOME_UNCERTAIN` until you inspect its side effects and choose Resume or Replay ([ADR-0059](../decisions/ADR-0059-uncertain-script-recovery.md)). For longer stops, choose an appropriate [cron missed-fire policy](04-triggers.md#schedule-with-cron).
+
+Read [Security and distribution](../11-security-and-distribution.md) for the intended deployment posture. Continue with [Build a loop](02-build-a-loop.md).
+
+[public-routes]: ../07-api-and-streaming.md#public-routes-decided-by-implementation-2026-10-03

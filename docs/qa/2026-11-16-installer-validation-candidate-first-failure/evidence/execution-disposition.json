@@ -1,0 +1,108 @@
+{
+  "driverSeconds": 313.0259882,
+  "actualDriver": {
+    "spawn": {
+      "pid": 9328,
+      "parentPid": 6396,
+      "birthUtc": "2026-11-16T06:50:36.6695358Z",
+      "birthError": null,
+      "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "arguments": [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-STA",
+        "-File",
+        "D:\\a\\_temp\\qa436-carrier-43819015672-1\\packets\\native\\run.ps1",
+        "-Phase",
+        "candidate",
+        "-Checkout",
+        "D:\\a\\GraphGoblin\\GraphGoblin",
+        "-ExpectedCommit",
+        "30973ad7c1fb3a74d34967efc17a07bf42d593ef",
+        "-NodePath",
+        "C:\\hostedtoolcache\\windows\\node\\22.23.4\\x64\\node.exe",
+        "-ChromeProxy",
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome_proxy.exe",
+        "-EvidenceName",
+        "qa436-candidate-first"
+      ]
+    },
+    "exit": {
+      "pid": 9328,
+      "birthUtc": "2026-11-16T06:50:36.6695358Z",
+      "exitCode": 1,
+      "exitUtc": "2026-11-16T06:55:50.0496740Z"
+    },
+    "close": {
+      "pid": 9328,
+      "exitCode": 1,
+      "streamsClosed": true,
+      "closedUtc": "2026-11-16T06:55:50.0709580Z",
+      "stdoutBytes": 0,
+      "stderrBytes": 0
+    }
+  },
+  "nativeCanaries": [
+    {
+      "ordinal": 147,
+      "opcode": "1",
+      "time": "2026-11-16T06:50:36.601440300+00:00",
+      "pid": 9016,
+      "parent": 6396,
+      "processKey": "0xFFFF950B6AF50080",
+      "image": "node.exe",
+      "commandLine": "\"C:\\hostedtoolcache\\windows\\node\\22.23.4\\x64\\node.exe\" -e process.stdout.write('qa436-candidate-first-process-canary-before-1f430cc508b04008a102e857b1cb3b89')"
+    },
+    {
+      "ordinal": 1538,
+      "opcode": "1",
+      "time": "2026-11-16T06:55:50.121102000+00:00",
+      "pid": 7952,
+      "parent": 6396,
+      "processKey": "0xFFFF950B6AF50080",
+      "image": "node.exe",
+      "commandLine": "\"C:\\hostedtoolcache\\windows\\node\\22.23.4\\x64\\node.exe\" -e process.stdout.write('qa436-candidate-first-process-canary-after-97257e67fe564067926f891526de5f63')"
+    }
+  ],
+  "decoder": {
+    "spawn": {
+      "pid": 9092,
+      "parentPid": 6396,
+      "birthUtc": "2026-11-16T06:55:59.8723306Z",
+      "birthError": null,
+      "executable": "C:\\Windows\\System32\\tracerpt.exe",
+      "arguments": [
+        "D:\\a\\_temp\\qa436-candidate-first-supervisor\\process-start.etl",
+        "-o",
+        "D:\\a\\_temp\\qa436-candidate-first-supervisor\\process-start.xml",
+        "-of",
+        "XML",
+        "-int",
+        "D:\\a\\_temp\\qa436-candidate-first-supervisor\\decoder-schema.xml",
+        "-summary",
+        "D:\\a\\_temp\\qa436-candidate-first-supervisor\\decoder-summary.txt"
+      ]
+    },
+    "exit": {
+      "pid": 9092,
+      "birthUtc": "2026-11-16T06:55:59.8723306Z",
+      "exitCode": 0,
+      "exitUtc": "2026-11-16T06:56:01.0931838Z"
+    },
+    "close": {
+      "pid": 9092,
+      "exitCode": 0,
+      "streamsClosed": true,
+      "closedUtc": "2026-11-16T06:56:01.0962960Z",
+      "stdoutBytes": 699,
+      "stderrBytes": 0
+    }
+  },
+  "validatorPids": [
+    3036,
+    10056,
+    6540,
+    6748
+  ]
+}

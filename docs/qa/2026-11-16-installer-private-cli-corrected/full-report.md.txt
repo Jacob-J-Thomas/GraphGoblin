@@ -1,0 +1,163 @@
+# #436 private-path regression: independent behaviour QA of the corrected launcher
+
+**Worker:** Claude Code with the `claude-opus-5-5` model. The brief requested xhigh effort; I cannot observe the effort setting from inside the session.
+
+This is bounded component QA of the GPT-authored F1 correction. It is not a PR scan, sign-off, CI run, hosted or public-installer matrix, rollback test or owner acceptance.
+
+## Result
+
+- **F1 is fixed in the local component scope.** Every drive-relative (`C:x`) and current-drive root-relative (`\x`) form tried was refused: the config in both modes, the staged link and the final EXE.
+  - Each refusal exited 1 with the exact fixed text and 0 B stdout.
+  - The fixture tree stayed byte-, attribute- and mtime-identical, with no canary start, store or log.
+  - The absolute-path positives C01, C07 and C08 still pass.
+- **C11b is now observed:** exit 1, `Invalid staged shortcut or final launcher path.`, no effects.
+- One fresh run executed **29 of 29 cases and 384 of 384 checks**. The harness exited 0, `firstFailure` is null and there were no setup or tool failures.
+
+## Bindings
+
+**Corrected source.** The six live files were checked against `launcher-436-corrected-candidate-source.json` (SHA-256 `431f2f54…cf51`) four times: in Bash at 06:20:25Z, inside the harness before compiling, inside the harness after the matrix, and in Bash at 06:24:28Z. All matched every time.
+
+| Path | SHA-256 | Bytes |
+| --- | --- | --- |
+| `scripts/install-windows-launcher.ps1` | `2f5874d33465f8a614f08c79e2a5433e0980aad6f9674a226daeaf584f06af1b` | 23983 |
+| `apps/windows-launcher/Launcher.cs` | `1adc34b4f5188dac9ba1568c1763dcad801dccc464115fd7123c4d35671c9d68` | 39786 |
+| `tooling/scripts/windows-launcher.acceptance.mjs` | `f2ec7e5f885934e200ac720f3a5c2a2b07e5b1adae87097dcedf420b2973a561` | 50742 |
+| `docs/09-frontend-and-pwa.md` | `d5db487253b51e1c199bbfb008495ceeff1d857f09e9419a57d1375f95c89ef8` | 322767 |
+| `docs/guide/01-install-and-first-run.md` | `7aeae3810784e0eb569985dac63d2a6c14c90fc4a74ea03ed66d7d2ddbab2a9c` | 22130 |
+| `CHANGELOG.md` | `014cd3de87d8ec64f5e4a7be5ba01d62cf6d47d1a9250b1a533289c20d2f9114` | 162920 |
+
+**Checkout state before and after the run (identical):**
+
+- HEAD `36048e8f…` and tree `382dcd6f…`.
+- The worktree index (`…/worktrees/GraphGoblin33/index`) hashed `7ff181e6…8c09` both times. That equals the first run's value, and there are no staged names.
+- `git status --porcelain` output was identical.
+- My first command was a plain `git status`. I used `--no-optional-locks` from then on.
+
+**Harness and helper.**
+
+- I copied, without modifying, the first-run harness `d22ff263…7064` and canary `ea96abbe…7393`.
+- The new harness hashes `3661872a3fb223d2ab508cbd9c312e21b9c667716bbe2e525208d42ceaa7c673`. It is ASCII and was frozen before the run.
+- The helper `launcher-436-native-v2-preparation/windows.cs` hashed `28455c8a6eb9b793f17c58014060085052156a9175dd2c670a91f4d8f33f0222` before and after the run.
+
+**First-run references (immutable, not rerun):**
+
+- C11a: PID 15948, exit 0.
+- Post-processing: harness exit 2.
+- Outcome `8b1ab9b3…6d56` and plan `8c7c96dd…8bbe` are unchanged.
+
+## Exact harness delta
+
+The diff is in `work/harness.diff` (`92be575c2b82848a6510bc49aac2fcd8fbeb38545b44fba21392f28a0004a8ac`):
+
+1. Two provenance comment lines.
+2. `$WorkRoot` points to this worker's `work` directory.
+3. The two changed manifest rows, plus the two `Launcher.cs` literals in S3 and the post-run check, use the corrected hashes and byte counts.
+4. `@($script:CaseResults).Count` became `$script:CaseResults.Count`.
+5. The path-echo fragment is now `opus-path-regression`. Keeping `opus-behavior-qa` would have made that oracle unable to fail.
+6. New cwd references:
+   - an empty `rel-stage\` directory;
+   - `rel-final-existing\GraphGoblin.exe`, an inert canary whose record was added to the canary list.
+7. Setup guards that throw a harness error, not a product failure. They prove the following before the matrix freeze:
+   - valid config A exists and the cwd-relative config is its byte copy;
+   - the referenced files and directories exist on the child's drive;
+   - the would-be outputs are absent.
+8. Cases C12a–f were appended.
+
+All 23 original cases are unchanged, together with their oracles, permitted change sets, the 20 s / 5 s / 360 s limits, the stop rule and receipt capture. Under PowerShell 5.1 `Parser.ParseFile` the harness had 0 errors before execution.
+
+## Execution
+
+One fresh, exclusive `work/run-01` ran from 06:24:09.390Z to 06:24:14.423Z.
+
+**Harness process:** system Windows PowerShell 5.1.26100.9818, Desktop, x64, STA. PID 57296, born 06:24:09.4106510Z.
+
+**Compilation:** Framework64 `csc` 14.8.10001.0 with the installer's exact flags. The candidate build is `86a741baa53ed0bcbd15756f61504eccb97acf541828cbaf72012817d187da05` (33280 B, x64 PE). The same three CS0649 warnings appeared as in the first run.
+
+**Children:** 32 in total (3 compiles and 29 launcher cases).
+
+- All exited within the 20 s limit (maximum 187 ms).
+- All streams closed within 5 ms. Every process had exited at release, and none was killed.
+- Every argv round-tripped through `CommandLineToArgvW`.
+- The child cwd was `<RUN>\fx\child-cwd` on drive C:.
+
+**Strictness probes.** All exited 1 with 0 B stdout, CRLF-terminated stderr and an empty tree diff. Every argv would succeed if accepted. CFG is `Invalid staged launcher configuration path.` and LNK is `Invalid staged shortcut or final launcher path.`
+
+| Case | PID | Birth (UTC) | ms | Probe | stderr |
+| --- | --- | --- | --- | --- | --- |
+| C11a | 48732 | 06:24:13.4987775 | 49 | validate `--config C:rel-config\GraphGoblin.exe.json` (valid copy in cwd) | CFG |
+| C11b | 42556 | 06:24:13.5923657 | 64 | stage, final `C:rel-final\GraphGoblin.exe` | LNK |
+| C12a | 33116 | 06:24:13.6988408 | 49 | validate `--config \Users\…\stage-exe\GraphGoblin.exe.json` | CFG |
+| C12b | 13324 | 06:24:13.7886587 | 48 | stage, config `C:rel-config\GraphGoblin.exe.json` | CFG |
+| C12c | 53880 | 06:24:13.8784541 | 65 | stage, link `C:rel-stage\GraphGoblin.lnk` | LNK |
+| C12d | 20896 | 06:24:13.9865949 | 65 | stage, link `\Users\…\stage-f\root-relative.lnk` | LNK |
+| C12e | 47648 | 06:24:14.1032532 | 69 | stage, final `\Users\…\final α x\GraphGoblin.exe` (existing) | LNK |
+| C12f | 44612 | 06:24:14.2255737 | 67 | stage, final `C:rel-final-existing\GraphGoblin.exe` (existing) | LNK |
+
+Stage probes that were not testing the config used valid absolute config A. After the run, `rel-stage` and `stage-f` were empty.
+
+**Why these probes are decisive.** The first run's C11a showed that a loose predicate resolves such paths against the cwd. Its C07 showed that an absent final directory is acceptable.
+
+**C01–C10 (21 cases):** every exit code and exact stderr text equals the first run's.
+
+**Positive staged links**, decoded with the independent `IShellLinkW` and property-store helper. For both, the icon equals the configured `IconLocation`, the tree diff is exactly the added link plus the staging directory's mtime, and decoding mutated nothing.
+
+| Case | Link | Result | AUMID |
+| --- | --- | --- | --- |
+| C07 | `stage-a\GraphGoblin.lnk` (3255 B, `85f56401…4801`) | Target, `--config "<final>.json"` and working dir all in `final-first-install`. Final directory not created. | `GraphGoblin.584f9c7c827197cbae24abc7` |
+| C08 | `stage α b\GraphGoblin.lnk` (3617 B, `645bb765…f3ed`) | Target `final α x\GraphGoblin.exe`, normalised from `sub\..\`. Existing final files unchanged. | `GraphGoblin.2c73afcfc2e41c08175f7dc1` |
+
+## Native vs controlled; limits
+
+**Observed natively:**
+
+- the PowerShell 5.1 process and the `csc` build;
+- process PIDs, births and exits, and raw pipe bytes;
+- NTFS state;
+- Shell Link COM and the property store;
+- `CommandLineToArgvW`;
+- the child's real cwd and current-drive resolution context.
+
+**Controlled fixtures:**
+
+- inert canaries at the Node, ChromeProxy, final-EXE and `rel-final-existing` paths;
+- placeholder repo files;
+- nonexistent icons;
+- synthetic configs and canary token `GG436QA_CANARY_ee9072c4a684`;
+- the `ChromeAppId` and AUMIDs computed by the harness.
+
+No real Node, Chrome, gateway, browser, PWA, owner profile or store was involved.
+
+**Limits:**
+
+- Single local host (Windows 11 10.0.26300). This is not the hosted, public-installer, rollback or CI matrix.
+- No UNC runtime claim.
+- Not exercised: `/x`, `C:/x`, lower-case drives and device prefixes. Source reading only: the predicate rejects `/x` and admits `\\?\…` and `\\.\…` through its UNC branch. Those are fully qualified, so this is consistent with the contract.
+- The public installer's relative handling was not exercised. Its hash is unchanged.
+- No ETW trace. Named-mutex absence was not observed, and no UI automation was used.
+
+## Cleanup
+
+- No `GraphGoblin.exe` or `inert-canary.exe` process remained, and 0 live processes have an image under `run-01`.
+- A pre-existing `127.0.0.1:4747` listener (PID 19500) appeared in a read-only `netstat`. It is not one of my 32 children, and I did not contact it.
+- I opened no listeners and made no network or provider calls.
+- I made no repository, source, test, index or GitHub changes.
+- Everything I wrote is under `work/` plus this report. All evidence was retained.
+
+## Evidence
+
+All paths are relative to `launcher-436-opus-path-regression/work/`. The full 135-file inventory is in `SHA256SUMS.txt` (`64f800fcdca7fa3923e0d6fbac693e8cbe57efcc7f9c728a32f828f254c398ee`).
+
+| File | SHA-256 |
+| --- | --- |
+| `harness/qa-harness.ps1` | `3661872a3fb223d2ab508cbd9c312e21b9c667716bbe2e525208d42ceaa7c673` |
+| `harness/canary.cs` | `ea96abbe98eee094cf7a40bfd1c6b828f34166387e83a050eb3a2228bf747393` |
+| `original-copy/qa-harness.ps1` | `d22ff2639281d698cde333b2df8f2f8797d76f5591a696fa4962a6aab31d7064` |
+| `harness.diff` | `92be575c2b82848a6510bc49aac2fcd8fbeb38545b44fba21392f28a0004a8ac` |
+| `pre-execution-freeze.txt` | `cd14ab0d69d5cf3513b85b2ef71c2cec1f38f67e20e4fe16960baa842b911f53` |
+| `post-execution-check.txt` | `c7c9cca934981929203668bd29fc05f2fc2fb955e1ea83d0368484ad46fd87c8` |
+| `run-01/matrix-plan.json` (frozen before the first launcher child) | `bb4667bedaa6bc6ab373f07ad3718479c7b8a42886935f851c346671c078986c` |
+| `run-01/matrix-outcome.json` | `f7ae13da96f8609126f6e1ad59b74a4005c919122e87a6b72858b0e4fe90af8f` |
+| `run-01/harness-progress.log` | `7fdef722df2b34501143a31a2f8b5d8ca75d92d3a906b6a4aec32c055ac2c84c` |
+| `harness-run-01.stdout.txt` | `1e9c7e72d586f9cca4e50edaad002c12fddda798257334a8c72e814f784e52fa` |
+| `harness-run-01.exitcode.txt` (`exit=0`; stderr file is 0 B) | `19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061` |
+| `run-01/receipts/` | 96 files: 32 × receipt JSON, raw stdout and raw stderr |

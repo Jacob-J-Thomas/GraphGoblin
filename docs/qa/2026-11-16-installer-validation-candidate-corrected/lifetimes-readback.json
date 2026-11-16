@@ -1,0 +1,677 @@
+{
+  "scope": "retained native process events; cutoff at closing canary birth",
+  "openingCanaryOrdinal": 143,
+  "closingCanaryOrdinal": 1458,
+  "pairedRootedLifetimes": 399,
+  "unpairedOrAmbiguousLifetimes": 0,
+  "pairCriteria": [
+    "same PID, process key, parent and image",
+    "one end after birth and before next same-PID birth",
+    "end prior to closing canary birth"
+  ],
+  "discrepancyDisposition": "Combined process key and PID were reused after completed lifetimes",
+  "reusedPidEventPairs": [
+    {
+      "start": {
+        "ordinal": 385,
+        "opcode": "1",
+        "time": "2026-11-16T07:32:08.522644000+00:00",
+        "pid": 8984,
+        "key": "0xFFFFCB82196E9080",
+        "parent": 7248,
+        "image": "node.exe",
+        "argv": "\"C:\\hostedtoolcache\\windows\\node\\22.23.4\\x64\\node.exe\" \"--version\"",
+        "exitStatus": 259
+      },
+      "end": {
+        "ordinal": 388,
+        "opcode": "2",
+        "time": "2026-11-16T07:32:08.555659400+00:00",
+        "pid": 8984,
+        "key": "0xFFFFCB82196E9080",
+        "parent": 7248,
+        "image": "node.exe",
+        "argv": "\"C:\\hostedtoolcache\\windows\\node\\22.23.4\\x64\\node.exe\" \"--version\"",
+        "exitStatus": 0
+      },
+      "nextSamePidBirth": {
+        "ordinal": 593,
+        "opcode": "1",
+        "time": "2026-11-16T07:33:21.394000600+00:00",
+        "pid": 8984,
+        "key": "0xFFFFCB82196E9080",
+        "parent": 3420,
+        "image": "conhost.exe",
+        "argv": "\\??\\C:\\Windows\\system32\\conhost.exe 0xffffffff -ForceV1",
+        "exitStatus": 259
+      },
+      "nearestDirectInstallerReceipt": "04/installer"
+    },
+    {
+      "start": {
+        "ordinal": 593,
+        "opcode": "1",
+        "time": "2026-11-16T07:33:21.394000600+00:00",
+        "pid": 8984,
+        "key": "0xFFFFCB82196E9080",
+        "parent": 3420,
+        "image": "conhost.exe",
+        "argv": "\\??\\C:\\Windows\\system32\\conhost.exe 0xffffffff -ForceV1",
+        "exitStatus": 259
+      },
+      "end": {
+        "ordinal": 630,
+        "opcode": "2",
+        "time": "2026-11-16T07:33:23.431045600+00:00",
+        "pid": 8984,
+        "key": "0xFFFFCB82196E9080",
+        "parent": 3420,
+        "image": "conhost.exe",
+        "argv": "\\??\\C:\\Windows\\system32\\conhost.exe 0x4",
+        "exitStatus": 0
+      },
+      "nextSamePidBirth": {
+        "ordinal": 875,
+        "opcode": "1",
+        "time": "2026-11-16T07:34:15.620024400+00:00",
+        "pid": 8984,
+        "key": "0xFFFFCB82196E9080",
+        "parent": 10092,
+        "image": "GraphGoblin.exe",
+        "argv": "\"D:\\a\\_temp\\qa436-candidate-corrected\\work\\17\\install α\\gg-launcher-stage-4ece0baddec746dc84335b428009b54a\\GraphGoblin.exe\" \"--inspect-shortcut\" \"D:\\a\\_temp\\qa436-candidate-corrected\\work\\17\\source\\input variant.lnk\"",
+        "exitStatus": 259
+      },
+      "nearestDirectInstallerReceipt": "13/seed"
+    },
+    {
+      "start": {
+        "ordinal": 594,
+        "opcode": "1",
+        "time": "2026-11-16T07:33:21.819829000+00:00",
+        "pid": 2352,
+        "key": "0xFFFFCB8217F8F080",
+        "parent": 3420,
+        "image": "node.exe",
+        "argv": "\"C:\\hostedtoolcache\\windows\\node\\22.23.4\\x64\\node.exe\" \"--version\"",
+        "exitStatus": 259
+      },
+      "end": {
+        "ordinal": 597,
+        "opcode": "2",
+        "time": "2026-11-16T07:33:21.848400100+00:00",
+        "pid": 2352,
+        "key": "0xFFFFCB8217F8F080",
+        "parent": 3420,
+        "image": "node.exe",
+        "argv": "\"C:\\hostedtoolcache\\windows\\node\\22.23.4\\x64\\node.exe\" \"--version\"",
+        "exitStatus": 0
+      },
+      "nextSamePidBirth": {
+        "ordinal": 1068,
+        "opcode": "1",
+        "time": "2026-11-16T07:34:58.783140300+00:00",
+        "pid": 2352,
+        "key": "0xFFFFCB8217F8F080",
+        "parent": 5156,
+        "image": "GraphGoblin.exe",
+        "argv": "\"D:\\a\\_temp\\qa436-candidate-corrected\\work\\22\\gg-launcher-stage-6be41139a48345d18c6e6a3c8fc10b0a\\GraphGoblin.exe\" \"--inspect-shortcut\" \"D:\\a\\_temp\\qa436-candidate-corrected\\work\\22\\source\\Chrome α.lnk\"",
+        "exitStatus": 259
+      },
+      "nearestDirectInstallerReceipt": "13/seed"
+    },
+    {
+      "start": {
+        "ordinal": 875,
+        "opcode": "1",
+        "time": "2026-11-16T07:34:15.620024400+00:00",
+        "pid": 8984,
+        "key": "0xFFFFCB82196E9080",
+        "parent": 10092,
+        "image": "GraphGoblin.exe",
+        "argv": "\"D:\\a\\_temp\\qa436-candidate-corrected\\work\\17\\install α\\gg-launcher-stage-4ece0baddec746dc84335b428009b54a\\GraphGoblin.exe\" \"--inspect-shortcut\" \"D:\\a\\_temp\\qa436-candidate-corrected\\work\\17\\source\\input variant.lnk\"",
+        "exitStatus": 259
+      },
+      "end": {
+        "ordinal": 877,
+        "opcode": "2",
+        "time": "2026-11-16T07:34:15.704926200+00:00",
+        "pid": 8984,
+        "key": "0xFFFFCB82196E9080",
+        "parent": 10092,
+        "image": "GraphGoblin.exe",
+        "argv": "\"D:\\a\\_temp\\qa436-candidate-corrected\\work\\17\\install α\\gg-launcher-stage-4ece0baddec746dc84335b428009b54a\\GraphGoblin.exe\" \"--inspect-shortcut\" \"D:\\a\\_temp\\qa436-candidate-corrected\\work\\17\\source\\input variant.lnk\"",
+        "exitStatus": 0
+      },
+      "nextSamePidBirth": null,
+      "nearestDirectInstallerReceipt": "17/installer"
+    },
+    {
+      "start": {
+        "ordinal": 1068,
+        "opcode": "1",
+        "time": "2026-11-16T07:34:58.783140300+00:00",
+        "pid": 2352,
+        "key": "0xFFFFCB8217F8F080",
+        "parent": 5156,
+        "image": "GraphGoblin.exe",
+        "argv": "\"D:\\a\\_temp\\qa436-candidate-corrected\\work\\22\\gg-launcher-stage-6be41139a48345d18c6e6a3c8fc10b0a\\GraphGoblin.exe\" \"--inspect-shortcut\" \"D:\\a\\_temp\\qa436-candidate-corrected\\work\\22\\source\\Chrome α.lnk\"",
+        "exitStatus": 259
+      },
+      "end": {
+        "ordinal": 1070,
+        "opcode": "2",
+        "time": "2026-11-16T07:34:58.867270400+00:00",
+        "pid": 2352,
+        "key": "0xFFFFCB8217F8F080",
+        "parent": 5156,
+        "image": "GraphGoblin.exe",
+        "argv": "\"D:\\a\\_temp\\qa436-candidate-corrected\\work\\22\\gg-launcher-stage-6be41139a48345d18c6e6a3c8fc10b0a\\GraphGoblin.exe\" \"--inspect-shortcut\" \"D:\\a\\_temp\\qa436-candidate-corrected\\work\\22\\source\\Chrome α.lnk\"",
+        "exitStatus": 0
+      },
+      "nextSamePidBirth": null,
+      "nearestDirectInstallerReceipt": "22/seed"
+    }
+  ],
+  "actualDirectExitMatches": [
+    {
+      "receipt": "driver",
+      "pid": 3760,
+      "startOrdinal": 149,
+      "endOrdinal": 1455,
+      "nativeEndUtc": "2026-11-16T07:36:47.617031900+00:00",
+      "directExitUtc": "2026-11-16T07:36:47.6012691Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "real-node",
+      "pid": 7236,
+      "startOrdinal": 157,
+      "endOrdinal": 160,
+      "nativeEndUtc": "2026-11-16T07:31:27.667329800+00:00",
+      "directExitUtc": "2026-11-16T07:31:27.6668948Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "version-fixture-compiler",
+      "pid": 1128,
+      "startOrdinal": 163,
+      "endOrdinal": 169,
+      "nativeEndUtc": "2026-11-16T07:31:27.823482300+00:00",
+      "directExitUtc": "2026-11-16T07:31:27.8229742Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "01/installer",
+      "pid": 4140,
+      "startOrdinal": 178,
+      "endOrdinal": 216,
+      "nativeEndUtc": "2026-11-16T07:31:34.206691200+00:00",
+      "directExitUtc": "2026-11-16T07:31:34.2048332Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "02/seed",
+      "pid": 740,
+      "startOrdinal": 219,
+      "endOrdinal": 255,
+      "nativeEndUtc": "2026-11-16T07:31:42.269123100+00:00",
+      "directExitUtc": "2026-11-16T07:31:42.2668633Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "02/installer",
+      "pid": 872,
+      "startOrdinal": 258,
+      "endOrdinal": 300,
+      "nativeEndUtc": "2026-11-16T07:31:48.388428200+00:00",
+      "directExitUtc": "2026-11-16T07:31:48.3857961Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "03/seed",
+      "pid": 2696,
+      "startOrdinal": 303,
+      "endOrdinal": 339,
+      "nativeEndUtc": "2026-11-16T07:31:56.264723800+00:00",
+      "directExitUtc": "2026-11-16T07:31:56.2617918Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "03/installer",
+      "pid": 6892,
+      "startOrdinal": 342,
+      "endOrdinal": 380,
+      "nativeEndUtc": "2026-11-16T07:32:01.942032700+00:00",
+      "directExitUtc": "2026-11-16T07:32:01.9389019Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "04/installer",
+      "pid": 7248,
+      "startOrdinal": 383,
+      "endOrdinal": 419,
+      "nativeEndUtc": "2026-11-16T07:32:09.848874800+00:00",
+      "directExitUtc": "2026-11-16T07:32:09.8454681Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "05/installer",
+      "pid": 5072,
+      "startOrdinal": 424,
+      "endOrdinal": 427,
+      "nativeEndUtc": "2026-11-16T07:32:16.491207700+00:00",
+      "directExitUtc": "2026-11-16T07:32:16.4876475Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "06/installer",
+      "pid": 7204,
+      "startOrdinal": 430,
+      "endOrdinal": 433,
+      "nativeEndUtc": "2026-11-16T07:32:23.144870900+00:00",
+      "directExitUtc": "2026-11-16T07:32:23.1420538Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "07/seed",
+      "pid": 9932,
+      "startOrdinal": 436,
+      "endOrdinal": 478,
+      "nativeEndUtc": "2026-11-16T07:32:31.392741800+00:00",
+      "directExitUtc": "2026-11-16T07:32:31.3894656Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "07/installer",
+      "pid": 3276,
+      "startOrdinal": 481,
+      "endOrdinal": 484,
+      "nativeEndUtc": "2026-11-16T07:32:35.954884400+00:00",
+      "directExitUtc": "2026-11-16T07:32:35.9512999Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "08/installer",
+      "pid": 8584,
+      "startOrdinal": 487,
+      "endOrdinal": 496,
+      "nativeEndUtc": "2026-11-16T07:32:42.574949200+00:00",
+      "directExitUtc": "2026-11-16T07:32:42.5710401Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "09/installer",
+      "pid": 7416,
+      "startOrdinal": 499,
+      "endOrdinal": 508,
+      "nativeEndUtc": "2026-11-16T07:32:49.196473700+00:00",
+      "directExitUtc": "2026-11-16T07:32:49.1922003Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "10/installer",
+      "pid": 5344,
+      "startOrdinal": 511,
+      "endOrdinal": 520,
+      "nativeEndUtc": "2026-11-16T07:32:55.832042600+00:00",
+      "directExitUtc": "2026-11-16T07:32:55.8274247Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "11/installer",
+      "pid": 7828,
+      "startOrdinal": 529,
+      "endOrdinal": 538,
+      "nativeEndUtc": "2026-11-16T07:33:02.454133200+00:00",
+      "directExitUtc": "2026-11-16T07:33:02.4492749Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "12/seed",
+      "pid": 6180,
+      "startOrdinal": 541,
+      "endOrdinal": 577,
+      "nativeEndUtc": "2026-11-16T07:33:10.614606400+00:00",
+      "directExitUtc": "2026-11-16T07:33:10.6095433Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "12/installer",
+      "pid": 8948,
+      "startOrdinal": 580,
+      "endOrdinal": 589,
+      "nativeEndUtc": "2026-11-16T07:33:15.303454600+00:00",
+      "directExitUtc": "2026-11-16T07:33:15.2983042Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "13/seed",
+      "pid": 3420,
+      "startOrdinal": 592,
+      "endOrdinal": 628,
+      "nativeEndUtc": "2026-11-16T07:33:23.429087100+00:00",
+      "directExitUtc": "2026-11-16T07:33:23.4234346Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "13/installer",
+      "pid": 3596,
+      "startOrdinal": 633,
+      "endOrdinal": 648,
+      "nativeEndUtc": "2026-11-16T07:33:28.516057300+00:00",
+      "directExitUtc": "2026-11-16T07:33:28.5101035Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "14/seed",
+      "pid": 6572,
+      "startOrdinal": 657,
+      "endOrdinal": 693,
+      "nativeEndUtc": "2026-11-16T07:33:36.478405500+00:00",
+      "directExitUtc": "2026-11-16T07:33:36.4719924Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "14/installer",
+      "pid": 3692,
+      "startOrdinal": 696,
+      "endOrdinal": 726,
+      "nativeEndUtc": "2026-11-16T07:33:42.119187900+00:00",
+      "directExitUtc": "2026-11-16T07:33:42.1124075Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "15/seed",
+      "pid": 1076,
+      "startOrdinal": 729,
+      "endOrdinal": 765,
+      "nativeEndUtc": "2026-11-16T07:33:49.974621700+00:00",
+      "directExitUtc": "2026-11-16T07:33:49.9674739Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "15/installer",
+      "pid": 9532,
+      "startOrdinal": 768,
+      "endOrdinal": 798,
+      "nativeEndUtc": "2026-11-16T07:33:55.583342100+00:00",
+      "directExitUtc": "2026-11-16T07:33:55.5758250Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "16/installer",
+      "pid": 8132,
+      "startOrdinal": 807,
+      "endOrdinal": 816,
+      "nativeEndUtc": "2026-11-16T07:34:02.282767400+00:00",
+      "directExitUtc": "2026-11-16T07:34:02.2749350Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "17/seed",
+      "pid": 9448,
+      "startOrdinal": 819,
+      "endOrdinal": 855,
+      "nativeEndUtc": "2026-11-16T07:34:10.422104300+00:00",
+      "directExitUtc": "2026-11-16T07:34:10.4140121Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "17/installer",
+      "pid": 10092,
+      "startOrdinal": 858,
+      "endOrdinal": 879,
+      "nativeEndUtc": "2026-11-16T07:34:15.814247800+00:00",
+      "directExitUtc": "2026-11-16T07:34:15.8060311Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "18/installer",
+      "pid": 5180,
+      "startOrdinal": 882,
+      "endOrdinal": 903,
+      "nativeEndUtc": "2026-11-16T07:34:23.170732100+00:00",
+      "directExitUtc": "2026-11-16T07:34:23.1622675Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "19/installer",
+      "pid": 5380,
+      "startOrdinal": 908,
+      "endOrdinal": 929,
+      "nativeEndUtc": "2026-11-16T07:34:30.590256300+00:00",
+      "directExitUtc": "2026-11-16T07:34:30.5812634Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "20/seed",
+      "pid": 4040,
+      "startOrdinal": 938,
+      "endOrdinal": 974,
+      "nativeEndUtc": "2026-11-16T07:34:38.605199700+00:00",
+      "directExitUtc": "2026-11-16T07:34:38.5957904Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "20/installer",
+      "pid": 8544,
+      "startOrdinal": 982,
+      "endOrdinal": 1006,
+      "nativeEndUtc": "2026-11-16T07:34:44.067824500+00:00",
+      "directExitUtc": "2026-11-16T07:34:44.0580296Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "21/installer",
+      "pid": 6048,
+      "startOrdinal": 1017,
+      "endOrdinal": 1044,
+      "nativeEndUtc": "2026-11-16T07:34:51.590483900+00:00",
+      "directExitUtc": "2026-11-16T07:34:51.5803218Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "22/seed",
+      "pid": 5156,
+      "startOrdinal": 1051,
+      "endOrdinal": 1087,
+      "nativeEndUtc": "2026-11-16T07:34:59.479051800+00:00",
+      "directExitUtc": "2026-11-16T07:34:59.4684193Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "22/installer",
+      "pid": 8588,
+      "startOrdinal": 1096,
+      "endOrdinal": 1105,
+      "nativeEndUtc": "2026-11-16T07:35:04.530495600+00:00",
+      "directExitUtc": "2026-11-16T07:35:04.5196097Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "23/seed",
+      "pid": 1724,
+      "startOrdinal": 1108,
+      "endOrdinal": 1144,
+      "nativeEndUtc": "2026-11-16T07:35:12.399030400+00:00",
+      "directExitUtc": "2026-11-16T07:35:12.3878709Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "23/installer",
+      "pid": 1188,
+      "startOrdinal": 1147,
+      "endOrdinal": 1156,
+      "nativeEndUtc": "2026-11-16T07:35:17.417657400+00:00",
+      "directExitUtc": "2026-11-16T07:35:17.4063692Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "24/seed",
+      "pid": 9768,
+      "startOrdinal": 1159,
+      "endOrdinal": 1197,
+      "nativeEndUtc": "2026-11-16T07:35:25.383224900+00:00",
+      "directExitUtc": "2026-11-16T07:35:25.3717741Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "24/installer",
+      "pid": 8000,
+      "startOrdinal": 1200,
+      "endOrdinal": 1209,
+      "nativeEndUtc": "2026-11-16T07:35:30.570897800+00:00",
+      "directExitUtc": "2026-11-16T07:35:30.5590330Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "25/installer",
+      "pid": 8384,
+      "startOrdinal": 1220,
+      "endOrdinal": 1229,
+      "nativeEndUtc": "2026-11-16T07:35:37.787230000+00:00",
+      "directExitUtc": "2026-11-16T07:35:37.7749178Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "26/installer",
+      "pid": 9576,
+      "startOrdinal": 1232,
+      "endOrdinal": 1241,
+      "nativeEndUtc": "2026-11-16T07:35:45.000709900+00:00",
+      "directExitUtc": "2026-11-16T07:35:44.9879664Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "27/installer",
+      "pid": 9672,
+      "startOrdinal": 1244,
+      "endOrdinal": 1253,
+      "nativeEndUtc": "2026-11-16T07:35:52.221385200+00:00",
+      "directExitUtc": "2026-11-16T07:35:52.2082375Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "28/seed",
+      "pid": 3652,
+      "startOrdinal": 1261,
+      "endOrdinal": 1301,
+      "nativeEndUtc": "2026-11-16T07:36:00.418628700+00:00",
+      "directExitUtc": "2026-11-16T07:36:00.4050586Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "28/installer",
+      "pid": 1860,
+      "startOrdinal": 1310,
+      "endOrdinal": 1319,
+      "nativeEndUtc": "2026-11-16T07:36:05.569981000+00:00",
+      "directExitUtc": "2026-11-16T07:36:05.5561262Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "29/seed",
+      "pid": 8804,
+      "startOrdinal": 1322,
+      "endOrdinal": 1358,
+      "nativeEndUtc": "2026-11-16T07:36:13.472478500+00:00",
+      "directExitUtc": "2026-11-16T07:36:13.4582993Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "29/installer",
+      "pid": 3420,
+      "startOrdinal": 1361,
+      "endOrdinal": 1370,
+      "nativeEndUtc": "2026-11-16T07:36:18.519491900+00:00",
+      "directExitUtc": "2026-11-16T07:36:18.5051767Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "30/seed",
+      "pid": 7644,
+      "startOrdinal": 1373,
+      "endOrdinal": 1411,
+      "nativeEndUtc": "2026-11-16T07:36:26.331395800+00:00",
+      "directExitUtc": "2026-11-16T07:36:26.3169118Z",
+      "actualDirectExitCode": 0,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "30/installer",
+      "pid": 5996,
+      "startOrdinal": 1414,
+      "endOrdinal": 1423,
+      "nativeEndUtc": "2026-11-16T07:36:31.405832500+00:00",
+      "directExitUtc": "2026-11-16T07:36:31.3911087Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "31/installer",
+      "pid": 7572,
+      "startOrdinal": 1432,
+      "endOrdinal": 1441,
+      "nativeEndUtc": "2026-11-16T07:36:38.485738800+00:00",
+      "directExitUtc": "2026-11-16T07:36:38.4705006Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    },
+    {
+      "receipt": "32/installer",
+      "pid": 5152,
+      "startOrdinal": 1448,
+      "endOrdinal": 1451,
+      "nativeEndUtc": "2026-11-16T07:36:45.405424600+00:00",
+      "directExitUtc": "2026-11-16T07:36:45.3898373Z",
+      "actualDirectExitCode": 1,
+      "streamsClosed": true
+    }
+  ]
+}

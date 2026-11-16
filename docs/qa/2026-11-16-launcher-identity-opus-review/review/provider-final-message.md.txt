@@ -1,0 +1,29 @@
+**Verdict: READY.** I found no blocking problem in PR #492. The fix is small and correct, the new Windows regression catches the bug on both a junction and a directory symlink, and current-head CI is green on the exact tested merge. The full report is at `review-435-opus-scan1/full-report.md` (SHA-256 `284eb4f6…cacd`).
+
+**Identities (no drift):**
+- **Head:** `6f383da798872aa0e6bd1e0de1fdcd4e702de9ae`, tree `decd1ca2…`
+- **Target:** `9fa8b2474c7290adb800c5e26be73511095cae25`
+- **Tested merge:** `5e386d5c…`, same tree as the head, parents target then head
+- **Source candidate:** `c75e2776…`; everything published after it changes only `docs/`
+- **Native test:** byte-identical (`4cac8f61…`) on the old-source test-only head, the source candidate and the published head
+- **Reviewer:** Claude Opus 5.5 (`claude-opus-5-5`). Effort `xhigh` is taken from the runner's launch file; I can't confirm it independently.
+
+**What I checked:**
+- **The fix.** Node keeps the alias spelling in `argv[1]` but loads the module from the real path, so the old check never matched through a link. A small probe in the review folder confirmed this on Node 22.23.4. The new check resolves both paths with the same native call, so they match through a link and two different files can never match. If resolution fails, the helper stays silent and the launcher refuses as before. The fingerprint, store-state and write behaviour are unchanged. Launches through the alias and the real path can't race, because the launcher's locks are keyed by data directory and port.
+- **Built-helper test.** On the old build it failed exactly the three intended checks; on the candidate it passed 2/2. Both runs used the same test bytes as the published file.
+- **Hosted Windows runs.** I decoded the raw logs myself rather than relying on the packet's summary:
+  - Old source: on both link types the helper printed nothing and the native launch was refused (14 passed, 3 failed as expected).
+  - Fixed source: 17/17 passed. It had 4 cold starts with distinct PIDs and start times, 8 warm reuses and 8 wrong-store/wrong-settings refusals. The alias launches really started the gateway from the alias path, all 4 gateways drained cleanly, and both links were removed.
+- **CI and evidence.** CI run 890 attempt 1: all four jobs green on attempt 1. My own sum of the Gates log is 9,619 passed / 41 skipped. All three in-repo QA packets and the hosted packet pass their checksum files.
+
+**Optional fixes in #435's scope:**
+- **R1:** `docs/10` still lists what `pnpm test:windows-launcher` covers without the new link case. That case fails rather than skips on Windows machines that can't create symbolic links, as happened locally. One or two sentences would fix it, and could go in before the Astra audit.
+- **R2:** The "harmless import" checks in the built and native tests pass for trivial reasons. Only the unit test exercises comparison against a different real file. No change required.
+- **R3:** The PR body, issue #435 and in-repo packets still describe the hosted symlink result and CI as pending. The `qa:touched-systems` label requires results in both the PR and the issue, so they should be updated before merge. Also "remains pending" in the register should read "remain".
+
+**Existing issues outside #435:**
+- **O1:** `gen-docs.mjs` (behind `check:docs`) and `check-migrations.mjs` use the same flawed check. Run from a linked checkout, they would probably exit 0 without checking anything. I haven't confirmed whether pnpm actually passes the linked path; this is a candidate for a separate issue.
+- **O2:** The Windows job's artifact upload finds no files. A likely cause is that the upload action skips hidden folders like `.tmp`; this is unconfirmed.
+- **O3–O7:** temp-folder leftovers, port headroom, duplicated entry checks across apps, and an exit-code nuance on unusual drives. None needs action for #435.
+
+**Limitations:** I didn't run the product, launcher or test suites. The symlink result rests on the single hosted run, and the cleanup results are that run's own assertions rather than a later independent check. I wrote only to `review-435-opus-scan1/` and made no Git, GitHub, CI or owner-resource changes. The checkout is still clean at `6f383da7`.

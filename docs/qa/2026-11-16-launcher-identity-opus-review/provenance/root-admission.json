@@ -1,0 +1,540 @@
+{
+  "head": "6f383da798872aa0e6bd1e0de1fdcd4e702de9ae",
+  "target": "9fa8b2474c7290adb800c5e26be73511095cae25",
+  "testedMerge": "5e386d5cc9ed4b022d15ade32d04fcd89c367688",
+  "tree": "decd1ca26c9bd63d942e939e65e2b2604d7f2652",
+  "scan1": "READY",
+  "completeFormalScans": 1,
+  "formalScanCap": 3,
+  "followups": [
+    493,
+    494,
+    495,
+    496
+  ],
+  "heldPr460": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460",
+    "number": 460,
+    "state": "open",
+    "merged": false,
+    "mergeable": false,
+    "draft": false,
+    "body": "Part of #458; preserves the separate owner acceptance on #276 and #325.\n\nThe launcher could abort a valid ownership check at 15 seconds despite a configured 60-second startup allowance, and it could deadlock by waiting for helper exit before draining redirected output. A native baseline reproduction fails on four valid slow ownership probes; the candidate completes the precheck and starts the matching disposable gateway.\n\nDrain both streams in bounded chunks, retain at most 256 KiB of UTF-8 protocol stdout, and require exit zero plus complete valid output. Initial helper allowance is `max(15, StartupTimeoutSeconds)`; ownership retries share the remaining monotonic release budget. Initial failures identify the helper stage, timing, output sizes and exit status without logging raw output. An inconclusive recheck retains the last verified held owner and complete safety guidance. Slow successful checks leave metadata. API, ownership decisions, stored formats and configuration remain unchanged.\n\nValidation at `b6ed79eeb289b781c48d3b0f994c1b2577990df9`: 27/27 native checks; independent focused QA and mutation checks; tooling lint and repository formatting passed. The preceding implementation also passed actual built-API slow ownership/startup/both-shells/managed-drain QA and all CI jobs. [Exact-head CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43546076967) is fully green: Gates (including all coverage thresholds, licenses, generated docs and dependency audit), Browser, Windows launcher and Template image. Unchanged local Windows symlink/POSIX/SQLite test limitations are recorded in the [evidence directory](docs/qa/2026-11-13-launcher-timeouts/README.md); the complete Linux gate passed.\n\nClaude Opus 5.5 xhigh completed diagnosis/design review, one full implementation review and one [targeted correction review](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460#issuecomment-6870208840). Both full-review findings are fixed and mutation-verified; the targeted verdict is READY with no introduced blocker. Existing helper-descendant cleanup remains follow-up #459. The exact historical stalled helper is unrecorded; reproduced defects are not claimed as proof of the original incident.\n\nLocal repair and owner cold-launch QA: the reviewed executable is installed; configuration and all three shortcut hashes are preserved. At the owner's request, two separate normal drains confirmed process exit, closed port and released locks before the owner launched first the desktop shortcut, then the taskbar icon. Both cold launches succeeded, produced new gateway PIDs and returned 200 for health and both app shells. The final gateway is left running. Automated installed-launch execution was policy-blocked; no workaround was attempted, and the owner performed both actual clicks. No migration or reset occurred. Implementation, reviews, independent QA, CI and local cold-launch acceptance are complete. Merge awaits explicit owner authorization.",
+    "title": "Fix Windows launcher helper timeouts and pipe draining",
+    "base": "main",
+    "base_sha": "b3b5e1874a8252cc01c065d18fef42cbfbe075b4",
+    "head": "codex/windows-launcher-timeouts",
+    "head_sha": "b6ed79eeb289b781c48d3b0f994c1b2577990df9",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": null,
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-14T01:45:05Z",
+    "updated_at": "2026-11-14T02:55:18Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 2,
+    "changed_files": 37,
+    "additions": 5727,
+    "deletions": 20,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/460",
+    "display_title": "Fix Windows launcher helper timeouts and pipe draining"
+  },
+  "currentRuns": {
+    "workflow_runs": [
+      {
+        "id": 43790735875,
+        "name": "CI",
+        "status": "completed",
+        "conclusion": "success",
+        "run_number": 890,
+        "jobs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/43790735875/jobs",
+        "logs_url": "https://api.github.com/repos/Jacob-J-Thomas/GraphGoblin/actions/runs/43790735875/logs",
+        "workflow_id": 374245139
+      }
+    ]
+  },
+  "currentJobs": {
+    "jobs": [
+      {
+        "id": 133048319866,
+        "name": "Browser",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43790735875,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Install Edge",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Functional browser suite (no retries)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Browser coverage and exclusions",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Upload browser failure evidence",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 10
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          }
+        ]
+      },
+      {
+        "id": 133048319973,
+        "name": "Template image",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43790735875,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Build the distributed image",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Load installed templates without network or writable storage",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          }
+        ]
+      },
+      {
+        "id": 133048320097,
+        "name": "Gates",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43790735875,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install (frozen lockfile)",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Reset acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Recovery process acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Chat restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 9
+          },
+          {
+            "name": "Wait restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Prompt restart acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Webhook retry acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 12
+          },
+          {
+            "name": "Current-format migration acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 13
+          },
+          {
+            "name": "Typecheck",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Lint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Format check",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Layer rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          },
+          {
+            "name": "Migration generation is a no-op",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 18
+          },
+          {
+            "name": "Design token rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 19
+          },
+          {
+            "name": "Dependency graph rules",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 20
+          },
+          {
+            "name": "Shipped templates and deliberate-invalid refusal",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 21
+          },
+          {
+            "name": "Install Chromium for tooling browser measurements",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22
+          },
+          {
+            "name": "Unit tests with coverage thresholds",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          },
+          {
+            "name": "Licence allowlist",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 24
+          },
+          {
+            "name": "Generated docs are current",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 25
+          },
+          {
+            "name": "Design token contrast table is current and passing",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 26
+          },
+          {
+            "name": "Dependency audit",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 27
+          },
+          {
+            "name": "Upload coverage reports",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 28
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 54
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 55
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 56
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 57
+          }
+        ]
+      },
+      {
+        "id": 133048320156,
+        "name": "Windows launcher",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 43790735875,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Install",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Build",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Native Windows launcher acceptance",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Upload native evidence",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 8
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 14
+          },
+          {
+            "name": "Post Run pnpm/action-setup@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 15
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 16
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 17
+          }
+        ]
+      }
+    ]
+  },
+  "git": {
+    "chunk_id": "98452b",
+    "wall_time_seconds": 1.3563085,
+    "exit_code": 0,
+    "original_token_count": 387,
+    "output": "## codex/gg-20261116-launcher-identity...origin/codex/gg-20261116-launcher-identity\n6f383da798872aa0e6bd1e0de1fdcd4e702de9ae\ndecd1ca26c9bd63d942e939e65e2b2604d7f2652\n9fa8b2474c7290adb800c5e26be73511095cae25\trefs/heads/main\n6f383da798872aa0e6bd1e0de1fdcd4e702de9ae\trefs/pull/492/head\n5e386d5cc9ed4b022d15ade32d04fcd89c367688\trefs/pull/492/merge\ntree decd1ca26c9bd63d942e939e65e2b2604d7f2652\nparent 9fa8b2474c7290adb800c5e26be73511095cae25\nparent 6f383da798872aa0e6bd1e0de1fdcd4e702de9ae\nauthor Jacob Thomas <92639671+Jacob-J-Thomas@users.noreply.github.com> 1794795145 +0000\ncommitter GitHub <noreply@github.com> 1794795145 +0000\ngpgsig -----BEGIN PGP SIGNATURE-----\n \n wsFcBAABCAAQBQJq+maJCRC1aQ7uu5UhlAAAwWcQAHwN6iz6f7Tu+yo/sZTIk2RM\n U1Dg41JXGfuXhfqPziLtlEktaMfMu8Og0Z8e9rRGkgQVlxynyAXaxGZBOJJ29zCn\n M7J0Dgo94sSG4tkk4526A5Fp9Eev3RsVTVNHmuual5EjjQNHHww+hS2rmZPs0NHQ\n Vh/Q9dhnW3O07ufBwNyziCJWKBIvQgESGyodNUI3k7gAZf4rcTklsyEGA4KT10vV\n nZwx1kZr2tBLPaCxaChf0opaHdmkMSdTQXyEYXSBIbEVS22N9En7XTi5y3VgngGf\n djURfgkpa9snbFLvVuCDA1nL3bNcqgaHoCtJA9kEzu78fC5B8uwVoGBl6IKbnax/\n Z4KLl++/l0zA0EXoUBawNcN8LqLhaIA4+emzZx61rHuHau4a1V9w/CB+7Z6Ht70Q\n hLCjp2kdwn7KfuONuo9G3xy0z39ynoyopKI1mXWeNYIDr6FvEyBxhYQKfAPEcM5y\n SwiEoyE2I4Go3VCkoMRmqk4FiQaeZCLJQCsnfDzdN5pw0twWWtL8pHG3z9p1kFDi\n oj9HbaVwj3k23YFBmBQZK4T55PS4WvbWWBy0n65S/H7ojMmmJ68vw8LnKEb2ENeD\n 8SK7p8VoOUtEbnT1NFml/ggjCBPhiwcEf2b23aj2mQNhQQoNulmyjC+pBo9aMc0D\n EHhalWFZdvPyq58UQ068\n =2/jO\n -----END PGP SIGNATURE-----\n \n\nMerge 6f383da798872aa0e6bd1e0de1fdcd4e702de9ae into 9fa8b2474c7290adb800c5e26be73511095cae25\n"
+  },
+  "prReadback": {
+    "url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492",
+    "number": 492,
+    "state": "open",
+    "merged": false,
+    "mergeable": true,
+    "draft": true,
+    "body": "Closes #435. Owner acceptance for #276/#325 remains separate.\n\nThe Windows launcher refused a valid checkout reached through a directory junction or symbolic link because its identity helper compared two different path spellings and exited without output. The helper now compares the physical entry files, so either spelling emits the same identity and starts or reuses the matching gateway. Inert imports, configuration/runtime refusals, store checks and fingerprint contents stay intact.\n\nThe permanent Windows acceptance suite independently creates and verifies a real junction and directory symbolic link, then exercises helper output, native cold starts in both directions, same/cross-path warm reuse, wrong-store/settings refusals, exact process ownership and managed cleanup. Its test-only baseline commit `08e60a0ae6d6b7cae853326825365760166f3ad3` reproduced helper silence and native cold refusal through both genuine link types in [Windows CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43787801176/job/133039259616); the unchanged original cases passed. The same native test bytes are included with the fix.\n\nValidation before publication: 13/13 focused API tests, API types and scoped lint/format passed. The exact final built-helper regression failed its three intended assertions on old source and passed 2/2 on the candidate. Independent GPT-6.1 Sol xhigh native QA verified the built gateway through direct and junction paths, both cold starts, warm reuse and mismatch refusals, real TCP/file SQLite, both shell assets, two authenticated drains and independent process/port/store cleanup. Local directory-symlink creation returned EPERM before product execution; the hosted fixed-source Windows result below closes that local verification gap. The initial baseline diagnostic failure and exact-identity recovery, original lint failure and offline inspector corrections are retained.\n\nEvidence: [baseline](docs/qa/2026-11-16-launcher-identity-baseline/README.md), [implementation](docs/qa/2026-11-16-launcher-identity-implementation/README.md), and [candidate native QA plus hosted old-source reproduction](docs/qa/2026-11-16-launcher-identity-candidate/README.md). This publication also archives the already merged #419 final CI/reviews/completion, without changing that implementation.\n\n[Publication-head CI](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43790735875) passed all four jobs on attempt 1 without retry: 9,619 tests / 41 skips and all 13 coverage floors; Browser 481 passes / one declared LIVE skip with zero retries; Windows 17/17 including both genuine link types; and all four distributed templates. The fixed-source hosted native run verified four cold starts, eight warm reuses, eight mismatch refusals and four managed drains. Optional strict routing performance was off; recorded frame p95 samples were 33.3–33.4 ms, so no strict-performance pass is claimed. The audit threshold passed with 8 low / 13 moderate advisories, and Windows uploaded no native artifact.\n\nClaude Opus 5.5 xhigh formal scan 1 returned READY with no introduced blocker. Root dispositions and the full report are in the PR conversation; nonblocking follow-ups #493–#496 are parked. Fresh Astra max exact-head/target sign-off remains required before merge; one of three formal scans is complete. Source candidate is `c75e277695dae260f0e14279cff8705bab84ef4c`, based on `9fa8b2474c7290adb800c5e26be73511095cae25`. The separate PR #460 owner merge hold and owner instance/store remain untouched. This PR does not install the batch or complete broader intent acceptance.\n",
+    "title": "Fix Windows launcher checkout alias detection",
+    "base": "main",
+    "base_sha": "9fa8b2474c7290adb800c5e26be73511095cae25",
+    "head": "codex/gg-20261116-launcher-identity",
+    "head_sha": "6f383da798872aa0e6bd1e0de1fdcd4e702de9ae",
+    "head_repo_id": 1403707890,
+    "head_repo_full_name": "Jacob-J-Thomas/GraphGoblin",
+    "merge_commit_sha": "5e386d5cc9ed4b022d15ade32d04fcd89c367688",
+    "user": {
+      "login": "Jacob-J-Thomas",
+      "name": "Jacob-J-Thomas",
+      "email": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/92639671?v=4",
+      "id": 92639671
+    },
+    "requested_reviewers": null,
+    "requested_team_reviewers": null,
+    "diff": null,
+    "comments": null,
+    "created_at": "2026-11-16T01:42:18Z",
+    "updated_at": "2026-11-16T03:09:21Z",
+    "closed_at": null,
+    "merged_at": null,
+    "commits": 3,
+    "changed_files": 385,
+    "additions": 37985,
+    "deletions": 35,
+    "display_url": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492",
+    "display_title": "Fix Windows launcher checkout alias detection"
+  }
+}

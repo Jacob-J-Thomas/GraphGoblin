@@ -1,0 +1,122 @@
+{
+  "packet": "2026-11-16-installer-candidate-other-ci",
+  "sourceRoot": "launcher/436-candidate-other-ci",
+  "directCopies": [
+    {
+      "source": "launcher/436-candidate-other-ci/run-43819015672-initial.json",
+      "destination": "raw/initial-run.json",
+      "bytes": 705,
+      "sha256": "4ce2d14bc19021f4abaa0044b3ad2e691916778524eff4beb7ee7b58a41f4205",
+      "byteIdentityVerified": true
+    },
+    {
+      "source": "launcher/436-candidate-other-ci/jobs-43819015672-initial.json",
+      "destination": "raw/initial-jobs.json",
+      "bytes": 10017,
+      "sha256": "c4a60403de4c19d7b1682803e8962962bc5bba3b73bbf06d4b0d0a9d9de4c86f",
+      "byteIdentityVerified": true
+    },
+    {
+      "source": "launcher/436-candidate-other-ci/gates.decoded.log",
+      "destination": "raw/gates.decoded.log",
+      "bytes": 433202,
+      "sha256": "d9044c2e80abd3c5c427e6fb5ff5ce2dbd58620acdb732c6078d674e449f2fd4",
+      "byteIdentityVerified": true
+    },
+    {
+      "source": "launcher/436-candidate-other-ci/browser.decoded.log",
+      "destination": "raw/browser.decoded.log",
+      "bytes": 179260,
+      "sha256": "cd556204ea02534f8590c9ff52e67c9eb84d5e43f769e3df80f2c1a98daf160d",
+      "byteIdentityVerified": true
+    },
+    {
+      "source": "launcher/436-candidate-other-ci/browser.job-summary.json",
+      "destination": "raw/browser.job-summary.json",
+      "bytes": 2475,
+      "sha256": "8bcc7411872c92f8e10560907d923fe6d14356e25d1b3687dd92797ac7a50d77",
+      "byteIdentityVerified": true
+    },
+    {
+      "source": "launcher/436-candidate-other-ci/template.decoded.log",
+      "destination": "raw/template.decoded.log",
+      "bytes": 40963,
+      "sha256": "6a9980cedf789bb609f61546a06fa2d0e4ce92d1921d778d5268f138ddf5ad81",
+      "byteIdentityVerified": true
+    },
+    {
+      "source": "launcher/436-candidate-other-ci/template.steps.json",
+      "destination": "raw/template.steps.json",
+      "bytes": 834,
+      "sha256": "3a94efb73e5d0f094866953c42ff8642972e8022a74204f3014d7adcfd5bb1f6",
+      "byteIdentityVerified": true
+    },
+    {
+      "source": "launcher/436-candidate-other-ci/coverage-14205555299.zip",
+      "destination": "raw/coverage-14205555299.zip",
+      "bytes": 22033,
+      "sha256": "275a965441bcd5e4834b4f9ef949027c6c9d2c3ebce1425625cfdae896151d8a",
+      "byteIdentityVerified": true
+    }
+  ],
+  "derivedEvidence": [
+    {
+      "destination": "raw/terminal-run-jobs.json",
+      "bytes": 11082,
+      "sha256": "85acb081629454a8dd9c5a2f23e6b21ff0953f09b2be2b25e40be017e27439ca",
+      "source": "GitHub workflow-run GET, jobs listing, and commit check-runs; synthetic merge/tree/parent values from root's actual Git-object verification",
+      "method": "normalized safe fields; Windows status only, with no Windows step details or raw log"
+    },
+    {
+      "destination": "raw/gates-steps.json",
+      "bytes": 4288,
+      "sha256": "7281e6a773a2f51134474af64bb34a3c1d689b7049e44fa0ba3b4d1ef165fcf6",
+      "source": "GitHub workflow-run jobs response for Gates job 133137523083",
+      "method": "JSON serialized from returned terminal step summaries"
+    },
+    {
+      "destination": "raw/gates-annotations.json",
+      "bytes": 1517,
+      "sha256": "686e746243372b43b625e5e65fdf711121b753c9043393072232090d1fb613e7",
+      "source": "GitHub check diagnostics response for check run 133137523083",
+      "method": "exact returned JSON text bytes; includes the 30-minute maximum-execution annotation"
+    },
+    {
+      "destination": "raw/coverage-member-map.json",
+      "bytes": 4013,
+      "sha256": "76cf3985294e3b17f4ca78b2867b2788c34a21562684b0c70d99f6907d7def97",
+      "source": "Included coverage archive 14205555299",
+      "method": "ZIP members read without extraction; records all 13 entry hashes and coverage line/branch percentages"
+    },
+    {
+      "destination": "raw/coverage-test-summary.json",
+      "bytes": 2972,
+      "sha256": "6520d2945146ce27a750affeb9a939fa3f964d4b55279efb26e8e40b4b41b35e",
+      "source": "Included ANSI-stripped Gates decoded log",
+      "method": "package test/file counts, V8 line/branch values, and Turbo summary parsed from the 13 package groups"
+    }
+  ],
+  "authoredFiles": [
+    {
+      "path": "README.md",
+      "bytes": 3470,
+      "sha256": "d6365fd82e4d8e092d24d785502131ad1c720614d2d3e4b31a3d70dcba3f9a4d",
+      "description": "formatted summary of run identity, terminal outcomes, coverage cutoff, and evidence limits"
+    }
+  ],
+  "exclusions": [
+    {
+      "source": "Windows launcher job 133137523340 raw log and artifacts",
+      "reason": "Captured and owned by the separate native-QA agent; only terminal status metadata is included here."
+    },
+    {
+      "source": "Temporary signed artifact download URL",
+      "reason": "Used only in memory to download the ZIP; never saved in this packet."
+    },
+    {
+      "source": "Private provider streams and event caches",
+      "reason": "Not required for CI evidence."
+    }
+  ],
+  "manifest": "SHA256SUMS.txt hashes every packet file except itself; the map is included in that manifest."
+}

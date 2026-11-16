@@ -1,0 +1,47 @@
+# #436 implementation handoff
+
+The six-path candidate is based on `36048e8f40cda520c2ec7b5865d3ff8c5bae6624`, tree
+`382dcd6fa76f8b04a914787e08d9291d1672d088`. The product baseline matches actual main
+`be633141be5a0cd2b4f960a46761fabbf2cb82c7`. The accepted hosted reproduction completed 32
+installer cases. It recorded 22 baseline differences, including source alias overwrites.
+[Independent baseline](../launcher/436-hosted-baseline-retry/README.md) ·
+[Exact candidate source and rollback function hashes](candidate-source.json)
+
+## Implementation
+
+- The installer discovers and probes Node with a bounded `--version` call before output
+  work. It uses fixed diagnostics, with a validated version triple eligible for display.
+- Windows handle identities protect the source link and all final output pairs across
+  path aliases, junctions and hard links. Existing targets are rechecked at publication.
+  Each output is staged on its destination volume.
+- Native `--validate-install --config <stagedConfig>` validates or refuses before normal
+  launcher startup. It runs for both shortcut policies. Staged link creation records the
+  final EXE, final config argv, working directory, icon and AppUserModelID.
+- The publisher records each attempted entry before actual replace or move. Its rollback
+  inspects the failing entry and backup as well as earlier successful entries. It verifies
+  restored managed files and retains the stage folders when it cannot verify recovery.
+- The permanent Windows PowerShell 5.1 group performs a real install with native links,
+  decodes each link's final target/config/AUMID, then challenges reserved `-NoShortcuts`
+  config, hard-link collision and missing-Node diagnostics with exact byte readback.
+  The 17 existing native cases retain their bytes.
+
+## Focused verification
+
+The commands, actual timings and exits are recorded beside their logs. Project Node was
+`v22.23.4`. C# compilation occurred through the permanent native regression and the public
+installer.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Initial PowerShell 5.1 launch | Exit 1. The classic parser rejected an inline hashtable assignment form accepted by PowerShell 7. The assignment was moved out of the literal. | [Execution](native-installer-first.json) · [Actual TAP and CLIXML](native-installer-first.log) |
+| First parse correction | Exit 1. The actual PowerShell 5.1 child could not resolve `Get-FileHash` under the Node-spawned shell environment. An external diagnostic copy isolated the exception. The installer now hashes through .NET file streams. | [Execution](native-installer-ps51-correction.json) · [Log](native-installer-ps51-correction.log) · [Captured diagnostic](diagnostic-exception.txt) |
+| Frozen Windows PowerShell 5.1 group | Exit 0, 6.547 s. The positive and all three negative controls passed. | [Execution](native-installer-frozen.json) · [TAP](native-installer-frozen.log) |
+| PowerShell 7 public installer smoke | First install and same-path `-NoShortcuts` replacement with relative Node/PWA paths. The changed setting persisted, the two installed links and source stayed byte-identical, and the store and staging checks passed. The source was a disposable native Shell Link fixture. | [Execution](installer-smoke-ps7-frozen.json) · [Log](installer-smoke-ps7-frozen.log) |
+| Composed production publisher | AST-loaded the five exact product functions and default native delegate. Observed `first.json` after its real replacement, then got `0x80070020` from the genuine later sharing violation. The publisher reported `restored` and both old final byte strings were read back. | [Execution](rollback-focused-frozen.json) · [Result](rollback-focused-frozen.log) · [Composition](rollback-focused.ps1) |
+| Static checks | Scoped ESLint and Prettier, PowerShell 7 syntax, and six-path `git diff --check` passed. | [Lint](scoped-lint.json) · [Format](scoped-format.json) · [Source and AST readback](candidate-source.json) |
+
+The sharing-violation test exercises actual Windows I/O through the production publisher and
+does not observe public-installer timing. The independent hosted candidate must still cover
+the full 32-case public matrix, process observation and rollback. The local check does not
+exercise Win32's uncommon partial-replacement statuses or an interrupted installer. No
+whole-repository build, coverage or independent native regression run occurred in this pass.

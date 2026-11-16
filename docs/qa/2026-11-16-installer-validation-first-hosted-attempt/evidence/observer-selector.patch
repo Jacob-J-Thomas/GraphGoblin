@@ -1,0 +1,17 @@
+--- sealed/observe.ps1
++++ offline/observer-offline.ps1
+@@ -39,8 +39,12 @@
+         $ordinal++
+         $system = $event.SelectSingleNode("./*[local-name()='System']")
+         $provider = $system.SelectSingleNode("./*[local-name()='Provider']")
+-        $actualGuid = [guid]::Empty
+-        if (!$provider -or ![guid]::TryParse($provider.GetAttribute('Guid'), [ref]$actualGuid) -or $actualGuid -ne $processGuid) { continue }
++        $actualProvider = [guid]::Empty
++        $systemTraceGuid = [guid]'9e814aad-3204-11d2-9a82-006008a86939'
++        if (!$provider -or ![guid]::TryParse($provider.GetAttribute('Guid'), [ref]$actualProvider) -or $actualProvider -ne $systemTraceGuid) { continue }
++        $eventGuid = $event.SelectSingleNode("./*[local-name()='ExtendedTracingInfo']/*[local-name()='EventGuid']")
++        $actualEventGuid = [guid]::Empty
++        if (!$eventGuid -or ![guid]::TryParse($eventGuid.InnerText, [ref]$actualEventGuid) -or $actualEventGuid -ne $processGuid) { continue }
+         $opcode = $system.SelectSingleNode("./*[local-name()='Opcode']")
+         if (!$opcode) { throw 'The native decoder omitted the classic process opcode.' }
+         $op = $opcode.InnerText

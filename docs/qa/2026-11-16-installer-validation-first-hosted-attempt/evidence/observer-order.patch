@@ -1,0 +1,11 @@
+--- offline/observer-offline.ps1
++++ offline/observer-offline-ordered.ps1
+@@ -70,7 +70,7 @@
+         $eventStream.Add($entry)
+     }
+     if (!$versions.Count) { throw 'Native decoder produced no classic process-start payloads with argv fields.' }
+-    $ordered = @($eventStream | Sort-Object @{Expression='time'}, @{Expression='ordinal'})
++    $ordered = @($eventStream | Sort-Object @{Expression={ [DateTimeOffset]$_.time }}, @{Expression={ $_.ordinal }})
+ 
+     function Read-Birth($Receipt, [string]$Argument) {
+         if (!$Receipt.birthUtc) { throw 'The direct child has no creation-time receipt.' }

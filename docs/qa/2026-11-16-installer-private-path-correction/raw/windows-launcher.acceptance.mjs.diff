@@ -1,0 +1,74 @@
+diff --git "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-436-private-path-correction\\before\\windows-launcher.acceptance.mjs" "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-436-private-path-correction\\after\\windows-launcher.acceptance.mjs"
+index 671c5bd0..1f22855e 100644
+--- "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-436-private-path-correction\\before\\windows-launcher.acceptance.mjs"
++++ "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher-436-private-path-correction\\after\\windows-launcher.acceptance.mjs"
+@@ -270,6 +270,13 @@ test(
+     await invoke();
+     assert.deepEqual(await readFile(source), sourceBefore);
+     const config = JSON.parse(await readFile(exe + '.json', 'utf8'));
++    const configPath = exe + '.json';
++    const validConfig = await execute(fixture, ['--validate-install', '--config', configPath], {
++      cwd: base,
++      windowsHide: true,
++    });
++    assert.equal(validConfig.stdout, '');
++    assert.equal(validConfig.stderr, '');
+     for (const output of [desktop, programs]) {
+       const inspected = JSON.parse(
+         (await execute(exe, ['--inspect-shortcut', output], { windowsHide: true })).stdout,
+@@ -295,6 +302,55 @@ test(
+       assert.deepEqual(await snapshot(), before);
+       assert.deepEqual(await readdir(store), []);
+     }
++    async function refusesPrivate(args, expected, stagedOutput) {
++      await assert.rejects(execute(fixture, args, { cwd: base, windowsHide: true }), (error) => {
++        assert.equal(error.code, 1);
++        assert.equal(error.stderr, `${expected}\r\n`);
++        assert.equal(error.stdout, '');
++        return true;
++      });
++      assert.deepEqual(await snapshot(), before);
++      assert.deepEqual(await readdir(store), []);
++      if (stagedOutput) await assert.rejects(lstat(stagedOutput), { code: 'ENOENT' });
++    }
++    const drive = base.slice(0, 2);
++    const driveRelativeConfig = `${drive}${relative(base, configPath)}`;
++    const rootRelativeConfig = configPath.slice(2);
++    await refusesPrivate(
++      ['--validate-install', '--config', driveRelativeConfig],
++      'Invalid staged launcher configuration path.',
++    );
++    await refusesPrivate(
++      ['--validate-install', '--config', rootRelativeConfig],
++      'Invalid staged launcher configuration path.',
++    );
++
++    const stageDir = join(base, 'private path staging');
++    await mkdir(stageDir);
++    for (const [kind, privatePath] of [
++      ['drive-relative', (absolute) => `${drive}${relative(base, absolute)}`],
++      ['root-relative', (absolute) => absolute.slice(2)],
++    ]) {
++      const shortcut = join(stageDir, `${kind}.lnk`);
++      const invalidShortcut = privatePath(shortcut);
++      await refusesPrivate(
++        ['--stage-shortcut', invalidShortcut, configPath, exe],
++        'Invalid staged shortcut or final launcher path.',
++        shortcut,
++      );
++
++      const finalExe = join(stageDir, `${kind}-launcher.exe`);
++      await refusesPrivate(
++        [
++          '--stage-shortcut',
++          join(stageDir, `${kind}-final.lnk`),
++          configPath,
++          privatePath(finalExe),
++        ],
++        'Invalid staged shortcut or final launcher path.',
++        join(stageDir, `${kind}-final.lnk`),
++      );
++    }
+     await refuses({ NoShortcuts: true, Environment: { GG_PORT: '9999' } }, /reserved GG_\*/i);
+     await refuses({ DesktopShortcut: alias }, /distinct files and paths/i);
+     await refuses(

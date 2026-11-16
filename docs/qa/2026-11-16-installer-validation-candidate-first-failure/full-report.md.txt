@@ -1,0 +1,35 @@
+# #436 first hosted candidate matrix
+
+The candidate recorded all 32 installer cases. Four supported routes passed and 27 invalid-input cases met refusal criteria. Case 06 failed the required missing-Node diagnostic. The driver exited 1 and the candidate matrix disposition was incomplete. The separate composed rollback step and its upload were skipped. [Windows job 133137523340](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43819015672/job/133137523340)
+
+## First failure
+
+Case 06 removed the explicit `NodePath` and used the exact process PATH `C:\Windows\System32;C:\Windows`. The public installer was invoked from the admitted x64 STA PowerShell 7 driver. Its child PID 4164 was born at 06:51:31.6099319 UTC, exited 1 at 06:51:32.3994483 and closed both streams. Stdout was empty. The retained 205 stderr bytes report “The property 'Source' cannot be found on this object. Verify that the property exists.” and `PropertyNotFoundStrict`, at the public invocation in the sealed `invoke.ps1` line 22. The expected category requires actionable Node 22.22.2 guidance.
+
+In the exact candidate installer, the omitted parameter's default evaluates `(Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source`. The sealed caller enables strict mode before the call. The failure occurred in the parameter default before the guarded body. The case preserved all tracked bytes, identities and native link metadata, and its listener readback was absent. [Raw case result](artifact/qa436-candidate-first/evidence/06/result.json) · [Raw stderr](artifact/qa436-candidate-first/evidence/06/installer.stderr)
+
+## Observed criteria
+
+| Criterion | Hosted outcome |
+| --- | --- |
+| Supported public installs and native link metadata | Cases 01–04 passed. Verified four x64 launchers, bound checkout and Node config, exact loopback origin/store, Unicode link names, native target, working directory, icon, final config argv and AppUserModelID. Source and unrelated sentinel bytes stayed intact. |
+| Staged validation including `-NoShortcuts` | Real staged validator descendants 3036, 10056, 6540 and 6748 appeared under the respective installer births. Each argv was `--validate-install --config <adjacent staged config>`. The case 03 installer invoked no staged shortcut creation and kept the existing Desktop, Programs and pin files. |
+| Safe actionable missing/invalid Node refusal | Case 06 failed on the raw property error. The other planned Node refusal cases passed. |
+| Canonical collision refusal and preservation | Cases 24–31 passed, including exact source, case variant, real junction, hard link, pairwise output, pin, config and default Desktop. Physical source aliases matched original volume, file ID and hash before the call. The default Desktop cleanup verified and removed its exact original disposable fixture. |
+| No final artifact changes on refusal | All 28 nonzero requests, including case 06, retained exact before/after file identities, sizes, hashes and native metadata. Independent offline readback verified 288 archived before/after file copies and 90 seed copies. All 32 listener readbacks were absent. |
+| No transient gateway/Chrome start in the matrix | Observed in the bounded native trace described below. |
+| Ordered post-mutation sharing failure and rollback | Skipped after the incomplete candidate matrix. No hosted rollback seed, mutation, lock, native failure or restoration artifact was generated. |
+
+Detailed outcomes and raw native input/output evidence remain available. [All cases](case-readback.tsv) · [Native artifact and argument readback](binary-argv-readback.json)
+
+## Actual process and source binding
+
+Driver PID 9328 was born at 06:50:36.6695358 UTC and really exited 1 at 06:55:50.0496740. Both streams closed separately at 06:55:50.0709580 with zero bytes. All 49 direct calls had birth, exit and separate close records. The 313.0259882-second schedule completed within the 450-second candidate limit. The child failure was a diagnostic mismatch, with no deadline.
+
+The native trace covered ETW canary PIDs 9016 and 7952 around the complete driver/pipe interval. It has 465 version-4 starts and 466 version-4 ends, with rundown excluded. Offline readback matched exact argv for both canaries, the driver and 49 direct children. All 399 driver-rooted process lifetimes closed by PID and unique process key before the closing canary. No Chrome or gateway Node main start was observed in that interval. The exact stopped session recorded 348 buffers, zero event/log/realtime loss, and a 22,806,528-byte ETL below the 32 MiB cap. Native decoder PID 9092 exited 0 and closed its streams. The raw XML retains a PartitionInfo header-extension decode error 15005. The classic Process payloads and canaries decoded successfully. [Independent trace and process readback](independent-readback.json)
+
+The actual checkout was merge `30973ad7c1fb3a74d34967efc17a07bf42d593ef`, tree `916bbcb9166f290839db280e6a0db172c0582527`, with ordered parents `be633141be5a0cd2b4f960a46761fabbf2cb82c7` and `596bbb654acab323e96c446d646eeccd5ffc9b07`. Reviewed product `1e303ba8c6c5b576c2ffe185fa67ac7e5734309f`, tree `fa152a660493208314b02327e319e531bf4b8dd3`, matched the exact six frozen files. Independent Git readback verified 35 carrier paths and 31 raw copied objects. Hosted build exited 0 on Node 22.23.4 with unchanged index. Outer bind before/after bytes matched SHA-256 `007958daad65ed978ca6b57ef8b503429d3d657c147063cc5025a289b7c491a5` across 29,606 tracked paths and 1,231 compiled outputs in 13 roots. All 16 native and execution packet members matched the reviewed bytes. The driver's own pre/post hash maps matched as well.
+
+The ordinary Windows suite passed 18 tests including the independent Windows PowerShell 5.1 installer regression. The three lock contention trials had one winner and four expected refusals each, with no EPERM in these trial records. Its optional upload reported no matching files. The 32-case matrix itself ran under PowerShell 7 and the hosted rollback proof remains unobserved. Other CI jobs have their separate results.
+
+Artifact 14204465794 is the exact attempt-1 matrix upload for run 43819015672. The ZIP has 1,668,141 bytes, 899 members and SHA-256 `ba67360d9cad393bcafc8ccdf5e5f4d0f06f13a8e451354d49d39d70ef49e44b`. The decoded Windows log has 96,664 UTF-8 bytes, leading BOM and final CRLF retained, SHA-256 `80e0e5f28350f5c7eedc35a0736fd4de444dfa8e7eb80c6896fefa47c198cf63`. All raw receipts and prepared offline readbacks remain available. The rollback reader was prepared before terminal status and did not run. This readback changed no candidate files and triggered no retry.

@@ -1,0 +1,134 @@
+# PR #492 / issue #435 — fresh final exact-head/target audit
+
+**SIGN-OFF.** I found no introduced in-scope blocker and no outstanding engineering acceptance gap for the bounded checkout-alias correction. This verdict covers publication head **6f383da798872aa0e6bd1e0de1fdcd4e702de9ae** against actual main **9fa8b2474c7290adb800c5e26be73511095cae25**, with the identical-tree tested merge identified below. It does not approve a different head or integration context, install anything, complete the four-intent batch, or complete owner acceptance.
+
+This is **formal scan 2 of the shared maximum 3**. Scan 1 was the completed Claude Opus 5.5 xhigh review, not behavioral QA or CI. The current audit is a fresh **GPT-6 Astra / max** session. The root's orchestration receipt records successful collaboration.spawn_agent arguments fork_turns=none, model=gpt-6-astra, reasoning_effort=max, returning /root/audit_435_final. That is the available actual assignment evidence; it is not provider-internal runtime attestation or independent introspection of reasoning effort. Receipt: ../launcher-435-astra-spawn-receipt.json.
+
+Final independent readback: **2026-11-16 03:19:31–03:19:32 UTC**. The checkout remained clean, PR #492 remained open/draft and mergeable, and current-head CI remained successful on attempt 1.
+
+## Exact identity and admission
+
+| Identity | Independently verified value |
+| --- | --- |
+| Checkout | C:/Users/98jak/.codex/worktrees/gg-20261115-runtime/GraphGoblin |
+| Branch | codex/gg-20261116-launcher-identity |
+| Publication head | 6f383da798872aa0e6bd1e0de1fdcd4e702de9ae |
+| Publication tree | decd1ca26c9bd63d942e939e65e2b2604d7f2652 |
+| Actual target/main | 9fa8b2474c7290adb800c5e26be73511095cae25 |
+| Target tree | 88ade580c80b2139b5d1bf51449dca10e33184f1 |
+| Tested merge | 5e386d5cc9ed4b022d15ade32d04fcd89c367688 |
+| Tested merge tree | decd1ca26c9bd63d942e939e65e2b2604d7f2652, exactly the publication tree |
+| Tested merge parents, ordered | 9fa8b2474c7290adb800c5e26be73511095cae25, then 6f383da798872aa0e6bd1e0de1fdcd4e702de9ae |
+| Source candidate | c75e277695dae260f0e14279cff8705bab84ef4c |
+| Source candidate tree | 640fab8634a8c0cad547a70a750150ba14d4259d |
+| Old-source native-test-only head | 08e60a0ae6d6b7cae853326825365760166f3ad3; its only change from target is the permanent native regression |
+| Supported audit runtime | Project Node v22.23.4; read-only Git used GIT_OPTIONAL_LOCKS=0 |
+
+Independent connector GETs, git ls-remote, local Git objects and the actual Windows checkout log agree. Final readbacks are retained in git-final-readback.json and github-final-readback.json; initial snapshots are retained too. I did not fetch into or update refs, stage, unstage, commit, push, or modify product files.
+
+I read the three review briefs/dispatches, live AGENTS.md, docs/README.md, docs/15-issue-workflow.md, the four-intent register's scope/gates and current launcher checkpoints, implementation-plan context, ADR-0064 and ADR-0069. The current issue admits engineering closure after gates and merge; #276/#325 retain separate owner acceptance.
+
+## Effective scope and source assessment
+
+The target-to-head diff has 385 paths. Its active implementation/test/documentation change is these six paths, plus documentary publication under docs/qa and the delivery register:
+
+- apps/api/src/instance-identity.ts
+- apps/api/src/instance-identity.test.ts
+- tooling/scripts/launcher-identity.test.mjs
+- tooling/scripts/windows-launcher.acceptance.mjs
+- docs/09-frontend-and-pwa.md
+- CHANGELOG.md
+
+I reviewed the complete effective diff, the helper and test implementations, the native suite's added group and unchanged surrounding cases, and the affected documentation. I inspected the unchanged configuration/canonicalization and C# helper, readiness, process and ownership call paths that establish the integration behavior. The source-candidate-to-publication diff has 379 documentary paths only. Every six-file candidate/publication Git-blob digest agrees. The permanent native regression is byte-identical at the old-source test-only head, source candidate and publication head: SHA-256 4cac8f617ebe4d96e8b54c4ba0bfe3c5a4647e284480b97f77fe0e847281c4ee.
+
+The root cause is supported by old source and actual negative controls: a lexical absolute argv path can preserve the checkout alias while the loaded ESM module URL names its resolved path. The old guard returned false and exited successfully without protocol output. The native launcher correctly rejected that empty result.
+
+The correction compares both existing files using the same realpathSync.native operation. A missing entry, invalid module URL or resolution error returns false. It does not accept a partly resolved entry or add a permissive fallback. Once the files match, the existing runtime check, configuration parsing, digest/store-state dispatch, newline and invalid-configuration diagnostic execute unchanged.
+
+instanceIdentity, launcherRuntimeSupported, launcherStoreState, configuration schema, fingerprint field order, secret exclusion and store ownership algorithms are unchanged. The fingerprint still canonicalizes runtime, main entry, data directory, file database and shell paths. The new guard performs filesystem reads, not store acquisition or mutation. It adds no dependency, format, migration, installer, logging, provider or UI behavior.
+
+The C# launcher still supplies the configured repo as cwd, invokes helper and main through that spelling, applies the same environment, validates the digest, checks ownership and refuses an unrelated/configuration-mismatched listener. The native test's extracted compile/launch functions preserve original arguments, cwd, environment, hidden-window setting and deadline. Nothing absorbs the separate timeout work held in PR #460.
+
+The docs/09 addition and changelog describe the demonstrated real/junction/symlink behavior. No new architecture decision or compatibility path was introduced. The docs/10 prerequisite omission remains a recorded nonblocking follow-up.
+
+## Acceptance and regression evidence
+
+| Criterion | Evidence assessed | Result |
+| --- | --- | --- |
+| Entry detection/direct invocation | Unit absolute/relative, different-existing-file, undefined/missing and invalid-URL cases; full 13-test identity file in current CI | Established for admitted contract |
+| Exact alias protocol | Built regression, local compiled helper matrix, freshly downloaded hosted native log | Same 65-byte lowercase SHA-256 plus LF, empty stderr, existing store-state JSON |
+| Invalid configuration/inert import | Final regression red on old source and green on fixed source; unit different-entry case; actual gateway imports | Preserved; focused built import control limitation retained under #494 |
+| Native cold starts | Genuine Junction and SymbolicLink, alias-first and direct-first | Four distinct PID/birth identities |
+| Same/cross-path warm reuse | Two warm invocations per cold gateway with exact owner/lease checks | Eight successful reuses |
+| Wrong store/settings refusal | Two mismatches per cold gateway, original identity/lease preservation and no alternate startup | Eight refusals, original gateway preserved |
+| Managed release | Exact-owner recheck, authenticated drain, PID/birth/listener/lease/reclaim disappearance and safe alias unlink | Four bound hosted releases; local candidate also has later independent host readback |
+| Read-only helper | Empty prelaunch stores in built/local/hosted evidence; source inspection | Established for tested paths; no store writes added |
+
+The unchanged final built-helper regression failed its three intended assertions on the old compiled helper: alias identity, alias store state and invalid-configuration rejection. Existing/direct controls passed. I read the red log and exit-1 receipt and verified its retained test bytes match the published regression. The candidate passed 2/2; its log hash matches the exit-0 receipt. Before/after candidate bindings are identical, and the current compiled helper still matches recorded SHA-256 bc5581e2e9941f842ddec8da2e26200cbb316d3c295148cc9aad3b995b42bd45.
+
+Hosted old-source run 43787801176 / job 133039259616 created both genuine link types, then observed silent alias helper output and native cold refusal. It reported 14 passes, 3 expected failures and no skips. Later positive cases were not reached. This is a discriminating negative control, not candidate success.
+
+For fixed source I independently fetched the current Windows log through the GitHub connector. Its **53,877 UTF-8 bytes**, including leading BOM and final CRLF, equal both the retained candidate log and root's separate captured log string. SHA-256: 58b62eb41d88d9962a6e0cebbd0ac193793b10a52945cd2004054ba6bb6eecb4. The checkout record names the exact tested merge above, Node v22.23.4 and 12 successful build tasks.
+
+I independently decoded both alias JSON records and required exact roundtrip through the actual Node 22.23.4 TAP escape function. decoded-native-records.json is derived data, not raw stdout. The raw log remains unchanged. Both records confirm the requested Windows link type plus Directory/ReparsePoint flags. Alias-cold main argv contains the actual alias spelling. Recorded owners:
+
+- Junction alias: PID 1596, creation FILETIME 134392689920462180.
+- Junction direct: PID 9404, creation FILETIME 134392690042327940.
+- SymbolicLink alias: PID 8072, creation FILETIME 134392690209603230.
+- SymbolicLink direct: PID 8252, creation FILETIME 134392690331393420.
+
+The native assertions validate executable, main argv, serving identity, PID/birth and two lease-byte hashes, then recheck after each warm invocation and refusal. I inspected the assertions, not just result labels. Cleanup retains an uncertain gateway/link for investigation and unlinks only after release and matching fixture/link identity. The required alias capability refusal deliberately fails rather than skips.
+
+The accepted local candidate report is separate evidence: real compiled launcher/gateway over TCP and file SQLite, direct/junction matrix, both HTTP shells and static asset hashes, 46 subprocess triplets, managed drains and later independent absent-process/listener readback. Its 4,372,892-byte external build binding hashes to b247b045d4394c976b7339df1ada61b0399677d847e740b4d2b19c4c4ff114f6, binding 28,809 tracked files, 1,231 outputs, 13 roots, 19 dependency files and 22 workspace links. I checked identity/counts/hash, relevant helper binding, raw candidate summary and independent report. Its historical candidate index digest is not claimed to be the publication index.
+
+## Current-head gates
+
+[CI run 43790735875](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43790735875) is the only pull-request workflow run returned for this head. It is successful at attempt 1, with all four jobs on this head and no retry:
+
+| Job | ID | Independently assessed result |
+| --- | --- | --- |
+| Gates | 133048320097 | All 32 reported steps succeeded. Thirteen Vitest totals sum to 9,619 passed / 41 skipped. |
+| Browser | 133048319866 | 481 passed / one declared LIVE-provider skip, zero retries, one worker. |
+| Windows launcher | 133048320156 | 17/17, zero failure/skip/cancellation, 175785.8981 ms, including both genuine aliases. |
+| Template image | 133048319973 | Four independent starter/implementation/review/qa drafts loaded from the read-only, no-network image. |
+
+I opened every coverage summary directly from the retained ZIP and checked all 13 line/branch floors. The fresh GitHub artifact listing binds artifact 14192079834, 22,040 bytes, to SHA-256 68506d5c108574bcbdd11856ddea6d02940345f8045496a7b4fcc84c01095a27; the downloaded ZIP matches. API is 95.8% lines / 90.7% branches; tooling 96.89% / 91.67%; web 98.6% / 94.31%. No threshold or exclusion changed.
+
+Retained Gates and Browser decoded logs match root's independent connector captures byte for byte. I summed all 13 groups, confirmed the 13-test identity and 2-test built-helper files, and inspected the workflow and template results. Job statuses are fresh; those two full logs were read from retained captures, unlike the additionally fresh Windows download.
+
+Qualifications remain explicit: the audit threshold passed with 8 low / 13 moderate advisories, not zero advisories. Optional strict routing mode was off; frame p95 samples 33.3–33.4 ms do not meet the optional 17 ms strict target. This is neither a strict-performance pass nor a controlled before/after regression conclusion. Browser's conditional failure artifact step was skipped. Windows found no upload files and the live run listing contains only coverage; there is no native artifact. Hosted acceptance rests on the bound structured log and assertions.
+
+## Scan 1 dispositions and findings
+
+**New introduced in-scope blockers: none. New actionable findings: none. No unresolved execution diagnostic is required.**
+
+I read the complete Opus report and root dispositions and verified report SHA-256 284eb4f6df116ed337b8942d75b2cb34657404cbd03d6bdeccc3c22d024ccacd. Launch/exit receipts record claude-opus-5-5, xhigh, exit 0. A fresh GET of [comment 6906188155](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/492#issuecomment-6906188155) contains the complete report and root disposition. Line-ending normalization applied only to comparing published text, not to hashing the report.
+
+| Prior finding | Final audit disposition |
+| --- | --- |
+| R1, docs/10 coverage/prerequisite | Accept DEFER-ISSUE to [#493](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/493). A real developer-documentation gap; runtime behavior and capable-host acceptance are established. |
+| R2, built inert-import control strength | Accept DEFER-ISSUE to [#494](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/494). Built/native controls use undefined-entry or file-URL error paths; unit different-existing-file and actual gateway imports establish current correctness. A wrapper entry would strengthen regression discrimination. |
+| R3, pending CI/symlink statements | Accept DUPLICATE-STALE for live PR/issue concern. Fresh bodies include current CI and genuine symlink acceptance. Committed packets/register identify prepublication checkpoints. Root will archive final completion evidence in the next lane, consistent with append-only delivery history. |
+| O1, other tooling entry guards | Accept conditional DEFER-ISSUE to [#495](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/495). Direct Node semantics do not establish actual pnpm gate bypass. None is claimed or used to invalidate CI. |
+| O2, missing native archive | Accept DEFER-ISSUE to [#496](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/496). Missing artifact confirmed; hidden-path exclusion remains an unverified possible cause. |
+| O3–O7 | Accept NO-CHANGE/informational with root qualifications. No introduced cleanup, port-allocation, cross-app-refactor, supported-filesystem or CI defect established. |
+
+Fresh GETs confirm #493–#496 are open, parked with backlog and no pickup gate. They do not expand the batch or authorize implementation.
+
+I do **not** adopt stronger statements about 8.3, subst, mapped drives or availability/race behavior as tested guarantees. Native acceptance covers real paths, Junction and SymbolicLink. Catching realpath errors preserves conservative refusal but does not prove all remote/virtual filesystems or races safe or available. Raw QA JSON/YAML/JavaScript/TypeScript ignore entries preserve bytes; QA Markdown is not blanket-excluded from formatting.
+
+## Evidence integrity, limitations and handoff
+
+source-and-evidence-inventory.json records all **377** QA publication files checked byte-for-byte against exact head Git blobs, all six active-path hashes and every manifest row read. Seven manifests verified: historical #419 current CI (52), completion (44), Opus archive (26), #435 baseline (69), implementation (25), candidate (186), and external fixed-source hosted packet (17). Previous #419 source copies remain archived evidence, not new active product changes.
+
+This audit executed only read-only Git/GitHub, file reads/hashes, archive parsing and audit-only offline inspectors under the new external directory. It reran no product test, native suite, build, browser, provider call or CI job, spawned no reviewers, and touched no owner process, port, store, installation or index. Accepted native/CI executions were inspected, not performed by this audit.
+
+The first audit-only inspector used .length for the workspace-links map. It stopped at that check with exit 1 after earlier checks; original script/diagnostic are retained as offline-verification-first.mjs and offline-first-failure.json. Correcting only the inspector to count Object.keys produced the recorded exit-0 verification. Oversized evidence-save attempts hit command/tool-size limits; smaller per-record saves succeeded. These were audit transport/inspection corrections, not product fixes or acceptance reruns. Initial evidence path lookups were corrected from the actual inventory.
+
+Original failures remain preserved: local true-symlink EPERM occurred before product execution; the first baseline CIM progress/CLIXML failure did not prove cleanup and required separately documented exact-identity managed recovery; the progress-only diagnostic correction, original lint failure and prior offline parser/command-alias failures remain distinct. Their history is not rewritten as first-pass success.
+
+Hosted cleanup is established by source-bound in-run assertions. This audit did not inspect the hosted machine after teardown. Local candidate has its own later independent host readback. HTTP shell/asset evidence is not interactive PWA/taskbar acceptance. No native 8.3/subst/mapped-drive, filesystem-race, physical reboot, new provider or owner-acceptance coverage is claimed.
+
+PR #460 remains owner-held, open at b6ed79eeb289b781c48d3b0f994c1b2577990df9, independently read during this audit. It is outside this verdict. #436/#438/#456 were not implemented or reviewed here. Owner acceptance/closure on #276/#325 stays separate. Root retains publication and integration authority.
+
+**Final gate disposition: SIGN-OFF at the exact head/target/tested merge above.** Root may use this report for #435's remaining publication/integration steps under existing authority. Changed source or target context needs the required auditor confirmation; this verdict does not silently carry over.

@@ -1,0 +1,18 @@
+**F1 is fixed in the local component scope, and C11b now runs and passes.** The single fresh run executed 29 of 29 launcher cases and 384 of 384 checks, and the harness exited 0.
+
+- **What was probed:** drive-relative (`C:x`) and root-relative (`\x`) paths for the config file (in both the validate and stage modes), the staged shortcut and the final EXE. That is C11a, C11b and the new C12a–f, eight probes in all.
+- **What happened:** every probe exited 1 with the exact fixed refusal text and no stdout. The fixture tree was unchanged, and nothing else was created or started: no shortcut, store, log or canary run.
+- **Why a pass means something:** each relative path pointed at a valid config or an existing file or folder. A refusal can therefore only come from the new path check, not from a missing or invalid config.
+- **Earlier cases:** C01–C10 gave the same exit codes and error text as the first run. The two positive shortcut cases (C07, C08) still decode to the correct target, arguments, working folder, icon and app ID.
+- **Source and index:** the six live files matched the new manifest four times: before compiling, after the run, in the harness and in Bash. The worktree index (`7ff181e6…`), HEAD and `git status` were the same before and after.
+- **Harness changes:** the diff is in `work/harness.diff`. Besides the permitted edits, I changed the check that looks for the fixture path in program output to use this run's folder name. With the old name it could never have failed. I also added setup guards and the six C12 cases.
+- **First run:** its evidence is untouched (C11a exit 0, harness exit 2). The old candidate was not rerun.
+- **Processes:** there were 32 child processes; none hung or was killed, and none is still running. A 127.0.0.1:4747 listener (PID 19500) was already running; it is not one of my processes, and I did not contact it.
+
+This run doesn't cover UNC paths, forward-slash or device-path forms, the hosted or public-installer matrix, rollback, CI, process tracing (ETW) or named-mutex absence, and it isn't owner acceptance.
+
+Files are in `C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher-436-opus-path-regression/`:
+- full-report.md
+- work/harness.diff
+- work/run-01/matrix-outcome.json
+- work/SHA256SUMS.txt
