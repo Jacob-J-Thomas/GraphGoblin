@@ -5,6 +5,8 @@ import Synchronization
 /// Sleepers resume when `advance(by:)` reaches their deadline, in deadline order, and throw
 /// `CancellationError` if their task is cancelled first. A sleep whose deadline has already
 /// passed returns immediately, so registration order never matters.
+/// `advanceWithoutResuming(by:)` moves time but holds due sleepers until `resumeDueSleepers()`,
+/// so a test can run other work after a deadline while that deadline's timer has not run yet.
 final class ManualClock: Clock {
     typealias Duration = Swift.Duration
 
@@ -94,6 +96,20 @@ final class ManualClock: Clock {
         for sleeper in due {
             sleeper.continuation.resume()
         }
+    }
+
+    /// Moves time forward without resuming any sleeper. A sleeper whose deadline is now reached
+    /// stays registered, and still cancellable, until `resumeDueSleepers()` or the next
+    /// `advance(by:)`: its timer is due but has not run.
+    func advanceWithoutResuming(by duration: Swift.Duration) {
+        state.withLock { current in
+            current.now = current.now.advanced(by: duration)
+        }
+    }
+
+    /// Resumes every sleeper whose deadline has already been reached, in deadline order.
+    func resumeDueSleepers() {
+        advance(by: .zero)
     }
 
     /// Whether a sleeper is currently registered for exactly this offset from the start.

@@ -183,9 +183,15 @@ struct LaunchInputs: Sendable {
     }
 
     func fingerprint(_ limit: OperationLimit) throws -> String {
-        let line = try capture([helper], limit: limit)
-        guard asciiHex(line, count: 64) else { throw OperationRefusal.invalid }
-        return line
+        do {
+            let line = try capture([helper], limit: limit)
+            guard asciiHex(line, count: 64) else { throw OperationRefusal.invalid }
+            return line
+        } catch OperationRefusal.cancelled {
+            throw OperationRefusal.cancelled
+        } catch {
+            throw LaunchRefusal(.cannotVerify)
+        }
     }
 
     func storeState(_ limit: OperationLimit) throws -> StoreState {

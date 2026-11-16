@@ -9,6 +9,25 @@ struct LaunchRefusal: Error {
     init(_ outcome: LaunchOutcome) { self.outcome = outcome }
 }
 
+func classifyAttemptFailure(
+    _ error: any Error, didCommit: Bool
+) -> (outcome: LaunchOutcome, childCategory: String?) {
+    if let refusal = error as? LaunchRefusal { return (refusal.outcome, nil) }
+    if let operation = error as? OperationRefusal {
+        switch operation {
+        case .cancelled: return (.cancelled, nil)
+        case .deadline: return (didCommit ? .startTimedOut : .cannotVerify, nil)
+        case .invalid, .disconnected: return (didCommit ? .startupUnverified : .cannotVerify, nil)
+        }
+    }
+    if let spawn = error as? ChildSpawnError {
+        guard didCommit else { return (.cannotVerify, nil) }
+        if case .noChild = spawn { return (.startFailed, "spawn-failed") }
+        return (.startupUnverified, nil)
+    }
+    return (didCommit ? .startupUnverified : .unexpected, nil)
+}
+
 final class AttemptState: @unchecked Sendable {
     private let lock = NSLock()
     private var started = false
@@ -212,32 +231,42 @@ package final class NativeLaunchEngine: LaunchEngine {
                                     progress: publish, logDirectory: &logDirectory,
                                     childCategory: &childCategory)
             }
-        } catch let refusal as LaunchRefusal {
-            outcome = refusal.outcome
-        } catch OperationRefusal.cancelled {
-            outcome = .cancelled
-        } catch ChildSpawnError.noChild {
-            childCategory = "spawn-failed"
-            outcome = .startFailed
         } catch {
-            outcome = state.didCommit ? .startupUnverified : .cannotVerify
+            let failure = classifyAttemptFailure(error, didCommit: state.didCommit)
+            outcome = failure.outcome
+            childCategory = failure.childCategory ?? childCategory
         }
-        if let installation, HeadlessResult(outcome).exitCode != 0,
-           HeadlessResult(outcome).exitCode != 40, !time.expired {
+        if let installation {
             let file = logDirectory
-            let record = "stage=\(stageName) outcome=\(HeadlessResult(outcome).code)"
-                + (childCategory.map { " child=" + $0 } ?? "") + "\n"
-            let finished = DispatchSemaphore(value: 0)
-            Self.diagnostics.async {
-                defer { finished.signal() }
+            writeFailureDiagnostic(outcome, stage: stageName, childCategory: childCategory) { record in
                 guard let directory = file ?? (try? LogDirectory.open(for: installation, create: true))
                 else { return }
-                try? directory.appendLauncherRecord(Data(record.utf8))
+                try? directory.appendLauncherRecord(record)
             }
-            _ = finished.wait(timeout: DispatchTime(uptimeNanoseconds:
-                min(time.end, DispatchTime.now().uptimeNanoseconds + 250_000_000)))
         }
         return outcome
+    }
+
+    func writeFailureDiagnostic(
+        _ outcome: LaunchOutcome, stage: String, childCategory: String?, append: @escaping @Sendable (Data) -> Void
+    ) {
+        let result = HeadlessResult(outcome)
+        guard result.exitCode != 0, result.exitCode != 40, !state.quitting else { return }
+        let record = "stage=\(stage) outcome=\(result.code)"
+            + (childCategory.map { " child=" + $0 } ?? "") + "\n"
+        let finished = DispatchSemaphore(value: 0)
+        // The gateway attempt has ended. Only the best-effort write uses this tail.
+        let deadline = DispatchTime.now() + .milliseconds(250)
+        Self.diagnostics.async { [state] in
+            defer { finished.signal() }
+            guard !state.quitting, DispatchTime.now() < deadline else { return }
+            append(Data(record.utf8))
+        }
+        while !state.quitting {
+            let now = DispatchTime.now()
+            guard now < deadline else { return }
+            if finished.wait(timeout: min(deadline, now + .milliseconds(25))) == .success { return }
+        }
     }
 
     private func observeAndStart(
@@ -302,6 +331,7 @@ package final class NativeLaunchEngine: LaunchEngine {
                         return self.state.quitting ? .cancelled : .cannotVerify
                     }
                     progress(.starting)
+                    guard !limit.time.expired else { return .startTimedOut }
                     let child = try inputs.gateway(admission: admission!).gateway()
                     defer { _ = child.observe() }
                     return try verifyChild(child, limit: limit, port: inputs.config.port,

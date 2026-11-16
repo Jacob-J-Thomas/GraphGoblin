@@ -118,7 +118,7 @@ enum PresentationCopy {
     static let fileMenu = "File"
     static let closeMenuItem = "Close"
 
-    static let waitingDetail = "Hiding this window doesn’t stop the launch. Quitting cancels the launch if GraphGoblin hasn’t started yet, and never stops a GraphGoblin that has already started."
+    static let waitingDetail = "Hiding this window doesn’t stop the launch. Quitting cancels the launch if it’s still pending, but if GraphGoblin has already begun starting, it may still finish starting. Quitting never stops a GraphGoblin that’s already running."
     static let handoffDetail = "Your web browser may take a moment to open. Quitting the launcher doesn’t stop GraphGoblin."
 
     static let handoffProgress = ProgressContent(
@@ -137,7 +137,7 @@ enum PresentationCopy {
         case .waitingForOtherLaunch:
             line = "Another GraphGoblin launch is in progress. Waiting for it to finish…"
         case .waitingForStore:
-            line = "GraphGoblin’s data is in use. Waiting for it to become available…"
+            line = "Access to GraphGoblin’s data is blocked. Waiting for it to become available…"
         case .waitingForRelease:
             line = "The previous GraphGoblin session is still shutting down. Waiting for it to finish…"
         case .starting:
@@ -230,8 +230,8 @@ enum PresentationCopy {
             )
         case .storeBlocked:
             return (
-                "GraphGoblin’s data is in use",
-                "Another process is using the data folder this launcher is set up for, so the launcher didn’t start another copy of GraphGoblin. Nothing was stopped. Wait for the other process to finish, or close it deliberately, then open GraphGoblin again. Don’t delete files to get around this."
+                "Access to GraphGoblin’s data is blocked",
+                "The launcher couldn’t confirm that the data folder it was set up with is free to use, so it didn’t start GraphGoblin. Nothing was stopped. Another GraphGoblin session may be using this data. If you recognize one, close it as you normally would, then open GraphGoblin again. If this keeps happening, the launcher’s log may say why. Don’t delete files to get around this."
             )
         case .cannotVerify:
             return (

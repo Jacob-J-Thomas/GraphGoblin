@@ -1,10 +1,19 @@
 import Darwin
 import Foundation
+import Synchronization
 import LaunchContract
 @testable import LauncherEngine
 import Testing
 
 @Suite struct EngineContractsTests {
+    private final class DiagnosticRecords: Sendable {
+        private let values = Mutex<[Data]>([])
+
+        func append(_ data: Data) { values.withLock { $0.append(data) } }
+
+        var snapshot: [Data] { values.withLock { $0 } }
+    }
+
     @Test func exactHeadlessEnvelopes() {
         let cases: [(LaunchOutcome, Int32, String, UInt16?)] = [
             (.openManagement(port: 1, mode: .running), 0, "open-management-running", 1),
@@ -96,6 +105,90 @@ import Testing
         for rejected in [secret, booleanPort, numericFlag] {
             #expect(throws: FileRefusal.self) { try LauncherConfiguration(data: Data(rejected.utf8)) }
         }
+    }
+
+    @Test func failedIdentityHelperSpawnIsAnObservationFailure() throws {
+        let scratch = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: scratch) }
+        let root = try Directory(path: canonicalPath(scratch.path))
+        let node = root.path + "/fixture-node"
+        try writeAll(root.createFile("fixture-node", mode: 0o700),
+                     Data("#!/bin/sh\nprintf '%s\\n' 'darwin,arm64,22.22.2'\n".utf8))
+        for relative in [
+            "apps/api/dist/main.js", "apps/api/dist/instance-identity.js", "apps/api/dist/macos-log/guard.js",
+            "apps/api/dist/managed-log/guard.js", "apps/api/dist/managed-log/gateway-log-writer.js",
+            "apps/web/dist/index.html", "apps/web/dist-goblin/index.html"
+        ] {
+            let path = URL(fileURLWithPath: root.path + "/" + relative)
+            try FileManager.default.createDirectory(at: path.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try Data("export const MACOS_LAUNCHER_LOG_PROTOCOL = 1;\n".utf8).write(to: path)
+        }
+        let config = try LauncherConfiguration(
+            checkout: root.path, node: node, dataDirectory: root.path + "/store", port: 4747,
+            requireAPIKey: false, ollamaEnabled: false, codexBinary: nil, claudeBinary: nil
+        )
+        let witness = BundleWitness(bundle: root.identity, executable: "", plist: "", configuration: "")
+        let contents = BundleContents(id: "", bundleID: AppName.standardBundleID, witness: witness, configuration: config)
+        let inputs = try LaunchInputs(VerifiedInstallation(home: root.path, name: AppName.standard, contents: contents))
+        try normalizeChildStatusDisposition()
+        let limit = OperationLimit(time: AttemptTime(seconds: 3), quitting: { false })
+        try inputs.verifyRuntime(limit)
+        try FileManager.default.removeItem(atPath: node)
+
+        do {
+            _ = try inputs.fingerprint(limit)
+            Issue.record("The removed executable must prevent starting the identity helper")
+        } catch {
+            let failure = classifyAttemptFailure(error, didCommit: false)
+            #expect(HeadlessResult(failure.outcome).exitCode == 22)
+            #expect(failure.childCategory == nil)
+        }
+    }
+
+    @Test func failureClassificationDistinguishesCommittedSpawnAndLocalSetup() {
+        let before = classifyAttemptFailure(ChildSpawnError.noChild, didCommit: false)
+        #expect(HeadlessResult(before.outcome).exitCode == 22)
+        #expect(before.childCategory == nil)
+        let after = classifyAttemptFailure(ChildSpawnError.noChild, didCommit: true)
+        #expect(HeadlessResult(after.outcome).exitCode == 30)
+        #expect(after.childCategory == "spawn-failed")
+
+        let localSetup = FileRefusal.system(EACCES)
+        #expect(HeadlessResult(classifyAttemptFailure(localSetup, didCommit: false).outcome).exitCode == 70)
+        #expect(HeadlessResult(classifyAttemptFailure(localSetup, didCommit: true).outcome).exitCode == 33)
+        #expect(HeadlessResult(classifyAttemptFailure(OperationRefusal.deadline, didCommit: false).outcome).exitCode == 22)
+        #expect(HeadlessResult(classifyAttemptFailure(OperationRefusal.deadline, didCommit: true).outcome).exitCode == 32)
+    }
+
+    @Test func expiredGatewayDeadlineStillRecordsTerminalFailure() {
+        let engine = NativeLaunchEngine(bundlePath: "/unused")
+        let records = DiagnosticRecords()
+        let limit = OperationLimit(time: AttemptTime(end: 0), quitting: { false })
+        do {
+            try limit.check()
+            Issue.record("A gateway action must not proceed after its deadline")
+        } catch {
+            let failure = classifyAttemptFailure(error, didCommit: true)
+            engine.writeFailureDiagnostic(failure.outcome, stage: "starting", childCategory: failure.childCategory) { bytes in
+                records.append(bytes)
+            }
+        }
+        let written = records.snapshot
+        #expect(written == [Data("stage=starting outcome=start-timed-out\n".utf8)])
+    }
+
+    @Test func cancelledAndQuittingAttemptsSkipFinalDiagnostics() {
+        let engine = NativeLaunchEngine(bundlePath: "/unused")
+        let records = DiagnosticRecords()
+        engine.writeFailureDiagnostic(.cancelled, stage: "checking", childCategory: nil) { bytes in
+            records.append(bytes)
+        }
+        engine.requestQuit()
+        engine.writeFailureDiagnostic(.storeBlocked, stage: "waiting-for-store", childCategory: nil) { bytes in
+            records.append(bytes)
+        }
+        #expect(records.snapshot.isEmpty)
     }
 
     @Test func healthRequiresUniqueCorrectHeadersAndExactBody() throws {

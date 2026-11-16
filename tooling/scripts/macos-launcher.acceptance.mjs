@@ -27,6 +27,7 @@ const logNames = ['gateway.log', 'gateway.log.1', 'launcher.log', 'launcher.log.
 const streamLimit = 256 * 1024;
 const indexLimit = 16 * 1024 * 1024;
 const slotLimit = 4 * 1024 * 1024;
+const launcherSlotLimit = 256 * 1024;
 const utf8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -864,7 +865,30 @@ async function scopedAcceptance(fixture, t) {
     assert.equal(replacement.receiptPath, installed.receiptPath);
     evidence.replacement = replacement;
     installed = replacement;
+
+    assert.deepEqual(await ownedDirectory(logRoot), logIdentity);
+    const launcherLogPath = join(logRoot, 'launcher.log');
+    const previousLauncherLog = (await statIfPresent(launcherLogPath))
+      ? await ownedFile(launcherLogPath, launcherSlotLimit, true)
+      : undefined;
     expectHeadless(await headless(fixture, 'held-store', '--ensure-gateway'), 21, 'store-blocked');
+    const launcherLog = await ownedFile(launcherLogPath, launcherSlotLimit, true);
+    await writeFile(join(evidence.output, 'held-store.launcher.log'), launcherLog.bytes, {
+      mode: 0o600,
+      flag: 'wx',
+    });
+    assert.deepEqual(await ownedDirectory(logRoot), logIdentity);
+    assert.equal(launcherLog.identity.device, logIdentity.device);
+    const priorBytes = previousLauncherLog?.bytes.length ?? 0;
+    if (previousLauncherLog) {
+      // Only this fixture's earlier refusals can have used the fresh alternate log.
+      assert.deepEqual(launcherLog.identity, previousLauncherLog.identity);
+      assert.ok(launcherLog.bytes.subarray(0, priorBytes).equals(previousLauncherLog.bytes));
+    }
+    assert.equal(
+      utf8.decode(launcherLog.bytes.subarray(priorBytes)),
+      'stage=waiting-for-store outcome=store-blocked\n',
+    );
     assert.equal(await refused(otherPort), true);
     assert.deepEqual(
       await processAndLeases(fixture, primaryPort, fingerprint, 'post-store-contender'),
@@ -884,7 +908,7 @@ async function scopedAcceptance(fixture, t) {
     assert.equal(state.state, 'held');
     assert.equal(state.path, join(dataDir, leaseNames[0]));
     passed(
-      'Same-path replacement kept the alternate identity and refused the live writer on its replacement port.',
+      'Same-path replacement kept the alternate identity and logged the held-store deadline refusal.',
     );
 
     stage = 'verified-drain';

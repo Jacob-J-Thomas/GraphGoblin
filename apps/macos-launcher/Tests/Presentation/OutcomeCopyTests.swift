@@ -119,8 +119,8 @@ enum CopyFixtures {
         FailureExpectation(
             outcome: .storeBlocked,
             kind: .storeBlocked,
-            title: "GraphGoblin’s data is in use",
-            message: "Another process is using the data folder this launcher is set up for, so the launcher didn’t start another copy of GraphGoblin. Nothing was stopped. Wait for the other process to finish, or close it deliberately, then open GraphGoblin again. Don’t delete files to get around this.",
+            title: "Access to GraphGoblin’s data is blocked",
+            message: "The launcher couldn’t confirm that the data folder it was set up with is free to use, so it didn’t start GraphGoblin. Nothing was stopped. Another GraphGoblin session may be using this data. If you recognize one, close it as you normally would, then open GraphGoblin again. If this keeps happening, the launcher’s log may say why. Don’t delete files to get around this.",
             offersShowLog: true
         ),
         FailureExpectation(
@@ -307,6 +307,35 @@ struct OutcomeCopyTests {
         }
     }
 
+    @Test("Quit and blocked-data copy promise only what the launcher can know")
+    func uncertainCopy() {
+        // Quit cancels a pending launch only; a start already under way may still finish.
+        let detail = PresentationCopy.waitingDetail
+        #expect(detail.hasPrefix("Hiding this window doesn’t stop the launch."))
+        #expect(detail.contains("Quitting cancels the launch if it’s still pending"))
+        #expect(detail.contains("if GraphGoblin has already begun starting, it may still finish starting"))
+        #expect(detail.contains("Quitting never stops a GraphGoblin that’s already running"))
+
+        // Access to the data is blocked or unconfirmed; nothing asserts that another session uses it.
+        let waiting = PresentationCopy.progress(for: .waitingForStore).statusLine
+        let blocked = PresentationCopy.alert(for: .storeBlocked, showLogAvailable: true)
+        #expect(waiting.hasPrefix("Access to GraphGoblin’s data is blocked."))
+        #expect(blocked.title == "Access to GraphGoblin’s data is blocked")
+        for text in [waiting, blocked.title, blocked.message] {
+            #expect(!text.contains("in use"), "\(text)")
+            #expect(!text.contains("is using"), "\(text)")
+            #expect(!text.contains("Another process"), "\(text)")
+        }
+        #expect(blocked.message.contains("couldn’t confirm that the data folder it was set up with is free to use"))
+        #expect(blocked.message.contains("Another GraphGoblin session may be using this data."))
+        // Closing a session is suggested only for one the user recognizes, never forced.
+        #expect(blocked.message.contains("If you recognize one, close it as you normally would"))
+        #expect(blocked.message.contains("Nothing was stopped."))
+        #expect(blocked.message.contains("If this keeps happening, the launcher’s log may say why."))
+        #expect(blocked.message.contains("Don’t delete files to get around this."))
+        #expect(blocked.buttons == [CopyFixtures.ok, CopyFixtures.showLog])
+    }
+
     @Test(
         "Management outcomes hand off the literal loopback address",
         arguments: [UInt16(1), 80, 4747, 65535],
@@ -390,11 +419,11 @@ struct OutcomeCopyTests {
 
     @Test("Every stage has its own fixed progress line")
     func stageCopy() {
-        let detail = "Hiding this window doesn’t stop the launch. Quitting cancels the launch if GraphGoblin hasn’t started yet, and never stops a GraphGoblin that has already started."
+        let detail = "Hiding this window doesn’t stop the launch. Quitting cancels the launch if it’s still pending, but if GraphGoblin has already begun starting, it may still finish starting. Quitting never stops a GraphGoblin that’s already running."
         let expected: [String: String] = [
             "checking": "Checking GraphGoblin…",
             "waitingForOtherLaunch": "Another GraphGoblin launch is in progress. Waiting for it to finish…",
-            "waitingForStore": "GraphGoblin’s data is in use. Waiting for it to become available…",
+            "waitingForStore": "Access to GraphGoblin’s data is blocked. Waiting for it to become available…",
             "waitingForRelease": "The previous GraphGoblin session is still shutting down. Waiting for it to finish…",
             "starting": "Starting GraphGoblin…",
         ]

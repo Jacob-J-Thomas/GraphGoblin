@@ -62,7 +62,9 @@ where C.Duration == Duration {
     private var userHidProgress = false
     private var handoffAddress: ManagementAddress?
     private var arbiter: HandoffArbiter<C.Instant>?
-    private var pendingFailure: FailureKind?
+    /// The reached failure awaiting its Show Log offer, with the one absolute monotonic instant
+    /// that ends the offer for both the expiry timer and the resolver's answer.
+    private var pendingFailure: (kind: FailureKind, offerDeadline: C.Instant)?
     private var shownAlert: AlertContent?
     private var showLogAction: ShowLogAction?
     private var awaitingTerminationReply = false
@@ -333,30 +335,37 @@ where C.Duration == Duration {
             return
         }
         phase = .preparingFailure
-        pendingFailure = kind
+        // One absolute deadline ends the offer. The expiry timer sleeps until it and the
+        // resolver's answer is judged against it, so neither completion order can extend it.
+        let deadline = clock.now.advanced(by: PresentationTiming.showLogOfferWait)
+        pendingFailure = (kind: kind, offerDeadline: deadline)
         let token = self.token
         resolverTask = Task { [weak self] in
             guard let resolve = self?.resolveShowLog else { return }
             let action = await resolve()
             self?.showLogResolved(action, token: token)
         }
-        resolverWaitTask = after(clock.now.advanced(by: PresentationTiming.showLogOfferWait)) { controller in
+        resolverWaitTask = after(deadline) { controller in
             controller.showLogOfferExpired()
         }
     }
 
+    /// Judges the resolver's answer on the main actor against the offer deadline. An answer
+    /// handled at or after that instant is discarded even when the expiry timer's continuation
+    /// is still queued behind it: the window then shows without Show Log, as on expiry.
     private func showLogResolved(_ action: ShowLogAction?, token source: AttemptToken) {
-        guard source === token, phase == .preparingFailure, let kind = pendingFailure else { return }
+        guard source === token, phase == .preparingFailure, let pending = pendingFailure else { return }
         resolverWaitTask?.cancel()
         resolverWaitTask = nil
-        showFailure(kind, showLog: action)
+        let offered: ShowLogAction? = clock.now < pending.offerDeadline ? action : nil
+        showFailure(pending.kind, showLog: offered)
     }
 
     private func showLogOfferExpired() {
-        guard phase == .preparingFailure, let kind = pendingFailure else { return }
+        guard phase == .preparingFailure, let pending = pendingFailure else { return }
         resolverTask?.cancel()
         resolverTask = nil
-        showFailure(kind, showLog: nil)
+        showFailure(pending.kind, showLog: nil)
     }
 
     private func showFailure(_ kind: FailureKind, showLog action: ShowLogAction?) {

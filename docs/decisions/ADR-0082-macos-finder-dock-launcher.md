@@ -21,7 +21,8 @@ the closed set of supported options. The launch uses these saved inputs without 
 Node and the checkout remain external prerequisites. This is not a signed distribution,
 automatic updater, login item or dedicated PWA-window implementation.
 
-**Validate, observe, then start once.** One monotonic 60-second budget begins before preflight.
+**Validate, observe, then start once.** One monotonic 60-second gateway admission and observation
+budget begins before preflight.
 Bounded helpers establish the effective instance fingerprint and authoritative store ownership.
 Cooperating launcher locks serialize admission across the canonical directory, database and
 port, but the API's two writer leases remain authoritative. A fresh connection refusal and
@@ -72,7 +73,10 @@ writer. Only actual `EAGAIN` contention is retried, for at most 1.5 seconds.
 The standard log directory is `~/Library/Logs/GraphGoblin/Launcher`; alternate installs use
 `~/Library/Logs/GraphGoblin/LauncherInstances/<id>`. Gateway logs retain two 4 MiB files,
 with 64 KiB records and 256 KiB total encoded backlog. Native launcher logs retain two
-256 KiB files with 4 KiB records. Log failure never stops the gateway.
+256 KiB files with 4 KiB records. A non-cancelled failure, including deadline expiry, gets a
+best-effort final diagnostic with a separate wait of at most 250 ms. That diagnostic tail
+cannot extend gateway admission, submit another helper or authorize a spawn. Quit remains
+prompt, and log failure never stops the gateway.
 
 **A detached start requires a local key source.** Saved configuration supports only the local
 SQLite file and `<dataDirectory>/master.key`. Existing or indeterminate data without an owned

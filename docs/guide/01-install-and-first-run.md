@@ -149,8 +149,9 @@ separate prerequisites; this launcher does not add harness support on a new plat
 An independent installation can use `--app-name 'GraphGoblin QA.app'` with its own
 `--data-dir` and `--port`. Alternate names start with `GraphGoblin ` and end in `.app`.
 Each receives its own identity and log directory. The installer refuses a foreign destination
-and validates a complete replacement before publishing it. Retain any reported recovery
-files if it cannot verify restoration; do not delete ownership files to force an install.
+and validates a complete replacement before publishing it. If it says installer recovery is
+required, preserve the app, receipt, and any stage; do not delete, rename, or edit them to force an
+install. Follow the [macOS launcher recovery inspection](07-troubleshooting.md#macos-finder-and-dock-launcher).
 
 **Hide** and the progress window's close button hide the launch progress while it continues.
 Reopening from the Dock shows the current state. **Quit** prevents a start if it has not
@@ -159,7 +160,10 @@ also leaves work running. Use the app's existing Stop controls when you intend t
 
 The launcher needs a local `master.key` beside existing data; shell-only key overrides and
 external database paths are unsupported here. Preserve the existing key and data together.
-For a new empty directory, the API creates the key only after taking both writer leases.
+For a new store, the selected data directory must be empty: even Finder metadata such as
+`.DS_Store` prevents first-key creation. Do not remove unrecognized entries to force a fresh store;
+inspect and preserve them, or choose another verified empty directory. The API creates the key only
+after taking both writer leases.
 
 Logs are in `~/Library/Logs/GraphGoblin/Launcher`, or
 `~/Library/Logs/GraphGoblin/LauncherInstances/<installation-id>` for an alternate app.
@@ -167,6 +171,9 @@ Logs are in `~/Library/Logs/GraphGoblin/Launcher`, or
 `launcher.log.1` at 256 KiB each. A launch error offers **Show Log in Finder** only when the
 destination can be safely verified. Browser errors offer **Copy Address**. There is no
 automatic retry, login item, updater or dedicated PWA window.
+
+For a held store, unexpected bundle contents, missing local key, gateway startup failure, or
+installer recovery message, use the [macOS launcher troubleshooting guide](07-troubleshooting.md#macos-finder-and-dock-launcher).
 
 See [ADR-0082](../decisions/ADR-0082-macos-finder-dock-launcher.md) for the installation and
 process ownership rules.

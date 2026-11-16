@@ -97,6 +97,76 @@ struct ShowLogTests {
         #expect(!h.surface.terminated)
     }
 
+    @Test(
+        "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs",
+        arguments: [3_000, 3_500]
+    )
+    func resolverAfterDeadlineBeforeTimer(elapsedMilliseconds: Int) async {
+        let h = Harness()
+        await h.start()
+        await h.finishEngine(with: .childExited)
+        await waitUntil("the Show Log resolver") { h.resolver.isResolving }
+        await h.waitForTimer(at: .seconds(3))
+
+        // Time reaches or passes the deadline, but the expiry timer is held: it has not run.
+        h.clock.advanceWithoutResuming(by: .milliseconds(elapsedMilliseconds))
+        await drainMainActor()
+        #expect(h.clock.hasSleeper(until: .seconds(3)))
+        #expect(h.controller.phase == .preparingFailure)
+        #expect(h.surface.alertsShown.isEmpty)
+
+        // The resolver's continuation reaches the main actor first, with an action.
+        h.resolver.settle(offeringAction: true)
+        await waitUntil("the failure window") { h.surface.alertOnScreen != nil }
+        #expect(h.surface.alertsShown == [PresentationCopy.alert(for: .childExited, showLogAvailable: false)])
+        #expect(h.surface.choicesOnScreen == [.dismiss])
+        // Handling the answer retired the held expiry timer; nothing later changes the window.
+        #expect(!h.clock.hasSleeper(until: .seconds(3)))
+        h.clock.resumeDueSleepers()
+        h.clock.advance(by: .seconds(5))
+        await drainMainActor()
+        #expect(h.surface.alertsShown.count == 1)
+
+        // The discarded action cannot be reached.
+        h.controller.alertChoiceMade(.showLog)
+        await drainMainActor()
+        #expect(h.resolver.actionInvocations == 0)
+        #expect(!h.surface.terminated)
+        #expect(h.controller.phase == .showingFailure)
+
+        h.controller.alertChoiceMade(.dismiss)
+        #expect(h.surface.terminated)
+        #expect(h.resolver.actionInvocations == 0)
+    }
+
+    @Test("An answer handled just before the 3 s deadline is offered and retires the expiry timer")
+    func resolverJustBeforeDeadline() async {
+        let h = Harness()
+        await h.start()
+        await h.finishEngine(with: .childExited)
+        await waitUntil("the Show Log resolver") { h.resolver.isResolving }
+        await h.waitForTimer(at: .seconds(3))
+
+        h.clock.advance(by: .milliseconds(2_999))
+        await drainMainActor()
+        #expect(h.surface.alertsShown.isEmpty)
+
+        h.resolver.settle(offeringAction: true)
+        await waitUntil("the failure window") { h.surface.alertOnScreen != nil }
+        #expect(h.surface.alertsShown == [PresentationCopy.alert(for: .childExited, showLogAvailable: true)])
+        #expect(h.surface.choicesOnScreen == [.dismiss, .showLog])
+        #expect(!h.clock.hasSleeper(until: .seconds(3)))
+
+        h.clock.advance(by: .seconds(5))
+        await drainMainActor()
+        #expect(h.surface.alertsShown.count == 1)
+
+        h.controller.alertChoiceMade(.showLog)
+        await waitUntil("the exit after Show Log") { h.surface.terminated }
+        #expect(h.resolver.actionInvocations == 1)
+        #expect(h.resolver.actionsCompleted == 1)
+    }
+
     @Test("A resolver that settles after Quit cannot bring back any window")
     func resolverAfterQuit() async {
         let h = Harness()

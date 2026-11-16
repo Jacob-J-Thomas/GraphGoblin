@@ -29,7 +29,7 @@ fi
 default_node=$(command -v node 2>/dev/null || :)
 case "$default_node" in /*) ;; *) default_node='' ;; esac
 
-script=$(/usr/bin/realpath "$0" 2>/dev/null) ||
+script=$(/bin/realpath "$0" 2>/dev/null) ||
     refuse "The launcher installer could not locate its checkout."
 checkout=${script%/scripts/install-macos-launcher.sh}
 if [ "$checkout" = "$script" ] || [ ! -f "$checkout/apps/macos-launcher/Package.swift" ]; then
@@ -38,7 +38,7 @@ fi
 
 private_tmp=$(/usr/bin/getconf DARWIN_USER_TEMP_DIR 2>/dev/null) ||
     refuse "A private launcher build directory is unavailable."
-private_tmp=$(/usr/bin/realpath "$private_tmp" 2>/dev/null) ||
+private_tmp=$(/bin/realpath "$private_tmp" 2>/dev/null) ||
     refuse "A private launcher build directory is unavailable."
 scratch=$(/usr/bin/mktemp -d "$private_tmp/graphgoblin-launcher.XXXXXXXX" 2>/dev/null) ||
     refuse "A private launcher build directory is unavailable."
@@ -75,7 +75,7 @@ for product in GraphGoblin GraphGoblinLauncherInstaller; do
 done
 bin_dir=$(swift_build --show-bin-path 2>"$scratch/compiler.stderr") ||
     refuse "The compiled launcher location could not be verified."
-bin_dir=$(/usr/bin/realpath "$bin_dir" 2>/dev/null) ||
+bin_dir=$(/bin/realpath "$bin_dir" 2>/dev/null) ||
     refuse "The compiled launcher location could not be verified."
 case "$bin_dir" in "$scratch"/*) ;; *) refuse "The compiled launcher location could not be verified." ;; esac
 if [ ! -x "$bin_dir/GraphGoblin" ] || [ -L "$bin_dir/GraphGoblin" ] ||
