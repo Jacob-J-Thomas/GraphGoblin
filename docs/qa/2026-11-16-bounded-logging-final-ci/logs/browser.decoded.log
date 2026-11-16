@@ -1,0 +1,1489 @@
+﻿2026-11-16T14:44:45.1012648Z Current runner version: '2.338.2'
+2026-11-16T14:44:45.1063070Z ##[group]Runner Image Provisioner
+2026-11-16T14:44:45.1064097Z Hosted Compute Agent
+2026-11-16T14:44:45.1064715Z Version: 20261103.629
+2026-11-16T14:44:45.1065400Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-16T14:44:45.1066126Z Build Date: 2026-11-03T17:26:59Z
+2026-11-16T14:44:45.1066831Z Worker ID: {4010b888-c739-4d40-909b-7fd89414c6cb}
+2026-11-16T14:44:45.1067600Z Region: centralus
+2026-11-16T14:44:45.1068144Z Cloud: Azure
+2026-11-16T14:44:45.1068692Z ##[endgroup]
+2026-11-16T14:44:45.1070246Z ##[group]Operating System
+2026-11-16T14:44:45.1070916Z Ubuntu
+2026-11-16T14:44:45.1071862Z 26.04.1
+2026-11-16T14:44:45.1072420Z LTS
+2026-11-16T14:44:45.1072983Z ##[endgroup]
+2026-11-16T14:44:45.1073545Z ##[group]Runner Image
+2026-11-16T14:44:45.1074176Z Image: ubuntu-26.04
+2026-11-16T14:44:45.1074800Z Version: 20261111.196.1
+2026-11-16T14:44:45.1076216Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-16T14:44:45.1077865Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+2026-11-16T14:44:45.1078900Z ##[endgroup]
+2026-11-16T14:44:45.1080179Z ##[group]GITHUB_TOKEN Permissions
+2026-11-16T14:44:45.1082702Z Contents: read
+2026-11-16T14:44:45.1083427Z Metadata: read
+2026-11-16T14:44:45.1084004Z Packages: read
+2026-11-16T14:44:45.1084576Z ##[endgroup]
+2026-11-16T14:44:45.1087167Z Secret source: Actions
+2026-11-16T14:44:45.1088117Z Cache mode: write
+2026-11-16T14:44:45.1089132Z Prepare workflow directory
+2026-11-16T14:44:45.1497882Z Prepare all required actions
+2026-11-16T14:44:45.1548408Z Getting action download info
+2026-11-16T14:44:45.3843022Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-16T14:44:45.5227105Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-16T14:44:45.9037998Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-16T14:44:46.0019330Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-16T14:44:46.1911945Z Complete job name: Browser
+2026-11-16T14:44:46.2961473Z ##[group]Run actions/checkout@v4
+2026-11-16T14:44:46.2962787Z with:
+2026-11-16T14:44:46.2963435Z   fetch-depth: 0
+2026-11-16T14:44:46.2964083Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-16T14:44:46.2968541Z   token: ***
+2026-11-16T14:44:46.2969206Z   ssh-strict: true
+2026-11-16T14:44:46.2970025Z   ssh-user: git
+2026-11-16T14:44:46.2970832Z   persist-credentials: true
+2026-11-16T14:44:46.2971755Z   clean: true
+2026-11-16T14:44:46.2972377Z   sparse-checkout-cone-mode: true
+2026-11-16T14:44:46.2973155Z   fetch-tags: false
+2026-11-16T14:44:46.2973790Z   show-progress: true
+2026-11-16T14:44:46.2974434Z   lfs: false
+2026-11-16T14:44:46.2975006Z   submodules: false
+2026-11-16T14:44:46.2975621Z   set-safe-directory: true
+2026-11-16T14:44:46.2976368Z   allow-unsafe-pr-checkout: false
+2026-11-16T14:44:46.2977480Z env:
+2026-11-16T14:44:46.2978056Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-16T14:44:46.2978800Z   LIVE: 0
+2026-11-16T14:44:46.2979380Z ##[endgroup]
+2026-11-16T14:44:46.6453431Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-16T14:44:46.6456646Z ##[group]Getting Git version info
+2026-11-16T14:44:46.6458536Z Working directory is '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-16T14:44:46.6460528Z [command]/usr/bin/git version
+2026-11-16T14:44:46.6466858Z git version 2.56.1
+2026-11-16T14:44:46.6492157Z ##[endgroup]
+2026-11-16T14:44:46.6513446Z Temporarily overriding HOME='/home/runner/work/_temp/5ed9f54e-db71-46fb-8217-2032263c2651' before making global git config changes
+2026-11-16T14:44:46.6517881Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-16T14:44:46.6522001Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T14:44:46.6598713Z Deleting the contents of '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-16T14:44:46.6607993Z ##[group]Initializing the repository
+2026-11-16T14:44:46.6610447Z [command]/usr/bin/git init /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T14:44:46.6751719Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-16T14:44:46.6755039Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-16T14:44:46.6839196Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-16T14:44:46.6842208Z hint: call:
+2026-11-16T14:44:46.6843172Z hint:
+2026-11-16T14:44:46.6844322Z hint: 	git config --global init.defaultBranch <name>
+2026-11-16T14:44:46.6845873Z hint:
+2026-11-16T14:44:46.6847414Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-16T14:44:46.6851131Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-16T14:44:46.6854286Z hint:
+2026-11-16T14:44:46.6855866Z hint: 	git branch -m <name>
+2026-11-16T14:44:46.6857598Z hint:
+2026-11-16T14:44:46.6860014Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-16T14:44:46.6864458Z Initialized empty Git repository in /home/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-16T14:44:46.6871040Z [command]/usr/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-16T14:44:46.6875421Z ##[endgroup]
+2026-11-16T14:44:46.6877149Z ##[group]Disabling automatic garbage collection
+2026-11-16T14:44:46.6878755Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-16T14:44:46.6906384Z ##[endgroup]
+2026-11-16T14:44:46.6909139Z ##[group]Setting up auth
+2026-11-16T14:44:46.6914032Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-16T14:44:46.6960907Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-16T14:44:46.7469990Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-16T14:44:46.7507146Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-16T14:44:46.7793146Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-16T14:44:46.7836081Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-16T14:44:46.8115798Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-16T14:44:46.8157591Z ##[endgroup]
+2026-11-16T14:44:46.8159972Z ##[group]Fetching the repository
+2026-11-16T14:44:46.8171728Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +dcf097ed963fdbad8c83efd6cc22aa02bb13a3ed:refs/remotes/pull/500/merge
+2026-11-16T14:44:58.0923799Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-16T14:44:58.0925579Z  * [new branch]        chore/audit-2026-10-21                   -> origin/chore/audit-2026-10-21
+2026-11-16T14:44:58.0927299Z  * [new branch]        codex-aidlc-full-v1                      -> origin/codex-aidlc-full-v1
+2026-11-16T14:44:58.0928402Z  * [new branch]        codex-aidlc-trial                        -> origin/codex-aidlc-trial
+2026-11-16T14:44:58.0929458Z  * [new branch]        codex-f4-01-freeze                       -> origin/codex-f4-01-freeze
+2026-11-16T14:44:58.0930491Z  * [new branch]        codex-f4-02-init-152                     -> origin/codex-f4-02-init-152
+2026-11-16T14:44:58.0931787Z  * [new branch]        codex-f4-03-delete-118                   -> origin/codex-f4-03-delete-118
+2026-11-16T14:44:58.0932895Z  * [new branch]        codex-f4-04-storage                      -> origin/codex-f4-04-storage
+2026-11-16T14:44:58.0934245Z  * [new branch]        codex-f4-05-paging                       -> origin/codex-f4-05-paging
+2026-11-16T14:44:58.0934980Z  * [new branch]        codex-f4-06-authority                    -> origin/codex-f4-06-authority
+2026-11-16T14:44:58.0935619Z  * [new branch]        codex-f4-06b-loader                      -> origin/codex-f4-06b-loader
+2026-11-16T14:44:58.0936308Z  * [new branch]        codex-f4-09-store                        -> origin/codex-f4-09-store
+2026-11-16T14:44:58.0937053Z  * [new branch]        codex-f4-10-assets                       -> origin/codex-f4-10-assets
+2026-11-16T14:44:58.0937660Z  * [new branch]        codex-f4-11-aidlc                        -> origin/codex-f4-11-aidlc
+2026-11-16T14:44:58.0938317Z  * [new branch]        codex-f4-12-decisions                    -> origin/codex-f4-12-decisions
+2026-11-16T14:44:58.0938982Z  * [new branch]        codex-f4-13-authoring                    -> origin/codex-f4-13-authoring
+2026-11-16T14:44:58.0939597Z  * [new branch]        codex-f4-14-gates                        -> origin/codex-f4-14-gates
+2026-11-16T14:44:58.0940224Z  * [new branch]        codex-f4-15-conversion                   -> origin/codex-f4-15-conversion
+2026-11-16T14:44:58.0940894Z  * [new branch]        codex-f4-20-triggers-t1                  -> origin/codex-f4-20-triggers-t1
+2026-11-16T14:44:58.0942117Z  * [new branch]        codex-f4-21-github-checks                -> origin/codex-f4-21-github-checks
+2026-11-16T14:44:58.0943390Z  * [new branch]        codex-f4-22-trigger-type                 -> origin/codex-f4-22-trigger-type
+2026-11-16T14:44:58.0944710Z  * [new branch]        codex-f4-23-webhook-intake               -> origin/codex-f4-23-webhook-intake
+2026-11-16T14:44:58.0946108Z  * [new branch]        codex-f4-23b-webhook-config              -> origin/codex-f4-23b-webhook-config
+2026-11-16T14:44:58.0947215Z  * [new branch]        codex-f4-25-filters                      -> origin/codex-f4-25-filters
+2026-11-16T14:44:58.0948444Z  * [new branch]        codex-f4-26-cutover                      -> origin/codex-f4-26-cutover
+2026-11-16T14:44:58.0949578Z  * [new branch]        codex-f4-27-device                       -> origin/codex-f4-27-device
+2026-11-16T14:44:58.0951065Z  * [new branch]        codex-f4-qa                              -> origin/codex-f4-qa
+2026-11-16T14:44:58.0952553Z  * [new branch]        codex-fix-exit-evidence                  -> origin/codex-fix-exit-evidence
+2026-11-16T14:44:58.0953942Z  * [new branch]        codex-fix-progress-exit-status           -> origin/codex-fix-progress-exit-status
+2026-11-16T14:44:58.0955420Z  * [new branch]        codex-fix-route-edits                    -> origin/codex-fix-route-edits
+2026-11-16T14:44:58.0956686Z  * [new branch]        codex-i166-prereview                     -> origin/codex-i166-prereview
+2026-11-16T14:44:58.0957890Z  * [new branch]        codex-i171-device-first                  -> origin/codex-i171-device-first
+2026-11-16T14:44:58.0959151Z  * [new branch]        codex-wp-a1-runtime-gates                -> origin/codex-wp-a1-runtime-gates
+2026-11-16T14:44:58.0960580Z  * [new branch]        codex-wp-a2-browser-gates                -> origin/codex-wp-a2-browser-gates
+2026-11-16T14:44:58.0962058Z  * [new branch]        codex-wp-a2-two-tab                      -> origin/codex-wp-a2-two-tab
+2026-11-16T14:44:58.0963406Z  * [new branch]        codex-wp-a3-test-inventory               -> origin/codex-wp-a3-test-inventory
+2026-11-16T14:44:58.0964754Z  * [new branch]        codex-wp-a4-licenses-examples            -> origin/codex-wp-a4-licenses-examples
+2026-11-16T14:44:58.0965948Z  * [new branch]        codex-wp-a5a-invasive-tests              -> origin/codex-wp-a5a-invasive-tests
+2026-11-16T14:44:58.0967048Z  * [new branch]        codex-wp-a5b-264                         -> origin/codex-wp-a5b-264
+2026-11-16T14:44:58.0968131Z  * [new branch]        codex-wp-b1-durable-events               -> origin/codex-wp-b1-durable-events
+2026-11-16T14:44:58.0969256Z  * [new branch]        codex-wp-b2-null-artifacts               -> origin/codex-wp-b2-null-artifacts
+2026-11-16T14:44:58.0970675Z  * [new branch]        codex-wp-c2-wait-identity                -> origin/codex-wp-c2-wait-identity
+2026-11-16T14:44:58.0972317Z  * [new branch]        codex-wp-c3-wake-poll-research           -> origin/codex-wp-c3-wake-poll-research
+2026-11-16T14:44:58.0973467Z  * [new branch]        codex-wp-c4-patch-wait-client            -> origin/codex-wp-c4-patch-wait-client
+2026-11-16T14:44:58.0974192Z  * [new branch]        codex-wp-c7-224                          -> origin/codex-wp-c7-224
+2026-11-16T14:44:58.0974796Z  * [new branch]        codex-wp-c7-319                          -> origin/codex-wp-c7-319
+2026-11-16T14:44:58.0975466Z  * [new branch]        codex-wp-d1-child-recovery               -> origin/codex-wp-d1-child-recovery
+2026-11-16T14:44:58.0976137Z  * [new branch]        codex-wp-d2-185                          -> origin/codex-wp-d2-185
+2026-11-16T14:44:58.0976796Z  * [new branch]        codex-wp-d2-webhook-retry                -> origin/codex-wp-d2-webhook-retry
+2026-11-16T14:44:58.0977549Z  * [new branch]        codex-wp-d3-utf8-probe-bounds            -> origin/codex-wp-d3-utf8-probe-bounds
+2026-11-16T14:44:58.0978222Z  * [new branch]        codex-wp-d4-343                          -> origin/codex-wp-d4-343
+2026-11-16T14:44:58.0978806Z  * [new branch]        codex-wp-d5-256                          -> origin/codex-wp-d5-256
+2026-11-16T14:44:58.0979388Z  * [new branch]        codex-wp-e1-186                          -> origin/codex-wp-e1-186
+2026-11-16T14:44:58.0979982Z  * [new branch]        codex-wp-e1-186-r2                       -> origin/codex-wp-e1-186-r2
+2026-11-16T14:44:58.0980581Z  * [new branch]        codex-wp-e1-268                          -> origin/codex-wp-e1-268
+2026-11-16T14:44:58.0981584Z  * [new branch]        codex-wp-e1a-sustained-measurements      -> origin/codex-wp-e1a-sustained-measurements
+2026-11-16T14:44:58.0982662Z  * [new branch]        codex-wp-e3-187-322                      -> origin/codex-wp-e3-187-322
+2026-11-16T14:44:58.0983810Z  * [new branch]        codex-wp-f2b-205                         -> origin/codex-wp-f2b-205
+2026-11-16T14:44:58.0985209Z  * [new branch]        codex-wp-f3-270                          -> origin/codex-wp-f3-270
+2026-11-16T14:44:58.0986231Z  * [new branch]        codex-wp-f4-265                          -> origin/codex-wp-f4-265
+2026-11-16T14:44:58.0987245Z  * [new branch]        codex-wp-f4-33                           -> origin/codex-wp-f4-33
+2026-11-16T14:44:58.0988299Z  * [new branch]        codex-wp-g1-116                          -> origin/codex-wp-g1-116
+2026-11-16T14:44:58.0989368Z  * [new branch]        codex-wp-g1-245-replay-seed              -> origin/codex-wp-g1-245-replay-seed
+2026-11-16T14:44:58.0990412Z  * [new branch]        codex-wp-g1-255                          -> origin/codex-wp-g1-255
+2026-11-16T14:44:58.0991534Z  * [new branch]        codex-wp-g2-240                          -> origin/codex-wp-g2-240
+2026-11-16T14:44:58.0992574Z  * [new branch]        codex/456-macos-logcap                   -> origin/codex/456-macos-logcap
+2026-11-16T14:44:58.0993721Z  * [new branch]        codex/aidlc-foundations                  -> origin/codex/aidlc-foundations
+2026-11-16T14:44:58.0994923Z  * [new branch]        codex/answer-primitives-97               -> origin/codex/answer-primitives-97
+2026-11-16T14:44:58.0996083Z  * [new branch]        codex/chat-qa-repairs                    -> origin/codex/chat-qa-repairs
+2026-11-16T14:44:58.0997003Z  * [new branch]        codex/claude-harness-26                  -> origin/codex/claude-harness-26
+2026-11-16T14:44:58.0997675Z  * [new branch]        codex/claude-plugin-455                  -> origin/codex/claude-plugin-455
+2026-11-16T14:44:58.0998344Z  * [new branch]        codex/decision-kinds-98                  -> origin/codex/decision-kinds-98
+2026-11-16T14:44:58.0999006Z  * [new branch]        codex/exit-evaluation-99                 -> origin/codex/exit-evaluation-99
+2026-11-16T14:44:58.1000123Z  * [new branch]        codex/gg-20261107-context                -> origin/codex/gg-20261107-context
+2026-11-16T14:44:58.1000811Z  * [new branch]        codex/gg-20261107-loopback               -> origin/codex/gg-20261107-loopback
+2026-11-16T14:44:58.1001876Z  * [new branch]        codex/gg-20261107-models                 -> origin/codex/gg-20261107-models
+2026-11-16T14:44:58.1002548Z  * [new branch]        codex/gg-20261107-plugins                -> origin/codex/gg-20261107-plugins
+2026-11-16T14:44:58.1003251Z  * [new branch]        codex/gg-20261113-i08-validation         -> origin/codex/gg-20261113-i08-validation
+2026-11-16T14:44:58.1004072Z  * [new branch]        codex/gg-20261114-canvas                 -> origin/codex/gg-20261114-canvas
+2026-11-16T14:44:58.1004801Z  * [new branch]        codex/gg-20261114-history-controls       -> origin/codex/gg-20261114-history-controls
+2026-11-16T14:44:58.1005534Z  * [new branch]        codex/gg-20261114-i08-input              -> origin/codex/gg-20261114-i08-input
+2026-11-16T14:44:58.1006420Z  * [new branch]        codex/gg-20261114-loop-names             -> origin/codex/gg-20261114-loop-names
+2026-11-16T14:44:58.1007213Z  * [new branch]        codex/gg-20261114-node-references-native -> origin/codex/gg-20261114-node-references-native
+2026-11-16T14:44:58.1007993Z  * [new branch]        codex/gg-20261114-save-publish           -> origin/codex/gg-20261114-save-publish
+2026-11-16T14:44:58.1008833Z  * [new branch]        codex/gg-20261114-space-cards            -> origin/codex/gg-20261114-space-cards
+2026-11-16T14:44:58.1009599Z  * [new branch]        codex/gg-20261115-history-disconnect     -> origin/codex/gg-20261115-history-disconnect
+2026-11-16T14:44:58.1010390Z  * [new branch]        codex/gg-20261115-mutation-failures      -> origin/codex/gg-20261115-mutation-failures
+2026-11-16T14:44:58.1011129Z  * [new branch]        codex/gg-20261115-poll-dedupe            -> origin/codex/gg-20261115-poll-dedupe
+2026-11-16T14:44:58.1012186Z  * [new branch]        codex/gg-20261115-terminal-waits         -> origin/codex/gg-20261115-terminal-waits
+2026-11-16T14:44:58.1012926Z  * [new branch]        codex/gg-20261116-bounded-logs           -> origin/codex/gg-20261116-bounded-logs
+2026-11-16T14:44:58.1013860Z  * [new branch]        codex/gg-20261116-installer-validation   -> origin/codex/gg-20261116-installer-validation
+2026-11-16T14:44:58.1014677Z  * [new branch]        codex/gg-20261116-launcher-identity      -> origin/codex/gg-20261116-launcher-identity
+2026-11-16T14:44:58.1015792Z  * [new branch]        codex/github-triggers-29                 -> origin/codex/github-triggers-29
+2026-11-16T14:44:58.1016559Z  * [new branch]        codex/goblin-chat-gateway                -> origin/codex/goblin-chat-gateway
+2026-11-16T14:44:58.1017308Z  * [new branch]        codex/implementation-template-30         -> origin/codex/implementation-template-30
+2026-11-16T14:44:58.1018105Z  * [new branch]        codex/node-forms-170                     -> origin/codex/node-forms-170
+2026-11-16T14:44:58.1018841Z  * [new branch]        codex/plugin-builder-344                 -> origin/codex/plugin-builder-344
+2026-11-16T14:44:58.1019488Z  * [new branch]        codex/qa-template-32                     -> origin/codex/qa-template-32
+2026-11-16T14:44:58.1020134Z  * [new branch]        codex/review-template-31                 -> origin/codex/review-template-31
+2026-11-16T14:44:58.1021101Z  * [new branch]        codex/template-button-alignment          -> origin/codex/template-button-alignment
+2026-11-16T14:44:58.1022457Z  * [new branch]        codex/template-gallery-28                -> origin/codex/template-gallery-28
+2026-11-16T14:44:58.1023213Z  * [new branch]        codex/template-starting-points           -> origin/codex/template-starting-points
+2026-11-16T14:44:58.1023912Z  * [new branch]        codex/windows-launcher                   -> origin/codex/windows-launcher
+2026-11-16T14:44:58.1024771Z  * [new branch]        codex/windows-launcher-timeouts          -> origin/codex/windows-launcher-timeouts
+2026-11-16T14:44:58.1026567Z  * [new branch]        codex/windows-reboot-lock-recovery       -> origin/codex/windows-reboot-lock-recovery
+2026-11-16T14:44:58.1028006Z  * [new branch]        docs/architecture-sweep-163              -> origin/docs/architecture-sweep-163
+2026-11-16T14:44:58.1029331Z  * [new branch]        feat/i14-basic-advanced                  -> origin/feat/i14-basic-advanced
+2026-11-16T14:44:58.1030581Z  * [new branch]        feat/i15-validation-popover              -> origin/feat/i15-validation-popover
+2026-11-16T14:44:58.1031991Z  * [new branch]        feat/i16-model-picker                    -> origin/feat/i16-model-picker
+2026-11-16T14:44:58.1033105Z  * [new branch]        feat/i17-undo-redo                       -> origin/feat/i17-undo-redo
+2026-11-16T14:44:58.1034374Z  * [new branch]        feat/i18-orthogonal-routing              -> origin/feat/i18-orthogonal-routing
+2026-11-16T14:44:58.1035281Z  * [new branch]        feat/i19-node-harness                    -> origin/feat/i19-node-harness
+2026-11-16T14:44:58.1035948Z  * [new branch]        feat/i20-cron-builder                    -> origin/feat/i20-cron-builder
+2026-11-16T14:44:58.1036626Z  * [new branch]        feat/i23-catalog-source                  -> origin/feat/i23-catalog-source
+2026-11-16T14:44:58.1037305Z  * [new branch]        feat/i24-catalog-settings                -> origin/feat/i24-catalog-settings
+2026-11-16T14:44:58.1037953Z  * [new branch]        feat/i40-fonts                           -> origin/feat/i40-fonts
+2026-11-16T14:44:58.1038524Z  * [new branch]        feat/i41-sweep                           -> origin/feat/i41-sweep
+2026-11-16T14:44:58.1039170Z  * [new branch]        feat/i43-classifier-backend              -> origin/feat/i43-classifier-backend
+2026-11-16T14:44:58.1039836Z  * [new branch]        feat/i43-classifier-ui                   -> origin/feat/i43-classifier-ui
+2026-11-16T14:44:58.1040480Z  * [new branch]        feat/i44-edge-waypoints                  -> origin/feat/i44-edge-waypoints
+2026-11-16T14:44:58.1041409Z  * [new branch]        feat/i45-dismissible-notices             -> origin/feat/i45-dismissible-notices
+2026-11-16T14:44:58.1042265Z  * [new branch]        feat/i53-forms-structure                 -> origin/feat/i53-forms-structure
+2026-11-16T14:44:58.1043583Z  * [new branch]        feat/i54-current-key                     -> origin/feat/i54-current-key
+2026-11-16T14:44:58.1044824Z  * [new branch]        feat/i55-56-reachability                 -> origin/feat/i55-56-reachability
+2026-11-16T14:44:58.1045966Z  * [new branch]        feat/i59-palette-collapse                -> origin/feat/i59-palette-collapse
+2026-11-16T14:44:58.1046912Z  * [new branch]        feat/i8-form-controls                    -> origin/feat/i8-form-controls
+2026-11-16T14:44:58.1048136Z  * [new branch]        feat/v1.1-editor-and-catalogue           -> origin/feat/v1.1-editor-and-catalogue
+2026-11-16T14:44:58.1049383Z  * [new branch]        feat/wider-node-editor                   -> origin/feat/wider-node-editor
+2026-11-16T14:44:58.1050533Z  * [new branch]        fix-186-live-follow                      -> origin/fix-186-live-follow
+2026-11-16T14:44:58.1051836Z  * [new branch]        fix-319-205-acceptance                   -> origin/fix-319-205-acceptance
+2026-11-16T14:44:58.1053045Z  * [new branch]        fix-f2-effort-refusal                    -> origin/fix-f2-effort-refusal
+2026-11-16T14:44:58.1054291Z  * [new branch]        fix/astra-2-code                         -> origin/fix/astra-2-code
+2026-11-16T14:44:58.1055405Z  * [new branch]        fix/astra-2-evidence                     -> origin/fix/astra-2-evidence
+2026-11-16T14:44:58.1056537Z  * [new branch]        fix/astra-3-evidence                     -> origin/fix/astra-3-evidence
+2026-11-16T14:44:58.1057609Z  * [new branch]        fix/e2e-flakes                           -> origin/fix/e2e-flakes
+2026-11-16T14:44:58.1058670Z  * [new branch]        fix/phase-review-backend                 -> origin/fix/phase-review-backend
+2026-11-16T14:44:58.1059832Z  * [new branch]        fix/phase-review-web                     -> origin/fix/phase-review-web
+2026-11-16T14:44:58.1061428Z  * [new branch]        fix/pre-release                          -> origin/fix/pre-release
+2026-11-16T14:44:58.1062729Z  * [new branch]        fix/routing-perf-strict-input            -> origin/fix/routing-perf-strict-input
+2026-11-16T14:44:58.1064094Z  * [new branch]        fix/routing-strict-frame-bound           -> origin/fix/routing-strict-frame-bound
+2026-11-16T14:44:58.1065417Z  * [new branch]        fix/settings-test-isolation              -> origin/fix/settings-test-isolation
+2026-11-16T14:44:58.1066651Z  * [new branch]        hygiene-d039-undici                      -> origin/hygiene-d039-undici
+2026-11-16T14:44:58.1067712Z  * [new branch]        main                                     -> origin/main
+2026-11-16T14:44:58.1069087Z  * [new branch]        opus-wp-b3-reset-and-retire              -> origin/opus-wp-b3-reset-and-retire
+2026-11-16T14:44:58.1070372Z  * [new branch]        opus-wp-c1-definition-pins               -> origin/opus-wp-c1-definition-pins
+2026-11-16T14:44:58.1071696Z  * [new branch]        opus-wp-c6-awaited-subloops              -> origin/opus-wp-c6-awaited-subloops
+2026-11-16T14:44:58.1072464Z  * [new branch]        opus-wp-f5-launch-diagnosis              -> origin/opus-wp-f5-launch-diagnosis
+2026-11-16T14:44:58.1073151Z  * [new branch]        plans/format-4-stage1                    -> origin/plans/format-4-stage1
+2026-11-16T14:44:58.1074281Z  * [new branch]        research/167-exit-comparison             -> origin/research/167-exit-comparison
+2026-11-16T14:44:58.1075409Z  * [new branch]        wp-d1-320                                -> origin/wp-d1-320
+2026-11-16T14:44:58.1075965Z  * [new tag]           v1.0.0                                   -> v1.0.0
+2026-11-16T14:44:58.1076500Z  * [new ref]           dcf097ed963fdbad8c83efd6cc22aa02bb13a3ed -> pull/500/merge
+2026-11-16T14:44:58.1078033Z ##[endgroup]
+2026-11-16T14:44:58.1078498Z ##[group]Determining the checkout info
+2026-11-16T14:44:58.1079032Z ##[endgroup]
+2026-11-16T14:44:58.1079440Z [command]/usr/bin/git sparse-checkout disable
+2026-11-16T14:44:58.1080590Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-16T14:44:58.1082791Z ##[group]Checking out the ref
+2026-11-16T14:44:58.1083345Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/500/merge
+2026-11-16T14:44:59.1909887Z Updating files:  16% (4935/30586)
+2026-11-16T14:44:59.2316293Z Updating files:  17% (5200/30586)
+2026-11-16T14:44:59.2579293Z Updating files:  18% (5506/30586)
+2026-11-16T14:44:59.2835148Z Updating files:  19% (5812/30586)
+2026-11-16T14:44:59.3082766Z Updating files:  20% (6118/30586)
+2026-11-16T14:44:59.3481989Z Updating files:  21% (6424/30586)
+2026-11-16T14:44:59.3874699Z Updating files:  22% (6729/30586)
+2026-11-16T14:44:59.4072718Z Updating files:  23% (7035/30586)
+2026-11-16T14:44:59.4286862Z Updating files:  24% (7341/30586)
+2026-11-16T14:44:59.4795259Z Updating files:  25% (7647/30586)
+2026-11-16T14:44:59.5000051Z Updating files:  26% (7953/30586)
+2026-11-16T14:44:59.5226706Z Updating files:  27% (8259/30586)
+2026-11-16T14:44:59.5649751Z Updating files:  28% (8565/30586)
+2026-11-16T14:44:59.5973078Z Updating files:  29% (8870/30586)
+2026-11-16T14:44:59.6208916Z Updating files:  30% (9176/30586)
+2026-11-16T14:44:59.6597740Z Updating files:  31% (9482/30586)
+2026-11-16T14:44:59.7505466Z Updating files:  32% (9788/30586)
+2026-11-16T14:44:59.7946061Z Updating files:  33% (10094/30586)
+2026-11-16T14:44:59.8458030Z Updating files:  34% (10400/30586)
+2026-11-16T14:44:59.8672537Z Updating files:  35% (10706/30586)
+2026-11-16T14:44:59.8922070Z Updating files:  36% (11011/30586)
+2026-11-16T14:44:59.9395613Z Updating files:  37% (11317/30586)
+2026-11-16T14:44:59.9853925Z Updating files:  38% (11623/30586)
+2026-11-16T14:45:00.0183675Z Updating files:  39% (11929/30586)
+2026-11-16T14:45:00.0479046Z Updating files:  40% (12235/30586)
+2026-11-16T14:45:00.1050076Z Updating files:  41% (12541/30586)
+2026-11-16T14:45:00.1377301Z Updating files:  42% (12847/30586)
+2026-11-16T14:45:00.1692837Z Updating files:  42% (13004/30586)
+2026-11-16T14:45:00.1961991Z Updating files:  43% (13152/30586)
+2026-11-16T14:45:00.2151858Z Updating files:  44% (13458/30586)
+2026-11-16T14:45:00.2369201Z Updating files:  45% (13764/30586)
+2026-11-16T14:45:00.2695457Z Updating files:  46% (14070/30586)
+2026-11-16T14:45:00.2983892Z Updating files:  47% (14376/30586)
+2026-11-16T14:45:00.3292273Z Updating files:  48% (14682/30586)
+2026-11-16T14:45:00.3458362Z Updating files:  49% (14988/30586)
+2026-11-16T14:45:00.3758552Z Updating files:  50% (15293/30586)
+2026-11-16T14:45:00.4320973Z Updating files:  51% (15599/30586)
+2026-11-16T14:45:00.4677698Z Updating files:  52% (15905/30586)
+2026-11-16T14:45:00.5073337Z Updating files:  53% (16211/30586)
+2026-11-16T14:45:00.5490405Z Updating files:  54% (16517/30586)
+2026-11-16T14:45:00.5677167Z Updating files:  55% (16823/30586)
+2026-11-16T14:45:00.6036059Z Updating files:  56% (17129/30586)
+2026-11-16T14:45:00.6272022Z Updating files:  57% (17435/30586)
+2026-11-16T14:45:00.6864201Z Updating files:  58% (17740/30586)
+2026-11-16T14:45:00.7371130Z Updating files:  59% (18046/30586)
+2026-11-16T14:45:00.7686125Z Updating files:  60% (18352/30586)
+2026-11-16T14:45:00.8001554Z Updating files:  61% (18658/30586)
+2026-11-16T14:45:00.8702383Z Updating files:  62% (18964/30586)
+2026-11-16T14:45:00.8972650Z Updating files:  63% (19270/30586)
+2026-11-16T14:45:00.9394925Z Updating files:  64% (19576/30586)
+2026-11-16T14:45:00.9783753Z Updating files:  65% (19881/30586)
+2026-11-16T14:45:01.0101666Z Updating files:  66% (20187/30586)
+2026-11-16T14:45:01.0369035Z Updating files:  67% (20493/30586)
+2026-11-16T14:45:01.0706926Z Updating files:  68% (20799/30586)
+2026-11-16T14:45:01.1000815Z Updating files:  69% (21105/30586)
+2026-11-16T14:45:01.1378205Z Updating files:  70% (21411/30586)
+2026-11-16T14:45:01.1477690Z Updating files:  70% (21614/30586)
+2026-11-16T14:45:01.1942924Z Updating files:  71% (21717/30586)
+2026-11-16T14:45:01.2544503Z Updating files:  72% (22022/30586)
+2026-11-16T14:45:01.2822708Z Updating files:  73% (22328/30586)
+2026-11-16T14:45:01.3514942Z Updating files:  74% (22634/30586)
+2026-11-16T14:45:01.3879592Z Updating files:  75% (22940/30586)
+2026-11-16T14:45:01.4600543Z Updating files:  76% (23246/30586)
+2026-11-16T14:45:01.4907129Z Updating files:  77% (23552/30586)
+2026-11-16T14:45:01.5283713Z Updating files:  78% (23858/30586)
+2026-11-16T14:45:01.5613665Z Updating files:  79% (24163/30586)
+2026-11-16T14:45:01.5919517Z Updating files:  80% (24469/30586)
+2026-11-16T14:45:01.6348786Z Updating files:  81% (24775/30586)
+2026-11-16T14:45:01.6594866Z Updating files:  82% (25081/30586)
+2026-11-16T14:45:01.6830056Z Updating files:  83% (25387/30586)
+2026-11-16T14:45:01.7155322Z Updating files:  84% (25693/30586)
+2026-11-16T14:45:01.7355803Z Updating files:  85% (25999/30586)
+2026-11-16T14:45:01.7541617Z Updating files:  86% (26304/30586)
+2026-11-16T14:45:01.7848442Z Updating files:  87% (26610/30586)
+2026-11-16T14:45:01.8034015Z Updating files:  88% (26916/30586)
+2026-11-16T14:45:01.8326514Z Updating files:  89% (27222/30586)
+2026-11-16T14:45:01.8837886Z Updating files:  90% (27528/30586)
+2026-11-16T14:45:01.9079364Z Updating files:  91% (27834/30586)
+2026-11-16T14:45:01.9234221Z Updating files:  92% (28140/30586)
+2026-11-16T14:45:01.9594277Z Updating files:  93% (28445/30586)
+2026-11-16T14:45:01.9994575Z Updating files:  94% (28751/30586)
+2026-11-16T14:45:02.0173983Z Updating files:  95% (29057/30586)
+2026-11-16T14:45:02.0388051Z Updating files:  96% (29363/30586)
+2026-11-16T14:45:02.0590706Z Updating files:  97% (29669/30586)
+2026-11-16T14:45:02.0814950Z Updating files:  98% (29975/30586)
+2026-11-16T14:45:02.1034131Z Updating files:  99% (30281/30586)
+2026-11-16T14:45:02.1035034Z Updating files: 100% (30586/30586)
+2026-11-16T14:45:02.1035707Z Updating files: 100% (30586/30586), done.
+2026-11-16T14:45:02.1340908Z Note: switching to 'refs/remotes/pull/500/merge'.
+2026-11-16T14:45:02.1341551Z 
+2026-11-16T14:45:02.1341902Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-11-16T14:45:02.1342834Z changes and commit them, and you can discard any commits you make in this
+2026-11-16T14:45:02.1343895Z state without impacting any branches by switching back to a branch.
+2026-11-16T14:45:02.1344400Z 
+2026-11-16T14:45:02.1344742Z If you want to create a new branch to retain commits you create, you may
+2026-11-16T14:45:02.1345547Z do so (now or later) by using -c with the switch command. Example:
+2026-11-16T14:45:02.1346019Z 
+2026-11-16T14:45:02.1346193Z   git switch -c <new-branch-name>
+2026-11-16T14:45:02.1346604Z 
+2026-11-16T14:45:02.1346768Z Or undo this operation with:
+2026-11-16T14:45:02.1347033Z 
+2026-11-16T14:45:02.1347167Z   git switch -
+2026-11-16T14:45:02.1347368Z 
+2026-11-16T14:45:02.1347713Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-11-16T14:45:02.1348218Z 
+2026-11-16T14:45:02.1348808Z HEAD is now at dcf097ed Merge 4dbb0dc185a9419fcebabd85e199dd554c382b4f into e21c24be9cef109ef438fd2df4c1583bc570b1cb
+2026-11-16T14:45:02.1495970Z ##[endgroup]
+2026-11-16T14:45:02.1558217Z [command]/usr/bin/git log -1 --format=%H
+2026-11-16T14:45:02.1585403Z dcf097ed963fdbad8c83efd6cc22aa02bb13a3ed
+2026-11-16T14:45:02.1838853Z ##[group]Run pnpm/action-setup@v4
+2026-11-16T14:45:02.1839153Z with:
+2026-11-16T14:45:02.1839355Z   dest: ~/setup-pnpm
+2026-11-16T14:45:02.1839573Z   run_install: null
+2026-11-16T14:45:02.1839776Z   cache: false
+2026-11-16T14:45:02.1840003Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-16T14:45:02.1840296Z   package_json_file: package.json
+2026-11-16T14:45:02.1840558Z   standalone: false
+2026-11-16T14:45:02.1840767Z env:
+2026-11-16T14:45:02.1840960Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-16T14:45:02.1841434Z   LIVE: 0
+2026-11-16T14:45:02.1841633Z ##[endgroup]
+2026-11-16T14:45:02.3400898Z ##[group]Running self-installer...
+2026-11-16T14:45:02.8807630Z (node:2427) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-16T14:45:02.8809356Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T14:45:03.0464136Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-16T14:45:03.2080721Z Packages: +3
+2026-11-16T14:45:03.2081686Z +++
+2026-11-16T14:45:03.9028957Z Progress: resolved 15, reused 0, downloaded 3, added 3, done
+2026-11-16T14:45:03.9205208Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-16T14:45:05.1220313Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-16T14:45:05.1225802Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-16T14:45:05.1738364Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-16T14:45:06.4847099Z 
+2026-11-16T14:45:06.4847533Z dependencies:
+2026-11-16T14:45:06.4847809Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-16T14:45:06.4848006Z 
+2026-11-16T14:45:06.4870928Z Done in 3.9s
+2026-11-16T14:45:06.5557734Z ##[endgroup]
+2026-11-16T14:45:06.5558430Z Installation Completed!
+2026-11-16T14:45:06.5745227Z ##[group]Run actions/setup-node@v4
+2026-11-16T14:45:06.5745510Z with:
+2026-11-16T14:45:06.5745710Z   node-version-file: .nvmrc
+2026-11-16T14:45:06.5745939Z   cache: pnpm
+2026-11-16T14:45:06.5746132Z   always-auth: false
+2026-11-16T14:45:06.5746345Z   check-latest: false
+2026-11-16T14:45:06.5748869Z   token: ***
+2026-11-16T14:45:06.5749060Z env:
+2026-11-16T14:45:06.5749250Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-16T14:45:06.5749485Z   LIVE: 0
+2026-11-16T14:45:06.5749730Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-16T14:45:06.5750039Z ##[endgroup]
+2026-11-16T14:45:06.7166197Z Resolved .nvmrc as 22
+2026-11-16T14:45:06.7232350Z Found in cache @ /opt/hostedtoolcache/node/22.23.4/x64
+2026-11-16T14:45:06.7236243Z (node:2459) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-16T14:45:06.7237007Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T14:45:06.7239305Z ##[group]Environment details
+2026-11-16T14:45:12.6984669Z node: v22.23.4
+2026-11-16T14:45:12.6984939Z npm: 10.9.9
+2026-11-16T14:45:12.6985144Z yarn: 1.22.22
+2026-11-16T14:45:12.6986217Z ##[endgroup]
+2026-11-16T14:45:12.7008210Z [command]/home/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-16T14:45:12.7201941Z /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-16T14:45:12.9103066Z Cache hit for: node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-16T14:45:12.9202615Z (node:2459) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-16T14:45:14.1523439Z Received 121634816 of 258558667 (47.0%), 115.8 MBs/sec
+2026-11-16T14:45:15.0404286Z Received 258558667 of 258558667 (100.0%), 130.4 MBs/sec
+2026-11-16T14:45:15.0405822Z Cache Size: ~247 MB (258558667 B)
+2026-11-16T14:45:15.0525400Z [command]/usr/bin/tar -xf /home/runner/work/_temp/4f6f3ad7-5775-41b0-90f9-70586a0c8220/cache.tzst -P -C /home/runner/work/GraphGoblin/GraphGoblin --use-compress-program unzstd
+2026-11-16T14:45:17.2953114Z Cache restored successfully
+2026-11-16T14:45:17.3065749Z Cache restored from key: node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-16T14:45:17.3283172Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-16T14:45:17.3283588Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-16T14:45:17.3346701Z shell: /usr/bin/bash -e {0}
+2026-11-16T14:45:17.3346977Z env:
+2026-11-16T14:45:17.3347185Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-16T14:45:17.3347434Z   LIVE: 0
+2026-11-16T14:45:17.3347679Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-16T14:45:17.3348004Z ##[endgroup]
+2026-11-16T14:45:17.3704337Z Scope: all 14 workspace projects
+2026-11-16T14:45:17.4184226Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-16T14:45:17.5693203Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-11-16T14:45:17.5722416Z   Content-addressable store is at: /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-16T14:45:17.5732097Z   Virtual store is at:             node_modules/.pnpm
+2026-11-16T14:45:21.3655514Z ✓ Lockfile passes supply-chain policies (931 entries in 3.9s)
+2026-11-16T14:45:21.3656489Z Lockfile is up to date, resolution step is skipped
+2026-11-16T14:45:21.3796030Z Packages: +801
+2026-11-16T14:45:21.3796780Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-16T14:45:21.4780843Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-16T14:45:21.8416886Z 
+2026-11-16T14:45:21.8417800Z devDependencies:
+2026-11-16T14:45:21.8418530Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-16T14:45:21.8419064Z + @eslint/js 10.0.1
+2026-11-16T14:45:21.8419490Z + @vitest/coverage-v8 5.0.3
+2026-11-16T14:45:21.8419920Z + dependency-cruiser 18.5.0
+2026-11-16T14:45:21.8420301Z + eslint 10.11.0
+2026-11-16T14:45:21.8420719Z + eslint-config-prettier 10.1.8
+2026-11-16T14:45:21.8421442Z + eslint-plugin-react-hooks 7.1.1
+2026-11-16T14:45:21.8421925Z + prettier 3.9.9
+2026-11-16T14:45:21.8422265Z + turbo 2.11.6
+2026-11-16T14:45:21.8422625Z + typescript 6.0.3
+2026-11-16T14:45:21.8423026Z + typescript-eslint 8.71.0
+2026-11-16T14:45:21.8423417Z + vitest 5.0.3
+2026-11-16T14:45:21.8423613Z 
+2026-11-16T14:45:21.8423917Z Done in 4.5s using pnpm v12.8.1
+2026-11-16T14:45:21.8888108Z ##[group]Run pnpm --filter @graphgoblin/web exec playwright install --with-deps msedge
+2026-11-16T14:45:21.8888808Z [36;1mpnpm --filter @graphgoblin/web exec playwright install --with-deps msedge[0m
+2026-11-16T14:45:21.8938736Z shell: /usr/bin/bash -e {0}
+2026-11-16T14:45:21.8939009Z env:
+2026-11-16T14:45:21.8939222Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-16T14:45:21.8939492Z   LIVE: 0
+2026-11-16T14:45:21.8939939Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-16T14:45:21.8940274Z ##[endgroup]
+2026-11-16T14:45:23.2120193Z Installing dependencies...
+2026-11-16T14:45:23.2199439Z Switching to root user to install dependencies...
+2026-11-16T14:45:23.3082478Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-11-16T14:45:23.3599141Z Hit:2 http://azure.archive.ubuntu.com/ubuntu resolute InRelease
+2026-11-16T14:45:23.3613216Z Get:6 https://packages.microsoft.com/ubuntu/26.04/prod resolute InRelease [3964 B]
+2026-11-16T14:45:23.3655764Z Get:3 http://azure.archive.ubuntu.com/ubuntu resolute-updates InRelease [137 kB]
+2026-11-16T14:45:23.3706503Z Get:4 http://azure.archive.ubuntu.com/ubuntu resolute-backports InRelease [137 kB]
+2026-11-16T14:45:23.3740670Z Get:5 http://azure.archive.ubuntu.com/ubuntu resolute-security InRelease [137 kB]
+2026-11-16T14:45:23.4082421Z Get:7 https://packages.microsoft.com/ubuntu/26.04/prod resolute/main amd64 Packages [158 kB]
+2026-11-16T14:45:23.4398745Z Get:12 https://packages.microsoft.com/ubuntu/26.04/prod resolute/main arm64 Packages [143 kB]
+2026-11-16T14:45:23.4470831Z Get:8 http://azure.archive.ubuntu.com/ubuntu resolute-updates/main amd64v3 Packages [873 kB]
+2026-11-16T14:45:23.4550108Z Get:9 http://azure.archive.ubuntu.com/ubuntu resolute-updates/main Translation-en [195 kB]
+2026-11-16T14:45:23.4554610Z Get:10 http://azure.archive.ubuntu.com/ubuntu resolute-updates/universe amd64v3 Packages [386 kB]
+2026-11-16T14:45:23.4577881Z Get:11 http://azure.archive.ubuntu.com/ubuntu resolute-updates/universe Translation-en [122 kB]
+2026-11-16T14:45:23.4589716Z Get:13 http://azure.archive.ubuntu.com/ubuntu resolute-security/main amd64v3 Packages [719 kB]
+2026-11-16T14:45:23.4631082Z Get:14 http://azure.archive.ubuntu.com/ubuntu resolute-security/main Translation-en [157 kB]
+2026-11-16T14:45:23.4638371Z Get:15 http://azure.archive.ubuntu.com/ubuntu resolute-security/universe amd64v3 Packages [221 kB]
+2026-11-16T14:45:23.4662729Z Get:16 http://azure.archive.ubuntu.com/ubuntu resolute-security/universe Translation-en [72.6 kB]
+2026-11-16T14:45:23.4682573Z Get:17 http://azure.archive.ubuntu.com/ubuntu resolute-security/restricted amd64v3 Packages [590 kB]
+2026-11-16T14:45:23.4731914Z Get:18 http://azure.archive.ubuntu.com/ubuntu resolute-security/restricted Translation-en [122 kB]
+2026-11-16T14:45:25.6692929Z Fetched 4172 kB in 0s (10.4 MB/s)
+2026-11-16T14:45:26.3463662Z Reading package lists...
+2026-11-16T14:45:26.3730459Z Reading package lists...
+2026-11-16T14:45:26.5348598Z Building dependency tree...
+2026-11-16T14:45:26.5356308Z Reading state information...
+2026-11-16T14:45:26.5680903Z xvfb is already the newest version (2:21.1.22-1ubuntu1.3).
+2026-11-16T14:45:26.5681927Z fonts-noto-color-emoji is already the newest version (2.051-1build1).
+2026-11-16T14:45:26.5682763Z libfontconfig1 is already the newest version (2.17.1-3ubuntu1).
+2026-11-16T14:45:26.5683413Z libfontconfig1 set to manually installed.
+2026-11-16T14:45:26.5684103Z libfreetype6 is already the newest version (2.14.2+dfsg-1ubuntu0.2).
+2026-11-16T14:45:26.5684832Z libfreetype6 set to manually installed.
+2026-11-16T14:45:26.5685506Z fonts-liberation is already the newest version (1:2.1.5-3build1).
+2026-11-16T14:45:26.5686429Z fonts-liberation set to manually installed.
+2026-11-16T14:45:26.6213984Z Solving dependencies...
+2026-11-16T14:45:26.7057389Z The following additional packages will be installed:
+2026-11-16T14:45:26.7057920Z   xfonts-encodings xfonts-utils
+2026-11-16T14:45:26.7064185Z Recommended packages:
+2026-11-16T14:45:26.7064819Z   fonts-ipafont-mincho fonts-tlwg-loma
+2026-11-16T14:45:26.7285312Z The following NEW packages will be installed:
+2026-11-16T14:45:26.7286350Z   fonts-freefont-ttf fonts-ipafont-gothic fonts-tlwg-loma-otf fonts-unifont
+2026-11-16T14:45:26.7292162Z   fonts-wqy-zenhei xfonts-cyrillic xfonts-encodings xfonts-scalable
+2026-11-16T14:45:26.7292890Z   xfonts-utils
+2026-11-16T14:45:26.7506026Z 0 upgraded, 9 newly installed, 0 to remove and 25 not upgraded.
+2026-11-16T14:45:26.7507156Z Need to get 21.9 MB of archives.
+2026-11-16T14:45:26.7507911Z After this operation, 80.2 MB of additional disk space will be used.
+2026-11-16T14:45:26.7508760Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-11-16T14:45:26.7950567Z Get:2 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-ipafont-gothic all 00303-23ubuntu1 [3703 kB]
+2026-11-16T14:45:26.9080402Z Get:3 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 fonts-freefont-ttf all 20211204+svn4273-4build1 [5656 kB]
+2026-11-16T14:45:27.0009022Z Get:4 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-tlwg-loma-otf all 1:0.7.3-1build1 [106 kB]
+2026-11-16T14:45:27.0386444Z Get:5 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-unifont all 1:16.0.04-1build1 [3169 kB]
+2026-11-16T14:45:27.1183632Z Get:6 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 fonts-wqy-zenhei all 0.9.45-8build1 [7863 kB]
+2026-11-16T14:45:27.2490428Z Get:7 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 xfonts-encodings all 1:1.0.5-0ubuntu3 [576 kB]
+2026-11-16T14:45:27.2904861Z Get:8 http://azure.archive.ubuntu.com/ubuntu resolute/main amd64v3 xfonts-utils amd64 1:7.7+7build1 [97.3 kB]
+2026-11-16T14:45:27.3299016Z Get:9 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 xfonts-cyrillic all 1:1.0.5+nmu1build1 [384 kB]
+2026-11-16T14:45:27.3704054Z Get:10 http://azure.archive.ubuntu.com/ubuntu resolute/universe amd64v3 xfonts-scalable all 1:1.0.3-1.3build1 [304 kB]
+2026-11-16T14:45:27.7154182Z Fetched 21.9 MB in 1s (34.5 MB/s)
+2026-11-16T14:45:27.7412264Z Selecting previously unselected package fonts-ipafont-gothic.
+2026-11-16T14:45:27.7781907Z (Reading database ... 
+2026-11-16T14:45:27.7782546Z (Reading database ... 5%
+2026-11-16T14:45:27.7782952Z (Reading database ... 10%
+2026-11-16T14:45:27.7783293Z (Reading database ... 15%
+2026-11-16T14:45:27.7783626Z (Reading database ... 20%
+2026-11-16T14:45:27.7783937Z (Reading database ... 25%
+2026-11-16T14:45:27.7784253Z (Reading database ... 30%
+2026-11-16T14:45:27.7784615Z (Reading database ... 35%
+2026-11-16T14:45:27.7785009Z (Reading database ... 40%
+2026-11-16T14:45:27.7785301Z (Reading database ... 45%
+2026-11-16T14:45:27.7785594Z (Reading database ... 50%
+2026-11-16T14:45:27.8539683Z (Reading database ... 55%
+2026-11-16T14:45:28.0535006Z (Reading database ... 60%
+2026-11-16T14:45:28.1943060Z (Reading database ... 65%
+2026-11-16T14:45:28.3470583Z (Reading database ... 70%
+2026-11-16T14:45:28.5462164Z (Reading database ... 75%
+2026-11-16T14:45:28.7094458Z (Reading database ... 80%
+2026-11-16T14:45:28.9408019Z (Reading database ... 85%
+2026-11-16T14:45:29.1493659Z (Reading database ... 90%
+2026-11-16T14:45:29.3103632Z (Reading database ... 95%
+2026-11-16T14:45:29.3104105Z (Reading database ... 100%
+2026-11-16T14:45:29.3104765Z (Reading database ... 213946 files and directories currently installed.)
+2026-11-16T14:45:29.3146379Z Preparing to unpack .../0-fonts-ipafont-gothic_00303-23ubuntu1_all.deb ...
+2026-11-16T14:45:29.3251995Z Unpacking fonts-ipafont-gothic (00303-23ubuntu1) ...
+2026-11-16T14:45:29.3929591Z Selecting previously unselected package fonts-freefont-ttf.
+2026-11-16T14:45:29.4067484Z Preparing to unpack .../1-fonts-freefont-ttf_20211204+svn4273-4build1_all.deb ...
+2026-11-16T14:45:29.4073570Z Unpacking fonts-freefont-ttf (20211204+svn4273-4build1) ...
+2026-11-16T14:45:29.4955187Z Selecting previously unselected package fonts-tlwg-loma-otf.
+2026-11-16T14:45:29.5094505Z Preparing to unpack .../2-fonts-tlwg-loma-otf_1%3a0.7.3-1build1_all.deb ...
+2026-11-16T14:45:29.5101337Z Unpacking fonts-tlwg-loma-otf (1:0.7.3-1build1) ...
+2026-11-16T14:45:29.5334432Z Selecting previously unselected package fonts-unifont.
+2026-11-16T14:45:29.5472774Z Preparing to unpack .../3-fonts-unifont_1%3a16.0.04-1build1_all.deb ...
+2026-11-16T14:45:29.5479294Z Unpacking fonts-unifont (1:16.0.04-1build1) ...
+2026-11-16T14:45:29.6630022Z Selecting previously unselected package fonts-wqy-zenhei.
+2026-11-16T14:45:29.6767030Z Preparing to unpack .../4-fonts-wqy-zenhei_0.9.45-8build1_all.deb ...
+2026-11-16T14:45:29.6910185Z Unpacking fonts-wqy-zenhei (0.9.45-8build1) ...
+2026-11-16T14:45:29.7812423Z Selecting previously unselected package xfonts-encodings.
+2026-11-16T14:45:29.7950409Z Preparing to unpack .../5-xfonts-encodings_1%3a1.0.5-0ubuntu3_all.deb ...
+2026-11-16T14:45:29.7958517Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu3) ...
+2026-11-16T14:45:29.8259721Z Selecting previously unselected package xfonts-utils.
+2026-11-16T14:45:29.8398910Z Preparing to unpack .../6-xfonts-utils_1%3a7.7+7build1_amd64v3.deb ...
+2026-11-16T14:45:29.8405751Z Unpacking xfonts-utils (1:7.7+7build1) ...
+2026-11-16T14:45:29.8783556Z Selecting previously unselected package xfonts-cyrillic.
+2026-11-16T14:45:29.8920798Z Preparing to unpack .../7-xfonts-cyrillic_1%3a1.0.5+nmu1build1_all.deb ...
+2026-11-16T14:45:29.8928560Z Unpacking xfonts-cyrillic (1:1.0.5+nmu1build1) ...
+2026-11-16T14:45:29.9278000Z Selecting previously unselected package xfonts-scalable.
+2026-11-16T14:45:29.9415197Z Preparing to unpack .../8-xfonts-scalable_1%3a1.0.3-1.3build1_all.deb ...
+2026-11-16T14:45:29.9422402Z Unpacking xfonts-scalable (1:1.0.3-1.3build1) ...
+2026-11-16T14:45:29.9860086Z Setting up fonts-wqy-zenhei (0.9.45-8build1) ...
+2026-11-16T14:45:30.0007976Z Setting up fonts-freefont-ttf (20211204+svn4273-4build1) ...
+2026-11-16T14:45:30.0023669Z Setting up fonts-tlwg-loma-otf (1:0.7.3-1build1) ...
+2026-11-16T14:45:30.0040715Z Setting up xfonts-encodings (1:1.0.5-0ubuntu3) ...
+2026-11-16T14:45:30.0056564Z Setting up fonts-ipafont-gothic (00303-23ubuntu1) ...
+2026-11-16T14:45:30.0121712Z update-alternatives: using /usr/share/fonts/opentype/ipafont-gothic/ipag.ttf to provide /usr/share/fonts/truetype/fonts-japanese-gothic.ttf (fonts-japanese-gothic.ttf) in auto mode
+2026-11-16T14:45:30.0155365Z Setting up fonts-unifont (1:16.0.04-1build1) ...
+2026-11-16T14:45:30.0172698Z Setting up xfonts-utils (1:7.7+7build1) ...
+2026-11-16T14:45:30.0224996Z Setting up xfonts-cyrillic (1:1.0.5+nmu1build1) ...
+2026-11-16T14:45:30.0677271Z Setting up xfonts-scalable (1:1.0.3-1.3build1) ...
+2026-11-16T14:45:30.1091770Z Processing triggers for man-db (2.13.1-1build1) ...
+2026-11-16T14:45:30.1113713Z Not building database; man-db/auto-update is not 'true'.
+2026-11-16T14:45:30.1125961Z Processing triggers for fontconfig (2.17.1-3ubuntu1) ...
+2026-11-16T14:45:30.8696141Z 
+2026-11-16T14:45:30.8696943Z Running kernel seems to be up-to-date.
+2026-11-16T14:45:30.8697362Z 
+2026-11-16T14:45:30.8697563Z Restarting services...
+2026-11-16T14:45:30.8793294Z 
+2026-11-16T14:45:30.8793717Z Service restarts being deferred:
+2026-11-16T14:45:30.8798184Z  systemctl restart hosted-compute-agent.service
+2026-11-16T14:45:30.8798615Z 
+2026-11-16T14:45:30.8799092Z No containers need to be restarted.
+2026-11-16T14:45:30.8799419Z 
+2026-11-16T14:45:30.8799738Z No user sessions are running outdated binaries.
+2026-11-16T14:45:30.8800102Z 
+2026-11-16T14:45:30.8800604Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-11-16T14:45:31.8252285Z Switching to root user to install dependencies...
+2026-11-16T14:45:31.8343976Z ++ arch
+2026-11-16T14:45:31.8372149Z + [[ x86_64 == aarch64 ]]
+2026-11-16T14:45:31.8372641Z + '[' -z '' ']'
+2026-11-16T14:45:31.8372940Z + [[ ! -f /etc/os-release ]]
+2026-11-16T14:45:31.8375510Z ++ bash -c 'source /etc/os-release && echo $ID'
+2026-11-16T14:45:31.8389577Z + ID=ubuntu
+2026-11-16T14:45:31.8389995Z + [[ ubuntu != ubuntu ]]
+2026-11-16T14:45:31.8394059Z + dpkg --get-selections
+2026-11-16T14:45:31.8394735Z + grep -q '^microsoft-edge-stable[[:space:]]*install$'
+2026-11-16T14:45:31.8521872Z + apt-get remove -y microsoft-edge-stable
+2026-11-16T14:45:31.8642855Z Reading package lists...
+2026-11-16T14:45:32.0036220Z Building dependency tree...
+2026-11-16T14:45:32.0043334Z Reading state information...
+2026-11-16T14:45:32.0874914Z Solving dependencies...
+2026-11-16T14:45:32.1773374Z The following packages will be REMOVED:
+2026-11-16T14:45:32.1774276Z   microsoft-edge-stable
+2026-11-16T14:45:32.6020445Z 0 upgraded, 0 newly installed, 1 to remove and 25 not upgraded.
+2026-11-16T14:45:32.6021598Z After this operation, 711 MB disk space will be freed.
+2026-11-16T14:45:32.6196403Z (Reading database ... 
+2026-11-16T14:45:32.6196905Z (Reading database ... 5%
+2026-11-16T14:45:32.6197362Z (Reading database ... 10%
+2026-11-16T14:45:32.6197822Z (Reading database ... 15%
+2026-11-16T14:45:32.6198256Z (Reading database ... 20%
+2026-11-16T14:45:32.6198698Z (Reading database ... 25%
+2026-11-16T14:45:32.6199137Z (Reading database ... 30%
+2026-11-16T14:45:32.6199569Z (Reading database ... 35%
+2026-11-16T14:45:32.6200035Z (Reading database ... 40%
+2026-11-16T14:45:32.6200439Z (Reading database ... 45%
+2026-11-16T14:45:32.6200721Z (Reading database ... 50%
+2026-11-16T14:45:32.6328655Z (Reading database ... 55%
+2026-11-16T14:45:32.6352123Z (Reading database ... 60%
+2026-11-16T14:45:32.6384462Z (Reading database ... 65%
+2026-11-16T14:45:32.6398857Z (Reading database ... 70%
+2026-11-16T14:45:32.6417644Z (Reading database ... 75%
+2026-11-16T14:45:32.6458776Z (Reading database ... 80%
+2026-11-16T14:45:32.6608850Z (Reading database ... 85%
+2026-11-16T14:45:32.6638019Z (Reading database ... 90%
+2026-11-16T14:45:32.6884807Z (Reading database ... 95%
+2026-11-16T14:45:32.6885382Z (Reading database ... 100%
+2026-11-16T14:45:32.6886116Z (Reading database ... 214211 files and directories currently installed.)
+2026-11-16T14:45:32.6923969Z Removing microsoft-edge-stable (157.0.4341.46-1) ...
+2026-11-16T14:45:32.9147862Z update-alternatives: using /usr/bin/google-chrome-stable to provide /usr/bin/x-www-browser (x-www-browser) in auto mode
+2026-11-16T14:45:32.9167878Z update-alternatives: using /usr/bin/google-chrome-stable to provide /usr/bin/gnome-www-browser (gnome-www-browser) in auto mode
+2026-11-16T14:45:33.0015397Z Processing triggers for man-db (2.13.1-1build1) ...
+2026-11-16T14:45:33.0032575Z Not building database; man-db/auto-update is not 'true'.
+2026-11-16T14:45:34.0117213Z + command -v curl
+2026-11-16T14:45:34.0117670Z + command -v gpg
+2026-11-16T14:45:34.0122247Z + curl -L https://packages.microsoft.com/keys/microsoft.asc
+2026-11-16T14:45:34.0123146Z + gpg --dearmor
+2026-11-16T14:45:34.0309742Z   % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+2026-11-16T14:45:34.0310899Z                                  Dload  Upload  Total   Spent   Left   Speed
+2026-11-16T14:45:34.0311850Z 
+2026-11-16T14:45:34.0515678Z   0      0   0      0   0      0      0      0                              0
+2026-11-16T14:45:34.0516661Z 100    975 100    975   0      0  45547      0                              0
+2026-11-16T14:45:34.0517615Z 100    975 100    975   0      0  45365      0                              0
+2026-11-16T14:45:34.0518511Z 100    975 100    975   0      0  45193      0                              0
+2026-11-16T14:45:34.0550566Z + install -o root -g root -m 644 /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/
+2026-11-16T14:45:34.0593333Z + sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-stable.list'
+2026-11-16T14:45:34.0603098Z + rm /tmp/microsoft.gpg
+2026-11-16T14:45:34.0614357Z + apt-get update
+2026-11-16T14:45:34.1222659Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+2026-11-16T14:45:34.1615061Z Hit:2 http://azure.archive.ubuntu.com/ubuntu resolute InRelease
+2026-11-16T14:45:34.1618531Z Get:6 https://packages.microsoft.com/repos/edge stable InRelease [3590 B]
+2026-11-16T14:45:34.1626066Z Hit:3 http://azure.archive.ubuntu.com/ubuntu resolute-updates InRelease
+2026-11-16T14:45:34.1628008Z Hit:4 http://azure.archive.ubuntu.com/ubuntu resolute-backports InRelease
+2026-11-16T14:45:34.1633005Z Hit:5 http://azure.archive.ubuntu.com/ubuntu resolute-security InRelease
+2026-11-16T14:45:34.1661883Z Hit:7 https://packages.microsoft.com/ubuntu/26.04/prod resolute InRelease
+2026-11-16T14:45:34.1894056Z Get:8 https://packages.microsoft.com/repos/edge stable/main amd64 Packages [64.1 kB]
+2026-11-16T14:45:34.3839243Z Fetched 67.7 kB in 0s (500 kB/s)
+2026-11-16T14:45:35.0955504Z Reading package lists...
+2026-11-16T14:45:35.1098962Z + apt-get install -y microsoft-edge-stable
+2026-11-16T14:45:35.1230605Z Reading package lists...
+2026-11-16T14:45:35.2890020Z Building dependency tree...
+2026-11-16T14:45:35.2897905Z Reading state information...
+2026-11-16T14:45:35.3822546Z Solving dependencies...
+2026-11-16T14:45:35.4809301Z The following NEW packages will be installed:
+2026-11-16T14:45:35.4810320Z   microsoft-edge-stable
+2026-11-16T14:45:35.5203783Z 0 upgraded, 1 newly installed, 0 to remove and 25 not upgraded.
+2026-11-16T14:45:35.5204628Z Need to get 201 MB of archives.
+2026-11-16T14:45:35.5205469Z After this operation, 711 MB of additional disk space will be used.
+2026-11-16T14:45:35.5206948Z Get:1 https://packages.microsoft.com/repos/edge stable/main amd64 microsoft-edge-stable amd64 157.0.4341.60-1 [201 MB]
+2026-11-16T14:45:37.1999272Z Fetched 201 MB in 1s (139 MB/s)
+2026-11-16T14:45:37.2201451Z Selecting previously unselected package microsoft-edge-stable.
+2026-11-16T14:45:37.2257381Z (Reading database ... 
+2026-11-16T14:45:37.2258057Z (Reading database ... 5%
+2026-11-16T14:45:37.2258555Z (Reading database ... 10%
+2026-11-16T14:45:37.2259017Z (Reading database ... 15%
+2026-11-16T14:45:37.2259460Z (Reading database ... 20%
+2026-11-16T14:45:37.2259776Z (Reading database ... 25%
+2026-11-16T14:45:37.2260128Z (Reading database ... 30%
+2026-11-16T14:45:37.2260580Z (Reading database ... 35%
+2026-11-16T14:45:37.2261017Z (Reading database ... 40%
+2026-11-16T14:45:37.2261773Z (Reading database ... 45%
+2026-11-16T14:45:37.2262148Z (Reading database ... 50%
+2026-11-16T14:45:37.2400927Z (Reading database ... 55%
+2026-11-16T14:45:37.2425641Z (Reading database ... 60%
+2026-11-16T14:45:37.2459254Z (Reading database ... 65%
+2026-11-16T14:45:37.2474821Z (Reading database ... 70%
+2026-11-16T14:45:37.2494633Z (Reading database ... 75%
+2026-11-16T14:45:37.2538382Z (Reading database ... 80%
+2026-11-16T14:45:37.2699640Z (Reading database ... 85%
+2026-11-16T14:45:37.2730937Z (Reading database ... 90%
+2026-11-16T14:45:37.3003416Z (Reading database ... 95%
+2026-11-16T14:45:37.3003955Z (Reading database ... 100%
+2026-11-16T14:45:37.3004545Z (Reading database ... 213822 files and directories currently installed.)
+2026-11-16T14:45:37.3045978Z Preparing to unpack .../microsoft-edge-stable_157.0.4341.60-1_amd64.deb ...
+2026-11-16T14:45:37.3054213Z Unpacking microsoft-edge-stable (157.0.4341.60-1) ...
+2026-11-16T14:45:44.8238614Z Setting up microsoft-edge-stable (157.0.4341.60-1) ...
+2026-11-16T14:45:45.0214240Z update-alternatives: using /usr/bin/microsoft-edge-stable to provide /usr/bin/microsoft-edge (microsoft-edge) in auto mode
+2026-11-16T14:45:45.0524144Z Processing triggers for man-db (2.13.1-1build1) ...
+2026-11-16T14:45:45.0539257Z Not building database; man-db/auto-update is not 'true'.
+2026-11-16T14:45:45.5998634Z 
+2026-11-16T14:45:45.5999374Z Running kernel seems to be up-to-date.
+2026-11-16T14:45:45.5999653Z 
+2026-11-16T14:45:45.5999794Z Restarting services...
+2026-11-16T14:45:45.6088240Z 
+2026-11-16T14:45:45.6088852Z Service restarts being deferred:
+2026-11-16T14:45:45.6089497Z  systemctl restart hosted-compute-agent.service
+2026-11-16T14:45:45.6091089Z 
+2026-11-16T14:45:45.6091653Z No containers need to be restarted.
+2026-11-16T14:45:45.6091880Z 
+2026-11-16T14:45:45.6092079Z No user sessions are running outdated binaries.
+2026-11-16T14:45:45.6092305Z 
+2026-11-16T14:45:45.6092588Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+2026-11-16T14:45:46.6011992Z + microsoft-edge-stable --version
+2026-11-16T14:45:46.7239237Z Microsoft Edge 157.0.4341.60 
+2026-11-16T14:45:46.7371942Z Downloading FFmpeg (playwright ffmpeg v1011) from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-linux.zip
+2026-11-16T14:45:47.1999813Z |                                                                                |   0% of 2.3 MiB
+2026-11-16T14:45:47.2320349Z |■■■■■■■■                                                                        |  10% of 2.3 MiB
+2026-11-16T14:45:47.2445652Z |■■■■■■■■■■■■■■■■                                                                |  20% of 2.3 MiB
+2026-11-16T14:45:47.2541838Z |■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 2.3 MiB
+2026-11-16T14:45:47.2576174Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 2.3 MiB
+2026-11-16T14:45:47.2604924Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 2.3 MiB
+2026-11-16T14:45:47.2674578Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 2.3 MiB
+2026-11-16T14:45:47.2697892Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 2.3 MiB
+2026-11-16T14:45:47.2717971Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 2.3 MiB
+2026-11-16T14:45:47.2738583Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 2.3 MiB
+2026-11-16T14:45:47.2748391Z |■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 2.3 MiB
+2026-11-16T14:45:47.3405417Z FFmpeg (playwright ffmpeg v1011) downloaded to /home/runner/.cache/ms-playwright/ffmpeg-1011
+2026-11-16T14:45:47.3657075Z ##[group]Run pnpm build
+2026-11-16T14:45:47.3657368Z [36;1mpnpm build[0m
+2026-11-16T14:45:47.3706523Z shell: /usr/bin/bash -e {0}
+2026-11-16T14:45:47.3706823Z env:
+2026-11-16T14:45:47.3707027Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-16T14:45:47.3707279Z   LIVE: 0
+2026-11-16T14:45:47.3707525Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-16T14:45:47.3707850Z ##[endgroup]
+2026-11-16T14:45:47.4028479Z $ turbo run build
+2026-11-16T14:45:47.4408681Z 
+2026-11-16T14:45:47.4409185Z Attention:
+2026-11-16T14:45:47.4410083Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-16T14:45:47.4411558Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-16T14:45:47.4412649Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-16T14:45:47.4413460Z https://turborepo.dev/docs/telemetry
+2026-11-16T14:45:47.4413678Z 
+2026-11-16T14:45:47.4972966Z 
+2026-11-16T14:45:47.4996126Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-16T14:45:47.5007057Z    • Running build in 13 packages
+2026-11-16T14:45:47.5057355Z    • Remote caching disabled
+2026-11-16T14:45:47.5057964Z 
+2026-11-16T14:45:49.8086298Z ##[group]@graphgoblin/contracts:build
+2026-11-16T14:45:49.8087117Z cache miss, executing 61e585e6b58bf48b
+2026-11-16T14:45:49.8087767Z $ tsc -b tsconfig.build.json
+2026-11-16T14:45:49.8088581Z ##[endgroup]
+2026-11-16T14:45:52.6120643Z ##[group]@graphgoblin/domain:build
+2026-11-16T14:45:52.6121522Z cache miss, executing ebaffae764d42966
+2026-11-16T14:45:52.6121886Z $ tsc -b tsconfig.build.json
+2026-11-16T14:45:52.6122308Z ##[endgroup]
+2026-11-16T14:45:56.6876846Z ##[group]@graphgoblin/engine:build
+2026-11-16T14:45:56.6877341Z cache miss, executing 0dd059a13e953960
+2026-11-16T14:45:56.6877684Z $ tsc -b tsconfig.build.json
+2026-11-16T14:45:56.6878122Z ##[endgroup]
+2026-11-16T14:45:59.5443158Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-16T14:45:59.5444369Z cache miss, executing 9483f7d96da23aff
+2026-11-16T14:45:59.5445265Z $ tsc -b tsconfig.build.json
+2026-11-16T14:45:59.5446165Z ##[endgroup]
+2026-11-16T14:46:00.1189126Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-16T14:46:00.1190369Z cache miss, executing a7507cd8995862d2
+2026-11-16T14:46:00.1191717Z $ tsc -b tsconfig.build.json
+2026-11-16T14:46:00.1192824Z ##[endgroup]
+2026-11-16T14:46:05.6408803Z ##[group]@graphgoblin/infrastructure:build
+2026-11-16T14:46:05.6410111Z cache miss, executing 6c2a59f91ea5ac02
+2026-11-16T14:46:05.6410726Z $ tsc -b tsconfig.build.json
+2026-11-16T14:46:05.6411695Z ##[endgroup]
+2026-11-16T14:46:13.1345294Z ##[group]@graphgoblin/api:build
+2026-11-16T14:46:13.1346025Z cache miss, executing f3caa6f48027a1bd
+2026-11-16T14:46:13.1346836Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-16T14:46:13.1347718Z ##[endgroup]
+2026-11-16T14:46:16.1244669Z ##[group]@graphgoblin/api-client:build
+2026-11-16T14:46:16.1245510Z cache miss, executing 4f17d5651ccab099
+2026-11-16T14:46:16.1246080Z $ tsc -b tsconfig.build.json
+2026-11-16T14:46:16.1246750Z ##[endgroup]
+2026-11-16T14:46:19.7056240Z ##[group]@graphgoblin/mcp:build
+2026-11-16T14:46:19.7057279Z cache miss, executing 906e04b44bf47c6b
+2026-11-16T14:46:19.7058230Z $ tsc -b tsconfig.build.json
+2026-11-16T14:46:19.7059467Z ##[endgroup]
+2026-11-16T14:46:21.5169972Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-16T14:46:21.5172304Z cache bypass, force executing 9343207b25cb1cdd
+2026-11-16T14:46:21.5173372Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-16T14:46:21.5175800Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-16T14:46:21.5177635Z ##[endgroup]
+2026-11-16T14:46:21.9074978Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-16T14:46:21.9075826Z cache bypass, force executing 23956972d1476f97
+2026-11-16T14:46:21.9076484Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-16T14:46:21.9077463Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-16T14:46:21.9078552Z Install: codex plugin marketplace add "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-16T14:46:21.9079234Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-16T14:46:21.9079754Z ##[endgroup]
+2026-11-16T14:46:24.5948904Z ##[group]@graphgoblin/web:build
+2026-11-16T14:46:24.5949544Z cache miss, executing 71a0146d7edb6fa8
+2026-11-16T14:46:24.5950081Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-16T14:46:24.5950959Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-16T14:46:24.5952016Z transforming...
+2026-11-16T14:46:24.5952498Z ✓ 779 modules transformed.
+2026-11-16T14:46:24.5952776Z rendering chunks...
+2026-11-16T14:46:24.5953013Z computing gzip size...
+2026-11-16T14:46:24.5953323Z dist/manifest.webmanifest           0.47 kB
+2026-11-16T14:46:24.5953827Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-16T14:46:24.5954365Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-16T14:46:24.5955162Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-16T14:46:24.5955766Z 
+2026-11-16T14:46:24.5956542Z [32m✓ built in 2.51s[39m
+2026-11-16T14:46:24.5956740Z 
+2026-11-16T14:46:24.5957025Z [36mPWA v1.3.0[39m
+2026-11-16T14:46:24.5957538Z mode      [35mgenerateSW[39m
+2026-11-16T14:46:24.5958008Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-16T14:46:24.5958328Z files generated
+2026-11-16T14:46:24.5958577Z   [2mdist/sw.js.map[22m
+2026-11-16T14:46:24.5958844Z   [2mdist/sw.js[22m
+2026-11-16T14:46:24.5959156Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-16T14:46:24.5959496Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-16T14:46:24.5960016Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-16T14:46:24.5960407Z transforming...
+2026-11-16T14:46:24.5960674Z ✓ 284 modules transformed.
+2026-11-16T14:46:24.5960932Z rendering chunks...
+2026-11-16T14:46:24.5961366Z computing gzip size...
+2026-11-16T14:46:24.5961713Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-16T14:46:24.5962247Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-16T14:46:24.5962808Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-16T14:46:24.5963464Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-16T14:46:24.5964109Z 
+2026-11-16T14:46:24.5964279Z [32m✓ built in 452ms[39m
+2026-11-16T14:46:24.5964425Z 
+2026-11-16T14:46:24.5964556Z [36mPWA v1.3.0[39m
+2026-11-16T14:46:24.5964851Z mode      [35mgenerateSW[39m
+2026-11-16T14:46:24.5965248Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-16T14:46:24.5965546Z files generated
+2026-11-16T14:46:24.5965818Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-16T14:46:24.5966132Z   [2m../dist-goblin/sw.js[22m
+2026-11-16T14:46:24.5966505Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-16T14:46:24.5966906Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-16T14:46:24.5967409Z ##[endgroup]
+2026-11-16T14:46:24.5967753Z 
+2026-11-16T14:46:24.5968063Z  Tasks:    12 successful, 12 total
+2026-11-16T14:46:24.5968609Z Cached:    0 cached, 12 total
+2026-11-16T14:46:24.5969045Z   Time:    37.154s 
+2026-11-16T14:46:24.5969273Z 
+2026-11-16T14:46:24.6987269Z ##[group]Run pnpm exec playwright test --retries=0 --workers=1
+2026-11-16T14:46:24.6987781Z [36;1mpnpm exec playwright test --retries=0 --workers=1[0m
+2026-11-16T14:46:24.7037036Z shell: /usr/bin/bash -e {0}
+2026-11-16T14:46:24.7037295Z env:
+2026-11-16T14:46:24.7037490Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-16T14:46:24.7037740Z   LIVE: 0
+2026-11-16T14:46:24.7037998Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-16T14:46:24.7038310Z ##[endgroup]
+2026-11-16T14:46:31.2533991Z 
+2026-11-16T14:46:31.2535046Z Running 482 tests using 1 worker
+2026-11-16T14:46:31.2535914Z 
+2026-11-16T14:46:33.7823986Z   ✓    1 [chromium] › e2e/actions.spec.ts:22:1 › Loops keeps on cancel, contains keyboard focus, exports, and deletes on confirmation (1.5s)
+2026-11-16T14:46:34.3993475Z Focused-element removal focusout events: [{"duringEvent":true,"afterMicrotask":false}]
+2026-11-16T14:46:39.7063654Z   ✓    2 [chromium] › e2e/actions.spec.ts:56:1 › Keep followed by a runs poll leaves body focus and Space opens no confirmation (5.9s)
+2026-11-16T14:46:40.9090914Z   ✓    3 [chromium] › e2e/actions.spec.ts:114:1 › Settings keeps on cancel and deletes a secret after explicit confirmation (1.2s)
+2026-11-16T14:46:42.7491586Z   ✓    4 [chromium] › e2e/actions.spec.ts:141:1 › Settings catalog edits LiteLLM models, refuses Add, and reports a second-delete error (1.8s)
+2026-11-16T14:46:44.5633582Z   ✓    5 [chromium] › e2e/actions.spec.ts:229:1 › Settings harness switches follow keyboard toggles and update Default model (1.8s)
+2026-11-16T14:46:46.3679714Z   ✓    6 [chromium] › e2e/actions.spec.ts:290:1 › Settings catalog preserves a disabled saved default until the owner changes it (1.8s)
+2026-11-16T14:46:48.0316822Z   ✓    7 [chromium] › e2e/actions.spec.ts:334:1 › Settings catalog refreshes a vanished toggle and announces the reason at the heading (1.6s)
+2026-11-16T14:46:50.4736558Z   ✓    8 [chromium] › e2e/actions.spec.ts:396:3 › Settings catalog has visible keyboard focus, pending and refused states in dark (2.4s)
+2026-11-16T14:46:52.8908107Z   ✓    9 [chromium] › e2e/actions.spec.ts:396:3 › Settings catalog has visible keyboard focus, pending and refused states in light (2.4s)
+2026-11-16T14:46:54.0133557Z   ✓   10 [chromium] › e2e/actions.spec.ts:482:1 › revoking this browser key warns and brings up the API key panel (1.1s)
+2026-11-16T14:46:55.0975753Z   ✓   11 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 1 presses (1.1s)
+2026-11-16T14:46:56.2493317Z   ✓   12 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 2 presses (1.1s)
+2026-11-16T14:46:57.3593686Z   ✓   13 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 3 presses (1.1s)
+2026-11-16T14:46:58.7483253Z   ✓   14 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 4 presses (1.4s)
+2026-11-16T14:46:59.9186386Z   ✓   15 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 5 presses (1.2s)
+2026-11-16T14:47:01.0783151Z   ✓   16 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 6 presses (1.1s)
+2026-11-16T14:47:02.3098703Z   ✓   17 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 7 presses (1.2s)
+2026-11-16T14:47:03.6183272Z   ✓   18 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 8 presses (1.3s)
+2026-11-16T14:47:04.8381088Z   ✓   19 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 9 presses (1.2s)
+2026-11-16T14:47:06.0785125Z   ✓   20 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 10 presses (1.2s)
+2026-11-16T14:47:07.4011572Z   ✓   21 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 12 presses (1.3s)
+2026-11-16T14:47:08.7587136Z   ✓   22 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, 409, 20 presses (1.3s)
+2026-11-16T14:47:09.8689495Z   ✓   23 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 1 presses (1.1s)
+2026-11-16T14:47:10.9665619Z   ✓   24 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 2 presses (1.1s)
+2026-11-16T14:47:12.0764129Z   ✓   25 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 3 presses (1.1s)
+2026-11-16T14:47:13.2120714Z   ✓   26 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 4 presses (1.1s)
+2026-11-16T14:47:14.3195886Z   ✓   27 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 5 presses (1.1s)
+2026-11-16T14:47:15.4351588Z   ✓   28 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 6 presses (1.1s)
+2026-11-16T14:47:16.5671945Z   ✓   29 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 7 presses (1.1s)
+2026-11-16T14:47:17.7533191Z   ✓   30 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 8 presses (1.2s)
+2026-11-16T14:47:19.0059017Z   ✓   31 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 9 presses (1.2s)
+2026-11-16T14:47:20.2239607Z   ✓   32 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 10 presses (1.2s)
+2026-11-16T14:47:21.4181821Z   ✓   33 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 12 presses (1.2s)
+2026-11-16T14:47:22.6588262Z   ✓   34 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: mouse, success, 20 presses (1.2s)
+2026-11-16T14:47:23.8463280Z   ✓   35 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 1 presses (1.2s)
+2026-11-16T14:47:25.0455774Z   ✓   36 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 2 presses (1.2s)
+2026-11-16T14:47:26.2642270Z   ✓   37 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 3 presses (1.2s)
+2026-11-16T14:47:27.4217671Z   ✓   38 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 4 presses (1.1s)
+2026-11-16T14:47:28.6955659Z   ✓   39 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 5 presses (1.3s)
+2026-11-16T14:47:29.9525573Z   ✓   40 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 6 presses (1.2s)
+2026-11-16T14:47:31.2033249Z   ✓   41 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 7 presses (1.2s)
+2026-11-16T14:47:32.4922012Z   ✓   42 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 8 presses (1.3s)
+2026-11-16T14:47:33.8380276Z   ✓   43 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 9 presses (1.3s)
+2026-11-16T14:47:35.2265638Z   ✓   44 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 10 presses (1.4s)
+2026-11-16T14:47:36.6102140Z   ✓   45 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 12 presses (1.4s)
+2026-11-16T14:47:38.0938971Z   ✓   46 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, 409, 20 presses (1.5s)
+2026-11-16T14:47:39.2469864Z   ✓   47 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 1 presses (1.1s)
+2026-11-16T14:47:40.4412382Z   ✓   48 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 2 presses (1.2s)
+2026-11-16T14:47:41.6280124Z   ✓   49 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 3 presses (1.2s)
+2026-11-16T14:47:42.7850919Z   ✓   50 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 4 presses (1.1s)
+2026-11-16T14:47:43.9766684Z   ✓   51 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 5 presses (1.2s)
+2026-11-16T14:47:45.1546880Z   ✓   52 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 6 presses (1.2s)
+2026-11-16T14:47:46.3939943Z   ✓   53 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 7 presses (1.2s)
+2026-11-16T14:47:47.6062048Z   ✓   54 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 8 presses (1.2s)
+2026-11-16T14:47:48.8088136Z   ✓   55 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 9 presses (1.2s)
+2026-11-16T14:47:50.0884226Z   ✓   56 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 10 presses (1.3s)
+2026-11-16T14:47:51.3490917Z   ✓   57 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 12 presses (1.2s)
+2026-11-16T14:47:52.6679401Z   ✓   58 [chromium] › e2e/actions.spec.ts:507:7 › busy Escape: keyboard, success, 20 presses (1.3s)
+2026-11-16T14:47:53.7313235Z   ✓   59 [chromium] › e2e/actions.spec.ts:606:1 › revocation closes before a held key-list refresh removes the action later (1.0s)
+2026-11-16T14:47:55.9130011Z   ✓   60 [chromium] › e2e/actions.spec.ts:646:1 › own-key revocation closes before the held 401 refetch and focuses the key panel without waiting for retry (2.2s)
+2026-11-16T14:47:57.0229150Z   ✓   61 [chromium] › e2e/actions.spec.ts:709:1 › review: keyboard export keeps focus and announces progress (1.1s)
+2026-11-16T14:47:58.3345346Z   ✓   62 [chromium] › e2e/actions.spec.ts:747:1 › review: pending double clicks cannot select status text (1.3s)
+2026-11-16T14:48:02.1804285Z   ✓   63 [chromium] › e2e/api-key-current.spec.ts:11:3 › current key: two browsers revoke the other key then their own with keyboard in dark (3.8s)
+2026-11-16T14:48:03.2170790Z   ✓   64 [chromium] › e2e/api-key-current.spec.ts:136:5 › trusted mode has no current-key marker and describes stored-key risk in dark, bearer=false (1.0s)
+2026-11-16T14:48:04.2937503Z   ✓   65 [chromium] › e2e/api-key-current.spec.ts:136:5 › trusted mode has no current-key marker and describes stored-key risk in dark, bearer=true (1.1s)
+2026-11-16T14:48:07.8490072Z   ✓   66 [chromium] › e2e/api-key-current.spec.ts:11:3 › current key: two browsers revoke the other key then their own with keyboard in light (3.5s)
+2026-11-16T14:48:08.9334907Z   ✓   67 [chromium] › e2e/api-key-current.spec.ts:136:5 › trusted mode has no current-key marker and describes stored-key risk in light, bearer=false (1.1s)
+2026-11-16T14:48:10.0334661Z   ✓   68 [chromium] › e2e/api-key-current.spec.ts:136:5 › trusted mode has no current-key marker and describes stored-key risk in light, bearer=true (1.1s)
+2026-11-16T14:48:16.1179931Z   ✓   69 [chromium] › e2e/bounded-history.spec.ts:10:1 › bounded Timeline browses a long run with keyboard focus, exact threads and persisted resume (6.1s)
+2026-11-16T14:48:22.9584590Z   ✓   70 [chromium] › e2e/chat.spec.ts:4:1 › owner Chat recovers a lost native-turn acknowledgement by read only, and system loops stay editable (6.8s)
+2026-11-16T14:48:24.2019137Z   ✓   71 [chromium] › e2e/chat.spec.ts:163:1 › empty owner Chat fits its real offline banner and keeps the composer in view after resize (1.2s)
+2026-11-16T14:48:30.3880318Z   ✓   72 [chromium] › e2e/classifiers.spec.ts:203:1 › Settings registers, enables, edits, disables, and deletes a classifier from the keyboard, and it persists (6.2s)
+2026-11-16T14:48:32.4668682Z   ✓   73 [chromium] › e2e/classifiers.spec.ts:338:1 › a decision selects the classifier, publishes, and runs against its endpoint (2.1s)
+2026-11-16T14:48:33.8909820Z   ✓   74 [chromium] › e2e/classifiers.spec.ts:407:1 › an unavailable explicit classifier fails without switching evaluator (1.4s)
+2026-11-16T14:48:37.0601138Z   ✓   75 [chromium] › e2e/classifiers.spec.ts:453:1 › a classifier Choice gate explains its options, refuses a duplicate label, and shows pass evidence (3.2s)
+2026-11-16T14:48:43.2633604Z   ✓   76 [chromium] › e2e/classifiers.spec.ts:561:3 › Settings and the picker in dark, at 768 px: empty, with a custom entry, a missing secret (6.2s)
+2026-11-16T14:48:49.2865042Z   ✓   77 [chromium] › e2e/classifiers.spec.ts:561:3 › Settings and the picker in light, at 768 px: empty, with a custom entry, a missing secret (6.0s)
+2026-11-16T14:48:52.0877186Z   ✓   78 [chromium] › e2e/claude-harness.spec.ts:77:1 › Claude inference selection stays family-specific through publish and run (2.8s)
+2026-11-16T14:48:54.6050021Z   ✓   79 [chromium] › e2e/claude-harness.spec.ts:169:3 › Claude Sonnet 5.5 selection and effort survive save and reopen and reach the adapter request (2.5s)
+2026-11-16T14:48:57.2089410Z   ✓   80 [chromium] › e2e/claude-harness.spec.ts:169:3 › Claude Haiku 5.5 selection and effort survive save and reopen and reach the adapter request (2.6s)
+2026-11-16T14:48:58.7547494Z   ✓   81 [chromium] › e2e/claude-harness.spec.ts:264:3 › explicit harness switch on narrow editor with readiness false (1.5s)
+2026-11-16T14:49:00.2052541Z   ✓   82 [chromium] › e2e/claude-harness.spec.ts:264:3 › explicit harness switch on narrow editor with readiness true (1.4s)
+2026-11-16T14:49:03.6382430Z   ✓   83 [chromium] › e2e/claude-harness.spec.ts:336:1 › a ready Claude model field stays editable while a focus refetch rechecks readiness (3.4s)
+2026-11-16T14:49:04.7177098Z   ✓   84 [chromium] › e2e/claude-harness.spec.ts:394:1 › Settings separates Claude adapter support from CLI readiness and supports Fable (1.1s)
+2026-11-16T14:49:05.7698796Z   ✓   85 [chromium] › e2e/claude-harness.spec.ts:464:1 › Claude settings stay pending through refresh and preserve the Codex defaults (1.0s)
+2026-11-16T14:49:06.8214429Z   ✓   86 [chromium] › e2e/claude-harness.spec.ts:531:1 › Settings Defaults aligns each model and effort select, with the Claude effort note below its row (1.0s)
+2026-11-16T14:49:09.4024384Z   ✓   87 [chromium] › e2e/claude-harness.spec.ts:574:1 › Claude inspector shows requested effort and policy artifact, and preserves unconfirmed termination failure (2.6s)
+2026-11-16T14:49:10.6372899Z   ✓   88 [chromium] › e2e/claude-harness.spec.ts:753:3 › loaded saved incompatible model is retained without a switch, readiness false (1.2s)
+2026-11-16T14:49:11.8263275Z   ✓   89 [chromium] › e2e/claude-harness.spec.ts:753:3 › loaded saved incompatible model is retained without a switch, readiness true (1.2s)
+2026-11-16T14:49:13.2940061Z   ✓   90 [chromium] › e2e/cron.spec.ts:39:3 › saved Etc/UTC previews through the real endpoint without a false zone error (1.4s)
+2026-11-16T14:49:14.8153093Z   ✓   91 [chromium] › e2e/cron.spec.ts:39:3 › saved Asia/Kolkata previews through the real endpoint without a false zone error (1.5s)
+2026-11-16T14:49:17.6058567Z   ✓   92 [chromium] › e2e/cron.spec.ts:77:3 › clearing time persists incomplete input, blocks readiness and undoes in one step (2.8s)
+2026-11-16T14:49:20.4828838Z   ✓   93 [chromium] › e2e/cron.spec.ts:77:3 › clearing every persists incomplete input, blocks readiness and undoes in one step (2.9s)
+2026-11-16T14:49:23.3619779Z   ✓   94 [chromium] › e2e/cron.spec.ts:77:3 › clearing monthly day persists incomplete input, blocks readiness and undoes in one step (2.9s)
+2026-11-16T14:49:26.2961523Z   ✓   95 [chromium] › e2e/cron.spec.ts:77:3 › clearing weekly days persists incomplete input, blocks readiness and undoes in one step (2.9s)
+2026-11-16T14:49:29.4043511Z   ✓   96 [chromium] › e2e/cron.spec.ts:123:1 › switching trigger type to Cron waits for a schedule without a preview or mount edit (3.1s)
+2026-11-16T14:49:31.2477960Z   ✓   97 [chromium] › e2e/cron.spec.ts:163:1 › custom selection and an expression field issue reveal and focus raw text (1.8s)
+2026-11-16T14:49:34.3805145Z   ✓   98 [chromium] › e2e/cron.spec.ts:195:1 › cron presets, keyboard days, timezone and custom source round trip through the real API (3.1s)
+2026-11-16T14:49:37.5602004Z   ✓   99 [chromium] › e2e/cron.spec.ts:272:1 › preview and displayed slots equal the scheduler across London DST; invalid and unreachable feedback (3.2s)
+2026-11-16T14:49:45.6246969Z   ✓  100 [chromium] › e2e/decision-routes.spec.ts:254:7 › decision answer help with touch › compact help works in dark at desktop and narrow widths (8.0s)
+2026-11-16T14:49:53.6133701Z   ✓  101 [chromium] › e2e/decision-routes.spec.ts:254:7 › decision answer help with touch › compact help works in light at desktop and narrow widths (8.0s)
+2026-11-16T14:49:58.0445779Z   ✓  102 [chromium] › e2e/decision-routes.spec.ts:254:7 › decision answer help with mouse › compact help works in dark at desktop and narrow widths (4.4s)
+2026-11-16T14:50:02.5378172Z   ✓  103 [chromium] › e2e/decision-routes.spec.ts:254:7 › decision answer help with mouse › compact help works in light at desktop and narrow widths (4.5s)
+2026-11-16T14:50:06.3476775Z   ✓  104 [chromium] › e2e/decision-routes.spec.ts:290:1 › kind changes preview losses, cancel, undo, retain edges and reload; Noul never truncates routes (3.8s)
+2026-11-16T14:50:14.8933523Z   ✓  105 [chromium] › e2e/decision-routes.spec.ts:356:1 › option IDs stay connected when numeric display labels change, save, and reload (8.5s)
+2026-11-16T14:50:20.3723520Z   ✓  106 [chromium] › e2e/decision-routes.spec.ts:487:1 › Loop issues remove the edge a blank route ID owns, and one Undo restores the whole draft (5.5s)
+2026-11-16T14:50:22.6286035Z   ✓  107 [chromium] › e2e/decision-routes.spec.ts:578:1 › pointer connection reaches the eighth option by its ID while showing its numeric label (2.2s)
+2026-11-16T14:50:26.1644720Z   ✓  108 [chromium] › e2e/decision-routes.spec.ts:603:1 › expression true/false routes preserve edges, then save and run the edited route (3.5s)
+2026-11-16T14:50:29.2312996Z   ✓  109 [chromium] › e2e/decision-routes.spec.ts:681:1 › Score bands expose fractional boundaries, validate malformed coverage, and connect on the canvas (3.0s)
+2026-11-16T14:50:31.6437060Z   ✓  110 [chromium] › e2e/decision-routes.spec.ts:746:1 › removing a connected option removes its edge in the same undo step (2.4s)
+2026-11-16T14:50:32.9122664Z   ✓  111 [chromium] › e2e/decision-routes.spec.ts:780:1 › the primitive-aware classifier picker preserves but marks an incompatible saved model (1.3s)
+2026-11-16T14:50:34.1306101Z   ✓  112 [chromium] › e2e/decision-routes.spec.ts:846:1 › a rejected Noul confidence result stays raw and visible without selecting a route (1.2s)
+2026-11-16T14:50:37.8109255Z   ✓  113 [chromium] › e2e/definition-pins.spec.ts:49:1 › a waiting draft run keeps its definition after the draft is edited in the editor (3.7s)
+2026-11-16T14:50:39.6593323Z   ✓  114 [chromium] › e2e/deletion-eligibility.spec.ts:24:1 › individual review cancels safely, confirms persisted consent, and withdraws it (1.8s)
+2026-11-16T14:50:41.3926726Z   ✓  115 [chromium] › e2e/deletion-eligibility.spec.ts:59:1 › bulk confirmation covers exactly the frozen selection; later history remains retained (1.7s)
+2026-11-16T14:50:43.2402516Z   ✓  116 [chromium] › e2e/deletion-eligibility.spec.ts:96:1 › protected history and a stale confirmation refuse visibly; invalid selections cannot approve a subset (1.8s)
+2026-11-16T14:50:45.0043745Z   ✓  117 [chromium] › e2e/device-draft-format.spec.ts:75:1 › an older device draft is refused, never converted or saved, and discarded only on request (1.7s)
+2026-11-16T14:50:46.5496054Z   ✓  118 [chromium] › e2e/device-draft-format.spec.ts:119:3 › a device record with no definition keeps export and discard instead of failing to render (1.5s)
+2026-11-16T14:50:48.3133966Z   ✓  119 [chromium] › e2e/device-draft-format.spec.ts:119:3 › a device record with a null definition keeps export and discard instead of failing to render (1.7s)
+2026-11-16T14:50:50.4598129Z   ✓  120 [chromium] › e2e/device-first.spec.ts:51:3 › slow server renders device work before its answer (synced=false) (2.1s)
+2026-11-16T14:50:51.8613175Z   ✓  121 [chromium] › e2e/device-first.spec.ts:51:3 › slow server renders device work before its answer (synced=true) (1.4s)
+2026-11-16T14:50:54.3451893Z   ✓  122 [chromium] › e2e/device-first.spec.ts:80:1 › warm navigation keeps the latest copy for each of two loops while reads are slow (2.5s)
+2026-11-16T14:50:55.9820403Z   ✓  123 [chromium] › e2e/device-first.spec.ts:124:1 › a late newer server response preserves new edits and asks before overwriting (1.6s)
+2026-11-16T14:51:00.8244543Z   ✓  124 [chromium] › e2e/device-first.spec.ts:154:1 › offline API reload restores device work; recovery saves only after reconciliation (4.8s)
+2026-11-16T14:51:03.0728571Z   ✓  125 [chromium] › e2e/device-first.spec.ts:177:1 › server saves continue after a device read failure and retry preserves unread work (2.2s)
+2026-11-16T14:51:09.4462539Z   ✓  126 [chromium] › e2e/drafts.spec.ts:24:1 › two tabs editing one draft: the stale tab is asked to reload or overwrite (6.4s)
+2026-11-16T14:51:13.2049915Z   ✓  127 [chromium] › e2e/drafts.spec.ts:79:1 › a restored-draft notice stays dismissed through edits and returns after a restoring reload (3.7s)
+2026-11-16T14:51:18.9007981Z   ✓  128 [chromium] › e2e/drafts.spec.ts:158:1 › an older version’s open connection blocks device drafts: the editor says so until it closes (review F2) (5.7s)
+2026-11-16T14:51:22.3804068Z   ✓  129 [chromium] › e2e/earlier-node-outputs.spec.ts:8:3 › copied output references drive scripts and expression routes at 1440px (3.4s)
+2026-11-16T14:51:25.4751385Z   ✓  130 [chromium] › e2e/earlier-node-outputs.spec.ts:8:3 › copied output references drive scripts and expression routes at 390px (3.1s)
+2026-11-16T14:51:26.5011717Z   ✓  131 [chromium] › e2e/edge-labels.spec.ts:4:1 › a squeezed forward label uses a bounded callout below surrounding cards (1.0s)
+2026-11-16T14:51:28.7834496Z   ✓  132 [chromium] › e2e/editor-modal.spec.ts:53:1 › a click opens the node editor; a drag moves the node and opens nothing (2.3s)
+2026-11-16T14:51:30.8306427Z   ✓  133 [chromium] › e2e/editor-modal.spec.ts:102:1 › PR48-QA-02: a double-click on a node leaves one editor open; a later backdrop click closes it (2.0s)
+2026-11-16T14:51:32.3203726Z   ✓  134 [chromium] › e2e/editor-modal.spec.ts:146:1 › keyboard: Enter opens, Tab stays inside, Delete edits text only, Esc closes back to the node (1.5s)
+2026-11-16T14:51:33.9723523Z   ✓  135 [chromium] › e2e/editor-modal.spec.ts:203:1 › below 768 px the node editor is a full-width sheet along the bottom edge (1.6s)
+2026-11-16T14:51:36.8470850Z   ✓  136 [chromium] › e2e/editor-modal.spec.ts:238:1 › the loop panel collapses and expands from its own controls and is remembered (2.9s)
+2026-11-16T14:51:39.4723388Z   ✓  137 [chromium] › e2e/editor-modal.spec.ts:317:1 › runs start from Runs: the editor links there, disabled with a reason until published (2.6s)
+2026-11-16T14:51:43.1084539Z   ✓  138 [chromium] › e2e/editor-modal.spec.ts:366:1 › a draft conflict is answered from inside an open node editor (3.6s)
+2026-11-16T14:51:51.2706297Z   ✓  139 [chromium] › e2e/events-refresh.spec.ts:16:1 › Events admits arrivals only on Refresh, preserves filters and pages again (#240) (8.1s)
+2026-11-16T14:52:04.2293941Z   ✓  140 [chromium] › e2e/events-refresh.spec.ts:68:1 › Events keeps an offline Refresh snapshot, recovers deliberately and clears filters with the keyboard (#240) (12.9s)
+2026-11-16T14:52:10.5216062Z   ✓  141 [chromium] › e2e/events-refresh.spec.ts:162:1 › Events drops an obsolete Refresh after clearing the filter, Back, a newer Refresh and paging (#240) (6.3s)
+2026-11-16T14:52:15.8701823Z   ✓  142 [chromium] › e2e/events-refresh.spec.ts:255:1 › Events updates the hundredth pending receipt after a head arrival without Refresh (#240) (5.3s)
+2026-11-16T14:52:20.4413866Z   ✓  143 [chromium] › e2e/exit-primitives.spec.ts:20:3 › authors a gate and terminal exits; last pass chooses repeat (4.6s)
+2026-11-16T14:52:25.0426559Z   ✓  144 [chromium] › e2e/exit-primitives.spec.ts:20:3 › authors a gate and terminal exits; last pass chooses done (4.6s)
+2026-11-16T14:52:26.9039684Z   ✓  145 [chromium] › e2e/exit-primitives.spec.ts:215:3 › an exit that returns None is understandable: suppressed (1.8s)
+2026-11-16T14:52:29.6693377Z   ✓  146 [chromium] › e2e/exit-primitives.spec.ts:215:3 › an exit that returns None is understandable: quiet (2.7s)
+2026-11-16T14:52:30.7871712Z   ✓  147 [chromium] › e2e/exit-primitives.spec.ts:309:1 › a maximum-length route label wraps in the 768 px inspector (1.1s)
+2026-11-16T14:52:31.7674458Z   ✓  148 [chromium] › e2e/fonts.spec.ts:120:1 › Geist is the default from the first paint, with only its file preloaded (963ms)
+2026-11-16T14:52:33.9011623Z   ✓  149 [chromium] › e2e/fonts.spec.ts:133:1 › a chosen face applies at once, survives reloads without a flash, and keeps code in Geist Mono (2.1s)
+2026-11-16T14:52:35.0517205Z   ✓  150 [chromium] › e2e/fonts.spec.ts:170:1 › Chakra Petch sets headings and the wordmark only, chosen with the keyboard (1.1s)
+2026-11-16T14:52:36.8160383Z   ✓  151 [chromium] › e2e/fonts.spec.ts:193:1 › another tab follows the face chosen here (1.8s)
+2026-11-16T14:52:38.4407369Z   ✓  152 [chromium] › e2e/fonts.spec.ts:206:1 › offline, the service worker serves the chosen face and the shell renders in it (1.6s)
+2026-11-16T14:52:40.0069842Z   ✓  153 [chromium] › e2e/fonts.spec.ts:252:3 › without the service worker › a font file that fails to load leaves the fallback stack and the layout intact (1.6s)
+2026-11-16T14:52:41.1595799Z   ✓  154 [chromium] › e2e/fonts.spec.ts:281:1 › a stored value this build does not know shows Geist and is left in place (1.1s)
+2026-11-16T14:52:42.6093807Z   ✓  155 [chromium] › e2e/fonts.spec.ts:295:1 › storage that throws shows Geist and the choice still applies for the page (1.4s)
+2026-11-16T14:52:44.7423325Z   ✓  156 [chromium] › e2e/form-controls.spec.ts:51:1 › switches and segmented controls work by keyboard and save what they show (2.1s)
+2026-11-16T14:52:51.4787977Z   ✓  157 [chromium] › e2e/form-controls.spec.ts:75:1 › a switch toggles with Space and Enter, and an optional boolean can go back to unset (6.7s)
+2026-11-16T14:52:52.7423645Z   ✓  158 [chromium] › e2e/form-controls.spec.ts:140:1 › Tab and Shift+Tab leave a code field (1.3s)
+2026-11-16T14:52:53.9623867Z   ✓  159 [chromium] › e2e/form-controls.spec.ts:163:1 › required fields are marked, and an error describes its control (1.2s)
+2026-11-16T14:52:55.2625673Z   ✓  160 [chromium] › e2e/form-controls.spec.ts:184:1 › the import file picker is a labelled native input that names the chosen file (1.3s)
+2026-11-16T14:52:56.3525969Z   ✓  161 [chromium] › e2e/form-controls.spec.ts:209:1 › the run form keeps a long choice inside its field and puts each problem beside its field (1.1s)
+2026-11-16T14:52:59.3437187Z   ✓  162 [chromium] › e2e/form-controls.spec.ts:273:1 › New run and Wait send the supplied input and omit untouched or reset fields (#235) (3.0s)
+2026-11-16T14:53:01.6805035Z   ✓  163 [chromium] › e2e/form-controls.spec.ts:403:1 › Omit takes a number the browser holds as incomplete away with its field, on New run and Wait (#235) (2.3s)
+2026-11-16T14:53:17.6909025Z   ✓  164 [chromium] › e2e/form-controls.spec.ts:548:3 › with a coarse pointer (#235) › Omit is a 44 px target that taps on the fields around it never reach, on New run and Wait (16.0s)
+2026-11-16T14:53:22.3003879Z   ✓  165 [chromium] › e2e/forms.spec.ts:71:1 › edited script args survive add, autosave, remove, and reload (4.6s)
+2026-11-16T14:53:25.6663663Z   ✓  166 [chromium] › e2e/forms.spec.ts:108:1 › collection focus and collision refusal preserve the saved values (3.3s)
+2026-11-16T14:53:27.7245037Z   ✓  167 [chromium] › e2e/forms.spec.ts:151:1 › unparsed collection rows follow removal and rename, and stop blocking Publish when removed (2.0s)
+2026-11-16T14:53:29.0155170Z   ✓  168 [chromium] › e2e/forms.spec.ts:240:1 › blank optional source is absent in the form and raw blank source cannot publish through the API (1.3s)
+2026-11-16T14:53:31.3443423Z   ✓  169 [chromium] › e2e/forms.spec.ts:272:1 › empty and whitespace templates survive editing, API validation, publishing, and import (2.3s)
+2026-11-16T14:53:32.6459960Z   ✓  170 [chromium] › e2e/forms.spec.ts:310:1 › required whitespace expressions are reported by the form and API validation, import, and publish (1.3s)
+2026-11-16T14:53:35.6720577Z dark: record content width 250.96875px at 380px, 150.96875px at 280px
+2026-11-16T14:53:37.0570401Z   ✓  171 [chromium] › e2e/forms.spec.ts:372:3 › record JSON editor accepts pointer and keyboard at panel widths (dark) (4.4s)
+2026-11-16T14:53:38.3443977Z   ✓  172 [chromium] › e2e/forms.spec.ts:440:3 › empty optional heartbeat preview is absent and malformed preview remains (dark) (1.3s)
+2026-11-16T14:53:41.4484567Z light: record content width 250.96875px at 380px, 150.96875px at 280px
+2026-11-16T14:53:42.8540556Z   ✓  173 [chromium] › e2e/forms.spec.ts:372:3 › record JSON editor accepts pointer and keyboard at panel widths (light) (4.5s)
+2026-11-16T14:53:44.2545840Z   ✓  174 [chromium] › e2e/forms.spec.ts:440:3 › empty optional heartbeat preview is absent and malformed preview remains (light) (1.4s)
+2026-11-16T14:53:47.1569867Z   ✓  175 [chromium] › e2e/forms.spec.ts:465:1 › #14: inference shows its basic fields, the rest under Advanced, which says what it hides and opens for an issue (2.9s)
+2026-11-16T14:53:48.6495118Z   ✓  176 [chromium] › e2e/forms.spec.ts:540:1 › #14: a collapsed group or operation flags an expression that does not compile, and its issue opens both (1.5s)
+2026-11-16T14:53:53.1972862Z   ✓  177 [chromium] › e2e/github-checks.spec.ts:5:3 › GitHub graph preview, cancel, apply and keyboard undo in light (4.5s)
+2026-11-16T14:53:57.8196986Z   ✓  178 [chromium] › e2e/github-checks.spec.ts:5:3 › GitHub graph preview, cancel, apply and keyboard undo in dark (4.6s)
+2026-11-16T14:54:01.5572577Z   ✓  179 [chromium] › e2e/github-triggers.spec.ts:76:1 › body-signed GitHub preset saves, admits a matching hook, and deduplicates a reused delivery key (3.7s)
+2026-11-16T14:54:04.4925073Z   ✓  180 [chromium] › e2e/github-triggers.spec.ts:218:1 › GitHub issue poll preset keeps bounded item settings editable and reloadable without running it (2.9s)
+2026-11-16T14:54:05.2856162Z   ✓  181 [chromium] › e2e/github-triggers.spec.ts:272:1 › Events exposes safe labels for all five webhook delivery dispositions (782ms)
+2026-11-16T14:54:06.3896668Z   ✓  182 [chromium] › e2e/goblin.spec.ts:103:3 › fresh same-machine pairing keeps empty Goblin at the top with a visible notice at 360x740 (1.1s)
+2026-11-16T14:54:07.5234066Z   ✓  183 [chromium] › e2e/goblin.spec.ts:103:3 › fresh same-machine pairing keeps empty Goblin at the top with a visible notice at 1280x860 (1.1s)
+2026-11-16T14:54:09.0393850Z   ✓  184 [chromium] › e2e/goblin.spec.ts:165:1 › a consumed code is refused without implicit Enter retries, then an explicit new code pairs (1.5s)
+2026-11-16T14:54:14.9303762Z   ✓  185 [chromium] › e2e/goblin.spec.ts:265:1 › Goblin pairs explicitly, executes a native turn, keeps API data out of its scoped cache, and signs out locally (5.9s)
+2026-11-16T14:54:16.2320167Z   ✓  186 [chromium] › e2e/goblin.spec.ts:452:1 › peripheral pairing reflows in both themes and at 200% zoom without claiming on load (1.3s)
+2026-11-16T14:54:19.4853635Z   ✓  187 [chromium] › e2e/goblin.spec.ts:485:1 › same-Mac loopback pairing without PUBLIC_URL generates, claims, chats, and revokes through the built UI (3.2s)
+2026-11-16T14:54:21.4159205Z   ✓  188 [chromium] › e2e/goblin.spec.ts:649:1 › emulated Home Screen context pairs in separate browser storage and revocation clears access (1.9s)
+2026-11-16T14:54:24.8374273Z   ✓  189 [chromium] › e2e/history.spec.ts:4:1 › Runs appends a second page and preserves loop, status and parent filters (3.4s)
+2026-11-16T14:54:28.3696662Z   ✓  190 [chromium] › e2e/history.spec.ts:56:1 › Events appends beyond the first page with reading position and keyboard focus intact (3.5s)
+2026-11-16T14:54:39.1142035Z   ✓  191 [chromium] › e2e/history.spec.ts:86:1 › Loops shows older history beyond 500 unrelated runs and a genuine never-run control (10.7s)
+2026-11-16T14:54:40.6604110Z   ✓  192 [chromium] › e2e/inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 1440 px (#259, #380) (1.5s)
+2026-11-16T14:54:42.0317103Z   ✓  193 [chromium] › e2e/inspector-large-values.spec.ts:117:3 › a long wait prompt stays bounded and keeps the page width at 1440 px (#259) (1.4s)
+2026-11-16T14:54:43.6217027Z   ✓  194 [chromium] › e2e/inspector-large-values.spec.ts:50:3 › large values stay bounded and the page keeps its width at 390 px (#259, #380) (1.6s)
+2026-11-16T14:54:44.8614688Z   ✓  195 [chromium] › e2e/inspector-large-values.spec.ts:117:3 › a long wait prompt stays bounded and keeps the page width at 390 px (#259) (1.2s)
+2026-11-16T14:54:46.6323394Z   ✓  196 [chromium] › e2e/inspector-large-values.spec.ts:165:1 › the keyboard stays inside an expanded value that a live event replaces (#259) (1.8s)
+2026-11-16T14:54:52.5143922Z   ✓  197 [chromium] › e2e/inspector-large-values.spec.ts:217:1 › oversized history keeps bounded cached rows and loads exact event and thread values on selection (#186, #259) (5.9s)
+2026-11-16T14:55:01.6343688Z   ✓  198 [chromium] › e2e/issue-170-qa.spec.ts:253:1 › I1: current golden bytes and main inference survive placement and edited save/reload (5.8s)
+2026-11-16T14:55:04.2063938Z   ✓  199 [chromium] › e2e/issue-170-qa.spec.ts:375:3 › D1 decision expression/choice: edits applicable source and saves across reload (2.6s)
+2026-11-16T14:55:06.7331074Z   ✓  200 [chromium] › e2e/issue-170-qa.spec.ts:375:3 › D1 decision expression/noul: edits applicable source and saves across reload (2.5s)
+2026-11-16T14:55:09.5161678Z   ✓  201 [chromium] › e2e/issue-170-qa.spec.ts:375:3 › D1 decision classifier/choice: edits applicable source and saves across reload (2.8s)
+2026-11-16T14:55:12.2836071Z   ✓  202 [chromium] › e2e/issue-170-qa.spec.ts:375:3 › D1 decision classifier/noul: edits applicable source and saves across reload (2.8s)
+2026-11-16T14:55:14.9650130Z   ✓  203 [chromium] › e2e/issue-170-qa.spec.ts:375:3 › D1 decision classifier/score: edits applicable source and saves across reload (2.7s)
+2026-11-16T14:55:17.6903211Z   ✓  204 [chromium] › e2e/issue-170-qa.spec.ts:375:3 › D1 decision llm/choice: edits applicable source and saves across reload (2.7s)
+2026-11-16T14:55:20.4314490Z   ✓  205 [chromium] › e2e/issue-170-qa.spec.ts:375:3 › D1 decision llm/noul: edits applicable source and saves across reload (2.7s)
+2026-11-16T14:55:25.1894402Z   ✓  206 [chromium] › e2e/issue-170-qa.spec.ts:447:3 › I4/I5 Input: syntax/schema refusal, pending isolation, structured roundtrip, empty and absent (4.7s)
+2026-11-16T14:55:30.9934034Z   ✓  207 [chromium] › e2e/issue-170-qa.spec.ts:447:3 › I4/I5 Context files: syntax/schema refusal, pending isolation, structured roundtrip, empty and absent (5.8s)
+2026-11-16T14:55:35.7326352Z   ✓  208 [chromium] › e2e/issue-170-qa.spec.ts:447:3 › I4/I5 Transforms: syntax/schema refusal, pending isolation, structured roundtrip, empty and absent (4.7s)
+2026-11-16T14:55:41.7093553Z   ✓  209 [chromium] › e2e/issue-170-qa.spec.ts:447:3 › I4/I5 Config overrides: syntax/schema refusal, pending isolation, structured roundtrip, empty and absent (6.0s)
+2026-11-16T14:55:48.0347505Z   ✓  210 [chromium] › e2e/issue-170-qa.spec.ts:447:3 › I4/I5 Capabilities: syntax/schema refusal, pending isolation, structured roundtrip, empty and absent (6.3s)
+2026-11-16T14:55:53.2294831Z   ✓  211 [chromium] › e2e/issue-170-qa.spec.ts:500:1 › I5 provider Context: 200 authored vars roundtrip and schema rejection leaves both stores intact (5.2s)
+2026-11-16T14:55:57.6625843Z   ✓  212 [chromium] › e2e/issue-170-qa.spec.ts:541:1 › I5 bounded lists: 200 mutations, files and Choice options are rejected atomically (4.4s)
+2026-11-16T14:56:01.1413667Z   ✓  213 [chromium] › e2e/issue-170-qa.spec.ts:597:1 › I4 held JSON survives collapse, tabs, close, global undo/redo, blocked switch and Publish; Cancel restores (3.5s)
+2026-11-16T14:56:03.0553808Z   ✓  214 [chromium] › e2e/issue-170-qa.spec.ts:651:3 › I3 canvas: issue focus opens hidden Context, Advanced and the JSON editor (1.9s)
+2026-11-16T14:56:04.7923660Z   ✓  215 [chromium] › e2e/issue-170-qa.spec.ts:651:3 › I3 title: issue focus opens hidden Context, Advanced and the JSON editor (1.7s)
+2026-11-16T14:56:06.9493855Z   ✓  216 [chromium] › e2e/issue-170-qa.spec.ts:651:3 › I3 publish: issue focus opens hidden Context, Advanced and the JSON editor (2.1s)
+2026-11-16T14:56:08.5389760Z   ✓  217 [chromium] › e2e/issue-170-qa.spec.ts:701:1 › I2 Settings counts errors while Context is selected and reopening starts on Settings (1.6s)
+2026-11-16T14:56:12.8542140Z   ✓  218 [chromium] › e2e/issue-170-qa.spec.ts:726:1 › I3 history focus: Context switches and JSON Apply stay reachable through undo and redo remounts (4.3s)
+2026-11-16T14:56:17.9306961Z   ✓  219 [chromium] › e2e/issue-170-qa.spec.ts:786:1 › inference session policies: named key errors stay visible; switching variants removes stale keys and history restores them (5.1s)
+2026-11-16T14:56:27.0658797Z   ✓  220 [chromium] › e2e/issue-170-qa.spec.ts:847:3 › I7 JSON dark: every section wraps long invalid text without horizontal scrolling at all five widths (9.1s)
+2026-11-16T14:56:36.0173071Z   ✓  221 [chromium] › e2e/issue-170-qa.spec.ts:847:3 › I7 JSON light: every section wraps long invalid text without horizontal scrolling at all five widths (8.9s)
+2026-11-16T14:56:45.7111102Z   ✓  222 [chromium] › e2e/issue-170-qa.spec.ts:923:1 › I6 schema numbers and variable/pointer suggestions accept authored values and describe refusals (9.7s)
+2026-11-16T14:56:47.4863508Z   ✓  223 [chromium] › e2e/issue-170-qa.spec.ts:982:1 › I8 tabs, labelled panels, visual focus order and JSON keyboard exit (1.8s)
+2026-11-16T14:56:59.4480360Z   ✓  224 [chromium] › e2e/issue-170-qa.spec.ts:1023:3 › I7 dark: both forms and tabs fit every viewport; unrelated dialog retains width (11.9s)
+2026-11-16T14:57:10.9466099Z   ✓  225 [chromium] › e2e/issue-170-qa.spec.ts:1023:3 › I7 light: both forms and tabs fit every viewport; unrelated dialog retains width (11.5s)
+2026-11-16T14:57:16.0863969Z   ✓  226 [chromium] › e2e/issue-170-qa.spec.ts:1106:1 › conflict inside Context JSON retains pending text; overwrite saves applied values; reload closes dialog (5.1s)
+2026-11-16T14:57:18.5406681Z   ✓  227 [chromium] › e2e/issue-170-qa.spec.ts:1137:1 › I6 incomplete optional numeric text keeps the last applied number in every persistence layer (2.4s)
+2026-11-16T14:57:22.1993927Z   ✓  228 [chromium] › e2e/issue-170-qa.spec.ts:1179:1 › I6 integer bounds: timeout and nested repair attempts use exact schema messages and preserve last good values (3.6s)
+2026-11-16T14:57:28.4715704Z   ✓  229 [chromium] › e2e/issue-170-qa.spec.ts:1218:1 › inference Claude and Codex: family selection, policy, visible model/effort, save/reload and policy refusal (6.3s)
+2026-11-16T14:57:33.8693757Z   ✓  230 [chromium] › e2e/issue-170-qa.spec.ts:1285:3 › route replacement expression: retained IDs reorder safely, explicit remove drops edge, and undo/redo is atomic (5.4s)
+2026-11-16T14:57:39.5516097Z   ✓  231 [chromium] › e2e/issue-170-qa.spec.ts:1285:3 › route replacement classifier: retained IDs reorder safely, explicit remove drops edge, and undo/redo is atomic (5.7s)
+2026-11-16T14:57:45.1056348Z   ✓  232 [chromium] › e2e/issue-170-qa.spec.ts:1285:3 › route replacement llm: retained IDs reorder safely, explicit remove drops edge, and undo/redo is atomic (5.5s)
+2026-11-16T14:57:47.3969463Z D3 Config overrides: Apply enabled=false; device=undefined; server=undefined
+2026-11-16T14:57:47.7659625Z   ✓  233 [chromium] › e2e/issue-170-qa.spec.ts:1344:3 › I4 parent validation Config overrides: invalid Claude JSON must not apply or reach the device draft (2.6s)
+2026-11-16T14:57:50.0144768Z D3 Capabilities: Apply enabled=false; device=undefined; server=undefined
+2026-11-16T14:57:50.1863105Z   ✓  234 [chromium] › e2e/issue-170-qa.spec.ts:1344:3 › I4 parent validation Capabilities: invalid Claude JSON must not apply or reach the device draft (2.4s)
+2026-11-16T14:57:52.4263996Z   ✓  235 [chromium] › e2e/issue-170-qa.spec.ts:1392:1 › I4 valid unapplied JSON is pending, survives reopening, blocks Publish and cancels without a change (2.2s)
+2026-11-16T14:58:02.4688026Z   ✓  236 [chromium] › e2e/issue-170-qa.spec.ts:1420:1 › I5 Score: 200 unicode rubric anchors roundtrip; split, connect, rename and remove bands atomically (10.0s)
+2026-11-16T14:58:17.5429802Z   ✓  237 [chromium] › e2e/issue-170-qa.spec.ts:1489:1 › shared mutations: every operation roundtrips; all four pointer suggestions retain authored RFC6901 paths (15.1s)
+2026-11-16T14:58:26.7521448Z   ✓  238 [chromium] › e2e/issue-170-qa.spec.ts:1532:1 › HTTP catalog evaluator: Choice, Noul and Score select the known model; disabling it preserves an explicit invalid selection (9.2s)
+2026-11-16T14:58:28.2183240Z   ✓  239 [chromium] › e2e/issue-7-qa.spec.ts:63:1 › I7-QA-03: reduced motion stops the running and live pulses at full opacity (1.4s)
+2026-11-16T14:58:31.9178281Z   ✓  240 [chromium] › e2e/issue-7-qa.spec.ts:129:1 › I7-QA-01: the longest valid loop name stays inside the editor toolbar and the lists (3.7s)
+2026-11-16T14:58:33.1915177Z   ✓  241 [chromium] › e2e/issue-7-qa.spec.ts:161:1 › I7-QA-02: overlong text stays inside Alert, Badge, and Button (1.3s)
+2026-11-16T14:58:39.2453674Z Followed live for 5022 ms while the run advanced from event 199 to 1699: {"GET /runs/{id}":10,"GET /runs/{id}/observation":10,"GET /runs/{id}/thread":10,"GET /runs/{id}/events":0}, 0 thread?at reads
+2026-11-16T14:58:39.9680670Z   ✓  242 [chromium] › e2e/live-follow.spec.ts:62:1 › following a fast run live refreshes bounded read models and reads no historical thread (#186) (6.6s)
+2026-11-16T14:58:44.6733580Z   ✓  243 [chromium] › e2e/live-follow.spec.ts:144:1 › following live stays quiet for screen readers and keyboard focus can always leave (#186 QA) (4.7s)
+2026-11-16T14:58:44.6762832Z   -  244 [chromium] › e2e/live.spec.ts:17:1 › LIVE: build, publish, and run an inference loop against Codex from the UI
+2026-11-16T14:58:49.0644162Z   ✓  245 [chromium] › e2e/loop-back-topology.spec.ts:147:3 › dark: unmarked decision and script returns follow the graph through bypass, delete, undo, reload and reduced motion (4.4s)
+2026-11-16T14:58:50.2340301Z   ✓  246 [chromium] › e2e/loop-back-topology.spec.ts:217:3 › dark: a return drawn rightward is a loop-back; a forward step drawn leftward is not (1.2s)
+2026-11-16T14:58:54.4526038Z   ✓  247 [chromium] › e2e/loop-back-topology.spec.ts:147:3 › light: unmarked decision and script returns follow the graph through bypass, delete, undo, reload and reduced motion (4.2s)
+2026-11-16T14:58:55.6330798Z   ✓  248 [chromium] › e2e/loop-back-topology.spec.ts:217:3 › light: a return drawn rightward is a loop-back; a forward step drawn leftward is not (1.2s)
+2026-11-16T14:59:04.8673530Z   ✓  249 [chromium] › e2e/loop-lifecycle.spec.ts:16:1 › draw a loop in the editor, publish it, run it, watch events, and provide input (9.2s)
+2026-11-16T14:59:06.3733194Z   ✓  250 [chromium] › e2e/loop-lifecycle.spec.ts:88:1 › cancel a waiting run from the inspector (1.5s)
+2026-11-16T14:59:08.3730965Z   ✓  251 [chromium] › e2e/loop-names.spec.ts:52:1 › Create refuses an equivalent name, keeps the original and creates on a deliberate retry (2.0s)
+2026-11-16T14:59:11.7676560Z   ✓  252 [chromium] › e2e/loop-names.spec.ts:91:1 › an equivalent rename keeps the authored draft on the device and both loops on the server (3.4s)
+2026-11-16T14:59:13.4164150Z   ✓  253 [chromium] › e2e/loop-names.spec.ts:146:1 › Import retries the unchanged upload under an explicit name and keeps the graph (1.6s)
+2026-11-16T14:59:16.5124084Z   ✓  254 [chromium] › e2e/loop-names.spec.ts:189:1 › a stale draft is a draft conflict first; overwriting it then meets the name refusal (3.1s)
+2026-11-16T14:59:19.4929040Z   ✓  255 [chromium] › e2e/loop-names.spec.ts:230:1 › at 360 px the Create and Import name guidance reflows and works from the keyboard (3.0s)
+2026-11-16T14:59:23.3056163Z   ✓  256 [chromium] › e2e/missing-session.spec.ts:5:1 › missing inherited session: decline, reload, choose fresh and follow it to success without a reload (3.8s)
+2026-11-16T14:59:25.6273970Z   ✓  257 [chromium] › e2e/model-effort.spec.ts:73:1 › open inherited labels refresh on focus after another tab saves Settings and match the next request (2.3s)
+2026-11-16T14:59:28.1164351Z   ✓  258 [chromium] › e2e/model-effort.spec.ts:129:1 › catalog pending and failure label effort as unknown without changing the selection (2.5s)
+2026-11-16T14:59:29.6617570Z   ✓  259 [chromium] › e2e/model-effort.spec.ts:164:3 › Claude ready capabilities refuse high before admission and still run low (explicit=false) (1.5s)
+2026-11-16T14:59:31.1554205Z   ✓  260 [chromium] › e2e/model-effort.spec.ts:164:3 › Claude ready capabilities refuse high before admission and still run low (explicit=true) (1.5s)
+2026-11-16T14:59:33.2995881Z   ✓  261 [chromium] › e2e/model-effort.spec.ts:237:5 › inference explicit effort survives editing, save, reload and adapter request (2.1s)
+2026-11-16T14:59:35.6230121Z   ✓  262 [chromium] › e2e/model-effort.spec.ts:237:5 › inference loop effort survives editing, save, reload and adapter request (2.3s)
+2026-11-16T14:59:37.8726342Z   ✓  263 [chromium] › e2e/model-effort.spec.ts:237:5 › inference Settings effort survives editing, save, reload and adapter request (2.2s)
+2026-11-16T14:59:40.0782962Z   ✓  264 [chromium] › e2e/model-effort.spec.ts:237:5 › inference ecosystem effort survives editing, save, reload and adapter request (2.2s)
+2026-11-16T14:59:42.2254726Z   ✓  265 [chromium] › e2e/model-effort.spec.ts:237:5 › inference process effort survives editing, save, reload and adapter request (2.1s)
+2026-11-16T14:59:44.5303160Z   ✓  266 [chromium] › e2e/model-effort.spec.ts:237:5 › llm explicit effort survives editing, save, reload and adapter request (2.3s)
+2026-11-16T14:59:46.9898355Z   ✓  267 [chromium] › e2e/model-effort.spec.ts:237:5 › llm loop effort survives editing, save, reload and adapter request (2.4s)
+2026-11-16T14:59:49.2143738Z   ✓  268 [chromium] › e2e/model-effort.spec.ts:237:5 › llm Settings effort survives editing, save, reload and adapter request (2.2s)
+2026-11-16T14:59:51.4035458Z   ✓  269 [chromium] › e2e/model-effort.spec.ts:237:5 › llm ecosystem effort survives editing, save, reload and adapter request (2.2s)
+2026-11-16T14:59:53.5850746Z   ✓  270 [chromium] › e2e/model-effort.spec.ts:237:5 › llm process effort survives editing, save, reload and adapter request (2.2s)
+2026-11-16T14:59:55.8889218Z   ✓  271 [chromium] › e2e/model-effort.spec.ts:363:1 › Codex effort choices follow the model: none first as no reasoning, max requested unchanged, neither for GPT-5.5 (2.3s)
+2026-11-16T14:59:58.2650531Z   ✓  272 [chromium] › e2e/model-effort.spec.ts:412:3 › inference: none is chosen, kept and named on GPT-5.5, published on GPT-6 Luna and requested as none (2.4s)
+2026-11-16T15:00:00.7807473Z   ✓  273 [chromium] › e2e/model-effort.spec.ts:412:3 › llm: none is chosen, kept and named on GPT-5.5, published on GPT-6 Luna and requested as none (2.5s)
+2026-11-16T15:00:02.6314484Z   ✓  274 [chromium] › e2e/model-effort.spec.ts:466:3 › inference: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen (1.8s)
+2026-11-16T15:00:04.4992218Z   ✓  275 [chromium] › e2e/model-effort.spec.ts:466:3 › llm: a max kept after switching to GPT-5.5 is named on the field and the node until a supported effort is chosen (1.9s)
+2026-11-16T15:00:07.2753776Z   ✓  276 [chromium] › e2e/model-effort.spec.ts:543:3 › inference: a GPT-5.5 none saved while a catalog listed it is named on the field and the node until a supported effort is chosen (2.8s)
+2026-11-16T15:00:09.9004127Z   ✓  277 [chromium] › e2e/model-effort.spec.ts:543:3 › llm: a GPT-5.5 none saved while a catalog listed it is named on the field and the node until a supported effort is chosen (2.6s)
+2026-11-16T15:00:11.8686338Z   ✓  278 [chromium] › e2e/model-effort.spec.ts:611:1 › Settings Codex default effort follows the default model, lists none first, and names an unsupported effort (2.0s)
+2026-11-16T15:00:13.1874095Z   ✓  279 [chromium] › e2e/model-effort.spec.ts:686:1 › classifier keeps Question, Model, Answer visible and has no effort (1.3s)
+2026-11-16T15:00:15.0785887Z   ✓  280 [chromium] › e2e/model-effort.spec.ts:753:1 › a saved unsupported effort stays visible and is refused before the adapter (1.9s)
+2026-11-16T15:00:16.8956248Z   ✓  281 [chromium] › e2e/model-picker.spec.ts:36:3 › seeded GPT-6.1 Terra preserves inherited effort and publishes none (1.8s)
+2026-11-16T15:00:18.7109972Z   ✓  282 [chromium] › e2e/model-picker.spec.ts:36:3 › seeded GPT-6.1 Terra preserves inherited effort and publishes medium (1.8s)
+2026-11-16T15:00:20.7982065Z   ✓  283 [chromium] › e2e/model-picker.spec.ts:110:3 › catalog model and effort publish and reach the harness (dark) (2.1s)
+2026-11-16T15:00:22.8115987Z   ✓  284 [chromium] › e2e/model-picker.spec.ts:110:3 › catalog model and effort publish and reach the harness (light) (2.0s)
+2026-11-16T15:00:25.3922672Z   ✓  285 [chromium] › e2e/model-picker.spec.ts:172:1 › a saved model removed from the catalog stays selected and explicit unknown import is rejected (2.6s)
+2026-11-16T15:00:27.6895455Z   ✓  286 [chromium] › e2e/model-picker.spec.ts:229:1 › catalog failure preserves the current values until retry and loop defaults share the picker (2.3s)
+2026-11-16T15:00:28.9204579Z   ✓  287 [chromium] › e2e/model-picker.spec.ts:273:1 › the decision LLM uses an explicit harness model and rejects unsupported effort on admission (1.2s)
+2026-11-16T15:00:36.2737612Z   ✓  288 [chromium] › e2e/model-picker.spec.ts:352:1 › following a model issue keeps focus through a delayed catalog and a failed cached refresh (7.3s)
+2026-11-16T15:00:38.7289126Z   ✓  289 [chromium] › e2e/model-picker.spec.ts:434:1 › explicit Claude to Codex switch persists the owner default and sends the exact request (2.4s)
+2026-11-16T15:00:43.7703574Z   ✓  290 [chromium] › e2e/model-picker.spec.ts:486:1 › cached catalog failure holds publication across a harness switch and recovers (5.0s)
+2026-11-16T15:00:44.8295464Z   ✓  291 [chromium] › e2e/node-harness.spec.ts:4:1 › shows Harness on inference nodes only (1.0s)
+2026-11-16T15:00:49.2139065Z   ✓  292 [chromium] › e2e/node-json.spec.ts:66:3 › classifier choice: JSON round trip, validation, multiline text, route removal confirmation and reload (4.4s)
+2026-11-16T15:00:53.5572794Z   ✓  293 [chromium] › e2e/node-json.spec.ts:66:3 › classifier noul: JSON round trip, validation, multiline text, route removal confirmation and reload (4.3s)
+2026-11-16T15:00:57.9011384Z   ✓  294 [chromium] › e2e/node-json.spec.ts:66:3 › classifier score: JSON round trip, validation, multiline text, route removal confirmation and reload (4.3s)
+2026-11-16T15:01:03.4341502Z   ✓  295 [chromium] › e2e/node-json.spec.ts:138:3 › expression: Routes JSON validates, matches IDs, confirms removal and reloads with multiline source (5.5s)
+2026-11-16T15:01:08.9870960Z   ✓  296 [chromium] › e2e/node-json.spec.ts:138:3 › llm: Routes JSON validates, matches IDs, confirms removal and reloads with multiline source (5.5s)
+2026-11-16T15:01:15.7022571Z   ✓  297 [chromium] › e2e/node-json.spec.ts:212:1 › inference section JSON validates before autosave, cancels, and round trips optional objects (6.7s)
+2026-11-16T15:01:18.0986296Z   ✓  298 [chromium] › e2e/node-json.spec.ts:281:1 › held Context JSON blocks Publish, survives reopening, opens from a badge and undoes across tabs (2.4s)
+2026-11-16T15:01:22.4581873Z   ✓  299 [chromium] › e2e/node-json.spec.ts:327:1 › number constraints hold invalid input while provider variables remain suggestions (4.3s)
+2026-11-16T15:01:27.2682122Z   ✓  300 [chromium] › e2e/node-json.spec.ts:369:1 › Answer JSON preserves surviving IDs through reorder and swap; equal-count delete/add removes only confirmed connections (4.8s)
+2026-11-16T15:01:29.5243252Z   ✓  301 [chromium] › e2e/node-json.spec.ts:422:1 › semantic JSON no-ops permit Publish; valid changed JSON is described as unapplied (2.2s)
+2026-11-16T15:01:31.1404547Z   ✓  302 [chromium] › e2e/node-json.spec.ts:461:1 › section JSON refuses hidden held input and focuses the first field without losing it (1.6s)
+2026-11-16T15:01:35.2083611Z   ✓  303 [chromium] › e2e/node-json.spec.ts:490:1 › incomplete numeric input survives tabs, session reopen and history; correction and deliberate clear apply (4.1s)
+2026-11-16T15:01:37.3274603Z   ✓  304 [chromium] › e2e/node-placement.spec.ts:63:1 › inference placement, tab keyboard order, and single-panel kinds (2.1s)
+2026-11-16T15:01:39.9179197Z   ✓  305 [chromium] › e2e/node-placement.spec.ts:121:3 › expression choice: placement and save/reload preserve the evaluator and routes (2.6s)
+2026-11-16T15:01:42.5010885Z   ✓  306 [chromium] › e2e/node-placement.spec.ts:121:3 › expression noul: placement and save/reload preserve the evaluator and routes (2.6s)
+2026-11-16T15:01:45.5657155Z   ✓  307 [chromium] › e2e/node-placement.spec.ts:121:3 › classifier choice: placement and save/reload preserve the evaluator and routes (3.0s)
+2026-11-16T15:01:48.7431957Z   ✓  308 [chromium] › e2e/node-placement.spec.ts:121:3 › classifier noul: placement and save/reload preserve the evaluator and routes (3.2s)
+2026-11-16T15:01:51.7620515Z   ✓  309 [chromium] › e2e/node-placement.spec.ts:121:3 › classifier score: placement and save/reload preserve the evaluator and routes (3.0s)
+2026-11-16T15:01:54.7094878Z   ✓  310 [chromium] › e2e/node-placement.spec.ts:121:3 › llm choice: placement and save/reload preserve the evaluator and routes (2.9s)
+2026-11-16T15:01:57.6040396Z   ✓  311 [chromium] › e2e/node-placement.spec.ts:121:3 › llm noul: placement and save/reload preserve the evaluator and routes (2.9s)
+2026-11-16T15:02:01.0978398Z   ✓  312 [chromium] › e2e/node-placement.spec.ts:192:1 › a Context issue opens its collapsed Advanced group; undo crosses tabs and retains held JSON (3.5s)
+2026-11-16T15:02:17.1335180Z   ✓  313 [chromium] › e2e/node-placement.spec.ts:268:3 › dark: node widths and both mounted panels fit at 360, 768, 1024, 1440 and 1920 px (16.0s)
+2026-11-16T15:02:33.0513264Z   ✓  314 [chromium] › e2e/node-placement.spec.ts:268:3 › light: node widths and both mounted panels fit at 360, 768, 1024, 1440 and 1920 px (15.9s)
+2026-11-16T15:02:42.2966830Z   ✓  315 [chromium] › e2e/ollama.spec.ts:99:1 › Ollama connection discovers models and explicit refresh preserves enabled preferences (9.2s)
+2026-11-16T15:02:45.6335884Z   ✓  316 [chromium] › e2e/ollama.spec.ts:262:1 › Ollama authoring makes provider limits explicit and corrects them in one undo step (3.3s)
+2026-11-16T15:02:49.7785662Z   ✓  317 [chromium] › e2e/own-session.spec.ts:4:1 › the editor saves opt-in own continuity and a visible optional reset (4.1s)
+2026-11-16T15:02:58.5223804Z   ✓  318 [chromium] › e2e/palette-placement.spec.ts:54:1 › palette authoring clears a three-output Decision and keeps converging labels apart (8.7s)
+2026-11-16T15:03:01.4323890Z   ✓  319 [chromium] › e2e/palette.spec.ts:77:1 › the palette rail adds nodes, supports drag, and remembers its state (2.9s)
+2026-11-16T15:03:03.1750282Z   ✓  320 [chromium] › e2e/palette.spec.ts:164:1 › rail controls keep their complete focus ring in dark and light themes (1.7s)
+2026-11-16T15:03:04.4663043Z   ✓  321 [chromium] › e2e/palette.spec.ts:207:1 › the rail scrolls by itself at 1000 × 520 (1.3s)
+2026-11-16T15:03:05.6903171Z   ✓  322 [chromium] › e2e/palette.spec.ts:234:1 › the rail keeps 44 px controls on a coarse pointer (1.2s)
+2026-11-16T15:03:07.7386262Z   ✓  323 [chromium] › e2e/prereview.spec.ts:4:3 › untouched UTC previews after manual to Cron (2.0s)
+2026-11-16T15:03:09.7023616Z   ✓  324 [chromium] › e2e/prereview.spec.ts:4:3 › untouched UTC previews after event to Cron (2.0s)
+2026-11-16T15:03:10.7797562Z   ✓  325 [chromium] › e2e/prereview.spec.ts:35:1 › Fit View contains every rendered card of a synthetic 29-node graph between open panels (1.1s)
+2026-11-16T15:03:15.2537862Z   ✓  326 [chromium] › e2e/pwa.spec.ts:26:3 › Loops recovers after the API listener restarts with the browser online (4.4s)
+2026-11-16T15:03:19.0544340Z   ✓  327 [chromium] › e2e/pwa.spec.ts:26:3 › Runs recovers after the API listener restarts with the browser online (3.8s)
+2026-11-16T15:03:22.4788986Z   ✓  328 [chromium] › e2e/pwa.spec.ts:26:3 › Events recovers after the API listener restarts with the browser online (3.4s)
+2026-11-16T15:03:26.2730173Z   ✓  329 [chromium] › e2e/pwa.spec.ts:26:3 › Settings recovers after the API listener restarts with the browser online (3.8s)
+2026-11-16T15:03:29.9091607Z   ✓  330 [chromium] › e2e/pwa.spec.ts:26:3 › run inspector recovers after the API listener restarts with the browser online (3.6s)
+2026-11-16T15:03:32.2065199Z   ✓  331 [chromium] › e2e/pwa.spec.ts:83:1 › a loaded run inspector reports a stream outage and resumes without navigation (2.3s)
+2026-11-16T15:03:34.8021921Z   ✓  332 [chromium] › e2e/pwa.spec.ts:121:1 › an offline editor draft saves after the API listener returns without navigation (2.6s)
+2026-11-16T15:03:39.5835922Z   ✓  333 [chromium] › e2e/pwa.spec.ts:165:1 › clean event-stream closes retain backoff without refetch or worker-update churn (4.8s)
+2026-11-16T15:03:39.7496668Z PWA lifecycle:{"kind":"document-created","at":1794841419735,"documentId":1794841419714.7,"calls":0,"found":0,"pending":0,"activity":1794841419735,"pageShown":false,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:40.0544515Z PWA lifecycle:{"kind":"pageshow","at":1794841420049,"documentId":1794841419714.7,"calls":0,"found":0,"pending":0,"activity":1794841419735,"pageShown":true,"visibility":"visible","focused":true,"trusted":true}
+2026-11-16T15:03:40.1558959Z PWA lifecycle:{"kind":"register-start","at":1794841420137,"documentId":1794841419714.7,"calls":0,"found":0,"pending":1,"activity":1794841420137,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:40.4459330Z PWA lifecycle:{"kind":"register-complete","at":1794841420440,"documentId":1794841419714.7,"calls":0,"found":0,"pending":0,"activity":1794841420440,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:40.4576653Z PWA lifecycle:{"kind":"update-start","at":1794841420441,"documentId":1794841419714.7,"calls":1,"found":0,"pending":1,"activity":1794841420441,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:40.4653562Z PWA lifecycle:{"kind":"updatefound","at":1794841420441,"documentId":1794841419714.7,"calls":1,"found":1,"pending":1,"activity":1794841420441,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:40.7807547Z PWA lifecycle:{"kind":"update-complete","at":1794841420724,"documentId":1794841419714.7,"calls":1,"found":1,"pending":0,"activity":1794841420724,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:40.9222590Z PWA lifecycle:{"kind":"document-created","at":1794841420915,"documentId":1794841420888.2,"calls":0,"found":0,"pending":0,"activity":1794841420915,"pageShown":false,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:41.0551804Z PWA lifecycle:{"kind":"pageshow","at":1794841421052,"documentId":1794841420888.2,"calls":0,"found":0,"pending":0,"activity":1794841420915,"pageShown":true,"visibility":"visible","focused":true,"trusted":true}
+2026-11-16T15:03:41.1517602Z PWA lifecycle:{"kind":"register-start","at":1794841421145,"documentId":1794841420888.2,"calls":0,"found":0,"pending":1,"activity":1794841421145,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:41.1650693Z PWA lifecycle:{"kind":"register-complete","at":1794841421155,"documentId":1794841420888.2,"calls":0,"found":0,"pending":0,"activity":1794841421155,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:41.1664424Z PWA lifecycle:{"kind":"update-start","at":1794841421156,"documentId":1794841420888.2,"calls":1,"found":0,"pending":1,"activity":1794841421156,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:41.1996118Z PWA lifecycle:{"kind":"update-complete","at":1794841421197,"documentId":1794841420888.2,"calls":1,"found":0,"pending":0,"activity":1794841421197,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:41.6945552Z PWA baseline: {"calls":1,"found":0,"pending":0,"activity":1794841421197,"pageShown":true}
+2026-11-16T15:03:42.9372279Z PWA lifecycle:{"kind":"focus","at":1794841422935,"documentId":1794841420888.2,"calls":1,"found":0,"pending":0,"activity":1794841421197,"pageShown":true,"visibility":"visible","focused":true,"trusted":false}
+2026-11-16T15:03:42.9375622Z PWA lifecycle:{"kind":"update-start","at":1794841422936,"documentId":1794841420888.2,"calls":2,"found":0,"pending":1,"activity":1794841422936,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:42.9759834Z PWA lifecycle:{"kind":"update-complete","at":1794841422972,"documentId":1794841420888.2,"calls":2,"found":0,"pending":0,"activity":1794841422972,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:42.9761773Z PWA lifecycle:{"kind":"updatefound","at":1794841422972,"documentId":1794841420888.2,"calls":2,"found":1,"pending":0,"activity":1794841422972,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:43.5574705Z PWA lifecycle:{"kind":"visibilitychange","at":1794841423550,"documentId":1794841420888.2,"calls":2,"found":1,"pending":0,"activity":1794841422972,"pageShown":true,"visibility":"visible","focused":true,"trusted":false}
+2026-11-16T15:03:43.5625272Z PWA lifecycle:{"kind":"update-start","at":1794841423550,"documentId":1794841420888.2,"calls":3,"found":1,"pending":1,"activity":1794841423550,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:43.6441621Z PWA lifecycle:{"kind":"update-complete","at":1794841423639,"documentId":1794841420888.2,"calls":3,"found":1,"pending":0,"activity":1794841423639,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:43.6445743Z PWA lifecycle:{"kind":"updatefound","at":1794841423639,"documentId":1794841420888.2,"calls":3,"found":2,"pending":0,"activity":1794841423639,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:43.9789627Z PWA lifecycle:{"kind":"visibilitychange","at":1794841423977,"documentId":1794841420888.2,"calls":3,"found":2,"pending":0,"activity":1794841423639,"pageShown":true,"visibility":"visible","focused":true,"trusted":false}
+2026-11-16T15:03:43.9793994Z PWA lifecycle:{"kind":"update-start","at":1794841423978,"documentId":1794841420888.2,"calls":4,"found":2,"pending":1,"activity":1794841423978,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:44.0202848Z PWA lifecycle:{"kind":"update-complete","at":1794841424019,"documentId":1794841420888.2,"calls":4,"found":2,"pending":0,"activity":1794841424019,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:44.0204568Z PWA lifecycle:{"kind":"updatefound","at":1794841424019,"documentId":1794841420888.2,"calls":4,"found":3,"pending":0,"activity":1794841424019,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:44.3647296Z PWA lifecycle:{"kind":"document-created","at":1794841424359,"documentId":1794841424262.5,"calls":0,"found":0,"pending":0,"activity":1794841424359,"pageShown":false,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:44.4123781Z PWA lifecycle:{"kind":"pageshow","at":1794841424410,"documentId":1794841424262.5,"calls":0,"found":0,"pending":0,"activity":1794841424359,"pageShown":true,"visibility":"visible","focused":true,"trusted":true}
+2026-11-16T15:03:44.5137596Z PWA lifecycle:{"kind":"register-start","at":1794841424470,"documentId":1794841424262.5,"calls":0,"found":0,"pending":1,"activity":1794841424470,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:44.5233587Z PWA lifecycle:{"kind":"register-complete","at":1794841424500,"documentId":1794841424262.5,"calls":0,"found":0,"pending":0,"activity":1794841424500,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:44.5236743Z PWA lifecycle:{"kind":"update-start","at":1794841424500,"documentId":1794841424262.5,"calls":1,"found":0,"pending":1,"activity":1794841424500,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:44.8163583Z PWA lifecycle:{"kind":"update-complete","at":1794841424780,"documentId":1794841424262.5,"calls":1,"found":0,"pending":0,"activity":1794841424780,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:46.1237223Z PWA lifecycle:{"kind":"document-created","at":1794841426111,"documentId":1794841425074.6,"calls":0,"found":0,"pending":0,"activity":1794841426111,"pageShown":false,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:46.2542948Z PWA lifecycle:{"kind":"pageshow","at":1794841426252,"documentId":1794841425074.6,"calls":0,"found":0,"pending":0,"activity":1794841426111,"pageShown":true,"visibility":"visible","focused":true,"trusted":true}
+2026-11-16T15:03:46.3640574Z PWA lifecycle:{"kind":"register-start","at":1794841426302,"documentId":1794841425074.6,"calls":0,"found":0,"pending":1,"activity":1794841426302,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:46.3650833Z PWA lifecycle:{"kind":"register-complete","at":1794841426338,"documentId":1794841425074.6,"calls":0,"found":0,"pending":0,"activity":1794841426338,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:46.3676799Z PWA lifecycle:{"kind":"update-start","at":1794841426338,"documentId":1794841425074.6,"calls":1,"found":0,"pending":1,"activity":1794841426338,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:46.7812975Z PWA lifecycle:{"kind":"update-complete","at":1794841426772,"documentId":1794841425074.6,"calls":1,"found":0,"pending":0,"activity":1794841426772,"pageShown":true,"visibility":"visible","focused":true,"trusted":null}
+2026-11-16T15:03:47.1530733Z PWA lifecycle:{"kind":"pagehide","at":1794841427152,"documentId":1794841425074.6,"calls":1,"found":0,"pending":0,"activity":1794841426772,"pageShown":true,"visibility":"visible","focused":true,"trusted":true}
+2026-11-16T15:03:47.1535146Z PWA lifecycle:{"kind":"visibilitychange","at":1794841427152,"documentId":1794841425074.6,"calls":1,"found":0,"pending":0,"activity":1794841426772,"pageShown":true,"visibility":"hidden","focused":true,"trusted":true}
+2026-11-16T15:03:47.1669178Z   ✓  334 [chromium] › e2e/pwa.spec.ts:213:1 › an open window detects a changed worker on focus, prompts, and updates only on confirmation (7.6s)
+2026-11-16T15:03:53.5001454Z   ✓  335 [chromium] › e2e/pwa.spec.ts:398:1 › two clean tabs reload after an update found more than 60 seconds after registration (6.3s)
+2026-11-16T15:03:57.4388915Z   ✓  336 [chromium] › e2e/pwa.spec.ts:494:1 › cold offline Loops reload recovers on reconnect without navigating (3.9s)
+2026-11-16T15:04:06.0014177Z   ✓  337 [chromium] › e2e/pwa.spec.ts:536:1 › another tab’s unresolved voice upload vetoes update activation until that tab closes (8.5s)
+2026-11-16T15:04:17.5789912Z   ✓  338 [chromium] › e2e/pwa.spec.ts:630:1 › a legacy active worker requires all app windows to close before the guarded update activates (11.6s)
+2026-11-16T15:04:18.6353206Z   ✓  339 [chromium] › e2e/qa.spec.ts:56:1 › a subloop child run opens in the inspector and replays from its seeded thread (1.0s)
+2026-11-16T15:04:22.1633622Z 1214-event run: live to complete 2266 ms (1,500 ms scripted turn), fresh open 590 ms, select event 356 ms, 7 live run fetches
+2026-11-16T15:04:22.1883605Z   ✓  340 [chromium] › e2e/qa.spec.ts:96:1 › streams 1,200 harness items into the inspector without gaps, duplicates, or a refetch per event (3.5s)
+2026-11-16T15:04:23.3381622Z   ✓  341 [chromium] › e2e/qa.spec.ts:173:1 › failure reasons are typed and visible: harness failure and decider unavailable (1.1s)
+2026-11-16T15:04:26.3895793Z   ✓  342 [chromium] › e2e/qa.spec.ts:231:1 › the editor blocks publishing on template syntax errors and unparsed JSON, and the API agrees (3.0s)
+2026-11-16T15:04:30.2783284Z   ✓  343 [chromium] › e2e/qa.spec.ts:318:1 › keyboard: add a node, walk the node editors, remove a connection and publish; the pointer connects (3.9s)
+2026-11-16T15:04:31.7735309Z   ✓  344 [chromium] › e2e/qa.spec.ts:378:1 › an edit made right before leaving the editor is kept (1.5s)
+2026-11-16T15:04:32.9303723Z   ✓  345 [chromium] › e2e/qa.spec.ts:398:1 › Settings defaults reach the next run without a restart (1.1s)
+2026-11-16T15:04:35.8144622Z   ✓  346 [chromium] › e2e/qa.spec.ts:439:1 › with GG_REQUIRE_API_KEY the shell loads, asks for a key, and uses it (2.9s)
+2026-11-16T15:04:40.1027503Z   ✓  347 [chromium] › e2e/qa.spec.ts:470:1 › with GG_REQUIRE_API_KEY, editor and inspector deep links go live once the key is entered (4.3s)
+2026-11-16T15:04:46.9496720Z   ✓  348 [chromium] › e2e/qa.spec.ts:509:1 › main screens fit 1024x768 without horizontal scrolling, and deep links load cold (6.8s)
+2026-11-16T15:04:47.8322122Z   ✓  349 [chromium] › e2e/readiness.spec.ts:27:3 › Settings labels unknown separately from model support (860ms)
+2026-11-16T15:04:48.6838343Z   ✓  350 [chromium] › e2e/readiness.spec.ts:27:3 › Settings labels ready separately from model support (833ms)
+2026-11-16T15:04:49.5556550Z   ✓  351 [chromium] › e2e/readiness.spec.ts:27:3 › Settings labels cli-missing separately from model support (858ms)
+2026-11-16T15:04:50.4832046Z   ✓  352 [chromium] › e2e/readiness.spec.ts:27:3 › Settings labels cli-incompatible separately from model support (910ms)
+2026-11-16T15:04:51.3175150Z   ✓  353 [chromium] › e2e/readiness.spec.ts:27:3 › Settings labels auth separately from model support (819ms)
+2026-11-16T15:04:52.1788087Z   ✓  354 [chromium] › e2e/readiness.spec.ts:27:3 › Settings labels quota separately from model support (846ms)
+2026-11-16T15:04:53.0404968Z   ✓  355 [chromium] › e2e/readiness.spec.ts:27:3 › Settings labels transport separately from model support (847ms)
+2026-11-16T15:04:55.6014128Z   ✓  356 [chromium] › e2e/readiness.spec.ts:52:1 › Settings keeps the last result while rechecking, shows a failed lookup once and retries (2.5s)
+2026-11-16T15:04:56.4498722Z   ✓  357 [chromium] › e2e/readiness.spec.ts:98:1 › Settings shows the loading text during the first check (831ms)
+2026-11-16T15:05:00.2462195Z   ✓  358 [chromium] › e2e/recovery-eligibility.spec.ts:45:1 › child directs recovery to its parent; two tabs Resume the same parent and child exactly once (3.8s)
+2026-11-16T15:05:01.7573668Z   ✓  359 [chromium] › e2e/recovery-eligibility.spec.ts:123:1 › stale inspector Resume is refused after API recovery, with no second attempt (1.5s)
+2026-11-16T15:05:03.9944013Z   ✓  360 [chromium] › e2e/recovery-eligibility.spec.ts:155:1 › two tabs Replay one observed intent into one separate linked run; repeat clicks cannot add a fork (2.2s)
+2026-11-16T15:05:05.7020304Z   ✓  361 [chromium] › e2e/recovery-eligibility.spec.ts:217:1 › repeat browser clicks admit one Resume and one Replay intent and preserve the exact identities (1.7s)
+2026-11-16T15:05:10.9815349Z   ✓  362 [chromium] › e2e/rename-references.spec.ts:198:1 › Starter assistant to writer: one saved step repairs the sibling Liquid and the Exit, and both versions run (5.2s)
+2026-11-16T15:05:16.0512980Z   ✓  363 [chromium] › e2e/rename-references.spec.ts:427:1 › uncertain, optional and known-missing references: notice rows, badges and Publish (5.1s)
+2026-11-16T15:05:21.0505619Z   ✓  364 [chromium] › e2e/rename-references.spec.ts:597:1 › focus stays in the repaired form, and unfinished input elsewhere survives the rename (5.0s)
+2026-11-16T15:05:27.4837828Z   ✓  365 [chromium] › e2e/rename-references.spec.ts:748:1 › a rename in a stale tab waits for Overwrite or Reload, and nothing is lost unseen (6.4s)
+2026-11-16T15:05:30.5587874Z   ✓  366 [chromium] › e2e/rename-references.spec.ts:859:1 › protected voice steps keep their ids, and renaming respond repairs the chat envelope (3.1s)
+2026-11-16T15:05:31.8381372Z   ✓  367 [chromium] › e2e/replay-seed.spec.ts:12:1 › a replay inspector shows inherited counters and values at its first event (1.3s)
+2026-11-16T15:05:33.8486401Z   ✓  368 [chromium] › e2e/responsive.spec.ts:261:5 › responsive dark › the full published-with-changes state fits a stacked Loops row at 360 px (2.0s)
+2026-11-16T15:06:17.3522508Z   ✓  369 [chromium] › e2e/responsive.spec.ts:312:5 › responsive dark › screens and transient states fit at 360, 768, 1024, and 1440 px (43.5s)
+2026-11-16T15:06:23.2800701Z   ✓  370 [chromium] › e2e/responsive.spec.ts:423:5 › responsive dark › all nine node dialogs fit their controls at 360 and 768 px (5.9s)
+2026-11-16T15:06:26.6432705Z   ✓  371 [chromium] › e2e/responsive.spec.ts:455:5 › responsive dark › the header navigation folds into a Menu at 360 px and shows its links at 768 px (3.4s)
+2026-11-16T15:06:28.4916202Z   ✓  372 [chromium] › e2e/responsive.spec.ts:493:5 › responsive dark › the runs table stacks its rows below 1024 px, keeping its column headers (1.8s)
+2026-11-16T15:06:29.5393688Z   ✓  373 [chromium] › e2e/responsive.spec.ts:544:5 › responsive dark › a Settings form turns into one column of full-width fields at 360 px (1.0s)
+2026-11-16T15:06:31.1384120Z   ✓  374 [chromium] › e2e/responsive.spec.ts:576:5 › responsive dark › at 768 px the editor selects, edits, connects, validates, and publishes a node (1.6s)
+2026-11-16T15:06:33.1210556Z   ✓  375 [chromium] › e2e/responsive.spec.ts:632:5 › responsive dark › at 768 px keyboard authoring adds, opens and edits nodes and publishes; the pointer connects them (2.0s)
+2026-11-16T15:06:36.2540169Z touch dark: Omit input (New run) 44 x 44 px
+2026-11-16T15:06:36.7269235Z touch dark: Omit input (Wait) 44 x 44 px
+2026-11-16T15:06:36.8509271Z touch dark: Full thread JSON 662 x 44 px
+2026-11-16T15:06:37.0573159Z touch dark: Node progress (0 nodes) 662 x 44 px
+2026-11-16T15:06:38.7095403Z touch dark: 768 px fitted zoom 0.7841, uncapped ports 44.02 x 36.07 px, row spacing 36.07 px
+2026-11-16T15:06:39.5670376Z touch dark: 360 px fitted zoom 0.2514, uncapped ports 22.13 x 11.57 px, row spacing 11.57 px
+2026-11-16T15:06:40.0441460Z touch dark: decision: Jsonata 596 x 44 px
+2026-11-16T15:06:40.9166776Z touch dark: script: Args 1 496 x 44 px
+2026-11-16T15:06:41.1822643Z touch dark: mutate: Content 514 x 44 px
+2026-11-16T15:06:41.6719969Z touch dark: wait: Prompt 596 x 44 px
+2026-11-16T15:06:41.7097683Z touch dark: wait: Input schema 596 x 54 px
+2026-11-16T15:06:41.7400626Z touch dark: wait: ui checkbox label 44 x 44 px
+2026-11-16T15:06:41.9719056Z touch dark: heartbeat: Until 596 x 44 px
+2026-11-16T15:06:42.0097616Z touch dark: heartbeat: Deadline 596 x 44 px
+2026-11-16T15:06:42.6080442Z   ✓  376 [chromium] › e2e/responsive.spec.ts:725:5 › responsive dark › on a coarse pointer the controls are at least 44 px (9.5s)
+2026-11-16T15:06:56.1103160Z touch zoom dark: [{"theme":"dark","zoom":1,"cardHeight":232,"isolatedTarget":{"width":44.0312,"height":44.0312},"adjacentTarget":{"width":38,"height":44.0312},"routingMeasures":0},{"theme":"dark","zoom":0.784,"cardHeight":232,"isolatedTarget":{"width":44.0142304,"height":36.064},"adjacentTarget":{"width":29.792,"height":36.064},"routingMeasures":0},{"theme":"dark","zoom":0.5,"cardHeight":232,"isolatedTarget":{"width":44.0156,"height":23},"adjacentTarget":{"width":19,"height":23},"routingMeasures":0},{"theme":"dark","zoom":1.2,"cardHeight":232,"isolatedTarget":{"width":44.025,"height":44.025},"adjacentTarget":{"width":44.025,"height":44.025},"routingMeasures":0}]; 300 nodes, eight zoom changes, zero routing measures
+2026-11-16T15:06:58.1113650Z   ✓  377 [chromium] › e2e/responsive.spec.ts:893:5 › responsive dark › coarse-pointer zoom preserves card geometry, disjoint targets and the routing cache (15.5s)
+2026-11-16T15:07:01.5844591Z   ✓  378 [chromium] › e2e/responsive.spec.ts:1049:5 › responsive dark › at 200% zoom (1024 by 768 px) Loops, the editor, a run, and Settings reflow without sideways scrolling (3.5s)
+2026-11-16T15:07:03.6692689Z   ✓  379 [chromium] › e2e/responsive.spec.ts:261:5 › responsive light › the full published-with-changes state fits a stacked Loops row at 360 px (2.1s)
+2026-11-16T15:07:47.8322002Z   ✓  380 [chromium] › e2e/responsive.spec.ts:312:5 › responsive light › screens and transient states fit at 360, 768, 1024, and 1440 px (44.2s)
+2026-11-16T15:07:53.6305540Z   ✓  381 [chromium] › e2e/responsive.spec.ts:423:5 › responsive light › all nine node dialogs fit their controls at 360 and 768 px (5.8s)
+2026-11-16T15:07:57.0778658Z   ✓  382 [chromium] › e2e/responsive.spec.ts:455:5 › responsive light › the header navigation folds into a Menu at 360 px and shows its links at 768 px (3.4s)
+2026-11-16T15:07:58.8707343Z   ✓  383 [chromium] › e2e/responsive.spec.ts:493:5 › responsive light › the runs table stacks its rows below 1024 px, keeping its column headers (1.8s)
+2026-11-16T15:08:00.0032194Z   ✓  384 [chromium] › e2e/responsive.spec.ts:544:5 › responsive light › a Settings form turns into one column of full-width fields at 360 px (1.1s)
+2026-11-16T15:08:01.5789141Z   ✓  385 [chromium] › e2e/responsive.spec.ts:576:5 › responsive light › at 768 px the editor selects, edits, connects, validates, and publishes a node (1.6s)
+2026-11-16T15:08:03.6352573Z   ✓  386 [chromium] › e2e/responsive.spec.ts:632:5 › responsive light › at 768 px keyboard authoring adds, opens and edits nodes and publishes; the pointer connects them (2.0s)
+2026-11-16T15:08:06.8698279Z touch light: Omit input (New run) 44 x 44 px
+2026-11-16T15:08:07.3347022Z touch light: Omit input (Wait) 44 x 44 px
+2026-11-16T15:08:07.4558794Z touch light: Full thread JSON 662 x 44 px
+2026-11-16T15:08:07.6779035Z touch light: Node progress (0 nodes) 662 x 44 px
+2026-11-16T15:08:09.4820069Z touch light: 768 px fitted zoom 0.7841, uncapped ports 44.02 x 36.07 px, row spacing 36.07 px
+2026-11-16T15:08:10.3090206Z touch light: 360 px fitted zoom 0.2514, uncapped ports 22.13 x 11.57 px, row spacing 11.57 px
+2026-11-16T15:08:10.7950887Z touch light: decision: Jsonata 596 x 44 px
+2026-11-16T15:08:11.6808219Z touch light: script: Args 1 496 x 44 px
+2026-11-16T15:08:11.9638942Z touch light: mutate: Content 514 x 44 px
+2026-11-16T15:08:12.4342230Z touch light: wait: Prompt 596 x 44 px
+2026-11-16T15:08:12.4710234Z touch light: wait: Input schema 596 x 54 px
+2026-11-16T15:08:12.4992329Z touch light: wait: ui checkbox label 44 x 44 px
+2026-11-16T15:08:12.7276599Z touch light: heartbeat: Until 596 x 44 px
+2026-11-16T15:08:12.7656207Z touch light: heartbeat: Deadline 596 x 44 px
+2026-11-16T15:08:13.3759666Z   ✓  387 [chromium] › e2e/responsive.spec.ts:725:5 › responsive light › on a coarse pointer the controls are at least 44 px (9.7s)
+2026-11-16T15:08:26.4242197Z touch zoom light: [{"theme":"light","zoom":1,"cardHeight":232,"isolatedTarget":{"width":44.0312,"height":44.0312},"adjacentTarget":{"width":38,"height":44.0312},"routingMeasures":0},{"theme":"light","zoom":0.784,"cardHeight":232,"isolatedTarget":{"width":44.0142304,"height":36.064},"adjacentTarget":{"width":29.792,"height":36.064},"routingMeasures":0},{"theme":"light","zoom":0.5,"cardHeight":232,"isolatedTarget":{"width":44.0156,"height":23},"adjacentTarget":{"width":19,"height":23},"routingMeasures":0},{"theme":"light","zoom":1.2,"cardHeight":232,"isolatedTarget":{"width":44.025,"height":44.025},"adjacentTarget":{"width":44.025,"height":44.025},"routingMeasures":0}]; 300 nodes, eight zoom changes, zero routing measures
+2026-11-16T15:08:28.2936027Z   ✓  388 [chromium] › e2e/responsive.spec.ts:893:5 › responsive light › coarse-pointer zoom preserves card geometry, disjoint targets and the routing cache (14.9s)
+2026-11-16T15:08:31.8342037Z   ✓  389 [chromium] › e2e/responsive.spec.ts:1049:5 › responsive light › at 200% zoom (1024 by 768 px) Loops, the editor, a run, and Settings reflow without sideways scrolling (3.5s)
+2026-11-16T15:08:36.4145201Z {"boundary":"explicit-resume","status":"succeeded","markerCount":2}
+2026-11-16T15:08:38.2461980Z   ✓  390 [chromium] › e2e/script-recovery.spec.ts:38:1 › an uncertain script needs consent; deliberate Replay runs the script as a new run (#321) (6.4s)
+2026-11-16T15:09:03.4206604Z   ✓  391 [chromium] › e2e/shutdown.spec.ts:90:1 › drain is visible everywhere, expiry offers choices, waiting has no timer, and completion exits cleanly (25.1s)
+2026-11-16T15:09:21.3057294Z   ✓  392 [chromium] › e2e/shutdown.spec.ts:266:1 › confirmed force interrupts a controlled native harness, releases ownership and preserves interruption on restart (17.9s)
+2026-11-16T15:09:23.5477337Z   ✓  393 [chromium] › e2e/storage-cleanup.spec.ts:5:1 › pressure cleans only confirmed history and shows both pressure warnings without broadening consent (2.2s)
+2026-11-16T15:09:30.6305279Z   ✓  394 [chromium] › e2e/storage-cleanup.spec.ts:61:1 › clears confirmed selection and prunes selected rows removed by cleanup while Runs stays open (7.1s)
+2026-11-16T15:09:31.6525980Z {"status":"draft","opened":true,"structuredTimeoutMs":null,"runDeadlineSeconds":null}
+2026-11-16T15:09:31.6731741Z   ✓  395 [chromium] › e2e/stored-loop-defaults.spec.ts:4:3 › editor reopens stored draft with omitted additive deadline defaults (1.0s)
+2026-11-16T15:09:32.6821879Z {"status":"published","opened":true,"structuredTimeoutMs":null,"runDeadlineSeconds":null}
+2026-11-16T15:09:32.7042413Z   ✓  396 [chromium] › e2e/stored-loop-defaults.spec.ts:4:3 › editor reopens stored published with omitted additive deadline defaults (1.0s)
+2026-11-16T15:09:34.8207061Z   ✓  397 [chromium] › e2e/template-gallery.spec.ts:5:1 › opens the starter gallery with the keyboard and creates an editable draft directly (2.1s)
+2026-11-16T15:09:37.7163938Z   ✓  398 [chromium] › e2e/template-gallery.spec.ts:53:1 › offers one green Use action per card without setup requests or fields (2.9s)
+2026-11-16T15:09:42.6606726Z   ✓  399 [chromium] › e2e/template-gallery.spec.ts:87:3 › gallery fits at 1440px and its Use button follows the opener in keyboard order (4.9s)
+2026-11-16T15:09:47.7422276Z   ✓  400 [chromium] › e2e/template-gallery.spec.ts:87:3 › gallery fits at 390px and its Use button follows the opener in keyboard order (5.1s)
+2026-11-16T15:09:52.4178556Z   ✓  401 [chromium] › e2e/template-gallery.spec.ts:87:3 › gallery fits at 320px and its Use button follows the opener in keyboard order (4.7s)
+2026-11-16T15:09:55.3513831Z   ✓  402 [chromium] › e2e/template-gallery.spec.ts:122:1 › retains keyboard focus and guards all cards while a copy is pending (2.9s)
+2026-11-16T15:09:58.9027962Z   ✓  403 [chromium] › e2e/template-gallery.spec.ts:155:1 › announces failed creation, keeps focus and retries only on a new activation (3.5s)
+2026-11-16T15:10:06.6555949Z   ✓  404 [chromium] › e2e/template-gallery.spec.ts:204:1 › a repeated Use asks for a name, then creates independent copies of the same graph (#209) (7.7s)
+2026-11-16T15:10:10.3853611Z   ✓  405 [chromium] › e2e/template-gallery.spec.ts:324:3 › the naming form after a refused Use fits at 390px and keeps keyboard order (#209) (3.7s)
+2026-11-16T15:10:14.0973515Z   ✓  406 [chromium] › e2e/template-gallery.spec.ts:324:3 › the naming form after a refused Use fits at 320px and keeps keyboard order (#209) (3.7s)
+2026-11-16T15:10:16.4557111Z   ✓  407 [chromium] › e2e/template-gallery.spec.ts:363:1 › opens the QA starting point as an ordinary copy without configured-parent isolation warnings (2.3s)
+2026-11-16T15:10:17.3160302Z   ✓  408 [chromium] › e2e/theme.spec.ts:51:1 › Dark is the default, from the first paint (837ms)
+2026-11-16T15:10:20.5014041Z   ✓  409 [chromium] › e2e/theme.spec.ts:64:1 › Light applies at once, survives reloads without a flash, and Dark comes back (3.2s)
+2026-11-16T15:10:21.9245795Z   ✓  410 [chromium] › e2e/theme.spec.ts:98:1 › cleared storage falls back to Dark (1.4s)
+2026-11-16T15:10:23.3325894Z   ✓  411 [chromium] › e2e/theme.spec.ts:109:1 › storage that throws does not break the app (1.4s)
+2026-11-16T15:10:31.7647306Z   ✓  412 [chromium] › e2e/thread-history.spec.ts:11:1 › open and reloaded inspectors follow persisted failure, resume and success with delayed snapshots (8.4s)
+2026-11-16T15:10:35.0027469Z   ✓  413 [chromium] › e2e/trigger-types.spec.ts:4:3 › trigger types and optional preset keyboard review in light (3.2s)
+2026-11-16T15:10:38.3222020Z   ✓  414 [chromium] › e2e/trigger-types.spec.ts:4:3 › trigger types and optional preset keyboard review in dark (3.3s)
+2026-11-16T15:10:42.3813010Z   ✓  415 [chromium] › e2e/trigger-types.spec.ts:122:3 › general webhook configuration persists and validates at 360px (4.1s)
+2026-11-16T15:10:46.5715622Z   ✓  416 [chromium] › e2e/trigger-types.spec.ts:122:3 › general webhook configuration persists and validates at 1440px (4.2s)
+2026-11-16T15:10:48.3865121Z   ✓  417 [chromium] › e2e/undo.spec.ts:86:1 › incomplete weekly Monday 07:30 blocks publish, survives dialog remount, and undoes once (1.8s)
+2026-11-16T15:10:51.5963347Z   ✓  418 [chromium] › e2e/undo.spec.ts:131:1 › undo and redo from the toolbar and the keys, saved like any edit (3.2s)
+2026-11-16T15:10:53.1076135Z   ✓  419 [chromium] › e2e/undo.spec.ts:192:1 › each pointer drag undoes and redoes in one step (1.5s)
+2026-11-16T15:10:54.9856452Z   ✓  420 [chromium] › e2e/undo.spec.ts:230:1 › inside a text field or CodeMirror the keys undo only that field’s text (1.9s)
+2026-11-16T15:10:57.4361342Z   ✓  421 [chromium] › e2e/undo.spec.ts:263:1 › typing a label, then Ctrl+Z outside the field, restores the label in one step (2.4s)
+2026-11-16T15:10:59.0793633Z   ✓  422 [chromium] › e2e/undo.spec.ts:325:1 › Ctrl+Z from a checkbox or a select undoes and keeps focus on that control (1.6s)
+2026-11-16T15:11:01.0852192Z   ✓  423 [chromium] › e2e/undo.spec.ts:353:1 › model then effort are two undo steps, and undo and redo keep Advanced open (review F5, F6) (2.0s)
+2026-11-16T15:11:03.4848416Z   ✓  424 [chromium] › e2e/undo.spec.ts:402:1 › row focus follows history without opening collapsed neighbours (2.4s)
+2026-11-16T15:11:04.9588018Z   ✓  425 [chromium] › e2e/undo.spec.ts:468:1 › nested message focus falls back to the surviving operation without revealing it (1.5s)
+2026-11-16T15:11:06.9057088Z   ✓  426 [chromium] › e2e/undo.spec.ts:511:1 › the Undo and Redo buttons are 32 px for a mouse and 44 px for touch (1.9s)
+2026-11-16T15:11:10.1876587Z   ✓  427 [chromium] › e2e/undo.spec.ts:540:1 › undoing a delete restores the node, its edges, and the exit’s loop-back; a rename undoes too (3.3s)
+2026-11-16T15:11:14.5047566Z   ✓  428 [chromium] › e2e/undo.spec.ts:590:1 › an undo after another client saved meets the conflict; a reload clears the history (4.3s)
+2026-11-16T15:11:16.0120393Z   ✓  429 [chromium] › e2e/undo.spec.ts:634:1 › on Apple platforms the keys are Cmd+Z and Cmd+Shift+Z (1.5s)
+2026-11-16T15:11:22.0995002Z   ✓  430 [chromium] › e2e/undo.spec.ts:667:1 › keeps the last 100 steps: 101 edits and 101 undos leave the first edit (6.1s)
+2026-11-16T15:11:26.5834065Z   ✓  431 [chromium] › e2e/unlimited-mode.spec.ts:3:1 › visible defaults and explicit unlimited persist; inspector shows the pin (4.5s)
+2026-11-16T15:11:29.1923603Z   ✓  432 [chromium] › e2e/unlimited-mode.spec.ts:86:1 › a repeat gate persists Unlimited passes through the node editor (2.6s)
+2026-11-16T15:11:30.2555614Z   ✓  433 [chromium] › e2e/validation.spec.ts:56:1 › badges count node issues and identify errors with text and icons (1.0s)
+2026-11-16T15:11:33.1631788Z   ✓  434 [chromium] › e2e/validation.spec.ts:89:1 › hover: the popover opens, stays while the pointer is in it, and choosing an issue focuses its field (2.9s)
+2026-11-16T15:11:34.8537450Z   ✓  435 [chromium] › e2e/validation.spec.ts:126:1 › keyboard: Tab to the badge opens it, Enter keeps it, the arrow keys reach a row, Esc closes it (1.7s)
+2026-11-16T15:11:36.3554074Z   ✓  436 [chromium] › e2e/validation.spec.ts:173:1 › Discard the unparsed text in the popover drops unparsed text and its issue (1.5s)
+2026-11-16T15:11:38.6470208Z   ✓  437 [chromium] › e2e/validation.spec.ts:193:1 › an issue only the server finds (a bad cron expression) shows on the badge after a save (2.3s)
+2026-11-16T15:11:40.6681860Z   ✓  438 [chromium] › e2e/validation.spec.ts:235:1 › a reloaded server draft is checked again, not answered from the draft loaded first (review F3) (2.0s)
+2026-11-16T15:11:42.0977700Z   ✓  439 [chromium] › e2e/validation.spec.ts:277:1 › loop-level issues stay in sight beside Publish, which refuses with the same message (1.4s)
+2026-11-16T15:11:43.0200266Z   ✓  440 [chromium] › e2e/validation.spec.ts:319:1 › a popover by the viewport’s edge stays inside it and never covers its badge (909ms)
+2026-11-16T15:11:44.4716309Z   ✓  441 [chromium] › e2e/validation.spec.ts:349:1 › dragging a node with its popover open moves the node and closes the popover (1.4s)
+2026-11-16T15:11:52.2396357Z   ✓  442 [chromium] › e2e/webhook-delivery.spec.ts:29:1 › inspector retains unknown acknowledgement after a rejection and eventual success (7.7s)
+2026-11-16T15:11:53.3586051Z   ✓  443 [chromium] › e2e/webhook-delivery.spec.ts:92:3 › inspector finalizes HTTP 200 without a reload while execution stays succeeded (1.1s)
+2026-11-16T15:11:54.5292504Z   ✓  444 [chromium] › e2e/webhook-delivery.spec.ts:92:3 › inspector finalizes HTTP 400 without a reload while execution stays succeeded (1.2s)
+2026-11-16T15:11:58.0097350Z   ✓  445 [chromium] › e2e/webhook-delivery.spec.ts:150:1 › remote resume that finishes between polls stays live while its webhook is pending (3.5s)
+2026-11-16T15:11:59.1784940Z   ✓  446 [chromium] › e2e/webhook-receiver.spec.ts:4:1 › the published receiver address accepts a JSON delivery and creates a run (1.1s)
+2026-11-16T15:12:09.2451977Z   ✓  447 [chromium] › e2e/chat-voice.spec.ts:186:3 › native AudioWorklet retains Stop, appends, and Send button submits complete audio once (7.3s)
+2026-11-16T15:12:16.2583716Z   ✓  448 [chromium] › e2e/chat-voice.spec.ts:186:3 › native AudioWorklet retains Stop, appends, and textarea Enter submits complete audio once (7.0s)
+2026-11-16T15:12:22.5930524Z   ✓  449 [chromium] › e2e/edge-routes.spec.ts:190:3 › dark: reroute a forward edge and a loop-back by dragging segments; reload keeps them (5.3s)
+2026-11-16T15:12:27.7673448Z   ✓  450 [chromium] › e2e/edge-routes.spec.ts:190:3 › light: reroute a forward edge and a loop-back by dragging segments; reload keeps them (5.2s)
+2026-11-16T15:12:29.4333639Z   ✓  451 [chromium] › e2e/edge-routes.spec.ts:269:1 › keyboard: Tab reaches the handles, arrows nudge by grid steps, Escape returns to the edge (1.6s)
+2026-11-16T15:12:33.5118703Z   ✓  452 [chromium] › e2e/edge-routes.spec.ts:347:1 › moving a card onto a manual route takes it back to automatic, in the move’s undo step (4.1s)
+2026-11-16T15:12:36.7791831Z   ✓  453 [chromium] › e2e/edge-routes.spec.ts:385:1 › a node move keeps the manual detour if resetting would cross the original obstacle (3.3s)
+2026-11-16T15:12:41.7313031Z   ✓  454 [chromium] › e2e/edge-routes.spec.ts:431:1 › an existing deliberate crossing stays manual when a new crossing has no clear replacement (4.9s)
+2026-11-16T15:12:44.4164135Z   ✓  455 [chromium] › e2e/edge-routes.spec.ts:484:1 › 32 alternating first-stub splits preserve a saveable and publishable route at the limit (2.7s)
+2026-11-16T15:12:45.8649461Z   ✓  456 [chromium] › e2e/edge-routes.spec.ts:513:1 › routes survive export and import, publish pins them, and runs ignore them (1.4s)
+2026-11-16T15:12:48.6830057Z   ✓  457 [chromium] › e2e/edge-routes.spec.ts:576:1 › selecting and deleting a rerouted edge, and undoing it, keeps its route (2.8s)
+2026-11-16T15:12:51.7176243Z   ✓  458 [chromium] › e2e/edge-routes.spec.ts:595:1 › a double click on a connection’s line, where its toolbar then puts Remove connection, selects it and removes nothing; a separate click removes it once (#207) (3.0s)
+2026-11-16T15:12:52.9517635Z   ✓  459 [chromium] › e2e/edge-routes.spec.ts:729:1 › forced colours keep the handles and their focus ring visible (1.2s)
+2026-11-16T15:12:53.9714064Z   ✓  460 [chromium] › e2e/routing.spec.ts:91:5 › dark: simple-loop routes and labels, owner screenshot (836ms)
+2026-11-16T15:12:54.8614888Z   ✓  461 [chromium] › e2e/routing.spec.ts:91:5 › dark: nested-loops routes and labels, owner screenshot (874ms)
+2026-11-16T15:12:55.7263857Z   ✓  462 [chromium] › e2e/routing.spec.ts:91:5 › dark: decision-back-route routes and labels, owner screenshot (852ms)
+2026-11-16T15:12:58.5220582Z   ✓  463 [chromium] › e2e/routing.spec.ts:91:5 › dark: dense-100-nodes routes and labels, owner screenshot (2.8s)
+2026-11-16T15:12:59.5620040Z   ✓  464 [chromium] › e2e/routing.spec.ts:91:5 › dark: six-return-decision routes and labels, owner screenshot (1.0s)
+2026-11-16T15:13:00.4260908Z   ✓  465 [chromium] › e2e/routing.spec.ts:91:5 › dark: eight-pixel-gap routes and labels, owner screenshot (852ms)
+2026-11-16T15:13:01.2915442Z   ✓  466 [chromium] › e2e/routing.spec.ts:91:5 › dark: forward-loop-back-detour routes and labels, owner screenshot (850ms)
+2026-11-16T15:13:02.9770190Z   ✓  467 [chromium] › e2e/routing.spec.ts:136:3 › dark: animated loop-back, click and keyboard selection, Delete and undo (1.7s)
+2026-11-16T15:13:03.7920235Z   ✓  468 [chromium] › e2e/routing.spec.ts:91:5 › light: simple-loop routes and labels, owner screenshot (802ms)
+2026-11-16T15:13:04.6979673Z   ✓  469 [chromium] › e2e/routing.spec.ts:91:5 › light: nested-loops routes and labels, owner screenshot (888ms)
+2026-11-16T15:13:05.5477446Z   ✓  470 [chromium] › e2e/routing.spec.ts:91:5 › light: decision-back-route routes and labels, owner screenshot (834ms)
+2026-11-16T15:13:08.3615648Z   ✓  471 [chromium] › e2e/routing.spec.ts:91:5 › light: dense-100-nodes routes and labels, owner screenshot (2.8s)
+2026-11-16T15:13:09.2606849Z   ✓  472 [chromium] › e2e/routing.spec.ts:91:5 › light: six-return-decision routes and labels, owner screenshot (887ms)
+2026-11-16T15:13:10.1229819Z   ✓  473 [chromium] › e2e/routing.spec.ts:91:5 › light: eight-pixel-gap routes and labels, owner screenshot (847ms)
+2026-11-16T15:13:11.0104876Z   ✓  474 [chromium] › e2e/routing.spec.ts:91:5 › light: forward-loop-back-detour routes and labels, owner screenshot (869ms)
+2026-11-16T15:13:12.6773532Z   ✓  475 [chromium] › e2e/routing.spec.ts:136:3 › light: animated loop-back, click and keyboard selection, Delete and undo (1.7s)
+2026-11-16T15:13:13.4966265Z   ✓  476 [chromium] › e2e/routing.spec.ts:189:1 › forced colours retain paths, labels, keyboard focus and selection (797ms)
+2026-11-16T15:13:14.7253541Z   ✓  477 [chromium] › e2e/routing.spec.ts:219:1 › dragging a card across a return path reroutes clear of its measured box in one undo step (1.2s)
+2026-11-16T15:13:16.0233393Z   ✓  478 [chromium] › e2e/routing.spec.ts:293:1 › vertical targets, long script route, overlapping cards and zoom (1.3s)
+2026-11-16T15:13:18.9663743Z   ✓  479 [chromium] › e2e/routing.spec.ts:404:1 › no missing path frames while dragging past a neighbour through 8 px gaps (2.9s)
+2026-11-16T15:13:20.2832169Z   ✓  480 [chromium] › e2e/routing.spec.ts:440:1 › adding a card and undoing its deletion never erase an existing backward path (1.3s)
+2026-11-16T15:13:29.7502710Z 100 nodes, drag 1: routing 4.700 ms / frame 33.300 ms p95; 160 routes, 260 frames
+2026-11-16T15:13:35.0053267Z 100 nodes, drag 2: routing 3.300 ms / frame 33.400 ms p95; 147 routes, 255 frames
+2026-11-16T15:13:40.2402922Z 100 nodes, drag 3: routing 3.700 ms / frame 33.300 ms p95; 163 routes, 262 frames
+2026-11-16T15:13:40.2465234Z Routing performance: {"nodes":100,"edges":200,"repeat":1,"channel":"msedge","browser":"157.0.4341.60","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":3.6999999997206032,"idle":{"frameP95Ms":16.700000000000273,"frameSamples":180},"repetitions":[{"repetition":1,"routingP95Ms":4.7000000001862645,"frameP95Ms":33.30000000000018,"addedFrameP95Ms":16.59999999999991,"reroutedEdgesP95":15,"routingSamples":160,"frameSamples":260,"durationMs":5002.39999999986,"pointerMovesSent":306,"pointerMovesObserved":256,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":3,"acknowledgementP95Ms":27,"samplerStartOffsetMs":2,"firstPointerMs":9.5,"lastPointerMs":5012.5,"inputDurationMs":5100},{"repetition":2,"routingP95Ms":3.300000000046566,"frameP95Ms":33.399999999999636,"addedFrameP95Ms":16.699999999999363,"reroutedEdgesP95":15,"routingSamples":147,"frameSamples":255,"durationMs":5014.399999999907,"pointerMovesSent":306,"pointerMovesObserved":245,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":4,"acknowledgementP95Ms":27,"samplerStartOffsetMs":16,"firstPointerMs":17.399999999906868,"lastPointerMs":5018.199999999953,"inputDurationMs":5101},{"repetition":3,"routingP95Ms":3.6999999997206032,"frameP95Ms":33.30000000000109,"addedFrameP95Ms":16.60000000000082,"reroutedEdgesP95":15,"routingSamples":163,"frameSamples":262,"durationMs":5004.5,"pointerMovesSent":306,"pointerMovesObserved":254,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":2,"acknowledgementP95Ms":26,"samplerStartOffsetMs":1,"firstPointerMs":6.900000000139698,"lastPointerMs":5014.90000000014,"inputDurationMs":5100}]}
+2026-11-16T15:13:40.2873482Z   ✓  481 [chromium] › e2e/routing.spec.ts:479:3 › performance: 100 nodes / 200 edges, three five-second pointer drags (20.0s)
+2026-11-16T15:13:50.5210981Z 300 nodes, drag 1: routing 9.000 ms / frame 49.900 ms p95; 123 routes, 215 frames
+2026-11-16T15:13:55.8659578Z 300 nodes, drag 2: routing 5.700 ms / frame 33.500 ms p95; 132 routes, 216 frames
+2026-11-16T15:14:01.2720517Z 300 nodes, drag 3: routing 5.700 ms / frame 50.000 ms p95; 125 routes, 207 frames
+2026-11-16T15:14:01.2932179Z Routing performance: {"nodes":300,"edges":600,"repeat":1,"channel":"msedge","browser":"157.0.4341.60","userAgent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36","viewport":{"width":1440,"height":900},"targets":{"medianRoutingP95Ms":8,"perDragRoutingP95Ms":16,"frameP95Ms":17},"medianRoutingP95Ms":5.7000000001862645,"idle":{"frameP95Ms":33.30000000000018,"frameSamples":163},"repetitions":[{"repetition":1,"routingP95Ms":9,"frameP95Ms":49.899999999999636,"addedFrameP95Ms":16.599999999999454,"reroutedEdgesP95":24,"routingSamples":123,"frameSamples":215,"durationMs":5000.000000000047,"pointerMovesSent":306,"pointerMovesObserved":221,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":3,"acknowledgementP95Ms":32,"samplerStartOffsetMs":4,"firstPointerMs":10.899999999906868,"lastPointerMs":4998.100000000093,"inputDurationMs":5105},{"repetition":2,"routingP95Ms":5.699999999720603,"frameP95Ms":33.5,"addedFrameP95Ms":0.1999999999998181,"reroutedEdgesP95":24,"routingSamples":132,"frameSamples":216,"durationMs":5022.4,"pointerMovesSent":306,"pointerMovesObserved":220,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":3,"acknowledgementP95Ms":32,"samplerStartOffsetMs":16,"firstPointerMs":17.199999999953434,"lastPointerMs":5023.5,"inputDurationMs":5117},{"repetition":3,"routingP95Ms":5.7000000001862645,"frameP95Ms":50,"addedFrameP95Ms":16.699999999999818,"reroutedEdgesP95":27,"routingSamples":125,"frameSamples":207,"durationMs":5000.400000000045,"pointerMovesSent":306,"pointerMovesObserved":219,"inputRadiansPerSecond":6,"inputBackend":"cdp-dispatchMouseEvent","inputFrequencyHz":60,"maxInFlightMoves":64,"peakInFlightMoves":4,"acknowledgementP95Ms":32,"samplerStartOffsetMs":7,"firstPointerMs":18.199999999953434,"lastPointerMs":5001.699999999953,"inputDurationMs":5107}]}
+2026-11-16T15:14:01.3344082Z   ✓  482 [chromium] › e2e/routing.spec.ts:479:3 › performance: 300 nodes / 600 edges, three five-second pointer drags (21.0s)
+2026-11-16T15:14:01.6554328Z 
+2026-11-16T15:14:01.6563325Z   1 skipped
+2026-11-16T15:14:01.6563871Z   481 passed (27.6m)
+2026-11-16T15:14:02.4457352Z ##[group]Run cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+2026-11-16T15:14:02.4457803Z [36;1mcat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'[0m
+2026-11-16T15:14:02.4458120Z [36;1m## Functional browser gate[0m
+2026-11-16T15:14:02.4458382Z [36;1m[0m
+2026-11-16T15:14:02.4458842Z [36;1mSelected coverage: all `apps/web/e2e/**/*.spec.ts` against the built app on Edge with zero retries and one worker.[0m
+2026-11-16T15:14:02.4459760Z [36;1mThis includes `script-recovery.spec.ts`: an isolated built API, kill/restart uncertainty, explicit retry consent, and resumed-run observation.[0m
+2026-11-16T15:14:02.4460565Z [36;1mThe test step and report record the executed result, including any setup failure.[0m
+2026-11-16T15:14:02.4461507Z [36;1mThe real API uses disposable storage and scripted harness/classifier boundaries; no paid provider is called.[0m
+2026-11-16T15:14:02.4462334Z [36;1m[0m
+2026-11-16T15:14:02.4462801Z [36;1mSkipped: `live.spec.ts` / `LIVE: build, publish, and run an inference loop against Codex from the UI`.[0m
+2026-11-16T15:14:02.4463571Z [36;1mIt requires `LIVE=1`, an installed Codex CLI and a provider login, and spends subscription quota. CI sets `LIVE=0`.[0m
+2026-11-16T15:14:02.4464298Z [36;1mNo other functional spec or test is skipped or gated on a provider login or installed CLI.[0m
+2026-11-16T15:14:02.4464747Z [36;1m[0m
+2026-11-16T15:14:02.4465084Z [36;1mOptional modes are off: `GG_FORMS_QA_PHASE` (historical before/after captures),[0m
+2026-11-16T15:14:02.4465635Z [36;1m`GG_ROUTING_SCREENSHOTS` (captures), `GG_ROUTING_PROFILE` (profiling), and[0m
+2026-11-16T15:14:02.4466241Z [36;1m`GG_ROUTING_STRICT_PERF` (stricter manual performance bounds). Their ordinary tests still run.[0m
+2026-11-16T15:14:02.4466894Z [36;1m`screens.capture.ts` is a manual screenshot utility, outside the `*.spec.ts` suite.[0m
+2026-11-16T15:14:02.4467503Z [36;1mLive/paid checks remain separate, manually authorized checks; this job schedules none.[0m
+2026-11-16T15:14:02.4468161Z [36;1mSUMMARY[0m
+2026-11-16T15:14:02.4518449Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-16T15:14:02.4518804Z env:
+2026-11-16T15:14:02.4519021Z   GG_E2E_BROWSER_CHANNEL: msedge
+2026-11-16T15:14:02.4519281Z   LIVE: 0
+2026-11-16T15:14:02.4519538Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-16T15:14:02.4519855Z ##[endgroup]
+2026-11-16T15:14:02.4747339Z Post job cleanup.
+2026-11-16T15:14:02.6067310Z (node:18782) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-16T15:14:02.6068901Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T15:14:02.6073299Z Cache hit occurred on the primary key node-cache-Linux-x64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83, not saving cache.
+2026-11-16T15:14:02.6221446Z Post job cleanup.
+2026-11-16T15:14:02.7776616Z Pruning is unnecessary.
+2026-11-16T15:14:02.7940844Z Post job cleanup.
+2026-11-16T15:14:02.8962210Z [command]/usr/bin/git version
+2026-11-16T15:14:02.9020089Z git version 2.56.1
+2026-11-16T15:14:02.9085349Z Temporarily overriding HOME='/home/runner/work/_temp/22fa2ea7-664c-4292-81ca-2a604700b299' before making global git config changes
+2026-11-16T15:14:02.9089711Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-16T15:14:02.9091733Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T15:14:02.9180441Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-16T15:14:02.9239226Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-16T15:14:02.9678922Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-16T15:14:02.9716127Z http.https://github.com/.extraheader
+2026-11-16T15:14:02.9733785Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-16T15:14:02.9788191Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-16T15:14:03.0154709Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-16T15:14:03.0199563Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-16T15:14:03.0711419Z Cleaning up orphan processes
+2026-11-16T15:14:03.1113266Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

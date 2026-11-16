@@ -1,0 +1,77 @@
+# label: 10-final-focused-tests
+# cwd: /c/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin
+# started: 2026-11-16T16:24:10Z
+# node: v22.23.4
+# command: pnpm --filter @graphgoblin/api exec vitest run src/gateway-logger.test.ts src/serve.test.ts src/windows-log/gateway-log-writer.test.ts --reporter=verbose
+# ---- output ----
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin/apps/api
+
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > writes Pino lines whole and creates only the active slot 20ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > keeps a é-terminated record at, below and above the 64 KiB encoded edge whole or marked 14ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > keeps a €-terminated record at, below and above the 64 KiB encoded edge whole or marked 14ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > keeps a 😀-terminated record at, below and above the 64 KiB encoded edge whole or marked 14ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log record boundaries > replaces a much larger record and keeps lone surrogates valid UTF-8 10ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > fills an adopted nonempty active slot exactly to 4 MiB, then rotates by rename-replace 31ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > rotates before a record that would exceed the slot by one byte 22ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > repairs an interrupted trailing record, including a split multibyte character 16ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > finds a boundary more than one record-limit back in under-cap legacy history 12ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > replaces oversized legacy slots only when admitted, after the old writer is gone 34ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > keeps an oversized slot untouched when it cannot be replaced 24ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > refuses unsafe managed names before opening or modifying them 11ms
+ ↓ src/windows-log/gateway-log-writer.test.ts > gateway log slot edges and adoption > refuses a dangling or live link at a managed name and preserves its target 3ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > caps combined in-flight and queued bytes at exactly 256 KiB without waiting 15ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > retains one encoded copy of each record across a held multi-record write 50ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > releases a short multi-record write before its rollback and keeps the rollback safe 52ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > acknowledges only the specific completed record and bounds the exit wait at 250 ms 521ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > rolls a real partial write back to the last complete boundary and recovers 11ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > disables the target when a partial write cannot be rolled back 4ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > drops on disk full with finite backoff and stops after the fault limit 6ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > drops on denied rotation and never truncates the full active slot 29ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > stops writing and preserves a foreign entry that replaced the active name 6ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > refuses rotation onto a previous slot it did not admit 22ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > recreates a removed active name at the fixed path 6ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > is a plain Pino destination: Pino finds no emit, flush or end hook to call 72ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > closes idempotently and refuses later records 3ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log with real Windows sharing > drops on a native delete-sharing denial during rotation and keeps both slots 271ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 0 20ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 1 11ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 2 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 3 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 4 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps configuration failure 5 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 6 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps recovery failure 7 13ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps http failure 8 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 9 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 10 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 11 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 12 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 13 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > prints complete refusals as their message in a shell 12ms
+ ✓ src/gateway-logger.test.ts > keeps the correlated private #381 diagnostic and narrows real access records to method, route and status 1283ms
+ ✓ src/gateway-logger.test.ts > keeps the configured level for the managed destination 10ms
+ ✓ src/gateway-logger.test.ts > keeps the ordinary shell logger and its default serializers 1ms
+ ✓ src/gateway-logger.test.ts > projects only validated access fields from unusual inputs 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > answers ERR_HTTP_REQUEST_TIMEOUT with the default response and records only its closed outcome 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > answers HPE_HEADER_OVERFLOW with the default response and records only its closed outcome 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > answers HPE_INVALID_METHOD with the default response and records only its closed outcome 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > answers EPIPE with the default response and records only its closed outcome 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > leaves a reset or already destroyed connection alone, as the default does 2ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > closes an unwritable connection and omits any code that is not a Node identifier 3ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > keeps the configured level: an info gateway answers without a trace record 1ms
+ ✓ src/serve.test.ts > serve with the managed destination > reports each reached stage and writes engine records only to the bounded destination 1175ms
+ ✓ src/serve.test.ts > serve with the managed destination > keeps serving while every log write is stalled, within the pending-byte bound 659ms
+ ✓ src/serve.test.ts > serve with the managed destination > stops at the bind stage on an occupied port and releases ownership 217ms
+ ✓ src/serve.test.ts > serve with the managed destination > stops at the configuration stage on invalid overrides 22ms
+ ✓ src/serve.test.ts > serve with the managed destination > answers malformed wire requests at managed trace without logging their bytes, then keeps serving 271ms
+ ✓ src/serve.test.ts > ordinary HTTP construction (control) > keeps Fastify's default parser-error handler, which logs the raw packet at trace 162ms
+
+ Test Files  3 passed (3)
+      Tests  58 passed | 1 skipped (59)
+   Start at  10:24:11
+   Duration  7.92s (import 41%, tests 34%, transform 24%)
+
+# ---- end ----
+# ended: 2026-11-16T16:24:19Z
+# exit: 0

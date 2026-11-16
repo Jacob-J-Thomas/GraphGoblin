@@ -1,0 +1,54 @@
+# label: 04-green-parser-logger-serve-test
+# cwd: /c/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin
+# started: 2026-11-16T16:18:09Z
+# node: v22.23.4
+# command: pnpm --filter @graphgoblin/api exec vitest run src/gateway-logger.test.ts src/serve.test.ts --reporter=verbose
+# ---- output ----
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin/apps/api
+
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 0 21ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 1 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 2 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 3 13ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 4 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps configuration failure 5 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps store failure 6 12ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps recovery failure 7 14ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps http failure 8 14ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 9 15ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 10 13ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 11 13ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 12 13ms
+ ✓ src/serve.test.ts > managed startup failure causes > maps bind failure 13 13ms
+ ✓ src/serve.test.ts > managed startup failure causes > prints complete refusals as their message in a shell 13ms
+ ✓ src/gateway-logger.test.ts > keeps the correlated private #381 diagnostic and narrows real access records to method, route and status 1391ms
+ ✓ src/gateway-logger.test.ts > keeps the configured level for the managed destination 10ms
+ ✓ src/gateway-logger.test.ts > keeps the ordinary shell logger and its default serializers 1ms
+ ✓ src/gateway-logger.test.ts > projects only validated access fields from unusual inputs 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > answers ERR_HTTP_REQUEST_TIMEOUT with the default response and records only its closed outcome 2ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > answers HPE_HEADER_OVERFLOW with the default response and records only its closed outcome 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > answers HPE_INVALID_METHOD with the default response and records only its closed outcome 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > answers EPIPE with the default response and records only its closed outcome 1ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > leaves a reset or already destroyed connection alone, as the default does 3ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > closes an unwritable connection and omits any code that is not a Node identifier 3ms
+ ✓ src/gateway-logger.test.ts > managed client-error handler > keeps the configured level: an info gateway answers without a trace record 1ms
+ ✓ src/serve.test.ts > serve with the managed destination > reports each reached stage and writes engine records only to the bounded destination 1287ms
+ ✓ src/serve.test.ts > serve with the managed destination > keeps serving while every log write is stalled, within the pending-byte bound 679ms
+ ✓ src/serve.test.ts > serve with the managed destination > stops at the bind stage on an occupied port and releases ownership 186ms
+ ✓ src/serve.test.ts > serve with the managed destination > stops at the configuration stage on invalid overrides 20ms
+ ✓ src/serve.test.ts > serve with the managed destination > answers malformed wire requests at managed trace without logging their bytes, then keeps serving 238ms
+ ✓ src/serve.test.ts > ordinary HTTP construction (control) > keeps Fastify's default parser-error handler, which logs the raw packet at trace 130ms
+
+ Test Files  2 passed (2)
+      Tests  32 passed (32)
+   Start at  10:18:10
+   Duration  7.95s (import 44%, tests 30%, transform 26%)
+
+  Transform  transforming modules took 3.69s · 26% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+# ---- end ----
+# ended: 2026-11-16T16:18:18Z
+# exit: 0

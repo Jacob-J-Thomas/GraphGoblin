@@ -1,0 +1,44 @@
+# label: 09-repeat-new-tests-x5
+# cwd: /c/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin
+# started: 2026-11-16T16:21:58Z
+# node: v22.23.4
+# command: bash -c set\ -e\;\ for\ i\ in\ 1\ 2\ 3\ 4\ 5\;\ do\ echo\ \"===\ iteration\ \$i\ ===\"\;\ pnpm\ --filter\ @graphgoblin/api\ exec\ vitest\ run\ src/windows-log/gateway-log-writer.test.ts\ src/serve.test.ts\ -t\ \"multi-record\|malformed\ wire\|default\ parser-error\"\ --reporter=verbose\ 2\>\&1\ \|\ grep\ -E\ \"✓\|×\|Tests\ \|Test\ Files\"\;\ done
+# ---- output ----
+=== iteration 1 ===
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > retains one encoded copy of each record across a held multi-record write 50ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > releases a short multi-record write before its rollback and keeps the rollback safe 51ms
+ ✓ src/serve.test.ts > serve with the managed destination > answers malformed wire requests at managed trace without logging their bytes, then keeps serving 1342ms
+ ✓ src/serve.test.ts > ordinary HTTP construction (control) > keeps Fastify's default parser-error handler, which logs the raw packet at trace 149ms
+ Test Files  2 passed (2)
+      Tests  4 passed | 44 skipped (48)
+=== iteration 2 ===
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > retains one encoded copy of each record across a held multi-record write 50ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > releases a short multi-record write before its rollback and keeps the rollback safe 53ms
+ ✓ src/serve.test.ts > serve with the managed destination > answers malformed wire requests at managed trace without logging their bytes, then keeps serving 1249ms
+ ✓ src/serve.test.ts > ordinary HTTP construction (control) > keeps Fastify's default parser-error handler, which logs the raw packet at trace 137ms
+ Test Files  2 passed (2)
+      Tests  4 passed | 44 skipped (48)
+=== iteration 3 ===
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > retains one encoded copy of each record across a held multi-record write 50ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > releases a short multi-record write before its rollback and keeps the rollback safe 51ms
+ ✓ src/serve.test.ts > serve with the managed destination > answers malformed wire requests at managed trace without logging their bytes, then keeps serving 1198ms
+ ✓ src/serve.test.ts > ordinary HTTP construction (control) > keeps Fastify's default parser-error handler, which logs the raw packet at trace 131ms
+ Test Files  2 passed (2)
+      Tests  4 passed | 44 skipped (48)
+=== iteration 4 ===
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > retains one encoded copy of each record across a held multi-record write 47ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > releases a short multi-record write before its rollback and keeps the rollback safe 51ms
+ ✓ src/serve.test.ts > serve with the managed destination > answers malformed wire requests at managed trace without logging their bytes, then keeps serving 1197ms
+ ✓ src/serve.test.ts > ordinary HTTP construction (control) > keeps Fastify's default parser-error handler, which logs the raw packet at trace 153ms
+ Test Files  2 passed (2)
+      Tests  4 passed | 44 skipped (48)
+=== iteration 5 ===
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > retains one encoded copy of each record across a held multi-record write 51ms
+ ✓ src/windows-log/gateway-log-writer.test.ts > gateway log queue, faults and acknowledgment > releases a short multi-record write before its rollback and keeps the rollback safe 52ms
+ ✓ src/serve.test.ts > serve with the managed destination > answers malformed wire requests at managed trace without logging their bytes, then keeps serving 1141ms
+ ✓ src/serve.test.ts > ordinary HTTP construction (control) > keeps Fastify's default parser-error handler, which logs the raw packet at trace 142ms
+ Test Files  2 passed (2)
+      Tests  4 passed | 44 skipped (48)
+# ---- end ----
+# ended: 2026-11-16T16:22:41Z
+# exit: 0

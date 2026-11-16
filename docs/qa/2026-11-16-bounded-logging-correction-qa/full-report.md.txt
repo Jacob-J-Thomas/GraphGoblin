@@ -1,0 +1,379 @@
+# #438 correction candidate behavior QA: execution 01
+
+Independent Claude Code Opus 5.5 xhigh behavior QA of the frozen #438 correction candidate. I did not implement the product. This report is not a formal code review, merge approval or owner acceptance, and it uses none of the PR's formal scans, which remain at 1 of 3. Root owns acceptance, sanitized publication, corrected-head CI, the fresh Astra MAX formal scan 2, merge and owner handoff. The overall batch remains incomplete.
+
+## Outcome
+
+I ran the single root-admitted invocation once, and it reached a terminal state. The wrapper exited **0** and the driver reported **`complete`** with `stopped: null`, `remaining: []` and `closingMatchesOpening: true`.
+
+All eight candidate rows were reached. Each row has the status the sealed matrix requires for the candidate:
+
+- **Pass:** all 47 judged predicates.
+- **Informational:** 17 predicates.
+- **Fail, error, inconclusive, not-reached or coverage-warning:** none.
+
+Every case recorded complete cleanup.
+
+Root's closing verifier receipt `launcher-438-publication-binding-05.json` was present when I reported. It shows the same frozen `1a46` source, unchanged index and unchanged artifact maps. Section 5 gives the details.
+
+A wrapper exit of 0 is not acceptance on its own. The per-row predicates below come from the receipts, and I re-checked the facts that matter against the raw process, drain and file evidence.
+
+## 1. Bound inputs I verified before running (read-only)
+
+| Input | SHA-256 | Match |
+| --- | --- | --- |
+| Admission `launcher-438-correction-candidate-admission-04.json` (state `root-admitted`, schema v2) | `e049214f…a6ee` | yes (before and after the run) |
+| Preparation 04 `SHA256SUMS.txt` | `b5eeeb94…d05` | yes. Every listed file verified OK |
+| Wrapper `launch.ps1` | `52fb86cd…2a93` | yes |
+| Plan `plan.md` | `60a545ff…4706` | yes |
+| Contract `launcher-438-final-contract.md` | `a1a02313…f474` | yes |
+| Product binding `launcher-438-candidate-binding-02.json` (full opening proof) | `c99bdf4e…8805` | yes |
+| Candidate launcher `launcher-438-candidate-compile-02/GraphGoblin.exe` | `61834689…7b77` | yes (before and after) |
+| Legacy e21c launcher `launcher-438-baseline-compile-01/GraphGoblinBaseline.exe` | `57b4fad9…23aa` | yes (after the run) |
+| Legacy binding `launcher-438-baseline-binding-02.json` | `85a77468…20de` | yes |
+| Project Node v22.23.4 `node.exe` | `dccc52de…ec14f` | yes |
+| PowerShell 7.6.9 `pwsh.exe` | `2a6769a3…2233` | yes |
+| Baseline summary | `3e7bd9dc…b59f` | yes |
+| Baseline root readback manifest `SHA256SUMS.txt` | `9937ae18…dbef5` | yes |
+
+- **Checkout.** HEAD was `1a46c3074e6862d3fb3186fe6cb83b7ee1d890f9` with tree `e4a8c9f818dfdc9720f420ac84cf6862c0f85c16`. `git --no-optional-locks status --porcelain=v1 --untracked-files=all` was empty before and after the run.
+- **Output paths.** The invocation, output and fixture directories did not exist beforehand, and `publication-binding-05` was absent.
+- **Pre-existing runner files.** `events.jsonl`, `latest.md` and `launch.json` in this directory belong to the session runner. I did not touch them.
+
+## 2. The single execution
+
+I ran the exact admitted command once from Git Bash and monitored that same process until it ended. I did not retry it, signal anything or start any other workload.
+
+| Receipt (`launcher-438-correction-qa-rev04-candidate-invocation-01`) | Value |
+| --- | --- |
+| `requested.json` | Recorded 17:14:21.7028215Z. Executable: project Node. Arguments: `driver.mjs`, the admission and its digest. Environment keys exactly `PATH`, `SystemRoot`, `TEMP`, `TMP`, `WINDIR`. PATH = project Node dir, `System32`, `SystemRoot`. TEMP/TMP = `<invocation>\driver-temp`. |
+| `launch.json` | Driver PID **16520**, created **2026-11-16T17:14:21.7203953Z** |
+| `exit.json` | Exit code **0** at **17:16:20.5316043Z** |
+| `capture.json` | stdout 159 bytes, stderr 0 bytes. Matches `stdout.raw` (159) and `stderr.raw` (0). |
+| `stdout.raw` | `{"status":"complete","stopped":null,"output":"…\\launcher-438-correction-qa-rev04-candidate-output-01"}` |
+| `driver-temp` | Empty at the end |
+
+No `timeout.json` or `hard-deadline-*.json` was written.
+
+**Driver summary.** `launcher-438-correction-qa-rev04-candidate-output-01/summary.json` (SHA `65e0fb6a…0691`) covers 17:14:24.173Z to 17:16:20.515Z, status `complete`. Counters: 7 of 8 launches, 5 of 5 gateways, 892 of 5,000 requests, 4 of 4 malformed exchanges.
+
+**Opening receipt.** `opening.json` (SHA `7ede8b4d…87a1`) records:
+- driver PID 16520 with environment keys `PATH`, `SystemRoot`, `TEMP`, `TMP`, `WINDIR`;
+- a clean `1a46`/`e4a8` checkout;
+- the private parent's protected SDDL, exactly equal to the admitted `O:…-1002G:…-513D:PAI(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FA;;;…-1002)`;
+- an inheriting fixture directory (`AI`/`ID`).
+
+**Closing readback.** The driver's closing readback deep-equals the opening for all 17 selected source/dist digests and Git head, tree and clean state. Those selected digests are a partial check, not a full build binding (section 5).
+
+| Case | Start to end (UTC) | Body ms | Predicates (pass / info) |
+| --- | --- | ---: | --- |
+| s-source | 17:14:25.095 to 25.185 | 7 | 2 / 4 |
+| c-f2-writer | 17:14:26.147 to 26.717 | 487 | 8 / 4 |
+| c-f1-logger-err | 17:14:27.668 to 27.914 | 170 | 3 / 2 |
+| c-f1-client-error | 17:14:28.865 to 41.296 | 11,315 | 7 / 2 |
+| n-f1-trace-launcher | 17:14:42.356 to 59.390 | 16,042 | 10 / 2 |
+| n-f3-pipe-holder | 17:15:00.349 to 19.342 | 17,978 | 6 / 1 |
+| n-f3-file-holder | 17:15:20.285 to 40.386 | 19,010 | 6 / 1 |
+| n-f3-legacy-writer | 17:15:41.369 to 16:20.194 | 37,869 | 5 / 1 |
+
+## 3. Per-row results
+
+Evidence paths are relative to `launcher-438-native-preparation-v3/candidate-correction-revision04-fixture-01/cases/<case>/evidence/`.
+
+### 3.1 s-source (source-only tier)
+
+| Predicate | Status | Observation |
+| --- | --- | --- |
+| `docs-in-use-text-exact` | **pass** | The extractor located the bullet by the admitted bold heading `- **Log folder in use:**` in `docs/guide/07-troubleshooting.md` (bound `89cc9068…4339`). The whole 7-line LF-joined block equals `rc3.expectedDocsBlock` byte for byte. |
+| `launcher-in-use-text-source` | pass (info) | `Launcher.cs:354` (`DestinationInUseFailure`) carries the exact `rc3.expectedInUseText` literal. |
+| `adr-in-use-wording` | info | ADR-0081 lines 73–80 state that a sharing violation or exit 70 names no holder, and that shutdown guidance applies only if a GraphGoblin gateway holds the folder. |
+| `writer-allocation-primitives` | info (no coverage warning) | Built writer: `Buffer.from` ×3, `Buffer.concat` ×1, `Buffer.alloc` ×2, `.subarray(` ×1. Untracked primitives (`new Uint8Array`, `new ArrayBuffer`, `copyBytesFrom`, `encodeInto`, `DataView`, `Buffer.of`, `SharedArrayBuffer`): all 0, so `untrackedUsed` is empty. |
+| `writer-write-path-excerpt`, `client-error-locus` | info | Excerpts recorded. |
+
+**My own read-only checks** (not counted as tier evidence):
+- A repository grep, excluding `node_modules`, finds the old unqualified sentence ("already in use by another GraphGoblin gateway") only in preserved raw historical QA evidence: `docs/qa/2026-11-16-bounded-logging-supplemental/report/analysis.json:6284`. Raw JSON bytes there are kept by policy.
+- The new wording appears in `Launcher.cs:354`, in the troubleshooting guide heading at line 13, and in `tooling/scripts/windows-launcher.acceptance.mjs:1434`.
+
+### 3.2 c-f2-writer (controlled tier: exact built `gateway-log-writer.js` `e35d962b…3a42` with real files and documented seams)
+
+| Predicate | Status | Observation |
+| --- | --- | --- |
+| `rc2-backlog-reached` | **pass** | Same accepted backlog as the baseline: a held 65,536-byte first write carrying R0, then R1–R3 accepted at 65,536 bytes each, for 262,144 pending. Two completed writes `[65,536, 196,608]`. The candidate concatenated R1–R3 into one write, as the baseline did. |
+| `rc2-retained-cap` | **pass** | `headCapture.observed: true` at op 7 with one full R0 copy and `writeMatchesExpectedHead: true`. `maxMeasured 262,144` (equal to the cap, not over). `maxUnattributed 0`, `over []`, `gapPoints []`, `untrackedPrimitives []`. `decisiveWitness.observed` is false: the baseline's duplicate-copy witness no longer appears (see the table below). |
+| `rc2-logical-cap` | **pass** | `maxLogical 262,144` over 41 sampled points. |
+| `rc2-rotation-reached` | **pass** | See the pressure scenario below. |
+| `writer-invariants` | **pass** | For all five scenarios: `oneOpInFlight`, `preWriteFits`, `completeRecords`, `slotCaps`, `closed`. Where applicable: `committedInOrder`, `noDrops`, `ackSucceeded`, `seedExact`, `rotationReached`, `exactlyOneRotation`. `maxInFlight` is 1 in every scenario. |
+| `rc2-fault-short` | **pass** | See the fault scenarios below. |
+| `rc2-fault-enospc` | **pass** | See the fault scenarios below. |
+| `released-after-close` | **pass** | After close, measured and unattributed tagged bytes are 0 in every scenario. 300 bytes of pool residue remain in retention-b and both fault scenarios. That residue is allocator overhead, which the plan treats separately. |
+| `transient-allocation`, `backing-allocation`, `whole-process-memory`, `measurement-coverage` | info | `maxBackingBytes 270,036`, `maxPoolResidue 300`, `maxArrayBuffersDelta 262,144`, `maxHeapUsedDelta 179,384`. Coverage gaps are stated by the harness: JS strings and untracked primitives are invisible, and reused live buffers may over-count. |
+
+**Retention scenario A, held points (tracked encoded payload bytes):**
+
+| Point | Op | Logical pending | Candidate measured (copies per record) | Baseline measured (copies per record) |
+| --- | --- | ---: | --- | --- |
+| before first write | `lstat` #6 | 65,536 | 65,536 (R0×1) | 65,536 (R0×1) |
+| first write held with backlog | `handle.write` 65,536 #7 | 262,144 | 262,144 (R0–R3 ×1, full) | 262,144 (R0–R3 ×1) |
+| hold before second write | `lstat` #8 | 196,608 | **196,608 (R1–R3 ×1)** | **393,216 (R1–R3 ×2)** |
+| second write held | `handle.write` 196,608 #9 | 196,608 | **196,608 (R1–R3 ×1)** | **393,216 (R1–R3 ×2)** |
+
+In supporting scenario B (300-byte head plus backlog to the logical cap), the candidate peaked at **261,844** at the held `lstat` and 261,844-byte write. The baseline peaked at **523,688**.
+
+**Pressure scenario (rotation).**
+- **Seed:** exactly 3,600,000 bytes (3,516 lines, SHA `cd5a4895…c997b`, file id `2894493802:2814749774500239`), read back.
+- **Records:** 27 accepted (tagged and multibyte), with a 2 MiB budget.
+- **Writes before rotation:** 65,536, 185,224, 70,536, 173,840 and 86,920 bytes, filling 3,600,000 to 4,182,056.
+- **Rotation:** exactly one close, rename and create.
+- **Previous slot:** at the first completed rename it held **4,182,056** bytes, with the prefix equal to the seed bytes and the identity equal to the seeded file.
+- **After rotation:** the sixth write (261,379 bytes) went to position 0 of the new active slot.
+- **Results:** 27 of 27 records committed in order. The acknowledged record `pressure-5` was written and present at acknowledgement. Max logical and measured were both 261,379.
+
+**Fault scenarios.** Each committed a 300-byte head first: a one-record write event of 300 bytes with result `complete`, and the active file equal to the head. Head SHA was `1b25fb8f…c8e6` for short-write and `8d6b82b7…17ef` for ENOSPC.
+- **Short write:** the second reached write (196,608 bytes at position 300) wrote only 196,601 bytes. The writer then:
+  - dropped the batch (reason `fault`, 3 records, 196,608 bytes);
+  - rolled back to exactly 300 bytes (`rollback complete size 300`);
+  - suspended with `faults 1`, `delayMs 1000`, ending in state `suspended` with 0 pending;
+  - returned acknowledgement `fault-short-2` as `written: false`, with `maxInFlight` 1.
+- **ENOSPC:** the second write failed with `ENOSPC`. The writer dropped the batch the same way, left the size unchanged at 300, suspended with `faults 1`/`delayMs 1000`, returned acknowledgement `false`, and kept `maxInFlight` at 1.
+
+**Qualifications:**
+- These are tracked samples. They support the targeted correction but are **not** whole-heap accounting, and I infer none. Complete accounting rests on source data flow, below.
+- The pressure scenario uses the fixed seed `438`. In both baseline and candidate, its deterministic size sequence produced **no record larger than 65,536 bytes**, so the oversized-marker sub-stimulus named in the matrix scenario text was **not reached**. No row-2 predicate depends on it, and the 65,536-byte record edge was covered only by historical, non-repeated evidence. I report it as unreached, not as a failure.
+
+**Source reasoning** (read-only, `apps/api/src/windows-log/gateway-log-writer.ts` lines 408–489):
+- `takeBatch` splices the dequeued records out of the queue. For a single record it passes that record's own `bytes`; for several it makes one `Buffer.concat`. The `taken` array is local and goes out of scope on return, so across `verifyActiveName` and `handle.write` the writer holds one encoded copy of each in-flight record.
+- A failed batch is discarded before `rollback` runs, so the rollback does not hold the bytes.
+- This matches the measured single copies of R1–R3, including R2, which carries an acknowledgement. That means the acknowledgement closures do not retain the record bytes.
+
+### 3.3 c-f1-logger-err (controlled tier: exact built logger)
+
+| Predicate | Status | Observation |
+| --- | --- | --- |
+| `engine-err-retained` | **pass** | Private record keeps `QaEngineError` type, name, message and stack (`QaEngineError: qa438 engine diagnostic …`). |
+| `engine-diagnostic-retained` | **pass** | `runId: qa438-run`, `nodeId: qa438-node` |
+| `engine-err-extra-fields` | info | `code QA438_ENGINE` and `qaDetail` retained; cause appears in the message. |
+| `logger-locus-probe` | info | A parser-shaped `err` handed **directly** to the logger is still serialized with `rawPacket`, exactly as in the baseline. The correction sits at the managed `clientErrorHandler`, not in the logger. This is consistent with contract §1, which keeps Pino engine error payloads obtainable. |
+| `logger-settled` | **pass** | `settled: true` |
+
+### 3.4 c-f1-client-error (controlled tier: exact built guarded entry run as a direct child)
+
+- **Process:** PID **53268**. Exact command line: `node.exe --import file:///…/f1-receipt-preload.mjs …\apps\api\dist\main.js`. The preload SHA `89e3bd68…52fd2` equals the admitted script.
+- **Ownership proof:**
+  - CIM parent was driver 16520, birth FILETIME `134393228713583090`;
+  - both lease files named PID 53268 and that exact FILETIME;
+  - health identity was `f71b6eea…916d1f` with phase `running`.
+
+| Predicate | Status | Observation |
+| --- | --- | --- |
+| `rc1-parser-event-reached` | **pass** | Two enumerable `clientError` receipts reached the parser hazard.<br>• `HPE_INVALID_HEADER_TOKEN`: `rawPacket` 257 bytes containing all six P1 synthetic canaries (path, query, header, header name, synthetic bearer, body).<br>• `HPE_INVALID_CHUNK_SIZE`: `rawPacket` 39 bytes containing the P2 body canary. |
+| `rc1-reply-reached` | **pass** | Both replies `HTTP/1.1 400 Bad Request` with Fastify's default client-error body |
+| `rc1-sink-canary-free` | **pass** | 0 hits in the managed sink. The baseline had 14 hit entries. |
+| `rc1-leak-path-observed` | info | Two client-error records, both level 10 (trace), `msg "client error"`, shaped `{"clientError":{"statusCode":400,"code":"HPE_INVALID_HEADER_TOKEN"}}` and `…"HPE_INVALID_CHUNK_SIZE"`. No `err`, no `rawPacket`, no canary. |
+| `access-projection` | **pass** | No violations or access hits. Tuples are identical to the baseline: `GET (none) 404`, 3× incoming `POST /loops`, 2× completed `POST /loops 400`. |
+| `sink-records-complete` | **pass** | `broken: []` |
+| `gateway-liveness` | **pass** | Same PID and identity, phase `running`, before and after |
+| `public-reply-no-echo` | info | `v2-unregistered` echoes its path segment in Fastify's default 404 body. This is identical to the baseline and goes only to the requester. |
+| `direct-exit-after-drain` | **pass** | Exit 0 = close 0, stdout/stderr EOF 0/0 bytes |
+
+**Drain:** listener refused, both leases and reclaim names absent, exact birth absent (CIM `{}` at 17:14:39.532Z, after child close at 39.412Z). Port 54065 free. The store has no locks, and DB/WAL/SHM were opened exclusively together.
+
+**Source reasoning:** `managedClientErrorHandler` (`gateway-logger.ts` lines 77–101) is installed only when `managed` (`serve.ts:86`). It reproduces Fastify's default status, body and socket closure, and logs only `{statusCode, code}`, with `code` limited by `^[A-Z][A-Z0-9_]{0,63}$`. Ordinary shell mode deliberately keeps Fastify's default handler (contract §1, "In managed mode only"). Shell mode was not exercised in this row.
+
+### 3.5 n-f1-trace-launcher (native tier: compiled candidate launcher and a real launcher-started gateway at `GG_LOG_LEVEL=trace`)
+
+- **Launcher:** PID 42296 with `--config …\install\qa438-trace.json --ensure-gateway`. Exit 0 = close 0, stdout/stderr **0/0 bytes** (process-004). The `launcher-quiet-start` predicate only checks the exit code; I confirmed the zero byte counts from the raw receipt.
+- **Gateway:** PID 54924, parent 42296, exact command line `"…\node.exe" "…\GraphGoblin\apps/api/dist/main.js"`. Birth `134393228875069200`; leases carry that PID and FILETIME; identity `3170609a…5dc4` with phase `running`.
+
+| Predicate | Status | Observation |
+| --- | --- | --- |
+| `launcher-quiet-start` | **pass** | See above. |
+| `rc1-reply-reached` | **pass** | P1 and P2 both returned 400 with 145-byte replies (identical SHA `21329fea…1bca`) and Fastify's client-error body. |
+| `rc1-sink-canary-free` | **pass** | 0 live hits. The baseline had 14. |
+| `rc1-sink-canary-free-final` | **pass** | Final `gateway.log`, `gateway.log.1` and `launcher.log`: 0 hits. The baseline had 14 hits in the slots and 0 in the launcher log. |
+| `access-projection` | **pass** | Tuples identical to the baseline, plus `GET /app/ 200`. |
+| `sink-records-complete` | **pass** | 3,863 records parsed, `broken []`. |
+| `gateway-liveness` | **pass** | Same PID and identity throughout. |
+| `same-gateway-throughout` | **pass** | Same PID and identity throughout. |
+| `381-private-diagnostic` | **pass** | Run `01M7JNNH525PWK4KD8V9R42NBH`. Public failure: `INTERNAL_ERROR`, "node mut produced an invalid patch", node `mut`. Private record from PID 54924 keeps `ZodError` name, message and stack, and there is no stack on the public surface. |
+| `rotation-smoke` | **pass** | Active slot seeded at 3,931,136 bytes (inode `…9259`). After 720 provider-free requests, the previous slot is the seeded inode at **4,194,145 bytes** (≤ 4,194,304). The new active slot (inode `…0434`) holds 46,894 bytes at the end. Both have `nlink 1`, `badRecords 0`, and every sampled size is within the slot cap. |
+
+**Drain:** listener refused, leases absent, birth absent (CIM `{}`), port 54126 free. The census of launcher 42296 shows 0 children. One known `Content.IE5` junction was retained by exact link and target.
+
+### 3.6 n-f3-pipe-holder (native tier: plain Node non-gateway pipe holder; child exit 70, launcher exit 1)
+
+- **Holder:** PID **20068**, `node.exe -e …net.createServer…` (not a gateway), parent driver 16520, birth `134393229013046270`.
+- **Pipe:** it holds the root's reservation `\\.\pipe\GraphGoblin.GatewayLog.08db7006df3d42bcf89a541263b795ccb44a5e53`. The fixture computed that name independently from the root's dev/ino and checked it against the built `managed-root.js`.
+
+| Predicate | Status | Observation |
+| --- | --- | --- |
+| `rc3-refusal-reached` | **pass** | Launcher PID 55348 exit 1 = close 1. Record: `code destination-in-use`, `childExit 70`, `outcome refused`, `stage gateway`. The stderr message equals the record message. |
+| `rc3-text-exact` | **pass** | stderr message and launcher record message both equal `rc3.expectedInUseText` exactly. The message ends "No process was stopped and no gateway log file was changed." |
+| `rc3-presentation-bounds` | **pass** | stdout 0 bytes, stderr 820 bytes. No control characters. `Log folder:` and `Configuration:` lines are present and within 260 characters. |
+| `rc3-facts-retained` | info | `statesNoProcessStopped: true`, `statesNoLogChanged: false`. The `false` is a harness regex artifact (section 6). |
+| `rc3-holder-untouched` | **pass** | Holder birth unchanged during the refusal; a pipe probe still got `EADDRINUSE`. `gateway.log` and `gateway.log.1` absent before and after. Contender store empty with no locks, contender port refused. |
+| `rc3-holder-released-before-positive` | **pass** | Hard-coded pass in the fixture. My own check of the raw receipts is below. |
+| `positive-after-release` | **pass** | Positive launcher 32032 started gateway 48240 (parent 32032, birth `134393229108377920`). The gateway was proven and then drained: listener refused, leases absent. |
+
+**Ordering from the raw receipts:**
+1. Holder birth confirmed at 01.453.
+2. Refusal ran from 17:15:02.174 to 05.172.
+3. Holder birth unchanged at 05.176.
+4. Holder exited 0 = close 0 with both EOFs (stdout `released`, 8 bytes) at **05.972**.
+5. Exact birth absent at **05.975–06.673**.
+6. Positive identity at 06.677, positive launch at **08.041**.
+
+### 3.7 n-f3-file-holder (native tier: plain PowerShell non-gateway file holder; parent-sharing refusal with no child)
+
+- **Holder:** PID **54896**, `System32\WindowsPowerShell\v1.0\powershell.exe` (not a gateway), parent driver 16520, birth `134393229212079720`.
+- **Handle:** it holds the seeded `gateway.log` (80 bytes, id `2894493802:2251799821190128`, SHA `7a4908af…eab`) with access `ReadWrite` and sharing `ReadWrite, Delete`.
+
+| Predicate | Status | Observation |
+| --- | --- | --- |
+| `rc3-refusal-reached` | **pass** | Launcher PID 27552 exit 1 = close 1. The record has `code destination-in-use` and **no `childExit`**. The stderr message equals the record message. The refusal took about 4.7 s against a configured 3 s startup deadline, which is consistent with the parent waiting within that deadline before refusing. |
+| `rc3-text-exact` | **pass** | Exact equality for both stderr and the record. |
+| `rc3-presentation-bounds` | **pass** | stdout 0 bytes, stderr 820 bytes, bounds respected. |
+| `rc3-facts-retained` | info | Same regex artifact as the pipe route. |
+| `rc3-holder-untouched` | **pass** | Holder birth unchanged. `gateway.log` id, size and SHA unchanged; no `gateway.log.1`. Contender store has **no entries** (no child started), no locks, and the port is refused. |
+| `rc3-holder-released-before-positive` | **pass** | Hard-coded in the fixture. My check of the raw receipts is below. |
+| `positive-after-release` | **pass** | Positive launcher 53636 started gateway 28648 (birth `134393229323460050`), which was drained with leases absent. |
+
+**Ordering from the raw receipts:** the holder exited 0 = close 0 with EOFs (`released 1\r\n`, 12 bytes) at **27.755**. Birth absent at **27.756–28.388**. Positive identity at 28.392, positive launch at **29.686**.
+
+### 3.8 n-f3-legacy-writer (native tier: actual retained e21c gateway as the live legacy writer; candidate only)
+
+- **Predecessor proof before and after.** The predecessor proof ran before the predecessor started and again after it was drained. Both readbacks are identical:
+  - head `e21c24be9cef109ef438fd2df4c1583bc570b1cb`, tree `d064706fb48def7bacac5e434f96825c5850d214`;
+  - 29,739 source files byte-matched;
+  - artifact inventory `0e4f2fb9…d51f`;
+  - launcher `57b4fad9…23aa`.
+- **Predecessor gateway.** Fresh private `legacy-root`, stores, ports and tokens. The e21c `GraphGoblinBaseline.exe` (PID 43792, cwd the e21c checkout) started gateway **30532**:
+  - command line `"…\node.exe" "…\gg-20261115-runtime\GraphGoblin\apps/api/dist/main.js"`;
+  - parent 43792, birth `134393229577069950`, leases matched;
+  - identity `b1600006…6e57`, phase `running`.
+- **Legacy writer active.** Its inherited `gateway.log` received the sentinel access line and then went quiescent at 2,358 bytes (id `2894493802:10696049116013888`, SHA `d20bde0a…3e5d`).
+
+| Predicate | Status | Observation |
+| --- | --- | --- |
+| `rc3-refusal-reached` | **pass** | Candidate contender PID 42060 (candidate launcher `61834689…`, startup 2 s) exit 1 = close 1. Record at 17:16:05.743Z: `code destination-in-use`, **no `childExit`**. stderr equals the record. |
+| `rc3-text-exact` | **pass** | Exact equality for both stderr and the record. |
+| `rc3-presentation-bounds` | **pass** | stdout 0 bytes, stderr 839 bytes (longer configuration name than the other routes), bounds respected. |
+| `rc3-facts-retained` | info | Same regex artifact. |
+| `rc3-legacy-writer-untouched` | **pass** | Active id unchanged and the 2,358-byte prefix unchanged. Contender store: no entries and no locks; contender port refused; predecessor binding stable. |
+| `predecessor-drained` | **pass** | PID 30532 / birth `134393229577069950`: listener refused, leases absent, birth absent (CIM `{}` at 17:16:07.984Z). |
+
+**Still-serving check.** After the refusal, `prove()` re-checked the predecessor's full proof and deep-equalled the original; a mismatch would have thrown. Three further CIM rows at 05.763, 06.451 and 07.138 show the same PID, parent and birth. The drain then re-proved it again before its token GET and POST.
+
+**Cleanup:** census of launchers 43792 and 42060 shows 0 children; ports 54019 and 54049 free; both stores have no locks; predecessor DB/WAL/SHM opened exclusively.
+
+This row is fresh candidate evidence. It does not rely on the historical supplemental N-11 observation.
+
+## 4. Process, ownership and cleanup readback
+
+- **V4 process receipts.** I cross-checked all **76** (2 driver plus 74 case) for label, executable, args and cwd equality between attempt, spawn and outcome; PID equality between spawn and outcome; exit code and signal equal to close; and both EOF byte counts equal to the recorded counts and to the raw stream file lengths. Findings: **0 problems** and no timeouts or kills.
+  - The only non-zero exits are the three expected refusal launchers: 55348, 27552 and 42060, each exit 1 = close 1 with stdout 0 bytes and stderr 820, 820 and 839 bytes.
+  - The baseline readback counted 63 V4 outcomes; the candidate adds the legacy-writer row.
+- **Gateway drains.** There were **5 qualified gateway drains**: direct-gateway 53268, trace 54924, pipe positive 48240, file positive 28648 and predecessor 30532. Each was proven before it became a drain target:
+  - health identity = expected identity, phase `running`;
+  - CIM row with the admitted Node and exact command line;
+  - parent = recorded launcher or driver;
+  - both leases naming the PID and the raw creation FILETIME.
+
+  Each drain then showed the listener refused, `leasesAbsent: true`, and the exact birth absent (the final CIM query returned `{}`). Under plan §8, `leasesAbsent` covers both `graphgoblin.lock` and `graphgoblin.db.graphgoblin.lock` plus their `.reclaim` names; the separate cleanup lock-absence checks also returned `locks: []`. The direct child also showed exit 0 = close 0 with both EOFs. No gateway or launcher was signalled.
+- **Holders.** Pipe holder 20068 and file holder 54896 each exited 0 = close 0 with both EOFs and `goneAfterRelease`, and their exact births were absent before any positive start.
+- **Launcher-child census.** All 7 recorded launcher PIDs (42296, 55348, 32032, 27552, 53636, 43792, 42060) had **0 child rows**. The four census probes each exited 0 with empty stdout. Each probe's 616 stderr bytes are only PowerShell CLIXML progress records ("Preparing modules for first use."); I checked that nothing else remains once those records are removed.
+- **Ports.** All 8 case ports were free at cleanup. Ports 4747/4748 were never used.
+- **Store locks.** 8 lock-absence checks across all case stores (gateway, contender, positive, predecessor and candidate-contender), all with `locks: []`.
+- **Exclusive DB/WAL/SHM.** The 5 gateway stores each had `graphgoblin.db`, `-wal` and `-shm` opened exclusively at the same time (15 opens). The helper reported `qa438-exclusive <entries> 3` and exited 0. I did not open stores, keys or SQLite contents myself.
+- **No-follow inventory.** The frozen helper `--cleanup-scan` ran in all 8 cases with exit 0 and `tempHits: []` (no managed TEMP output). It retained exactly 4 reparse entries: the known WinINet `…\INetCache\Content.IE5` mount points in the trace, pipe-holder, file-holder and legacy-writer profiles. Each was attested as `retained-known-windows-cache-junction`, tag `0xa0000003`, with its link resolving to the sibling `IE` folder on the same volume. There are no unknown reparse points. I did not traverse any junction.
+- **Environment.** Every case environment's keys were exactly `APPDATA`, `LOCALAPPDATA`, `PATH`, `SystemRoot`, `TEMP`, `TMP`, `USERPROFILE`, `WINDIR`, with PATH = project Node, `System32`, `SystemRoot`. No `HOME`.
+- **Privacy readbacks.** Fixture, log-root, install and legacy-root owner was the operator SID. Allowed principals were SYSTEM, the operator and Administrators.
+- **Disposition.** Nothing is unresolved: no live process, held port or store lock is attributable to this run. All case fixture trees remain retained under `candidate-correction-revision04-fixture-01` for root's disposition.
+
+## 5. Full closing proof (root's verifier)
+
+`launcher-438-publication-binding-05.json` was present at report time. I read and hashed it; I did not create it or run any sweep.
+
+| Field | Value |
+| --- | --- |
+| SHA-256 / bytes | **`5096448132e61138a83174ec65d198a31f81578bc3f31d7271362136052cf791`** / 161,581 |
+| `recordedAt` | 2026-11-16T17:17:07.537Z, after driver exit at 17:16:20.53Z |
+| Schema / mode | `gg438-publication-metadata-provenance/v1` / `frozen-source-readback` |
+| Opening and closing | Both: head `1a46c3074e6862d3fb3186fe6cb83b7ee1d890f9`, tree `e4a8c9f8…`, actual main `e21c24be…`/`d064706f…`, clean, index `a3ccd90a…3646` |
+| Source | `trackedFiles 30,586`, `frozenBytesMatched 30,586`, `indexMatchesTree true`, `changes []` |
+| Binding referenced | `launcher-438-candidate-binding-02.json` `c99bdf4e…8805` |
+| Build and launcher references | source-build `571e8046…d7`, build receipt `74395766…00`, launcher `61834689…7b77`, compiler receipt `f5097cc4…19` |
+| Artifacts | 1,255 output files in 13 roots, inventory `aeeff6ac…2496`. **I verified that its `outputRoots`, `outputFiles`, `runtimeEntries`, `dependencyFiles`, `workspaceLinks`, `inventorySha256` and `counts` deep-equal binding-02's.** |
+| Executions recorded | builds 0, native 0, tests 0, formal scans 0 |
+
+**What I did and did not check.** I compared JSON maps only. I did not recompute `trackedBytesDigest` (`0c92517e…84c9`) or audit the verifier script. Acceptance of the closing proof belongs to root.
+
+## 6. Adversarial observations and qualifications
+
+None of these is a product defect.
+
+1. **`rc3-facts-retained.statesNoLogChanged` is `false` on all three candidate routes (true in the baseline).** The harness regex `/no log file was changed/` does not match the new admitted wording "no **gateway** log file was changed". The predicate is informational, and exact-text equality (pass) is the oracle. The admitted final sentence is present verbatim. This is a harness wording artifact.
+2. **`rc3-holder-released-before-positive` is a hard-coded `pass` in `f3-in-use-guidance.mjs`.** It relies on `holdExact` throwing otherwise. I verified the exit, close, EOF, birth absence and ordering independently from the raw V4 receipts (sections 3.6 and 3.7).
+3. **`launcher-quiet-start` checks only the exit code.** I verified 0/0 stdout/stderr bytes from the raw launcher receipt.
+4. **`decisiveWitness.observed: false` on the candidate is not a vacuous pass.** The head capture was observed, and the same op 8/9 hold points (196,608-byte pre-write `lstat` and write) were reached with full single copies of R1–R3.
+5. **`rc2-retained-cap` peaks exactly at the 262,144-byte cap.** This is the moment R0 is in flight and R1–R3 are queued, matching logical pending. The pass condition is ≤ cap.
+6. **The oversized-marker sub-stimulus in the pressure scenario was not reached** in either build (fixed seed 438; no record over 65,536 bytes). No predicate covers it.
+7. **Logger-level locus unchanged.** A future code path that logs a raw Node parser error object directly through the managed logger would still serialize `rawPacket`. The correction is the managed `clientErrorHandler` only. Shell mode keeps Fastify's default by design.
+8. **Request pairing.** In both builds, the chunked P2 request has an "incoming request" record without a "request completed" record (the socket is destroyed mid-body). `sink-records-complete` judges JSON-line completeness, not request pairing.
+9. **Not exercised in this run** (plan §9): dialog presentation; native 408 and 431 client errors; other runtimes; cross-user or cross-session holders and races; fatal termination; nonlocal filesystems; real disk-full (ENOSPC was a seam). Native whole-process memory was not measured, and native rotation is sampled.
+
+## 7. Evidence tiers
+
+| Tier | What counts here |
+| --- | --- |
+| Controlled production seams | c-f2-writer: exact built writer with real files plus the documented fs seams for holds, short write and ENOSPC, and tracked allocation sampling. c-f1-logger-err: exact built logger. c-f1-client-error: exact built guarded entry as a direct child with a read-only receipt preload, real loopback HTTP and the real managed sink. |
+| Native launcher behavior | n-f1-trace-launcher, n-f3-pipe-holder, n-f3-file-holder and the n-f3-legacy-writer contender: compiled candidate launcher `61834689…`. The legacy predecessor ran on the e21c launcher `57b4fad9…` and build. |
+| Source reasoning | s-source predicates, plus my read-only reads of `gateway-log-writer.ts`, `gateway-logger.ts` and `serve.ts`, and a repository grep for the old text. |
+| Implementer unit checks | Not run and not counted. Tests such as `gateway-logger.test.ts` and `serve.test.ts` exist in source and are review inputs only. |
+| CI | Not run here. Root owns all corrected-head CI jobs. |
+
+## 8. Baseline comparison
+
+| Row | Baseline (revision 04, frozen `4dbb0dc`) | Candidate (`1a46c30`) |
+| --- | --- | --- |
+| s-source | Frozen block equal (negative control) | Root-reviewed block equal |
+| c-f2-writer | `rc2-retained-cap` **fail**: 393,216 at the 196,608 write and pre-write `lstat`, two copies each of R1–R3, max 523,688, 10 over-cap points | **pass**: 196,608 there, one copy each, max 262,144, 0 over, 0 gaps. All other predicates pass in both. |
+| c-f1-logger-err | pass | pass (same locus probe) |
+| c-f1-client-error | `rc1-sink-canary-free` **fail**: 14 hit entries in 2 client-error records with `err.rawPacket` | **pass**: 0 hits; records hold only `{statusCode, code}`. Parser events and 400 replies reached in both. |
+| n-f1-trace-launcher | `rc1-sink-canary-free` and `-final` **fail**: 14 live and 14 final slot hits | **pass**: 0 live, 0 slots, 0 launcher log. Rotation, #381, liveness and access pass in both. |
+| n-f3-pipe-holder | Refusal reached (exit 1, child 70). Text = frozen unqualified attribution; stderr 652 bytes | Same route reached. Text = root-reviewed conditional text; stderr 820 bytes. |
+| n-f3-file-holder | Parent refusal (no child). Frozen text; 652 bytes | Same route. Reviewed text; 820 bytes. |
+| n-f3-legacy-writer | Not admitted | Reached against a live e21c gateway. Reviewed text; predecessor untouched, then drained. |
+
+All four failing baseline negative controls became passes: `rc2-retained-cap` (row 2), `rc1-sink-canary-free` (rows 4 and 5) and `rc1-sink-canary-free-final` (row 5). The two frozen-text RC3 routes now match the reviewed text, with refusal reach and holder safety unchanged. Process, ownership and cleanup discipline matched the baseline's qualified pattern.
+
+## 9. What I did and did not do
+
+- **Did:**
+  - one execution of the admitted command;
+  - read-only hashing;
+  - read-only `git --no-optional-locks rev-parse` and `status`;
+  - read-only grep and reads of source and receipts;
+  - read-only JSON analysis with the project Node (inline and stdin scripts, no files written outside this directory).
+- **Wrote only in this directory:** `evidence-inventory.json`, `full-report.md`, `SHA256SUMS.txt`.
+- **Did not:**
+  - build, test or retry;
+  - signal any process or touch ports 4747/4748;
+  - write to Git or GitHub, or touch owner stores, profiles, services or installs;
+  - use SSH, real providers or additional agents;
+  - scan processes broadly or traverse fixture stores or junctions;
+  - read master keys or SQLite contents;
+  - modify or delete any evidence.
+- **Synthetic canaries** in this evidence are artificial QA inputs, not credentials. No real secrets or owner data are included here.
+
+## 10. Inventory and seal
+
+- [`evidence-inventory.json`](evidence-inventory.json) lists bounded SHA-256 hashes for:
+  - inputs and runtimes;
+  - the 6 invocation receipts;
+  - opening, summary and the 10 driver-evidence files;
+  - the key evidence files per case;
+  - a per-case process-receipt manifest digest covering all 76 process receipt sets;
+  - the closing verifier;
+  - the baseline comparison files.
+- No evidence file in any case evidence directory is unlisted. Fixture trees, stores and junctions are excluded by design.
+- [`SHA256SUMS.txt`](SHA256SUMS.txt) seals this report and the inventory.

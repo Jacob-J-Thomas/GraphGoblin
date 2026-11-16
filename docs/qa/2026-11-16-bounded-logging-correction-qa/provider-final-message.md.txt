@@ -1,0 +1,37 @@
+I ran the single admitted invocation once. It finished with wrapper exit 0 and driver status `complete`, and all eight candidate rows reached the status the sealed matrix requires: 47 predicates pass, 17 are informational, and none failed, errored, was inconclusive or went unreached. Every case cleaned up completely. This is independent behavior QA only, not acceptance; formal scans stay at 1 of 3 and the batch remains incomplete.
+
+**Execution:** driver PID 16520 ran from 17:14:21.72Z to 17:16:20.53Z, with 159 bytes of stdout and 0 of stderr. No timeout or hard-deadline file was written. The driver's closing readback matched its opening at `1a46c30`/`e4a8c9f`, and the checkout was clean before and after.
+
+**Rows:**
+- **s-source:** the troubleshooting block under "Log folder in use" equals the admitted block exactly. The writer uses no untracked allocation primitives, so there is no coverage warning.
+- **c-f2-writer:** the same backlog was accepted and the held 65,536-byte head was captured. At the 196,608-byte write and its pre-write check, the candidate held 196,608 tracked bytes with one copy each of R1–R3; the baseline held 393,216 with two copies each. The supporting scenario peaked at 261,844 (baseline 523,688). Overall peak was 262,144 (at, not over, the cap) with no gaps or unattributed bytes.
+  - The 3,600,000-byte seed was preserved in the previous slot at the single rotation.
+  - The short-write and ENOSPC faults both reached the second write after the committed 300-byte head; rollback, suspension, queue release, failed acknowledgement and one-operation-in-flight all held.
+  - These are tracked samples only; I did not infer whole-heap accounting.
+- **c-f1-logger-err:** the private engine error and diagnostic were retained and the logger settled.
+- **c-f1-client-error:** both parser errors were reached with the synthetic canaries in the raw packets, and both replies were 400. The managed sink had 0 canary hits (baseline 14). Client-error records now carry only status code and error code. The direct child stayed live, then drained and exited 0 with both streams closed.
+- **n-f1-trace-launcher:** the launcher exited 0 with no output, and the same gateway served throughout. The live log, final log slots and launcher log were all canary-free (baseline 14 live and 14 final hits). The #381 private ZodError was retained. One sampled rotation left the previous slot at 4,194,145 bytes, under the 4,194,304 cap.
+- **n-f3-pipe-holder:** child exit 70 and launcher exit 1, with the exact new text in both stderr and the launcher record. The plain Node holder and the log names were untouched, and the contender had no leases or listener. The holder exited and its birth was confirmed gone before the positive launch, which then drained.
+- **n-f3-file-holder:** the parent refused without starting a child (no child exit), with the exact new text. The PowerShell holder's file was unchanged, the contender store stayed empty, and the release and positive drain completed.
+- **n-f3-legacy-writer:** a live, separately bound e21c gateway was the legacy writer. The candidate refused at the parent with the exact new text. The predecessor's log was unchanged, its identity re-check matched after the refusal, its binding readbacks matched before and after, and it then drained.
+
+**Process and cleanup readback:**
+- All 76 process receipts are consistent, including close codes and both stream byte counts against the raw files. The only non-zero exits are the three expected refusal launchers (exit 1).
+- Five gateways drained after full proof: listener refused, leases absent, exact birth absent. Both holders exited 0 with their births gone before any positive start.
+- All seven launcher PIDs had zero children, eight ports were free, eight stores had no locks, and five stores passed the exclusive DB/WAL/SHM open.
+- No TEMP files were written. Only the four known `Content.IE5` cache junctions were retained, and I did not traverse them.
+
+**Closing proof:** `launcher-438-publication-binding-05.json` was present when I reported (SHA `5096448132e61138a83174ec65d198a31f81578bc3f31d7271362136052cf791`). It records frozen `1a46c30` with an unchanged index, all 30,586 source files matching their frozen bytes, and no changes. Its 1,255-output artifact map is identical to binding-02. I did not recompute its tracked-bytes digest or audit the verifier; accepting it is root's call.
+
+**Harness quirks (none is a product defect):**
+- The informational `statesNoLogChanged` check reads `false` on all three RC3 routes. Its pattern looks for "no log file was changed", but the new text says "no gateway log file was changed".
+- The holder-release check is a hard-coded pass, and the quiet-start check looks only at the exit code. I confirmed both from the raw process receipts instead.
+- Because the pressure scenario uses a fixed seed, neither run produced an oversized record, so the oversized-marker path was never exercised. No predicate depends on it.
+- The managed fix is in the client-error handler, not the logger: a raw parser error passed straight to the logger would still be serialized, as in the baseline. Shell mode keeps Fastify's default by design.
+
+Nothing remains unresolved: no live process, held port or store lock from this run. Fixture trees are retained for root.
+
+Files are in `launcher-438-correction-opus-execution-01`:
+- `full-report.md` (`e52cf664…b991`)
+- `evidence-inventory.json` (`4b2026ab…f8dd`)
+- `SHA256SUMS.txt` (`b53d8721…e4ed`)

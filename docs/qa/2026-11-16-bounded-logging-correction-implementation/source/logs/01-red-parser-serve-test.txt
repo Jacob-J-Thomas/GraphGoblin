@@ -1,0 +1,262 @@
+# label: 01-red-parser-serve-test
+# cwd: /c/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin
+# started: 2026-11-16T16:12:34Z
+# node: v22.23.4
+# command: pnpm --filter @graphgoblin/api exec vitest run src/serve.test.ts
+# ---- output ----
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261116-bounded-logs-corrections/GraphGoblin/apps/api
+
+ ❯ src/serve.test.ts (21 tests | 1 failed) 2623ms
+   ❯ serve with the managed destination (5)
+     × answers malformed wire requests at managed trace without logging their bytes, then keeps serving 222ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/serve.test.ts > serve with the managed destination > answers malformed wire requests at managed trace without logging their bytes, then keeps serving
+AssertionError: expected [ { level: 10, …(5) } ] to deeply equal [ { level: 10, …(5) }, …(1) ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "clientError": {
++     "err": {
++       "bytesParsed": 141,
+        "code": "HPE_INVALID_HEADER_TOKEN",
+-       "statusCode": 400,
++       "message": "Parse Error: Invalid header token",
++       "rawPacket": {
++         "data": [
++           71,
++           69,
++           84,
++           32,
++           47,
++           104,
++           101,
++           97,
++           108,
++           116,
++           104,
++           122,
++           47,
++           71,
++           71,
++           95,
++           80,
++           65,
++           82,
++           83,
++           69,
++           82,
++           95,
++           80,
++           65,
++           84,
++           72,
++           95,
++           67,
++           65,
++           78,
++           65,
++           82,
++           89,
++           63,
++           112,
++           114,
++           111,
++           98,
++           101,
++           61,
++           71,
++           71,
++           95,
++           80,
++           65,
++           82,
++           83,
++           69,
++           82,
++           95,
++           81,
++           85,
++           69,
++           82,
++           89,
++           95,
++           67,
++           65,
++           78,
++           65,
++           82,
++           89,
++           32,
++           72,
++           84,
++           84,
++           80,
++           47,
++           49,
++           46,
++           49,
++           13,
++           10,
++           72,
++           111,
++           115,
++           116,
++           58,
++           32,
++           49,
++           50,
++           55,
++           46,
++           48,
++           46,
++           48,
++           46,
++           49,
++           13,
++           10,
++           65,
++           117,
++           116,
++           104,
++           111,
++           114,
++           105,
++           122,
++           97,
++           116,
++           105,
++           111,
++           110,
++           58,
++           32,
++           66,
++           101,
++           97,
++           114,
++           101,
++           114,
++           32,
++           71,
++           71,
++           95,
++           80,
++           65,
++           82,
++           83,
++           69,
++           82,
++           95,
++           66,
++           69,
++           65,
++           82,
++           69,
++           82,
++           95,
++           67,
++           65,
++           78,
++           65,
++           82,
++           89,
++           13,
++           10,
++           66,
++           97,
++           100,
++           32,
++           72,
++           101,
++           97,
++           100,
++           101,
++           114,
++           58,
++           32,
++           71,
++           71,
++           95,
++           80,
++           65,
++           82,
++           83,
++           69,
++           82,
++           95,
++           72,
++           69,
++           65,
++           68,
++           69,
++           82,
++           95,
++           67,
++           65,
++           78,
++           65,
++           82,
++           89,
++           13,
++           10,
++           13,
++           10,
++         ],
++         "type": "Buffer",
++       },
++       "reason": "Invalid header token",
++       "stack": "Error: Parse Error: Invalid header token",
++       "type": "Error",
+      },
+      "hostname": "DESKTOP-RQPA3QI",
+      "level": 10,
+      "msg": "client error",
+      "pid": 47604,
+      "time": 1794845564140,
+-   },
+-   {
+-     "clientError": {
+-       "code": "HPE_HEADER_OVERFLOW",
+-       "statusCode": 431,
+-     },
+-     "hostname": Any<String>,
+-     "level": 10,
+-     "msg": "client header_overflow",
+-     "pid": 47604,
+-     "time": Any<Number>,
+    },
+  ]
+
+ ❯ src/serve.test.ts:228:87
+    226|       // Only the closed outcome, its status and Node's parser code; n…
+    227|       // header or packet bytes.
+    228|       expect(records.filter((record) => String(record['msg']).startsWi…
+       |                                                                                       ^
+    229|         {
+    230|           level: 10,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 20 passed (21)
+   Start at  10:12:35
+   Duration  9.19s (import 45%, tests 29%, transform 25%)
+
+  Transform  transforming modules took 2.28s · 25% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261116-bounded-logs-corrections\GraphGoblin\apps\api
+
+# ---- end ----
+# ended: 2026-11-16T16:12:44Z
+# exit: 1

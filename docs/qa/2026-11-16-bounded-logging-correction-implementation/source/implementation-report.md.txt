@@ -1,0 +1,142 @@
+# #438 correction implementation 02: handoff for root integration
+
+Actual Claude Code Opus 5.5 (xhigh) correction implementation session. The session implemented the three root causes accepted from formal scan 1 (`launcher-438-formal-sol-scan1/report.md`, SHA-256 `0a3c6d32e07c94ac305a38468c17a2d0d8b91688a09ae55d66f39049e33dc9fd`, verified on read) as dispositioned in `launcher-438-formal-sol-scan1-dispositions.md`. It also read AGENTS.md, docs/README.md, docs/15 and `launcher-438-final-contract.md`.
+
+This is source, documentation and focused unit verification only. It does not establish CI, native acceptance, independent QA, review or merge. No commits, index, stash, push or GitHub actions were taken. No build, coverage or native suite was run, and no process was terminated. No provider was launched.
+
+## Identity
+
+- Checkout `C:\Users\98jak\.codex\worktrees\gg-20261116-bounded-logs-corrections\GraphGoblin`, a sparse worktree whose sparse set excludes `/docs/qa/`.
+- Start: HEAD `4dbb0dc185a9419fcebabd85e199dd554c382b4f`, tree `6fb222d5b1e70ae6aa16c9702a36f12241c82a89`, clean (`logs/00-start-state.txt`).
+- End: same HEAD and tree, uncommitted working-tree changes in 15 files only. `docs/qa` and `apps/api/dist` are absent (`logs/13-end-state.txt`).
+- Node v22.23.4 is the project runtime and is first on PATH for every command. pnpm 12.8.1 ran in Git Bash, the documented equivalent of `pnpm.cmd` in PowerShell (AGENTS.md). `run-logged.sh` records each command, its output and its exit status in `logs/<label>.txt` and `commands.tsv`.
+- Full working-tree diff against HEAD is in `source.diff` (SHA-256 `dd69ad2ce4602a3d4f857883a8cdca54fe9f9d33884bb63d6140f59cbeb6890c`). `changed-files.txt` lists the files. Per-file SHA-256 values are in `logs/13-end-state.txt`.
+
+## Changed files
+
+| File | Root cause |
+| --- | --- |
+| `apps/api/src/gateway-logger.ts` | 1: `managedClientErrorHandler`, `ClientSocket` |
+| `apps/api/src/app.ts` | 1: optional `BuildAppOptions.clientErrorHandler`, passed to Fastify only when supplied |
+| `apps/api/src/serve.ts` | 1: supplies the handler only when `managed` is present |
+| `apps/api/src/gateway-logger.test.ts` | 1: unit tests for the handler's closed outcomes |
+| `apps/api/src/serve.test.ts` | 1: managed wire regression plus ordinary-construction control |
+| `apps/api/src/windows-log/gateway-log-writer.ts` | 2: `takeBatch`, `writeBatch` returns its rollback request, `cycle` keeps only a length |
+| `apps/api/src/windows-log/gateway-log-writer.test.ts` | 2: two reachability regressions; the seam gained a truncate stall and weak write-buffer references |
+| `apps/windows-launcher/Launcher.cs` | 3: `DestinationInUseFailure` text and two doc comments (no logic changes) |
+| `apps/windows-launcher/NativeChecks.cs` | 3: bounded-log check for the neutral, conditional text |
+| `tooling/scripts/windows-launcher.acceptance.mjs` | 3: both destination-in-use stderr expectations |
+| `docs/guide/07-troubleshooting.md` | 3 |
+| `docs/decisions/ADR-0081-bounded-windows-launcher-logs.md` | 1, 2 and 3 (paragraphs reflowed to 100 columns) |
+| `docs/10-testing-and-quality.md`, `docs/11-security-and-distribution.md`, `CHANGELOG.md` | 1 and 2 (docs/10 also 3) |
+
+No dependency, schema, stored-format, CLI, exit-code, protocol, marker, pipe-derivation, environment or workflow change. The delivery register and the original QA, CI and review artifacts were not touched.
+
+## 1. Managed HTTP parser-error privacy
+
+**Cause.** `managed-http/client-error-bypasses-access-projection`. Node's parser failure reaches Fastify's default `clientErrorHandler` before any Fastify request exists. At trace, that handler logs `{ err }` through Pino's standard `err` serializer, which copies the enumerable `rawPacket`.
+
+**Resolution.** In managed mode only, `serve()` passes `managedClientErrorHandler` to `buildApp` as Fastify's `clientErrorHandler`. This is the exact boundary where the error is logged. The handler reproduces Fastify 5.12.5's default handler with the same mapping and bytes:
+
+- An `ECONNRESET` error or an already destroyed socket returns without action.
+- `ERR_HTTP_REQUEST_TIMEOUT` answers 408 and `HPE_HEADER_OVERFLOW` answers 431. Every other error answers 400.
+- The response has the same status line, `Content-Length`, `Content-Type` and JSON body, and is written only if the socket is writable.
+- `socket.destroy(error)` closes the connection.
+
+The only difference is the trace record. It contains `{ clientError: { statusCode, code? } }` with the same `client <label>` message. `code` is included only when it matches `^[A-Z][A-Z0-9_]{0,63}$`, which Node error codes such as `HPE_INVALID_HEADER_TOKEN` satisfy. The record never contains the error's message, reason, stack, `rawPacket`, headers or other fields.
+
+Pino's `err` serializer is unchanged, so engine and provider error name, message and stack, including the #381 correlated record, remain in the private log. The configured level is kept, so the record is only emitted at trace. Shell mode and `createTestApp` do not pass the option, so Fastify keeps its default handler there.
+
+**Verification.**
+
+- First failure, `logs/01-red-parser-serve-test.txt`, exit 1, unmodified source: in the managed `serve()` wire test at `GG_LOG_LEVEL=trace`, the `client error` record contained `err.bytesParsed`, `err.message` (`Parse Error: Invalid header token`), `err.reason` and `err.rawPacket` as a numeric JSON Buffer. `red-rawpacket-decoded.txt` decodes those 177 bytes to the complete packet: path, query, `Authorization: Bearer …` and header canaries. The 431 record was absent because its approximately 17 KiB packet encoded above 64 KiB and the writer replaced it with the oversized marker. The ordinary-construction control passed.
+- Corrected, `logs/04-green-parser-logger-serve-test.txt` and `logs/10-final-focused-tests.txt`, exit 0:
+  - The managed wire test sends a real 177-byte malformed packet and a 17 KiB header-overflow packet to the real listening server. Each receives Fastify's exact 400 or 431 response bytes and the connection closes; the helper rejects if the socket stays open for 10 s.
+  - An ordinary `/healthz` request afterwards returns 200, and its access record is projected to `{ method, route, statusCode }`.
+  - `gateway.log` is parsed as JSON. The client-error records equal exactly `{level:10,time,pid,hostname,msg,clientError:{statusCode,code}}` for `HPE_INVALID_HEADER_TOKEN`/400 and `HPE_HEADER_OVERFLOW`/431.
+  - Every key and string in every record, with every numeric byte array decoded as Latin-1, contains none of the four canaries.
+  - The control test uses `createTestApp`, ordinary construction with a trace Pino logger. It shows that the same input still reaches Fastify's default handler and its `err.rawPacket` decodes to the query canary. This shows that the input reaches the parser and that defaults are unchanged.
+  - Handler unit tests run the real managed logger. They cover 408, 431, 400 (parser) and 400 (`EPIPE`) with exact response bytes and `destroy(error)`, ECONNRESET and destroyed sockets, an unwritable socket, rejected code shapes (undefined, number, lowercase, spaced canary, 65 characters) and info level (no record, response still sent). A canary in the message, reason, `rawPacket` and headers never appears.
+- Order note: the wire test was written and failed first. The handler unit tests import the new export, so they were written after the handler existed.
+
+**Limits.** The request timeout (408) is exercised only through the handler with a fake socket. A wire timeout would need Node or Fastify timeout settings that the app does not set. The native, launcher-started trace-level gateway was not run.
+
+## 2. Retained encoded-data cap
+
+**Cause.** `gateway-writer/coalesced-batch-duplicates-retained-bytes`. `writeBatch` kept the dequeued `Pending[]`, whose records still referenced their `bytes`, alive alongside the `Buffer.concat` copy across `verifyActiveName()` and `handle.write()`. It also kept both alive across the awaited rollback after `settle(false)` had already released the in-flight charge. The logical counters were correct but undercounted what was retained.
+
+**Resolution** (`gateway-log-writer.ts`):
+
+- New synchronous `takeBatch()`. It selects records with unchanged slot-boundary logic, splices them from the queue and moves the charge from queued to in-flight. It returns `{ buffer, records, acks }`: the record's own bytes for a single record, or one `Buffer.concat` for several. It also returns only the acknowledgment callbacks. The dequeued records are unreachable when it returns.
+- `writeBatch()` holds only that one buffer across its awaits. `settle` releases the charge, and every path returns immediately after `settle` without awaiting again. On a failed or short write it returns `{ handle, position, code }`, and `cycle()` performs the unchanged `rollback()` and `fault()` sequence after `writeBatch` has finished.
+- `cycle()` keeps only `this.queue[0]?.bytes.length` across rotation instead of the queue head object.
+
+Unchanged: one filesystem operation in flight, order, the batch boundary, one write per batch, the `write` and `drop` observer events, per-record `writeAcknowledged`, the 256 KiB cap and drop summaries, slot and record limits, rollback and disable behaviour, the backoff and fault constants, and the 250 ms settle.
+
+**What the tests observe.** Both tests use the production writer over real files through its filesystem seam. They use the pre-existing `--expose-gc` from `apps/api/vitest.config.ts`.
+
+1. *Held multi-record write.* This is the reviewer's case.
+   - A 65,536 B write is held.
+   - Three records of 65,536, 65,437 and 100 B (131,073 B) are enqueued. While only those three synchronous calls run, `Buffer.from` is patched to record a `WeakRef` to each encoded record and nothing else; exactly 3 are captured.
+   - The first write is released and the coalesced 131,073 B write is held at the seam. After one macrotask (so WeakRef keep-alive for the job ends) and a full `gc()`, all three record buffers are collected while the write's own 131,073 B buffer is reachable.
+   - The test then fills the remaining budget to exactly 262,144 B, sees the next record dropped, sees the acknowledgment pending until its batch completes and true afterwards, and checks write order and file contents.
+2. *Short multi-record write with held rollback.*
+   - A 2×65,536 B coalesced write lands 5 B, and the rollback's truncate is held.
+   - Both acknowledgments are already false and `pendingBytes` is 0. After `gc()`, neither record buffer nor the 131,072 B write buffer is reachable.
+   - On release, the rollback truncates to 15 B, the writer suspends (finite backoff) and only the kept record remains.
+
+First failure, `logs/02-red-writer-test.txt`, exit 1, unmodified writer: both tests reported `expected [ true, true, true ] to deeply equal [ false, false, false ]`. The originals and the copy were all still reachable. Gates that stayed held after the throw then caused `afterEach` hook timeouts. Before the corrected run, both tests were wrapped in `try/finally` to release their gates; the assertions were unchanged. Corrected: `logs/03-green-writer-test.txt` (26 passed, 1 pre-existing skip) and `logs/10-final-focused-tests.txt`. `logs/09-repeat-new-tests-x5.txt` shows 5 of 5 iterations green for both retention tests and both parser wire tests. The two extra marker characters in that log come from the logged command line.
+
+**What rests on source and data-flow reasoning rather than observation.**
+
+- At every await in `cycle`, `rotate`, `completeRotation`, `verifyActiveName`, `writeBatch` and `rollback`, the only strong references to encoded record payload are the queue entries, which are charged to `queuedBytes`, and `writeBatch`'s single `buffer`, which is charged to `inFlightBytes` until `settle`, with no await after it.
+- The tests sample two transitions. The general invariant across rotation and the `verifyActiveName` recreate path is argued from the source.
+- The previous `first` reference in `cycle` could outlive its uncharged drop only during `disable()`'s `closeHandle()`, with enqueue refused and at most 64 KiB held. That was not a cap overrun but was changed for exactness and is not separately tested.
+- Not part of the retained-payload contract: the synchronous `Buffer.concat` instant, when the dequeued records and the copy briefly coexist with no I/O or await; Pino's transient strings; `Buffer` pool slabs; allocator overhead; libuv request state, which references the same buffer; and the 64 KiB adoption read buffer used before the writer exists. The WeakRef assertions observe V8 reachability of these exact buffers on Node 22.23.4. They do not bound whole-process heap.
+
+**Limits.** Native throughput and sustained-rotation lifecycle were not re-measured. The change does not alter batch selection, write count or the timing constants, but native QA is still required.
+
+## 3. Truthful destination conflict guidance
+
+**Cause.** `launcher/destination-conflict-overstates-owner`. One message serves both child exit 70 (named-pipe reservation unavailable) and the parent's `ERROR_SHARING_VIOLATION` on `gateway.log`. It asserted that another GraphGoblin gateway was using the folder and told the operator to shut it down.
+
+**Resolution.** Only the `StartupOutcome.DestinationInUseFailure` text and two doc comments changed. The new text is:
+
+> GraphGoblin could not start because its log folder is in use: another process holds the folder's log reservation or has gateway.log open, and that process was not identified. If it is a GraphGoblin gateway, possibly an older version still running, shut it down deliberately; otherwise close the program holding the folder or its log. Launch again once it is released. No process was stopped and no log file was changed.
+
+The following are unchanged: code `destination-in-use`; child exits 70 to 75 and their mapping; `childExit` retention; the public exit 1 with stderr and dialog; the probe loop and deadline; warm and cold ownership; process-handle disposal; and record and presentation limits. The message is fixed text plus the existing validated, capped `Log folder` and `Configuration` locations. The troubleshooting entry now describes the reservation (the `GraphGoblin.GatewayLog.<key>` named pipe) or the sharing conflict, says the launcher cannot identify the holder, and gives conditional shutdown or close-the-program guidance with a retry once it is released. ADR-0081 records the same evidence boundary for the sharing violation.
+
+**Verification.** None of this was run in this session:
+
+- `NativeChecks.cs` gained a check over `ForChildExit(70, …)` and `DestinationInUseFailure(…, 0)`. It requires code `destination-in-use`, no "by another GraphGoblin gateway", "that process was not identified", "If it is a GraphGoblin gateway" and "once it is released".
+- In the acceptance script, the live-gateway parent case (disjoint store and port) and the non-gateway PowerShell append holder (legacy stand-in) both now require the full new sentence and reject the old attribution. The junction contender case asserts exit 70 only.
+
+Only ESLint (`logs/07-lint-tooling-acceptance.txt`), Prettier and `node --check` (`logs/12-acceptance-syntax-check.txt`) ran on the acceptance script. The C# was not compiled. Supplemental N-9's plain Node pipe holder (child 70 through the launcher) and a genuine legacy writer must be re-run by native QA against the rebuilt launcher.
+
+## Command results
+
+| Log | Exit | Result |
+| --- | ---: | --- |
+| 00-start-state | 0 | Clean, expected head and tree, Node v22.23.4 |
+| 01-red-parser-serve-test | 1 | Expected first failure: rawPacket and message in the managed trace record (20 passed, 1 failed) |
+| 02-red-writer-test | 1 | Expected first failures: dequeued and write buffers reachable (24 passed, 2 failed, 1 skipped) |
+| 03-green-writer-test | 0 | 26 passed, 1 pre-existing skip |
+| 04-green-parser-logger-serve-test | 0 | 32 passed |
+| 05-typecheck-api-noemit | 0 | `tsc -p tsconfig.json` (noEmit; all API source and tests) |
+| 06-lint-api-changed | 0 | ESLint, zero warnings, 7 changed API files |
+| 07-lint-tooling-acceptance | 0 | ESLint, zero warnings, acceptance script |
+| 08-format-check-authored | 0 | Prettier on 13 authored files |
+| 09-repeat-new-tests-x5 | 0 | 5×4 new wire and retention tests passed (per-iteration summaries checked) |
+| 10-final-focused-tests | 0 | Final tree: 58 passed, 1 pre-existing skip across logger, serve and writer |
+| 11-final-format-check | 0 | Prettier after the final docs reflow |
+| 12-acceptance-syntax-check | 0 | `node --check` on the acceptance script |
+| 13-end-state | 0 | Same HEAD and tree, 15 modified files, hashes |
+
+The pre-existing skip is the writer test for a symbolic link at a managed name, which skips on EPERM without the symlink privilege. The writer test file also contains the existing real-Windows delete-sharing rotation test, which spawns a PowerShell file holder that exits when its stdin ends. That test ran and passed in runs 02, 03 and 10.
+
+## Not run, and open for root
+
+- `tsc -b tsconfig.build.json` was not run because it emits `dist/` for the API and six referenced packages, which counts as a build. The noEmit check covered every changed TypeScript file. The new exports have explicit types, but declaration emit was not exercised.
+- Not run: coverage, the full API package suite, `main.test.ts` (needs `dist/main.js`), `guard.test.ts` and `managed-root.test.ts` (Windows icacls and PowerShell security probes), the launcher compile, `NativeChecks --bounded-log-checks`, `pnpm test:windows-launcher`, and browser and image jobs.
+- The focused tests reach both sides of the new branches: the `buildApp` option with and without a handler (the latter through `createTestApp`), every handler branch, single and multi-record batches, and the failed and complete writes. The managed `serve()` branch was run here. The unmanaged `serve()` branch passes no handler and is reached by `main.test.ts` and `units.test.ts` through `main()`; those were not run in this session. Coverage percentages were not measured.
+- Native behaviour QA is still required and was not attempted. It covers the managed trace-level parser path on the built launcher-started gateway, writer pressure and lifecycle, and both destination-conflict holders.
