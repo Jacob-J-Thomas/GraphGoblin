@@ -84,19 +84,20 @@ jobs:
         shell: pwsh
         env:
           QA436_PHASE: baseline
-          QA436_NAME: qa436-baseline-corrected
+          QA436_NAME: qa436-baseline-bound
           QA436_BASE_COMMIT: be633141be5a0cd2b4f960a46761fabbf2cb82c7
           QA436_BASE_TREE: decd1ca26c9bd63d942e939e65e2b2604d7f2652
           QA436_PRODUCT_COMMIT: be633141be5a0cd2b4f960a46761fabbf2cb82c7
           QA436_PRODUCT_TREE: decd1ca26c9bd63d942e939e65e2b2604d7f2652
-          QA436_PACKET: docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2
+          QA436_PACKET: docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3
           QA436_DRIVER: docs/qa/2026-11-16-installer-validation-preparation/raw/native-v2
-          QA436_PACKET_SHA: 310225e74d3f43a601eed73f5fcfda7d7458dbe9a0d073b0a9bd47f1fcffd679
+          QA436_PACKET_SHA: b134339e89f697440e3884b771143db2538d26453791a5cfdea4f36488132495
           QA436_CARRIER_FILES: |-
             [
               ".github/workflows/ci.yml",
               "docs/qa/.gitattributes",
               "docs/qa/2026-11-16-installer-validation-preparation/README.md",
+              "docs/qa/2026-11-16-installer-validation-preparation/bound-baseline-source-copy-map.json",
               "docs/qa/2026-11-16-installer-validation-preparation/com-probe-source-copy-map.json",
               "docs/qa/2026-11-16-installer-validation-preparation/corrected-baseline-source-copy-map.json",
               "docs/qa/2026-11-16-installer-validation-preparation/raw/com-probe/PropertyStoreProbe.cs",
@@ -116,6 +117,17 @@ jobs:
               "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/observe.ps1",
               "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/supervise.ps1",
               "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v2/syntax-readback.json",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/ProcessTrace.cs",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/README.md.txt",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/SHA256SUMS.txt",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/admission.example.json",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/bind.mjs",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/carrier-steps.example.yml",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/inventory/artifacts.mjs",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/inventory/common.mjs",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/observe.ps1",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/supervise.ps1",
+              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution-v3/syntax-readback.json",
               "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/ProcessTrace.cs",
               "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/README.md.txt",
               "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/SHA256SUMS.txt",
@@ -264,10 +276,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qa436-baseline-corrected
+          name: qa436-baseline-bound
           path: |
-            ${{ runner.temp }}/qa436-baseline-corrected/evidence/
-            ${{ runner.temp }}/qa436-baseline-corrected-supervisor/
+            ${{ runner.temp }}/qa436-baseline-bound/evidence/
+            ${{ runner.temp }}/qa436-baseline-bound-supervisor/
             ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/build-exit.json
             ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/admission.json
           if-no-files-found: error
