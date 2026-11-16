@@ -1,0 +1,210 @@
+{
+  "id": "R-recovery-drain-62241",
+  "cases": [
+    "recovery"
+  ],
+  "startedAt": "2026-11-16T21:37:54.942Z",
+  "checks": [
+    {
+      "id": "recovery-pre:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 47364
+      }
+    },
+    {
+      "id": "recovery-pre:instance",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "observed": "cde0bce5f23e9ebba998853f5e583a507ffc72e41d5ecd0594ab61789887ef11",
+        "expected": "cde0bce5f23e9ebba998853f5e583a507ffc72e41d5ecd0594ab61789887ef11"
+      }
+    },
+    {
+      "id": "recovery-pre:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 47364,
+          "ppid": 1,
+          "pgid": 47364,
+          "uid": 501,
+          "stat": "Ss",
+          "tty": "??",
+          "birth": "Mon Nov 16 15:37:54 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-d75d293f66da44ffb60198a07d8fa2e2/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "recovery-pre:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 47364,
+            "command": "node",
+            "address": "127.0.0.1:62241"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recovery-pre:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 47364,
+            "sha256": "bd16986aef14e41e1a777c775cdd282c931899e6cfe60376253bdb9e2de2fe7a",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179008539"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 47364,
+            "sha256": "a85df1755c341554c922ff4e828f0560646df336144d41cbc45e5796542ff5a5",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179008542"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "recovery-pre:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 47364,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "recovery:registered-owner",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "fresh": {
+          "port": 62241,
+          "pid": 47364,
+          "birth": "Mon Nov 16 15:37:54 2026",
+          "instance": "cde0bce5f23e9ebba998853f5e583a507ffc72e41d5ecd0594ab61789887ef11",
+          "phase": "running",
+          "ppid": 1,
+          "pgid": 47364,
+          "stat": "Ss",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-d75d293f66da44ffb60198a07d8fa2e2/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "bd16986aef14e41e1a777c775cdd282c931899e6cfe60376253bdb9e2de2fe7a",
+            "graphgoblin.db.graphgoblin.lock": "a85df1755c341554c922ff4e828f0560646df336144d41cbc45e5796542ff5a5"
+          }
+        },
+        "owner": {
+          "port": 62241,
+          "pid": 47364,
+          "birth": "Mon Nov 16 15:37:54 2026",
+          "instance": "cde0bce5f23e9ebba998853f5e583a507ffc72e41d5ecd0594ab61789887ef11",
+          "phase": "running",
+          "ppid": 1,
+          "pgid": 47364,
+          "stat": "Ss",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-d75d293f66da44ffb60198a07d8fa2e2/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "bd16986aef14e41e1a777c775cdd282c931899e6cfe60376253bdb9e2de2fe7a",
+            "graphgoblin.db.graphgoblin.lock": "a85df1755c341554c922ff4e828f0560646df336144d41cbc45e5796542ff5a5"
+          }
+        }
+      }
+    },
+    {
+      "id": "recovery:shutdown-state",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "recovery:same-incarnation",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "recovery:drain-accepted",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 202,
+        "phase": "draining"
+      }
+    },
+    {
+      "id": "recovery:never-forcing",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "forcing": null
+      }
+    },
+    {
+      "id": "recovery:released",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "series": [
+          {
+            "ms": 32,
+            "state": "refused",
+            "code": "ECONNREFUSED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recovery:store-free",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "text": "{\"state\":\"free\"}\n"
+      }
+    }
+  ],
+  "notes": {
+    "owner": {
+      "port": 62241,
+      "pid": 47364,
+      "birth": "Mon Nov 16 15:37:54 2026",
+      "instance": "cde0bce5f23e9ebba998853f5e583a507ffc72e41d5ecd0594ab61789887ef11",
+      "phase": "running",
+      "ppid": 1,
+      "pgid": 47364,
+      "stat": "Ss",
+      "tty": "??",
+      "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-d75d293f66da44ffb60198a07d8fa2e2/repo/apps/api/dist/main.js",
+      "leases": {
+        "graphgoblin.lock": "bd16986aef14e41e1a777c775cdd282c931899e6cfe60376253bdb9e2de2fe7a",
+        "graphgoblin.db.graphgoblin.lock": "a85df1755c341554c922ff4e828f0560646df336144d41cbc45e5796542ff5a5"
+      }
+    }
+  },
+  "status": "criteria-met",
+  "elapsedMs": 377,
+  "finishedAt": "2026-11-16T21:37:55.320Z"
+}

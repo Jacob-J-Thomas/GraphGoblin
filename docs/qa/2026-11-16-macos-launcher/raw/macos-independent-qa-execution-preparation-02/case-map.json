@@ -1,0 +1,178 @@
+{
+  "schema": "gg456-independent-native-qa-case-map/1",
+  "status": "prepared-not-run",
+  "notAPass": true,
+  "notAReview": true,
+  "author": {"tool": "Claude Code", "model": "claude-opus-5-5", "effort": "xhigh", "role": "independent behavior QA (harness authoring)", "date": "2026-11-16"},
+  "revision": "execution-preparation-02: copy of execution-preparation-01 with six harness corrections (correction-handoff.md)",
+  "priorPlan": "launcher/macos-independent-qa-preparation-01/{qa-plan.md,cases.json}",
+  "preparationBaseline": {
+    "head": "8bddb93aaa61ebb1b962385efa97a468a379929d",
+    "tree": "d0f7b3eefda54c888e044715bd21ac30201003b3",
+    "base": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+    "finalBinding": "pending root; the driver refuses a binding whose final flag is false"
+  },
+  "files": {
+    "driver": "gg456-native-qa.mjs",
+    "bindingTemplate": "binding.template.json",
+    "readme": "README.md",
+    "hashes": "preparation 02 output hashes are listed in correction-handoff.md; root re-verifies and binds driverSha256"
+  },
+  "citationRoot": "C:/Users/98jak/.codex/worktrees/gg-20261116-macos-launcher/GraphGoblin at 8bddb93a (read-only); preparation-02 refs to NativeLaunchEngine.swift read its uncommitted product correction over 8bddb93a, and root binds the final build",
+  "bindings": [
+    {
+      "id": "C1", "name": "Provider-free fixture with an active run", "status": "bound",
+      "value": "Loop format 4: manual trigger (exposeTo ui/api/mcp) -> wait {mode: duration, seconds: 45} -> exit {outcome: success, returns: none, destinations: []}. Created by POST /loops {definition} (201 {loop, draft, issues}); started by POST /loops/{id}/runs {allowDraft: true} (202 {run}); observed by GET /runs/{id} (status waiting) and GET /loops (runCount).",
+      "consequence": "Durable timers do not hold drain, so an ordinary drain completes while the run stays waiting and resumes after restart. The draining phase, and therefore open-management-observe-shutdown, is not deterministically reachable with this fixture. A script node could hold drain but would execute a command inside the gateway and is not used.",
+      "basis": ["doc", "contract-schema", "route-schema"],
+      "refs": ["docs/04-node-catalog.md:238-253", "docs/04-node-catalog.md:277-289", "docs/07-api-and-streaming.md:18-41", "docs/07-api-and-streaming.md:525", "docs/07-api-and-streaming.md:756-764", "packages/contracts/src/loop.ts:10,101-118", "packages/contracts/src/nodes.ts:40-43,81-88,635-675,727-750,757-773", "packages/contracts/src/run.ts:19-28,330", "apps/api/src/routes/loops.ts:78,142-180", "apps/api/src/routes/runs.ts:72-120,186-198"]
+    },
+    {
+      "id": "C2", "name": "Health, shutdown and read routes", "status": "bound",
+      "value": "GET /healthz body exactly {\"status\":\"ok\"} with single X-GraphGoblin-Instance (64 hex), X-GraphGoblin-Pid, X-GraphGoblin-Phase. GET /system/shutdown -> {phase, graceMs, activeRunIds, unconfirmedRunIds, choices, controlToken}; POST /system/shutdown {\"action\":\"drain\"} with x-graphgoblin-shutdown-token -> 202. Local trusted mode (no key, keys not required) acts with *. Launcher maps running -> running; draining, awaiting-choice, forcing, drain-failed, force-failed -> observe-shutdown; ready, exiting, stopped -> release wait.",
+      "basis": ["doc", "source-interface"],
+      "refs": ["docs/07-api-and-streaming.md:3-8", "docs/07-api-and-streaming.md:296-313", "docs/07-api-and-streaming.md:723-751", "apps/macos-launcher/Engine/Loopback.swift:53-66,78-142"]
+    },
+    {
+      "id": "C3", "name": "Writer leases, reclaim guards, cooperating launcher locks, store-state helper", "status": "bound",
+      "value": "Leases <D>/graphgoblin.lock and <D>/graphgoblin.db.graphgoblin.lock (private JSON with pid); guards <lease>.reclaim (directories). Launcher anchors ~/Library/Application Support/GraphGoblin/LauncherLocks/{directory,database,port}-<sha256(utf8 value)> held by flock. Read-only helper: <node> apps/api/dist/instance-identity.js [--store-state] with the gateway environment prints the 64-hex fingerprint or {\"state\":\"free\"} / {\"state\":\"held\",\"path\",\"detail\"}.",
+      "basis": ["doc", "source-interface"],
+      "refs": ["docs/guide/01-install-and-first-run.md:234", "docs/11-security-and-distribution.md:66", "docs/guide/07-troubleshooting.md:47-55", "apps/macos-launcher/Engine/NativeLaunchEngine.swift:39-86", "apps/macos-launcher/Engine/LaunchInputs.swift:185-205", "apps/api/src/instance-identity.ts:24-76", "tooling/scripts/macos-launcher.acceptance.mjs:25,275-307"]
+    },
+    {
+      "id": "C4", "name": "Ordinary shell start and shell-only key variable", "status": "bound",
+      "value": "Shell start: <node> apps/api/dist/main.js, cwd the checkout, with the same clean environment the driver expects of a launcher gateway (expectedEnv): HOME, PATH <nodeDir>:/usr/bin:/bin:/usr/sbin:/sbin, LANG en_US.UTF-8, TMPDIR, GG_HOST=127.0.0.1, GG_PORT=P2, GG_DATA_DIR=D, GG_WEB_DIST, GG_GOBLIN_DIST, GG_DB_URL the exact byte-percent-encoded file URI of <D>/graphgoblin.db, GG_REQUIRE_API_KEY=false, GG_OLLAMA_ENABLED=false; no GG_MACOS_LAUNCHER_LOG_ADMISSION. GG_DB_URL is required: without it the API derives an unescaped 'file:' URI from GG_DATA_DIR, which for the '%41 #1' store can name a different SQLite path. Key from <D>/master.key. Shell-only key variable: GG_MASTER_KEY, used only as a synthetic launcher canary; the installer refuses it in its own environment.",
+      "basis": ["doc", "source-interface"],
+      "refs": ["docs/guide/01-install-and-first-run.md:160-162,210-257", "apps/macos-launcher/Installer/Core/LauncherInstaller.swift:31", "apps/api/src/config.ts:146"]
+    },
+    {
+      "id": "C5", "name": "Installer invocation, outcomes and staging", "status": "bound",
+      "value": "bash scripts/install-macos-launcher.sh realpaths itself (so a symlinked checkout saves the canonical checkout), compiles both Swift products in a private DARWIN_USER_TEMP_DIR scratch on every invocation except a lone --help, then runs the installer. Exit 0 with stdout 'GraphGoblin was installed in Applications.'; usage exit 64; other refusals exit 1 with fixed stderr text; publication failure exit 1 with 'previous installation was verified' / 'destination was verified absent' / 'Installer recovery is required'. Omitted --port defaults to 4747 and omitted --data-dir to ~/.graphgoblin, so every QA invocation passes both. Names: 'GraphGoblin ' prefix (case-sensitive) + '.app', NFC-precomposed before use; an existing entry found through the requested spelling is updated under its receipt spelling. Stage directories '.graphgoblin-launcher-stage-<32 hex>' in ~/Applications. Receipt ~/Library/Application Support/GraphGoblin/LauncherInstalls/<id>.json {version, id, name, applications, installed{bundle, executable, plist, configuration}} plus staged/stageName only while unsettled.",
+      "basis": ["doc", "source-interface"],
+      "refs": ["docs/guide/01-install-and-first-run.md:128-153", "docs/decisions/ADR-0082-macos-finder-dock-launcher.md:50-59", "scripts/install-macos-launcher.sh:6-19,32-37,72-86", "apps/macos-launcher/Installer/Core/InstallerOptions.swift:4-121", "apps/macos-launcher/Installer/Core/LauncherInstaller.swift:31-51,140-197,217-224,246-273", "apps/macos-launcher/Installer/Entry.swift:7-14", "apps/macos-launcher/Engine/Installation.swift:58-163,176-227,267-324"]
+    },
+    {
+      "id": "C6", "name": "Managed logs, admission and launcher records", "status": "bound",
+      "value": "Alternate log root ~/Library/Logs/GraphGoblin/LauncherInstances/<id> (0700); gateway.log and gateway.log.1 at most 4 MiB each; launcher.log and launcher.log.1 at most 256 KiB each, 4 KiB records. Entry marker 'export const MACOS_LAUNCHER_LOG_PROTOCOL = 1;' in the first 4 KiB of main.js. Gateway receives GG_MACOS_LAUNCHER_LOG_ADMISSION={version:1, root, device, inode}. Launcher records 'stage=<stage> outcome=<code>[ child=<category>]' for non-zero outcomes other than cancelled (exit 40), unless quitting; no record for success. The product correction writes this record in a separate best-effort tail of at most 250 ms after the gateway attempt has ended, including after the unchanged 60 s admission/observation deadline, so store-blocked writes 'stage=waiting-for-store outcome=store-blocked'. The 8bddb93a preparation assumption that store-blocked writes none is historical, not current behavior.",
+      "basis": ["doc", "source-interface"],
+      "refs": ["docs/guide/01-install-and-first-run.md:164-169", "docs/decisions/ADR-0082-macos-finder-dock-launcher.md:61-75", "apps/macos-launcher/Engine/LaunchInputs.swift:45-52", "apps/macos-launcher/Engine/Diagnostics.swift:122-140,173-225,264-273", "apps/macos-launcher/Engine/NativeLaunchEngine.swift:193-270 (uncommitted correction)", "apps/macos-launcher/Engine/Headless.swift:37"]
+    },
+    {
+      "id": "C7", "name": "Hosted artifact schema", "status": "readback-by-root",
+      "value": "CI job macos-launcher on macos-15: toolchain versions.txt, Swift test stdout/stderr/exit under .tmp/macos-launcher-swift, acceptance artifacts under GG_MACOS_LAUNCHER_ARTIFACT_DIR, uploaded as artifact 'macos-launcher' with .tmp/macos-launcher-*/ and 7-day retention. Not used by this driver.",
+      "basis": ["doc", "ci-config"],
+      "refs": ["docs/10-testing-and-quality.md:3-16", ".github/workflows/ci.yml:13-82"]
+    },
+    {
+      "id": "C8", "name": "Windows readback", "status": "pending-root-git-readback",
+      "value": "Instance protocol constant 2 and the Mac log protocol marker 1 are confirmed in source and ADR; the base..head path list touching Windows launcher/protocol files and the test:windows-launcher result need a Git/CI readback this preparation could not perform.",
+      "refs": ["apps/api/src/instance-identity.ts:13", "docs/decisions/ADR-0082-macos-finder-dock-launcher.md:61-66"]
+    },
+    {
+      "id": "C9", "name": "Presentation copy", "status": "bound-for-gui-later",
+      "value": "Exact strings for the GUI phase, e.g. 'GraphGoblin’s data is in use. Waiting for it to become available…', 'Port <P> is already in use', 'GraphGoblin’s data is in use', 'Show Log in Finder', 'Copy Address', 'Hide', 'Quit'. Not used by this driver.",
+      "refs": ["apps/macos-launcher/Presentation/PresentationCopy.swift:108-144,219-240"]
+    },
+    {
+      "id": "C10", "name": "Owner-Mac build", "status": "bound-as-preparation-baseline",
+      "value": "Checkout /Users/jake/Library/Caches/graphgoblin-456-product-build-10efab60131d48aa8f38d3c260089e3b/repo; Node /opt/homebrew/Cellar/node@22/22.22.2_2/bin/node 22.22.2 sha256 e67e9c66...d010; seven built-file hashes; source head 8bddb93a / tree d0f7b3ee. Root rebinds for the final candidate.",
+      "refs": ["launcher/macos-product-build-transport-implementation-01/receipts/product-build-10efab60131d48aa8f38d3c260089e3b/validation.json", "launcher/macos-product-build-transport-implementation-01/receipts/product-build-10efab60131d48aa8f38d3c260089e3b/result.json"]
+    },
+    {
+      "id": "H", "name": "Headless contract and gateway environment (supporting)", "status": "bound",
+      "value": "argv exactly --ensure-gateway or --validate-installation, anything else usage 64; stdout {\"version\":1,\"code\":...[,\"port\":N]} plus LF; exit table 0/10/11/12/13/20/21/22/23/24/25/30/31/32/33/40/70; 60 s monotonic budget. Gateway environment: HOME from the password database, PATH <nodeDir>:/usr/bin:/bin:/usr/sbin:/sbin, LANG inherited only if it matches [A-Za-z0-9_.@-]{1,64} else en_US.UTF-8, TMPDIR the private DARWIN_USER_TEMP_DIR, GG_HOST, GG_PORT, GG_DATA_DIR, GG_WEB_DIST, GG_GOBLIN_DIST, GG_DB_URL (byte-percent-encoded file URI), GG_REQUIRE_API_KEY, GG_OLLAMA_ENABLED, optional GG_CODEX_BINARY/GG_CLAUDE_BINARY, plus GG_MACOS_LAUNCHER_LOG_ADMISSION. Fingerprint covers protocol 2, runtime path, Node version, entry and canonical config, so installs A and B share one fingerprint and a different Node path changes it.",
+      "basis": ["doc", "source-interface"],
+      "refs": ["docs/guide/07-troubleshooting.md:74-78", "apps/macos-launcher/Entry.swift:10-27", "apps/macos-launcher/Engine/Headless.swift:16-45", "apps/macos-launcher/Engine/NativeLaunchEngine.swift:105-115", "apps/macos-launcher/Engine/LaunchInputs.swift:66-105,219-223", "apps/api/src/instance-identity.ts:24-45"]
+    }
+  ],
+  "engineeringReference": {
+    "file": "tooling/scripts/macos-launcher.acceptance.mjs",
+    "usedAs": "interface reference only; no assertion is reused as QA evidence",
+    "alreadyCovers": ["public install of one alternate with a temporary 'store α %' directory", "--validate-installation refusal and invalid argv usage", "foreign listener answering {\"status\":\"fixture-foreign\"}", "non-fresh store without key", "two concurrent cold launches of the same app", "warm reuse and managed log admission/contention", "under-lease key recheck", "same-name managed replacement with a port change", "held store by its own launcher gateway on the replacement port", "verified drain and cleanup"]
+  },
+  "stages": [
+    {
+      "id": "S0-scope-and-owner-snapshot", "priorCases": ["O0"], "reqs": ["R25"], "tier": "native",
+      "adds": "Exclusive private QA scope, symlinked non-ASCII checkout link, read-only owner snapshot (protected port listeners, Applications, default app/store, production and instance logs, receipts, lock anchors, crash reports; names kept only for GraphGoblin entries). An absent ~/Applications (ENOENT only) is an empty listing for the pre-install admission name check and the S0 stage-residue baseline only, provided home is a user-owned directory without group or other write; a symlink, non-directory or unsafe ~/Applications, an unsafe home, and every other error refuse. The driver never creates ~/Applications; the public installer creates its own destination. After an install, absence is an error.",
+      "checks": [["scope-private-physical", "must"], ["checkout-link-resolves", "must"]],
+      "effects": ["creates ~/Library/Caches/graphgoblin-456-qa-<r8>/{evidence,links,data}", "symlink links/'QA checkout ü 漢' -> bound checkout"]
+    },
+    {
+      "id": "S1-install-a-odd-checkout", "priorCases": ["O1", "O2"], "reqs": ["R06", "R08", "R09"], "tier": "native",
+      "adds": "Public installer invoked through the symlinked 'ü 漢' checkout with the NFC name 'GraphGoblin QA ü-<r8>.app' and the prospective '%41 #1' store on macOS 26.6.2; exact bundle/plist/config/receipt identity; checkout saved canonically, not by link spelling; only QA entries appear in owner locations; candidate checkout listing and launcher source unchanged by the installer.",
+      "checks": [["installer-exit-zero", "must"], ["installer-output", "want", "source-interface"], ["a:bundle-physical", "must"], ["a:bundle-inventory", "want", "source-interface"], ["a:files-owned-single-link", "want"], ["a:arm64-executable", "want"], ["a:no-quarantine", "want"], ["a:installation-id", "must"], ["a:bundle-identifier", "must", "doc"], ["a:regular-app-plist", "want"], ["a:config-closed-keys", "want", "source-interface"], ["a:config-values", "must", "doc"], ["a:config-options", "want"], ["a:no-canary-in-config", "must"], ["a:receipt-private", "must", "doc"], ["a:receipt-binding", "must", "source-interface"], ["a:receipt-settled", "must"], ["link-spelling-not-saved", "want"], ["single-a-entry", "must"], ["no-new-stage-residue", "must"], ["applications-only-a", "must"], ["receipts-only-a", "must"], ["default-resources-not-created", "must"], ["checkout-listing-unchanged-by-installer", "want"], ["launcher-source-unchanged-by-installer", "want"]],
+      "effects": ["~/Applications/GraphGoblin QA ü-<r8>.app", "receipt <idA>.json", "possible LaunchServices registration"]
+    },
+    {
+      "id": "S2-cold-env-canary-launch", "priorCases": ["O3", "O6 (same-session part)"], "reqs": ["R06", "R07", "R12", "R23", "R24"], "tier": "native",
+      "adds": "Cold headless launch from a closed environment with HOME unset and hostile PATH, NODE_OPTIONS, DYLD_FALLBACK_LIBRARY_PATH, proxies, LANG, LC_ALL, TMPDIR, GG_HOST/PORT/DATA_DIR/DB_URL/WEB_DIST/GOBLIN_DIST/REQUIRE_API_KEY/OLLAMA_ENABLED/MASTER_KEY/SHUTDOWN_GRACE_MS/LOG_LEVEL and a forged GG_MACOS_LAUNCHER_LOG_ADMISSION (canary GG_HOST is the distinct literal loopback 127.0.0.2, never a wildcard, so even an inherited-host regression stays local); real process attributes (parent launchd, session and group leader, no tty, stdio /dev/null, canonical cwd and runtime); filtered environment equals the closed set; GG_DB_URL decodes exactly into the '%41 #1' store with no mis-decoded sibling; independently computed fingerprint matches; no helper or launcher left; no browser connection; private canary-free logs.",
+      "checks": [["precondition-port-refused", "must"], ["precondition-store-absent", "must"], ["precondition-no-gateway", "must"], ["envelope-open-management-running", "must", "doc"], ["within-60s-budget", "want", "doc"], ["no-canary-in-launcher-output", "must"], ["cold:* witness (health shape, process, single loopback listener, lease holder, stable identity)", "must"], ["fingerprint-equals-independent-config", "must", "source-interface"], ["parent-is-launchd", "want", "doc"], ["session-and-group-leader", "want", "doc"], ["no-controlling-terminal", "want"], ["stdio-dev-null", "want", "doc"], ["cwd-canonical-checkout", "must", "doc"], ["runtime-is-bound-node", "want"], ["no-canary-token-in-gateway-process", "must"], ["environment-observable", "want"], ["no-canary-only-names", "must"], ["closed-name-set", "want", "source-interface"], ["saved-options-override-canaries", "must", "doc"], ["deterministic-values", "want", "source-interface"], ["data-dir-value", "want"], ["database-uri-exact", "must"], ["log-admission-bound-to-instance-directory", "want", "doc"], ["single-store-directory", "must"], ["database-inside-store", "must"], ["local-key-private", "want", "doc"], ["no-canary-in-store-names", "must"], ["both-shells-served", "want", "doc"], ["no-helper-or-launcher-left", "want", "doc"], ["single-gateway", "must"], ["headless-opened-no-browser", "want", "doc"], ["no-canary-in-logs", "must"], ["log-directory-private", "want", "doc"]],
+      "effects": ["QA gateway A on P", "store D created by the API", "instance log directory <idA>"]
+    },
+    {
+      "id": "S3-spelling-alias-update", "priorCases": ["O5"], "reqs": ["R02", "R11", "R23"], "tier": "native",
+      "adds": "Managed update through the NFD spelling and, on a proven case-insensitive volume (the upper-case spelling lstat-resolves to A's bundle identity), the suffix-case variant 'GraphGoblin qa Ü-<r8>.app' while the gateway runs. The variant keeps the exact 'GraphGoblin ' prefix, so, exactly like NFD, it must be a successful managed replacement: exactly one bundle entry with the original NFC name bytes, same installation ID, settled receipt, new bundle generation; gateway PID, birth, fingerprint and leases undisturbed. A refusal of either spelling is unmet, never accepted. On a case-sensitive volume the variant is skipped (note applicationsCaseInsensitive=false). Warm launch reuses the same gateway.",
+      "checks": [["nfd-spelling-differs-bytewise", "must"], ["applicationsCaseInsensitive", "note (case variant runs only when true)"], ["<tag>:single-bundle-original-spelling", "must"], ["<tag>:refusal-left-installation-unchanged", "note (recorded only on refusal, before the hard stop)"], ["<tag>:managed-update", "must"], ["<tag>:installer-output", "want"], ["a-<tag>:* installed identity (same ID, receipt name equals the original NFC bytes)", "must/want as S1"], ["<tag>:new-generation", "must", "doc"], ["<tag>:no-new-stage-residue", "must"], ["<tag>:gateway-undisturbed", "must"], ["warm-envelope", "must"], ["warm-same-gateway", "must"]],
+      "effects": ["A replaced in place once or twice"]
+    },
+    {
+      "id": "S4-wait-run-graceful-drain-and-retention", "priorCases": ["O7 (adapted)", "G5 native part"], "reqs": ["R13 (never forced)", "R22 (retention)", "R23"], "tier": "native",
+      "adds": "Provider-free active run (durable 45 s timer) created through public routes; ordinary token-bound drain completes with the run active and is never forced; verified release (listener refused, PID gone or reborn, leases and guards absent, store-state free); cold relaunch gives a new incarnation; the same run and loop IDs are retained and the run completes after restart; no provider child process before or after.",
+      "checks": [["loop-created", "must"], ["run-admitted", "must"], ["run-active-waiting", "must"], ["no-provider-process", "must"], ["drain-with-waiting-run:* (registered owner, shutdown state, same incarnation, drain accepted, never forcing, released, store free)", "must"], ["intermediatePhasesObserved", "note"], ["waiting-run-not-unconfirmed", "want"], ["relaunch-envelope", "must"], ["new-gateway-incarnation", "must"], ["run-retained-across-restart", "must", "doc"], ["run-completed-after-restart", "want", "doc"], ["loop-retained", "want"], ["no-provider-process-after-restart", "must"], ["drain-idle:*", "must"]],
+      "effects": ["loop 'QA wait <r8>' and one run stored in D", "gateway restarted, then drained"]
+    },
+    {
+      "id": "S5-second-install-concurrent-aliased-store", "priorCases": ["O10"], "reqs": ["R09", "R17", "R23"], "tier": "native",
+      "adds": "Second alternate 'GraphGoblin QA ü-<r8>-b.app' installed from the canonical script path with --data-dir given as the 'data alias ü' symlink; alias saved as the canonical store; distinct ID, bundle ID and log directory; A, A and B cold-launched concurrently against the same store and port: all three open-management-running and exactly one gateway at every 200 ms poll.",
+      "checks": [["alias-resolves-to-store", "must"], ["installer-exit-zero", "must"], ["b:* installed identity", "must/want as S1"], ["alias-saved-as-canonical-store", "must"], ["store-spelling-bytes-identical", "want"], ["distinct-installation-identity", "must", "doc"], ["identical-saved-configuration", "want"], ["preconditions", "must"], ["envelope-0..2", "must"], ["poller-healthy", "must"], ["never-more-than-one-gateway", "must", "doc"], ["concurrent:* witness", "must"], ["observed-gateway-is-owner", "must"], ["no-helper-or-launcher-left", "want"], ["headless-opened-no-browser", "want"], ["drain-concurrent:*", "must"]],
+      "effects": ["~/Applications/GraphGoblin QA ü-<r8>-b.app", "receipt <idB>.json", "symlink links/'data alias ü'"]
+    },
+    {
+      "id": "S6-foreign-listeners", "priorCases": ["O11"], "reqs": ["R15", "R23", "R24"], "tier": "native (QA-owned in-process listener)",
+      "adds": "Two deterministic foreign listeners on P: a plain {\"status\":\"ok\"} health with no identity headers (older-build shape) answered to A, and a well-formed identity with a non-matching fingerprint and the QA process PID answered to B; both give port-in-use with the port; the QA listener and the store are untouched; each install's own log directory receives one launcher record.",
+      "checks": [["impostor-differs-from-fixture", "must"], ["<mode>:envelope-port-in-use", "must", "doc"], ["<mode>:prompt-refusal", "want"], ["<mode>:launcher-probed-listener", "want"], ["<mode>:qa-listener-untouched", "must", "doc"], ["<mode>:store-untouched", "must"], ["<mode>:no-gateway", "must"], ["<mode>:launcher-record", "want", "source-interface"], ["<mode>:no-canary-in-record", "must"], ["qa-listener-closed", "must"]],
+      "effects": ["launcher.log lines in <idA> and <idB>; <idB> log directory created if absent"]
+    },
+    {
+      "id": "S7-shell-held-store", "priorCases": ["O8"], "reqs": ["R14", "R23", "R24"], "tier": "native",
+      "adds": "Ordinary shell API (not launcher-started) started with the clean expected environment, including the exact byte-encoded GG_DB_URL (C4), holds the same store on P2; launcher A waits and reports store-blocked within the 60 s budget band (the unchanged 60 s deadline plus the separate <=250 ms diagnostic tail); P is never served and no launcher-spawned gateway appears; the contender's PID, birth, fingerprint and leases are unchanged; shell output stays out of managed logs; A's launcher.log gains exactly the fresh line 'stage=waiting-for-store outcome=store-blocked' with no rotation (this bounded fixture never approaches the 256 KiB cap), no child=spawn-failed and no canary; the contender is stopped by ordinary drain and exits on its own.",
+      "checks": [["precondition-ports-refused", "must"], ["precondition-store-free", "must"], ["contender-ready", "must"], ["contender:* witness", "must"], ["contender-is-registered-child", "must"], ["store-held-by-writer-lease", "must"], ["envelope-store-blocked", "must", "doc"], ["elapsed-60-to-63s", "want", "qa-tolerance"], ["elapsed-at-most-65s", "must", "qa-tolerance"], ["watcher-healthy", "must"], ["never-served-on-p", "must"], ["no-launcher-spawned-gateway", "must", "doc"], ["contender-unchanged", "must", "doc"], ["shell-output-separate-from-managed-logs", "must"], ["launcherRecord", "note"], ["launcher-record-no-spawn-failed-or-canary", "must"], ["launcher-record-store-blocked", "must", "source-interface"], ["no-canary-in-shell-output", "must"], ["drain-contender:*", "must"], ["contender-exit-zero", "want"]],
+      "effects": ["<scope>/contender/{stdout.log,stderr.log}"]
+    },
+    {
+      "id": "S8-moved-runtime-disposable-copy", "priorCases": ["O9b"], "reqs": ["R16 (runtime half)"], "tier": "native", "optional": "--include-node-move",
+      "adds": "B is reinstalled with a disposable byte-identical Node copy inside the scope; renaming the copy gives runtime-unavailable with no spawn; restoring it starts a gateway whose fingerprint differs (runtime path is part of the identity); after a verified drain B is reinstalled with the bound Node. The candidate checkout is never moved.",
+      "checks": [["copy-identical", "must"], ["install-with-copy", "must"], ["b-node-copy:*", "must/want"], ["envelope-runtime-unavailable", "must", "doc"], ["no-spawn", "must"], ["restored-envelope", "must"], ["copy-runtime:* witness", "must"], ["runtime-path-changes-fingerprint", "want", "source-interface"], ["drain-copy-runtime:*", "must"], ["reinstall-bound-node", "must"], ["b-restored:*", "must/want"]],
+      "effects": ["<scope>/runtime/node (about 100 MB)", "B replaced twice"]
+    },
+    {
+      "id": "S9-stopped-fixture-and-manifest", "priorCases": ["X1 (observation only, no cleanup)", "GUI fixture"], "reqs": ["R09", "R24", "R25"], "tier": "native",
+      "adds": "Verified stopped fixture: no QA process, both ports refused, store free, both installs unchanged since last readback, logs private and bounded and canary-free (excerpts copied), lock anchors identified, owner-resource diff limited to QA entries, candidate checkout unchanged; fixture-manifest.json with exact identities, the stored loop/run IDs, follow-up commands and the deferred cleanup list.",
+      "checks": [["ports-refused", "must"], ["no-qa-process", "must"], ["store-leases-free", "must"], ["store-free", "must"], ["final-<role>:*", "must/want"], ["<role>:unchanged-since-last-readback", "must"], ["<role>:logs-private-bounded", "want", "doc"], ["<role>:no-canary-in-logs", "must"], ["owner-diff-only-qa:{applications,receipts,instanceLogs,locks}", "want"], ["default-resources-not-created", "must"], ["default-resources-unchanged", "want"], ["protected-port-listeners-unchanged", "want"], ["no-graphgoblin-crash-report", "want"], ["built-file-unchanged:*", "want"], ["launcher-source-unchanged", "want"], ["checkout-listing-unchanged", "want"]],
+      "effects": ["evidence/fixture-manifest.json; nothing removed"]
+    }
+  ],
+  "followUp": {
+    "admission": "observe and drain are excluded from the initial execution admission and are not redesigned in preparation 02. Before any later use, root separately hash-binds the generated fixture-manifest.json and verifies a fresh physical --out parent.",
+    "observe": {"mode": "observe", "readOnly": true, "use": "bracket each later GUI step: listeners on P/P2, health and process of a fixture gateway, filtered environment, launcher and helper processes by run-id marks, established connections on P (browser evidence), leases, bundle/receipt identity, log listings and the last launcher records, GraphGoblin crash reports"},
+    "drain": {"mode": "drain", "use": "return a running fixture gateway to stopped after a GUI step; requires --pid and --birth from a fresh observe; checks manifest fingerprint, command, port and store, then ordinary token-bound drain; never force or signal"}
+  },
+  "coverageSplit": {
+    "nativeObservation": ["S0-S9 on the owner Mac with the real installer, launcher, gateway, shell API, filesystem, sockets and process table"],
+    "qaFixturesNotProductSeams": ["in-process foreign listeners (S6)", "synthetic canary environment (S2)", "disposable Node copy (S8)"],
+    "scriptedSeams": ["none in this driver; presentation/engine/installer scripted seams remain Swift-suite evidence read back by root (B2)"],
+    "hosted": ["B2 Swift suites and built-app acceptance on macos-15 (readback, C7)", "H1 only if root admits an independent hosted channel"],
+    "pendingGui": ["G0 console admission (preflight-02: accessibility false, screen capture unknown, default browser Google Chrome) so the instrument is owner physical input", "G1 LaunchServices readiness", "G2 Finder double-click cold", "G3 warm", "G4 Finder alias", "G5 Dock pin, in-app stop, cold Dock click, run history (uses manifest data)", "G6 same-path replacement keeps the pin", "G7 progress panel, Hide, reopen, store-blocked, pre-spawn Quit and repeated Quit (GUI/Swift only; there is no headless Quit flag)", "G8 port-in-use window, keys, focus, Show Log in Finder", "G9 pin and alias removal"],
+    "retainedAsEngineeringOrSwiftCoverage": ["O4 installer argument refusals (each invocation compiles Swift first; hosted engineering covers usage)", "O9 moved checkout (the candidate directory is immutable and a full built-checkout copy is out of proportion)", "open-management-observe-shutdown with a real draining phase (C1 consequence)", "waitingForRelease/releaseUnconfirmed", "installer interruption and recovery"],
+    "residual": ["O6 survival after the transport SSH session ends is not exercised; only parent, session, tty and stdio are", "macOS 15 Finder/Dock, Intel and other browsers", "logout Quit"]
+  },
+  "correctionsToPriorPlan": [
+    "Successful launches write no launcher.log record; G2's 'one attempt with outcome open-management-running' is not an expected observation. Failure outcomes other than cancelled write one 'stage=... outcome=...' line in a separate <=250 ms diagnostic tail, including after the 60 s deadline, so store-blocked writes 'stage=waiting-for-store outcome=store-blocked' (the 8bddb93a 'store-blocked writes none' reading is historical).",
+    "Every installer invocation except a lone --help compiles both Swift products, so O4-style refusals cost a compile each.",
+    "The installer defaults to port 4747 and ~/.graphgoblin when the flags are omitted; every QA invocation passes both.",
+    "A valid inherited LANG is passed through by design; the canary LANG must be outside the allowed character set to expect en_US.UTF-8.",
+    "The 'GraphGoblin ' prefix is case-sensitive; the case variant changes only the suffix case.",
+    "A durable wait does not hold drain; O7 becomes S4 (drain with an active run, retention, completion after restart).",
+    "Accessibility is not trusted and screen capture is unknown (preflight-02); no other UI controller is assumed."
+  ]
+}

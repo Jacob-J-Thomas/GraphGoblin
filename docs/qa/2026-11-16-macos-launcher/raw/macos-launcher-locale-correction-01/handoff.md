@@ -1,0 +1,10 @@
+# macOS launcher locale correction
+
+Baseline `35bb0afb688b66b2e88ee3c3366c5183fcdeb5a5`. Only `apps/macos-launcher/Engine/Diagnostics.swift` changed. SHA-256 `424cc13f99986f7f564cdd7979f3b44227f17712585051ccc43aadadf681783c`.
+
+The captured launcher IPS reaches Foundation's sorted JSON writer from `admissionDocument` and faults inside ICU locale collation. On the owner Mac, the standalone six-case probe reproduced SIGSEGV in sorted JSONSerialization with the invalid `LC_ALL` value both alone and paired with invalid `LANG`. The same dictionary encoded exactly with unsorted JSONSerialization and with sorted typed JSONEncoder under both invalid values. Sorted JSONSerialization also encoded exactly with valid `LC_ALL`, including when only `LANG` was invalid. The compiler, toolchain probe and six serialization processes all had actual exit events and both pipe EOFs. No probe deadline signalled a process. [Matched IPS](../macos-native-launcher-crash-diagnosis-04/receipt/GraphGoblin-45243.ips) · [Native causal receipt](../macos-launcher-locale-causal-probe-01/receipt/summary.json)
+
+The correction removes `.sortedKeys` only from this transient admission document. It retains `.withoutEscapingSlashes`, the four fields, canonical decimal identity rules, UTF-8 and 4,096-byte limit. `LaunchInputs.gateway` sends the document only as the private Mac admission variable. `apps/api/src/macos-log/guard.ts:49–69` parses it with `JSON.parse`, counts four fields and validates version, root, device and inode by name. Its returned snapshot holds only the validated root and numeric identities. The original field ordering has no meaning to the consumer. Configuration, receipt encoding and parent environment behavior are outside this correction.
+
+`git diff --check` passed for the changed source. The causal receipt qualifies the selected encoding operation. Compile and test the corrected product with the existing hostile-locale cold-launch regression and verify both readiness and completed gateway cleanup. This worker did not build or execute the corrected product.
+

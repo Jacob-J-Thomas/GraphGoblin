@@ -32,7 +32,37 @@ The owner clarified [delivery routing on 2026-11-14](https://github.com/Jacob-J-
 
 Validator, builder and integration architecture uses GPT-6.1 Sol xhigh with Claude Opus 5.5 xhigh review. Stateful form/canvas UI uses Claude Opus 5.5 xhigh with independent GPT-6.1 Sol xhigh review. The in-progress #235 GPT proposal was frozen uncommitted and handed to Claude for design and final implementation. Mixed #209/#273 work separates GPT architecture/domain and Claude UI surfaces into bounded slices. The test-only #452 prerequisite is assigned to GPT-6 Luna xhigh; it changes observation timing, never product focus behavior or assertion deadlines.
 
-## Launcher checkpoint - 2026-11-16
+## Current macOS launcher checkpoint - 2026-11-16
+
+Seventeen batch PRs have merged. PR #501 / #456 remains draft and incomplete. Two of its
+three formal scans have completed: GPT reviewed Claude's presentation and actual Claude Code
+Opus 5.5 xhigh reviewed the GPT native/API implementation. The accepted corrections are in
+the candidate; fresh independent Astra MAX final audit remains scan 3. No review budget is reset.
+
+Historical CI at `370a12b5784252356807bfc7676f65f6cb19b5e0` passed all five jobs.
+Independent native QA then exposed a locale-sensitive Foundation JSON sorting crash. The
+launcher and installer corrections at source `18089bba4b1c5f4fad19627d4c118b48b656a247`
+built successfully on the owner Mac. Engineering acceptance passed two tests and all nine
+native checkpoints, including malformed-locale installation and cold launch, replacement,
+verified shutdown and disposable cleanup. Those results do not establish complete independent
+QA or Finder/Dock acceptance.
+
+Independent QA 05 passed its first four stages, then stopped when its draft-run request
+omitted the required draft version ID. Recovery drain passed; no successful stopped-fixture
+manifest exists. Actual Claude is assessing the retained evidence and will implement the
+bounded harness corrections after root disposition. Previous failed attempts remain failed
+evidence. See the [native evidence snapshot](../qa/2026-11-16-macos-launcher/README.md).
+
+A native coverage audit found the old Swift export maps only 21 of 25 product files, with
+60.62% line and 49.66% region coverage in that subset and no branch counters. An explicit
+missed-branch capability probe also produced no Swift branch counters. The owner decision
+on a proposed Swift line/region metric and explicit branch-outcome tests is pending; no
+native threshold waiver is assumed and the existing V8 thresholds remain unchanged.
+Native coverage resolution, complete independent QA, required interactive observations,
+current-candidate CI and final audit remain open. Owner closure and deployment are separate;
+PR #460 and the owner Windows instance remain protected.
+
+## Earlier launcher implementation checkpoint - 2026-11-16
 
 PR #500 (#438) merged as `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`, with tree
 `430d34fda9d7e91752a7dbc93794242b4c17a5aa` identical to the reviewed head. Independent
