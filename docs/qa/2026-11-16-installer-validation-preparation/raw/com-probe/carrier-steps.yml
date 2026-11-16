@@ -1,0 +1,112 @@
+# Append to the Windows job of the restored ordinary workflow. Checkout needs fetch-depth: 2.
+- name: Admitted #436 Shell Link property-store diagnostic
+  if: github.event_name == 'pull_request' && github.event.pull_request.number == 497 && github.run_attempt == '1'
+  shell: pwsh
+  timeout-minutes: 2
+  run: |
+    $ErrorActionPreference = 'Stop'
+    Set-StrictMode -Version Latest
+    if ($env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or $env:RUNNER_OS -cne 'Windows' -or
+        $env:GITHUB_RUN_ATTEMPT -cne '1' -or $env:GITHUB_EVENT_NAME -cne 'pull_request') {
+      throw 'The diagnostic requires its admitted first hosted Windows run.'
+    }
+    $root = Join-Path $env:RUNNER_TEMP "qa436-com-probe-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_ATTEMPT)"
+    if (Test-Path -LiteralPath $root) { throw 'Diagnostic output already exists.' }
+    New-Item -ItemType Directory -Path $root | Out-Null
+    function Save([string]$Name, $Data) {
+      $path = Join-Path $root "$Name.json"
+      $file = [IO.File]::Open($path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+      try { $file.Write([Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject $Data -Depth 12) + [char]10)); $file.Flush($true) }
+      finally { $file.Dispose() }
+    }
+    function Read-Git([string]$Revision) {
+      $value = git rev-parse --verify $Revision
+      if ($LASTEXITCODE -ne 0 -or $value -cnotmatch '^[0-9a-f]{40}$') { throw "Git identity unavailable: $Revision" }
+      return $value
+    }
+    $expectedBase = 'be633141be5a0cd2b4f960a46761fabbf2cb82c7'
+    $event = Get-Content -Raw -LiteralPath $env:GITHUB_EVENT_PATH | ConvertFrom-Json -AsHashtable
+    $head = Read-Git 'HEAD'
+    $tree = Read-Git 'HEAD^{tree}'
+    $firstParent = Read-Git 'HEAD^1'
+    $secondParent = Read-Git 'HEAD^2'
+    if ($event.number -ne 497 -or $head -cne $env:GITHUB_SHA -or $firstParent -cne $expectedBase -or
+        $firstParent -cne $event.pull_request.base.sha -or $secondParent -cne $event.pull_request.head.sha -or
+        $tree -cne (Read-Git ($secondParent + '^{tree}'))) { throw 'The actual diagnostic merge identity was not admitted.' }
+    git diff --quiet $expectedBase $head -- . ':!.github/workflows/ci.yml' ':!docs/qa/.gitattributes' ':!docs/qa/2026-11-16-installer-validation-preparation'
+    if ($LASTEXITCODE -ne 0) { throw 'Product inputs differ from the exact post-#435 baseline.' }
+    $raw = Join-Path $env:GITHUB_WORKSPACE 'docs\qa\2026-11-16-installer-validation-preparation\raw'
+    $probe = Join-Path $raw 'com-probe\probe.ps1'
+    $property = Join-Path $raw 'com-probe\PropertyStoreProbe.cs'
+    $native = Join-Path $raw 'native\windows.cs'
+    $inputs = [ordered]@{
+      $probe = 'fdf8d5600f540794231bfec33cfd61957ff18c8860d7e0ea7595410c61dae81f'
+      $property = 'd54e13b588e2e283b0cb6744ae18ceb8adba3ba4c1cce82773ddaed43e6de529'
+      $native = '4488dd959fd5c27ccfabbca5f67b93af616dcce8e24b9b7a128cc671ca89c049'
+    }
+    function Confirm-Inputs {
+      foreach ($file in $inputs.Keys) {
+        if ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant() -cne $inputs[$file]) {
+          throw "Diagnostic input changed: $file"
+        }
+      }
+    }
+    Confirm-Inputs
+    $exe = (Get-Process -Id $PID).Path
+    $arguments = @('-NoLogo','-NoProfile','-NonInteractive','-STA','-File',$probe,
+      '-AttemptRoot',$root,'-NativeHelper',$native,'-PropertyHelperSha256',$inputs[$property],'-CheckoutHead',$head)
+    Save 'attempt' ([ordered]@{ run=$env:GITHUB_RUN_ID; attempt=$env:GITHUB_RUN_ATTEMPT; pull=497
+      head=$head; tree=$tree; parents=@($firstParent,$secondParent); executable=$exe
+      executableSha256=(Get-FileHash -LiteralPath $exe).Hash.ToLowerInvariant()
+      arguments=$arguments; inputs=$inputs; exitDeadlineMs=45000; closeDeadlineMs=5000 })
+    $info = [Diagnostics.ProcessStartInfo]::new($exe)
+    $info.UseShellExecute = $false
+    $info.RedirectStandardOutput = $true
+    $info.RedirectStandardError = $true
+    $info.WorkingDirectory = $env:GITHUB_WORKSPACE
+    foreach ($value in $arguments) { $info.ArgumentList.Add($value) }
+    $out = [IO.File]::Open((Join-Path $root 'stdout.txt'), [IO.FileMode]::CreateNew)
+    $err = [IO.File]::Open((Join-Path $root 'stderr.txt'), [IO.FileMode]::CreateNew)
+    $child = $null
+    $stage = 'start'
+    try {
+      $child = [Diagnostics.Process]::Start($info)
+      $pipes = [Threading.Tasks.Task[]]@($child.StandardOutput.BaseStream.CopyToAsync($out),
+        $child.StandardError.BaseStream.CopyToAsync($err))
+      $birth = $child.StartTime.ToUniversalTime().ToString('o')
+      Save 'spawn' @{ pid=$child.Id; birthUtc=$birth; parentPid=$PID }
+      $stage = 'native exit'
+      if (!$child.WaitForExit(45000)) { throw 'Child exit deadline elapsed.' }
+      Save 'exit' @{ pid=$child.Id; birthUtc=$birth; exitCode=$child.ExitCode; exitUtc=$child.ExitTime.ToUniversalTime().ToString('o') }
+      $stage = 'pipe close'
+      if (![Threading.Tasks.Task]::WaitAll($pipes, 5000)) { throw 'The independent pipe close deadline elapsed.' }
+      $out.Flush($true)
+      $err.Flush($true)
+      Save 'close' @{ pid=$child.Id; streamsClosed=$true; closedUtc=[DateTime]::UtcNow.ToString('o')
+        stdoutBytes=$out.Length; stderrBytes=$err.Length }
+      $stage = 'closing input verification'
+      Confirm-Inputs
+      if ((Read-Git 'HEAD') -cne $head -or (Read-Git 'HEAD^{tree}') -cne $tree) { throw 'Checkout changed during the probe.' }
+      $stage = 'diagnostic summary'
+      $summary = Get-Content -Raw -LiteralPath (Join-Path $root 'probe\summary.json') | ConvertFrom-Json -AsHashtable
+      if ($child.ExitCode -ne 0 -or $summary.status -cne 'diagnostic-complete' -or $summary.recordedCases -ne 2) {
+        throw 'The diagnostic did not record both cases.'
+      }
+      Save 'result' @{ status='diagnostic-complete'; closingIdentityVerified=$true; recordedCases=2 }
+    } catch {
+      Save 'first-failure' @{ stage=$stage; message=$_.Exception.Message; stack=$_.ScriptStackTrace }
+      throw
+    } finally {
+      $out.Dispose()
+      $err.Dispose()
+      if ($child) { $child.Dispose() }
+    }
+
+- name: Retain #436 Shell Link diagnostic evidence
+  if: always() && github.event_name == 'pull_request' && github.event.pull_request.number == 497 && github.run_attempt == '1'
+  uses: actions/upload-artifact@v4
+  with:
+    name: qa436-com-probe-first
+    path: ${{ runner.temp }}/qa436-com-probe-${{ github.run_id }}-${{ github.run_attempt }}
+    if-no-files-found: error
+    retention-days: 7

@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 2
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -27,50 +27,8 @@ jobs:
           cache: pnpm
       - name: Install
         run: pnpm install --frozen-lockfile
-      - name: 'Build with #436 run receipt'
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $env:GIT_OPTIONAL_LOCKS = '0'
-          function Read-Git([string[]]$Arguments) {
-            $value = & git.exe @Arguments
-            if ($LASTEXITCODE -ne 0) { throw 'Git identity query failed.' }
-            $value
-          }
-          $checkout = (Get-Item -LiteralPath $env:GITHUB_WORKSPACE).FullName
-          $node = (Get-Command node.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
-          $nodeVersion = & $node --version
-          if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v22\.\d+\.\d+$' -or
-              [version]$nodeVersion.Substring(1) -lt [version]'22.22.2') { throw 'Bind supported Node 22.' }
-          $head = Read-Git @('rev-parse','HEAD')
-          $tree = Read-Git @('rev-parse','HEAD^{tree}')
-          if ($head -cne $env:GITHUB_SHA -or (Read-Git @('status','--porcelain=v1','--untracked-files=all'))) {
-            throw 'The actual workflow checkout differs from the admitted source.'
-          }
-          $index = Read-Git @('rev-parse','--path-format=absolute','--git-path','index')
-          $before = (Get-FileHash -Algorithm SHA256 -LiteralPath $index).Hash.ToLowerInvariant()
-          $control = Join-Path $env:RUNNER_TEMP "qa436-carrier-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          if (Test-Path -LiteralPath $control) { throw 'Carrier control directory already exists.' }
-          New-Item -ItemType Directory -Path $control | Out-Null
-          $beforeStart = [DateTime]::UtcNow.ToString('o')
-          $PSNativeCommandUseErrorActionPreference = $false
-          & pnpm.cmd build
-          $buildExit = $LASTEXITCODE
-          $ended = [DateTime]::UtcNow.ToString('o')
-          $receipt = [ordered]@{
-            schema='gg436-hosted-build-exit/v1'; command='pnpm.cmd build'; exitCode=$buildExit
-            checkout=$checkout; head=$head; tree=$tree; githubRunId=$env:GITHUB_RUN_ID; githubRunAttempt=$env:GITHUB_RUN_ATTEMPT
-            startedUtc=$beforeStart; exitedUtc=$ended; nodePath=$node; nodeVersion=$nodeVersion
-            nodeSha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $node).Hash.ToLowerInvariant()
-            beforeIndexSha256=$before; afterIndexSha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $index).Hash.ToLowerInvariant()
-          }
-          $receiptPath = Join-Path $control 'build-exit.json'
-          [IO.File]::WriteAllText($receiptPath,($receipt | ConvertTo-Json -Depth 6)+[char]10,[Text.UTF8Encoding]::new($false))
-          Add-Content -LiteralPath $env:GITHUB_ENV -Value "QA436_CONTROL=$control"
-          if ($buildExit -ne 0) { exit $buildExit }
-          if ($receipt.beforeIndexSha256 -cne $receipt.afterIndexSha256 -or
-              (Read-Git @('rev-parse','HEAD')) -cne $head -or
-              (Read-Git @('status','--porcelain=v1','--untracked-files=all'))) { throw 'Build changed the bound source.' }
+      - name: Build
+        run: pnpm build
       - name: Native Windows launcher acceptance
         run: pnpm test:windows-launcher
       - name: Upload native evidence
@@ -80,171 +38,118 @@ jobs:
           name: windows-launcher
           path: .tmp/windows-launcher-*/
           if-no-files-found: warn
-      - name: 'Admitted #436 hosted installer and process-start observation'
+      # Append to the Windows job of the restored ordinary workflow. Checkout needs fetch-depth: 2.
+      - name: Admitted #436 Shell Link property-store diagnostic
+        if: github.event_name == 'pull_request' && github.event.pull_request.number == 497 && github.run_attempt == '1'
         shell: pwsh
-        env:
-          QA436_PHASE: baseline
-          QA436_NAME: qa436-baseline-first
-          QA436_BASE_COMMIT: be633141be5a0cd2b4f960a46761fabbf2cb82c7
-          QA436_BASE_TREE: decd1ca26c9bd63d942e939e65e2b2604d7f2652
-          QA436_PRODUCT_COMMIT: be633141be5a0cd2b4f960a46761fabbf2cb82c7
-          QA436_PRODUCT_TREE: decd1ca26c9bd63d942e939e65e2b2604d7f2652
-          QA436_PACKET: docs/qa/2026-11-16-installer-validation-preparation/raw/execution
-          QA436_DRIVER: docs/qa/2026-11-16-installer-validation-preparation/raw/native
-          QA436_PACKET_SHA: e188e20f9c841013c2d2c9137b88a2aae647a8799ad6d18267e5e19b943266ef
-          QA436_CARRIER_FILES: |-
-            [
-              ".github/workflows/ci.yml",
-              "docs/qa/.gitattributes",
-              "docs/qa/2026-11-16-installer-validation-preparation/README.md",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/ProcessTrace.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/admission.example.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/bind.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/carrier-steps.example.yml",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/inventory/artifacts.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/inventory/common.mjs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/observe.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/supervise.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/execution/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/README.md.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/SHA256SUMS.txt",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/invoke.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/run.ps1",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/syntax-readback.json",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/version-fixture.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/raw/native/windows.cs",
-              "docs/qa/2026-11-16-installer-validation-preparation/source-copy-map.json"
-            ]
-          QA436_VALIDATOR_ARGUMENT: ''
+        timeout-minutes: 2
         run: |
           $ErrorActionPreference = 'Stop'
-          $env:GIT_OPTIONAL_LOCKS = '0'
-          $workspace = (Get-Item -LiteralPath $env:GITHUB_WORKSPACE).FullName
-          $control = Get-Item -LiteralPath $env:QA436_CONTROL -Force
-          $expectedControl = Join-Path $env:RUNNER_TEMP "qa436-carrier-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          if ($control.FullName -cne $expectedControl -or !$control.PSIsContainer -or
-              ($control.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw 'Unexpected carrier control directory.' }
-          $packetRoot = Join-Path $control.FullName 'packets'
-          if (Test-Path -LiteralPath $packetRoot) { throw 'Expected a fresh packet materialization directory.' }
-          New-Item -ItemType Directory -Path $packetRoot | Out-Null
-          function Copy-QaPacket([string]$Source, [string]$Destination, [string[]]$Names) {
-            $root = Get-Item -LiteralPath $Source -Force
-            if (!$root.PSIsContainer -or ($root.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
-              throw 'Expected a plain carried packet directory.'
-            }
-            $expected = @($Names | ForEach-Object { if ($_ -ceq 'README.md') { 'README.md.txt' } else { $_ } } | Sort-Object -CaseSensitive)
-            $entries = @(Get-ChildItem -LiteralPath $root.FullName -Recurse -Force)
-            if (@($entries | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }).Count) {
-              throw 'Carried packet contains a reparse point.'
-            }
-            $actual = @($entries | Where-Object { !$_.PSIsContainer } | ForEach-Object {
-              [IO.Path]::GetRelativePath($root.FullName, $_.FullName).Replace('\', '/')
-            } | Sort-Object -CaseSensitive)
-            if (($actual -join '|') -cne ($expected -join '|')) { throw 'Carried packet membership differs from the allowlist.' }
-            New-Item -ItemType Directory -Path $Destination | Out-Null
-            foreach ($name in $Names) {
-              $stored = if ($name -ceq 'README.md') { 'README.md.txt' } else { $name }
-              $sourceFile = Join-Path $root.FullName $stored
-              $target = Join-Path $Destination $name
-              $targetDir = Split-Path -Parent $target
-              if (!(Test-Path -LiteralPath $targetDir -PathType Container)) {
-                New-Item -ItemType Directory -Path $targetDir | Out-Null
-              }
-              [IO.File]::Copy($sourceFile, $target, $false)
-            }
-            (Get-Item -LiteralPath $Destination).FullName
+          Set-StrictMode -Version Latest
+          if ($env:RUNNER_ENVIRONMENT -cne 'github-hosted' -or $env:RUNNER_OS -cne 'Windows' -or
+              $env:GITHUB_RUN_ATTEMPT -cne '1' -or $env:GITHUB_EVENT_NAME -cne 'pull_request') {
+            throw 'The diagnostic requires its admitted first hosted Windows run.'
           }
-          $packet = Copy-QaPacket (Join-Path $workspace $env:QA436_PACKET) (Join-Path $packetRoot 'execution') @(
-            'ProcessTrace.cs',
-            'README.md',
-            'SHA256SUMS.txt',
-            'admission.example.json',
-            'bind.mjs',
-            'carrier-steps.example.yml',
-            'inventory/artifacts.mjs',
-            'inventory/common.mjs',
-            'observe.ps1',
-            'supervise.ps1',
-            'syntax-readback.json'
-          )
-          $driver = Copy-QaPacket (Join-Path $workspace $env:QA436_DRIVER) (Join-Path $packetRoot 'native') @(
-            'README.md',
-            'SHA256SUMS.txt',
-            'invoke.ps1',
-            'run.ps1',
-            'syntax-readback.json',
-            'version-fixture.cs',
-            'windows.cs'
-          )
-          $utf8 = [Text.UTF8Encoding]::new($false)
-          $requiredDriverSha = '6b4be7674b608a8583415dd75e642d483249d789eca678e14b641af958918926'
-          foreach ($item in @(@{path=$packet; digest=$env:QA436_PACKET_SHA}, @{path=$driver; digest=$requiredDriverSha})) {
-            $manifest = Join-Path $item.path 'SHA256SUMS.txt'
-            if ((Get-FileHash -Algorithm SHA256 -LiteralPath $manifest).Hash.ToLowerInvariant() -cne $item.digest) {
-              throw 'Reviewed manifest digest mismatch.'
-            }
-            foreach ($line in Get-Content -LiteralPath $manifest) {
-              if ($line -cnotmatch '^([a-f0-9]{64})  ([A-Za-z0-9_./-]+)$' -or
-                  $Matches[2].StartsWith('/') -or $Matches[2].Contains('..')) { throw 'Unsafe manifest member.' }
-              $expected = $Matches[1]
-              $boundFile = Get-Item -LiteralPath (Join-Path $item.path $Matches[2]) -Force
-              if ($boundFile.PSIsContainer -or ($boundFile.Attributes -band [IO.FileAttributes]::ReparsePoint) -or
-                  (Get-FileHash -Algorithm SHA256 -LiteralPath $boundFile.FullName).Hash.ToLowerInvariant() -cne $expected) {
-                throw 'Reviewed fixture or carrier bytes differ.'
+          $root = Join-Path $env:RUNNER_TEMP "qa436-com-probe-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_ATTEMPT)"
+          if (Test-Path -LiteralPath $root) { throw 'Diagnostic output already exists.' }
+          New-Item -ItemType Directory -Path $root | Out-Null
+          function Save([string]$Name, $Data) {
+            $path = Join-Path $root "$Name.json"
+            $file = [IO.File]::Open($path, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+            try { $file.Write([Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject $Data -Depth 12) + [char]10)); $file.Flush($true) }
+            finally { $file.Dispose() }
+          }
+          function Read-Git([string]$Revision) {
+            $value = git rev-parse --verify $Revision
+            if ($LASTEXITCODE -ne 0 -or $value -cnotmatch '^[0-9a-f]{40}$') { throw "Git identity unavailable: $Revision" }
+            return $value
+          }
+          $expectedBase = 'be633141be5a0cd2b4f960a46761fabbf2cb82c7'
+          $event = Get-Content -Raw -LiteralPath $env:GITHUB_EVENT_PATH | ConvertFrom-Json -AsHashtable
+          $head = Read-Git 'HEAD'
+          $tree = Read-Git 'HEAD^{tree}'
+          $firstParent = Read-Git 'HEAD^1'
+          $secondParent = Read-Git 'HEAD^2'
+          if ($event.number -ne 497 -or $head -cne $env:GITHUB_SHA -or $firstParent -cne $expectedBase -or
+              $firstParent -cne $event.pull_request.base.sha -or $secondParent -cne $event.pull_request.head.sha -or
+              $tree -cne (Read-Git ($secondParent + '^{tree}'))) { throw 'The actual diagnostic merge identity was not admitted.' }
+          git diff --quiet $expectedBase $head -- . ':!.github/workflows/ci.yml' ':!docs/qa/.gitattributes' ':!docs/qa/2026-11-16-installer-validation-preparation'
+          if ($LASTEXITCODE -ne 0) { throw 'Product inputs differ from the exact post-#435 baseline.' }
+          $raw = Join-Path $env:GITHUB_WORKSPACE 'docs\qa\2026-11-16-installer-validation-preparation\raw'
+          $probe = Join-Path $raw 'com-probe\probe.ps1'
+          $property = Join-Path $raw 'com-probe\PropertyStoreProbe.cs'
+          $native = Join-Path $raw 'native\windows.cs'
+          $inputs = [ordered]@{
+            $probe = 'fdf8d5600f540794231bfec33cfd61957ff18c8860d7e0ea7595410c61dae81f'
+            $property = 'd54e13b588e2e283b0cb6744ae18ceb8adba3ba4c1cce82773ddaed43e6de529'
+            $native = '4488dd959fd5c27ccfabbca5f67b93af616dcce8e24b9b7a128cc671ca89c049'
+          }
+          function Confirm-Inputs {
+            foreach ($file in $inputs.Keys) {
+              if ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant() -cne $inputs[$file]) {
+                throw "Diagnostic input changed: $file"
               }
             }
           }
-          $receiptPath = Join-Path $env:QA436_CONTROL 'build-exit.json'
-          $build = Get-Content -Raw -LiteralPath $receiptPath | ConvertFrom-Json -AsHashtable
-          if ($build.exitCode -ne 0 -or $build.head -cne $env:GITHUB_SHA) { throw 'Build proof did not complete.' }
-          $knownChrome = @(
-            foreach ($programFiles in @([Environment]::GetFolderPath('ProgramFiles'), [Environment]::GetFolderPath('ProgramFilesX86'))) {
-              if ($programFiles) {
-                $application = Join-Path $programFiles 'Google\Chrome\Application'
-                $binary = Join-Path $application 'chrome.exe'
-                $proxy = Join-Path $application 'chrome_proxy.exe'
-                if ((Test-Path -LiteralPath $binary -PathType Leaf) -and (Test-Path -LiteralPath $proxy -PathType Leaf)) {
-                  (Get-Item -LiteralPath $proxy).FullName
-                }
-              }
+          Confirm-Inputs
+          $exe = (Get-Process -Id $PID).Path
+          $arguments = @('-NoLogo','-NoProfile','-NonInteractive','-STA','-File',$probe,
+            '-AttemptRoot',$root,'-NativeHelper',$native,'-PropertyHelperSha256',$inputs[$property],'-CheckoutHead',$head)
+          Save 'attempt' ([ordered]@{ run=$env:GITHUB_RUN_ID; attempt=$env:GITHUB_RUN_ATTEMPT; pull=497
+            head=$head; tree=$tree; parents=@($firstParent,$secondParent); executable=$exe
+            executableSha256=(Get-FileHash -LiteralPath $exe).Hash.ToLowerInvariant()
+            arguments=$arguments; inputs=$inputs; exitDeadlineMs=45000; closeDeadlineMs=5000 })
+          $info = [Diagnostics.ProcessStartInfo]::new($exe)
+          $info.UseShellExecute = $false
+          $info.RedirectStandardOutput = $true
+          $info.RedirectStandardError = $true
+          $info.WorkingDirectory = $env:GITHUB_WORKSPACE
+          foreach ($value in $arguments) { $info.ArgumentList.Add($value) }
+          $out = [IO.File]::Open((Join-Path $root 'stdout.txt'), [IO.FileMode]::CreateNew)
+          $err = [IO.File]::Open((Join-Path $root 'stderr.txt'), [IO.FileMode]::CreateNew)
+          $child = $null
+          $stage = 'start'
+          try {
+            $child = [Diagnostics.Process]::Start($info)
+            $pipes = [Threading.Tasks.Task[]]@($child.StandardOutput.BaseStream.CopyToAsync($out),
+              $child.StandardError.BaseStream.CopyToAsync($err))
+            $birth = $child.StartTime.ToUniversalTime().ToString('o')
+            Save 'spawn' @{ pid=$child.Id; birthUtc=$birth; parentPid=$PID }
+            $stage = 'native exit'
+            if (!$child.WaitForExit(45000)) { throw 'Child exit deadline elapsed.' }
+            Save 'exit' @{ pid=$child.Id; birthUtc=$birth; exitCode=$child.ExitCode; exitUtc=$child.ExitTime.ToUniversalTime().ToString('o') }
+            $stage = 'pipe close'
+            if (![Threading.Tasks.Task]::WaitAll($pipes, 5000)) { throw 'The independent pipe close deadline elapsed.' }
+            $out.Flush($true)
+            $err.Flush($true)
+            Save 'close' @{ pid=$child.Id; streamsClosed=$true; closedUtc=[DateTime]::UtcNow.ToString('o')
+              stdoutBytes=$out.Length; stderrBytes=$err.Length }
+            $stage = 'closing input verification'
+            Confirm-Inputs
+            if ((Read-Git 'HEAD') -cne $head -or (Read-Git 'HEAD^{tree}') -cne $tree) { throw 'Checkout changed during the probe.' }
+            $stage = 'diagnostic summary'
+            $summary = Get-Content -Raw -LiteralPath (Join-Path $root 'probe\summary.json') | ConvertFrom-Json -AsHashtable
+            if ($child.ExitCode -ne 0 -or $summary.status -cne 'diagnostic-complete' -or $summary.recordedCases -ne 2) {
+              throw 'The diagnostic did not record both cases.'
             }
-          ) | Select-Object -Unique
-          if (@($knownChrome).Count -ne 1) { throw 'Expected one checked image Chrome proxy and adjacent browser.' }
-          $proxyPath = @($knownChrome)[0]
-          $powerShell = (Get-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe')).FullName
-          $compiler = (Get-Item -LiteralPath (Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe')).FullName
-          $decoder = (Get-Item -LiteralPath (Join-Path $env:SystemRoot 'System32\tracerpt.exe')).FullName
-          $admission = [ordered]@{
-            schema='gg436-hosted-admission/v1'; state='root-admitted'; phase=$env:QA436_PHASE
-            checkout=$workspace; expectedCommit=$build.head; expectedTree=$build.tree
-            baseCommit=$env:QA436_BASE_COMMIT; baseTree=$env:QA436_BASE_TREE
-            productCommit=$env:QA436_PRODUCT_COMMIT; productTree=$env:QA436_PRODUCT_TREE
-            githubRunId=$env:GITHUB_RUN_ID; githubRunAttempt=$env:GITHUB_RUN_ATTEMPT
-            evidenceName=$env:QA436_NAME; driverDirectory=$driver; driverManifestSha256=$requiredDriverSha
-            packetManifestSha256=$env:QA436_PACKET_SHA; carrierOnlyPaths=@(ConvertFrom-Json $env:QA436_CARRIER_FILES)
-            validatorArgument=if ($env:QA436_VALIDATOR_ARGUMENT) { $env:QA436_VALIDATOR_ARGUMENT }
-            buildReceipt=[ordered]@{path=$receiptPath; sha256=(Get-FileHash -Algorithm SHA256 -LiteralPath $receiptPath).Hash.ToLowerInvariant()}
-            tools=[ordered]@{node=$build.nodePath; powershell=$powerShell; compiler=$compiler; tracerpt=$decoder; chromeProxy=$proxyPath
-              chrome=(Get-Item -LiteralPath (Join-Path (Split-Path -Parent $proxyPath) 'chrome.exe')).FullName}
+            Save 'result' @{ status='diagnostic-complete'; closingIdentityVerified=$true; recordedCases=2 }
+          } catch {
+            Save 'first-failure' @{ stage=$stage; message=$_.Exception.Message; stack=$_.ScriptStackTrace }
+            throw
+          } finally {
+            $out.Dispose()
+            $err.Dispose()
+            if ($child) { $child.Dispose() }
           }
-          $path = Join-Path $env:QA436_CONTROL 'admission.json'
-          [IO.File]::WriteAllText($path,($admission | ConvertTo-Json -Depth 10)+[char]10,$utf8)
-          $sha = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
-          & $powerShell -NoLogo -NoProfile -NonInteractive -STA -File (Join-Path $packet 'supervise.ps1') -Admission $path -AdmissionSha256 $sha
-          exit $LASTEXITCODE
-      - name: 'Retain #436 evidence'
-        if: always()
+
+      - name: Retain #436 Shell Link diagnostic evidence
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.number == 497 && github.run_attempt == '1'
         uses: actions/upload-artifact@v4
         with:
-          name: qa436-baseline-first
-          path: |
-            ${{ runner.temp }}/qa436-baseline-first/evidence/
-            ${{ runner.temp }}/qa436-baseline-first-supervisor/
-            ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/build-exit.json
-            ${{ runner.temp }}/qa436-carrier-${{ github.run_id }}-${{ github.run_attempt }}/admission.json
+          name: qa436-com-probe-first
+          path: ${{ runner.temp }}/qa436-com-probe-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: error
+          retention-days: 7
   gates:
     name: Gates
     runs-on: ubuntu-latest
