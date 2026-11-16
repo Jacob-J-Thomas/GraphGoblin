@@ -1,0 +1,28 @@
+# #438 V4 control API correction
+
+The first candidate attempt stopped at `controls.mjs:4` when the install-root readback called `native.runPowerShell`. The factory already implements that function and uses it for CIM, but its return object at `native.mjs:204` omits it. The wrapper exited 1. The original cleanup has no gateways or ports, no errors, and 12 retained fixture entries. Its opening and closing binding hashes are identical. [First failure](../launcher-438-candidate-qa-preparation/attempts/candidate-attempt-1/evidence/first-failure.json) · [Cleanup](../launcher-438-candidate-qa-preparation/attempts/candidate-attempt-1/evidence/cleanup.json) · [Wrapper exit](../launcher-438-candidate-qa-preparation/receipts/candidate-attempt-1/exit.json)
+
+The [one-line patch](native-api-export.patch) adds the existing function to the factory return. It preserves the PowerShell invocation, 9-second bound, progress handling, read-only helper disposition, exit/stderr assertions and raw receipts. It leaves controls, runner and product bytes alone.
+
+| Control | Adjacent API check |
+| --- | --- |
+| `privateRootReadback` | Passes a label, encoded PowerShell source and `{ extraEnv: { QA438_FIXTURE_LOG_ROOT } }`. The helper merges those keys into its bounded child environment and returns the `run` record. Its `stdout` contains the JSON owner, allowed-principal and SDDL fields the control parses. |
+| `observeStdio` | Uses the same PowerShell call shape for the exact health PID and reads a decimal FILETIME from `stdout`. `gatewayProof` supplies numeric `health.pid` and string `proc.creationFileTime`. The subsequent existing `run(label, executable, argv, cwd, options)` takes the exact three observer arguments and `input: ''`, which creates the independent stdin pipe. Its return includes `exit.code`, `stdout` and `stderr`. The observer result schema and slots match the qualified observer. The runner re-proves the gateway after this observation. |
+| `privateFailure` | Receives injected V3 `request`, `tail` and `pinoRecords` helpers plus the V4 `observe` and `put`. Call signatures agree, including disposable loopback port, two absolute gateway-slot paths and `Buffer` tails. The current event route provides `items` and `hasMore`. The frozen engine lines for the invalid-patch path supply the public message and private run/node/error fields used here. |
+
+The adjacent check found no other direct control/native interface mismatch. Runtime behavior remains for the independently admitted candidate QA. [V4 controls](../launcher-438-candidate-qa-preparation/controls.mjs) · [V4 runner](../launcher-438-candidate-qa-preparation/run.mjs)
+
+## Bind the next attempt
+
+- Preserve the original V4 seal `8f6b1ca1fc856f8e05bf7176c02e53cd7e0fa1023954e4ba49c82b0e11de3a4b` and attempt-1 evidence. Applying only the one-line patch changes the native module SHA-256 from `becbc4311c441e5b3472c0450ae76366452ca7c461f822361d465c37c4b79ece` to `19bf2a8a953eea6538f6515704aaace45ed832773528cca53862440e20bde837`.
+- Root updates the example and fresh admission `nativeModuleSha256`, the V4 provenance and manifest, and the exact new wrapper/invocation references. Rebind the actual post-change manifest before native execution. The supplemental worker owns its separate native-module dependency pin. Keep that package separate.
+- [Static readback](static-readback.json) verified all 11 original V4 manifest entries. Node 22 checked the proposed native source in memory and the unchanged controls and runner. The checker enumerated all three direct control/native calls against the corrected factory surface. It did not evaluate those modules or launch a fixture. After applying and resealing, root can verify the installed delta and the fresh unconsumed admission before scheduling another actual Claude attempt.
+
+```powershell
+$qaNode = 'C:\Users\98jak\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe'
+$qaCheck = Join-Path $qaCorrection 'verify-static.mjs'
+& $qaNode $qaCheck --applied $qaNewV4ManifestSha $qaNewAdmission $qaNewAdmissionSha
+```
+
+No current V4, candidate, build, product or supplemental files changed in this readback. Formal scans consumed remain 0.
+

@@ -1,0 +1,31 @@
+The V4 core candidate attempt 1 ran once and ended `incomplete` (exit 1) because of a bug in the QA harness itself; the candidate was never started. No behavior predicate was checked, so this run says nothing either way about #438's behavior.
+
+**What failed:** `TypeError: native.runPowerShell is not a function`, at `controls.mjs:4` called from `run.mjs:471`. That is the install-folder privacy check, the first step after the opening source/build check passed.
+- The bound `native.mjs` defines `runPowerShell` but never returns it from `createNative`; it returns only `{ env, run, cim, closeStore }`. V3 has the same shape, and the V3→V4 patch didn't change it.
+- `controls.mjs` is new in V4 and calls the missing function in two places. The second, in `observeStdio` (line 21), would have failed the same way.
+- The preparation's syntax check only parsed the files, so it couldn't catch this. I checked by reading every member the harness uses on the `native` object; this is the only missing one.
+
+**What ran and what didn't:**
+- Before the failure, the driver only created fixture folders and one canary file. No config was written, no port allocated, and the launcher, gateway, identity helper, Script node and stdio observer were never started.
+- So there are no pressure samples, rotations, file identities, held work, #381 private/public failure, access projection, warm/refusal/restart/shell/legacy results, or NUL-slot observation.
+- The process chain was the invoker → PS7 wrapper (PID 52796) → runner Node (PID 15200), plus one cleanup PowerShell check (PID 39500, exit 0). All three exited, and both output streams of each closed with end-of-file. All three PIDs were gone when I checked afterwards.
+- The opening and closing source/build checks produced identical results: HEAD `1c04263b`, tree `332d414f`, main `e21c24be`, index `0340a3df`, 30,020 source files, 13 output roots / 1,255 outputs, launcher `98b17be7`.
+- Driver cleanup reported zero errors: 0 gateways, 0 ports, 0 launcher children. The kept fixture tree has 12 entries, no junctions or links, no SQLite or key files, and no log files. The known `Content.IE5` junction never appeared, so there is no cleanup continuation for root to review. I deleted, unlinked and killed nothing.
+
+**Deviations and disclosures:**
+- **Path form:** I ran the admitted command with the same executable, script, plan file and digest, but with backslash paths. The invoker's own path check (`absolute()` in `common.mjs`) rejects the forward-slash form written in the brief before doing anything; I confirmed that beforehand without touching the product. The backslash form matches the root-tools README.
+- **Extra read-only checks:** I checked liveness of the exact recorded PIDs and read the fixture install folder's permissions.
+  - The permissions would satisfy the check the driver never reached. That is my reading, not driver evidence.
+  - My first permissions read failed because my shell's inherited `PSModulePath` lists PowerShell 7 module folders first; the empty output and error note are kept. The driver's own minimal environment doesn't have this problem.
+- **Index:** I ran one early `git status` without `--no-optional-locks`. The index hash was unchanged afterwards, both before and after the run.
+
+**For root:**
+- The harness fix (return `runPowerShell` from `createNative`, or change `controls.mjs`) means a new manifest and admission.
+- Attempt-1 is used up. The `attempts/candidate-attempt-1`, `receipts/candidate-attempt-1` and `launcher-438-candidate-invocation-01` folders exist, and the invoker refuses to reuse them, so a new attempt name and output folder are needed.
+- Still outstanding: the core run itself, supplemental native rows N-3 to N-23, controlled rows C-1 to C-9, current-head CI, the GPT-6.1 Sol review and the Astra final verdict. Formal scans used: 0 of 3.
+
+Files are in `launcher-438-candidate-opus-execution-01`:
+- full-report.md
+- evidence-inventory.json
+- preflight.json
+- SHA256SUMS.txt

@@ -1,0 +1,290 @@
+# #438 V4 core candidate attempt 2: independent behavior QA execution report
+
+Independent actual Claude Code Opus 5.5 xhigh behavior QA worker. I did not implement the candidate. This report records one execution of the corrected, root-admitted V4 core candidate attempt (`candidate-attempt-2`). It is behavior QA, not a formal review. Formal scans remain 0 of 3. It gives no verdict, merge, owner or overall issue/batch acceptance.
+
+## Outcome
+
+- **Attempt status:** `incomplete`. Runner exit 1, wrapper exit 1, invoker `complete: true` exit 1.
+- **Behavior:** every V4 core behavior stage ran to completion against the frozen candidate. `first-failure.json` is absent, and `result.json` has `firstFailure: null` and `bindingError: null`.
+- **Only error: the known cleanup refusal, raised after all behavior stages had passed.**
+  - Where: the driver's owned no-follow inventory, `confirmOwnedCleanup` at `windows.mjs:28` (called from `run.mjs:545`).
+  - Predicate: `assert(!stat.isSymbolicLink() && (stat.isDirectory() || (stat.isFile() && stat.nlink === 1)), path)` was false.
+  - Path: `…\attempts\candidate-attempt-2\disposable\profile\AppData\Local\Microsoft\Windows\INetCache\Content.IE5`. This is the expected WinINet junction.
+  - Effect: `status` became `incomplete` and the runner exited 1. I preserved this exit and did not retry.
+  - Not reached: the driver's PowerShell no-reparse/SQLite exclusive-open probe and its `disposableRetained` marker.
+- **Bindings:** the opening and closing source/build bindings are byte-identical, SHA-256 `6b682329…05a7`.
+- **Remaining scoped state:**
+  - No live processes: all 50 exact recorded PIDs are absent.
+  - All 3 fixture ports refuse connections.
+  - No lease or reclaim files remain.
+  - Exactly one reparse entry is retained: the `Content.IE5` junction. Its target is the sibling `INetCache\IE` inside the fixture.
+  - SQLite exclusive-open was **not** attested, either by the driver or by me.
+  - Only root can review and admit an exact cleanup continuation (section 8).
+
+## 1. Exact command, runtime and inputs
+
+The admitted command, executed **once** from Git Bash with canonical backslashes and every path quoted:
+
+```
+'C:\Users\98jak\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe' 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-438-candidate-freeze-root-tools\invoke-v4.mjs' 'C:\Users\98jak\graphgoblin-qa\2026-11-13-aidlc-batch\launcher-438-candidate-root-invocation-02.json' '2e44283364d051f77dbdc2238eb3ae299a5b9efd3b69020aa7bbc8d89623261c'
+```
+
+Environment:
+
+- `NODE_OPTIONS` was unset. The invoker and wrapper also assert or remove it.
+- The inherited Git Bash PATH listed `/c/Users/98jak/bin` first, although `node` already resolved to project Node v22.23.4. I explicitly prepended the project Node directory for the command.
+- The cwd was the frozen checkout. The invoker itself spawns the wrapper with cwd set to the V4 suite.
+- I ran the command as a background tool task, with a 2-hour tool limit above the wrapper's 25-minute deadline, and monitored that same process until its actual exit.
+- Console receipts:
+  - start `2026-11-16T12:02:07.294Z`, end `12:03:42.171Z`;
+  - exit 1;
+  - stdout one line, `{"complete":true,"pid":48380,"exitCode":1,"output":"…\\launcher-438-candidate-invocation-02"}`;
+  - stderr 0 B.
+  - Files: [invoker-console.\*](invoker-console.stdout).
+
+Before the run I rehashed all bound inputs; they are in [preflight.json](preflight.json). Every value matched the brief and admission 02:
+
+| Item | Value |
+| --- | --- |
+| Checkout / branch | `C:\Users\98jak\.codex\worktrees\gg-20261116-bounded-logs\GraphGoblin` / `codex/gg-20261116-bounded-logs` |
+| HEAD / tree | `1c04263bcbfd93056e77ee98a9c5d705df26ea88` / `332d414fea68cb2fffdd1c2baca620491ce1f341` |
+| actual main (origin/main) / tree | `e21c24be9cef109ef438fd2df4c1583bc570b1cb` / `d064706fb48def7bacac5e434f96825c5850d214` |
+| Index | `…\.git\worktrees\GraphGoblin34\index` SHA-256 `0340a3df59595535e1c4ef69d4b811143571cc2d7c81e381ce53d6e4678c00c7`; porcelain 0 lines (read with `--no-optional-locks`; no plain `git status` used) |
+| Project Node / PS7 7.6.9 / Git | `dccc52de…ec14f` / `2a6769a3…2b233` / `fec691d8…9600f` |
+| Root invocation plan 02 / invoker | `2e442833…3261c` / `8dfb58115d8b5dcd86e50bcc8c7095c593288023e0ef837ea46aac6ce9b5ac80` |
+| Native admission 02 | `5a862b45f49b7ecbea6cf5615c6211d04a622a5ff2f214a078cf4683c07b5627` (attempt `candidate-attempt-2`) |
+| V4 manifest | `202bd1b2d4f01f6d9a6426030600e82ee81a914878e233b85daf58b638ba1f2d`; all 11 rows `OK` |
+| native / runner / controls / binding / wrapper | `19bf2a8a…bde837` / `fd07b72b…39b325` / `07b46702…33b69e` / `e8b3109f…76955a` / `5b82d428…16438b` |
+| V4 root review 03 (correction receipt) | `f06da71501f4625e90cf7e0482a946631d030b7224ea60eb852592d14aa0fd93` |
+| Candidate binding / compiled launcher | `8202421f8a0bda13d2f46467af88a060539b75111e9fabbbc38f461fcc7cf7ff` / `98b17be71be48d8402d34d345ce8842a170deb4e7703930da3509705ef2106e9` |
+| Contract / private fixture receipt / stdio qualification / observer exe / root freeze | `a1a02313…cf474` / `1c702bcb…61dfb` / `dc5c9a06…45024` / `34a4a9aa…67a91` / `21e98135…b3adc` |
+
+Before the run, `attempts/candidate-attempt-2`, `receipts/candidate-attempt-2` and `launcher-438-candidate-invocation-02` were all absent. Attempt 1 was not reused.
+
+## 2. Process chain, exits, EOF and close
+
+| Layer | PID | Start (UTC) | Exit (UTC) | Exit / close | Streams |
+| --- | ---: | --- | --- | --- | --- |
+| Git Bash → project Node invoker | n/a | 12:02:07.294 | 12:03:42.171 | 1 | stdout 1 JSON line (149 B), stderr 0 B |
+| Invoker → PS7 wrapper `launch.ps1` | 48380 | spawned 12:02:07.566 | exit 12:03:42.117, close 12:03:42.117 | 1 / 1, signal null, `complete: true` | stdout 0 B (EOF .104, write-closed .105); stderr 0 B (EOF .102, write-closed .105) |
+| Wrapper → project Node runner `run.mjs` | 36276 | created 12:02:08.029 | 12:03:42.074 | 1 | `capture.json` stdout 0 B / stderr 0 B; no `timeout.json` |
+
+The runner made 44 helper and product spawns, recorded in `process-001…044`:
+
+- Every one has `exit` equal to `close`, a null signal and no timeout.
+- For every one, the stdout and stderr EOF byte counts equal the captured byte counts.
+- The only non-zero exits are the two expected refusals, `wrong-store` and `occupied-port`.
+- Breakdown:
+  - 7 `GraphGoblin.exe` launches;
+  - 4 canonical-identity helpers;
+  - 1 direct ordinary-shell `main.js`;
+  - 1 NUL stdio observer;
+  - 28 exact-PID `Win32_Process` reads;
+  - 1 install-root ACL read;
+  - 1 exact-PID native birth read;
+  - 1 launcher child census.
+
+Runner timeline (evidence mtimes and recorded times):
+
+| UTC | Event |
+| --- | --- |
+| 12:02:08.169 | runner `startedAt`; `admission.json` byte copy |
+| 12:02:18.256 | `opening-binding.json` (about 10.1 s full source/output verification) |
+| 12:02:19.574 | `install-privacy.json`: passed (attempt 1 failed here) |
+| 12:02:21.295 → 12:02:28.645 | cold launcher 41960; gateway 44704 born 12:02:24.504 |
+| 12:02:29.970 | `gateway-stdio.json` |
+| 12:02:30.9 | readiness log, first projected access record, invalid-bearer control |
+| 12:02:31.978 | held Script work registered |
+| 12:02:31.979 → 12:02:40.422 | pressure (34,048 requests, 8,441 ms) |
+| 12:02:42.334 | held run `succeeded` after release |
+| 12:02:42.603 | #381 private record captured |
+| 12:02:42.6 → 12:02:51.1 | warm, alternate-config warm, wrong-store and occupied-port launches |
+| 12:02:55.002 | cold gateway drained; exit readback |
+| 12:02:55.015 → 12:03:07.943 | legacy oversized seed, restart (gateway 33896), drain |
+| 12:03:09.271 → 12:03:20.126 | clean restart (gateway 26328), drain |
+| 12:03:21.478 → 12:03:29.259 | ordinary shell (gateway 33364, direct child of the runner), drain |
+| 12:03:29.266–.351 | final managed-file checks and byte copies `managed-0/1/2.raw` |
+| 12:03:29.353 → 12:03:30.258 | census of the 7 launcher PIDs: 0 rows |
+| 12:03:30.278 | `cleanup.json` with one error (the junction) |
+| 12:03:42.048 | `closing-binding.json` (byte-identical to opening) |
+| 12:03:42.050 | `result.json` `status: incomplete` |
+
+## 3. First failure
+
+- **Behavior predicates:** none failed. There is no `first-failure.json` and no `first-failure-file-readback.json`.
+- **First and only error:** the cleanup assertion quoted in the Outcome section. `cleanup.json` (`13f4280e…c3ba`) records it as `AssertionError`, `actual: false`, `expected: true`, at `windows.mjs:28:5` via the recursive `inventory` → `confirmOwnedCleanup` → `run.mjs:545:27`.
+- **Prerequisites before that step:**
+  - `cleanup.gateways` has 4 drained gateways, each with `drainStatus` 202 and an exact birth absent (`after: {}`).
+  - `cleanup.ports` has 64062, 58199 and 58336, all `free: true`.
+  - No child-exit ambiguity was recorded.
+  - `childCensus.rows` is `[]` for parent PIDs 41960, 41184, 49620, 56596, 37184, 30912 and 53132 (census probe PID 13504).
+
+## 4. Per-case observed outcomes
+
+| Case (V4 matrix / brief) | Observed |
+| --- | --- |
+| Opening source/build binding | **Passed** (driver): 30,020 source files, 13 output roots, 1,255 outputs, artifact inventory `cba40dd3…2bee`, launcher `98b17be7…06e9` |
+| Install-root privacy | **Passed.** Owner = operator `S-1-5-21-…-1002`. Allow set exactly {operator, `S-1-5-18`, `S-1-5-32-544`}, all inherited (`OICIID`, `D:AI`) |
+| N-1 cold launch | **Passed.** Launcher 41960: exit 0, stdout/stderr 0/0 B, both EOF at .640 and exit/close at .645, separately recorded. Gateway 44704: `phase: running`; instance identity `91972c08…8587` equals the canonical-identity helper output; parent = launcher 41960. Executable = project Node. argv = exactly `node` + `…\GraphGoblin\apps/api/dist/main.js` with no extra argv. This mixed-separator spelling is identical to the baseline attempt-3 precursor. Both leases name PID 44704 and the CIM FILETIME `134393041445035770`. `graphgoblin.db` header is `SQLite format 3\0` |
+| Actual NUL std slots | **Passed** (qualified observer, host-bound). Native birth `…776` vs CIM `…770` (6 × 100 ns). Slots: stdin `\Device\Null`, type 2, `readData: true`, granted `0x00120089`. Stdout and stderr: `\Device\Null`, type 2, `writeData: true`, granted `0x00120196`. Stdout and stderr share remote handle `0x574`. The gateway was re-proven unchanged afterwards. The launcher's explicit inherited-handle list and retained process handle were not inspected |
+| Gateway outlives launcher | **Observed.** All pressure, rotations, held work and the #381 failure occurred on gateway 44704 after launcher 41960 had exited (12:02:28.645) |
+| Recent Pino records | **Passed.** `GraphGoblin API listening` from PID 44704 was present within 5 s. After pressure, `latest-gateway.tail` (627 records) contains `request completed` |
+| Three active→previous identity moves within ≤100,000 requests / 180 s | **Passed.** 3 distinct moves at 34,048 requests / 8,441 ms (about 4,034 requests/s). Details in section 5 |
+| Bounded pair and records | **Passed on samples.** All 142 inventory samples are stable, safe and violation-free. Maximum slot 4,194,219 B (cap 4,194,304); maximum pair 8,388,332 B (cap 8,388,608); maximum launcher 1,080 B. Final files: every record ends in LF and parses as fatal-UTF-8 JSON. Largest gateway record 323 B; launcher records 539 and 541 B (caps 65,536 / 4,096) |
+| Held Script continues on the same gateway | **Passed.** Script PID 49300 (parent 44704, project Node, born 12:02:31.096) stayed `running` with an identical CIM row through all 3 moves, and the gateway proof was unchanged. After release, run `01M7J3SHYVV36NAKC0C3BBPYWZ` was `succeeded` (finished 12:02:42.293). After the drain, Script birth 49300 was absent |
+| #381 private vs public | **Passed.** Run `01M7J3SX1VWJH1E69A1DQW1DQ5`: public `failure` = `{code: INTERNAL_ERROR, message: "node mut produced an invalid patch", nodeId: "mut", resumable: false}`. The `run.failed` event matches it; 6 events, `hasMore: false`. The public JSON has no `stack` key and none of the private frame line, `ZodError` or `invalid_type`. The private `gateway.log` record (level 50) has PID 44704, the same `runId`, `nodeId: mut`, `msg: node produced an invalid patch`, and `error.name: ZodError` with a non-empty `error.message` and `error.stack` (frame `RunManager.execute … packages/engine/dist/run-manager.js:2194:46`) |
+| Access projection (method / route template / status) | **Passed on reached records.** The driver checked the first-access, invalid-auth and latest tails. In my separate scan of the final retained slots (22,494 + 32 access records): `req` keys ⊆ {method, route} and `res` keys ⊆ {method, route, statusCode}. Every pressure request carried `?token=<query canary>&qa=<n>-x×900`. Neither the canary nor the padding appears in any slot. The store path appears only in the existing private `GraphGoblin API listening` `dataDir` field, never in an access record |
+| Invalid-bearer control | **Passed.** 401, `application/problem+json`, `code: UNAUTHORIZED`. Health before and after equals the proof. The captured tail holds a completed 401 record (`req-7`, `/healthz`), and the authorization canary is absent from it. A sampled observation only; serializer-input proof is C-9 |
+| Warm (same config) | **Passed.** Launcher 41184: exit 0, 0/0 B. The gateway proof is unchanged |
+| Alternate-config warm | **Passed.** Launcher 49620 with the same config contents in `other-config`: exit 0, 0/0 B. The gateway proof is unchanged. `other-config` holds only its config file, so no gateway or launcher pair was created there |
+| Wrong-store refusal | **Passed.** Launcher 56596 with `store-b` on the serving port: exit 1, stderr 409 B containing the closed foreign-listener text and the `Configuration:` line. `store-b` stayed empty and the gateway proof is unchanged. `launcher.log` was created with one record: `outcome: refused`, `stage: gateway`, `code: foreign-listener`, config path 185 chars, no `childExit` |
+| Foreign-listener refusal | **Passed.** An owned unrelated HTTP server ran on 58199. Launcher 37184: exit 1, stderr 411 B, same closed text. The server still answered 200 and `store-port` stayed empty. A second launcher record was written. Port 58199 was refused after the server closed |
+| Exact owned drain (each gateway) | **Passed ×4.** Identity was re-proven at three points: on entering the stop, before requesting the token, and after the token but before posting the drain. Token 200, drain 202. Listener closed; exact birth absent; both leases and both `.reclaim` names absent |
+| Legacy oversized | **Passed (authored seed).** Seed of 5,328,037 B (`e8249a0a…428b23`) written over the stopped active slot. Restart gateway 33896 under launcher 30912: exit 0, 0/0 B, full proof. Within 5 s the gateway slots held its listening record. Neither the seed marker nor the padding appears in either slot. Active kept file ID `…921694`, now 1,543 B, so its contents were replaced rather than rotated. Previous (`…185516`, 4,194,219 B, all pressure-era PID 44704 records) was untouched |
+| Clean restart | **Passed.** Launcher 53132: exit 0, 0/0 B. Gateway 26328, same instance identity, full proof, then drained |
+| Ordinary shell control | **Passed.** Direct `node …\apps\api\dist\main.js` (PID 33364, parent = runner 36276, separate store and port 58336): exit 0. Stdout 2,877 B includes `GraphGoblin API listening` and ordinary Pino `req` {method, url, host, remoteAddress, remotePort}; stderr 0 B. The managed launcher and gateway slots kept the same sizes and file identities across the shell run (the driver compares sampled rows, not hashes) |
+| No managed TEMP fallback | **Passed.** The TEMP pair never existed in any of the 142 samples. `disposable/temp` is empty |
+| Unrelated canary | **Passed.** `qa438-unrelated.keep` is unchanged (30 B, `ee6e8898…6291`). No unexpected entries in any sample |
+| Closing binding | **Passed.** Equal to the opening binding |
+| Driver cleanup | **Refused** at the `Content.IE5` junction (section 3). Gateways, ports and the child census were already clean |
+
+## 5. Pressure, IDs, caps and work
+
+Pressure ran in batches of 256 with 12 workers.
+
+- **Calibration:** at 2,048 requests, the same active file had grown by 760,784 B, estimating 33,873 requests for three caps. The actual third move came at 34,048.
+
+Rotations (volume `2894493802`; `retainedBytes` is the previous slot just after the move):
+
+| # | Between samples | Closed active → previous | New active | Retained B | Headroom to 4,194,304 |
+| ---: | --- | --- | --- | ---: | ---: |
+| 1 | pressure-11008 → 11264 | `…2251799822474860` | `…562949962211038` | 4,194,113 | 191 |
+| 2 | pressure-22272 → 22528 | `…562949962211038` | `…2533274799185516` | 4,194,113 | 191 |
+| 3 | pressure-33792 → 34048 | `…2533274799185516` | `…844424938921694` | 4,194,219 | 85 |
+
+- **Identities:** the gateway slots used exactly 4 distinct file identities. The launcher slot used one, `…2251799822474761`, and `launcher.log.1` never existed.
+- **Retained previous slot (final):** 11,247 request pairs (22,494 records), all from PID 44704, all `GET /healthz 200`. That is about 373 B per request with records of at most 214 B. The over-900-byte query string is not in them.
+- **Bounds:** these bytes are **sampled observations**. Pre-write ceilings and the 256 KiB in-flight/queue cap need the controlled writer-seam rows (C-2/C-3).
+- **Held work:** loop `01M7J3SHXKV4RY1H15S1AM6M3W`, run `01M7J3SHYVV36NAKC0C3BBPYWZ`, Script PID 49300, terminal `succeeded`.
+- **#381 run:** `01M7J3SX1VWJH1E69A1DQW1DQ5`.
+- **#381 record retention:** the private record was captured from active `gateway.log` while gateway 44704 served. V4's order later overwrote that active file with the authored legacy seed, and the candidate then replaced it. The final retained slots therefore no longer contain this record. Its evidence copy is `private-failure-private.json` (`5b290159…c9f9`).
+
+## 6. Streams
+
+- **Launchers:** stdout/stderr bytes:
+  - cold, warm, warm-other-root, legacy-restart and clean-restart: 0/0;
+  - wrong-store: 0/409;
+  - occupied-port: 0/411.
+  - Every launcher's EOF preceded its exit/close by 3–5 ms.
+- **Refusal stderr:** closed fixed text, `Port <n> belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.`, then `Configuration: <fixture config path>`. Neither the query nor the authorization canary appears.
+- **Gateway std slots:** NUL, as described in section 4. The managed gateway wrote nothing observable to the caller. Its records went only to the private slots.
+- **Ordinary shell:** stdout 2,877 B of ordinary Pino; stderr 0 B; EOF 12:03:28.431; exit/close .449.
+- **Runner, wrapper and invoker streams:** 0 B, except the invoker's one JSON line.
+
+## 7. Opening and closing bindings
+
+Both files are 509 B with SHA-256 `6b682329d02c8faaca0ff1298b3b9813ba8716b993983befab55e16a130105a7`: head `1c04263b…`, tree `332d414f…`, actualMain `e21c24be…`, index `0340a3df…`, 30,020 / 13 / 1,255, artifact inventory `cba40dd3…`, launcher `98b17be7…`.
+
+My own reads after the run:
+
+- With `--no-optional-locks`, HEAD, tree, origin/main, the index SHA-256 and porcelain status (0 lines) were unchanged.
+- The V4 manifest still verifies 11/11.
+- Admission 02, plan 02, the candidate binding and the launcher executable rehash unchanged.
+
+## 8. Cleanup and remaining scoped state
+
+The driver's `cleanup.json` is summarized in section 3. The `exclusive` field and `disposableRetained` are absent because the inventory assertion threw before the PowerShell probe.
+
+My read-only observations after exit:
+
+- **PIDs:** at 12:06:41Z, `tasklist /FI "PID eq N"` for each of the 50 exact recorded PIDs found none present. The list covered the wrapper, runner, 7 launchers, 4 gateways, the Script node and every helper or probe PID in `process-*` receipts. A positive control on my own shell PID did return a row.
+- **Ports:** at 12:07:01.963Z, exact loopback connects to 64062, 58199 and 58336 all returned `ECONNREFUSED`. Ports 4747/4748 were never touched.
+- **Retained tree** (no-follow lstat walk, no content reads of keys or databases): 58 entries, made of 37 directories, 20 files and **1 reparse entry**.
+  - The reparse entry is `disposable\profile\AppData\Local\Microsoft\Windows\INetCache\Content.IE5`, a junction to `…\disposable\profile\AppData\Local\Microsoft\Windows\INetCache\IE`. That target is inside the fixture and contains only `container.dat` (0 B).
+  - `profile\AppData\Local\Microsoft\Windows\PowerShell\StartupProfileData-NonInteractive` (64 B) is also present. This run's evidence does not attribute which process created the `profile\AppData` subtree.
+- **Install slots:**
+  - `install\gateway.log` 6,834 B, `gateway.log.1` 4,194,219 B and `launcher.log` 1,080 B are byte-identical to `managed-0/1/2.raw`.
+  - The 3 install configs and the unrelated canary are present; `other-config` holds the fourth config.
+  - `temp` and `store-b`/`store-port` are empty.
+  - `work` holds `release` and `script-pid.json`.
+- **Stores:**
+  - `store-a` and `store-shell` each hold `graphgoblin.db` (4,096 B), `-shm` (32,768 B), `-wal` (1,256,632 B and 642,752 B respectively) and `master.key` (44 B, not read).
+  - `store-a` also has an empty `workspaces` directory.
+  - No `graphgoblin.lock`, `.db.graphgoblin.lock` or `.reclaim` names exist.
+  - The baseline attempt-3 retained stores show the same `-wal`/`-shm` pattern.
+  - **SQLite exclusive-open was not attested in this attempt.**
+
+I did not unlink, delete, kill, change any ACL, or open any store file exclusively. **Root decision needed:** an exact cleanup continuation for `candidate-attempt-2`. Under the V4 rule, that means:
+
+1. Match the exact junction path and its original target.
+2. Verify that no other reparse entry exists and that no fixture process or listener is live.
+3. Unlink only the junction, never its target.
+4. Attest the target unchanged and SQLite exclusive-open.
+
+If any of that is ambiguous, retain the tree.
+
+## 9. Deviations, disclosures, limits and skips
+
+- **One execution, no retries.** I made no product, source, index, build, harness or Git changes, and ran no builds, tests, browsers or provider workloads. I did not touch owner stores, owner paths or ports 4747/4748. No supplements were run.
+- **PATH:** I prepended the project Node directory explicitly (section 1).
+- **Analysis-only incidents.** These were all read-only and are not evidence inputs:
+  - one inline `node -e` failed with a regex syntax error;
+  - one `node -e` failed with ENOENT before writing, because MSYS collapsed doubled backslashes; I reran it with forward-slash paths;
+  - my first ad-hoc "stack text in public" check was invalid, because the ZodError stack begins with its multi-line message. I replaced it with a check on frame lines.
+- **Stdio:** the observer qualification is host-bound. It reads the gateway's actual std slots only. No claim is made about the launcher's full explicit inherited-handle list or its retained `CreateProcess` handle.
+- **Access:** absence of canaries is limited to the reached and retained access records. The exact serializer input (C-9) and N-3 stimuli are separate.
+- **Caps:** these are sampled native bounds, not pre-write ceilings.
+- **Legacy:** this was the V4-authored oversized seed after the candidate's own stop. It is not genuine predecessor-writer proof; N-11/N-12/N-13 remain.
+- **Not exercised here:**
+  - the 250 ms exit flush;
+  - startup-failure exit codes 70–75 and the unknown-exit case;
+  - junction or pipe contention;
+  - sharing denial;
+  - unsafe names or ACLs;
+  - the reserved environment key;
+  - CLI flags;
+  - foreign SID, hostile pipe squatting, other sessions, external/fatal termination and nonlocal filesystems.
+- **Standins:** no source, injected or standin evidence is used as native acceptance here.
+
+## 10. Remaining QA and gates (none satisfied by this report)
+
+- Root review and admission of the exact cleanup continuation for `candidate-attempt-2` (section 8).
+- Supplemental native rows owned by root:
+  - N-3 access stimuli;
+  - N-4 startup store/config;
+  - N-5/N-22 early-import and unknown exits;
+  - N-5/N-4 unlogged 73/75;
+  - N-6 stale entry;
+  - N-7/N-8/N-9 junction and pipe contention;
+  - N-11/N-12/N-13 live predecessor, warm negative and oversized rollover;
+  - N-14 UTF-8 repair;
+  - N-15 rotation sharing denial;
+  - N-16 read-share 71;
+  - N-17/N-18 native pair full and mutex;
+  - N-19/N-20 unsafe names and broad ACL;
+  - N-21 reserved key;
+  - N-23 shell and CLI.
+- Controlled production-seam rows C-1 through C-9.
+- Actual current-head CI.
+- Separate independent QA closure.
+- The GPT-6.1 Sol xhigh opposite-family review.
+- A fresh independent Astra max final verdict naming the exact head and target.
+- Formal scans used: 0 of 3.
+
+## 11. Evidence
+
+- [evidence-inventory.json](evidence-inventory.json) records SHA-256 and byte sizes for:
+  - the outer invocation receipts (6 files, `launcher-438-candidate-invocation-02`);
+  - the wrapper receipts (6, `receipts/candidate-attempt-2`);
+  - all 395 attempt evidence files (`attempts/candidate-attempt-2/evidence`);
+  - the no-follow retained-tree listing (58 rows; keys and databases by metadata only);
+  - my worker files.
+- Key hashes:
+  - `result.json` `a590d42f…48fb9`
+  - `cleanup.json` `13f4280e…c3ba`
+  - `pressure-summary.json` `ce08d9e6…b201`
+  - `gateway-stdio.json` `a091b378…a874`
+  - `private-failure-public.json` `fd6bda85…3277`
+  - `managed-0/1/2.raw` `fd903131…7f34` / `ceb5b217…62b6` / `62325d6d…c268`
+- [SHA256SUMS.txt](SHA256SUMS.txt) seals this report, the inventory, the preflight and the console receipts.
+- **Excluded** as private provider/session streams: `events.jsonl`, `latest.md`, `launch.json` and any `provider-final-message.md` in this directory. No fixture key or database contents were read or copied, and no real data was used.
