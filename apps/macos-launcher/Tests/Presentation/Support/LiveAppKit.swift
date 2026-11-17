@@ -1,6 +1,7 @@
 import AppKit
 import Foundation
 import LaunchContract
+import Testing
 @testable import LauncherPresentation
 
 /// A GitHub-hosted runner: a fresh virtual machine with its own logged-in Quartz session that
