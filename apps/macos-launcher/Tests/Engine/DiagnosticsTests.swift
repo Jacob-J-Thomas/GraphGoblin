@@ -95,7 +95,8 @@ private struct DiagnosticFixture {
         #expect(try fixture.directory.root.names().isEmpty)
 
         try fixture.directory.appendLauncherRecord(maximumRecord)
-        let active = try #require(fixture.identity("launcher.log"))
+        let existing = try fixture.identity("launcher.log")
+        let active = try #require(existing)
         #expect(try fixture.bytes("launcher.log") == maximumRecord)
 
         let exact = (0..<63).reduce(into: Data()) { bytes, _ in
@@ -115,7 +116,8 @@ private struct DiagnosticFixture {
         #expect(try fixture.identity("launcher.log") != active)
         #expect(try fixture.bytes("launcher.log.1") == atCap)
         #expect(try fixture.bytes("launcher.log") == newRecord)
-        let newMetadata = try #require(fixture.directory.root.named("launcher.log"))
+        let metadata = try fixture.directory.root.named("launcher.log")
+        let newMetadata = try #require(metadata)
         #expect(newMetadata.st_mode & 0o777 == 0o600)
     }
 
@@ -159,8 +161,10 @@ private struct DiagnosticFixture {
                 try #require(chmod(directory.path + "/" + slot, 0o644) == 0)
             }
         }
-        let priorGateway = try #require(fixture.identity("gateway.log.1"))
-        let priorLauncher = try #require(fixture.identity("launcher.log.1"))
+        let gateway = try fixture.identity("gateway.log.1")
+        let launcher = try fixture.identity("launcher.log.1")
+        let priorGateway = try #require(gateway)
+        let priorLauncher = try #require(launcher)
         #expect(throws: FileRefusal.self) { try fixture.directory.gatewayAdmission() }
         #expect(throws: FileRefusal.self) { try fixture.directory.appendLauncherRecord(Data("new\n".utf8)) }
         #expect(try directory.names() == ["keep", "gateway.log.1", "launcher.log.1"])

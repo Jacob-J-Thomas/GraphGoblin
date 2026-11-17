@@ -333,7 +333,8 @@ struct InstalledEngineTests {
         let kept = try log.root.createFile("keep")
         try writeAll(kept, original)
         try #require(symlinkat("keep", log.root.fd, "gateway.log.1") == 0)
-        let symlink = try #require(log.root.named("gateway.log.1"))
+        let slot = try log.root.named("gateway.log.1")
+        let symlink = try #require(slot)
         let progress = EngineProgress()
         let result = HeadlessResult(await fixture.engine().run { progress.append($0) })
         withExtendedLifetime(reservation) {}

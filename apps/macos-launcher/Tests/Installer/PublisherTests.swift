@@ -130,7 +130,8 @@ import Testing
             )
             try records.write(stable, replacing: nil)
             let filename = fixture.id + ".json"
-            let before = try #require(fixture.receipts.named(filename))
+            let existing = try fixture.receipts.named(filename)
+            let before = try #require(existing)
             let bytes = try stable.encode()
 
             #expect(throws: FileRefusal.self) { try records.write(pending, replacing: Data("stale".utf8)) }
