@@ -71,8 +71,8 @@ The separate-process recovery check runs with `pnpm build` followed by `pnpm tes
 
 The owner approved at least 90% line coverage and 90% region coverage for the macOS launcher's
 complete production source, plus explicit behavior tests of branch outcomes. Swift's current LLVM
-export has no branch denominator, so branch outcomes are established by tests rather than a
-branch percentage. This native policy is separate from, and does not change, the V8 policy above.
+export has no branch denominator, so the policy uses tests for branch outcomes rather than a
+numeric branch percentage. This native policy is separate from, and does not change, the V8 policy above.
 See [ADR-0083](decisions/ADR-0083-swift-native-coverage.md) and the
 [CI #03 evidence](qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-03/README.md).
 
