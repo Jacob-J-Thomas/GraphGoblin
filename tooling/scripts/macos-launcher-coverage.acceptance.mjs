@@ -397,6 +397,8 @@ function diagnoseSwiftTestFailure({
           testScratch,
           '--build-tests',
           '--enable-code-coverage',
+          '-Xswiftc',
+          '-disable-batch-mode',
           '--jobs',
           '1',
           '--very-verbose',
@@ -511,7 +513,16 @@ function main() {
     tests = tools.xcrun(
       'swift-tests',
       'swift',
-      ['test', ...common, '--scratch-path', testScratch, '--enable-code-coverage', '--verbose'],
+      [
+        'test',
+        ...common,
+        '--scratch-path',
+        testScratch,
+        '--enable-code-coverage',
+        '-Xswiftc',
+        '-disable-batch-mode',
+        '--verbose',
+      ],
       { timeout: 270_000, env: swiftEnv },
     );
   } catch (error) {
