@@ -285,7 +285,7 @@ function main() {
   const tests = tools.xcrun(
     'swift-tests',
     'swift',
-    ['test', ...common, '--scratch-path', testScratch, '--enable-code-coverage'],
+    ['test', ...common, '--scratch-path', testScratch, '--enable-code-coverage', '--verbose'],
     { timeout: 270_000, env: swiftEnv },
   );
   console.log(tests.stdout.toString());
