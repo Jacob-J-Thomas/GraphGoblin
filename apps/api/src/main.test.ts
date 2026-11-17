@@ -31,6 +31,12 @@ describe('built entry and the reserved Windows launcher variable (#438)', () => 
     const head = (await readFile(built)).subarray(0, 4096).toString('latin1');
     expect(head).toContain('export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;');
     await access(fileURLToPath(new URL('../dist/windows-log/guard.js', import.meta.url)));
+    expect(head).toContain('export const MACOS_LAUNCHER_LOG_PROTOCOL = 1;');
+    await access(fileURLToPath(new URL('../dist/macos-log/guard.js', import.meta.url)));
+    await access(fileURLToPath(new URL('../dist/managed-log/guard.js', import.meta.url)));
+    await access(
+      fileURLToPath(new URL('../dist/managed-log/gateway-log-writer.js', import.meta.url)),
+    );
   });
 
   it('consumes the variable for CLI commands, which keep their ordinary output', async () => {
@@ -39,6 +45,7 @@ describe('built entry and the reserved Windows launcher variable (#438)', () => 
     await mkdir(logs);
     const command = f.run(['--create-api-key', 'reserved variable'], {
       gg_Windows_Launcher_Log_Dir: logs,
+      gg_Macos_Launcher_Log_Admission: 'not a snapshot',
     });
     expect(await command.waitForExit()).toEqual({ code: 0, signal: null });
     expect(command.stdout).toMatch(/gg_[A-Za-z0-9_-]+/);
@@ -113,6 +120,34 @@ describe('built entry and the reserved Windows launcher variable (#438)', () => 
       expect(log).not.toContain(token);
       expect([child.stdout, child.stderr]).toEqual(['', '']);
       expect((await readdir(logs)).sort()).toEqual(['gateway.log']);
+    },
+    60_000,
+  );
+});
+
+describe('physical Mac managed entry', () => {
+  it.runIf(process.platform === 'darwin')(
+    'rejects a malformed snapshot before loading the app or creating a store',
+    async () => {
+      const f = await fixture();
+      const child = f.run([], { gg_Macos_Launcher_Log_Admission: 'invalid' });
+      expect(await child.waitForExit()).toEqual({ code: 71, signal: null });
+      expect([child.stdout, child.stderr]).toEqual(['', '']);
+      await noLock(f.lockPath);
+      await noLock(join(f.dataDir, 'master.key'));
+      await noLock(join(f.dataDir, 'graphgoblin.db'));
+    },
+    60_000,
+  );
+
+  it.skipIf(process.platform === 'darwin')(
+    'consumes the Mac variable and preserves ordinary shell startup elsewhere',
+    async () => {
+      const f = await fixture();
+      const token = await f.createKey();
+      const child = f.run([], { GG_MACOS_LAUNCHER_LOG_ADMISSION: 'invalid' });
+      await f.ready(child, token);
+      expect(child.stdout).toContain('GraphGoblin API listening');
     },
     60_000,
   );

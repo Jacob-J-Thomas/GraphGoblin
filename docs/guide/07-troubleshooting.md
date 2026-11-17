@@ -77,6 +77,126 @@ gateway without opening a PWA and reports failures to stderr instead of a dialog
 ownership and readiness rules. A normal click during a drain reopens the PWA for existing shutdown
 controls; closing that PWA leaves execution running.
 
+## macOS Finder and Dock launcher
+
+The optional [macOS launcher](01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
+supports Apple Silicon on macOS 15 or later, a built checkout, native Node 22.22.2 or later within
+major 22, and Swift 6 for installer updates. The saved checkout and Node paths must remain in place;
+after either moves, rebuild if needed and run the installer again. There is no automatic retry or
+updater.
+
+### Resolve a launch outcome
+
+The launcher uses a closed outcome and exit code for headless diagnostics. The progress window uses
+plain-language guidance and never displays raw paths, exceptions, or environment values. If it
+offers **Show Log in Finder**, use that to inspect the private log; the action is available only
+after the log location has been revalidated.
+
+| Outcome and exit                                                     | Action                                                                                                                                                                                 |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `installation-invalid` (10)                                          | Confirm the saved checkout still exists and is built, then run the installer from that checkout.                                                                                       |
+| `runtime-unavailable` (11)                                           | Install or select Node 22.22.2 or later within major 22, then rerun the installer with that executable.                                                                                |
+| `assets-unavailable` (12)                                            | Build the checkout with Node 22, then open the launcher again.                                                                                                                         |
+| `key-source-unavailable` (13)                                        | Preserve the data directory. The Mac launcher requires its owned regular `master.key` beside the local database; shell-only key overrides and external database paths are unsupported. |
+| `port-in-use` (20)                                                   | Identify the listener. Stop a recognized GraphGoblin through its normal controls, or configure a verified free port in the installer. The launcher never stops an unrelated listener.  |
+| `store-blocked` (21)                                                 | Another GraphGoblin may be starting, running, or shutting down with the same data or database. Wait or stop a recognized session normally; do not remove lock or data files.           |
+| `cannot-verify` (22), `launch-busy` (23), `release-unconfirmed` (24) | Wait and open the app again after the current check or shutdown settles. Do not start another process or force a release while ownership is uncertain.                                 |
+| `diagnostics-unavailable` (25)                                       | Check that the Mac has free disk space, then try again. If it persists, rerun the installer and preserve the existing installation.                                                    |
+| `start-failed` (30)                                                  | Confirm the saved checkout and Node executable still exist, then open the app again.                                                                                                   |
+| `child-exited` (31)                                                  | Read the latest gateway startup record, correct its stated cause, and launch again.                                                                                                    |
+| `start-timed-out` (32), `startup-unverified` (33)                    | The gateway may still be running. Wait, inspect the log, and verify the matching gateway before trying again; the launcher does not kill it or repeat the spawn.                       |
+| `cancelled` (40)                                                     | Quit was accepted before start committed; no failure action is needed. A committed start is not stopped by Quit.                                                                       |
+| `unexpected` (70)                                                    | Inspect the launcher log. Nothing is stopped; if it repeats, keep the log for diagnosis.                                                                                               |
+
+The numeric outcomes above belong to the native launcher. They are separate from the managed
+gateway's internal exit codes, even though both use the number 70 for different meanings.
+
+### Read gateway startup records
+
+The gateway records a closed startup `stage` and `cause`; the stages are `import`,
+`configuration`, `store`, `recovery`, `http`, and `bind`. Causes identify conditions such as a
+missing or incompatible module, invalid configuration, held or refused store, missing local key,
+recovery failure, or a port that cannot be bound. The record contains no raw exception, path,
+configuration, or environment value. Correct the reported condition before another launch. If no
+record was written, use the launcher outcome and preserve the logs; do not infer that the gateway
+stopped.
+
+Managed gateway exits before readiness are: 70, log destination already in use; 71, destination
+unsafe or unavailable; 72/73, application import failed with/without a written diagnostic; and
+74/75, startup failed with/without a written diagnostic. These codes are internal to the detached
+gateway; interpret them with the launcher outcome and the last gateway record, not as native
+launcher exit codes.
+
+The default private logs are `~/Library/Logs/GraphGoblin/Launcher`. An alternate app uses
+`~/Library/Logs/GraphGoblin/LauncherInstances/<installation-id>`. The gateway retains
+`gateway.log` and `gateway.log.1`, 4 MiB each; the native launcher retains `launcher.log` and
+`launcher.log.1`, 256 KiB each. Old records roll off. The native launcher also takes private
+per-user coordination locks under `~/Library/Application Support/GraphGoblin/LauncherLocks`; the
+API's data-directory and database writer leases remain authoritative. Do not delete log, lock,
+lease, key, database, or receipt files to clear an error.
+
+The launcher gives a gateway up to 60 seconds to be admitted as ready. After an eligible failed
+attempt, it may make one best-effort final diagnostic write with a separate wait of at most 250 ms.
+That bounded log wait does not extend the 60-second admission deadline or trigger another spawn.
+Quit cancels pre-commit work; after a start is committed, quitting or closing the browser only
+ends observation. Stop the gateway through the existing authenticated shutdown API. The browser's
+Wait and Force choices are available only after an externally initiated drain reaches its choice
+phase; they do not start a drain. See [Gateway shutdown](../07-api-and-streaming.md#gateway-shutdown-224).
+
+### Refused bundle or fresh store
+
+The installer accepts only the managed bundle layout: `Contents` with exactly `Info.plist`,
+`MacOS`, and `Resources`; `MacOS` with exactly `GraphGoblin`; and `Resources` with exactly
+`launcher.json`. Finder additions such as `Icon\r`, `.DS_Store`, or any unknown file, link, owner,
+identity, mode, or ACL make the bundle untrusted. Do not remove unexpected contents to force an
+update; preserve the app and ask a maintainer to inspect it.
+
+The data directory must be owned by the current user and must not be group- or world-writable. An
+existing store needs its owned local regular `master.key`; the launcher uses the local SQLite
+database at `<data-directory>/graphgoblin.db`. First-key creation is allowed only for a genuinely
+empty directory after both writer leases are held. Finder metadata such as `.DS_Store` in a keyless
+directory means it is not fresh, so startup refuses instead of creating a key. Preserve every entry
+and the existing key/data together; inspect the directory or choose another verified empty location
+through the installer. The launcher does not support shell key overrides or external SQLite paths.
+
+### Installer receipt inspection and repair
+
+Installer recovery is a maintainer procedure, not a user cleanup step. Preserve the app, receipt,
+and every stage while gathering evidence. Never delete a receipt, invent a witness, rename an
+unverified stage, or use a blanket cleanup command. A receipt is selected only by a validated
+32-hex `GraphGoblinInstallationID` in the app's `Info.plist`, then read from
+`~/Library/Application Support/GraphGoblin/LauncherInstalls/<id>.json`. Authenticate the private,
+ACL-free receipt and its physical parent before interpreting its canonical compact, sorted JSON.
+Its exact keys are `version`, `id`, `name`, `applications`, and `installed`, with optional
+`staged` and `stageName`. The `applications` identity and each witness's `bundle` identity are
+decimal-string device/inode pairs; witness `executable`, `plist`, and `configuration` values are
+SHA-256 hashes of the three managed files.
+
+An update stage is named `.graphgoblin-launcher-stage-<32-hex>` under the same physical
+`~/Applications` directory and contains the app name at the opposite generation. While both
+pending fields exist, the next installer requires the stage to match the witness opposite the live
+target. A missing or mismatching stage is a safe refusal. Runtime can verify either witnessed
+target generation without consulting the stage. A first-install pending receipt can have
+`stageName` without `staged`; once its target matches `installed`, the next installer does not need
+that stage.
+
+Only a qualified maintainer may repair a receipt, and only while holding the installer's exclusive
+lock on the physical Applications directory. Save the original metadata first. Independently
+verify the private ACL-free canonical receipt, its parent and Applications identities, strict target
+layout and ownership, and all three file hashes and identities against exactly one existing
+witness. Confirm that the other stage is positively absent at its recorded name. Then the stable
+receipt may put the verified live witness in `installed`, omit both `staged` and `stageName`, and
+retain the same ID, app name, and Applications identity in the same private ACL-free canonical
+format. If the target or stage is unknown, foreign, present but not matched to the opposite witness,
+or otherwise ambiguous, stop and preserve all bytes for inspection. If a valid opposite stage is
+present, preserve both generations and rerun the normal installer; do not manually remove it.
+
+An alternate name such as `GraphGoblin Support.app` can provide temporary access only when the
+problem is limited to the managed app bundle. Use the same explicit Node, data directory, and port
+with the installer's existing options. The alternate app has a distinct installation ID and log
+directory, while the per-user locks still prevent a parallel writer or listener bypass. It does not
+repair a missing key, a blocked store, or an unknown listener.
+
 Read the run's failure banner and event log first. Record the run ID, failing node, code, and message before changing anything. Use the [failure-code reference](03-run-and-observe.md#act-on-failure-reasons) for every contract code.
 
 ## Inference prompt delivery

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { constants, type BigIntStats } from 'node:fs';
 import {
   lstat,
   mkdir,
@@ -21,6 +22,20 @@ const acquiringPaths = new Set<string>();
 export interface DataDirLock {
   /** Release only this acquisition's file. Safe to call more than once. */
   release(): Promise<void>;
+}
+
+export interface OwnedWriterArtifact {
+  path: string;
+  dev: bigint;
+  ino: bigint;
+}
+
+export interface AttestedDataDirLock extends DataDirLock {
+  verifyOwnedArtifact(): Promise<OwnedWriterArtifact | undefined>;
+}
+
+interface AttestLocalArtifact {
+  attestLocalArtifact: true;
 }
 
 function hasCode(error: unknown, code: string): boolean {
@@ -232,7 +247,48 @@ export async function dataDirLockState(
   return { state: 'free' };
 }
 
-async function acquireFile(path: string, record: string): Promise<DataDirLock> {
+async function verifyWriterArtifact(
+  acquired: OwnedWriterArtifact,
+  record: Buffer,
+): Promise<OwnedWriterArtifact | undefined> {
+  const uid = process.geteuid?.();
+  if (uid === undefined) return undefined;
+  const { path, dev, ino } = acquired;
+  const matches = (stat: BigIntStats) =>
+    stat.isFile() &&
+    stat.dev === dev &&
+    stat.ino === ino &&
+    stat.uid === BigInt(uid) &&
+    (stat.mode & 0o077n) === 0n &&
+    stat.nlink === 1n;
+  try {
+    if (!matches(await lstat(path, { bigint: true }))) return undefined;
+    const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    try {
+      if (!matches(await file.stat({ bigint: true }))) return undefined;
+      const buffer = Buffer.alloc(record.length + 1);
+      const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
+      if (bytesRead !== record.length || !buffer.subarray(0, bytesRead).equals(record))
+        return undefined;
+      if (
+        !matches(await file.stat({ bigint: true })) ||
+        !matches(await lstat(path, { bigint: true }))
+      )
+        return undefined;
+      return { path, dev, ino };
+    } finally {
+      await file.close();
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+async function acquireFile(
+  path: string,
+  record: string,
+  attestation?: AttestLocalArtifact,
+): Promise<DataDirLock> {
   const file = await open(path, 'wx', 0o600).catch(async (error: unknown) => {
     if (!hasCode(error, 'EEXIST')) throw error;
     await removeStale(path);
@@ -242,8 +298,13 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
     });
   });
   heldPaths.add(path);
+  let acquired: OwnedWriterArtifact | undefined;
   try {
     await file.writeFile(record, 'utf8');
+    if (attestation) {
+      const { dev, ino } = await file.stat({ bigint: true });
+      acquired = { path, dev, ino };
+    }
   } catch (error) {
     heldPaths.delete(path);
     await file.close();
@@ -253,8 +314,10 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
     await file.close();
   }
   let releasing: Promise<void> | undefined;
-  return {
+  let releaseStarted = false;
+  const lease: DataDirLock = {
     release() {
+      releaseStarted = true;
       releasing ??= (async () => {
         try {
           // The record includes a random ownership token: never remove a replacement lock.
@@ -268,6 +331,18 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
       return releasing;
     },
   };
+  if (!acquired) return lease;
+  const bound = acquired;
+  const expected = Buffer.from(record, 'utf8');
+  const attested: AttestedDataDirLock = {
+    ...lease,
+    async verifyOwnedArtifact() {
+      if (releaseStarted) return undefined;
+      const verified = await verifyWriterArtifact(bound, expected);
+      return releaseStarted ? undefined : verified;
+    },
+  };
+  return attested;
 }
 
 /**
@@ -276,9 +351,16 @@ async function acquireFile(path: string, record: string): Promise<DataDirLock> {
  * or have a different, verified Windows creation identity.
  * The short-lived recovery guard follows the same rule after interrupted reclamation.
  */
+export function acquireDataDirLock(
+  dataDir: string,
+  filename: string | undefined,
+  attestation: AttestLocalArtifact,
+): Promise<AttestedDataDirLock>;
+export function acquireDataDirLock(dataDir: string, filename?: string): Promise<DataDirLock>;
 export async function acquireDataDirLock(
   dataDir: string,
   filename = 'graphgoblin.lock',
+  attestation?: AttestLocalArtifact,
 ): Promise<DataDirLock> {
   const path = resolve(canonicalPath(dataDir), filename);
   // Reserve pending acquisitions too, before any asynchronous filesystem operation.
@@ -296,7 +378,7 @@ export async function acquireDataDirLock(
     // Take the guard even if the main file is missing after a crash during reclamation.
     const recovery = await acquireRecovery(`${path}.reclaim`, record, token);
     try {
-      return await acquireFile(path, record);
+      return await acquireFile(path, record, attestation);
     } finally {
       await recovery.release();
     }
@@ -306,7 +388,15 @@ export async function acquireDataDirLock(
 }
 
 /** A shared external SQLite file has one owner even when data directories differ. */
-export async function acquireDatabaseLock(databaseFile: string): Promise<DataDirLock> {
+export function acquireDatabaseLock(
+  databaseFile: string,
+  attestation: AttestLocalArtifact,
+): Promise<AttestedDataDirLock>;
+export function acquireDatabaseLock(databaseFile: string): Promise<DataDirLock>;
+export async function acquireDatabaseLock(
+  databaseFile: string,
+  attestation?: AttestLocalArtifact,
+): Promise<DataDirLock> {
   const file = canonicalPath(databaseFile);
   const info = await stat(file).catch((error: unknown) => {
     if (hasCode(error, 'ENOENT')) return undefined;
@@ -316,7 +406,10 @@ export async function acquireDatabaseLock(databaseFile: string): Promise<DataDir
     throw new Error(
       `database ${file} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
     );
-  return acquireDataDirLock(dirname(file), `${basename(file)}.graphgoblin.lock`);
+  const name = basename(file) + '.graphgoblin.lock';
+  return attestation
+    ? acquireDataDirLock(dirname(file), name, attestation)
+    : acquireDataDirLock(dirname(file), name);
 }
 
 export function databaseLockState(databaseFile: string): ReturnType<typeof dataDirLockState> {

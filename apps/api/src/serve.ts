@@ -6,7 +6,8 @@ import { createContainer } from './container.js';
 import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { createGatewayLogger, managedClientErrorHandler } from './gateway-logger.js';
 import { StoreRefusedError } from './store-refusal.js';
-import type { StartupCause, StartupStage } from './windows-log/guard.js';
+import { MacosKeySourceError } from './macos-local-key.js';
+import type { StartupCause, StartupStage } from './managed-log/guard.js';
 
 export interface ServeResult {
   app: Awaited<ReturnType<typeof buildApp>>;
@@ -14,7 +15,7 @@ export interface ServeResult {
 }
 
 export interface ServeOptions {
-  /** Only for the Windows launcher's detached gateway, supplied by the guarded entry. */
+  /** Only for detached launcher gateways, supplied by the guarded entry. */
   managed?: {
     /** The bounded private log destination. */
     destination: DestinationStream;
@@ -22,6 +23,8 @@ export interface ServeOptions {
     onStage(stage: StartupStage): void;
     /** Bounded diagnostic flush after graceful cleanup, before the process exits. */
     beforeExit(): Promise<unknown>;
+    /** Require the local key rule under both store leases for the Mac launcher. */
+    localKeySource?: 'macos';
   };
 }
 
@@ -74,7 +77,11 @@ export async function serve(options: ServeOptions = {}): Promise<ServeResult> {
 
   const startup = (async () => {
     managed?.onStage('store');
-    const owner = await createContainer(config, { logger });
+    const localKeySource = managed?.localKeySource;
+    const owner = await createContainer(config, {
+      logger,
+      ...(localKeySource === undefined ? {} : { localKeySource }),
+    });
     container = owner;
     if (shuttingDown) owner.prepareShutdown();
     managed?.onStage('recovery');
@@ -152,6 +159,7 @@ function hasCode(error: unknown, ...codes: string[]): boolean {
  */
 export function startupFailureCause(stage: StartupStage, error: unknown): StartupCause {
   if (error instanceof StoreRefusedError) return 'store-refused';
+  if (error instanceof MacosKeySourceError) return 'key-source-unavailable';
   if (error instanceof ProcessDefaultsRefusedError) return 'defaults-refused';
   const message = error instanceof Error ? error.message : '';
   if (message.startsWith('another GraphGoblin process')) return 'store-held';
