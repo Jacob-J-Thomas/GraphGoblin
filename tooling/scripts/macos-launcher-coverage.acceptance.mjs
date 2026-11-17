@@ -501,6 +501,8 @@ function main() {
   mkdirSync(presentationProfileDir, { mode: 0o700 });
   const swiftEnv = {
     ...process.env,
+    // Darwin stdio should retain SwiftPM's forwarded stdout on timeout.
+    _STDBUF_O: '0',
     GG_MACOS_COVERAGE_FIXTURE_ROOT: swiftFixtureRoot,
     GG_MACOS_COVERAGE_REPO: repo,
     GG_MACOS_COVERAGE_NODE: node,
@@ -522,6 +524,10 @@ function main() {
         '-Xswiftc',
         '-disable-batch-mode',
         '--verbose',
+        '--event-stream-output-path',
+        join(out, 'swift-testing-events.jsonl'),
+        '--event-stream-version',
+        '0',
       ],
       { timeout: 270_000, env: swiftEnv },
     );

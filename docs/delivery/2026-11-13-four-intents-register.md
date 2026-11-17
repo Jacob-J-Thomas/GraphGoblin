@@ -60,9 +60,11 @@ The owner clarified that Chrome had hung/crashed on its previous page; after res
 the correct destination opened. This is an owner-observed browser recovery, not an established
 launcher defect. At the owner's request, the existing Codex chat on the Mac received the
 remaining Finder, alias, Dock, browser-close and replacement checks through computer use.
-The queued prompt was consumed, but its `Inspecting Finder` call then stopped returning results.
-One continuation is queued, and the owner has been asked to recover that stuck turn because
-the remote session-control endpoint is unavailable. No remaining GUI test is claimed complete.
+The owner recovered its stalled `Inspecting Finder` call. The Mac agent then reported a successful
+warm Finder launch at 03:35:47 UTC on November 17, supported by the same correct gateway PID58208.
+Its next compound call, `Verifying alias and inspecting Dock`, stopped returning results at
+03:38:22 UTC. A second recovery request is pending because remote session control is unavailable.
+The alias, Dock and lifecycle sequence has no completed report; no further GUI pass is claimed.
 Earlier failed attempts retain their original outcomes. See the
 [native evidence snapshot](../qa/2026-11-16-macos-launcher/README.md).
 
@@ -84,10 +86,18 @@ Swift Testing assertions, corrected without weakening the assertions at `448168a
 verbose CI06 then failed during Swift compilation with only SwiftPM's generic build failure,
 before tests executed. Both separately passed native API integration and public installer/gateway
 acceptance. The complete raw compiler streams are retained externally; no new production
-coverage result exists. Focused GPT and actual Claude diagnosis found no demonstrated source
-cause. A failure-only serial build diagnostic now records scoped build and crash evidence while
-preserving the original gate failure. Historical partial coverage is not a pass, and no formal
-review slot is reset by these implementation diagnostics.
+coverage result exists. Bounded compiler diagnostics in CI07/CI08 isolated a presentation helper
+that omitted `import Testing` while using a caller-expanded Testing default macro. Actual Claude
+added that one import at `e16a3877`. CI09 run `44012433527` compiled and linked the test runner
+in 22.50 seconds, then reached the unchanged 270-second command timeout without a completed test
+report. Its build-only diagnostic passed and all 28 test-source objects were present. Native API
+and public installer/gateway acceptance passed separately. GPT and actual Claude are diagnosing
+test execution; neither test completion nor new production coverage is established. Historical
+partial coverage is not a pass, and these implementation diagnostics reset no formal review slot.
+The next invocation records Swift Testing's version0 event stream and uses Darwin's stdout
+buffering override so a timeout retains progress. Test selection, concurrency, assertions,
+coverage thresholds and deadlines stay unchanged; the event file may be absent if startup stops
+before its creation, and its presence alone establishes no test pass.
 The approved plan now uses the existing authenticated shutdown API. No visible start-shutdown
 control is added; current browser wait/force behavior during drain stays unchanged. No API action
 is represented as an owner UI action. Native coverage, required interactive observations and
