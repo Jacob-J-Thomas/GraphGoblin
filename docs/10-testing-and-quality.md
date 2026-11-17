@@ -92,8 +92,12 @@ declaration and entry mapping gap makes these partial measurements; they do not 
 passing 90% result. The `pnpm test:macos-coverage` package command is now wired into the macOS
 CI job before `pnpm test:macos-launcher`. CI12 at `53f41045` accounted for all 25 sources and
 passed 154 Swift tests, then correctly failed the region threshold: 3,439/3,627 lines (94.82%)
-and 1,775/2,056 regions (86.33%). This establishes complete measurement, not a passing native
-gate. See the [current QA record](qa/2026-11-16-macos-launcher/README.md) for later results.
+and 1,775/2,056 regions (86.33%). That result establishes complete measurement, not a passing
+native gate. CI13 at `4d725033` passed 168 Swift tests and the complete native gate with
+3,492/3,627 lines (96.28%) and 1,868/2,056 regions (90.86%). All five CI jobs passed; this does
+not establish the separate interactive Finder/Dock criteria or owner acceptance. See the
+[CI13 evidence](qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-13/README.md) and
+[current QA record](qa/2026-11-16-macos-launcher/README.md).
 The native evidence upload retains `.tmp/macos-launcher-*` and Swift `codecov` output for seven days.
 
 ## Maintained scripts and executable evidence (#264)

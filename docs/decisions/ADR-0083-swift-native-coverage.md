@@ -40,7 +40,10 @@ The owner approved this policy. The `pnpm test:macos-coverage` package command i
 the Swift native tests, collect and check coverage, and the macOS CI job invokes it before native
 installer and gateway acceptance. CI12 at `53f41045` passed 154 native tests and measured the
 complete 25-source roster: 3,439/3,627 lines (94.82%) and 1,775/2,056 regions (86.33%). The region
-threshold correctly failed. A passing native gate remains required. CI #03
+threshold correctly failed. CI13 at `4d725033` subsequently passed 168 Swift tests and the
+complete native gate: 3,492/3,627 lines (96.28%) and 1,868/2,056 regions (90.86%). All five
+CI jobs passed, with the original thresholds and denominator unchanged. The separate native
+GUI observations and owner acceptance remain required. CI #03
 predates the step; its existing green jobs and supplementary native coverage artifact do not
 establish that this decision's thresholds passed or that the complete mapping is covered by the
 new check.
