@@ -10,6 +10,9 @@ struct FixtureRun: Sendable {
 
     let launchError: String?
     let timedOut: Bool
+    /// Foundation signalled the child's termination and itself reports it no longer running.
+    /// Only then are `exitedNormally` and `status` read from the process.
+    let exitObserved: Bool
     let streamsClosed: Bool
     let exitedNormally: Bool
     let status: Int32
@@ -35,8 +38,8 @@ struct FixtureRun: Sendable {
 
     var diagnostics: String {
         """
-        launchError=\(launchError ?? "none") timedOut=\(timedOut) streamsClosed=\(streamsClosed) \
-        exitedNormally=\(exitedNormally) status=\(status)
+        launchError=\(launchError ?? "none") timedOut=\(timedOut) exitObserved=\(exitObserved) \
+        streamsClosed=\(streamsClosed) exitedNormally=\(exitedNormally) status=\(status)
         stdout:
         \(stdout)
         stderr:
@@ -56,7 +59,7 @@ struct FixtureRun: Sendable {
 }
 
 /// Starts the `PresentationFixture` executable as a directly tracked child and collects its
-/// result. Only that child is ever signalled, and only while it is still running and unreaped.
+/// result. Only that child is ever signalled, and only while Foundation still reports it running.
 enum FixtureLaunch {
     /// Built next to the test bundle, as the implicit product of its executable target.
     static var executableURL: URL {
@@ -80,7 +83,9 @@ enum FixtureLaunch {
     }
 
     /// Blocks a dispatch thread (never the cooperative pool) until the child has exited and
-    /// both streams are closed, or the deadline passes.
+    /// both streams are closed, or the deadline and each bounded cleanup phase after it have
+    /// passed. A child whose exit was not observed by then is reported as such, and its
+    /// termination reason and status are never read.
     private static func runToEnd(url: URL, arguments: [String], timeout: Duration) -> FixtureRun {
         let process = Process()
         process.executableURL = url
@@ -106,8 +111,8 @@ enum FixtureLaunch {
             try process.run()
         } catch {
             return FixtureRun(
-                launchError: String(describing: error), timedOut: false, streamsClosed: false,
-                exitedNormally: false, status: -1, stdout: "", stderr: ""
+                launchError: String(describing: error), timedOut: false, exitObserved: false,
+                streamsClosed: false, exitedNormally: false, status: -1, stdout: "", stderr: ""
             )
         }
 
@@ -123,19 +128,28 @@ enum FixtureLaunch {
         }
 
         var timedOut = false
-        if exited.wait(timeout: .now() + dispatchInterval(timeout)) == .timedOut {
+        var signalled = exited.wait(timeout: .now() + dispatchInterval(timeout)) == .success
+        if !signalled {
             timedOut = true
             if process.isRunning {
                 process.terminate()
             }
-            if exited.wait(timeout: .now() + .seconds(5)) == .timedOut {
+            signalled = exited.wait(timeout: .now() + .seconds(5)) == .success
+            if !signalled {
                 if process.isRunning {
                     kill(process.processIdentifier, SIGKILL)
                 }
-                exited.wait()
+                signalled = exited.wait(timeout: .now() + .seconds(5)) == .success
             }
         }
-        process.waitUntilExit()
+        // The termination handler alone is not taken as proof of exit: Foundation must also
+        // report the child no longer running, which is when its reason and status are readable.
+        let exitObserved = signalled && runningEnds(process, within: .seconds(5))
+        if !exitObserved {
+            // Foundation may still be tracking the child and may still call the termination
+            // handler: keep the process alive rather than release it under either.
+            _ = Unmanaged.passRetained(process)
+        }
         let readsFinished = reads.wait(timeout: .now() + .seconds(5)) == .success
         if !readsFinished {
             // A reader is still blocked on these descriptors: keep them open rather than let
@@ -147,12 +161,24 @@ enum FixtureLaunch {
         return FixtureRun(
             launchError: nil,
             timedOut: timedOut,
+            exitObserved: exitObserved,
             streamsClosed: readsFinished && streams.allSatisfy { $0.reachedEOF },
-            exitedNormally: process.terminationReason == .exit,
-            status: process.terminationStatus,
+            exitedNormally: exitObserved ? process.terminationReason == .exit : false,
+            status: exitObserved ? process.terminationStatus : -1,
             stdout: String(decoding: streams[0].bytes, as: UTF8.self),
             stderr: String(decoding: streams[1].bytes, as: UTF8.self)
         )
+    }
+
+    /// Waits at most `interval` for Foundation's own record of the child to show it no longer
+    /// running. Reads that record only; never reaps or signals anything itself.
+    private static func runningEnds(_ process: Process, within interval: DispatchTimeInterval) -> Bool {
+        let deadline = DispatchTime.now() + interval
+        while process.isRunning {
+            guard DispatchTime.now() < deadline else { return false }
+            usleep(1_000)
+        }
+        return true
     }
 
     private static func readToEnd(_ descriptor: Int32) -> FixtureStream {

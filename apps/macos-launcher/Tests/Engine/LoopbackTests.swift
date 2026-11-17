@@ -5,7 +5,7 @@ import Synchronization
 @testable import LauncherEngine
 import Testing
 
-/// Binds an ephemeral IPv4 port even when the test needs connection refusal.
+/// Reserves an ephemeral IPv4 port while its socket is open.
 struct FixtureSocket: Sendable {
     let handle: OwnedDescriptor
     let port: UInt16
@@ -30,6 +30,32 @@ struct FixtureSocket: Sendable {
         guard named == 0, address.sin_port != 0 else { throw FileRefusal.invalid }
         self.handle = handle
         self.port = UInt16(bigEndian: address.sin_port)
+    }
+}
+
+struct FixturePortReservation {
+    let port: UInt16
+    private var socket: FixtureSocket?
+
+    init() throws {
+        let socket = try FixtureSocket()
+        try #require(socket.port != 4747 && socket.port != 4748)
+        port = socket.port
+        self.socket = socket
+    }
+
+    mutating func releaseAndRequireRefusal() throws {
+        // A bound, non-listening socket did not prove refusal on the hosted Darwin runner.
+        withExtendedLifetime(socket) {}
+        socket = nil
+        let observation = try Loopback(port: port).observe(
+            fingerprint: LoopbackTests.fingerprint, expectedChild: nil,
+            appHTML: LoopbackTests.app, goblinHTML: LoopbackTests.goblin,
+            limit: OperationLimit(time: AttemptTime(seconds: 3), quitting: { false })
+        )
+        let refused: Bool
+        if case .refused = observation { refused = true } else { refused = false }
+        try #require(refused, "Released fixture port returned \(observation) instead of TCP refusal")
     }
 }
 
@@ -249,13 +275,8 @@ final class ScriptedLoopbackPeer: Sendable {
     }
 
     @Test func closedPortDiffersFromMalformedOversizeResetAndStalledPeers() throws {
-        let reservation = try FixtureSocket()
-        try withExtendedLifetime(reservation) {
-            guard case .refused = try observe(port: reservation.port) else {
-                Issue.record("A refused TCP connection must permit a store observation")
-                return
-            }
-        }
+        var reservation = try FixturePortReservation()
+        try reservation.releaseAndRequireRefusal()
         for reply: ScriptedLoopbackPeer.Reply in [
             .bytes(Data("unexpected bytes".utf8)),
             .bytes(Self.http(Data(repeating: 97, count: 4_097))),

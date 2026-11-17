@@ -94,10 +94,16 @@ report. Its build-only diagnostic passed and all 28 test-source objects were pre
 and public installer/gateway acceptance passed separately. GPT and actual Claude are diagnosing
 test execution; neither test completion nor new production coverage is established. Historical
 partial coverage is not a pass, and these implementation diagnostics reset no formal review slot.
-The next invocation records Swift Testing's version0 event stream and uses Darwin's stdout
-buffering override so a timeout retains progress. Test selection, concurrency, assertions,
-coverage thresholds and deadlines stay unchanged; the event file may be absent if startup stops
-before its creation, and its presence alone establishes no test pass.
+CI10 run `44014916376` retained 726 complete event records and exposed five backend test issues.
+All live AppKit and four GUI child-process tests passed. The bound-port fixture did not establish
+TCP refusal on Darwin; repeated installed-engine waits then exhausted the 270-second deadline.
+The cold fixture returned its expected 202 but its child remained alive at the three-second check.
+GPT's test-only corrections release the reserved socket and require observed refusal before the
+engine attempt, and close the drain response's connection. A local Node22 control reproduced the
+old keepalive behavior and the corrected bounded close; it is separate from native Swift proof.
+Actual Claude also bounded the GUI helper's fallback exit waits, a known harness defect that
+the passing GUI scenarios did not encounter. No shipping source, test population, assertions,
+coverage threshold or deadline changes. Complete native execution and coverage remain pending.
 The approved plan now uses the existing authenticated shutdown API. No visible start-shutdown
 control is added; current browser wait/force behavior during drain stays unchanged. No API action
 is represented as an owner UI action. Native coverage, required interactive observations and

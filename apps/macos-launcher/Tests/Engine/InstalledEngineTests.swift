@@ -217,7 +217,8 @@ struct InstalledEngineTests {
 
     @Test func coldCommitBindsDirectChildAndWarmAttemptKeepsItsPID() async throws {
         let hosted = try HostedEngineFixture()
-        let port = try FixtureSocket().port
+        var reservation = try FixturePortReservation()
+        let port = reservation.port
         let token = UUID().uuidString
         let main = #"""
             import { appendFileSync, writeFileSync } from 'node:fs'
@@ -244,7 +245,8 @@ struct InstalledEngineTests {
                 reply(200, 'text/html', '<html>Goblin</html>')
               } else if (request.url === '/fixture-drain' && request.method === 'POST'
                          && request.headers['x-fixture-control'] === '\#(token)') {
-                reply(202, 'application/json', '{"closed":true}')
+                // The current response is still active when server.close() checks idle sockets.
+                reply(202, 'application/json', '{"closed":true}', { connection: 'close' })
                 server.close()
               } else {
                 reply(404, 'text/plain', 'unexpected fixture request')
@@ -257,6 +259,7 @@ struct InstalledEngineTests {
             """#
         let fixture = try BoundEngineInstallation(hosted: hosted, port: port, main: main)
         let cold = EngineProgress()
+        try reservation.releaseAndRequireRefusal()
         let coldResult = HeadlessResult(await fixture.engine().run { cold.append($0) })
         try #require(coldResult.exitCode == 0)
         try #require(coldResult.code == "open-management-running")
@@ -324,7 +327,7 @@ struct InstalledEngineTests {
 
     @Test func refusedDiagnosticsPreventChildCommitAndPreserveForeignGatewaySlot() async throws {
         let hosted = try HostedEngineFixture()
-        let reservation = try FixtureSocket()
+        var reservation = try FixturePortReservation()
         let fixture = try BoundEngineInstallation(
             hosted: hosted, port: reservation.port, main: "throw new Error('must not run')"
         )
@@ -336,8 +339,8 @@ struct InstalledEngineTests {
         let slot = try log.root.named("gateway.log.1")
         let symlink = try #require(slot)
         let progress = EngineProgress()
+        try reservation.releaseAndRequireRefusal()
         let result = HeadlessResult(await fixture.engine().run { progress.append($0) })
-        withExtendedLifetime(reservation) {}
         try #require(result.exitCode == 25)
         try #require(result.code == "diagnostics-unavailable")
         try #require(progress.values == ["checking"])
@@ -404,7 +407,7 @@ struct InstalledEngineTests {
 
     @Test func quitWhileObservingHeldStoreOrReleasingPeerPreventsCommit() async throws {
         let hosted = try HostedEngineFixture()
-        let reservation = try FixtureSocket()
+        var reservation = try FixturePortReservation()
         let held = try BoundEngineInstallation(hosted: hosted, port: reservation.port, helper: #"""
             const value = process.argv[2] === '--store-state' ? JSON.stringify({
               state: 'held', path: process.env.GG_DATA_DIR + '/graphgoblin.lock', detail: 'fixture owner'
@@ -413,6 +416,7 @@ struct InstalledEngineTests {
             """#)
         let peer = try ScriptedLoopbackPeer([.bytes(LoopbackTests.health(phase: "ready"))])
         let releasing = try BoundEngineInstallation(hosted: hosted, port: peer.port)
+        try reservation.releaseAndRequireRefusal()
         for (fixture, waiting) in [(held, "waiting-for-store"), (releasing, "waiting-for-release")] {
             let engine = fixture.engine()
             let progress = EngineProgress()
@@ -430,7 +434,6 @@ struct InstalledEngineTests {
             try #require(authorization == nil)
             try fixture.clean()
         }
-        withExtendedLifetime(reservation) {}
         let requests = try peer.requests()
         try #require(requests.count == 1)
         try #require(requests.first?.hasPrefix("GET /healthz ") == true)
@@ -439,12 +442,12 @@ struct InstalledEngineTests {
     @Test(arguments: [70, 71, 72, 73, 74, 75, 76, 143])
     func committedChildExitProducesItsBoundedDiagnosticCategory(code: Int) async throws {
         let hosted = try HostedEngineFixture()
-        let reservation = try FixtureSocket()
+        var reservation = try FixturePortReservation()
         let action = code == 143 ? "process.kill(process.pid, 'SIGTERM')" : "process.exit(\(code))"
         let fixture = try BoundEngineInstallation(hosted: hosted, port: reservation.port, main: action)
         let progress = EngineProgress()
+        try reservation.releaseAndRequireRefusal()
         let result = HeadlessResult(await fixture.engine().run { progress.append($0) })
-        withExtendedLifetime(reservation) {}
         let categories = [
             70: "destination-in-use", 71: "destination-unavailable", 72: "import-failed-logged",
             73: "import-failed-unlogged", 74: "startup-failed-logged", 75: "startup-failed-unlogged",
