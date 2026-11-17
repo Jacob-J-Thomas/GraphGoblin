@@ -156,7 +156,9 @@ install. Follow the [macOS launcher recovery inspection](07-troubleshooting.md#m
 **Hide** and the progress window's close button hide the launch progress while it continues.
 Reopening from the Dock shows the current state. **Quit** prevents a start if it has not
 already been committed and never stops an already started GraphGoblin. Closing the browser
-also leaves work running. Use the app's existing Stop controls when you intend to stop it.
+also leaves work running. Stop the gateway through the existing authenticated shutdown API.
+The browser's Wait and Force choices are available only after an externally initiated drain
+reaches its choice phase; they do not start a drain. See [Gateway shutdown](../07-api-and-streaming.md#gateway-shutdown-224).
 
 The launcher needs a local `master.key` beside existing data; shell-only key overrides and
 external database paths are unsupported here. Preserve the existing key and data together.

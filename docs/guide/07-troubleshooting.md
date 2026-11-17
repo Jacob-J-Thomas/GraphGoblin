@@ -139,7 +139,9 @@ The launcher gives a gateway up to 60 seconds to be admitted as ready. After an 
 attempt, it may make one best-effort final diagnostic write with a separate wait of at most 250 ms.
 That bounded log wait does not extend the 60-second admission deadline or trigger another spawn.
 Quit cancels pre-commit work; after a start is committed, quitting or closing the browser only
-ends observation. Use the management page's existing Stop controls to stop GraphGoblin.
+ends observation. Stop the gateway through the existing authenticated shutdown API. The browser's
+Wait and Force choices are available only after an externally initiated drain reaches its choice
+phase; they do not start a drain. See [Gateway shutdown](../07-api-and-streaming.md#gateway-shutdown-224).
 
 ### Refused bundle or fresh store
 

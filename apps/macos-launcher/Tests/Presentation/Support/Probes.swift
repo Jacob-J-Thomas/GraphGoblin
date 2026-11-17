@@ -26,3 +26,18 @@ final class CallbackRecorder {
     var hides = 0
     var choices: [AlertChoice] = []
 }
+
+/// The receiver a real `AppKitSurface` reports window actions to, in place of the controller.
+@MainActor
+final class EventsProbe: PresentationEvents {
+    private(set) var hides = 0
+    private(set) var choices: [AlertChoice] = []
+
+    func hideRequested() {
+        hides += 1
+    }
+
+    func alertChoiceMade(_ choice: AlertChoice) {
+        choices.append(choice)
+    }
+}

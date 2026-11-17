@@ -124,6 +124,52 @@ struct AppKitWindowTests {
         panel.close()
     }
 
+    @Test("Typed Esc and Command-period hide the progress panel and dismiss a failure window")
+    func typedCancelKeys() throws {
+        let recorder = CallbackRecorder()
+        let progress = ProgressPanel(content: PresentationCopy.progress(for: .checking)) {
+            recorder.hides += 1
+        }
+        let failure = FailurePanel(content: PresentationCopy.alert(for: .childExited, showLogAvailable: true)) { choice in
+            recorder.choices.append(choice)
+        }
+        let escape = try #require(Self.keyEvent("\u{1b}", keyCode: 53, flags: []))
+        let commandPeriod = try #require(Self.keyEvent(".", keyCode: 47, flags: [.command]))
+        let capsLockEscape = try #require(Self.keyEvent("\u{1b}", keyCode: 53, flags: [.capsLock]))
+
+        progress.keyDown(with: escape)
+        progress.keyDown(with: commandPeriod)
+        progress.keyDown(with: capsLockEscape)
+        failure.keyDown(with: escape)
+        failure.keyDown(with: commandPeriod)
+        failure.keyDown(with: capsLockEscape)
+
+        #expect(recorder.hides == 3)
+        #expect(recorder.choices == [.dismiss, .dismiss, .dismiss])
+        #expect(!progress.isVisible)
+        #expect(!failure.isVisible)
+        progress.close()
+        failure.close()
+    }
+
+    @Test("A browser failure's buttons choose dismiss and copyAddress, in AppKit order")
+    func browserFailureButtons() throws {
+        let recorder = CallbackRecorder()
+        let address = try #require(ManagementAddress(port: 62241))
+        let content = PresentationCopy.alert(for: .browserRejected(address), showLogAvailable: false)
+        let panel = FailurePanel(content: content) { choice in
+            recorder.choices.append(choice)
+        }
+        #expect(panel.controls.buttons.map { $0.title } == ["OK", "Copy Address"])
+        #expect(panel.initialFirstResponder === panel.controls.buttons[0])
+
+        panel.controls.buttons[1].performClick(nil)
+        panel.controls.buttons[0].performClick(nil)
+        #expect(recorder.choices == [.copyAddress, .dismiss])
+        #expect(!panel.isVisible)
+        panel.close()
+    }
+
     @Test("The delegate routes reopen and Quit without starting another attempt")
     func delegateRouting() {
         let probe = LifecycleProbe()

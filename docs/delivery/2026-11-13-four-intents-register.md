@@ -44,23 +44,46 @@ Independent native QA then exposed a locale-sensitive Foundation JSON sorting cr
 launcher and installer corrections at source `18089bba4b1c5f4fad19627d4c118b48b656a247`
 built successfully on the owner Mac. Engineering acceptance passed two tests and all nine
 native checkpoints, including malformed-locale installation and cold launch, replacement,
-verified shutdown and disposable cleanup. Those results do not establish complete independent
-QA or Finder/Dock acceptance.
+verified shutdown and disposable cleanup. Those results are separate from independent QA
+and do not establish Finder/Dock acceptance.
 
-Independent QA 05 passed its first four stages, then stopped when its draft-run request
-omitted the required draft version ID. Recovery drain passed; no successful stopped-fixture
-manifest exists. Actual Claude is assessing the retained evidence and will implement the
-bounded harness corrections after root disposition. Previous failed attempts remain failed
-evidence. See the [native evidence snapshot](../qa/2026-11-16-macos-launcher/README.md).
+Independent QA 05 stopped at a missing draft version ID. Actual Claude corrected that request,
+the accepted-shutdown-response oracle and cross-install configuration comparison. The correction
+passed 49 controls, eight mutation challenges and an actual portless API test. QA 06 then met
+all 342 selected native checks on the same frozen product build, without forced recovery.
+Actual Claude independently assessed the evidence and found no product defect. A fresh read-only
+observation confirmed the retained fixture stopped, with matching apps and receipts. The owner
+then performed the Finder launch and reported a port 7443 pairing window. Read-only samples at
+02:02:57 and 02:02:58 UTC on November 17 (November 16 locally) verified one matching detached
+QA gateway, PID 58208 on port 62241, with unchanged apps/receipts and a Chrome connection.
+The owner clarified that Chrome had hung/crashed on its previous page; after restarting Chrome,
+the correct destination opened. This is an owner-observed browser recovery, not an established
+launcher defect. At the owner's request, the existing Codex session on the Mac is performing
+the remaining actual Finder, alias, Dock, browser-close and replacement checks through computer
+use. The queued prompt was consumed and desktop inspection started; results are still pending.
+Earlier failed attempts retain their original outcomes. See the
+[native evidence snapshot](../qa/2026-11-16-macos-launcher/README.md).
 
-A native coverage audit found the old Swift export maps only 21 of 25 product files, with
-60.62% line and 49.66% region coverage in that subset and no branch counters. An explicit
-missed-branch capability probe also produced no Swift branch counters. The owner decision
-on a proposed Swift line/region metric and explicit branch-outcome tests is pending; no
-native threshold waiver is assumed and the existing V8 thresholds remain unchanged.
-Native coverage resolution, complete independent QA, required interactive observations,
-current-candidate CI and final audit remain open. Owner closure and deployment are separate;
-PR #460 and the owner Windows instance remain protected.
+CI 03 run `43971560928` passed all five jobs at published evidence checkpoint
+`635a637c4be4f8d63647c01996cdb80e3c262323`; product paths equal `18089bba`. The synthetic
+merge has the expected target/head parents and the same tree as the head. The 13 V8 workspace
+coverage summaries meet existing thresholds; Browser passed 481 tests with one expected skip
+and zero retries, and Swift passed 105 tests.
+
+A native coverage audit found the current Swift export maps only 21 of 25 product files, with
+60.67% line and 49.75% region coverage in that subset and no branch counters. An explicit
+missed-branch capability probe also produced no Swift branch counters. The owner
+[approved the scoped Swift policy and shutdown clarification](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6935644999)
+on November 16: require at least 90% production lines and regions plus explicit branch-outcome
+tests, leaving V8 thresholds unchanged. Complete source mapping, additional behavior tests and
+the failing native CI gate are being implemented. The collector command and native CI step are
+wired locally, pending their first hosted execution; the current partial result is not a pass.
+GPT owns collection/backend tests and actual Claude Opus 5.5 xhigh owns presentation tests.
+The approved plan now uses the existing authenticated shutdown API. No visible start-shutdown
+control is added; current browser wait/force behavior during drain stays unchanged. No API action
+is represented as an owner UI action. Native coverage, required interactive observations and
+final audit remain open. Recheck CI at any later head.
+Owner closure and deployment are separate; PR #460 and the owner Windows instance remain protected.
 
 ## Earlier launcher implementation checkpoint - 2026-11-16
 

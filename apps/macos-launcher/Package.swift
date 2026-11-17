@@ -27,6 +27,10 @@ let package = Package(
         .testTarget(name: "LauncherInstallerTests", dependencies: ["LauncherEngine", "LauncherInstaller"],
                     path: "Tests/Installer"),
         .testTarget(name: "LauncherPresentationTests", dependencies: ["LaunchContract", "LauncherPresentation"],
-                    path: "Tests/Presentation")
+                    path: "Tests/Presentation"),
+        // A test-only GUI child. The installer never includes it in the application bundle.
+        .executableTarget(name: "PresentationFixture",
+                          dependencies: ["LaunchContract", "LauncherPresentation"],
+                          path: "Tests/PresentationFixture", sources: ["PresentationFixture.swift"])
     ]
 )

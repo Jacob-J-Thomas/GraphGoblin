@@ -1,0 +1,1013 @@
+﻿2026-11-16T22:35:51.0743050Z Current runner version: '2.338.2'
+2026-11-16T22:35:51.0772330Z ##[group]Runner Image Provisioner
+2026-11-16T22:35:51.0773090Z Hosted Compute Agent
+2026-11-16T22:35:51.0773480Z Version: 20261103.629
+2026-11-16T22:35:51.0774040Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-16T22:35:51.0774630Z Build Date: 2026-11-03T17:26:59Z
+2026-11-16T22:35:51.0775090Z Worker ID: {6f750f06-5247-42d5-8f80-0936bf519641}
+2026-11-16T22:35:51.0775550Z Region: westus
+2026-11-16T22:35:51.0776680Z Cloud: MacCloud
+2026-11-16T22:35:51.0777230Z ##[endgroup]
+2026-11-16T22:35:51.0778320Z ##[group]Operating System
+2026-11-16T22:35:51.0778740Z macOS
+2026-11-16T22:35:51.0779200Z 15.8.2
+2026-11-16T22:35:51.0779580Z 24H232
+2026-11-16T22:35:51.0780110Z ##[endgroup]
+2026-11-16T22:35:51.0780530Z ##[group]Runner Image
+2026-11-16T22:35:51.0781100Z Image: macos-15-arm64
+2026-11-16T22:35:51.0781560Z Version: 20261104.0514.1
+2026-11-16T22:35:51.0782650Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20261104.0514/images/macos/macos-15-arm64-Readme.md
+2026-11-16T22:35:51.0783700Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20261104.0514
+2026-11-16T22:35:51.0784450Z ##[endgroup]
+2026-11-16T22:35:51.0785440Z ##[group]GITHUB_TOKEN Permissions
+2026-11-16T22:35:51.0787010Z Contents: read
+2026-11-16T22:35:51.0787440Z Metadata: read
+2026-11-16T22:35:51.0787820Z Packages: read
+2026-11-16T22:35:51.0788250Z ##[endgroup]
+2026-11-16T22:35:51.0789910Z Secret source: Actions
+2026-11-16T22:35:51.0790880Z Cache mode: write
+2026-11-16T22:35:51.0791540Z Prepare workflow directory
+2026-11-16T22:35:51.1851520Z Prepare all required actions
+2026-11-16T22:35:51.1912260Z Getting action download info
+2026-11-16T22:35:52.0093960Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-16T22:35:54.3162000Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-16T22:35:54.9844010Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-16T22:35:55.1981140Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-16T22:35:55.5806990Z Complete job name: macOS launcher
+2026-11-16T22:35:55.6823010Z ##[group]Run actions/checkout@v4
+2026-11-16T22:35:55.6823810Z with:
+2026-11-16T22:35:55.6824040Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-16T22:35:55.6826620Z   token: ***
+2026-11-16T22:35:55.6826820Z   ssh-strict: true
+2026-11-16T22:35:55.6827050Z   ssh-user: git
+2026-11-16T22:35:55.6827250Z   persist-credentials: true
+2026-11-16T22:35:55.6827490Z   clean: true
+2026-11-16T22:35:55.6827690Z   sparse-checkout-cone-mode: true
+2026-11-16T22:35:55.6827950Z   fetch-depth: 1
+2026-11-16T22:35:55.6828160Z   fetch-tags: false
+2026-11-16T22:35:55.6828380Z   show-progress: true
+2026-11-16T22:35:55.6828570Z   lfs: false
+2026-11-16T22:35:55.6828750Z   submodules: false
+2026-11-16T22:35:55.6828990Z   set-safe-directory: true
+2026-11-16T22:35:55.6829340Z   allow-unsafe-pr-checkout: false
+2026-11-16T22:35:55.6829770Z env:
+2026-11-16T22:35:55.6829950Z   LIVE: 0
+2026-11-16T22:35:55.6830400Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:35:55.6830870Z ##[endgroup]
+2026-11-16T22:35:56.3117760Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-16T22:35:56.3119540Z ##[group]Getting Git version info
+2026-11-16T22:35:56.3119980Z Working directory is '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-16T22:35:56.3120760Z [command]/opt/homebrew/bin/git version
+2026-11-16T22:35:56.3490790Z git version 2.56.0
+2026-11-16T22:35:56.3525380Z ##[endgroup]
+2026-11-16T22:35:56.3535600Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/29ee71ab-dbba-4c9f-acf5-57ef301aaa2a/.gitconfig'
+2026-11-16T22:35:56.3555390Z Temporarily overriding HOME='/Users/runner/work/_temp/29ee71ab-dbba-4c9f-acf5-57ef301aaa2a' before making global git config changes
+2026-11-16T22:35:56.3557860Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-16T22:35:56.3567770Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T22:35:56.3762530Z Deleting the contents of '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-16T22:35:56.3777540Z ##[group]Initializing the repository
+2026-11-16T22:35:56.3779190Z [command]/opt/homebrew/bin/git init /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T22:35:56.4156310Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-16T22:35:56.4157460Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-16T22:35:56.4158530Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-16T22:35:56.4159280Z hint: call:
+2026-11-16T22:35:56.4159580Z hint:
+2026-11-16T22:35:56.4160260Z hint: 	git config --global init.defaultBranch <name>
+2026-11-16T22:35:56.4160950Z hint:
+2026-11-16T22:35:56.4165210Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-16T22:35:56.4167790Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-16T22:35:56.4171970Z hint:
+2026-11-16T22:35:56.4172890Z hint: 	git branch -m <name>
+2026-11-16T22:35:56.4173510Z hint:
+2026-11-16T22:35:56.4173930Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-16T22:35:56.4174850Z Initialized empty Git repository in /Users/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-16T22:35:56.4184350Z [command]/opt/homebrew/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-16T22:35:56.4304130Z ##[endgroup]
+2026-11-16T22:35:56.4305510Z ##[group]Disabling automatic garbage collection
+2026-11-16T22:35:56.4306860Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-16T22:35:56.4409740Z ##[endgroup]
+2026-11-16T22:35:56.4411280Z ##[group]Setting up auth
+2026-11-16T22:35:56.4413140Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-16T22:35:56.4529550Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-16T22:35:56.6206920Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-16T22:35:56.6290990Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-16T22:35:56.7758720Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-16T22:35:56.7803510Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-16T22:35:56.9417930Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-16T22:35:56.9637010Z ##[endgroup]
+2026-11-16T22:35:56.9639650Z ##[group]Fetching the repository
+2026-11-16T22:35:56.9642600Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +68a9536dcf4c6e1c047deb28f83d910b16e4113d:refs/remotes/pull/501/merge
+2026-11-16T22:36:11.8489660Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-16T22:36:11.8494300Z  * [new ref]           68a9536dcf4c6e1c047deb28f83d910b16e4113d -> pull/501/merge
+2026-11-16T22:36:11.8503540Z ##[endgroup]
+2026-11-16T22:36:11.8504850Z ##[group]Determining the checkout info
+2026-11-16T22:36:11.8521730Z ##[endgroup]
+2026-11-16T22:36:11.8581090Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-16T22:36:11.8691640Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-16T22:36:11.8764010Z ##[group]Checking out the ref
+2026-11-16T22:36:11.8775580Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/501/merge
+2026-11-16T22:36:13.1084970Z Updating files:   6% (2096/31434)
+2026-11-16T22:36:13.3863730Z Updating files:   7% (2201/31434)
+2026-11-16T22:36:13.4964150Z Updating files:   8% (2515/31434)
+2026-11-16T22:36:13.6114790Z Updating files:   9% (2830/31434)
+2026-11-16T22:36:13.7140930Z Updating files:  10% (3144/31434)
+2026-11-16T22:36:13.7881650Z Updating files:  11% (3458/31434)
+2026-11-16T22:36:13.9038820Z Updating files:  12% (3773/31434)
+2026-11-16T22:36:13.9115850Z Updating files:  13% (4087/31434)
+2026-11-16T22:36:14.0024280Z Updating files:  13% (4112/31434)
+2026-11-16T22:36:14.1640080Z Updating files:  14% (4401/31434)
+2026-11-16T22:36:14.3721130Z Updating files:  15% (4716/31434)
+2026-11-16T22:36:14.5197330Z Updating files:  16% (5030/31434)
+2026-11-16T22:36:14.6372870Z Updating files:  17% (5344/31434)
+2026-11-16T22:36:14.7817240Z Updating files:  18% (5659/31434)
+2026-11-16T22:36:14.8481130Z Updating files:  19% (5973/31434)
+2026-11-16T22:36:14.9138810Z Updating files:  20% (6287/31434)
+2026-11-16T22:36:15.0898330Z Updating files:  20% (6563/31434)
+2026-11-16T22:36:15.1562270Z Updating files:  21% (6602/31434)
+2026-11-16T22:36:15.2460280Z Updating files:  22% (6916/31434)
+2026-11-16T22:36:15.3084830Z Updating files:  23% (7230/31434)
+2026-11-16T22:36:15.4161190Z Updating files:  24% (7545/31434)
+2026-11-16T22:36:15.5046890Z Updating files:  25% (7859/31434)
+2026-11-16T22:36:15.5745870Z Updating files:  26% (8173/31434)
+2026-11-16T22:36:15.6600080Z Updating files:  27% (8488/31434)
+2026-11-16T22:36:15.7682280Z Updating files:  28% (8802/31434)
+2026-11-16T22:36:15.8386810Z Updating files:  29% (9116/31434)
+2026-11-16T22:36:15.9129850Z Updating files:  30% (9431/31434)
+2026-11-16T22:36:16.1385300Z Updating files:  31% (9745/31434)
+2026-11-16T22:36:16.3098080Z Updating files:  32% (10059/31434)
+2026-11-16T22:36:16.5340910Z Updating files:  33% (10374/31434)
+2026-11-16T22:36:16.6630360Z Updating files:  34% (10688/31434)
+2026-11-16T22:36:16.7908010Z Updating files:  35% (11002/31434)
+2026-11-16T22:36:16.9135510Z Updating files:  36% (11317/31434)
+2026-11-16T22:36:16.9685410Z Updating files:  36% (11570/31434)
+2026-11-16T22:36:17.1084120Z Updating files:  37% (11631/31434)
+2026-11-16T22:36:17.2036910Z Updating files:  38% (11945/31434)
+2026-11-16T22:36:17.2983320Z Updating files:  39% (12260/31434)
+2026-11-16T22:36:17.4491510Z Updating files:  40% (12574/31434)
+2026-11-16T22:36:17.6269410Z Updating files:  41% (12888/31434)
+2026-11-16T22:36:17.7069950Z Updating files:  42% (13203/31434)
+2026-11-16T22:36:17.7822340Z Updating files:  43% (13517/31434)
+2026-11-16T22:36:17.8639950Z Updating files:  44% (13831/31434)
+2026-11-16T22:36:17.9136780Z Updating files:  45% (14146/31434)
+2026-11-16T22:36:17.9449450Z Updating files:  45% (14354/31434)
+2026-11-16T22:36:18.0572750Z Updating files:  46% (14460/31434)
+2026-11-16T22:36:18.1524740Z Updating files:  47% (14774/31434)
+2026-11-16T22:36:18.1949380Z Updating files:  48% (15089/31434)
+2026-11-16T22:36:18.3319890Z Updating files:  49% (15403/31434)
+2026-11-16T22:36:18.4914010Z Updating files:  50% (15717/31434)
+2026-11-16T22:36:18.5851780Z Updating files:  51% (16032/31434)
+2026-11-16T22:36:18.6809500Z Updating files:  52% (16346/31434)
+2026-11-16T22:36:18.7590990Z Updating files:  53% (16661/31434)
+2026-11-16T22:36:18.8171430Z Updating files:  54% (16975/31434)
+2026-11-16T22:36:18.8775460Z Updating files:  55% (17289/31434)
+2026-11-16T22:36:18.9228450Z Updating files:  56% (17604/31434)
+2026-11-16T22:36:18.9639480Z Updating files:  56% (17791/31434)
+2026-11-16T22:36:19.0913410Z Updating files:  57% (17918/31434)
+2026-11-16T22:36:19.2294740Z Updating files:  58% (18232/31434)
+2026-11-16T22:36:19.3036300Z Updating files:  59% (18547/31434)
+2026-11-16T22:36:19.5170490Z Updating files:  60% (18861/31434)
+2026-11-16T22:36:19.6367210Z Updating files:  61% (19175/31434)
+2026-11-16T22:36:19.9150340Z Updating files:  62% (19490/31434)
+2026-11-16T22:36:19.9410730Z Updating files:  62% (19774/31434)
+2026-11-16T22:36:20.3580730Z Updating files:  63% (19804/31434)
+2026-11-16T22:36:20.4795990Z Updating files:  64% (20118/31434)
+2026-11-16T22:36:20.6734970Z Updating files:  65% (20433/31434)
+2026-11-16T22:36:20.7967450Z Updating files:  66% (20747/31434)
+2026-11-16T22:36:20.9149130Z Updating files:  67% (21061/31434)
+2026-11-16T22:36:20.9660500Z Updating files:  67% (21312/31434)
+2026-11-16T22:36:21.1705150Z Updating files:  68% (21376/31434)
+2026-11-16T22:36:21.2775940Z Updating files:  69% (21690/31434)
+2026-11-16T22:36:21.4476200Z Updating files:  70% (22004/31434)
+2026-11-16T22:36:21.5457450Z Updating files:  71% (22319/31434)
+2026-11-16T22:36:21.6807520Z Updating files:  72% (22633/31434)
+2026-11-16T22:36:21.8077180Z Updating files:  73% (22947/31434)
+2026-11-16T22:36:21.9163670Z Updating files:  74% (23262/31434)
+2026-11-16T22:36:22.0061350Z Updating files:  74% (23416/31434)
+2026-11-16T22:36:22.1163130Z Updating files:  75% (23576/31434)
+2026-11-16T22:36:22.2167860Z Updating files:  76% (23890/31434)
+2026-11-16T22:36:22.3419790Z Updating files:  77% (24205/31434)
+2026-11-16T22:36:22.4573830Z Updating files:  78% (24519/31434)
+2026-11-16T22:36:22.5598700Z Updating files:  79% (24833/31434)
+2026-11-16T22:36:22.6282640Z Updating files:  80% (25148/31434)
+2026-11-16T22:36:22.7141620Z Updating files:  81% (25462/31434)
+2026-11-16T22:36:22.8079340Z Updating files:  82% (25776/31434)
+2026-11-16T22:36:22.8857080Z Updating files:  83% (26091/31434)
+2026-11-16T22:36:22.9164410Z Updating files:  84% (26405/31434)
+2026-11-16T22:36:22.9554250Z Updating files:  84% (26567/31434)
+2026-11-16T22:36:23.0137860Z Updating files:  85% (26719/31434)
+2026-11-16T22:36:23.0854410Z Updating files:  86% (27034/31434)
+2026-11-16T22:36:23.1691600Z Updating files:  87% (27348/31434)
+2026-11-16T22:36:23.2642140Z Updating files:  88% (27662/31434)
+2026-11-16T22:36:23.4045510Z Updating files:  89% (27977/31434)
+2026-11-16T22:36:23.4912660Z Updating files:  90% (28291/31434)
+2026-11-16T22:36:23.5824000Z Updating files:  91% (28605/31434)
+2026-11-16T22:36:23.6913640Z Updating files:  92% (28920/31434)
+2026-11-16T22:36:23.7368090Z Updating files:  93% (29234/31434)
+2026-11-16T22:36:23.7962870Z Updating files:  94% (29548/31434)
+2026-11-16T22:36:23.8484530Z Updating files:  95% (29863/31434)
+2026-11-16T22:36:23.9151420Z Updating files:  96% (30177/31434)
+2026-11-16T22:36:23.9167120Z Updating files:  97% (30491/31434)
+2026-11-16T22:36:23.9941660Z Updating files:  97% (30498/31434)
+2026-11-16T22:36:24.0757210Z Updating files:  98% (30806/31434)
+2026-11-16T22:36:24.1538830Z Updating files:  99% (31120/31434)
+2026-11-16T22:36:24.1540050Z Updating files: 100% (31434/31434)
+2026-11-16T22:36:24.1543170Z Updating files: 100% (31434/31434), done.
+2026-11-16T22:36:24.1999130Z HEAD is now at 68a9536d Merge 635a637c4be4f8d63647c01996cdb80e3c262323 into 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1
+2026-11-16T22:36:24.2196430Z ##[endgroup]
+2026-11-16T22:36:24.2644670Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-16T22:36:24.2879470Z 68a9536dcf4c6e1c047deb28f83d910b16e4113d
+2026-11-16T22:36:24.3660830Z ##[group]Run pnpm/action-setup@v4
+2026-11-16T22:36:24.3662130Z with:
+2026-11-16T22:36:24.3674140Z   dest: ~/setup-pnpm
+2026-11-16T22:36:24.3675090Z   run_install: null
+2026-11-16T22:36:24.3675690Z   cache: false
+2026-11-16T22:36:24.3676500Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-16T22:36:24.3677450Z   package_json_file: package.json
+2026-11-16T22:36:24.3678330Z   standalone: false
+2026-11-16T22:36:24.3679260Z env:
+2026-11-16T22:36:24.3679740Z   LIVE: 0
+2026-11-16T22:36:24.3680980Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:36:24.3682380Z ##[endgroup]
+2026-11-16T22:36:24.6278360Z ##[group]Running self-installer...
+2026-11-16T22:36:25.0761950Z (node:1394) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-16T22:36:25.0766900Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T22:36:25.2808990Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-16T22:36:25.4656050Z Packages: +2
+2026-11-16T22:36:25.4656590Z ++
+2026-11-16T22:36:26.1810720Z Progress: resolved 15, reused 0, downloaded 2, added 2, done
+2026-11-16T22:36:26.2097400Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-16T22:36:26.8366880Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-16T22:36:26.8371190Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-16T22:36:26.9808470Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-16T22:36:28.4214050Z 
+2026-11-16T22:36:28.4216110Z dependencies:
+2026-11-16T22:36:28.4216880Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-16T22:36:28.4217380Z 
+2026-11-16T22:36:28.4299810Z Done in 3.6s
+2026-11-16T22:36:28.5378170Z ##[endgroup]
+2026-11-16T22:36:28.5393780Z Installation Completed!
+2026-11-16T22:36:28.5924950Z ##[group]Run actions/setup-node@v4
+2026-11-16T22:36:28.5925760Z with:
+2026-11-16T22:36:28.5926170Z   node-version-file: .nvmrc
+2026-11-16T22:36:28.5926760Z   cache: pnpm
+2026-11-16T22:36:28.5927260Z   always-auth: false
+2026-11-16T22:36:28.5927840Z   check-latest: false
+2026-11-16T22:36:28.5933840Z   token: ***
+2026-11-16T22:36:28.5934380Z env:
+2026-11-16T22:36:28.5934920Z   LIVE: 0
+2026-11-16T22:36:28.5935900Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:36:28.5937260Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T22:36:28.5937990Z ##[endgroup]
+2026-11-16T22:36:28.8866040Z Resolved .nvmrc as 22
+2026-11-16T22:36:28.8967980Z (node:1495) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-16T22:36:28.8972160Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T22:36:28.8990240Z Found in cache @ /Users/runner/hostedtoolcache/node/22.23.4/arm64
+2026-11-16T22:36:28.9039810Z ##[group]Environment details
+2026-11-16T22:36:29.7414610Z node: v22.23.4
+2026-11-16T22:36:29.7536300Z npm: 10.9.9
+2026-11-16T22:36:29.7638070Z yarn: 1.22.22
+2026-11-16T22:36:29.7676120Z ##[endgroup]
+2026-11-16T22:36:29.7682090Z [command]/Users/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-16T22:36:29.8248850Z /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-16T22:36:30.1908560Z (node:1495) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-16T22:36:30.1940660Z Cache hit for: node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-16T22:36:31.5152440Z Received 0 of 433669274 (0.0%), 0.0 MBs/sec
+2026-11-16T22:36:32.5171200Z Received 58720256 of 433669274 (13.5%), 28.0 MBs/sec
+2026-11-16T22:36:33.5170790Z Received 134217728 of 433669274 (30.9%), 42.6 MBs/sec
+2026-11-16T22:36:34.5181500Z Received 218103808 of 433669274 (50.3%), 51.9 MBs/sec
+2026-11-16T22:36:35.5222790Z Received 264241152 of 433669274 (60.9%), 50.3 MBs/sec
+2026-11-16T22:36:36.5240760Z Received 264241152 of 433669274 (60.9%), 41.9 MBs/sec
+2026-11-16T22:36:37.5245070Z Received 314572800 of 433669274 (72.5%), 42.8 MBs/sec
+2026-11-16T22:36:38.5578170Z Received 385875968 of 433669274 (89.0%), 45.9 MBs/sec
+2026-11-16T22:36:39.5316750Z Received 425280666 of 433669274 (98.1%), 45.0 MBs/sec
+2026-11-16T22:36:39.8599220Z Received 433669274 of 433669274 (100.0%), 44.3 MBs/sec
+2026-11-16T22:36:39.8698870Z Cache Size: ~414 MB (433669274 B)
+2026-11-16T22:36:39.8802040Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/cdedd6a4-e8a7-4295-9936-24a4653e61c4/cache.tzst -P -C /Users/runner/work/GraphGoblin/GraphGoblin --delay-directory-restore --use-compress-program unzstd
+2026-11-16T22:36:58.3624150Z Cache restored successfully
+2026-11-16T22:36:58.3809900Z Cache restored from key: node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-16T22:36:58.4377810Z ##[group]Run mkdir -p .tmp/macos-launcher-toolchain
+2026-11-16T22:36:58.4379420Z [36;1mmkdir -p .tmp/macos-launcher-toolchain[0m
+2026-11-16T22:36:58.4381970Z [36;1m{[0m
+2026-11-16T22:36:58.4383040Z [36;1m  git rev-parse HEAD 'HEAD^{tree}'[0m
+2026-11-16T22:36:58.4384210Z [36;1m  sw_vers[0m
+2026-11-16T22:36:58.4386060Z [36;1m  uname -m[0m
+2026-11-16T22:36:58.4386720Z [36;1m  xcode-select -p[0m
+2026-11-16T22:36:58.4387060Z [36;1m  xcrun --sdk macosx --show-sdk-version[0m
+2026-11-16T22:36:58.4451230Z [36;1m  xcrun --sdk macosx swift --version[0m
+2026-11-16T22:36:58.4451670Z [36;1m  node --version[0m
+2026-11-16T22:36:58.4451980Z [36;1m  pnpm --version[0m
+2026-11-16T22:36:58.4452430Z [36;1m} > .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-16T22:36:58.4452870Z [36;1mcat .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-16T22:36:58.4453340Z [36;1mtest "$(uname -m)" = arm64[0m
+2026-11-16T22:36:58.7776400Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-16T22:36:58.7776700Z env:
+2026-11-16T22:36:58.7777020Z   LIVE: 0
+2026-11-16T22:36:58.7777380Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:36:58.7777990Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T22:36:58.7778390Z ##[endgroup]
+2026-11-16T22:37:05.3784200Z 68a9536dcf4c6e1c047deb28f83d910b16e4113d
+2026-11-16T22:37:05.3785360Z 40473ceb73b971532d98560c7218a0367fcfd620
+2026-11-16T22:37:05.3785710Z ProductName:		macOS
+2026-11-16T22:37:05.3786050Z ProductVersion:		15.8.2
+2026-11-16T22:37:05.3786350Z BuildVersion:		24H232
+2026-11-16T22:37:05.3786650Z arm64
+2026-11-16T22:37:05.3787080Z /Applications/Xcode_16.4.app/Contents/Developer
+2026-11-16T22:37:05.3787510Z 15.5
+2026-11-16T22:37:05.3787980Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-16T22:37:05.3788880Z Target: arm64-apple-macosx15.0
+2026-11-16T22:37:05.3789150Z v22.23.4
+2026-11-16T22:37:05.3789430Z 12.8.1
+2026-11-16T22:37:05.3800750Z swift-driver version: 1.120.5 
+2026-11-16T22:37:05.3921880Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-16T22:37:05.3922440Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-16T22:37:05.4009080Z shell: /bin/bash -e {0}
+2026-11-16T22:37:05.4010430Z env:
+2026-11-16T22:37:05.4010670Z   LIVE: 0
+2026-11-16T22:37:05.4011190Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:37:05.4011800Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T22:37:05.4012170Z ##[endgroup]
+2026-11-16T22:37:05.5580340Z Scope: all 14 workspace projects
+2026-11-16T22:37:05.7065290Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-16T22:37:06.4580930Z Packages are cloned from the content-addressable store to the virtual store.
+2026-11-16T22:37:06.4610090Z   Content-addressable store is at: /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-16T22:37:06.4696050Z   Virtual store is at:             node_modules/.pnpm
+2026-11-16T22:37:09.9655190Z ✓ Lockfile passes supply-chain policies (931 entries in 4.3s)
+2026-11-16T22:37:09.9657060Z Lockfile is up to date, resolution step is skipped
+2026-11-16T22:37:09.9849790Z Packages: +801
+2026-11-16T22:37:09.9871250Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-16T22:37:10.2102060Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-16T22:37:10.3749890Z 
+2026-11-16T22:37:10.3751230Z devDependencies:
+2026-11-16T22:37:10.3752530Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-16T22:37:10.3753310Z + @eslint/js 10.0.1
+2026-11-16T22:37:10.3754860Z + @vitest/coverage-v8 5.0.3
+2026-11-16T22:37:10.3756320Z + dependency-cruiser 18.5.0
+2026-11-16T22:37:10.3757180Z + eslint 10.11.0
+2026-11-16T22:37:10.3758380Z + eslint-config-prettier 10.1.8
+2026-11-16T22:37:10.3761630Z + eslint-plugin-react-hooks 7.1.1
+2026-11-16T22:37:10.3762350Z + prettier 3.9.9
+2026-11-16T22:37:10.3763060Z + turbo 2.11.6
+2026-11-16T22:37:10.3763810Z + typescript 6.0.3
+2026-11-16T22:37:10.3764480Z + typescript-eslint 8.71.0
+2026-11-16T22:37:10.3765270Z + vitest 5.0.3
+2026-11-16T22:37:10.3765670Z 
+2026-11-16T22:37:10.3783170Z Done in 4.8s using pnpm v12.8.1
+2026-11-16T22:37:10.4005800Z ##[group]Run pnpm build
+2026-11-16T22:37:10.4006730Z [36;1mpnpm build[0m
+2026-11-16T22:37:10.4065690Z shell: /bin/bash -e {0}
+2026-11-16T22:37:10.4066050Z env:
+2026-11-16T22:37:10.4066340Z   LIVE: 0
+2026-11-16T22:37:10.4066700Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:37:10.4067340Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T22:37:10.4067700Z ##[endgroup]
+2026-11-16T22:37:10.5101800Z $ turbo run build
+2026-11-16T22:37:10.7975260Z 
+2026-11-16T22:37:10.7975840Z Attention:
+2026-11-16T22:37:10.7976700Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-16T22:37:10.7977360Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-16T22:37:10.7978150Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-16T22:37:10.7979000Z https://turborepo.dev/docs/telemetry
+2026-11-16T22:37:10.7979160Z 
+2026-11-16T22:37:11.8524420Z 
+2026-11-16T22:37:11.8601790Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-16T22:37:11.8629460Z    • Running build in 13 packages
+2026-11-16T22:37:11.8731060Z    • Remote caching disabled
+2026-11-16T22:37:11.8755060Z 
+2026-11-16T22:37:14.3135630Z ##[group]@graphgoblin/contracts:build
+2026-11-16T22:37:14.3148370Z cache miss, executing 01211188ac2b43c2
+2026-11-16T22:37:14.3148810Z $ tsc -b tsconfig.build.json
+2026-11-16T22:37:14.3149230Z ##[endgroup]
+2026-11-16T22:37:17.9043160Z ##[group]@graphgoblin/domain:build
+2026-11-16T22:37:17.9045780Z cache miss, executing 3786922b2e677db0
+2026-11-16T22:37:17.9046880Z $ tsc -b tsconfig.build.json
+2026-11-16T22:37:17.9048120Z ##[endgroup]
+2026-11-16T22:37:22.9454340Z ##[group]@graphgoblin/engine:build
+2026-11-16T22:37:22.9462600Z cache miss, executing 254c20e9005133ea
+2026-11-16T22:37:22.9566480Z $ tsc -b tsconfig.build.json
+2026-11-16T22:37:22.9673380Z ##[endgroup]
+2026-11-16T22:37:26.0409020Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-16T22:37:26.0532430Z cache miss, executing f50b659ccef01e03
+2026-11-16T22:37:26.0636460Z $ tsc -b tsconfig.build.json
+2026-11-16T22:37:26.0745190Z ##[endgroup]
+2026-11-16T22:37:26.7816410Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-16T22:37:26.7870710Z cache miss, executing 71c02089d917b814
+2026-11-16T22:37:26.7871860Z $ tsc -b tsconfig.build.json
+2026-11-16T22:37:26.7872920Z ##[endgroup]
+2026-11-16T22:37:34.2112590Z ##[group]@graphgoblin/infrastructure:build
+2026-11-16T22:37:34.2118220Z cache miss, executing bc13b619b1311daf
+2026-11-16T22:37:34.2119450Z $ tsc -b tsconfig.build.json
+2026-11-16T22:37:34.2121080Z ##[endgroup]
+2026-11-16T22:37:43.3727700Z ##[group]@graphgoblin/api:build
+2026-11-16T22:37:43.3729170Z cache miss, executing 7a0726416a66b44a
+2026-11-16T22:37:43.3731590Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-16T22:37:43.3732270Z ##[endgroup]
+2026-11-16T22:37:46.4828580Z ##[group]@graphgoblin/api-client:build
+2026-11-16T22:37:46.4830230Z cache miss, executing 9bef7719fcad2156
+2026-11-16T22:37:46.4831320Z $ tsc -b tsconfig.build.json
+2026-11-16T22:37:46.4833060Z ##[endgroup]
+2026-11-16T22:37:50.9789090Z ##[group]@graphgoblin/mcp:build
+2026-11-16T22:37:50.9790300Z cache miss, executing 23ed1fc018303522
+2026-11-16T22:37:50.9792160Z $ tsc -b tsconfig.build.json
+2026-11-16T22:37:50.9860730Z ##[endgroup]
+2026-11-16T22:37:52.7239640Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-16T22:37:52.7341380Z cache bypass, force executing 670bf6959cde0747
+2026-11-16T22:37:52.7443680Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-16T22:37:52.7547530Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-16T22:37:52.7648280Z ##[endgroup]
+2026-11-16T22:37:53.4239970Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-16T22:37:53.4341640Z cache bypass, force executing 4a76b9675c537f6c
+2026-11-16T22:37:53.4347260Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-16T22:37:53.4448970Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-16T22:37:53.4450100Z Install: codex plugin marketplace add "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-16T22:37:53.4464590Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-16T22:37:53.4508660Z ##[endgroup]
+2026-11-16T22:37:56.8149230Z ##[group]@graphgoblin/web:build
+2026-11-16T22:37:56.8152200Z cache miss, executing 2dfd38d4e1499696
+2026-11-16T22:37:56.8152900Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-16T22:37:56.8170840Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-16T22:37:56.8184990Z transforming...
+2026-11-16T22:37:56.8188590Z ✓ 779 modules transformed.
+2026-11-16T22:37:56.8189450Z rendering chunks...
+2026-11-16T22:37:56.8190480Z computing gzip size...
+2026-11-16T22:37:56.8192630Z dist/manifest.webmanifest           0.47 kB
+2026-11-16T22:37:56.8194490Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-16T22:37:56.8196210Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-16T22:37:56.8197170Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-16T22:37:56.8197650Z 
+2026-11-16T22:37:56.8210020Z [32m✓ built in 2.69s[39m
+2026-11-16T22:37:56.8211500Z 
+2026-11-16T22:37:56.8212660Z [36mPWA v1.3.0[39m
+2026-11-16T22:37:56.8215660Z mode      [35mgenerateSW[39m
+2026-11-16T22:37:56.8220700Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-16T22:37:56.8227240Z files generated
+2026-11-16T22:37:56.8227730Z   [2mdist/sw.js.map[22m
+2026-11-16T22:37:56.8229280Z   [2mdist/sw.js[22m
+2026-11-16T22:37:56.8240340Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-16T22:37:56.8242380Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-16T22:37:56.8251630Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-16T22:37:56.8253580Z transforming...
+2026-11-16T22:37:56.8255510Z ✓ 284 modules transformed.
+2026-11-16T22:37:56.8258020Z rendering chunks...
+2026-11-16T22:37:56.8259220Z computing gzip size...
+2026-11-16T22:37:56.8272320Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-16T22:37:56.8278490Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-16T22:37:56.8295460Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-16T22:37:56.8301800Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-16T22:37:56.8302790Z 
+2026-11-16T22:37:56.8304010Z [32m✓ built in 596ms[39m
+2026-11-16T22:37:56.8310260Z 
+2026-11-16T22:37:56.8310820Z [36mPWA v1.3.0[39m
+2026-11-16T22:37:56.8316830Z mode      [35mgenerateSW[39m
+2026-11-16T22:37:56.8322070Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-16T22:37:56.8323280Z files generated
+2026-11-16T22:37:56.8325380Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-16T22:37:56.8326240Z   [2m../dist-goblin/sw.js[22m
+2026-11-16T22:37:56.8328560Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-16T22:37:56.8330430Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-16T22:37:56.8332150Z ##[endgroup]
+2026-11-16T22:37:56.8332720Z 
+2026-11-16T22:37:56.8333320Z  Tasks:    12 successful, 12 total
+2026-11-16T22:37:56.8335680Z Cached:    0 cached, 12 total
+2026-11-16T22:37:56.8336890Z   Time:    45.995s 
+2026-11-16T22:37:56.8337300Z 
+2026-11-16T22:37:57.0444160Z ##[group]Run pnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts
+2026-11-16T22:37:57.0447490Z [36;1mpnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts[0m
+2026-11-16T22:37:57.0559790Z shell: /bin/bash -e {0}
+2026-11-16T22:37:57.0560130Z env:
+2026-11-16T22:37:57.0560400Z   LIVE: 0
+2026-11-16T22:37:57.0560900Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:37:57.0561660Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T22:37:57.0562050Z ##[endgroup]
+2026-11-16T22:37:57.7354160Z 
+2026-11-16T22:37:57.7356180Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/Users/runner/work/GraphGoblin/GraphGoblin/apps/api[39m
+2026-11-16T22:37:57.7356710Z 
+2026-11-16T22:37:58.7149230Z  [32m✓[39m src/windows-log/guard.test.ts [2m([22m[2m16 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 594[2mms[22m[39m
+2026-11-16T22:37:58.9195190Z  [32m✓[39m src/managed-log/gateway-log-writer.test.ts [2m([22m[2m27 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 837[2mms[22m[39m
+2026-11-16T22:37:58.9198140Z    [32m✓[39m gateway log queue, faults and acknowledgment [2m(13)[22m
+2026-11-16T22:37:58.9200620Z      [33m[2m✓[22m[39m acknowledges only the specific completed record and bounds the exit wait at 250 ms[33m 511[2mms[22m[39m
+2026-11-16T22:37:59.9895880Z  [32m✓[39m src/data-dir-lock.test.ts [2m([22m[2m47 tests[22m[2m)[22m[33m 1003[2mms[22m[39m
+2026-11-16T22:38:05.7003850Z {"level":30,"time":1794868685696,"pid":3319,"hostname":"sjc22-be107-1f29edf2-93d0-4b66-a59f-a9d7e8f3fdf2-5A6F19B3DD59.local","msg":"Server listening at http://127.0.0.1:5634"}
+2026-11-16T22:38:05.7020580Z {"level":30,"time":1794868685696,"pid":3319,"hostname":"sjc22-be107-1f29edf2-93d0-4b66-a59f-a9d7e8f3fdf2-5A6F19B3DD59.local","host":"127.0.0.1","port":5634,"dataDir":"/var/folders/2s/vty41l455yv698g4xkgfv7z00000gn/T/gg-api-process-yb3Lt4","requireApiKey":true,"msg":"GraphGoblin API listening"}
+2026-11-16T22:38:05.7095740Z {"level":30,"time":1794868685708,"pid":3319,"hostname":"sjc22-be107-1f29edf2-93d0-4b66-a59f-a9d7e8f3fdf2-5A6F19B3DD59.local","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+2026-11-16T22:38:05.7190400Z {"level":30,"time":1794868685714,"pid":3319,"hostname":"sjc22-be107-1f29edf2-93d0-4b66-a59f-a9d7e8f3fdf2-5A6F19B3DD59.local","reqId":"req-1","res":{"statusCode":200},"responseTime":4.80804100000023,"msg":"request completed"}
+2026-11-16T22:38:05.8088910Z  [32m✓[39m src/serve.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 1946[2mms[22m[39m
+2026-11-16T22:38:05.8089990Z    [32m✓[39m serve with the managed destination [2m(5)[22m
+2026-11-16T22:38:05.8091010Z      [33m[2m✓[22m[39m reports each reached stage and writes engine records only to the bounded destination[33m 436[2mms[22m[39m
+2026-11-16T22:38:05.8092080Z      [33m[2m✓[22m[39m keeps serving while every log write is stalled, within the pending-byte bound[33m 636[2mms[22m[39m
+2026-11-16T22:38:06.0027060Z  [32m✓[39m src/macos-log/guard.test.ts [2m([22m[2m42 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+2026-11-16T22:38:07.4263070Z  [32m✓[39m src/gateway-logger.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 357[2mms[22m[39m
+2026-11-16T22:38:07.4268210Z    [33m[2m✓[22m[39m keeps the correlated private #381 diagnostic and narrows real access records to method, route and status[33m 342[2mms[22m[39m
+2026-11-16T22:38:08.8317890Z  [32m✓[39m src/macos-local-key.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 280[2mms[22m[39m
+2026-11-16T22:38:11.7672960Z  [32m✓[39m src/database-ownership.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1758[2mms[22m[39m
+2026-11-16T22:38:11.7674180Z    [33m[2m✓[22m[39m rechecks catalog created by a writer before database ownership is acquired[33m 1378[2mms[22m[39m
+2026-11-16T22:38:12.6422240Z  [32m✓[39m src/main-entry.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-11-16T22:38:18.1058750Z  [32m✓[39m src/main.test.ts [2m([22m[2m15 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[33m 18908[2mms[22m[39m
+2026-11-16T22:38:18.1060810Z    [32m✓[39m built entry and the reserved Windows launcher variable (#438) [2m(4)[22m
+2026-11-16T22:38:18.1063390Z      [33m[2m✓[22m[39m consumes the variable for CLI commands, which keep their ordinary output[33m 1734[2mms[22m[39m
+2026-11-16T22:38:18.1068050Z      [33m[2m✓[22m[39m ignores the Windows-only variable elsewhere and keeps shell logging[33m 2721[2mms[22m[39m
+2026-11-16T22:38:18.1069200Z    [32m✓[39m built API entry and startup failures [2m(6)[22m
+2026-11-16T22:38:18.1070130Z      [33m[2m✓[22m[39m holds ownership while listening and releases it on supported HTTP close[33m 2055[2mms[22m[39m
+2026-11-16T22:38:18.1071380Z      [33m[2m✓[22m[39m serves authenticated requests using a binary-created key and refuses a competing process[33m 2969[2mms[22m[39m
+2026-11-16T22:38:18.1072790Z      [33m[2m✓[22m[39m dispatches the API-key and preflight CLIs with their real exit codes[33m 3470[2mms[22m[39m
+2026-11-16T22:38:18.1073850Z      [33m[2m✓[22m[39m releases ownership on a real corrupt-database startup fault before HTTP setup[33m 1688[2mms[22m[39m
+2026-11-16T22:38:18.1074990Z      [33m[2m✓[22m[39m releases ownership after a real occupied-port listen failure[33m 2157[2mms[22m[39m
+2026-11-16T22:38:18.1076310Z      [33m[2m✓[22m[39m releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)[33m 2034[2mms[22m[39m
+2026-11-16T22:38:18.1119270Z 
+2026-11-16T22:38:18.1123350Z [2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+2026-11-16T22:38:18.1125650Z [2m      Tests [22m [1m[32m203 passed[39m[22m[2m | [22m[33m8 skipped[39m[90m (211)[39m
+2026-11-16T22:38:18.1127280Z [2m   Start at [22m 22:37:57
+2026-11-16T22:38:18.1128690Z [2m   Duration [22m 20.34s[2m (tests 77%, import 16%, transform 8%)[22m
+2026-11-16T22:38:18.1151130Z 
+2026-11-16T22:38:18.1918500Z ##[group]Run mkdir -p .tmp/macos-launcher-swift
+2026-11-16T22:38:18.1919040Z [36;1mmkdir -p .tmp/macos-launcher-swift[0m
+2026-11-16T22:38:18.1919310Z [36;1mset +e[0m
+2026-11-16T22:38:18.1919690Z [36;1mxcrun --sdk macosx swift test --package-path apps/macos-launcher \[0m
+2026-11-16T22:38:18.1920290Z [36;1m  --scratch-path .tmp/macos-swift-test --arch arm64 --enable-code-coverage \[0m
+2026-11-16T22:38:18.1920850Z [36;1m  > .tmp/macos-launcher-swift/stdout.log 2> .tmp/macos-launcher-swift/stderr.log[0m
+2026-11-16T22:38:18.1921350Z [36;1mresult=$?[0m
+2026-11-16T22:38:18.1921630Z [36;1mprintf '%s\n' "$result" > .tmp/macos-launcher-swift/exit.txt[0m
+2026-11-16T22:38:18.1922190Z [36;1mcat .tmp/macos-launcher-swift/stdout.log[0m
+2026-11-16T22:38:18.1922640Z [36;1mcat .tmp/macos-launcher-swift/stderr.log >&2[0m
+2026-11-16T22:38:18.1922940Z [36;1mexit "$result"[0m
+2026-11-16T22:38:18.1974900Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-16T22:38:18.1975460Z env:
+2026-11-16T22:38:18.1975690Z   LIVE: 0
+2026-11-16T22:38:18.1976200Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:38:18.1976740Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T22:38:18.1977160Z ##[endgroup]
+2026-11-16T22:38:55.4802960Z Test Suite 'All tests' started at 2026-11-16 22:38:54.591.
+2026-11-16T22:38:55.4805940Z Test Suite 'All tests' passed at 2026-11-16 22:38:54.595.
+2026-11-16T22:38:55.4807140Z 	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.004) seconds
+2026-11-16T22:38:55.4810370Z ◇ Test run started.
+2026-11-16T22:38:55.4811460Z ↳ Testing Library Version: 124.4
+2026-11-16T22:38:55.4812440Z ↳ Target Platform: arm64e-apple-macos14.0
+2026-11-16T22:38:55.4813810Z ◇ Suite PublisherTests started.
+2026-11-16T22:38:55.4815200Z ◇ Suite EngineContractsTests started.
+2026-11-16T22:38:55.4816260Z ◇ Suite ACLTests started.
+2026-11-16T22:38:55.4817490Z ◇ Suite ChildTests started.
+2026-11-16T22:38:55.4820260Z ◇ Suite "Show Log: only a reached failure's opaque action, never a fallback" started.
+2026-11-16T22:38:55.4822220Z ◇ Suite "Browser completion deadline arbitration" started.
+2026-11-16T22:38:55.4824360Z ◇ Suite "Browser handoff: one submission, 10 s deadline, first terminal result wins" started.
+2026-11-16T22:38:55.4827130Z ◇ Suite "Quit: synchronous engine request, suppression, and both completion orders" started.
+2026-11-16T22:38:55.4828890Z ◇ Suite "AppKit windows (needs a GUI login session; nothing is shown)" started.
+2026-11-16T22:38:55.4830750Z ◇ Suite "One attempt, ordered progress, delayed panel, Hide and reopen" started.
+2026-11-16T22:38:55.4832620Z ◇ Suite "AppKit controls, menu and adapters (no window server needed)" started.
+2026-11-16T22:38:55.4834390Z ◇ Suite "Outcome mapping and fixed copy" started.
+2026-11-16T22:38:55.4836200Z ◇ Test unverifiableDestinationLeavesForeignEntryAndCandidate() started.
+2026-11-16T22:38:55.4838060Z ◇ Test rollbackToVerifiedAbsence() started.
+2026-11-16T22:38:55.4839390Z ◇ Test absentDestinationUsesExclusivePublish() started.
+2026-11-16T22:38:55.4840860Z ◇ Test closedArgumentsAndNames() started.
+2026-11-16T22:38:55.4842710Z ◇ Test signedWitnessesSurviveActualExchangeAndRollback() started.
+2026-11-16T22:38:55.4843930Z ◇ Test exactHeadlessEnvelopes() started.
+2026-11-16T22:38:55.4845370Z ◇ Test zeroMeansAbsentAndNonzeroMeansPresent() started.
+2026-11-16T22:38:55.4846840Z ◇ Test boundedDenyOnlyAndAllowPolicies() started.
+2026-11-16T22:38:55.4848270Z ◇ Test failedIdentityHelperSpawnIsAnObservationFailure() started.
+2026-11-16T22:38:55.4849630Z ◇ Test runtimeAndClosedConfig() started.
+2026-11-16T22:38:55.4851270Z ◇ Test cancelledAndQuittingAttemptsSkipFinalDiagnostics() started.
+2026-11-16T22:38:55.4852830Z ◇ Test failuresDoNotBecomeAbsentOrEmpty() started.
+2026-11-16T22:38:55.4854500Z ◇ Test failureClassificationDistinguishesCommittedSpawnAndLocalSetup() started.
+2026-11-16T22:38:55.4856690Z ◇ Test swiftAndDarwinUnsignedIdentityVectors() started.
+2026-11-16T22:38:55.4862390Z ◇ Test commitAndQuitBothOrders() started.
+2026-11-16T22:38:55.4864770Z ◇ Test expiredGatewayDeadlineStillRecordsTerminalFailure() started.
+2026-11-16T22:38:55.4866490Z ◇ Test healthRequiresUniqueCorrectHeadersAndExactBody() started.
+2026-11-16T22:38:55.4868210Z ◇ Test twoStreamsAndVerifiedExit() started.
+2026-11-16T22:38:55.4869790Z ◇ Test overflowingHeaderAndHangingHelperAreBounded() started.
+2026-11-16T22:38:55.4872030Z ◇ Test "The offer waits at most 3 s; an action that arrives later is discarded" started.
+2026-11-16T22:38:55.4874650Z ◇ Test "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs" started.
+2026-11-16T22:38:55.4876680Z ◇ Test "The resolver is never asked without the Show Log affordance" started.
+2026-11-16T22:38:55.4878420Z ◇ Test "Show Log runs to completion before the launcher exits" started.
+2026-11-16T22:38:55.4880580Z ◇ Test "A resolved action is offered, invoked once, and then the launcher exits" started.
+2026-11-16T22:38:55.4882640Z ◇ Test "Every failure with the affordance asks the resolver exactly once" started.
+2026-11-16T22:38:55.4884890Z ◇ Test "Quit while Show Log runs exits without finishing again later" started.
+2026-11-16T22:38:55.4886230Z ◇ Test "A nil offer shows no Show Log, and choosing it anyway does nothing" started.
+2026-11-16T22:38:55.4903050Z ◇ Test "An answer handled just before the 3 s deadline is offered and retires the expiry timer" started.
+2026-11-16T22:38:55.4905450Z ◇ Test "A resolver that settles after Quit cannot bring back any window" started.
+2026-11-16T22:38:55.4907310Z ◇ Test "Before the deadline the translated callback stands" started.
+2026-11-16T22:38:55.4908910Z ◇ Test "At or after the deadline every callback is unconfirmed" started.
+2026-11-16T22:38:55.4910840Z ◇ Test "While the offer resolves the panel stays; it closes just before the alert" started.
+2026-11-16T22:38:55.4912660Z ◇ Test "Expiry settles once; later callbacks and timers are ignored" started.
+2026-11-16T22:38:55.4914420Z ◇ Test "Copy Address after an unconfirmed result copies the same fixed address" started.
+2026-11-16T22:38:55.4916170Z ◇ Test "Port 0 in a management outcome never reaches the browser" started.
+2026-11-16T22:38:55.4917760Z ◇ Test "Concurrent callbacks and timers settle exactly once" started.
+2026-11-16T22:38:55.4919290Z ◇ Test "An early timer does not settle; the later callback still can" started.
+2026-11-16T22:38:55.4921020Z ◇ Test "Deadline expiry is unconfirmed, and a later callback is ignored" started.
+2026-11-16T22:38:55.4922480Z ◇ Test "Accepted is a quiet exit" started.
+2026-11-16T22:38:55.4923850Z ◇ Test "A callback observed at the deadline cannot count as accepted" started.
+2026-11-16T22:38:55.4925480Z ◇ Test "The deadline starts at submission, not at attempt entry" started.
+2026-11-16T22:38:55.4927220Z ◇ Test "Rejected shows the rejection and offers only Copy Address" started.
+2026-11-16T22:38:55.4928910Z ◇ Test "Hiding during the handoff keeps the submission pending" started.
+2026-11-16T22:38:55.4931070Z ◇ Test "The first terminal callback wins and later ones are ignored" started.
+2026-11-16T22:38:55.4933030Z ◇ Test "Progress after Quit never reaches the screen" started.
+2026-11-16T22:38:55.4934610Z ◇ Test "Exits the launcher starts itself are not Quit requests" started.
+2026-11-16T22:38:55.4936740Z ◇ Test "Quit, then the engine's own cancellation: one reply, nothing shown" started.
+2026-11-16T22:38:55.4939940Z ◇ Test "Quit before the attempt starts means the engine never runs, and Quit again is still now" started.
+2026-11-16T22:38:55.4942590Z ◇ Test "Quit, then a management outcome: no browser submission and no window" started.
+2026-11-16T22:38:55.4944580Z ◇ Test "Quit, then a failure outcome: no window and no Show Log resolution" started.
+2026-11-16T22:38:55.4947610Z ◇ Test "Engine completion with a failure, then Quit: the window closes and later choices are ignored" started.
+2026-11-16T22:38:55.4954300Z ◇ Test "Quit again before the grace expires: the original 2 s deadline holds and one reply is sent" started.
+2026-11-16T22:38:55.4958010Z ◇ Test "Quit waits at most 2 s for the engine to return" started.
+2026-11-16T22:38:55.4958780Z ◇ Test "OK on a browser failure copies nothing" started.
+2026-11-16T22:38:55.4959680Z ◇ Test "A callback with neither an application nor an error is unconfirmed" started.
+2026-11-16T22:38:55.4960830Z ◇ Test "Quit again before the engine returns: still later, one request, one reply, then now" started.
+2026-11-16T22:38:55.4961880Z ◇ Test "Engine completion, then Quit: the submitted request stays and late callbacks are ignored" started.
+2026-11-16T22:38:55.4963020Z ◇ Test "A callback observed before the deadline wins even if the timer is delivered first" started.
+2026-11-16T22:38:55.4963880Z ◇ Test "One submission of the literal address in both management modes" started.
+2026-11-16T22:38:55.4964530Z ◇ Test "A visible panel switches to the handoff line" started.
+2026-11-16T22:38:55.4965220Z ◇ Test "A callback delivered on a background thread is honored" started.
+2026-11-16T22:38:55.4966110Z ◇ Test "The delegate routes reopen and Quit without starting another attempt" started.
+2026-11-16T22:38:55.4967430Z ◇ Test "Progress panel: titled, closable, fixed size, stays visible when the app deactivates" started.
+2026-11-16T22:38:55.4968470Z ◇ Test "Failure panel: dialog subrole, default button first responder, every cancel path dismisses" started.
+2026-11-16T22:38:55.4970140Z ◇ Test "Reopen during the handoff surfaces it without a second submission" started.
+2026-11-16T22:38:55.4971030Z ◇ Test "Close box, Command-W, Esc, Command-period and Hide all only hide the progress panel" started.
+2026-11-16T22:38:55.4973710Z ◇ Test "Reopen and Hide after the launcher finished change nothing" started.
+2026-11-16T22:38:55.4976220Z ◇ Test "A lone OK failure panel still dismisses on Esc" started.
+2026-11-16T22:38:55.4977880Z ◇ Test "Cancelled ends quietly without asking for anything" started.
+2026-11-16T22:38:55.4978940Z ◇ Test "Each failure outcome closes the panel first, then shows its alert" started.
+2026-11-16T22:38:55.4979990Z ◇ Test "Progress arriving after the outcome never changes the screen" started.
+2026-11-16T22:38:55.4980880Z ◇ Test "A handoff accepted before the threshold shows no window at all" started.
+2026-11-16T22:38:55.4981810Z ◇ Test "Stages reach the screen in emission order and repeats are dropped" started.
+2026-11-16T22:38:55.4982760Z ◇ Test "The engine runs once despite repeated starts, reopens and hides" started.
+2026-11-16T22:38:55.4983510Z ◇ Test "The panel appears on its own only once 1 s has passed" started.
+2026-11-16T22:38:55.4984870Z ◇ Test "Stages emitted from a background thread keep their order" started.
+2026-11-16T22:38:55.4987940Z ◇ Test "Reopen before the threshold shows the panel at once, and only once" started.
+2026-11-16T22:38:55.4990500Z ◇ Test "Hide only hides: the attempt continues and stays hidden until reopen" started.
+2026-11-16T22:38:55.4992550Z ◇ Test "Reopen while a failure is shown raises that window and never stacks another" started.
+2026-11-16T22:38:55.4994140Z ◇ Test "Hiding before the threshold suppresses the automatic panel" started.
+2026-11-16T22:38:55.4996550Z ◇ Test "Before any stage the delayed panel uses the neutral line" started.
+2026-11-16T22:38:55.4999310Z ◇ Test "Presentation timing constants are the reviewed values" started.
+2026-11-16T22:38:55.5000660Z ◇ Test "A port conflict with no usable port uses the generic wording" started.
+2026-11-16T22:38:55.5001610Z ◇ Test "Quit and blocked-data copy promise only what the launcher can know" started.
+2026-11-16T22:38:55.5003400Z ◇ Test "Failure titles are distinct" started.
+2026-11-16T22:38:55.5005130Z ◇ Test "Every stage has its own fixed progress line" started.
+2026-11-16T22:38:55.5006240Z ◇ Test "The fixtures name all 17 closed outcomes and all 15 failures" started.
+2026-11-16T22:38:55.5011320Z ◇ Test "Browser failures show the fixed address and offer only Copy Address" started.
+2026-11-16T22:38:55.5014960Z ◇ Test "Management outcomes hand off the literal loopback address" started.
+2026-11-16T22:38:55.5020110Z ◇ Test "Port conflicts name only the reported port" started.
+2026-11-16T22:38:55.5020880Z ◇ Test "The canary scanner detects the raw details it guards against" started.
+2026-11-16T22:38:55.5021700Z Building for debugging...
+2026-11-16T22:38:55.5022690Z [0/22] /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-swift-test/arm64-apple-macosx/debug/GraphGoblinMacLauncherPackageTests.derived/runner.swift
+2026-11-16T22:38:55.5023490Z [1/22] Write sources
+2026-11-16T22:38:55.5023830Z [9/22] Write GraphGoblin-entitlement.plist
+2026-11-16T22:38:55.5024410Z [10/22] Write GraphGoblinLauncherInstaller-entitlement.plist
+2026-11-16T22:38:55.5025070Z [13/22] Write swift-version--79AA4F9932D1E87A.txt
+2026-11-16T22:38:55.5025460Z [15/24] Emitting module LaunchContract
+2026-11-16T22:38:55.5025980Z [16/24] Compiling LaunchContract LaunchContract.swift
+2026-11-16T22:38:55.5026590Z [17/40] Compiling LauncherEngine ChildProcess.swift
+2026-11-16T22:38:55.5027080Z [18/40] Compiling LauncherEngine Diagnostics.swift
+2026-11-16T22:38:55.5027660Z [19/40] Compiling LauncherEngine Headless.swift
+2026-11-16T22:38:55.5028170Z [20/40] Compiling LauncherEngine Installation.swift
+2026-11-16T22:38:55.5028600Z [21/40] Compiling LauncherEngine LaunchInputs.swift
+2026-11-16T22:38:55.5029100Z [22/40] Compiling LauncherEngine Loopback.swift
+2026-11-16T22:38:55.5030190Z [23/40] Emitting module LauncherEngine
+2026-11-16T22:38:55.5030600Z [24/42] Compiling LauncherEngine NativeFiles.swift
+2026-11-16T22:38:55.5031400Z [25/42] Compiling LauncherEngine NativeLaunchEngine.swift
+2026-11-16T22:38:55.5031970Z [26/48] Emitting module LauncherPresentation
+2026-11-16T22:38:55.5032450Z [27/51] Compiling LauncherInstaller InstallerOptions.swift
+2026-11-16T22:38:55.5033030Z [28/51] Emitting module LauncherInstaller
+2026-11-16T22:38:55.5033670Z [29/51] Compiling LauncherInstaller BundlePublisher.swift
+2026-11-16T22:38:55.5034170Z [30/52] Compiling LauncherInstaller LauncherInstaller.swift
+2026-11-16T22:38:55.5034760Z [31/54] Emitting module LauncherInstallerTests
+2026-11-16T22:38:55.5035400Z [32/54] Compiling LauncherPresentation PresentationSeams.swift
+2026-11-16T22:38:55.5035920Z [33/54] Compiling LauncherPresentation ProgressPanel.swift
+2026-11-16T22:38:55.5036580Z [34/54] Compiling LauncherPresentation WorkspaceBrowserOpener.swift
+2026-11-16T22:38:55.5037180Z [43/56] Emitting module LauncherEngineTests
+2026-11-16T22:38:55.5037630Z [44/56] Compiling LauncherEngineTests ChildTests.swift
+2026-11-16T22:38:55.5038230Z [45/56] Compiling LauncherEngineTests ACLTests.swift
+2026-11-16T22:38:55.5038800Z [46/57] Compiling InstallerEntry Entry.swift
+2026-11-16T22:38:55.5039220Z [47/57] Emitting module InstallerEntry
+2026-11-16T22:38:55.5039870Z [48/68] Compiling LauncherInstallerTests PublisherTests.swift
+2026-11-16T22:38:55.5040510Z [49/70] Emitting module LauncherEntry
+2026-11-16T22:38:55.5040980Z [50/70] Compiling LauncherEntry Entry.swift
+2026-11-16T22:38:55.5041360Z [50/70] Write Objects.LinkFileList
+2026-11-16T22:38:55.5041830Z [53/70] Emitting module LauncherPresentationTests
+2026-11-16T22:38:55.5042380Z [53/75] Linking GraphGoblinLauncherInstaller
+2026-11-16T22:38:55.5042740Z [54/75] Linking GraphGoblin
+2026-11-16T22:38:55.5043150Z [55/75] Applying GraphGoblinLauncherInstaller
+2026-11-16T22:38:55.5043660Z [56/75] Applying GraphGoblin
+2026-11-16T22:38:55.5044180Z [58/75] Compiling LauncherPresentationTests Probes.swift
+2026-11-16T22:38:55.5044850Z [59/75] Compiling LauncherPresentationTests ScriptedBrowserOpener.swift
+2026-11-16T22:38:55.5045650Z [60/75] Compiling LauncherPresentationTests ScriptedLaunchEngine.swift
+2026-11-16T22:38:55.5046180Z [61/75] Compiling LauncherPresentationTests ScriptedResolver.swift
+2026-11-16T22:38:55.5046770Z [62/75] Compiling LauncherPresentationTests ScriptedSurface.swift
+2026-11-16T22:38:55.5047380Z [63/75] Compiling LauncherEngineTests EngineContractsTests.swift
+2026-11-16T22:38:55.5047880Z [64/75] Compiling LauncherPresentationTests OutcomeCopyTests.swift
+2026-11-16T22:38:55.5048870Z [65/75] Compiling LauncherPresentationTests QuitTests.swift
+2026-11-16T22:38:55.5049460Z [66/75] Compiling LauncherPresentationTests ShowLogTests.swift
+2026-11-16T22:38:55.5049940Z [67/75] Compiling LauncherPresentationTests Harness.swift
+2026-11-16T22:38:55.5050460Z [68/75] Compiling LauncherPresentationTests ManualClock.swift
+2026-11-16T22:38:55.5051040Z [69/75] Compiling LauncherPresentationTests AppKitControlTests.swift
+2026-11-16T22:38:55.5051610Z [70/75] Compiling LauncherPresentationTests AppKitWindowTests.swift
+2026-11-16T22:38:55.5052250Z [71/75] Compiling LauncherPresentationTests AttemptLifecycleTests.swift
+2026-11-16T22:38:55.5052960Z [72/75] Compiling LauncherPresentationTests BrowserHandoffTests.swift
+2026-11-16T22:38:55.5053530Z [73/75] Compiling LauncherPresentationTests HandoffArbiterTests.swift
+2026-11-16T22:38:55.5054130Z [74/77] Emitting module GraphGoblinMacLauncherPackageTests
+2026-11-16T22:38:55.5054680Z [75/77] Compiling GraphGoblinMacLauncherPackageTests runner.swift
+2026-11-16T22:38:55.5055150Z [75/77] Write Objects.LinkFileList
+2026-11-16T22:38:55.5055580Z [76/77] Linking GraphGoblinMacLauncherPackageTests
+2026-11-16T22:38:55.5055850Z Build complete! (28.98s)
+2026-11-16T22:38:55.5056710Z ◇ Test "Start failures distinguish no child, a verified exit, a timeout and an unknown result" started.
+2026-11-16T22:38:55.5057240Z ◇ Test "Cancelled ends quietly" started.
+2026-11-16T22:38:55.5058140Z ◇ Test "Each failure outcome maps to its own fixed alert" started.
+2026-11-16T22:38:55.5058870Z ◇ Test "No user-visible text carries paths, process details or implementation vocabulary" started.
+2026-11-16T22:38:55.5059610Z ◇ Test "Failure controls: OK is the Return default; the secondary action has no key" started.
+2026-11-16T22:38:55.5060390Z ◇ Test "A management outcome without a usable port never becomes a browser address" started.
+2026-11-16T22:38:55.5061110Z ◇ Test "The production composition types build without opening anything" started.
+2026-11-16T22:38:55.5061830Z ◇ Test "Progress controls: Hide answers Esc, Quit sends terminate, Return is inert" started.
+2026-11-16T22:38:55.5062470Z ◇ Test "Esc and Command-period are the only cancel keys" started.
+2026-11-16T22:38:55.5063010Z ◇ Test "Accessibility identifiers are distinct" started.
+2026-11-16T22:38:55.5063470Z ◇ Test "A lone OK is still the Return default" started.
+2026-11-16T22:38:55.5064120Z ◇ Test "The main menu maps Command-Q to terminate and Command-W to performClose" started.
+2026-11-16T22:38:55.5064820Z ◇ Test "Browser failure controls offer OK and Copy Address only" started.
+2026-11-16T22:38:55.5065410Z ◇ Test "The native browser callback translates to the closed outcome" started.
+2026-11-16T22:38:55.5066520Z ◇ Passing 1 argument elapsedMilliseconds → 3000 to "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs"
+2026-11-16T22:38:55.5067640Z ◇ Passing 1 argument elapsedMilliseconds → 3500 to "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs"
+2026-11-16T22:38:55.5068640Z ◇ Passing 1 argument expected → installationInvalid to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5069620Z ◇ Passing 1 argument expected → runtimeUnavailable to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5070590Z ◇ Passing 1 argument expected → assetsUnavailable to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5071750Z ◇ Passing 1 argument expected → keySourceUnavailable to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5072790Z ◇ Passing 1 argument expected → portInUse to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5073780Z ◇ Passing 1 argument expected → storeBlocked to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5074640Z ◇ Passing 1 argument expected → cannotVerify to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5076320Z ◇ Passing 1 argument expected → launchBusy to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5077390Z ◇ Passing 1 argument expected → releaseUnconfirmed to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5078320Z ◇ Passing 1 argument expected → startFailed to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5079200Z ◇ Passing 1 argument expected → childExited to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5080160Z ◇ Passing 1 argument expected → startTimedOut to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5081160Z ◇ Passing 1 argument expected → startupUnverified to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5082030Z ◇ Passing 1 argument expected → unexpected to "Every failure with the affordance asks the resolver exactly once"
+2026-11-16T22:38:55.5082890Z ◇ Passing 1 argument outcome → .accepted to "Before the deadline the translated callback stands"
+2026-11-16T22:38:55.5083690Z ◇ Passing 1 argument outcome → .rejected to "Before the deadline the translated callback stands"
+2026-11-16T22:38:55.5084450Z ◇ Passing 1 argument outcome → .unconfirmed to "Before the deadline the translated callback stands"
+2026-11-16T22:38:55.5085790Z ◇ Passing 2 arguments outcome → .accepted, offset → 10.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5086770Z ◇ Passing 2 arguments outcome → .accepted, offset → 11.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5087750Z ◇ Passing 2 arguments outcome → .accepted, offset → 600.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5088660Z ◇ Passing 2 arguments outcome → .rejected, offset → 10.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5089620Z ◇ Passing 2 arguments outcome → .rejected, offset → 11.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5090630Z ◇ Passing 2 arguments outcome → .rejected, offset → 600.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5091860Z ◇ Passing 2 arguments outcome → .unconfirmed, offset → 10.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5093130Z ◇ Passing 2 arguments outcome → .unconfirmed, offset → 11.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5094070Z ◇ Passing 2 arguments outcome → .unconfirmed, offset → 600.0 seconds to "At or after the deadline every callback is unconfirmed"
+2026-11-16T22:38:55.5094890Z ◇ Passing 1 argument port → 1 to "Copy Address after an unconfirmed result copies the same fixed address"
+2026-11-16T22:38:55.5095680Z ◇ Passing 1 argument port → 65535 to "Copy Address after an unconfirmed result copies the same fixed address"
+2026-11-16T22:38:55.5096680Z ◇ Passing 2 arguments port → 1, mode → .running to "One submission of the literal address in both management modes"
+2026-11-16T22:38:55.5097630Z ◇ Passing 2 arguments port → 1, mode → .observingShutdown to "One submission of the literal address in both management modes"
+2026-11-16T22:38:55.5098720Z ◇ Passing 2 arguments port → 4747, mode → .running to "One submission of the literal address in both management modes"
+2026-11-16T22:38:55.5099770Z ◇ Passing 2 arguments port → 4747, mode → .observingShutdown to "One submission of the literal address in both management modes"
+2026-11-16T22:38:55.5100720Z ◇ Passing 2 arguments port → 65535, mode → .running to "One submission of the literal address in both management modes"
+2026-11-16T22:38:55.5127130Z ◇ Passing 2 arguments port → 65535, mode → .observingShutdown to "One submission of the literal address in both management modes"
+2026-11-16T22:38:55.5128170Z ◇ Passing 1 argument expected → installationInvalid to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5129860Z ◇ Passing 1 argument expected → runtimeUnavailable to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5130780Z ◇ Passing 1 argument expected → assetsUnavailable to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5131690Z ◇ Passing 1 argument expected → keySourceUnavailable to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5132570Z ◇ Passing 1 argument expected → portInUse to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5133400Z ◇ Passing 1 argument expected → storeBlocked to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5134240Z ◇ Passing 1 argument expected → cannotVerify to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5135080Z ◇ Passing 1 argument expected → launchBusy to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5135950Z ◇ Passing 1 argument expected → releaseUnconfirmed to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5136880Z ◇ Passing 1 argument expected → diagnosticsUnavailable to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5138040Z ◇ Passing 1 argument expected → startFailed to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5138880Z ◇ Passing 1 argument expected → childExited to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5139720Z ◇ Passing 1 argument expected → startTimedOut to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5140590Z ◇ Passing 1 argument expected → startupUnverified to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5141440Z ◇ Passing 1 argument expected → unexpected to "Each failure outcome closes the panel first, then shows its alert"
+2026-11-16T22:38:55.5142230Z ◇ Passing 1 argument port → 1 to "Browser failures show the fixed address and offer only Copy Address"
+2026-11-16T22:38:55.5142980Z ◇ Passing 1 argument port → 4747 to "Browser failures show the fixed address and offer only Copy Address"
+2026-11-16T22:38:55.5143730Z ◇ Passing 1 argument port → 65535 to "Browser failures show the fixed address and offer only Copy Address"
+2026-11-16T22:38:55.5144510Z ◇ Passing 2 arguments port → 1, mode → .running to "Management outcomes hand off the literal loopback address"
+2026-11-16T22:38:55.5145350Z ◇ Passing 2 arguments port → 1, mode → .observingShutdown to "Management outcomes hand off the literal loopback address"
+2026-11-16T22:38:55.5146170Z ◇ Passing 2 arguments port → 80, mode → .running to "Management outcomes hand off the literal loopback address"
+2026-11-16T22:38:55.5147010Z ◇ Passing 2 arguments port → 80, mode → .observingShutdown to "Management outcomes hand off the literal loopback address"
+2026-11-16T22:38:55.5147860Z ◇ Passing 2 arguments port → 4747, mode → .running to "Management outcomes hand off the literal loopback address"
+2026-11-16T22:38:55.5148710Z ◇ Passing 2 arguments port → 4747, mode → .observingShutdown to "Management outcomes hand off the literal loopback address"
+2026-11-16T22:38:55.5149560Z ◇ Passing 2 arguments port → 65535, mode → .running to "Management outcomes hand off the literal loopback address"
+2026-11-16T22:38:55.5150440Z ◇ Passing 2 arguments port → 65535, mode → .observingShutdown to "Management outcomes hand off the literal loopback address"
+2026-11-16T22:38:55.5151140Z ◇ Passing 1 argument port → 1 to "Port conflicts name only the reported port"
+2026-11-16T22:38:55.5151890Z ◇ Passing 1 argument port → 80 to "Port conflicts name only the reported port"
+2026-11-16T22:38:55.5152490Z ◇ Passing 1 argument port → 65535 to "Port conflicts name only the reported port"
+2026-11-16T22:38:55.5153210Z ◇ Passing 1 argument expected → installationInvalid to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5154370Z ◇ Passing 1 argument expected → runtimeUnavailable to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5155220Z ◇ Passing 1 argument expected → assetsUnavailable to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5156020Z ◇ Passing 1 argument expected → keySourceUnavailable to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5156780Z ◇ Passing 1 argument expected → portInUse to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5157480Z ◇ Passing 1 argument expected → storeBlocked to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5158210Z ◇ Passing 1 argument expected → cannotVerify to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5158920Z ◇ Passing 1 argument expected → launchBusy to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5159670Z ◇ Passing 1 argument expected → releaseUnconfirmed to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5160480Z ◇ Passing 1 argument expected → diagnosticsUnavailable to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5161240Z ◇ Passing 1 argument expected → startFailed to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5161940Z ◇ Passing 1 argument expected → childExited to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5163030Z ◇ Passing 1 argument expected → startTimedOut to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5163790Z ◇ Passing 1 argument expected → startupUnverified to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5164520Z ◇ Passing 1 argument expected → unexpected to "Each failure outcome maps to its own fixed alert"
+2026-11-16T22:38:55.5165260Z ✔ Test unverifiableDestinationLeavesForeignEntryAndCandidate() passed after 0.072 seconds.
+2026-11-16T22:38:55.5165920Z ✔ Test absentDestinationUsesExclusivePublish() passed after 0.072 seconds.
+2026-11-16T22:38:55.5166450Z ✔ Test closedArgumentsAndNames() passed after 0.072 seconds.
+2026-11-16T22:38:55.5166930Z ✔ Test exactHeadlessEnvelopes() passed after 0.072 seconds.
+2026-11-16T22:38:55.5167460Z ✔ Test zeroMeansAbsentAndNonzeroMeansPresent() passed after 0.072 seconds.
+2026-11-16T22:38:55.5168030Z ✔ Test boundedDenyOnlyAndAllowPolicies() passed after 0.072 seconds.
+2026-11-16T22:38:55.5168540Z ✔ Test rollbackToVerifiedAbsence() passed after 0.072 seconds.
+2026-11-16T22:38:55.5169000Z ✔ Test runtimeAndClosedConfig() passed after 0.072 seconds.
+2026-11-16T22:38:55.5169590Z ✔ Test cancelledAndQuittingAttemptsSkipFinalDiagnostics() passed after 0.072 seconds.
+2026-11-16T22:38:55.5170180Z ✔ Test failuresDoNotBecomeAbsentOrEmpty() passed after 0.072 seconds.
+2026-11-16T22:38:55.5170860Z ✔ Test failureClassificationDistinguishesCommittedSpawnAndLocalSetup() passed after 0.072 seconds.
+2026-11-16T22:38:55.5171520Z ✔ Test swiftAndDarwinUnsignedIdentityVectors() passed after 0.072 seconds.
+2026-11-16T22:38:55.5172040Z ✔ Test commitAndQuitBothOrders() passed after 0.072 seconds.
+2026-11-16T22:38:55.5172620Z ✔ Test expiredGatewayDeadlineStillRecordsTerminalFailure() passed after 0.072 seconds.
+2026-11-16T22:38:55.5173280Z ✔ Test healthRequiresUniqueCorrectHeadersAndExactBody() passed after 0.072 seconds.
+2026-11-16T22:38:55.5173950Z ✔ Test failedIdentityHelperSpawnIsAnObservationFailure() passed after 0.073 seconds.
+2026-11-16T22:38:55.5174610Z ✔ Test signedWitnessesSurviveActualExchangeAndRollback() passed after 0.073 seconds.
+2026-11-16T22:38:55.5175240Z ✔ Test "Before the deadline the translated callback stands" passed after 0.072 seconds.
+2026-11-16T22:38:55.5175880Z ✔ Test "At or after the deadline every callback is unconfirmed" passed after 0.072 seconds.
+2026-11-16T22:38:55.5176550Z ✔ Test "Expiry settles once; later callbacks and timers are ignored" passed after 0.072 seconds.
+2026-11-16T22:38:55.5177250Z ✔ Test "An early timer does not settle; the later callback still can" passed after 0.072 seconds.
+2026-11-16T22:38:55.5178200Z ✔ Test "A port conflict with no usable port uses the generic wording" passed after 0.071 seconds.
+2026-11-16T22:38:55.5178980Z ✔ Test "Quit and blocked-data copy promise only what the launcher can know" passed after 0.071 seconds.
+2026-11-16T22:38:55.5179620Z ✔ Test "Every stage has its own fixed progress line" passed after 0.071 seconds.
+2026-11-16T22:38:55.5180160Z ✔ Test "Failure titles are distinct" passed after 0.071 seconds.
+2026-11-16T22:38:55.5180760Z ✔ Test "The fixtures name all 17 closed outcomes and all 15 failures" passed after 0.071 seconds.
+2026-11-16T22:38:55.5181490Z ✔ Test "Browser failures show the fixed address and offer only Copy Address" passed after 0.072 seconds.
+2026-11-16T22:38:55.5182200Z ✔ Test "Management outcomes hand off the literal loopback address" passed after 0.072 seconds.
+2026-11-16T22:38:55.5182820Z ✔ Test "Port conflicts name only the reported port" passed after 0.072 seconds.
+2026-11-16T22:38:55.5183480Z ✔ Test "The canary scanner detects the raw details it guards against" passed after 0.072 seconds.
+2026-11-16T22:38:55.5184040Z ✔ Test twoStreamsAndVerifiedExit() passed after 0.074 seconds.
+2026-11-16T22:38:55.5184500Z ✔ Test "Cancelled ends quietly" passed after 0.072 seconds.
+2026-11-16T22:38:55.5185060Z ✔ Test "Each failure outcome maps to its own fixed alert" passed after 0.072 seconds.
+2026-11-16T22:38:55.5186030Z ✔ Test "Start failures distinguish no child, a verified exit, a timeout and an unknown result" passed after 0.072 seconds.
+2026-11-16T22:38:55.5186860Z ✔ Test "A management outcome without a usable port never becomes a browser address" passed after 0.072 seconds.
+2026-11-16T22:38:55.5187420Z ✔ Suite PublisherTests passed after 0.076 seconds.
+2026-11-16T22:38:55.5187840Z ✔ Suite EngineContractsTests passed after 0.076 seconds.
+2026-11-16T22:38:55.5188220Z ✔ Suite ACLTests passed after 0.076 seconds.
+2026-11-16T22:38:55.5188760Z ✔ Test "Concurrent callbacks and timers settle exactly once" passed after 0.075 seconds.
+2026-11-16T22:38:55.5189540Z ✔ Test "No user-visible text carries paths, process details or implementation vocabulary" passed after 0.073 seconds.
+2026-11-16T22:38:55.5190220Z ✔ Suite "Browser completion deadline arbitration" passed after 0.076 seconds.
+2026-11-16T22:38:55.5190770Z ✔ Suite "Outcome mapping and fixed copy" passed after 0.076 seconds.
+2026-11-16T22:38:55.5191360Z ✔ Test overflowingHeaderAndHangingHelperAreBounded() passed after 0.177 seconds.
+2026-11-16T22:38:55.5191950Z ✔ Suite ChildTests passed after 0.179 seconds.
+2026-11-16T22:38:55.5192500Z ✔ Test "Presentation timing constants are the reviewed values" passed after 0.477 seconds.
+2026-11-16T22:38:55.5193260Z ✔ Test "Failure controls: OK is the Return default; the secondary action has no key" passed after 0.482 seconds.
+2026-11-16T22:38:55.5193940Z ✔ Test "Esc and Command-period are the only cancel keys" passed after 0.481 seconds.
+2026-11-16T22:38:55.5194520Z ✔ Test "Accessibility identifiers are distinct" passed after 0.481 seconds.
+2026-11-16T22:38:55.5195080Z ✔ Test "A lone OK is still the Return default" passed after 0.481 seconds.
+2026-11-16T22:38:55.5195750Z ✔ Test "The main menu maps Command-Q to terminate and Command-W to performClose" passed after 0.480 seconds.
+2026-11-16T22:38:55.5196450Z ✔ Test "Browser failure controls offer OK and Copy Address only" passed after 0.480 seconds.
+2026-11-16T22:38:55.5197210Z ✔ Test "The native browser callback translates to the closed outcome" passed after 0.480 seconds.
+2026-11-16T22:38:55.5197970Z ✔ Test "The delegate routes reopen and Quit without starting another attempt" passed after 0.483 seconds.
+2026-11-16T22:38:55.5198700Z ✔ Test "The production composition types build without opening anything" passed after 0.482 seconds.
+2026-11-16T22:38:55.5199390Z ✔ Test "Port 0 in a management outcome never reaches the browser" passed after 0.484 seconds.
+2026-11-16T22:38:55.5200210Z ✔ Test "Engine completion with a failure, then Quit: the window closes and later choices are ignored" passed after 0.483 seconds.
+2026-11-16T22:38:55.5201540Z ✔ Test "Progress panel: titled, closable, fixed size, stays visible when the app deactivates" passed after 0.483 seconds.
+2026-11-16T22:38:55.5202470Z ✔ Test "Close box, Command-W, Esc, Command-period and Hide all only hide the progress panel" passed after 0.483 seconds.
+2026-11-16T22:38:55.5203350Z ✔ Test "Failure panel: dialog subrole, default button first responder, every cancel path dismisses" passed after 0.483 seconds.
+2026-11-16T22:38:55.5204090Z ✔ Test "A lone OK failure panel still dismisses on Esc" passed after 0.483 seconds.
+2026-11-16T22:38:55.5204690Z ✔ Test "Cancelled ends quietly without asking for anything" passed after 0.483 seconds.
+2026-11-16T22:38:55.5205360Z ✔ Suite "AppKit windows (needs a GUI login session; nothing is shown)" passed after 0.486 seconds.
+2026-11-16T22:38:55.5206160Z ✔ Test "Progress controls: Hide answers Esc, Quit sends terminate, Return is inert" passed after 0.482 seconds.
+2026-11-16T22:38:55.5206910Z ✔ Suite "AppKit controls, menu and adapters (no window server needed)" passed after 0.486 seconds.
+2026-11-16T22:38:55.5207580Z ✔ Test "A callback delivered on a background thread is honored" passed after 0.484 seconds.
+2026-11-16T22:38:55.5208310Z ✔ Test "Reopen while a failure is shown raises that window and never stacks another" passed after 0.484 seconds.
+2026-11-16T22:38:55.5209190Z ✔ Test "Before any stage the delayed panel uses the neutral line" passed after 0.483 seconds.
+2026-11-16T22:38:55.5209860Z ✔ Test "Stages emitted from a background thread keep their order" passed after 0.484 seconds.
+2026-11-16T22:38:55.5210520Z ✔ Test "Rejected shows the rejection and offers only Copy Address" passed after 0.489 seconds.
+2026-11-16T22:38:55.5211050Z ✔ Test "Accepted is a quiet exit" passed after 0.489 seconds.
+2026-11-16T22:38:55.5211680Z ✔ Test "A callback with neither an application nor an error is unconfirmed" passed after 0.489 seconds.
+2026-11-16T22:38:55.5212430Z ✔ Test "Copy Address after an unconfirmed result copies the same fixed address" passed after 0.489 seconds.
+2026-11-16T22:38:55.5213130Z ✔ Test "Exits the launcher starts itself are not Quit requests" passed after 0.489 seconds.
+2026-11-16T22:38:55.5213700Z ✔ Test "OK on a browser failure copies nothing" passed after 0.489 seconds.
+2026-11-16T22:38:55.5214320Z ✔ Test "Reopen and Hide after the launcher finished change nothing" passed after 0.488 seconds.
+2026-11-16T22:38:55.5214980Z ✔ Test "Hiding during the handoff keeps the submission pending" passed after 0.489 seconds.
+2026-11-16T22:38:55.5215710Z ✔ Test "While the offer resolves the panel stays; it closes just before the alert" passed after 0.492 seconds.
+2026-11-16T22:38:55.5216440Z ✔ Test "A callback observed at the deadline cannot count as accepted" passed after 0.492 seconds.
+2026-11-16T22:38:55.5217220Z ✔ Test "A callback observed before the deadline wins even if the timer is delivered first" passed after 0.492 seconds.
+2026-11-16T22:38:55.5218020Z ✔ Test "A resolved action is offered, invoked once, and then the launcher exits" passed after 0.494 seconds.
+2026-11-16T22:38:55.5218760Z ✔ Test "Each failure outcome closes the panel first, then shows its alert" passed after 0.493 seconds.
+2026-11-16T22:38:55.5219430Z ✔ Test "Show Log runs to completion before the launcher exits" passed after 0.497 seconds.
+2026-11-16T22:38:55.5220040Z ✔ Test "A visible panel switches to the handoff line" passed after 0.496 seconds.
+2026-11-16T22:38:55.5220690Z ✔ Test "The resolver is never asked without the Show Log affordance" passed after 0.503 seconds.
+2026-11-16T22:38:55.5221390Z ✔ Test "Reopen before the threshold shows the panel at once, and only once" passed after 0.574 seconds.
+2026-11-16T22:38:55.5222120Z ✔ Test "The engine runs once despite repeated starts, reopens and hides" passed after 0.574 seconds.
+2026-11-16T22:38:55.5222930Z ✔ Test "Quit before the attempt starts means the engine never runs, and Quit again is still now" passed after 0.575 seconds.
+2026-11-16T22:38:55.5223980Z ✔ Test "Reopen during the handoff surfaces it without a second submission" passed after 0.574 seconds.
+2026-11-16T22:38:55.5224750Z ✔ Test "One submission of the literal address in both management modes" passed after 0.575 seconds.
+2026-11-16T22:38:55.5225450Z ✔ Test "Hiding before the threshold suppresses the automatic panel" passed after 0.574 seconds.
+2026-11-16T22:38:55.5226150Z ✔ Test "Quit, then a failure outcome: no window and no Show Log resolution" passed after 0.575 seconds.
+2026-11-16T22:38:55.5226880Z ✔ Test "A nil offer shows no Show Log, and choosing it anyway does nothing" passed after 0.576 seconds.
+2026-11-16T22:38:55.5227570Z ✔ Test "The first terminal callback wins and later ones are ignored" passed after 0.575 seconds.
+2026-11-16T22:38:55.5228290Z ✔ Test "Quit, then a management outcome: no browser submission and no window" passed after 0.575 seconds.
+2026-11-16T22:38:55.5228990Z ✔ Test "Progress arriving after the outcome never changes the screen" passed after 0.574 seconds.
+2026-11-16T22:38:55.5229690Z ✔ Test "A resolver that settles after Quit cannot bring back any window" passed after 0.576 seconds.
+2026-11-16T22:38:55.5230400Z ✔ Test "A handoff accepted before the threshold shows no window at all" passed after 0.574 seconds.
+2026-11-16T22:38:55.5231120Z ✔ Test "Stages reach the screen in emission order and repeats are dropped" passed after 0.574 seconds.
+2026-11-16T22:38:55.5232120Z ✔ Test "Quit while Show Log runs exits without finishing again later" passed after 0.576 seconds.
+2026-11-16T22:38:55.5232920Z ✔ Test "Engine completion, then Quit: the submitted request stays and late callbacks are ignored" passed after 0.575 seconds.
+2026-11-16T22:38:55.5233700Z ✔ Test "Every failure with the affordance asks the resolver exactly once" passed after 0.576 seconds.
+2026-11-16T22:38:55.5234420Z ✔ Test "Quit, then the engine's own cancellation: one reply, nothing shown" passed after 0.579 seconds.
+2026-11-16T22:38:55.5235100Z ✔ Test "The deadline starts at submission, not at attempt entry" passed after 0.579 seconds.
+2026-11-16T22:38:55.5235720Z ✔ Test "Progress after Quit never reaches the screen" passed after 0.606 seconds.
+2026-11-16T22:38:55.5236380Z ✔ Test "Deadline expiry is unconfirmed, and a later callback is ignored" passed after 0.609 seconds.
+2026-11-16T22:38:55.5237140Z ✔ Suite "Browser handoff: one submission, 10 s deadline, first terminal result wins" passed after 0.610 seconds.
+2026-11-16T22:38:55.5237810Z ✔ Test "Quit waits at most 2 s for the engine to return" passed after 0.610 seconds.
+2026-11-16T22:38:55.5238560Z ✔ Test "An answer handled just before the 3 s deadline is offered and retires the expiry timer" passed after 0.611 seconds.
+2026-11-16T22:38:55.5239430Z ✔ Test "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs" passed after 0.643 seconds.
+2026-11-16T22:38:55.5240230Z ✔ Test "The offer waits at most 3 s; an action that arrives later is discarded" passed after 0.643 seconds.
+2026-11-16T22:38:55.5240910Z ✔ Test "The panel appears on its own only once 1 s has passed" passed after 0.641 seconds.
+2026-11-16T22:38:55.5241610Z ✔ Suite "Show Log: only a reached failure's opaque action, never a fallback" passed after 0.645 seconds.
+2026-11-16T22:38:55.5242340Z ✔ Test "Hide only hides: the attempt continues and stays hidden until reopen" passed after 0.643 seconds.
+2026-11-16T22:38:55.5243060Z ✔ Suite "One attempt, ordered progress, delayed panel, Hide and reopen" passed after 0.646 seconds.
+2026-11-16T22:38:55.5243880Z ✔ Test "Quit again before the grace expires: the original 2 s deadline holds and one reply is sent" passed after 0.731 seconds.
+2026-11-16T22:38:55.5244730Z ✔ Test "Quit again before the engine returns: still later, one request, one reply, then now" passed after 0.730 seconds.
+2026-11-16T22:38:55.5245550Z ✔ Suite "Quit: synchronous engine request, suppression, and both completion orders" passed after 0.733 seconds.
+2026-11-16T22:38:55.5246100Z ✔ Test run with 105 tests passed after 0.734 seconds.
+2026-11-16T22:38:55.5358290Z ##[group]Run pnpm test:macos-launcher
+2026-11-16T22:38:55.5358710Z [36;1mpnpm test:macos-launcher[0m
+2026-11-16T22:38:55.5413170Z shell: /bin/bash -e {0}
+2026-11-16T22:38:55.5413370Z env:
+2026-11-16T22:38:55.5413500Z   LIVE: 0
+2026-11-16T22:38:55.5413850Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:38:55.5414310Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T22:38:55.5414580Z ##[endgroup]
+2026-11-16T22:38:55.7020720Z $ node --test tooling/scripts/macos-launcher.acceptance.mjs
+2026-11-16T22:38:55.7815600Z TAP version 13
+2026-11-16T22:38:55.8644070Z # Subtest: a reset does not prove that the listener released
+2026-11-16T22:38:55.8648200Z ok 1 - a reset does not prove that the listener released
+2026-11-16T22:38:55.8648870Z   ---
+2026-11-16T22:38:55.8649270Z   duration_ms: 22.331042
+2026-11-16T22:38:55.8649540Z   type: 'test'
+2026-11-16T22:38:55.8649750Z   ...
+2026-11-16T22:41:02.1924260Z # Subtest: macOS public launcher, native headless process and actual gateway
+2026-11-16T22:41:02.1926110Z ok 2 - macOS public launcher, native headless process and actual gateway
+2026-11-16T22:41:02.1927250Z   ---
+2026-11-16T22:41:02.1927820Z   duration_ms: 126259.510916
+2026-11-16T22:41:02.1928350Z   type: 'test'
+2026-11-16T22:41:02.1928750Z   ...
+2026-11-16T22:41:02.1929480Z # Public install with a malformed inherited locale validated and published a receipt-bound alternate app.
+2026-11-16T22:41:02.1932550Z # A foreign listener survived the launcher refusal and no store was initialized.
+2026-11-16T22:41:02.1937500Z # An occupied store without its key refused before spawn and preserved its contents.
+2026-11-16T22:41:02.1939710Z # Concurrent cold attempts with malformed locales completed and a single verified gateway served both built shells after both launchers exited.
+2026-11-16T22:41:02.1940770Z # Warm launch kept the serving PID and private managed logs excluded the request query.
+2026-11-16T22:41:02.1945660Z # A second built API entry contended on the actual physical log reservation before touching its store.
+2026-11-16T22:41:02.1946850Z # The actual managed API refused a missing local key at the store stage, preserving database bytes.
+2026-11-16T22:41:02.1948550Z # Same-path replacement kept the alternate identity and logged the held-store deadline refusal.
+2026-11-16T22:41:02.1949470Z # Supported drain released both leases, the verified process birth and the loopback listener.
+2026-11-16T22:41:02.1950260Z # Evidence: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:41:02.2037920Z 1..2
+2026-11-16T22:41:02.2039730Z # tests 2
+2026-11-16T22:41:02.2040550Z # suites 0
+2026-11-16T22:41:02.2041580Z # pass 2
+2026-11-16T22:41:02.2042770Z # fail 0
+2026-11-16T22:41:02.2044130Z # cancelled 0
+2026-11-16T22:41:02.2044920Z # skipped 0
+2026-11-16T22:41:02.2045830Z # todo 0
+2026-11-16T22:41:02.2046110Z # duration_ms 126373.603167
+2026-11-16T22:41:02.2381910Z ##[group]Run actions/upload-artifact@v4
+2026-11-16T22:41:02.2382330Z with:
+2026-11-16T22:41:02.2382520Z   name: macos-launcher
+2026-11-16T22:41:02.2382970Z   include-hidden-files: true
+2026-11-16T22:41:02.2383350Z   path: .tmp/macos-launcher-*/
+.tmp/macos-swift-test/**/codecov/**
+
+2026-11-16T22:41:02.2383820Z   if-no-files-found: error
+2026-11-16T22:41:02.2384180Z   retention-days: 7
+2026-11-16T22:41:02.2384450Z   compression-level: 6
+2026-11-16T22:41:02.2384800Z   overwrite: false
+2026-11-16T22:41:02.2385110Z env:
+2026-11-16T22:41:02.2385310Z   LIVE: 0
+2026-11-16T22:41:02.2385810Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T22:41:02.2386330Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T22:41:02.2386840Z ##[endgroup]
+2026-11-16T22:41:02.7161460Z (node:6267) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-16T22:41:02.7175550Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T22:41:03.7067550Z With the provided path, there will be 78 files uploaded
+2026-11-16T22:41:03.7069530Z Artifact name is valid!
+2026-11-16T22:41:03.7070350Z Root directory input is valid!
+2026-11-16T22:41:04.4741840Z Beginning upload of artifact content to blob storage
+2026-11-16T22:41:04.5671480Z (node:6267) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-16T22:41:05.1205550Z Uploaded bytes 317215
+2026-11-16T22:41:05.2018640Z Finished uploading artifact content to blob storage!
+2026-11-16T22:41:05.2031570Z SHA256 digest of uploaded artifact zip is 4175c97d8eeae149ec86d5bc899e58d925dc2f12956972ecf329d2f138bf72f5
+2026-11-16T22:41:05.2032240Z Finalizing artifact upload
+2026-11-16T22:41:05.6617590Z Artifact macos-launcher.zip successfully finalized. Artifact ID 14279411156
+2026-11-16T22:41:05.6651870Z Artifact macos-launcher has been successfully uploaded! Final size is 317215 bytes. Artifact ID is 14279411156
+2026-11-16T22:41:05.6670930Z Artifact download URL: https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43971560928/artifacts/14279411156
+2026-11-16T22:41:05.6784320Z Post job cleanup.
+2026-11-16T22:41:05.8375970Z (node:6500) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-16T22:41:05.8379480Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T22:41:05.8380510Z Cache hit occurred on the primary key node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83, not saving cache.
+2026-11-16T22:41:05.8532550Z Post job cleanup.
+2026-11-16T22:41:06.0416130Z Pruning is unnecessary.
+2026-11-16T22:41:06.0624460Z Post job cleanup.
+2026-11-16T22:41:06.2133210Z [command]/opt/homebrew/bin/git version
+2026-11-16T22:41:06.2311010Z git version 2.56.0
+2026-11-16T22:41:06.2334380Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/76803a87-fdad-4411-92e2-f2a7a9b91ca3/.gitconfig'
+2026-11-16T22:41:06.2345200Z Temporarily overriding HOME='/Users/runner/work/_temp/76803a87-fdad-4411-92e2-f2a7a9b91ca3' before making global git config changes
+2026-11-16T22:41:06.2348900Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-16T22:41:06.2358450Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T22:41:06.2477680Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-16T22:41:06.2549970Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-16T22:41:06.4243430Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-16T22:41:06.4369370Z http.https://github.com/.extraheader
+2026-11-16T22:41:06.4387520Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-16T22:41:06.4466710Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-16T22:41:06.5365550Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-16T22:41:06.5437990Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-16T22:41:06.7548170Z Cleaning up orphan processes
+2026-11-16T22:41:09.2494210Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

@@ -117,6 +117,38 @@ import Testing
         }
     }
 
+    @Test func staleReceiptReplacementAndDiscardPreserveExactWitnessAndBytes() throws {
+        try fixture { fixture in
+            let prior = try fixture.bundle(in: fixture.applications, marker: "prior")
+            let candidate = try fixture.bundle(in: fixture.stage, marker: "candidate")
+            let records = ReceiptStore(directory: fixture.receipts)
+            let stable = InstallationReceipt(id: fixture.id, name: fixture.name,
+                                             applications: fixture.applications.identity, installed: prior)
+            let pending = InstallationReceipt(
+                id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
+                installed: prior, staged: candidate, stageName: URL(fileURLWithPath: fixture.stage.path).lastPathComponent
+            )
+            try records.write(stable, replacing: nil)
+            let filename = fixture.id + ".json"
+            let before = try #require(fixture.receipts.named(filename))
+            let bytes = try stable.encode()
+
+            #expect(throws: FileRefusal.self) { try records.write(pending, replacing: Data("stale".utf8)) }
+            #expect(throws: FileRefusal.self) { try records.write(pending, replacing: nil) }
+            #expect(throws: FileRefusal.self) { try records.discard(pending) }
+            #expect(try records.bytes(fixture.id) == bytes)
+            #expect(try fixture.receipts.named(filename).map(FileIdentity.init) == FileIdentity(before))
+            #expect(try fixture.receipts.names() == [filename])
+            #expect(try fixture.witness(fixture.applications) == prior)
+            #expect(try fixture.witness(fixture.stage) == candidate)
+
+            try records.discard(stable)
+            #expect(try fixture.receipts.names().isEmpty)
+            #expect(try fixture.witness(fixture.applications) == prior)
+            #expect(try fixture.witness(fixture.stage) == candidate)
+        }
+    }
+
     @Test func closedArgumentsAndNames() throws {
         let command = try InstallerOptions.parse([
             "--app-name", "GraphGoblin QA a\u{0301}.app", "--port", "65535",
@@ -135,5 +167,47 @@ import Testing
         ] {
             #expect(throws: InstallerRefusal.self) { try InstallerOptions.parse(args) }
         }
+    }
+
+    @Test func platformBootstrapAndTerminalUsageAreClosed() throws {
+        let prefix = ["/fixture/checkout", "/fixture/release", "", "--"]
+        let help = LauncherInstaller.run(prefix + ["--help"], environment: [:])
+        #expect(help.exitCode == 0)
+        #expect(help.output == InstallerOptions.usage)
+
+        for arguments in [
+            prefix + ["--port"],
+            prefix + ["--data-dir", "relative"],
+            prefix + ["--node", "/node", "--node", "/second-node"],
+            prefix + ["--help", "--require-api-key"]
+        ] {
+            let result = LauncherInstaller.run(arguments, environment: [:])
+            #expect(result.exitCode == 64)
+            #expect(result.output == InstallerOptions.usage)
+        }
+        for arguments in [
+            [], ["/fixture/checkout", "/fixture/release", ""],
+            ["relative", "/fixture/release", "", "--"],
+            ["/fixture/checkout", "relative", "", "--"],
+            ["/fixture/checkout", "/fixture/release", "relative", "--"],
+            ["/fixture/checkout", "/fixture/release", "", "--help"]
+        ] {
+            let result = LauncherInstaller.run(arguments, environment: [:])
+            #expect(result.exitCode == 1)
+            #expect(result.output == "The candidate bundle could not be staged and verified.")
+        }
+
+        let parsed = try InstallerOptions.parse([
+            "--app-name", "GraphGoblin.app", "--data-dir", "/fixture/store",
+            "--codex-binary", "/fixture/codex", "--claude-binary", "/fixture/claude"
+        ])
+        guard case .install(let options) = parsed else {
+            Issue.record("Explicit alternate binary paths should parse as installer configuration")
+            return
+        }
+        #expect(options.appName == "GraphGoblin.app")
+        #expect(options.dataDirectory == "/fixture/store")
+        #expect(options.codexBinary == "/fixture/codex")
+        #expect(options.claudeBinary == "/fixture/claude")
     }
 }

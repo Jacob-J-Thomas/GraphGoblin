@@ -2,6 +2,8 @@
 
 Date: 2026-11-16. Status: Accepted architecture for #456, following the
 [owner-approved plan](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6872747350).
+The owner clarified that its “in-app shutdown” wording means the existing authenticated shutdown
+API, with no new web control ([approval](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6935644999)).
 Extends the checkout installation and bounded logging described in
 [ADR-0081](ADR-0081-bounded-windows-launcher-logs.md).
 
@@ -32,8 +34,10 @@ gateway termination request from the launcher.
 
 A matching service must provide its exact health response, fingerprint, PID, phase and both
 built HTML shells, followed by a fresh identity/phase check. Active drain and failure phases
-open the existing management page with its shutdown controls; final release phases wait for
-observed release. Unknown listeners, malformed observations and held or uncertain stores
+open the existing management page to observe state. The browser's Wait and Force choices are
+available only after a drain initiated elsewhere reaches the API's choice phase; they use the
+existing authenticated shutdown API. The launcher adds no web control. Final release phases
+wait for observed release. Unknown listeners, malformed observations and held or uncertain stores
 refuse conservatively. Child exit, definite spawn failure, startup timeout and unverified
 startup are distinct outcomes. Direct `posix_spawn` uses a new session, close-on-exec defaults,
 null standard descriptors and the saved checkout as child cwd. The gateway outlives the app
@@ -97,5 +101,6 @@ keyboard and accessibility observations remain distinct from headless and script
 Issue #456 and its parent retain the required post-merge owner acceptance.
 
 No stored format or schema changes. Updating a saved checkout or Node location requires
-rerunning the installer. Closing either launcher or browser leaves active work running;
-the management page's existing Stop controls retain shutdown authority.
+rerunning the installer. Closing either launcher or browser leaves active work running. Stop a
+running gateway through the existing authenticated shutdown API; the browser's Wait and Force
+choices do not initiate a drain. See [Gateway shutdown](../07-api-and-streaming.md#gateway-shutdown-224).

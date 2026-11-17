@@ -101,3 +101,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0081 - Bounded private logs for the Windows launcher's gateway](ADR-0081-bounded-windows-launcher-logs.md) records the in-gateway bounded writer, the guarded entry, one owner per private physical log root, the coordinated cutover and closed launcher outcomes (#438).
 
 [ADR-0082 - Per-user macOS Finder and Dock launcher](ADR-0082-macos-finder-dock-launcher.md) records saved native runtime inputs, detached lifetime, conservative admission, AppKit presentation, receipt-bound atomic installation and the shared managed-log writer (#456).
+
+[ADR-0083 - Native Swift coverage for the macOS launcher](ADR-0083-swift-native-coverage.md) sets the 90% line and region policy with explicit branch-outcome tests, preserves the V8 gates, and records that the collector/check is wired while its first hosted verification is pending (#456).

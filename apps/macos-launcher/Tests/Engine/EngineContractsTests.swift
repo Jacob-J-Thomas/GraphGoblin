@@ -86,7 +86,11 @@ import Testing
         #expect(committed.quitting)
         #expect(committed.didCommit)
         #expect(!committed.commit(before: budget))
-        #expect(!AttemptState().commit(before: AttemptTime(end: 0)))
+        let expired = AttemptState()
+        #expect(!expired.commit(before: budget))
+        #expect(expired.begin())
+        #expect(!expired.commit(before: AttemptTime(end: 0)))
+        #expect(!expired.didCommit)
     }
 
     @Test func runtimeAndClosedConfig() throws {
@@ -159,6 +163,27 @@ import Testing
         #expect(HeadlessResult(classifyAttemptFailure(localSetup, didCommit: true).outcome).exitCode == 33)
         #expect(HeadlessResult(classifyAttemptFailure(OperationRefusal.deadline, didCommit: false).outcome).exitCode == 22)
         #expect(HeadlessResult(classifyAttemptFailure(OperationRefusal.deadline, didCommit: true).outcome).exitCode == 32)
+    }
+
+    @Test func operationFailuresPreserveCommitBoundaryAndClosedOutcome() {
+        for (error, before, after) in [
+            (OperationRefusal.deadline, "cannot-verify", "start-timed-out"),
+            (OperationRefusal.disconnected, "cannot-verify", "startup-unverified"),
+            (OperationRefusal.invalid, "cannot-verify", "startup-unverified"),
+            (OperationRefusal.cancelled, "cancelled", "cancelled")
+        ] {
+            for (committed, expected) in [(false, before), (true, after)] {
+                let classified = classifyAttemptFailure(error, didCommit: committed)
+                #expect(HeadlessResult(classified.outcome).code == expected)
+                #expect(classified.childCategory == nil)
+            }
+        }
+        let unknown = classifyAttemptFailure(ChildSpawnError.unknownChild, didCommit: true)
+        #expect(HeadlessResult(unknown.outcome).code == "startup-unverified")
+        #expect(unknown.childCategory == nil)
+        let refused = classifyAttemptFailure(LaunchRefusal(.assetsUnavailable), didCommit: true)
+        #expect(HeadlessResult(refused.outcome).code == "assets-unavailable")
+        #expect(refused.childCategory == nil)
     }
 
     @Test func expiredGatewayDeadlineStillRecordsTerminalFailure() {

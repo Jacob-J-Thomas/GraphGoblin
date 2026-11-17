@@ -6,8 +6,10 @@ the application, runs the affected API tests, runs the Swift engine/installer/pr
 suites under full Xcode and exercises the public installer and real gateway with an alternate
 bundle, disposable stores and non-owner ports. It covers malformed inherited locales during
 public installation and concurrent cold launch. Native test output and failure evidence are
-retained for seven days. Swift coverage output is additional evidence; it does not replace
-the existing TypeScript/JavaScript V8 gates or their thresholds.
+retained for seven days. Swift coverage follows the separate accepted policy in ADR-0083. The
+`pnpm test:macos-coverage` collector/check is wired as a 10-minute step in the macOS CI job,
+before native installer and gateway acceptance. Its first post-wiring hosted verification is
+pending. The existing TypeScript/JavaScript V8 thresholds remain unchanged.
 
 The presentation tests use an injected clock, engine, opener and surface. Five offscreen
 window tests require an available Quartz session; report their actual skips separately.
@@ -59,11 +61,35 @@ The separate-process recovery check runs with `pnpm build` followed by `pnpm tes
 
 `apps/api/src/pinned-run-restart.test.ts` kills and restarts the built API on a disposable store. It verifies that an admitted child and Replay retain the original published definition while a new run selects the newer publish. API subprocess fixtures collect closed native SQLite objects before deleting their stores: on Windows, closed connections and statements can retain file handles until collection, including after read-only observers close.
 
-## Coverage policy (Decided)
+## TypeScript/JavaScript V8 coverage policy (Decided)
 
 - Every package, including `apps/web` and `tooling`, inherits the V8 coverage gate from `tooling/vitest.shared.mjs`: lines, branches, functions and statements each have a numerical threshold of 90. Vitest accepts exactly 90%; results below 90 fail. Package configs extend the shared configuration without lowering these four thresholds.
 - The shared denominator includes `src/**/*.ts` and `src/**/*.tsx`, including `src/testing` helpers. It excludes tests, type declarations, `src/**/__fixtures__/**` and `src/**/generated/**`. The generated OpenAPI declarations are excluded; handwritten API-client code is measured. SQL migrations are outside the TypeScript include and have migration/startup acceptance checks. No maintained source is excluded to raise its score.
 - Coverage uses Vitest's V8 provider. Each package writes its own text summary, `coverage-summary.json` and LCOV; the root Turbo gate runs these package gates. There is no aggregate repository percentage or merged cross-package report. CI uploads the package summaries, including tooling's.
+
+## Native Swift coverage policy (#456, accepted; hosted verification pending)
+
+The owner approved at least 90% line coverage and 90% region coverage for the macOS launcher's
+complete production source, plus explicit behavior tests of branch outcomes. Swift's current LLVM
+export has no branch denominator, so branch outcomes are established by tests rather than a
+branch percentage. This native policy is separate from, and does not change, the V8 policy above.
+See [ADR-0083](decisions/ADR-0083-swift-native-coverage.md) and the
+[CI #03 evidence](qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-03/README.md).
+
+The coverage inventory includes all 25 production source files across six targets. The collector
+must verify each source-to-object mapping and executable entry, combine the verified counters
+across targets, and stop if any production source or entry is missing or unmapped.
+Declaration-only sources with no executable regions remain inventoried with that status
+established from the complete object mapping. No production source may be excluded to raise
+coverage.
+
+CI #03 predates the collector/check step and maps only 21 of the 25 production files:
+2,177/3,588 lines (60.67%) and 1,015/2,040 regions (49.75%), with no branch denominator. The
+declaration and entry mapping gap makes these partial measurements; they do not establish a
+passing 90% result. The `pnpm test:macos-coverage` package command is now wired into the macOS
+CI job before `pnpm test:macos-launcher`; the first post-wiring hosted run remains pending, so
+there is not yet CI evidence that the complete denominator or thresholds pass. The native
+evidence upload retains `.tmp/macos-launcher-*` and Swift `codecov` output for seven days.
 
 ## Maintained scripts and executable evidence (#264)
 
