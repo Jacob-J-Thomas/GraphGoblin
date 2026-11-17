@@ -58,9 +58,11 @@ then performed the Finder launch and reported a port 7443 pairing window. Read-o
 QA gateway, PID 58208 on port 62241, with unchanged apps/receipts and a Chrome connection.
 The owner clarified that Chrome had hung/crashed on its previous page; after restarting Chrome,
 the correct destination opened. This is an owner-observed browser recovery, not an established
-launcher defect. At the owner's request, the existing Codex session on the Mac is performing
-the remaining actual Finder, alias, Dock, browser-close and replacement checks through computer
-use. The queued prompt was consumed and desktop inspection started; results are still pending.
+launcher defect. At the owner's request, the existing Codex chat on the Mac received the
+remaining Finder, alias, Dock, browser-close and replacement checks through computer use.
+The queued prompt was consumed, but its `Inspecting Finder` call then stopped returning results.
+One continuation is queued, and the owner has been asked to recover that stuck turn because
+the remote session-control endpoint is unavailable. No remaining GUI test is claimed complete.
 Earlier failed attempts retain their original outcomes. See the
 [native evidence snapshot](../qa/2026-11-16-macos-launcher/README.md).
 
@@ -76,9 +78,16 @@ missed-branch capability probe also produced no Swift branch counters. The owner
 [approved the scoped Swift policy and shutdown clarification](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6935644999)
 on November 16: require at least 90% production lines and regions plus explicit branch-outcome
 tests, leaving V8 thresholds unchanged. Complete source mapping, additional behavior tests and
-the failing native CI gate are being implemented. The collector command and native CI step are
-wired locally, pending their first hosted execution; the current partial result is not a pass.
-GPT owns collection/backend tests and actual Claude Opus 5.5 xhigh owns presentation tests.
+the failing native CI gate are implemented. GPT authored collection/backend tests and actual
+Claude Opus 5.5 xhigh authored presentation tests. CI04 exposed throwing optional reads inside
+Swift Testing assertions, corrected without weakening the assertions at `448168ab`. CI05 and
+verbose CI06 then failed during Swift compilation with only SwiftPM's generic build failure,
+before tests executed. Both separately passed native API integration and public installer/gateway
+acceptance. The complete raw compiler streams are retained externally; no new production
+coverage result exists. Focused GPT and actual Claude diagnosis found no demonstrated source
+cause. A failure-only serial build diagnostic now records scoped build and crash evidence while
+preserving the original gate failure. Historical partial coverage is not a pass, and no formal
+review slot is reset by these implementation diagnostics.
 The approved plan now uses the existing authenticated shutdown API. No visible start-shutdown
 control is added; current browser wait/force behavior during drain stays unchanged. No API action
 is represented as an owner UI action. Native coverage, required interactive observations and

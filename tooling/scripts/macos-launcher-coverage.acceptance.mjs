@@ -2,16 +2,23 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
+  closeSync,
+  constants,
   copyFileSync,
+  fstatSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
+  opendirSync,
+  openSync,
   readFileSync,
   readdirSync,
+  readSync,
   realpathSync,
   writeFileSync,
 } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { availableParallelism, freemem, homedir, totalmem } from 'node:os';
+import { basename, dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runEntryFixtures } from './macos-launcher-coverage-fixture.acceptance.mjs';
 import {
@@ -192,6 +199,222 @@ function sentinel(scratch, run, record, tools) {
   return leftProfile;
 }
 
+// Diagnostics run on a disposable hosted runner, after the original streams and exit were recorded.
+function diagnosticFile(path, maxBytes, save) {
+  try {
+    const named = lstatSync(path, { throwIfNoEntry: false });
+    if (!named) return { path, state: 'missing' };
+    const metadata = { path, size: named.size, mtimeMs: named.mtimeMs };
+    if (!named.isFile()) return { ...metadata, state: 'not-regular' };
+    if (named.size > maxBytes) return { ...metadata, state: 'over-size-limit' };
+    const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    try {
+      const matches = (stat) =>
+        stat.isFile() &&
+        stat.dev === named.dev &&
+        stat.ino === named.ino &&
+        stat.size === named.size &&
+        stat.mtimeMs === named.mtimeMs &&
+        stat.ctimeMs === named.ctimeMs;
+      if (!matches(fstatSync(fd))) return { ...metadata, state: 'changed' };
+      const bytes = Buffer.alloc(named.size);
+      for (let offset = 0; offset < bytes.length;) {
+        const count = readSync(fd, bytes, offset, bytes.length - offset, offset);
+        if (count === 0) return { ...metadata, state: 'changed' };
+        offset += count;
+      }
+      if (!matches(fstatSync(fd))) return { ...metadata, state: 'changed' };
+      save?.(bytes);
+      return { ...metadata, state: 'hashed', sha256: digest(bytes) };
+    } finally {
+      closeSync(fd);
+    }
+  } catch (error) {
+    return { path, state: 'unavailable', code: error.code ?? error.name };
+  }
+}
+
+function recentCompilerReports({ startedAt, finishedAt, deadline, write }) {
+  const pattern =
+    /^(?:swift-frontend|swift-plugin-server|swift-driver|swiftc|ld(?:64)?|JetsamEvent)(?:[-_][a-zA-Z0-9._-]{1,180})?\.(?:ips|crash)$/u;
+  const scanned = [];
+  const candidates = [];
+  for (const directory of [
+    join(homedir(), 'Library/Logs/DiagnosticReports'),
+    '/Library/Logs/DiagnosticReports',
+  ]) {
+    const scan = { directory, entries: 0, state: 'complete' };
+    scanned.push(scan);
+    if (performance.now() >= deadline) {
+      scan.state = 'deadline';
+      continue;
+    }
+    try {
+      if (!lstatSync(directory).isDirectory()) {
+        scan.state = 'not-directory';
+        continue;
+      }
+      const dir = opendirSync(directory);
+      try {
+        while (true) {
+          if (performance.now() >= deadline) {
+            scan.state = 'deadline';
+            break;
+          }
+          if (scan.entries === 256) {
+            scan.state = 'entry-cap';
+            break;
+          }
+          const entry = dir.readSync();
+          if (!entry) break;
+          scan.entries += 1;
+          if (!entry.isFile() || !pattern.test(entry.name)) continue;
+          const path = join(directory, entry.name);
+          const stat = lstatSync(path, { throwIfNoEntry: false });
+          if (!stat?.isFile() || stat.mtimeMs < startedAt || stat.mtimeMs > finishedAt) continue;
+          candidates.push({ path, mtimeMs: stat.mtimeMs });
+        }
+      } finally {
+        dir.closeSync();
+      }
+    } catch (error) {
+      scan.state = error.code === 'ENOENT' ? 'missing' : 'unavailable';
+      scan.code = error.code ?? error.name;
+    }
+  }
+  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  const reports = [];
+  for (const { path } of candidates.slice(0, 4)) {
+    if (performance.now() >= deadline) break;
+    const artifact = 'swift-tests-diagnostic-report-' + (reports.length + 1) + extname(path);
+    const report = diagnosticFile(path, 1024 * 1024, (bytes) => write(artifact, bytes));
+    reports.push({ ...report, artifact: report.state === 'hashed' ? artifact : null });
+  }
+  return {
+    startedAt,
+    finishedAt,
+    scanned,
+    matches: candidates.length,
+    reportCaptureDeadline: reports.length < Math.min(4, candidates.length),
+    reports,
+  };
+}
+
+function diagnoseSwiftTestFailure({
+  error,
+  startedAt,
+  testScratch,
+  packageFiles,
+  common,
+  swiftEnv,
+  tools,
+  record,
+  write,
+}) {
+  const finishedAt = Date.now();
+  const deadline = performance.now() + 150_000;
+  const debug = join(testScratch, 'arm64-apple-macosx/debug');
+  const testName = 'GraphGoblinMacLauncherPackageTests';
+  const errors = [];
+  const attempt = (label, operation) => {
+    try {
+      operation();
+    } catch (failure) {
+      errors.push({ label, message: String(failure.message ?? failure).slice(0, 512) });
+    }
+  };
+  attempt('record original failure', () =>
+    record('swift-tests-failure.json', {
+      startedAt,
+      finishedAt,
+      testScratch,
+      originalReceipt: 'swift-tests.json',
+      error: String(error.message ?? error).slice(0, 512),
+      availableCpu: availableParallelism(),
+      totalMemoryBytes: totalmem(),
+      freeMemoryBytes: freemem(),
+    }),
+  );
+  attempt('snapshot build files', () => {
+    const files = [
+      diagnosticFile(join(testScratch, 'debug.yaml'), 4 * 1024 * 1024),
+      diagnosticFile(join(debug, 'description.json'), 4 * 1024 * 1024),
+      diagnosticFile(join(testScratch, 'build.db'), 8 * 1024 * 1024),
+    ];
+    for (const [name, path] of [
+      ['runner.swift', join(debug, testName + '.derived/runner.swift')],
+      ['test-link-files.txt', join(debug, testName + '.product/Objects.LinkFileList')],
+      ['test-output-file-map.json', join(debug, testName + '.build/output-file-map.json')],
+    ]) {
+      const artifact = 'swift-tests-diagnostic-' + name;
+      const file = diagnosticFile(path, 1024 * 1024, (bytes) => write(artifact, bytes));
+      files.push({ ...file, artifact: file.state === 'hashed' ? artifact : null });
+    }
+    for (const path of [
+      join(debug, testName + '.build/runner.swift.o'),
+      join(debug, testName + '.xctest/Contents/MacOS', testName),
+      join(debug, 'GraphGoblin'),
+      join(debug, 'GraphGoblinLauncherInstaller'),
+      join(debug, presentationFixture.name),
+    ]) {
+      if (performance.now() >= deadline) break;
+      files.push(diagnosticFile(path, 32 * 1024 * 1024));
+    }
+
+    const expected = ['Engine', 'Installer', 'Presentation'].flatMap((suite) =>
+      packageFiles
+        .filter((file) => file.startsWith('Tests/' + suite + '/'))
+        .map((source) => ({
+          source,
+          object: join(debug, 'Launcher' + suite + 'Tests.build', basename(source) + '.o'),
+        })),
+    );
+    const testObjects = [];
+    let hashBudget = 64 * 1024 * 1024;
+    for (const { source, object } of expected.slice(0, 128)) {
+      if (performance.now() >= deadline) break;
+      const row = diagnosticFile(object, Math.min(8 * 1024 * 1024, hashBudget));
+      if (row.state === 'hashed') hashBudget -= row.size;
+      testObjects.push({ source, ...row });
+    }
+    record('swift-tests-diagnostic-build-files.json', {
+      files,
+      expectedTestObjects: expected.length,
+      testObjects,
+    });
+  });
+  // Leave part of the same deadline for reports written asynchronously after either build.
+  const timeout = Math.floor(deadline - performance.now()) - 2_000;
+  if (timeout > 0) {
+    attempt('serial build only', () =>
+      tools.xcrun(
+        'swift-tests-diagnostic-build',
+        'swift',
+        [
+          'build',
+          ...common,
+          '--scratch-path',
+          testScratch,
+          '--build-tests',
+          '--enable-code-coverage',
+          '--jobs',
+          '1',
+          '--very-verbose',
+        ],
+        { timeout, env: swiftEnv },
+      ),
+    );
+  }
+  // File mtime scopes collection to the window; it does not identify which build caused a report.
+  attempt('snapshot compiler reports', () =>
+    record(
+      'swift-tests-diagnostic-reports.json',
+      recentCompilerReports({ startedAt, finishedAt: Date.now(), deadline, write }),
+    ),
+  );
+  record('swift-tests-diagnostic-status.json', { errors, buildRan: timeout > 0 });
+}
+
 function main() {
   if (
     process.platform !== 'darwin' ||
@@ -211,7 +434,7 @@ function main() {
   mkdirSync(out, { mode: 0o700 });
   assert.ok(process.env.RUNNER_TEMP, 'Expected the hosted runner scratch directory.');
   const scratch = mkdtempSync(join(realpathSync(process.env.RUNNER_TEMP), 'graphgoblin-coverage-'));
-  const { run, record } = recorder(out, scratch);
+  const { run, record, write } = recorder(out, scratch);
   const tools = coverageTools(run, scratch);
   const node = realpathSync(process.execPath);
   tools.xcrun('swift-version', 'swift', ['--version']);
@@ -282,12 +505,33 @@ function main() {
     GG_MACOS_COVERAGE_LAUNCHER: ordinary,
     GG_MACOS_COVERAGE_PRESENTATION_PROFILES: presentationProfileDir,
   };
-  const tests = tools.xcrun(
-    'swift-tests',
-    'swift',
-    ['test', ...common, '--scratch-path', testScratch, '--enable-code-coverage', '--verbose'],
-    { timeout: 270_000, env: swiftEnv },
-  );
+  const startedAt = Date.now();
+  let tests;
+  try {
+    tests = tools.xcrun(
+      'swift-tests',
+      'swift',
+      ['test', ...common, '--scratch-path', testScratch, '--enable-code-coverage', '--verbose'],
+      { timeout: 270_000, env: swiftEnv },
+    );
+  } catch (error) {
+    try {
+      diagnoseSwiftTestFailure({
+        error,
+        startedAt,
+        testScratch,
+        packageFiles,
+        common,
+        swiftEnv,
+        tools,
+        record,
+        write,
+      });
+    } catch (diagnosticError) {
+      console.error('Swift build diagnostics could not be retained:', diagnosticError);
+    }
+    throw error;
+  }
   console.log(tests.stdout.toString());
   const debug = realpathSync(join(testScratch, 'debug'));
   const testName = 'GraphGoblinMacLauncherPackageTests';
