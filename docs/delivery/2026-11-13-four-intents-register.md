@@ -63,8 +63,12 @@ remaining Finder, alias, Dock, browser-close and replacement checks through comp
 The owner recovered its stalled `Inspecting Finder` call. The Mac agent then reported a successful
 warm Finder launch at 03:35:47 UTC on November 17, supported by the same correct gateway PID58208.
 Its next compound call, `Verifying alias and inspecting Dock`, stopped returning results at
-03:38:22 UTC. A second recovery request is pending because remote session control is unavailable.
-The alias, Dock and lifecycle sequence has no completed report; no further GUI pass is claimed.
+03:38:22 UTC. Remote session control was unavailable for a second recovery. The owner authorized
+a fresh direct Codex CLI session on the Mac. A read-only capability probe successfully called
+`cua.getState()` through the actual `mcp__cua_repl` tool. The fresh QA session launched at
+04:45:14 UTC and also completed `cua.getState()`, then computer use denied control of the Codex app
+for safety reasons. The old turn is still pending. The owner has a stop-only request so the fresh
+session can take over. The alias, Dock and lifecycle sequence has no completed report.
 Earlier failed attempts retain their original outcomes. See the
 [native evidence snapshot](../qa/2026-11-16-macos-launcher/README.md).
 
@@ -91,9 +95,9 @@ that omitted `import Testing` while using a caller-expanded Testing default macr
 added that one import at `e16a3877`. CI09 run `44012433527` compiled and linked the test runner
 in 22.50 seconds, then reached the unchanged 270-second command timeout without a completed test
 report. Its build-only diagnostic passed and all 28 test-source objects were present. Native API
-and public installer/gateway acceptance passed separately. GPT and actual Claude are diagnosing
-test execution; neither test completion nor new production coverage is established. Historical
-partial coverage is not a pass, and these implementation diagnostics reset no formal review slot.
+and public installer/gateway acceptance passed separately. CI09 produced neither test completion
+nor new production coverage. Historical partial coverage does not satisfy the gate, and these
+implementation diagnostics reset no formal review slot.
 CI10 run `44014916376` retained 726 complete event records and exposed five backend test issues.
 All live AppKit and four GUI child-process tests passed. The bound-port fixture did not establish
 TCP refusal on Darwin; repeated installed-engine waits then exhausted the 270-second deadline.
@@ -103,7 +107,17 @@ engine attempt, and close the drain response's connection. A local Node22 contro
 old keepalive behavior and the corrected bounded close; it is separate from native Swift proof.
 Actual Claude also bounded the GUI helper's fallback exit waits, a known harness defect that
 the passing GUI scenarios did not encounter. No shipping source, test population, assertions,
-coverage threshold or deadline changes. Complete native execution and coverage remain pending.
+coverage threshold or deadline changed.
+
+CI11 at `bdabca42` passed all 154 Swift tests in 6.265 seconds, 203 API tests with eight skips,
+and both native acceptance tests. The coverage gate stopped after `llvm-cov` exported valid
+zero-baseline JSON with exit 0 and four object-newer warnings on stderr. The raw production
+baseline has 23 mapped files and two declaration-only files, with zero hits across 3,627 lines
+and 2,056 regions. Measured production coverage percentages are still unavailable. The pending
+collector correction indexes only the unrelated sentinel's raw counters after the instrumented
+objects are built, preserving strict stderr checks and the approved thresholds.
+[CI11 run](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44017248649)
+
 The approved plan now uses the existing authenticated shutdown API. No visible start-shutdown
 control is added; current browser wait/force behavior during drain stays unchanged. No API action
 is represented as an owner UI action. Native coverage, required interactive observations and

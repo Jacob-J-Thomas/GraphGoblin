@@ -196,7 +196,7 @@ function sentinel(scratch, run, record, tools) {
       Object.entries(reports).map(([key, rows]) => [key, Object.fromEntries(rows)]),
     ),
   });
-  return leftProfile;
+  return left.profile;
 }
 
 // Diagnostics run on a disposable hosted runner, after the original streams and exit were recorded.
@@ -442,7 +442,7 @@ function main() {
   tools.xcrun('swift-version', 'swift', ['--version']);
   tools.xcrun('llvm-cov-version', 'llvm-cov', ['--version']);
   tools.xcrun('llvm-profdata-version', 'llvm-profdata', ['--version']);
-  const zeroProfile = sentinel(scratch, run, record, tools);
+  const zeroProfileInput = sentinel(scratch, run, record, tools);
 
   const describe = tools.xcrun('package-description', 'swift', [
     'package',
@@ -610,7 +610,8 @@ function main() {
   });
   const indexed = tools.merge('swift-coverage-profile', profiles);
   copyFileSync(indexed, join(out, 'swift-coverage.profdata'));
-  // The sentinel profile uses its own named module. No product function should have a matching counter.
+  // Index only the unrelated sentinel's counters after linking the objects. LLVM checks profile freshness.
+  const zeroProfile = tools.merge('swift-zero-profile', [zeroProfileInput]);
   const baseline = tools.load('swift-zero-baseline', zeroProfile, objects, pkg);
   const observed = tools.load('swift-coverage', indexed, objects, pkg);
   const report = checkCoverage({ sources, sourceDigests, baseline, observed });
