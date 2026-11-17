@@ -7,12 +7,15 @@ import {
   mkdirSync,
   readFileSync,
   readdirSync,
+  readlinkSync,
   rmdirSync,
+  symlinkSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { homedir, userInfo } from 'node:os';
 import { dirname, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const plistFile = 'Contents/Info.plist';
 const binaryFile = 'Contents/MacOS/GraphGoblin';
@@ -84,9 +87,11 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
   const id = randomUUID();
   const name = 'GraphGoblin QA ' + id + '.app';
   const foreignName = 'GraphGoblin QA foreign ' + id + '.app';
+  const freshName = 'GraphGoblin QA fresh ' + id + '.app';
   const apps = join(home, 'Applications');
   const application = join(apps, name);
   const foreign = join(apps, foreignName);
+  const fresh = join(apps, freshName);
   const receiptRoot = join(
     home,
     'Library',
@@ -127,19 +132,28 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
     expectClosed(capture(label, binary, args, extraEnv), code, stdout, stderr);
     outcomes.push({ label, exit: code, stdout, stderr });
   }
-  function install(label, checkout, installName, code, stdout, stderr, extraEnv) {
+  function install(
+    label,
+    checkout,
+    installName,
+    code,
+    stdout,
+    stderr,
+    extraEnv,
+    { releasePath = ordinary, nodePath = node, dataPath = data } = {},
+  ) {
     checked(
       label,
       installer,
       [
         checkout,
-        ordinary,
-        node,
+        releasePath,
+        nodePath,
         '--',
         '--app-name',
         installName,
         '--data-dir',
-        data,
+        dataPath,
         '--port',
         '56321',
         '--disable-ollama',
@@ -151,7 +165,8 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
     );
   }
   const initialStages = stages();
-  assert.ok(!existsSync(application) && !existsSync(foreign) && !existsSync(data));
+  assert.ok(!existsSync(application) && !existsSync(foreign) && !existsSync(fresh));
+  assert.ok(!existsSync(data));
   const envelope = (code) => JSON.stringify({ version: 1, code }) + '\n';
   checked('launcher-usage', launcher, ['--invalid-coverage-option'], 64, envelope('usage'));
   for (const [label, flag] of [
@@ -186,11 +201,18 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
   install('installer-remote-db-refusal', repo, name, 1, '', keyRefusal, {
     GG_DB_URL: 'https://example.invalid/database',
   });
+  const databaseURL = (path) => pathToFileURL(path).href.replace('file://', 'file://localhost');
+  install('installer-wrong-local-db-refusal', repo, name, 1, '', keyRefusal, {
+    GG_DB_URL: databaseURL(join(data, 'unrelated.db')),
+  });
   assert.ok(!existsSync(application) && !existsSync(data));
   assert.deepEqual(stages(), initialStages);
 
   const installedText = 'GraphGoblin was installed in Applications.\n';
-  install('installer-first', repo, name, 0, installedText, '', { LC_ALL: 'ggcanary17544768eaef' });
+  install('installer-first', repo, name, 0, installedText, '', {
+    LC_ALL: 'ggcanary17544768eaef',
+    GG_DB_URL: databaseURL(join(data, 'graphgoblin.db')),
+  });
   const expectedConfig = {
     version: 1,
     checkout: repo,
@@ -243,6 +265,141 @@ export function runEntryFixtures({ repo, scratch, launcher, installer, ordinary,
   assert.deepEqual(afterFailure.installed, replaced.installed);
   assert.deepEqual(readFileSync(replaced.receipt), receiptBefore);
   assert.deepEqual(readdirSync(receiptRoot).sort(), receiptsBefore);
+
+  function expectFreshAbsent() {
+    assert.equal(lstatSync(fresh, { throwIfNoEntry: false }), undefined);
+    assert.equal(lstatSync(data, { throwIfNoEntry: false }), undefined);
+    assert.deepEqual(readdirSync(receiptRoot).sort(), receiptsBefore);
+    assert.deepEqual(stages(), initialStages);
+  }
+
+  install(
+    'installer-fresh-staged-assets-refusal',
+    badCheckout,
+    freshName,
+    1,
+    '',
+    'Build both apps/web/dist and apps/web/dist-goblin before installing.\n',
+  );
+  expectFreshAbsent();
+
+  const notExecutable = join(scratch, 'non-executable-installer-input');
+  const original = Buffer.from('isolated file must stay unchanged\n');
+  writeFileSync(notExecutable, original, { flag: 'wx', mode: 0o600 });
+  const fileBefore = identity(notExecutable, false);
+  const runtimeRefusal =
+    'Choose a native Apple Silicon Node 22.22.2 or later within major 22 with --node.\n';
+  install(
+    'installer-node-file-refusal',
+    repo,
+    freshName,
+    1,
+    '',
+    runtimeRefusal,
+    {},
+    {
+      nodePath: notExecutable,
+    },
+  );
+  expectFreshAbsent();
+  install(
+    'installer-store-file-refusal',
+    repo,
+    freshName,
+    1,
+    '',
+    'Check the saved checkout and built apps/api/dist entries, then install again.\n',
+    {},
+    { dataPath: notExecutable },
+  );
+  expectFreshAbsent();
+  assert.deepEqual(identity(notExecutable, false), fileBefore);
+  assert.deepEqual(readFileSync(notExecutable), original);
+
+  // Unlike the non-executable input, this executable reaches the staged runtime probe.
+  install(
+    'installer-fresh-staged-runtime-refusal',
+    repo,
+    freshName,
+    1,
+    '',
+    runtimeRefusal,
+    {},
+    {
+      nodePath: '/bin/sh',
+    },
+  );
+  expectFreshAbsent();
+  const goblinShell = 'apps/web/dist-goblin/index.html';
+  mkdirSync(dirname(join(badCheckout, goblinShell)), { recursive: true });
+  copyFileSync(join(repo, goblinShell), join(badCheckout, goblinShell));
+  writeFileSync(
+    join(badCheckout, 'apps/api/dist/instance-identity.js'),
+    "process.stdout.write('invalid fingerprint\\n');\n",
+  );
+  install(
+    'installer-fresh-staged-helper-refusal',
+    badCheckout,
+    freshName,
+    1,
+    '',
+    'The built API identity helper could not be verified. Rebuild the checkout and check the local runtime.\n',
+  );
+  expectFreshAbsent();
+
+  const missing = join(scratch, 'absent-release-input');
+  const alias = join(scratch, 'untrusted-release-alias');
+  const short = join(scratch, 'short-release-input');
+  const wrongMachO = join(scratch, 'wrong-release-file-type');
+  const changedHeader = Buffer.alloc(32);
+  changedHeader.set([0xcf, 0xfa, 0xed, 0xfe, 0x0c, 0, 0, 0x01]);
+  changedHeader[12] = 0x06; // MH_DYLIB, not the required MH_EXECUTE.
+  symlinkSync(ordinary, alias);
+  const aliasBefore = lstatSync(alias, { bigint: true });
+  writeFileSync(short, 'too short', { flag: 'wx', mode: 0o700 });
+  writeFileSync(wrongMachO, changedHeader, { flag: 'wx', mode: 0o700 });
+  const ordinaryDigest = digest(ordinary);
+  const shortBefore = identity(short, false);
+  const wrongMachOBefore = identity(wrongMachO, false);
+  for (const [label, releasePath] of [
+    ['missing', missing],
+    ['alias', alias],
+    ['short', short],
+    ['wrong-macho-type', wrongMachO],
+  ]) {
+    install(
+      'installer-release-' + label + '-refusal',
+      repo,
+      freshName,
+      1,
+      '',
+      'The candidate bundle could not be staged and verified.\n',
+      {},
+      { releasePath },
+    );
+    // Assembly failures leave the freshly created stage empty. Preserve anything else.
+    const additions = stages().filter((entry) => !initialStages.includes(entry));
+    assert.equal(additions.length, 1);
+    assert.match(additions[0], /^\.graphgoblin-launcher-stage-[a-f0-9]{32}$/u);
+    const stage = join(apps, additions[0]);
+    const witness = identity(stage, true);
+    assert.equal(lstatSync(stage).mode & 0o077, 0);
+    assert.deepEqual(readdirSync(stage), []);
+    assert.deepEqual(identity(stage, true), witness);
+    rmdirSync(stage);
+    expectFreshAbsent();
+  }
+  assert.equal(lstatSync(missing, { throwIfNoEntry: false }), undefined);
+  const aliasAfter = lstatSync(alias, { bigint: true });
+  assert.ok(aliasAfter.isSymbolicLink());
+  assert.equal(aliasAfter.dev, aliasBefore.dev);
+  assert.equal(aliasAfter.ino, aliasBefore.ino);
+  assert.equal(readlinkSync(alias), ordinary);
+  assert.equal(digest(ordinary), ordinaryDigest);
+  assert.deepEqual(identity(short, false), shortBefore);
+  assert.equal(readFileSync(short, 'utf8'), 'too short');
+  assert.deepEqual(identity(wrongMachO, false), wrongMachOBefore);
+  assert.deepEqual(readFileSync(wrongMachO), changedHeader);
 
   const foreignBytes = 'isolated foreign destination\n';
   writeFileSync(foreign, foreignBytes, { flag: 'wx', mode: 0o600 });

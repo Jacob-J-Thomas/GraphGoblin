@@ -67,8 +67,13 @@ Its next compound call, `Verifying alias and inspecting Dock`, stopped returning
 a fresh direct Codex CLI session on the Mac. A read-only capability probe successfully called
 `cua.getState()` through the actual `mcp__cua_repl` tool. The fresh QA session launched at
 04:45:14 UTC and also completed `cua.getState()`, then computer use denied control of the Codex app
-for safety reasons. The old turn is still pending. The owner has a stop-only request so the fresh
-session can take over. The alias, Dock and lifecycle sequence has no completed report.
+for safety reasons. The owner subsequently confirmed the old turn was stopped. The fresh session
+resumed at 04:51:32 UTC and reverified the native fixture through automatic approval review.
+Finder access was denied; Chrome initially worked, then native-pipe startup failed during the
+dedicated-window check. The session completed scoped cancellation, ordinary drain and managed
+replacement file checks, leaving the fixture stopped. Actual Claude independently assessed this
+partial evidence; root retained the distinction between driver assertions, direct observations
+and pending persistence checks. Alias, Dock, browser-close and restarted history remain unverified.
 Earlier failed attempts retain their original outcomes. See the
 [native evidence snapshot](../qa/2026-11-16-macos-launcher/README.md).
 
@@ -117,6 +122,20 @@ and 2,056 regions. Measured production coverage percentages are still unavailabl
 collector correction indexes only the unrelated sentinel's raw counters after the instrumented
 objects are built, preserving strict stderr checks and the approved thresholds.
 [CI11 run](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44017248649)
+
+CI12 at `53f41045` validated that correction: both zero and observed LLVM exports exited 0
+with empty stderr, and all 154 Swift tests passed. The complete source set measured 3,439/3,627
+lines (94.82%) and 1,775/2,056 regions (86.33%). The approved region threshold correctly failed.
+All other CI12 jobs passed, including the complete shared gates and Browser suite. A test-only
+batch now covers descriptor errors, receipt and path refusals, interrupted installer recovery,
+rollback and exact warm-peer failure behavior. Its 57-file Swift package compiled and linked on
+the owner Mac in an isolated build-only check after correcting two test imports. The local
+Command Line Tools require an explicit search path to their installed Testing framework. The
+focused local test attempt then failed to load a transitive Testing runtime library before any
+test executed; no repository build settings changed. Test execution and measured coverage remain
+subject to the next hosted run. Thresholds, source denominator, assertions and deadlines are unchanged, and no
+branch counters are available.
+[CI12 run](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44019677654)
 
 The approved plan now uses the existing authenticated shutdown API. No visible start-shutdown
 control is added; current browser wait/force behavior during drain stays unchanged. No API action

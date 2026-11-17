@@ -5,6 +5,35 @@ import Foundation
 import Testing
 
 @Suite struct ChildTests {
+    @Test func nulInArgumentsOrEnvironmentIsRefusedBeforeSpawning() throws {
+        try normalizeChildStatusDisposition()
+        let scratch = try TemporaryEngineDirectory()
+        defer { scratch.remove() }
+        let cwd = scratch.root.path
+        let program = #"printf '%s|%s\n' "$1" "$CANARY" > spawned"#
+        let arguments = ["-c", program, "fixture"]
+        for (argument, environment) in [("visible\0hidden", "intact"), ("visible", "intact\0hidden")] {
+            do {
+                _ = try captureReadOnly(
+                    executable: "/bin/sh", arguments: arguments + [argument],
+                    cwd: cwd, environment: ["CANARY": environment], time: AttemptTime(seconds: 3)
+                )
+                Issue.record("The helper accepted an embedded NUL")
+            } catch ChildSpawnError.noChild {
+                #expect(try scratch.root.named("spawned") == nil)
+            }
+        }
+        let valid = try captureReadOnly(
+            executable: "/bin/sh", arguments: arguments + ["visible"],
+            cwd: cwd, environment: ["CANARY": "intact"], time: AttemptTime(seconds: 3)
+        )
+        #expect(valid.exitCode == 0)
+        #expect(valid.stdout.isEmpty && valid.stderr.isEmpty)
+        #expect(try readBounded(scratch.root.openRegular("spawned"), maximum: 64)
+                == Data("visible|intact\n".utf8))
+        #expect(try scratch.root.names() == ["spawned"])
+    }
+
     @Test func twoStreamsAndVerifiedExit() throws {
         try normalizeChildStatusDisposition()
         let output = try captureReadOnly(

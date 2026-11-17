@@ -215,6 +215,34 @@ struct InstalledEngineTests {
         try fixture.clean()
     }
 
+    @Test func warmPeerNeedsBothExactShellsEvenAfterIdentityRecovers() async throws {
+        let hosted = try HostedEngineFixture()
+        let peer = try ScriptedLoopbackPeer([
+            .bytes(LoopbackTests.health(phase: "not-a-phase")),
+            .bytes(LoopbackTests.health()),
+            .bytes(LoopbackTests.shell(LoopbackTests.app)),
+            .bytes(LoopbackTests.shell(Data("<html>unrelated</html>".utf8))),
+            .bytes(LoopbackTests.health())
+        ])
+        let fixture = try BoundEngineInstallation(
+            hosted: hosted, port: peer.port, main: "throw new Error('must not run')"
+        )
+        let progress = EngineProgress()
+        let result = HeadlessResult(await fixture.engine().run { progress.append($0) })
+        try #require(result.bytes == Data(#"{"version":1,"code":"assets-unavailable"}"#.utf8) + Data([10]))
+        try #require(result.exitCode == 12)
+        try #require(progress.values == ["checking"])
+        let requests = try peer.requests()
+        #expect(requests.compactMap { $0.split(separator: " ").dropFirst().first.map { String($0) } }
+                == ["/healthz", "/healthz", "/app/", "/goblin/", "/healthz"])
+        try #require(try fixture.root.named("store") == nil)
+        let log = try fixture.logDirectory(create: false)
+        try #require(try log.root.names() == ["launcher.log"])
+        #expect(try readBounded(log.root.openRegular("launcher.log"), maximum: 4_096)
+                == Data("stage=checking outcome=assets-unavailable\n".utf8))
+        try fixture.clean(logRoots: [log.root])
+    }
+
     @Test func coldCommitBindsDirectChildAndWarmAttemptKeepsItsPID() async throws {
         let hosted = try HostedEngineFixture()
         var reservation = try FixturePortReservation()

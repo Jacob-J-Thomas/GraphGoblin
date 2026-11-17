@@ -44,6 +44,48 @@ private struct DiagnosticFixture {
 }
 
 @Suite struct DiagnosticsTests {
+    @Test func standardAndAlternateDiagnosticsKeepDistinctPrivatePaths() throws {
+        let scratch = try TemporaryEngineDirectory()
+        defer { scratch.remove() }
+        let id = "0123456789abcd0123456789abcd0123"
+        let config = try LauncherConfiguration(
+            checkout: scratch.root.path, node: "/bin/sh", dataDirectory: scratch.root.path + "/store",
+            port: 45123, requireAPIKey: false, ollamaEnabled: false, codexBinary: nil, claudeBinary: nil
+        )
+        let witness = BundleWitness(bundle: scratch.root.identity, executable: "", plist: "", configuration: "")
+        func openLog(_ name: String) throws -> LogDirectory {
+            let contents = BundleContents(
+                id: id, bundleID: AppName.bundleID(name: name, id: id), witness: witness, configuration: config
+            )
+            return try LogDirectory.open(
+                for: VerifiedInstallation(home: scratch.root.path, name: name, contents: contents), create: true
+            )
+        }
+        #expect(AppName.bundleID(name: AppName.standard, id: id) == "com.graphgoblin.launcher")
+        let standard = try openLog(AppName.standard)
+        let alternate = try openLog("GraphGoblin QA fixture.app")
+        #expect(standard.root.path == scratch.root.path + "/Library/Logs/GraphGoblin/Launcher")
+        #expect(alternate.root.path == scratch.root.path + "/Library/Logs/GraphGoblin/LauncherInstances/" + id)
+        #expect(standard.root.identity != alternate.root.identity)
+        try #require(fchmod(standard.root.fd, 0o500) == 0)
+        defer { _ = fchmod(standard.root.fd, 0o700) }
+        do {
+            _ = try standard.gatewayAdmission()
+            Issue.record("Gateway admission authorized a private directory without write access")
+        } catch FileRefusal.system(let code) {
+            #expect(code == EACCES)
+        }
+        _ = try alternate.gatewayAdmission()
+        #expect(try standard.root.names().isEmpty)
+        #expect(try alternate.root.names().isEmpty)
+    }
+
+    @Test func malformedDiagnosticIdentityCannotProduceAnAdmissionRecord() throws {
+        let payload = Data(#"{"device":"18446744073709551616","inode":"7"}"#.utf8)
+        let identity = try JSONDecoder().decode(FileIdentity.self, from: payload)
+        #expect(throws: FileRefusal.self) { try admissionDocument(path: "/private/logs", identity: identity) }
+    }
+
     @Test func admitsMissingAndPrivateGatewaySlotsWithoutMutatingThem() throws {
         let fixture = try DiagnosticFixture()
         defer { fixture.scratch.remove() }

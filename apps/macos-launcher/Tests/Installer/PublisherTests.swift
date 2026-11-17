@@ -1,6 +1,6 @@
 import Darwin
 import Foundation
-import LauncherEngine
+@testable import LauncherEngine
 @testable import LauncherInstaller
 import Testing
 
@@ -71,6 +71,9 @@ import Testing
             let candidate = try fixture.bundle(in: fixture.stage, marker: "candidate")
             let result = fixture.withPublisher(previous: nil, candidate: candidate).publish { false }
             #expect(result == .targetAbsentVerified)
+            let message = InstallerResult.publicationFailed(result)
+            #expect(message.exitCode == 1)
+            #expect(message.output == "Publication failed. The installation destination was verified absent.")
             #expect(try fixture.witness(fixture.applications) == nil)
             #expect(try fixture.witness(fixture.stage) == candidate)
         }
@@ -93,7 +96,11 @@ import Testing
             let read = try InstallationReceipt.read(from: fixture.receipts, id: fixture.id)
             #expect(read.authorizesInstalled(prior))
             #expect(read.authorizesInstalled(candidate))
-            #expect(publisher.publish { false } == .previousInstallVerified)
+            let rolledBack = publisher.publish { false }
+            #expect(rolledBack == .previousInstallVerified)
+            let message = InstallerResult.publicationFailed(rolledBack)
+            #expect(message.exitCode == 1)
+            #expect(message.output == "Publication failed. The previous installation was verified.")
             #expect(try fixture.witness(fixture.applications) == prior)
             #expect(try fixture.witness(fixture.stage) == candidate)
             #expect(publisher.publish() == .published)
@@ -109,7 +116,11 @@ import Testing
             let foreignBytes = Data("foreign".utf8)
             try writeAll(foreign, foreignBytes)
             let before = FileIdentity(try foreign.metadata())
-            #expect(fixture.withPublisher(previous: nil, candidate: candidate).publish() == .recoveryRequired)
+            let result = fixture.withPublisher(previous: nil, candidate: candidate).publish()
+            #expect(result == .recoveryRequired)
+            let message = InstallerResult.publicationFailed(result)
+            #expect(message.exitCode == 1)
+            #expect(message.output == "Publication could not be verified. Installer recovery is required.")
             let stillForeign = try fixture.applications.openRegular(fixture.name)
             #expect(FileIdentity(try stillForeign.metadata()) == before)
             #expect(try readBounded(stillForeign, maximum: 64) == foreignBytes)
@@ -147,6 +158,112 @@ import Testing
             #expect(try fixture.receipts.names().isEmpty)
             #expect(try fixture.witness(fixture.applications) == prior)
             #expect(try fixture.witness(fixture.stage) == candidate)
+        }
+    }
+
+    @Test func alternateReceiptSchemasCannotAuthorizeAGenuineBundle() throws {
+        try fixture { fixture in
+            let installed = try fixture.bundle(in: fixture.applications, marker: "installed")
+            let staged = try fixture.bundle(in: fixture.stage, marker: "staged")
+            let stageName = URL(fileURLWithPath: fixture.stage.path).lastPathComponent
+            let stable = InstallationReceipt(
+                id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
+                installed: installed, staged: staged, stageName: stageName
+            )
+            let bytes = try stable.encode()
+            let fileName = fixture.id + ".json"
+            try writeAll(fixture.receipts.createFile(fileName), bytes)
+            let verified = try InstallationReceipt.read(from: fixture.receipts, id: fixture.id)
+            #expect(verified.authorizesInstalled(installed) && verified.authorizesInstalled(staged))
+            #expect(throws: FileRefusal.self) { try InstallationReceipt.read(from: fixture.receipts, id: "../escape") }
+            let malformedWitness = BundleWitness(
+                bundle: installed.bundle, executable: "invalid-digest",
+                plist: installed.plist, configuration: installed.configuration
+            )
+            let malformed: [InstallationReceipt] = [
+                InstallationReceipt(
+                    id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
+                    installed: malformedWitness
+                ),
+                InstallationReceipt(
+                    id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
+                    installed: installed, staged: installed, stageName: stageName
+                ),
+                InstallationReceipt(
+                    id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
+                    installed: installed, staged: staged
+                ),
+                InstallationReceipt(
+                    id: fixture.id, name: fixture.name, applications: fixture.applications.identity,
+                    installed: installed, staged: staged, stageName: InstallationFiles.stagePrefix + "bad"
+                )
+            ]
+            let object = try #require(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
+            var wrongStage = object
+            wrongStage["stageName"] = 1
+            var wrongIdentity = object
+            wrongIdentity["applications"] = ["inode": "1"]
+            var wrongWitness = object
+            wrongWitness["installed"] = ["bundle": ["device": "1", "inode": "2"]]
+            let malformedObjects = try [wrongStage, wrongIdentity, wrongWitness].map {
+                try JSONSerialization.data(withJSONObject: $0)
+            }
+            let records = try malformed.map { try $0.encode() } + malformedObjects
+            for (index, altered) in records.enumerated() {
+                let alternate = try fixture.root.createDirectory("Receipt\(index)")
+                let file = try alternate.createFile(fileName)
+                try writeAll(file, altered)
+                let identity = FileIdentity(try file.metadata())
+                #expect(throws: FileRefusal.self) { try InstallationReceipt.read(from: alternate, id: fixture.id) }
+                #expect(try alternate.named(fileName).map(FileIdentity.init) == identity)
+                #expect(try readBounded(alternate.openRegular(fileName), maximum: 16_384) == altered)
+            }
+            #expect(try ReceiptStore(directory: fixture.receipts).bytes(fixture.id) == bytes)
+            #expect(try fixture.witness(fixture.applications) == installed)
+            #expect(try fixture.witness(fixture.stage) == staged)
+        }
+    }
+
+    @Test func bundleInspectionRefusesChangedLayoutAndMissingExecutionAuthority() throws {
+        try fixture { fixture in
+            let baseline = try fixture.bundle(in: fixture.applications, marker: "installed")
+            let bundle = try fixture.applications.child(fixture.name)
+            let contents = try bundle.child("Contents")
+            let binaryDirectory = try contents.child("MacOS")
+            let binary = try binaryDirectory.openRegular("GraphGoblin")
+            let binaryIdentity = FileIdentity(try binary.metadata())
+            for parent in [contents, binaryDirectory] {
+                let extra = try parent.createFile("foreign")
+                let bytes = Data("unrelated".utf8)
+                try writeAll(extra, bytes)
+                #expect(throws: FileRefusal.self) { try InstallationFiles.inspect(bundle) }
+                #expect(try parent.named("foreign").map(FileIdentity.init) == FileIdentity(try extra.metadata()))
+                #expect(try readBounded(parent.openRegular("foreign"), maximum: 32) == bytes)
+                try #require(unlinkat(parent.fd, "foreign", 0) == 0)
+                #expect(try InstallationFiles.inspect(bundle).witness == baseline)
+            }
+            try #require(fchmod(binary.fd, 0o600) == 0)
+            #expect(throws: FileRefusal.self) { try InstallationFiles.inspect(bundle) }
+            #expect(try binaryDirectory.named("GraphGoblin").map(FileIdentity.init) == binaryIdentity)
+            #expect(try readBounded(binaryDirectory.openRegular("GraphGoblin"), maximum: 32) == Data("installed".utf8))
+            try #require(fchmod(binary.fd, 0o700) == 0)
+            #expect(try InstallationFiles.inspect(bundle).witness == baseline)
+
+            let witness = try contents.openRegular("Info.plist")
+            let original = try readBounded(witness, maximum: 16_384)
+            let plist = try #require(
+                PropertyListSerialization.propertyList(from: original, options: [], format: nil) as? [String: Any]
+            )
+            var modified = plist
+            modified.removeValue(forKey: "CFBundleIdentifier")
+            let incomplete = try PropertyListSerialization.data(fromPropertyList: modified, format: .xml, options: 0)
+            let writable = try contents.openRegular("Info.plist", write: true)
+            try #require(ftruncate(writable.fd, 0) == 0)
+            try writeAll(writable, incomplete)
+            #expect(throws: FileRefusal.self) { try InstallationFiles.inspect(bundle) }
+            #expect(try readBounded(contents.openRegular("Info.plist"), maximum: 16_384) == incomplete)
+            try contents.match("Info.plist", witness, privateMode: true)
+            #expect(try binaryDirectory.named("GraphGoblin").map(FileIdentity.init) == binaryIdentity)
         }
     }
 

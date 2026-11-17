@@ -1,12 +1,12 @@
 # ADR-0083 - Native Swift coverage for the macOS launcher
 
-Date: 2026-11-16. Status: Accepted policy; collector/check wired, first hosted verification pending.
+Date: 2026-11-16. Status: Accepted policy; complete hosted measurement and threshold enforcement verified.
 Approved by the owner in the [#456 coverage and shutdown decision](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6935644999).
 
 ## Context
 
 The macOS launcher is a Swift package with six production targets. Its Xcode test run exports
-LLVM coverage JSON, but the current CI report does not map every production source file. CI #03
+LLVM coverage JSON, but the initial CI report did not map every production source file. CI #03
 maps 21 of the 25 production files and reports 2,177/3,588 lines (60.67%) and 1,015/2,040
 regions (49.75%). The export has no branch denominator. These are partial measurements, not a
 pass or failure against a complete 90% denominator. The [CI #03 packet](../qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-03/README.md)
@@ -38,15 +38,17 @@ the residual and actual percentages; do not hide production code with exclusions
 
 The owner approved this policy. The `pnpm test:macos-coverage` package command is wired to run
 the Swift native tests, collect and check coverage, and the macOS CI job invokes it before native
-installer and gateway acceptance. The first hosted run with this wiring is pending. CI #03
+installer and gateway acceptance. CI12 at `53f41045` passed 154 native tests and measured the
+complete 25-source roster: 3,439/3,627 lines (94.82%) and 1,775/2,056 regions (86.33%). The region
+threshold correctly failed. A passing native gate remains required. CI #03
 predates the step; its existing green jobs and supplementary native coverage artifact do not
 establish that this decision's thresholds passed or that the complete mapping is covered by the
 new check.
 
-The CI #03 21-of-25 mapping is a known evidence gap. The missing four sources remain part of
-the required roster until complete object evidence proves any source has no executable regions.
-The current mapped 60.67% line and 49.75% region results must not be reported as a complete
-package score or as meeting the 90% policy.
+The historical CI #03 21-of-25 mapping remains partial evidence. CI12 includes 23 executable
+source mappings and two declaration-only sources whose zero counters were established from
+the complete object mapping. Its measured result does not waive either 90% threshold. The
+[QA record](../qa/2026-11-16-macos-launcher/README.md) retains execution history and later results.
 
 ## Consequences
 

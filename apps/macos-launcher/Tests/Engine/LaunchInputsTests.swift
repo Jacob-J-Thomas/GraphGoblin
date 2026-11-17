@@ -134,6 +134,78 @@ struct EngineCheckout {
         }
     }
 
+    @Test func changedPathAliasesCannotChangeSavedLaunchInputs() throws {
+        try fixture { scratch, checkout, config in
+            let aliases = try scratch.root.createDirectory("aliases")
+            try #require(symlinkat(checkout.root.path, aliases.fd, "checkout") == 0)
+            try #require(symlinkat(config.node, aliases.fd, "node") == 0)
+            let store = try scratch.root.createDirectory("store")
+            try #require(symlinkat(store.path, aliases.fd, "store") == 0)
+            let raw = try #require(JSONSerialization.jsonObject(with: config.encode()) as? [String: Any])
+
+            for (field, alias, refusal) in [
+                ("checkout", "checkout", "installation-invalid"),
+                ("dataDirectory", "store", "installation-invalid"),
+                ("node", "node", "runtime-unavailable"),
+                ("codexBinary", "node", "installation-invalid")
+            ] {
+                var record = raw
+                record[field] = aliases.path + "/" + alias
+                let saved = try LauncherConfiguration(data: JSONSerialization.data(withJSONObject: record))
+                expectLaunchRefusal(refusal) { _ = try inputs(scratch, saved) }
+            }
+            var positive = raw
+            positive["ollamaEnabled"] = true
+            let saved = try LauncherConfiguration(data: JSONSerialization.data(withJSONObject: positive))
+            let verified = try inputs(scratch, saved)
+            #expect(verified.environment["GG_OLLAMA_ENABLED"] == "true")
+            #expect(verified.config.dataDirectory == config.dataDirectory)
+            #expect(try store.names().isEmpty)
+            #expect(try scratch.root.named(URL(fileURLWithPath: config.dataDirectory).lastPathComponent) == nil)
+            #expect(try aliases.names() == ["checkout", "node", "store"])
+        }
+    }
+
+    @Test func savedConfigurationRejectsRelativeInputsAndZeroPort() throws {
+        try fixture { scratch, checkout, config in
+            let original = try config.encode()
+            var object = try #require(JSONSerialization.jsonObject(with: original) as? [String: Any])
+            object["dataDirectory"] = "relative/store"
+            let conflicting = try JSONSerialization.data(withJSONObject: object)
+            #expect(throws: FileRefusal.self) { try LauncherConfiguration(data: conflicting) }
+            #expect(throws: FileRefusal.self) { try canonicalProspectiveDirectory("relative/store") }
+            #expect(throws: FileRefusal.self) {
+                try LauncherConfiguration(
+                    checkout: checkout.root.path, node: config.node, dataDirectory: config.dataDirectory,
+                    port: 0, requireAPIKey: false, ollamaEnabled: false, codexBinary: nil, claudeBinary: nil
+                )
+            }
+            object["dataDirectory"] = "/"
+            let root = try LauncherConfiguration(data: JSONSerialization.data(withJSONObject: object))
+            #expect(root.database == "/graphgoblin.db")
+            #expect(root.databaseURI == "file:///graphgoblin.db")
+            #expect(try scratch.root.named(URL(fileURLWithPath: config.dataDirectory).lastPathComponent) == nil)
+        }
+    }
+
+    @Test func existingRegularFileCannotBecomeAStoreAncestor() throws {
+        try fixture { scratch, _, config in
+            let inputs = try inputs(scratch, config)
+            let storeName = URL(fileURLWithPath: config.dataDirectory).lastPathComponent
+            let file = try scratch.root.createFile(storeName)
+            let bytes = Data("existing regular file".utf8)
+            try writeAll(file, bytes)
+            let witness = FileIdentity(try file.metadata())
+
+            expectLaunchRefusal("key-source-unavailable") { try inputs.requireLocalKey() }
+            #expect(throws: FileRefusal.self) {
+                try canonicalProspectiveDirectory(config.dataDirectory + "/nested/store")
+            }
+            #expect(try scratch.root.named(storeName).map(FileIdentity.init) == witness)
+            #expect(try readBounded(scratch.root.openRegular(storeName), maximum: 64) == bytes)
+        }
+    }
+
     @Test func absentEmptyAndKeyedStoresAreReadOnlyWhileKeylessContentIsRefused() throws {
         try fixture { scratch, _, config in
             let inputs = try inputs(scratch, config)

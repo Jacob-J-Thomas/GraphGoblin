@@ -8,15 +8,18 @@ bundle, disposable stores and non-owner ports. It covers malformed inherited loc
 public installation and concurrent cold launch. Native test output and failure evidence are
 retained for seven days. Swift coverage follows the separate accepted policy in ADR-0083. The
 `pnpm test:macos-coverage` collector/check is wired as a 10-minute step in the macOS CI job,
-before native installer and gateway acceptance. Its first post-wiring hosted verification is
-pending. The existing TypeScript/JavaScript V8 thresholds remain unchanged.
+before native installer and gateway acceptance. Hosted execution verifies the complete source
+inventory and enforces both native thresholds. The existing TypeScript/JavaScript V8 thresholds
+remain unchanged.
 
 The presentation tests use an injected clock, engine, opener and surface. Five offscreen
 window tests require an available Quartz session; report their actual skips separately.
 They do not establish Finder/Dock routing, real keyboard focus, VoiceOver or default-browser
 activation. These remain native acceptance observations, with post-merge owner acceptance
-tracked on #456 and #326. A Command Line Tools installation without the `Testing` module can
-compile production Swift but cannot run this suite; that failure is not a test pass.
+tracked on #456 and #326. A Command Line Tools installation may require explicit compiler and
+linker search paths to its installed `Testing` framework, and runtime dependencies may still
+prevent test execution. A missing module, runtime-load failure or failed build is not a test
+pass; a build-only check does not establish test execution.
 
 `pnpm test:windows-launcher` runs on the **Windows launcher** CI job after the normal build. It
 compiles the shipped x64 C# source with the Windows .NET Framework compiler and drives real built
@@ -67,7 +70,7 @@ The separate-process recovery check runs with `pnpm build` followed by `pnpm tes
 - The shared denominator includes `src/**/*.ts` and `src/**/*.tsx`, including `src/testing` helpers. It excludes tests, type declarations, `src/**/__fixtures__/**` and `src/**/generated/**`. The generated OpenAPI declarations are excluded; handwritten API-client code is measured. SQL migrations are outside the TypeScript include and have migration/startup acceptance checks. No maintained source is excluded to raise its score.
 - Coverage uses Vitest's V8 provider. Each package writes its own text summary, `coverage-summary.json` and LCOV; the root Turbo gate runs these package gates. There is no aggregate repository percentage or merged cross-package report. CI uploads the package summaries, including tooling's.
 
-## Native Swift coverage policy (#456, accepted; hosted verification pending)
+## Native Swift coverage policy (#456, accepted)
 
 The owner approved at least 90% line coverage and 90% region coverage for the macOS launcher's
 complete production source, plus explicit behavior tests of branch outcomes. Swift's current LLVM
@@ -87,9 +90,11 @@ CI #03 predates the collector/check step and maps only 21 of the 25 production f
 2,177/3,588 lines (60.67%) and 1,015/2,040 regions (49.75%), with no branch denominator. The
 declaration and entry mapping gap makes these partial measurements; they do not establish a
 passing 90% result. The `pnpm test:macos-coverage` package command is now wired into the macOS
-CI job before `pnpm test:macos-launcher`; the first post-wiring hosted run remains pending, so
-there is not yet CI evidence that the complete denominator or thresholds pass. The native
-evidence upload retains `.tmp/macos-launcher-*` and Swift `codecov` output for seven days.
+CI job before `pnpm test:macos-launcher`. CI12 at `53f41045` accounted for all 25 sources and
+passed 154 Swift tests, then correctly failed the region threshold: 3,439/3,627 lines (94.82%)
+and 1,775/2,056 regions (86.33%). This establishes complete measurement, not a passing native
+gate. See the [current QA record](qa/2026-11-16-macos-launcher/README.md) for later results.
+The native evidence upload retains `.tmp/macos-launcher-*` and Swift `codecov` output for seven days.
 
 ## Maintained scripts and executable evidence (#264)
 
