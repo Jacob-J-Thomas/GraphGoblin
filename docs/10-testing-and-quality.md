@@ -286,9 +286,9 @@ Set `GG_TEST_PORT_START` and `GG_TEST_PORT_COUNT` to a free range large enough f
 the fixtures active at the same time. The default is 5600 to 5699, with 5760 to 5769
 for the dedicated shutdown process and startup suites. An invalid or exhausted
 range fails with the range in the error. TCP bind probes check IPv4 loopback and,
-on Windows, also check IPv4 and available dual-stack wildcard bindings because
-Windows can allow these addresses to bind the same port. Probe listeners close
-before startup. Reservations coordinate fixtures drawing from that range
+on Windows and macOS, also check IPv4 and available dual-stack wildcard bindings
+because overlapping addresses can bind the same port on those platforms.
+Probe listeners close before startup. Reservations coordinate fixtures drawing from that range
 in the same Vitest run. Each port records successive claims in separate
 directories that stay until the run closes. An unfinished claim stays reserved
 for that run, and the Vitest parent removes the reservation directory when

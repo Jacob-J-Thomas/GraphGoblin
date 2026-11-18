@@ -69,8 +69,9 @@ function hasConflictingBind(port: number, host: string): Promise<boolean> {
 }
 
 async function canBind(port: number): Promise<boolean> {
-  // Windows permits certain overlapping wildcard and loopback bind pairs. Probe each separately.
-  const hosts = process.platform === 'win32' ? ['127.0.0.1', '0.0.0.0', '::'] : ['127.0.0.1'];
+  // Windows and macOS can allow overlapping wildcard and loopback binds. Probe each separately.
+  const checkWildcards = process.platform === 'win32' || process.platform === 'darwin';
+  const hosts = checkWildcards ? ['127.0.0.1', '0.0.0.0', '::'] : ['127.0.0.1'];
   for (const host of hosts) {
     if (await hasConflictingBind(port, host)) return false;
   }
