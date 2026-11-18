@@ -1,0 +1,82 @@
+name: "#407 hosted POSIX control"
+
+on:
+  push:
+    branches: [codex/qa/gg-407-posix-control-02]
+
+permissions:
+  contents: read
+
+jobs:
+  posix:
+    name: "#407 control (${{ matrix.os }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      GG_TEST_PORT_START: '18470'
+      GG_TEST_PORT_COUNT: '20'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Initialize disposable directories
+        id: init
+        run: |
+          set -euo pipefail
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          work="$(mktemp -d "${RUNNER_TEMP%/}/gg407-posix-XXXXXXXX")"
+          work="$(cd "$work" && pwd -P)"
+          mkdir "$work/evidence" "$work/sync" "$work/maintained-tmp" "$work/witness-tmp"
+          {
+            printf 'GG_407_WORK=%s\n' "$work"
+            printf 'GG_407_EVIDENCE=%s\n' "$work/evidence"
+            printf 'GG_407_SYNC=%s\n' "$work/sync"
+          } >> "$GITHUB_ENV"
+      - name: Bind checkout and runtime to the exact candidate
+        run: node .github/qa407-posix/control.mjs source
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+      - name: Build candidate
+        run: |
+          pnpm build
+          node .github/qa407-posix/control.mjs build
+      - name: Maintained API port tests
+        id: maintained
+        run: bash .github/qa407-posix/run-suite.sh maintained
+      - name: Two-worker native lease and API witness
+        if: ${{ !cancelled() && (steps.maintained.outcome == 'success' || steps.maintained.outcome == 'failure') }}
+        run: |
+          mkdir apps/api/src/qa407-posix
+          cp .github/qa407-posix/shared.ts .github/qa407-posix/owner.test.ts .github/qa407-posix/peer.test.ts apps/api/src/qa407-posix/
+          bash .github/qa407-posix/run-suite.sh witness
+      - name: Upload selected evidence
+        if: ${{ always() && steps.init.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gg407-posix-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          path: |
+            ${{ env.GG_407_EVIDENCE }}/source.json
+            ${{ env.GG_407_EVIDENCE }}/build.json
+            ${{ env.GG_407_EVIDENCE }}/maintained.log
+            ${{ env.GG_407_EVIDENCE }}/maintained.json
+            ${{ env.GG_407_EVIDENCE }}/maintained.exit.json
+            ${{ env.GG_407_EVIDENCE }}/witness.log
+            ${{ env.GG_407_EVIDENCE }}/witness.json
+            ${{ env.GG_407_EVIDENCE }}/witness.exit.json
+            ${{ env.GG_407_EVIDENCE }}/ports-maintained-before.json
+            ${{ env.GG_407_EVIDENCE }}/ports-maintained-after.json
+            ${{ env.GG_407_EVIDENCE }}/ports-witness-before.json
+            ${{ env.GG_407_EVIDENCE }}/ports-witness-after.json
