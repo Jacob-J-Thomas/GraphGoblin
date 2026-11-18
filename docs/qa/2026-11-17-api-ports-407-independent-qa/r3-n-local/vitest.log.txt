@@ -1,0 +1,52 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-ports-407-qa/GraphGoblin/apps/api
+
+ ✓ src/qa407/qa407-n-local.test.ts > N1 invalid env ranges fail clearly before any claim or fixture directory 49ms
+ ✓ src/qa407/qa407-n-local.test.ts > N2 exhaustion is clear and bounded for single and multi-port ranges 7ms
+ ✓ src/qa407/qa407-n-local.test.ts > N3 stale releases cannot delete replacement claims 23ms
+ ✓ src/qa407/qa407-n-local.test.ts > N4 a claim left by a dead owner (simulated marker) is never reclaimed during the run 1006ms
+ × src/qa407/qa407-n-local.test.ts > N5 foreign listener variants in separate processes 545ms
+   → 0.0.0.0 foreign refused: expected 'GRANTED' to contain 'Ports are reserved by tests or in use'
+   → :: foreign refused: expected 'GRANTED' to contain 'Ports are reserved by tests or in use'
+ ✓ src/qa407/qa407-n-local.test.ts > N7 no-setup module instance and fixture directory failure release cleanly 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/qa407/qa407-n-local.test.ts > N5 foreign listener variants in separate processes
+AssertionError: 0.0.0.0 foreign refused: expected 'GRANTED' to contain 'Ports are reserved by tests or in use'
+
+Expected: "Ports are reserved by tests or in use"
+Received: "GRANTED"
+
+ ❯ src/qa407/qa407-n-local.test.ts:224:66
+    222|   const by = Object.fromEntries(results.map((r) => [r.host, r]));
+    223|   expect.soft(by['127.0.0.1']!.reserve, '127.0.0.1 foreign refused').t…
+    224|   expect.soft(by['0.0.0.0']!.reserve, '0.0.0.0 foreign refused').toCon…
+       |                                                                  ^
+    225|   expect.soft(by['::']!.reserve, ':: foreign refused').toContain('Port…
+    226|   for (const r of results) expect.soft(r.foreignAfter, `${r.host} pres…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/qa407/qa407-n-local.test.ts > N5 foreign listener variants in separate processes
+AssertionError: :: foreign refused: expected 'GRANTED' to contain 'Ports are reserved by tests or in use'
+
+Expected: "Ports are reserved by tests or in use"
+Received: "GRANTED"
+
+ ❯ src/qa407/qa407-n-local.test.ts:225:56
+    223|   expect.soft(by['127.0.0.1']!.reserve, '127.0.0.1 foreign refused').t…
+    224|   expect.soft(by['0.0.0.0']!.reserve, '0.0.0.0 foreign refused').toCon…
+    225|   expect.soft(by['::']!.reserve, ':: foreign refused').toContain('Port…
+       |                                                        ^
+    226|   for (const r of results) expect.soft(r.foreignAfter, `${r.host} pres…
+    227| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  23:13:10
+   Duration  2.16s (tests 89%, import 5%, transform 4%, setup 2%)
+

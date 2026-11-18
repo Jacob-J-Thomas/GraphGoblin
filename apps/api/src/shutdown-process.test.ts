@@ -3,24 +3,22 @@ import { join } from 'node:path';
 import { createServer, type ServerResponse } from 'node:http';
 import { afterEach, expect, it } from 'vitest';
 import type { LoopDefinitionInput, RunRecord } from '@graphgoblin/contracts';
+import { reserveApiPort } from './testing/api-port.js';
 import { createApiProcessFixture, eventually, listening } from './testing/api-subprocess.js';
 
 const fixtures: Awaited<ReturnType<typeof createApiProcessFixture>>[] = [];
 afterEach(async () => {
   for (const f of fixtures.splice(0)) await f.dispose();
 }, 60_000);
-// A run given its own range through GG_TEST_PORT_START uses it; otherwise these cases keep theirs.
-const ports = process.env.GG_TEST_PORT_START
-  ? {
-      start: Number(process.env.GG_TEST_PORT_START),
-      count: Number(process.env.GG_TEST_PORT_COUNT ?? 100),
-    }
-  : { start: 5760, count: 10 };
+// A run given its own range uses it; otherwise these cases keep theirs.
+const ports =
+  process.env.GG_TEST_PORT_START === undefined && process.env.GG_TEST_PORT_COUNT === undefined
+    ? { portStart: 5760, portCount: 10 }
+    : {};
 async function boot(env: NodeJS.ProcessEnv = {}) {
   const f = await createApiProcessFixture({
     prefix: 'gg-wp-c7-224-',
-    portStart: ports.start,
-    portCount: ports.count,
+    ...ports,
   });
   fixtures.push(f);
   const token = await f.createKey();
@@ -95,15 +93,15 @@ it('native drain rechecks a wake during delivery cleanup and completes its requi
     req.resume();
     held = res;
   });
-  let receiverPort = ports.start;
-  const lastPort = ports.start + ports.count - 1;
-  while (receiverPort <= lastPort && (await listening(receiverPort))) receiverPort++;
-  if (receiverPort > lastPort) throw new Error('No disposable receiver port is free');
-  await new Promise<void>((resolve, reject) => {
-    receiver.once('error', reject);
-    receiver.listen(receiverPort, '127.0.0.1', resolve);
-  });
+  const { port: receiverPort, release: releaseReceiverPort } = await reserveApiPort(
+    ports.portStart,
+    ports.portCount,
+  );
   try {
+    await new Promise<void>((resolve, reject) => {
+      receiver.once('error', reject);
+      receiver.listen(receiverPort, '127.0.0.1', resolve);
+    });
     const leaf = await a.publish(
       loop('Required child after wake', [
         {
@@ -199,10 +197,14 @@ it('native drain rechecks a wake during delivery cleanup and completes its requi
     expect(await text).toContain('event: run.finished');
     await expect(access(a.f.lockPath)).rejects.toMatchObject({ code: 'ENOENT' });
   } finally {
-    await writeFile(release, 'finish');
-    held?.end();
-    receiver.closeAllConnections();
-    await new Promise<void>((resolve) => receiver.close(() => resolve()));
+    try {
+      await writeFile(release, 'finish');
+    } finally {
+      held?.end();
+      receiver.closeAllConnections();
+      await new Promise<void>((resolve) => receiver.close(() => resolve()));
+      await releaseReceiverPort();
+    }
   }
 }, 120_000);
 

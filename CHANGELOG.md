@@ -9,6 +9,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   Importing those modules remains inert. The supported pnpm checks already rejected invalid
   inputs through the tested Windows junction.
 
+- API test workers reserve their assigned loopback ports through subprocess startup,
+  restart and cleanup, so parallel fixtures cannot select the same port (#407).
+
 - CI runs the repository checks and the serial coverage gate as two independent jobs, Repository
   checks and Coverage, each with a 30-minute budget (#488, ADR-0084). Coverage gets its own
   install and build and a 25-minute step cap, and uploads the package coverage summaries after

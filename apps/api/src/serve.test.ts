@@ -7,7 +7,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { serve, shellFailureOutput, startupFailureCause, type ServeOptions } from './serve.js';
 import { StoreRefusedError } from './store-refusal.js';
-import { eventually, freePort, listening } from './testing/api-subprocess.js';
+import { reserveApiPort } from './testing/api-port.js';
+import { eventually, listening } from './testing/api-subprocess.js';
 import { createTestApp } from './testing/test-app.js';
 import {
   GATEWAY_LOG_PENDING_BYTES,
@@ -20,12 +21,17 @@ import type { StartupStage } from './windows-log/guard.js';
 
 const roots: string[] = [];
 const writers: GatewayLogWriter[] = [];
+const releasePorts: Array<() => Promise<void>> = [];
 afterEach(async () => {
   vi.unstubAllEnvs();
-  for (const writer of writers.splice(0)) await writer.close();
-  globalThis.gc?.();
-  for (const root of roots.splice(0))
-    await rm(root, { recursive: true, force: true, maxRetries: 10 });
+  try {
+    for (const writer of writers.splice(0)) await writer.close();
+    globalThis.gc?.();
+    for (const root of roots.splice(0))
+      await rm(root, { recursive: true, force: true, maxRetries: 10 });
+  } finally {
+    for (const release of releasePorts.splice(0)) await release();
+  }
 }, 30_000);
 
 describe('managed startup failure causes', () => {
@@ -76,7 +82,8 @@ describe('serve with the managed destination', () => {
   async function environment(fs?: LogFileSystem) {
     const dataDir = await mkdtemp(join(tmpdir(), 'gg-serve-managed-'));
     roots.push(dataDir);
-    const port = await freePort(Number(process.env['GG_TEST_PORT_START'] ?? 5600), 100);
+    const { port, release } = await reserveApiPort();
+    releasePorts.push(release);
     for (const name of Object.keys(process.env))
       if (name.toUpperCase().startsWith('GG_') && !name.toUpperCase().startsWith('GG_TEST_'))
         vi.stubEnv(name, undefined);

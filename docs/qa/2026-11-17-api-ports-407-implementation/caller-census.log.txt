@@ -1,0 +1,103 @@
+git head 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1
+rg -n --hidden -g "!**/node_modules/**" -g "!**/.git/**" "api-subprocess\.(js|ts)|reserveApiPort\("
+docs\10-testing-and-quality.md:277:`apps/api/src/main.test.ts` uses `src/testing/api-subprocess.ts` against the built
+apps\api\src\child-creation-restart.test.ts:19:import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
+apps\api\src\defaults-startup.test.ts:8:import { createApiProcessFixture } from './testing/api-subprocess.js';
+apps\api\src\history-cleanup.test.ts:609:    reservation = await reserveApiPort();
+apps\api\src\edges.test.ts:510:// Native shutdown evidence lives in main.test.ts and testing/api-subprocess.ts.
+apps\api\src\main.test.ts:9:import { createApiProcessFixture, eventually, listening } from './testing/api-subprocess.js';
+apps\api\src\pinned-run-restart.test.ts:16:import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
+apps\api\src\serve.test.ts:11:import { eventually, listening } from './testing/api-subprocess.js';
+apps\api\src\serve.test.ts:85:    const { port, release } = await reserveApiPort();
+apps\api\src\script-restart.test.ts:12:import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
+apps\api\src\script-persistence-restart.test.ts:13:import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
+apps\api\src\testing\api-subprocess.ts:116:  const reservation = await reserveApiPort(options.portStart, options.portCount);
+apps\api\src\testing\api-port.ts:44:export async function reserveApiPort(
+apps\api\src\testing\api-port.test.ts:6:import { createApiProcessFixture, listening } from './api-subprocess.js';
+apps\api\src\testing\api-port.test.ts:17:  await expect(reserveApiPort(start, count)).rejects.toThrow('Invalid disposable API port range');
+apps\api\src\testing\api-port.test.ts:28:    await expect(reserveApiPort(port, 1)).rejects.toThrow(
+apps\api\src\testing\api-port.test.ts:34:    await expect(reserveApiPort(port, 1)).rejects.toThrow('Ports are reserved by tests or in use');
+apps\api\src\testing\api-port.test.ts:43:  const probe = await reserveApiPort();
+apps\api\src\testing\api-port.test.ts:51:    await expect(reserveApiPort(probe.port, 1)).rejects.toThrow(
+apps\api\src\testing\api-port.test.ts:63:  const old = await reserveApiPort();
+apps\api\src\testing\api-port.test.ts:71:    await expect(reserveApiPort(old.port, 1)).rejects.toThrow(
+apps\api\src\testing\api-port.test.ts:84:    await expect(reserveApiPort()).rejects.toThrow(
+apps\api\src\retired-event-startup.test.ts:20:import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
+apps\api\src\shutdown-startup.test.ts:7:import { createApiProcessFixture } from './testing/api-subprocess.js';
+apps\api\src\shutdown-process.test.ts:7:import { createApiProcessFixture, eventually, listening } from './testing/api-subprocess.js';
+apps\api\src\shutdown-process.test.ts:96:  const { port: receiverPort, release: releaseReceiverPort } = await reserveApiPort(
+apps\api\src\shutdown-console.test.ts:15:import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
+apps\api\src\targeted-events-restart.test.ts:6:import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
+apps\api\src\subloop-restart.test.ts:20:import { createApiProcessFixture, eventually } from './testing/api-subprocess.js';
+rg -n --hidden -g "!**/node_modules/**" -g "!**/.git/**" -g "!**/qa/**" "GG_TEST_PORT_(START|COUNT)|freePort\("
+tooling\scripts\windows-launcher.acceptance.mjs:100:let nextPort = Number(process.env.GG_TEST_PORT_START ?? 4830);
+tooling\scripts\windows-launcher.acceptance.mjs:102:async function freePort() {
+tooling\scripts\windows-launcher.acceptance.mjs:227:    const port = await freePort();
+tooling\scripts\windows-launcher.acceptance.mjs:496:        Port: await freePort(),
+tooling\scripts\windows-launcher.acceptance.mjs:1145:    const port = await freePort();
+tooling\scripts\windows-launcher.acceptance.mjs:1486:    const refusalPort = await freePort();
+tooling\scripts\windows-launcher.acceptance.mjs:1617:    const primary = await configuration(install, 'primary', { Port: await freePort() });
+tooling\scripts\upgrade.acceptance.mjs:36:async function freePort() {
+tooling\scripts\upgrade.acceptance.mjs:37:  const start = Number(process.env.GG_TEST_PORT_START ?? 6300);
+tooling\scripts\upgrade.acceptance.mjs:38:  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 10);
+tooling\scripts\upgrade.acceptance.mjs:51:  const port = await freePort();
+tooling\scripts\upgrade.acceptance.mjs:159:            env: environment(dir, await freePort()),
+tooling\scripts\reset.acceptance.mjs:95:async function freePort() {
+tooling\scripts\reset.acceptance.mjs:147:      const refused = await api([], dataDir, { GG_PORT: String(await freePort()) });
+tooling\scripts\reset.acceptance.mjs:232:      const port = await freePort();
+apps\web\e2e\script-recovery.spec.ts:24:async function freePort() {
+apps\web\e2e\script-recovery.spec.ts:42:  const port = await freePort();
+apps\api\src\testing\api-port.ts:45:  start = Number(process.env.GG_TEST_PORT_START ?? 5600),
+apps\api\src\testing\api-port.ts:46:  count = Number(process.env.GG_TEST_PORT_COUNT ?? 100),
+apps\api\src\testing\api-port.ts:57:      `Invalid disposable API port range (GG_TEST_PORT_START=${start}, GG_TEST_PORT_COUNT=${count}). Expected integer ports within 1-65535.`,
+apps\api\src\testing\api-port.test.ts:81:  vi.stubEnv('GG_TEST_PORT_START', '65535');
+apps\api\src\testing\api-port.test.ts:82:  vi.stubEnv('GG_TEST_PORT_COUNT', '2');
+apps\api\src\testing\api-port.test.ts:85:      'GG_TEST_PORT_START=65535, GG_TEST_PORT_COUNT=2',
+docs\10-testing-and-quality.md:285:Set `GG_TEST_PORT_START` and `GG_TEST_PORT_COUNT` to a free range large enough for
+apps\api\src\shutdown-startup.test.ts:13:    ...(process.env.GG_TEST_PORT_START === undefined && process.env.GG_TEST_PORT_COUNT === undefined
+apps\api\src\shutdown-process.test.ts:15:  process.env.GG_TEST_PORT_START === undefined && process.env.GG_TEST_PORT_COUNT === undefined
+apps\api\src\script-restart.test.ts:42:      // The shared fixture honors GG_TEST_PORT_START/COUNT for isolated integration gates.
+apps\api\scripts\wait-restart.acceptance.mjs:23:async function freePort() {
+apps\api\scripts\wait-restart.acceptance.mjs:24:  const start = Number(process.env.GG_TEST_PORT_START ?? 5600);
+apps\api\scripts\wait-restart.acceptance.mjs:25:  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 100);
+apps\api\scripts\wait-restart.acceptance.mjs:72:  const port = await freePort().catch(async (error) => {
+apps\api\scripts\recovery-process.integration.mjs:34:async function freePort() {
+apps\api\scripts\recovery-process.integration.mjs:35:  const start = Number(process.env.GG_TEST_PORT_START ?? 5600);
+apps\api\scripts\recovery-process.integration.mjs:36:  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 100);
+apps\api\scripts\recovery-process.integration.mjs:107:    const port = await freePort();
+apps\api\scripts\prompt-restart.integration.mjs:24:async function freePort() {
+apps\api\scripts\prompt-restart.integration.mjs:81:    const port = await freePort();
+apps\api\scripts\failure-evidence.integration.mjs:22:async function freePort() {
+apps\api\scripts\failure-evidence.integration.mjs:23:  const start = Number(process.env.GG_TEST_PORT_START ?? 5660);
+apps\api\scripts\failure-evidence.integration.mjs:24:  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 10);
+apps\api\scripts\failure-evidence.integration.mjs:37:  const port = await freePort();
+apps\api\scripts\chat-restart.acceptance.mjs:52:async function freePort() {
+apps\api\scripts\chat-restart.acceptance.mjs:53:  const start = Number(process.env.GG_TEST_PORT_START ?? 6390);
+apps\api\scripts\chat-restart.acceptance.mjs:54:  const count = Number(process.env.GG_TEST_PORT_COUNT ?? 20);
+apps\api\scripts\chat-restart.acceptance.mjs:136:    const port = await freePort();
+rg -n "\.listen\(" apps/api/src -g "*.test.ts"
+apps/api/src\adversarial.test.ts:574:    const base = await t.app.listen({ port: 0, host: '127.0.0.1' });
+apps/api/src\finalization.test.ts:18:  await new Promise<void>((ok) => receiver.listen(0, '127.0.0.1', ok));
+apps/api/src\finalization.test.ts:34:    const base = await api.app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\history-cleanup.test.ts:610:    const url = await server.listen({
+apps/api/src\main.test.ts:203:    await new Promise<void>((resolve) => server.listen(f.port, '127.0.0.1', resolve));
+apps/api/src\perf.test.ts:110:      await t.app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\serve.test.ts:186:    await new Promise<void>((resolve) => server.listen(env.port, '127.0.0.1', resolve));
+apps/api/src\serve.test.ts:333:      await fixture.app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\routes\chat-pairing.test.ts:41:    await test.app.listen({ host: test.container.config.host, port: test.container.config.port });
+apps/api/src\routes\chat-pairing.test.ts:161:    await test.app.listen({ host: '0.0.0.0', port: 0 });
+apps/api/src\routes\chat-pairing.test.ts:177:    await test.app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\routes\chat-pairing.test.ts:213:      await test.app.listen({ host, port: 0 });
+apps/api/src\routes\chat-pairing.test.ts:235:      await test.app.listen({ host: boundHost, port: 0 });
+apps/api/src\shutdown-process.test.ts:103:      receiver.listen(receiverPort, '127.0.0.1', resolve);
+apps/api/src\sse-bounds.test.ts:38:    const base = await app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\sse-bounds.test.ts:111:      const base = await app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\sse-bounds.test.ts:212:    const base = await app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\routes\thread-disconnect.test.ts:188:    base = await app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\sse-catchup.test.ts:63:      const base = await app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\sse-catchup.test.ts:336:    const base = await app.listen({ host: '127.0.0.1', port: 0 });
+apps/api/src\sse.test.ts:18:  await t.app.listen({ port: 0, host: '127.0.0.1' });
+apps/api/src\testing\api-port.test.ts:48:      listener.listen(probe.port, '127.0.0.1', resolve);
+apps/api/src\webhook-delivery-lifecycle.test.ts:22:  await new Promise<void>((ok) => receiver.listen(0, '127.0.0.1', ok));
+apps/api/src\triggers\poll-depth.test.ts:54:    source!.listen(0, '127.0.0.1', resolve);
+apps/api/src\triggers\poll-http-bounds.test.ts:29:      await new Promise<void>((resolve) => server!.listen(0, '127.0.0.1', resolve));

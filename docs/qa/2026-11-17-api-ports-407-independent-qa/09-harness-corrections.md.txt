@@ -1,0 +1,35 @@
+# QA harness corrections and first-failure provenance
+
+No candidate file was edited. All corrections below are to disposable QA files only. Every first failure is preserved in its run folder.
+
+## HC1: S1 own-marker identity (r1 -> r1b)
+
+- First failure: `r1-s1-two-worker/vitest.log` (exit 1). Worker A asserted `after.claim.exists === false` after `f.dispose()`.
+- Raw evidence (`r1-s1-two-worker/S1-observations.jsonl`): A's marker was `2ac3686e-...`. After dispose the claim held marker `be099c78-...`, which was worker B's poll reservation, won at ms ...697 just after A's dispose resolved at ...694.
+- Diagnosis: the harness assertion was too strict for a peer that polls aggressively. This is not a candidate defect.
+- Correction (s1-scenario.ts): record `ownMarker` at reservation and assert `ownMarkerRemains === false`. Also record B's `firstFailMs`, `lastFailMs` and `failedAfterADisposeStart`.
+
+## HC2: S1 A-side post-dispose `listening` check (r1b -> r1c)
+
+- Second failure: `r1b-s1-two-worker-corrected/vitest.log` (exit 1). A's post-dispose `listening(port)` returned true at ms ...067.
+- Raw evidence: A's child closed at ...055 and A's dispose resolved at ...065. B won the port at ...066, after a successful 127.0.0.1 bind probe, and B's own `listening` check after winning was false. A's later `final` check (...073) was false.
+- Diagnosis: A's TCP connect landed on B's transient `canBind` probe listener. In r1c the same effect showed up as informational data: A's `final` at ...619 saw `listening:true` at exactly B's win ms ...619.
+- Correction: A's post-dispose `listening` check became informational. The authoritative evidence that nothing was listening is B's successful bind probe plus B's own `wonPortListeningAtWin === false`.
+
+## HC3: port probe classification (probe v1 -> v2)
+
+- `probe-assigned-ports.mjs` (v1) flagged any netstat row containing :638xx. After r1 this included client-side TIME_WAIT rows whose remote port was 63800/63801. All binds succeeded.
+- v2 (`probe-assigned-ports-v2.mjs`) fails only on bind failure or a LISTENING row with a local address in range, and still records all touching rows. v1 output is kept (`06-ports-before.log`, `r1-s1-two-worker/ports-*.json`). The r1 after-state was rechecked with v2 (`r1-s1-two-worker/ports-after-recheck-v2.json`, ok).
+
+## HC4: process listing (children.ps1 -> children-v2.ps1)
+
+- v1 matched any process whose command line contained the QA path, so it also listed the orchestrator's launcher shell, which carries the QA brief text. v2 lists only node.exe processes. The v1 output is kept in `r1-s1-two-worker/processes-after.json` (no node processes there either).
+
+## Corrected file versions
+
+`qa-tests/` holds the final versions. s1-scenario.ts as run in r1 differed only by the absence of the HC1 and HC2 edits: the `initialClaim`/`ownMarker` lines, the `ownMarkerRemains` assertion replacing `expect(after.claim.exists).toBe(false)` plus `expect(after.listening).toBe(false)`, and the poll `firstFailMs`/`lastFailMs` fields.
+
+## HC0: hash script path mapping (before any test run)
+
+- The first version of `hash-sources.sh` did not strip the implementation-tree prefix. It therefore hashed (read-only) the implementation tree's files at their absolute paths; all 14 matched the frozen manifest, including that tree's `dist/main.js`. Its output overwrote `02-sources-before.json` and was not kept.
+- The corrected script maps manifest paths to QA-tree relative paths. `02-sources-before.json` is the corrected QA-tree result (13 match; `dist/main.js` absent before the build). Nothing in the implementation tree was written.

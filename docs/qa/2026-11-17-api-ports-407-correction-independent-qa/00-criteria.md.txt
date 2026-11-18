@@ -1,0 +1,33 @@
+# #407 correction 01: independent QA criteria
+
+These criteria were written after reading the brief, AGENTS.md, docs/README.md, docs/15, the original independent QA report, the original provider public report and the corrected implementer README. I wrote them before reading the candidate's `api-port.test.ts`, the caller test diffs or any author witness script or log. The implementation (`api-port.ts`, the setup files) is read after this file is recorded, so I can design concrete scenarios.
+
+The original D2 numbers are taken from the raw original record: 25 unexpected `EPERM` mkdir errors across 17,490 attempts and 1,881 grants. No rate derived from a grant denominator is reused.
+
+## D1: Windows wildcard foreign listeners (native)
+
+- K1. A pre-existing listener in a separate OS process on `0.0.0.0:P`, on dual-stack `[::]:P` (Node's default `listen(port)`) or on `127.0.0.1:P` is never granted. The helper either grants another port in the range or reports bounded exhaustion. Each foreign listener still answers its own sentinel after the reservation and is never closed or killed by the helper.
+- K2. The helper's probe listeners are closed by the time the grant is returned: a fresh `127.0.0.1:P` bind by the grantee succeeds.
+- K3. Real built API, D1 path: a foreign `0.0.0.0` listener on one port of a two-port range is skipped by `createApiProcessFixture()`. The child becomes ready on the other port, and `127.0.0.1:<foreign port>` still answers with the foreign sentinel while the fixture runs.
+- Observation only (not a criterion): IPv6-only `[::]` (ipv6Only) and `[::1]` foreign listeners. These do not receive IPv4 loopback traffic, so either granting or skipping is acceptable.
+- Controlled-only (not natively reproducible here): the "IPv6 unavailable" fallback. IPv6 is available on this host. I check its ordering by reading the code only, and the author's controlled-fault evidence stays controlled.
+
+## D2: Windows reservation contention (native)
+
+- K4. Two real Vitest workers, using the actual `apps/api/vitest.config.ts` global setup and setup file, contend for a one-port range for a bounded period with distinctive per-worker ownership tokens. Required: zero overlapping live grants across workers, using a system-wide monotonic clock (QueryPerformanceCounter via `process.hrtime.bigint()`) and an on-disk check of the newest generation at grant and before release. Also required: zero duplicate generations, zero reservation rejections other than the documented exhaustion error, and zero release rejections. Both workers must obtain grants, so the scenario really contends.
+- K5. Stale release and marker replacement: a repeated or stale release by an earlier lease never changes a later generation. If a lease's own marker is externally replaced within its generation, its release does not remove or rename the replacement, and the failure is visible. The port stays reserved whenever the newest generation is not released.
+- K6. A stale, incomplete or crashed newest generation stays reserved. An older released generation never frees a newer unreleased one.
+- K7. Genuine permission errors stay visible: a real Windows ACL that denies directory creation in the run's coordination tree makes reservation reject with the raw filesystem error. It must not be reported as exhaustion or silently skipped. The ACL is removed afterwards.
+- K8. Generation ordering is numeric across a decimal-width change (for example 9 to 10). Several hundred grants on one port in K4 cover this natively.
+
+## Regression: real built API (one bounded witness)
+
+- K9. A reservation is held from grant until the owned child has settled. While a fixture's child is stopped and restarted on the same port, a peer worker cannot obtain that port. During the owner's dispose the peer is refused until the child has exited and dispose has resolved; afterwards the peer gets the port.
+- K10. Global teardown removes the whole run-owned coordination root after the workers stop, and nothing outside it. No QA-owned listener, child process or file survives, and ports 63800-63819 are bindable afterwards.
+
+## Process criteria
+
+- P1. All 14 frozen hashes (13 sources plus `apps/api/dist/main.js`) match before and after QA. A stale hash stops the work.
+- P2. Only ports 63800-63819 are used, and the whole range is verified bindable first.
+- P3. Budget: one coherent native witness run plus at most one harness correction. No broad API coverage rerun and no reruns until green. First failures are preserved.
+- P4. Controlled faults and native proof are reported separately. POSIX behaviour remains pending hosted CI.

@@ -1,0 +1,62 @@
+# Scenario design (before any witness run)
+
+Recorded after reading the candidate `api-port.ts`, `api-ports.global-setup.ts`, `api-ports.setup.ts`, `vitest.config.ts`, the unchanged fixture `api-subprocess.ts` and the docs/10 and CHANGELOG diffs. I still had not read the author's `api-port.test.ts`, the caller test diffs, the author witness scripts or their logs.
+
+## Implementation facts this design relies on (static read)
+
+- `claim(slot)`: non-recursive `mkdir(slot)` that tolerates `EEXIST`, then one `readdir(slot)`. `latest` is the numeric maximum over names for which `Number(name)` is a safe integer. If `latest > 0` and `<slot>/<latest>/released` is not a directory, the port is reserved. Otherwise an exclusive `mkdir(<slot>/<latest+1>)` decides the winner (`EEXIST` means lost), followed by `mkdir(<gen>/<randomUUID>)`. Release is the memoised `rename(<gen>/<uuid>, <gen>/released)`.
+- `reserveApiPort`: claim first, then probe. On win32 the probes are `127.0.0.1`, `0.0.0.0` and `::` (dual-stack by Node default), run serially, with each server closed. Only `EADDRINUSE` counts as a conflict. For `::` only, `EAFNOSUPPORT`, `EPROTONOSUPPORT` and `EADDRNOTAVAIL` mean "no conflict". Any other error, or an IPv4 error, rejects. A failed probe releases its own generation. Other platforms probe only `127.0.0.1`.
+- Global setup: `mkdtemp(tmpdir()/gg-api-ports-*)`, and the root is removed by `rm(recursive, force)` in `vitest.onClose`.
+- The IPv6-unavailable fallback cannot be produced natively on this host, where IPv6 is available. It is checked by reading only and remains controlled-fault evidence.
+
+## Single coherent native witness: one Vitest invocation
+
+`pnpm.cmd exec vitest run --reporter=verbose --maxWorkers=2 src/qa407c/` from `apps/api`, with the real config. TEMP and TMP are redirected to a QA-owned empty folder, so the run's `gg-api-ports-*` root, the wait-storage root and the fixture data directories are all observable. `GG_TEST_PORT_START=63800` and `GG_TEST_PORT_COUNT=20` are set. The two test files run in two forks and coordinate through rendezvous files with abort propagation.
+
+Port plan (63800-63819 only):
+
+| Port(s) | Use |
+| --- | --- |
+| 63800 | D2 contention, one-port range, both workers, 8 s each |
+| 63802-63803 | K3 + K9 real built API: foreign `0.0.0.0` listener on 63802, fixture range 63802-63803 |
+| 63804-63810 | D1 local: 63804 `0.0.0.0`, 63805 Node default `listen(port)`, 63806 explicit `::` dual-stack, 63807 `127.0.0.1`, 63808 `::` ipv6Only (observation), 63809 `::1` (observation), 63810 free control |
+| 63811-63816 | K5/K6/K8 local generation cases |
+| 63817-63818 | K7 ACL cases (mkdir denied on a slot; rename denied in a generation) |
+
+### D2 (K4, K8), workers A and B
+
+- Each worker loops for 8 s on `reserveApiPort(63800, 1)`. On a grant it reads the slot and requires that the newest generation contains exactly one UUID entry. Just before release it reads the slot again and requires the same newest generation and the same UUID. After release its own generation must contain only `released`.
+- Per grant it records role, pid, generation, UUID and hrtime at grant, release call and release done. Unexpected reservation errors, release errors and harness filesystem errors are counted separately.
+- After both workers finish, A merges both logs. Required: unique generations, generations contiguous from 1 to N on disk, every generation containing only `released`, N equal to the grants plus any recorded probe-failure generations, and no cross-worker overlap of `[grant, releaseCall]` intervals in QPC time. Also required: for consecutive generations, the earlier release call precedes the later grant.
+
+### K3 + K9 (real built API), worker A owner and worker B peer
+
+1. A starts a foreign `0.0.0.0:63802` HTTP sentinel process, then calls `createApiProcessFixture({portStart: 63802, portCount: 2})`. Required: port 63803 (K3).
+2. With the reservation held and no child started, B's `reserveApiPort(63802, 2)` must report exhaustion.
+3. A creates a key, starts the child and passes authenticated readiness. `127.0.0.1:63802` must still answer `foreign:0.0.0.0` (K3).
+4. A SIGKILLs the child and the port stops listening. B's attempt must report exhaustion.
+5. A restarts on the same port and passes authenticated readiness.
+6. A disposes the fixture while B polls. Every B attempt ending before A's child `close` (QPC) must be refused as exhaustion. B's eventual win must be 63803, granted after A's child close, and `127.0.0.1:63803` must not be listening at the win.
+7. A closes the foreign sentinel after checking it is still alive.
+
+### D1 local (K1, K2), worker B
+
+Six foreign sentinel processes listen on 63804-63809. Single-port `reserveApiPort(P, 1)` must report exhaustion for 63804-63807; the 63808 and 63809 outcomes are recorded as observations only. A range scan `reserveApiPort(63804, 7)` runs 20 times and must never grant 63804-63807. For K2, after a grant on 63810, a fresh bind on `127.0.0.1`, `0.0.0.0` and `::` must succeed. An independent per-port bind matrix is recorded for context. Each sentinel must answer its own body afterwards and still be alive.
+
+### K5, K6, K8 local, worker B
+
+- 63811: native stale repeated release. L1 is granted and released, L2 gets generation 2, then L1 releases again. Generation 2 must be untouched and the port must stay reserved.
+- 63812: controlled marker replacement inside the lease's own generation. The release must reject visibly and leave the replacement in place, and the port must stay reserved.
+- 63813: controlled external removal of generation 1, after which a new lease receives generation 1 again. The stale release must reject without touching the new marker.
+- 63814: native abandoned lease, which leaves the same on-disk state as a crashed holder. The port must stay reserved, and worker A also checks this from the other process.
+- 63815: controlled incomplete newest generation (generation 1 released, generation 2 empty). The port must stay reserved.
+- 63816: controlled generations 1-10, all released. The grant must be generation 11 (numeric order).
+
+### K7 ACL, worker B (native Windows ACL, current user)
+
+- 63817: `icacls <slot> /deny <user>:(AD)`. `reserveApiPort(63817, 1)` must reject with a raw filesystem code and not report exhaustion. The ACE is then removed with `/remove:d`, and a grant must work again.
+- 63818: a lease is held, then `icacls <gen> /deny <user>:(AD)` is applied. `release()` must reject visibly, and a second `release()` must return the same memoised rejection (no retry). The ACE is removed and the port must stay reserved for the run.
+
+### After the run
+
+Re-hash the 14 frozen entries. Probe 63800-63819 for bindability and LISTENING rows. List node processes that reference QA paths. The redirected TEMP must be empty, meaning the root was removed by teardown. Remove the QA test files by exact name and verify `git status` equals the initial state.
