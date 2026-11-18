@@ -1,0 +1,571 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index cdcdc560..638476df 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -20,24 +20,56 @@ jobs:
+       - uses: actions/checkout@v4
+       - uses: pnpm/action-setup@v4
+       - uses: actions/setup-node@v4
++        id: node
+         with:
+           node-version-file: .nvmrc
+           cache: pnpm
+       - name: Install
++        id: install
+         run: pnpm install --frozen-lockfile
+       - name: Build
++        id: build
+         run: pnpm build
++      # Native evidence (#496): a fresh, non-hidden folder directly below the runner temp,
++      # outside the checkout and every fixture. The suite writes typed records only. Prepared
++      # after the build, so its failure can never skip install, build or the native command; it
++      # needs only the checkout and Node, so a failed install or build is still recorded.
++      - name: Prepare native evidence
++        id: evidence
++        if: ${{ !cancelled() && steps.node.outcome == 'success' }}
++        env:
++          GG_TEST_EVIDENCE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
++          GG_TEST_EVIDENCE_EVENT_BASE: ${{ github.event.pull_request.base.sha }}
++        run: node tooling/scripts/windows-launcher-evidence.mjs init
+       - name: Native Windows launcher acceptance
++        id: native
++        # Runs after a successful build whatever evidence preparation did. A preparation failure
++        # still fails the job, and the suite then receives no evidence folder.
++        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
++        env:
++          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outcome == 'success' && steps.evidence.outputs.dir || '' }}
+         run: pnpm test:windows-launcher
++      - name: Finalize native evidence
++        id: finalize
++        # Only a successfully prepared folder is finalized, and only finalized files are uploaded.
++        if: ${{ always() && steps.evidence.outcome == 'success' }}
++        env:
++          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outputs.dir }}
++          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_ID: ${{ steps.evidence.outputs.id }}
++          GG_TEST_EVIDENCE_INSTALL_OUTCOME: ${{ steps.install.outcome }}
++          GG_TEST_EVIDENCE_BUILD_OUTCOME: ${{ steps.build.outcome }}
++          GG_TEST_EVIDENCE_NATIVE_OUTCOME: ${{ steps.native.outcome }}
++        run: node tooling/scripts/windows-launcher-evidence.mjs finalize
+       - name: Upload native evidence
+-        if: always()
++        if: ${{ always() && steps.finalize.outputs.paths != '' }}
+         uses: actions/upload-artifact@v4
+         with:
+-          name: windows-launcher
+-          path: .tmp/windows-launcher-*/
+-          if-no-files-found: warn
+-  gates:
+-    name: Gates
++          name: windows-launcher-${{ github.run_attempt }}
++          path: ${{ steps.finalize.outputs.paths }}
++          if-no-files-found: error
++          include-hidden-files: false
++  repository-checks:
++    name: Repository checks
+     runs-on: ubuntu-latest
+     timeout-minutes: 30
+     steps:
+@@ -100,13 +132,6 @@ jobs:
+       - name: Shipped templates and deliberate-invalid refusal
+         run: pnpm check:templates
+ 
+-      - name: Install Chromium for tooling browser measurements
+-        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium
+-
+-      - name: Unit tests with coverage thresholds
+-        # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
+-        run: pnpm exec turbo run test:coverage --concurrency=1
+-
+       - name: Licence allowlist
+         run: pnpm check:licenses
+ 
+@@ -119,6 +144,37 @@ jobs:
+       - name: Dependency audit
+         run: pnpm audit --audit-level=high
+ 
++  coverage:
++    name: Coverage
++    runs-on: ubuntu-latest
++    timeout-minutes: 30
++    steps:
++      - uses: actions/checkout@v4
++
++      - uses: pnpm/action-setup@v4
++
++      - uses: actions/setup-node@v4
++        with:
++          node-version-file: .nvmrc
++          cache: pnpm
++
++      - name: Install (frozen lockfile)
++        run: pnpm install --frozen-lockfile
++
++      # The same full build as Repository checks, so every suite sees the original built inputs.
++      - name: Build
++        run: pnpm build
++
++      - name: Install Chromium for tooling browser measurements
++        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium
++
++      - name: Unit tests with coverage thresholds
++        id: coverage
++        # The step cap leaves job time to retain the reports of a failed or timed-out run.
++        timeout-minutes: 25
++        # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
++        run: pnpm exec turbo run test:coverage --concurrency=1
++
+       - name: Upload coverage reports
+         if: always()
+         uses: actions/upload-artifact@v4
+@@ -128,7 +184,58 @@ jobs:
+             packages/*/coverage/coverage-summary.json
+             apps/*/coverage/coverage-summary.json
+             tooling/coverage/coverage-summary.json
+-          if-no-files-found: ignore
++          if-no-files-found: warn
++
++      - name: Coverage report status
++        if: always()
++        shell: bash
++        env:
++          COVERAGE_OUTCOME: ${{ steps.coverage.outcome }}
++        run: |
++          reports=$( (ls packages/*/coverage/coverage-summary.json apps/*/coverage/coverage-summary.json tooling/coverage/coverage-summary.json 2>/dev/null || true) | wc -l)
++          {
++            echo '## Coverage'
++            echo
++            echo "Coverage step: \`${COVERAGE_OUTCOME:-not run}\`. Package summaries retained: ${reports}."
++            if [ "${COVERAGE_OUTCOME:-}" != success ]; then
++              echo
++              echo 'The coverage step did not succeed: any retained summaries are partial and establish no passing gate.'
++            fi
++          } >> "$GITHUB_STEP_SUMMARY"
++          echo "Coverage step: ${COVERAGE_OUTCOME:-not run}; package summaries retained: ${reports}"
++
++  # The stable `Gates` status context. It always runs, even when a lane fails, is skipped or is
++  # cancelled, and passes only when both lanes succeeded. It is never skippable, because a skipped
++  # job would satisfy a branch rule that requires it.
++  gates:
++    name: Gates
++    needs: [repository-checks, coverage]
++    if: ${{ always() }}
++    runs-on: ubuntu-latest
++    timeout-minutes: 2
++    permissions: {}
++    steps:
++      - name: Require Repository checks and Coverage to succeed
++        shell: bash
++        env:
++          REPOSITORY_CHECKS: ${{ needs.repository-checks.result }}
++          COVERAGE: ${{ needs.coverage.result }}
++        run: |
++          {
++            echo '## Gates'
++            echo
++            echo '| Required job | Result |'
++            echo '| --- | --- |'
++            echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"
++            echo "| Coverage | \`${COVERAGE:-missing}\` |"
++          } >> "$GITHUB_STEP_SUMMARY"
++          echo "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"
++          if [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then
++            echo 'Gates passed: Repository checks and Coverage both succeeded.'
++            exit 0
++          fi
++          echo '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'
++          exit 1
+ 
+   browser:
+     name: Browser
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 40958082..76218a3b 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,27 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- CI runs the repository checks and the serial coverage gate as two independent jobs, Repository
++  checks and Coverage, each with a 30-minute budget (#488, ADR-0084). Coverage gets its own
++  install and build and a 25-minute step cap, and uploads the package coverage summaries after
++  every outcome. The licence, generated-docs, contrast and dependency-audit checks no longer wait
++  for coverage. The `Gates` status is now a short aggregate that is always evaluated and passes
++  only when both jobs succeed; a failed, cancelled or skipped job never passes it. It stays the one
++  stable status context; `main` currently has no branch protection or ruleset requiring it.
++  Commands, arguments, thresholds and the test workload are unchanged.
++
++- The Windows launcher CI job uploads bounded, typed native evidence as `windows-launcher-<attempt>`
++  (#496). The earlier `.tmp/windows-launcher-*/` upload never produced an archive; by default the
++  uploader skips hidden paths, which include everything below `.tmp`. The evidence comes from a
++  fresh folder in the runner temp directory: a manifest binding the run and checkout, the suite's
++  typed observations, and a validated result, together under 256 KiB. It records test outcomes,
++  child exit codes, signals and timings, alias and cleanup dispositions, and fixture states, but
++  never paths, output, keys, stores or fixture files. The evidence folder is prepared after the
++  build, so a preparation failure fails the job without skipping the native tests and uploads
++  nothing. Only the exact manifest bytes `init` wrote are accepted. A passing native run without
++  its required observations, with a repeated or contradictory record, or with a checkout that does
++  not match, or cannot be matched to, the event fails the job.
++
+ - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
+   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
+   written by the gateway itself so it never waits on logging and keeps working after the launcher
+diff --git a/docs/10-testing-and-quality.md b/docs/10-testing-and-quality.md
+index 3beb8e2a..d5085b9a 100644
+--- a/docs/10-testing-and-quality.md
++++ b/docs/10-testing-and-quality.md
+@@ -113,13 +113,15 @@ The [WP-B3 QA record](qa/2026-10-19-wp-b3-reset/README.md) holds the owner's man
+ 
+ ## CI gates (Decided)
+ 
+-`.github/workflows/ci.yml` runs three jobs on pushes to `main` and pull requests; a failure in any job fails the workflow. Jobs run independently; the steps below describe their execution order within each job.
++`.github/workflows/ci.yml` runs six jobs on pushes to `main` and pull requests: Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs run independently on separate runners, except that Gates waits for Repository checks and Coverage; the steps below describe the execution order within each job.
+ 
+-The `gates` job runs:
++The `Gates` status is a stable aggregate context ([ADR-0084](decisions/ADR-0084-independent-ci-lanes-behind-gates.md), #488). Coverage and the repository checks run as two independent jobs, so neither one's duration can keep the other from finishing, and the final licence, docs, contrast and audit checks no longer wait for coverage.
++
++The `repository-checks` job (**Repository checks**, 30-minute job budget) runs:
+ 
+ 1. Install with a frozen lockfile.
+ 2. Build every package and app (`pnpm build`).
+-3. Reset, recovery, wait restart, prompt restart, webhook retry and current-format migration acceptance (`pnpm test:reset`, `pnpm test:recovery-process`, `pnpm test:wait-restart`, `pnpm test:prompt-restart`, `pnpm test:webhook-retry`, `pnpm test:upgrade`).
++3. Reset, recovery, Chat restart, wait restart, prompt restart, webhook retry and current-format migration acceptance (`pnpm test:reset`, `pnpm test:recovery-process`, `pnpm test:chat-restart`, `pnpm test:wait-restart`, `pnpm test:prompt-restart`, `pnpm test:webhook-retry`, `pnpm test:upgrade`).
+ 4. Typecheck every TypeScript package, test files included (`pnpm typecheck`; `tooling` is JavaScript and is covered by lint and its coverage gate).
+ 5. Lint and formatting (`pnpm lint`, `pnpm format:check`).
+ 6. Declared workspace layer rules (`pnpm check:layers`).
+@@ -127,11 +129,39 @@ The `gates` job runs:
+ 8. Design token guard: no palette classes or colour literals in web components (`pnpm check:tokens`).
+ 9. dependency-cruiser: dependency rules and no circular imports (`pnpm check:deps`).
+ 10. Shipped templates and deliberate-invalid refusal (`pnpm check:templates`).
+-11. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`).
+-12. Licence allowlist check over the full dependency tree (`pnpm check:licenses`).
+-13. Generated reference docs are current (`pnpm check:docs`).
+-14. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
+-15. Dependency audit for known vulnerabilities, failing on high and critical (`pnpm audit --audit-level=high`). An advisory may be accepted only when the vulnerable package is test-only and unreachable from shipped code; each accepted advisory is listed under `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with its reason and the condition for removing it, and recorded in the CHANGELOG.
++11. Licence allowlist check over the full dependency tree (`pnpm check:licenses`).
++12. Generated reference docs are current (`pnpm check:docs`).
++13. Design token contrast table is current and every enforced pair passes (`pnpm check:contrast`).
++14. Dependency audit for known vulnerabilities, failing on high and critical (`pnpm audit --audit-level=high`). An advisory may be accepted only when the vulnerable package is test-only and unreachable from shipped code; each accepted advisory is listed under `auditConfig.ignoreGhsas` in `pnpm-workspace.yaml` with its reason and the condition for removing it, and recorded in the CHANGELOG.
++
++A failing step stops the job and GitHub records the later steps as skipped. A failure therefore leaves the rest of that job unreported, never passed.
++
++The `coverage` job (**Coverage**, 30-minute job budget) runs:
++
++1. Install with a frozen lockfile.
++2. Build every package and app (`pnpm build`), the same full build as Repository checks, so every suite sees the original built inputs.
++3. Install Chromium for the tooling browser measurements (`pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium`).
++4. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`). The step has a 25-minute cap inside the job budget.
++5. Upload the package `coverage-summary.json` files as the `coverage` artifact after every outcome (a warning when none exist), and write the coverage step's outcome and the number of retained summaries to the job summary. Summaries from a failed, cancelled or timed-out step are partial and never establish a passing gate.
++
++The workload is unchanged: the same packages, tests, thresholds, worker settings and serial order, with no sharding, retry or remote cache.
++
++The `gates` job (**Gates**, 2 minutes) needs both jobs and runs with `always()`, so it is evaluated even when either job fails, is skipped or is cancelled. It checks out nothing, holds no token permissions, writes both results to its log and job summary, and succeeds only when both results are `success`. Any failed, cancelled, skipped or missing result fails it. It is never skippable, because a skipped job would satisfy a branch rule that requires it. A run cancelled because a newer commit superseded it therefore ends with a non-green Gates. The workflow keeps `Gates` as the one stable status context for such a rule. A read-back of `main` on 2026-11-17 found no branch protection and no rulesets, so no platform-required check is configured. Read individual command results from the Repository checks and Coverage jobs.
++
++Budgets come from the retained #485, #487, #490 and #501 logs (summarized in ADR-0084). The 30-minute lane budgets and the 25-minute coverage cap are this change's architecture choice, made from those measurements; they are not an owner requirement. The slowest coverage step that emitted every group took 20m22s. Two 30-minute deadline attempts were cut off at 20m08s and 20m16s, with tooling and both plugin groups still outstanding; tooling alone took 99 to 133 seconds in comparable runs. On those slow runners the 25-minute cap therefore leaves about 2.5 minutes, not the 4.6 minutes it leaves over the slowest complete run. A coverage run past the cap fails Coverage, and therefore Gates; its partial reports are still uploaded. Measured setup before coverage took 1 to 1.5 minutes. Exhausting a whole job budget, or losing the runner, can still prevent the upload.
++
++The `windows-launcher` job (**Windows launcher**, 20 minutes) installs, builds and runs `pnpm test:windows-launcher` with its unchanged assertions, timeouts, TAP output and stdout records. It used to upload `.tmp/windows-launcher-*/`, which never produced an archive. The uploader's documented default excludes hidden paths, including everything below a dot-directory such as `.tmp`. The fixture trees also hold stores, keys, shortcuts, binaries, hard links and junctions to the checkout, none of which may be exported. Bounded typed evidence replaces them (#496):
++
++- **Prepare.** After the build step, `node tooling/scripts/windows-launcher-evidence.mjs init` creates a fresh, non-hidden `windows-launcher-evidence-XXXXXX` directory directly below the runner temp folder, outside the checkout and every fixture. It needs only the checkout and Node, so it runs whenever Node setup succeeded and the run is not cancelled, including after a failed install or build, which are then recorded as not run. It writes `manifest.json`, which binds the repository, workflow reference, job key, run ID and attempt, event, ref and SHA, and the event head and base. It also binds the checked-out commit, its tree and its parents read from the commit header, so a shallow merge checkout can be compared with the event, plus the runner image and the Node version. Missing or malformed values are recorded as null and listed under `unavailable` (the event base only for a pull request). A preparation failure fails the job but cannot skip install, build or the native command: the native step runs after every successful build, then receives no evidence directory, and nothing is finalized or uploaded.
++- **Record.** The native step receives only that directory, through `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR`. The suite reads it once, removes it from its environment before any child starts, and appends typed records to `observations.ndjson` synchronously as they occur. The records cover the start and end of every test and subtest; every child process's tool and mode, exit code, recognised error code, signal, kill state, configured timeout, elapsed time, stdout and stderr byte counts and a closed diagnostic class recognised from its stderr; checkout-alias link type, target match, release and unlink disposition; lock-contention owner counts; gateway drain, window-fixture and contender cleanup; and each fixture root's existence and type at exit, observed with `lstat`. Fixtures are identified only by their random six-character suffix.
++- **Privacy.** A record holds closed enums, bounded integers, booleans and validated identifiers only: no path, argument, environment value, key, token, store byte, command output, error message or log text. Records with missing, extra, invalid or mutually inconsistent fields become `rejected` records. So does a second statement of a once-per-run fact (each test and subtest start and end, each link kind's alias outcome, each alias round and each contention trial), and any of the recorder's own lifecycle or fixture-state types written through the public API.
++- **Bounds.** Each record is at most 1 KiB and the file at most 1,024 records and 192 KiB, with room reserved for the closing records. Records beyond that are counted as omitted after one `overflow` record. The manifest is capped at 8 KiB and the result at 16 KiB, so the archive stays below 256 KiB.
++- **Failures.** A failing test or subtest also prints its typed end record and its last child record to stdout. An evidence directory that is missing, linked, outside the runner temp or not created by `init` is refused with one stdout marker; the tests still run with their own result. A write failure stops recording with one marker and never throws into a test.
++- **Finalize.** After the native step, on every outcome of a successfully prepared directory, `finalize` refuses a directory that is not the `init` directory for this job. It also refuses any entry other than the two expected files, and a link, hard link, non-file or oversized file, without following, deleting or writing anything. The manifest must be exactly the bytes `init` wrote: it is rebuilt from its validated values, the fixed limits and file names, and the fields derived from them (the `unavailable` list and the checkout comparisons), then compared byte for byte, so an unknown or repeated field at any depth, a byte-order mark or other formatting is refused before any path is published. Observation bytes must be the recorder's canonical serialization without a byte-order mark. The stream must start with its one `recorder-open`, hold at most one `overflow` record and at most one final `recorder-closed` record whose counts match the stream, and state each once-per-run fact once. Any other byte or contradiction rejects the file. These checks validate shape and consistency; they do not authenticate files that a hostile runner could write. It then writes `result.json` with the install, build and native step outcomes, the observation state and counts, per-case results and the missing required observations. The upload receives only the exact file paths, as `windows-launcher-<attempt>`, with `include-hidden-files: false` and `if-no-files-found: error`.
++- **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; every started subtest ended and passed; both checkout-alias records with a matched target, no failure stage and an unlinked alias, each after owner-verified, drained releases through both the alias and the direct spelling; the single-owner contention trials 1, 2 and 3, each its own record; and a final state for every fixture. Alias and contention records count only from their own case. Every checkout comparison that applies to the event must also hold: a false one is a known contradiction (`binding-contradiction`) and a missing one leaves the revision unverified (`binding-unverified`). The run identity must be bound too: a missing or malformed repository, workflow reference, job key, run ID, run attempt, event or ref is reported once as `binding-identity`. The runner OS, architecture and image and the Node version are diagnostics that may stay unavailable, and a push needs no event base. A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
++- **Retention.** Fixtures under `.tmp` and OS TEMP are left in place, including any kept because a release or unlink could not be verified. Evidence records their final state and never copies or traverses them.
++
++Without `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR` the local `pnpm test:windows-launcher` writes no evidence and keeps its usual output. The CI evidence binds to the checkout but does not establish a hosted result by itself: the uploaded archive, its GitHub digest and the job's own log are the evidence.
+ 
+ The `browser` job installs pnpm and Node 22 from the shared `.nvmrc` pin, installs the frozen dependencies and Edge (`playwright install --with-deps msedge`), builds the app, then runs `pnpm exec playwright test --retries=0 --workers=1` from `apps/web`. `GG_E2E_BROWSER_CHANNEL=msedge` matches Windows development and the existing Ubuntu routing-performance job. Windows still defaults to installed Edge; other platforms default to Playwright's bundled Chromium unless a channel is explicitly selected. Retries default to zero everywhere, so a first-attempt failure fails the job, and under `CI` a focused (`.only`) test fails the run instead of silently skipping the rest of the suite. The functional step has a 60-minute timeout inside the 75-minute job budget. The expanded serial suite took 45m32s in the Windows candidate run; the step budget leaves about 14 minutes beyond that measurement, with another 15 minutes for setup/build and evidence upload outside the test step. These are whole-job budgets; individual test and performance limits stay unchanged. On Ubuntu the Browser job took 20m47s, its test step 19m04s, for 420 passed tests and the one paid-provider skip (CI run 40184348129, 2026-10-25). A step timeout fails the step, allowing the upload with `failure() || cancelled()` to run; exhausting the whole job budget can still prevent later steps. The `browser-failure` artifact contains available `apps/web/test-results/` evidence and the HTML report at `apps/web/playwright-report/` on failure or cancellation. The default trace mode retains failure traces where tracing is enabled: `routing.spec.ts` sets `trace: 'off'`, and the custom contexts in `responsive.spec.ts` attach no trace. A failure does not guarantee a trace ZIP.
+ 
+diff --git a/docs/decisions/README.md b/docs/decisions/README.md
+index c4708503..a324606f 100644
+--- a/docs/decisions/README.md
++++ b/docs/decisions/README.md
+@@ -99,3 +99,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
+ [ADR-0080 - Authored failures and private run diagnostics](ADR-0080-run-failure-diagnostics.md) defines the mutation operation identity, Exit evaluation failure, and the public failure projection (#381, #414).
+ 
+ [ADR-0081 - Bounded private logs for the Windows launcher's gateway](ADR-0081-bounded-windows-launcher-logs.md) records the in-gateway bounded writer, the guarded entry, one owner per private physical log root, the coordinated cutover and closed launcher outcomes (#438).
++
++[ADR-0084 - Independent CI lanes behind a fail-closed Gates check](ADR-0084-independent-ci-lanes-behind-gates.md) runs repository checks and serial coverage as independent jobs behind the always-evaluated `Gates` aggregate, which passes only when both succeed (#488).
+diff --git a/tooling/scripts/windows-launcher.acceptance.mjs b/tooling/scripts/windows-launcher.acceptance.mjs
+index 91e0f4e2..9901543c 100644
+--- a/tooling/scripts/windows-launcher.acceptance.mjs
++++ b/tooling/scripts/windows-launcher.acceptance.mjs
+@@ -25,9 +25,17 @@ import process from 'node:process';
+ import { test } from 'node:test';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
+ import { promisify } from 'node:util';
++import {
++  aliasStage,
++  errorCodeOf,
++  openWindowsLauncherEvidence,
++} from './windows-launcher-evidence.mjs';
+ 
+ const root = fileURLToPath(new URL('../../', import.meta.url));
+-const execute = promisify(execFile);
++// CI evidence (#496): typed records only, appended as they occur. Without the CI variable nothing
++// is written; the variable is removed from this process before any child starts.
++const ciEvidence = openWindowsLauncherEvidence({ repoRoot: root });
++const execute = ciEvidence.observeExecFile(promisify(execFile));
+ const env = Object.fromEntries(
+   Object.entries(process.env).filter(([key]) => !key.startsWith('GG_') && key !== 'JEV_API_KEY'),
+ );
+@@ -121,9 +129,12 @@ const health = async (config) => {
+   };
+ };
+ async function stop(config) {
++  const cleanup = (result) =>
++    ciEvidence.record('cleanup', { action: 'gateway-drain', result, count: null });
+   try {
+     await health(config);
+   } catch {
++    cleanup('not-running');
+     return;
+   }
+   await fetch(origin(config) + '/system/shutdown', {
+@@ -131,15 +142,20 @@ async function stop(config) {
+     headers: { 'content-type': 'application/json' },
+     body: JSON.stringify({ action: 'drain' }),
+     signal: AbortSignal.timeout(3000),
++  }).catch((error) => {
++    cleanup('failed');
++    throw error;
+   });
+   for (let i = 0; i < 100; i++) {
+     try {
+       await health(config);
+     } catch {
++      cleanup('drained');
+       return;
+     }
+     await sleep(100);
+   }
++  cleanup('failed');
+   throw new Error('Disposable gateway did not finish its normal drain.');
+ }
+ 
+@@ -206,9 +222,10 @@ function logRecords(contents) {
+ test(
+   'Windows PowerShell 5.1 installer validates before replacing native launcher files',
+   { skip: process.platform !== 'win32', timeout: 120_000 },
+-  async () => {
++  ciEvidence.observeTest('installer', async () => {
+     await mkdir(join(root, '.tmp'), { recursive: true });
+     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-installer-'));
++    ciEvidence.fixture('installer', base);
+     const install = join(base, 'installed space α');
+     const store = join(base, 'store');
+     await mkdir(store);
+@@ -474,15 +491,16 @@ test(
+       { NodePath: join(base, 'GG_INSTALLER_PRIVATE_PATH_CANARY', 'node.exe') },
+       /Node.+22\.22\.2.+-NodePath/is,
+     );
+-  },
++  }),
+ );
+ 
+ test(
+   'native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route',
+   { skip: process.platform !== 'win32', timeout: 240_000 },
+-  async (t) => {
++  ciEvidence.observeTest('launcher', async (t) => {
+     await mkdir(join(root, '.tmp'), { recursive: true });
+     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-'));
++    ciEvidence.fixture('launcher', base);
+     const install = join(base, 'launcher space-α');
+     await privateDirectory(install);
+     const exe = join(install, 'GraphGoblin.exe');
+@@ -683,6 +701,11 @@ test(
+           if (!closed) {
+             fixture.kill();
+           }
++          ciEvidence.record('cleanup', {
++            action: 'window-fixture',
++            result: closed ? 'closed' : 'killed',
++            count: null,
++          });
+         }
+         assert.equal(closed, true, 'Disposable native HWND fixture did not close.');
+       });
+@@ -907,7 +930,7 @@ test(
+       },
+     );
+     console.log(JSON.stringify({ evidence: 'windows-launcher-native', artifacts: base }));
+-  },
++  }),
+ );
+ 
+ const identityLine = /^[a-f0-9]{64}\n$/;
+@@ -1102,6 +1125,8 @@ function sameFile(current, original) {
+ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
+   const fixture = await privateDirectory(await mkdtemp(join(sandbox, `${kind}-`)));
+   const alias = join(fixture, 'checkout alias-α');
++  // The link's final state is observed with lstat only; it is never traversed or exported.
++  ciEvidence.fixture('alias-link', alias, ciEvidence.fixture('alias-fixture', fixture));
+   const evidence = {
+     evidence: 'windows-launcher-checkout-alias',
+     kind,
+@@ -1112,6 +1137,7 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
+   };
+   const fixtureStat = await lstat(fixture, { bigint: true });
+   let link;
++  let targetMatched = false;
+   let releaseVerified = true;
+   let stage = 'create-alias';
+   let failure;
+@@ -1122,6 +1148,7 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
+     assert.ok(created.isSymbolicLink());
+     assert.equal(await realpath(alias), repo);
+     assert.equal(await realpath(await readlink(alias)), repo);
++    targetMatched = true;
+     evidence.reparse = await nativeObservation(
+       `
+       $item = Get-Item -LiteralPath $env:GG_TEST_CHECKOUT_ALIAS -Force;
+@@ -1273,6 +1300,16 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
+           roundFailure = error;
+         }
+       }
++      ciEvidence.record('alias-round', {
++        kind,
++        spelling: start.name,
++        ownerVerified: owner !== undefined,
++        release: observation.release ?? 'failed',
++        releaseFailure:
++          'releaseFailure' in observation
++            ? errorCodeOf({ code: observation.releaseFailure })
++            : null,
++      });
+       if (roundFailure) throw roundFailure;
+     }
+   } catch (error) {
+@@ -1308,18 +1345,47 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
+     failure ??= error;
+   }
+   console.log(JSON.stringify(evidence));
++  // Typed projection of the same facts: no paths, protocol identity or command output.
++  const reparseType = evidence.reparse?.linkType;
++  ciEvidence.record('alias', {
++    kind,
++    observedLinkType:
++      reparseType === 'Junction' || reparseType === 'SymbolicLink'
++        ? reparseType
++        : evidence.reparse
++          ? 'other'
++          : 'unobserved',
++    reparsePoint:
++      typeof evidence.reparse?.reparsePoint === 'boolean' ? evidence.reparse.reparsePoint : null,
++    directory: typeof evidence.reparse?.directory === 'boolean' ? evidence.reparse.directory : null,
++    targetMatched,
++    failureStage: evidence.failure ? aliasStage(evidence.failure.stage) : null,
++    failureCode: evidence.failure ? errorCodeOf(failure) : null,
++    disposition: evidence.aliasUnlinked
++      ? 'unlinked'
++      : evidence.aliasAbsent === true
++        ? 'not-created'
++        : link && !releaseVerified
++          ? 'retained-release-unverified'
++          : evidence.unlinkFailure !== undefined
++            ? 'retained-unlink-refused'
++            : 'retained-unverified-link',
++    unlinkFailure:
++      evidence.unlinkFailure === undefined ? null : errorCodeOf({ code: evidence.unlinkFailure }),
++  });
+   if (failure) throw failure;
+ }
+ 
+ test(
+   'native Windows launcher accepts junction and directory symlink checkout paths',
+   { skip: process.platform !== 'win32', timeout: 240_000 },
+-  async (t) => {
++  ciEvidence.observeTest('checkout-alias', async (t) => {
+     const repo = await realpath(root);
+     const temp = await realpath(tmpdir());
+     const fromRepo = relative(repo, temp);
+     assert.ok(isAbsolute(fromRepo) || fromRepo === '..' || fromRepo.startsWith(`..${sep}`));
+     const sandbox = await mkdtemp(join(temp, 'graphgoblin-launcher-alias-'));
++    ciEvidence.fixture('alias-sandbox', sandbox);
+     const exe = join(sandbox, 'GraphGoblin.exe');
+     await compileLauncher(
+       join(process.env.WINDIR, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'),
+@@ -1333,15 +1399,16 @@ test(
+         checkLauncherAlias(exe, sandbox, repo, kind, linkType),
+       );
+     }
+-  },
++  }),
+ );
+ 
+ test(
+   'independent API processes never share ownership while reclaiming a reused PID',
+   { skip: process.platform !== 'win32', timeout: 180_000 },
+-  async () => {
++  ciEvidence.observeTest('lock-contention', async () => {
+     await mkdir(join(root, '.tmp'), { recursive: true });
+     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-contention-'));
++    ciEvidence.fixture('contention', base);
+     const { windowsProcessIdentity } =
+       await import('../../apps/api/dist/windows-process-identity.js');
+     const { identity } = await windowsProcessIdentity(process.pid);
+@@ -1360,6 +1427,14 @@ test(
+       try {
+         const results = await Promise.all(contenders.map((contender) => contender.result));
+         const owners = results.filter((result) => result.status === 'acquired');
++        const refused = results.filter((result) => result.status === 'refused').length;
++        ciEvidence.record('contention', {
++          trial,
++          contenders: contenders.length,
++          acquired: owners.length,
++          refused,
++          other: results.length - owners.length - refused,
++        });
+         // No successful contender is released before every result is known. The launcher
+         // mutex and in-process acquiringPaths cannot serialize these separate API writers.
+         for (const owner of owners) {
+@@ -1392,19 +1467,27 @@ test(
+         assert.equal(recorded.pid, owners[0].pid);
+       } finally {
+         for (const { child } of contenders) child.stdin.end();
++        let closedContenders = 0;
+         await Promise.all(
+           contenders.map(async ({ child, exited }) => {
+             const closed = await Promise.race([
+               exited.then(() => true),
+               sleep(5000).then(() => false),
+             ]);
++            if (closed) closedContenders++;
+             if (!closed) child.kill();
+             assert.equal(closed, true, 'Ownership contender did not release on stdin EOF.');
+           }),
++        ).finally(() =>
++          ciEvidence.record('cleanup', {
++            action: 'contenders',
++            result: closedContenders === contenders.length ? 'closed' : 'killed',
++            count: closedContenders,
++          }),
+         );
+       }
+     }
+-  },
++  }),
+ );
+ 
+ /** Complete LF records totalling exactly `bytes`. */
+@@ -1464,9 +1547,10 @@ function holdLegacyAppend(path) {
+ test(
+   'bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names',
+   { skip: process.platform !== 'win32', timeout: 300_000 },
+-  async (t) => {
++  ciEvidence.observeTest('bounded-logs', async (t) => {
+     await mkdir(join(root, '.tmp'), { recursive: true });
+     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-logs-'));
++    ciEvidence.fixture('logs', base);
+     const install = await privateDirectory(join(base, 'install α'));
+     const canonicalInstall = await realpath(install);
+     // Gateway and launcher inherit an isolated TEMP: a no-write witness for managed log names.
+@@ -1756,5 +1840,5 @@ test(
+     assert.ok((await stat(gatewayLog)).size <= 4 * 1024 * 1024);
+     assert.ok((await stat(join(install, 'launcher.log'))).size <= 256 * 1024);
+     console.log(JSON.stringify({ evidence: 'windows-launcher-bounded-logs', artifacts: base }));
+-  },
++  }),
+ );

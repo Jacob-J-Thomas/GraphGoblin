@@ -1,0 +1,69 @@
+{
+  "allDetected": true,
+  "results": {
+    "drop Chat restart": {
+      "exit": 1,
+      "problems": [
+        "repository-checks steps differ from the base Gates steps without coverage",
+        "pnpm test:chat-restart must run only in Repository checks"
+      ]
+    },
+    "change coverage concurrency": {
+      "exit": 1,
+      "problems": [
+        "coverage lacks pnpm exec turbo run test:coverage --concurrency=1",
+        "pnpm exec turbo run test:coverage --concurrency=1 must run only in Coverage"
+      ]
+    },
+    "drop audit": {
+      "exit": 1,
+      "problems": [
+        "repository-checks steps differ from the base Gates steps without coverage",
+        "pnpm audit --audit-level=high must run only in Repository checks"
+      ]
+    },
+    "audit continues on error": {
+      "exit": 1,
+      "problems": [
+        "repository-checks steps differ from the base Gates steps without coverage",
+        "repository-checks has continue-on-error"
+      ]
+    },
+    "skippable Gates": {
+      "exit": 1,
+      "problems": [
+        "Gates must always be evaluated"
+      ]
+    },
+    "Gates needs one lane": {
+      "exit": 1,
+      "problems": [
+        "Gates needs both lanes"
+      ]
+    },
+    "coverage step uncapped": {
+      "exit": 1,
+      "problems": [
+        "coverage step cap must be 25 minutes"
+      ]
+    },
+    "browser retries": {
+      "exit": 1,
+      "problems": [
+        "browser job changed"
+      ]
+    },
+    "hidden upload opt-in": {
+      "exit": 1,
+      "problems": [
+        "hidden files explicitly excluded"
+      ]
+    },
+    "coverage upload only on success": {
+      "exit": 1,
+      "problems": [
+        "coverage upload must always be attempted"
+      ]
+    }
+  }
+}

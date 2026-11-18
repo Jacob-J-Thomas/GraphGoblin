@@ -1,0 +1,168 @@
+# QA-ONLY disposable #496 control generated from the frozen corrected candidate ci.yml. Never merge.
+# Branch codex/qa/gg-496-invalid-prepare from the EXACT frozen corrected candidate commit,
+# adding only this file.
+name: QA 496 invalid prepare and not-run evidence
+
+on:
+  push:
+    branches: [codex/qa/gg-496-invalid-prepare]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-launcher-invalid-prepare:
+    name: Windows launcher invalid prepare
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      LIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        id: node
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install
+        id: install
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        id: build
+        run: pnpm build
+      # Native evidence (#496): a fresh, non-hidden folder directly below the runner temp,
+      # outside the checkout and every fixture. The suite writes typed records only. Prepared
+      # after the build, so its failure can never skip install, build or the native command; it
+      # needs only the checkout and Node, so a failed install or build is still recorded.
+      - name: Prepare native evidence
+        id: evidence
+        if: ${{ !cancelled() && steps.node.outcome == 'success' }}
+        env:
+          GG_TEST_EVIDENCE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          GG_TEST_EVIDENCE_EVENT_BASE: ${{ github.event.pull_request.base.sha }}
+          # QA-ONLY INJECTION: the checkout as runner temp, so the real init refuses.
+          RUNNER_TEMP: ${{ github.workspace }}
+        run: node tooling/scripts/windows-launcher-evidence.mjs init
+      - name: Native Windows launcher acceptance
+        id: native
+        # Runs after a successful build whatever evidence preparation did. A preparation failure
+        # still fails the job, and the suite then receives no evidence folder.
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outcome == 'success' && steps.evidence.outputs.dir || '' }}
+        run: pnpm test:windows-launcher
+      - name: Finalize native evidence
+        id: finalize
+        # Only a successfully prepared folder is finalized, and only finalized files are uploaded.
+        if: ${{ always() && steps.evidence.outcome == 'success' }}
+        env:
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outputs.dir }}
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_ID: ${{ steps.evidence.outputs.id }}
+          GG_TEST_EVIDENCE_INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          GG_TEST_EVIDENCE_BUILD_OUTCOME: ${{ steps.build.outcome }}
+          GG_TEST_EVIDENCE_NATIVE_OUTCOME: ${{ steps.native.outcome }}
+        run: node tooling/scripts/windows-launcher-evidence.mjs finalize
+      - name: Upload native evidence
+        id: upload
+        if: ${{ always() && steps.finalize.outputs.paths != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-launcher-${{ github.run_attempt }}
+          path: ${{ steps.finalize.outputs.paths }}
+          if-no-files-found: error
+          include-hidden-files: false
+      - name: QA readback (prints facts, never fails)
+        if: always()
+        shell: pwsh
+        env:
+          PREPARE: ${{ steps.evidence.outcome }}
+          INSTALL: ${{ steps.install.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          NATIVE: ${{ steps.native.outcome }}
+          FINALIZE: ${{ steps.finalize.outcome }}
+          STATUS: ${{ steps.finalize.outputs.status }}
+          PATHS: ${{ steps.finalize.outputs.paths }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        run: |
+          $temp = @(Get-ChildItem -LiteralPath $env:RUNNER_TEMP -Force -Filter 'windows-launcher-evidence-*' | ForEach-Object Name)
+          $checkout = @(Get-ChildItem -LiteralPath $env:GITHUB_WORKSPACE -Force -Filter 'windows-launcher-evidence-*' | ForEach-Object Name)
+          [ordered]@{ evidence = 'qa-496-invalid-prepare'; prepare = $env:PREPARE; install = $env:INSTALL; build = $env:BUILD; native = $env:NATIVE; finalize = $env:FINALIZE; status = $env:STATUS; paths = $env:PATHS; artifactId = $env:ARTIFACT_ID; artifactDigest = $env:ARTIFACT_DIGEST; runnerTempEvidence = $temp; checkoutEvidence = $checkout } | ConvertTo-Json -Compress
+  windows-launcher-install-fails:
+    name: Windows launcher install fails
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      LIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        id: node
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install
+        id: install
+        # QA-ONLY INJECTION: install fails.
+        run: exit 1
+      - name: Build
+        id: build
+        run: pnpm build
+      # Native evidence (#496): a fresh, non-hidden folder directly below the runner temp,
+      # outside the checkout and every fixture. The suite writes typed records only. Prepared
+      # after the build, so its failure can never skip install, build or the native command; it
+      # needs only the checkout and Node, so a failed install or build is still recorded.
+      - name: Prepare native evidence
+        id: evidence
+        if: ${{ !cancelled() && steps.node.outcome == 'success' }}
+        env:
+          GG_TEST_EVIDENCE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          GG_TEST_EVIDENCE_EVENT_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node tooling/scripts/windows-launcher-evidence.mjs init
+      - name: Native Windows launcher acceptance
+        id: native
+        # Runs after a successful build whatever evidence preparation did. A preparation failure
+        # still fails the job, and the suite then receives no evidence folder.
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outcome == 'success' && steps.evidence.outputs.dir || '' }}
+        run: pnpm test:windows-launcher
+      - name: Finalize native evidence
+        id: finalize
+        # Only a successfully prepared folder is finalized, and only finalized files are uploaded.
+        if: ${{ always() && steps.evidence.outcome == 'success' }}
+        env:
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outputs.dir }}
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_ID: ${{ steps.evidence.outputs.id }}
+          GG_TEST_EVIDENCE_INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          GG_TEST_EVIDENCE_BUILD_OUTCOME: ${{ steps.build.outcome }}
+          GG_TEST_EVIDENCE_NATIVE_OUTCOME: ${{ steps.native.outcome }}
+        run: node tooling/scripts/windows-launcher-evidence.mjs finalize
+      - name: Upload native evidence
+        id: upload
+        if: ${{ always() && steps.finalize.outputs.paths != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa496-not-run-windows-launcher-${{ github.run_attempt }}
+          path: ${{ steps.finalize.outputs.paths }}
+          if-no-files-found: error
+          include-hidden-files: false
+      - name: QA readback (prints facts, never fails)
+        if: always()
+        shell: pwsh
+        env:
+          PREPARE: ${{ steps.evidence.outcome }}
+          INSTALL: ${{ steps.install.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          NATIVE: ${{ steps.native.outcome }}
+          FINALIZE: ${{ steps.finalize.outcome }}
+          STATUS: ${{ steps.finalize.outputs.status }}
+          PATHS: ${{ steps.finalize.outputs.paths }}
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+        run: |
+          $temp = @(Get-ChildItem -LiteralPath $env:RUNNER_TEMP -Force -Filter 'windows-launcher-evidence-*' | ForEach-Object Name)
+          $checkout = @(Get-ChildItem -LiteralPath $env:GITHUB_WORKSPACE -Force -Filter 'windows-launcher-evidence-*' | ForEach-Object Name)
+          [ordered]@{ evidence = 'qa-496-install-fails'; prepare = $env:PREPARE; install = $env:INSTALL; build = $env:BUILD; native = $env:NATIVE; finalize = $env:FINALIZE; status = $env:STATUS; paths = $env:PATHS; artifactId = $env:ARTIFACT_ID; artifactDigest = $env:ARTIFACT_DIGEST; runnerTempEvidence = $temp; checkoutEvidence = $checkout } | ConvertTo-Json -Compress

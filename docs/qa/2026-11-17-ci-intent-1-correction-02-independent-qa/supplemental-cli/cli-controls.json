@@ -1,0 +1,139 @@
+{
+  "node": "v22.23.4",
+  "source": {
+    "base": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+    "helper": {
+      "bytes": 55816,
+      "sha256": "5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf"
+    }
+  },
+  "fixtureRoot": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-i1-cli-qa-dbfj0V",
+  "passed": 5,
+  "total": 5,
+  "claims": [
+    {
+      "name": "actual checkout merge parents accepted and a wrong pull-request base is incomplete",
+      "pass": true,
+      "evidence": {
+        "actual": {
+          "state": "observed",
+          "head": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+          "tree": "430d34fda9d7e91752a7dbc93794242b4c17a5aa",
+          "parents": [
+            "e21c24be9cef109ef438fd2df4c1583bc570b1cb",
+            "3e8b98b80d478f0788ac50dd5817006fcf96c280"
+          ],
+          "matchesSha": true,
+          "headMatchesEventHead": null,
+          "baseParentMatchesEventBase": true,
+          "headParentMatchesEventHead": true
+        },
+        "wrong": {
+          "status": "incomplete",
+          "missing": [
+            "binding-contradiction"
+          ]
+        }
+      }
+    },
+    {
+      "name": "unknown checkout comparison keeps passing native incomplete and failed native useful",
+      "pass": true,
+      "evidence": [
+        {
+          "code": 1,
+          "status": "incomplete",
+          "files": 3
+        },
+        {
+          "code": 0,
+          "status": "native-failed",
+          "files": 3
+        },
+        {
+          "code": 0,
+          "status": "not-run",
+          "files": 2
+        }
+      ]
+    },
+    {
+      "name": "single unpaired real subtest observation is incomplete",
+      "pass": true,
+      "evidence": {
+        "status": "incomplete",
+        "missing": [
+          "installer-subtests"
+        ],
+        "installer": {
+          "started": true,
+          "result": "pass",
+          "subtestsStarted": 1,
+          "subtestsPassed": 0,
+          "subtestsFailed": 0,
+          "subtestsUnpaired": 1,
+          "children": 1,
+          "childFailures": 0
+        }
+      }
+    },
+    {
+      "name": "missing run identity cannot produce complete evidence",
+      "pass": true,
+      "evidence": {
+        "code": 1,
+        "status": "incomplete",
+        "missing": [
+          "binding-identity"
+        ],
+        "binding": {
+          "unavailable": [
+            "runId"
+          ],
+          "repository": "Jacob-J-Thomas/GraphGoblin",
+          "workflowRef": "Jacob-J-Thomas/GraphGoblin/.github/workflows/ci.yml@refs/heads/main",
+          "job": "windows-launcher",
+          "runId": null,
+          "runAttempt": "2",
+          "event": "push",
+          "ref": "refs/heads/main",
+          "sha": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+          "eventHead": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+          "eventBase": null,
+          "runnerOs": "Windows",
+          "runnerArch": "X64",
+          "imageVersion": "20261117.196.1",
+          "checkout": {
+            "state": "observed",
+            "head": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+            "tree": "430d34fda9d7e91752a7dbc93794242b4c17a5aa",
+            "parents": [
+              "e21c24be9cef109ef438fd2df4c1583bc570b1cb",
+              "3e8b98b80d478f0788ac50dd5817006fcf96c280"
+            ],
+            "matchesSha": true,
+            "headMatchesEventHead": true,
+            "baseParentMatchesEventBase": null,
+            "headParentMatchesEventHead": null
+          },
+          "node": "v22.23.4"
+        }
+      }
+    },
+    {
+      "name": "a closer cannot claim additional rejected rows with zero omissions",
+      "pass": true,
+      "evidence": {
+        "state": "rejected",
+        "reason": "lifecycle",
+        "bytes": 4958,
+        "records": 0,
+        "closed": false,
+        "rejected": 0,
+        "omittedRecords": 0,
+        "omittedBytes": 0,
+        "byType": {}
+      }
+    }
+  ]
+}

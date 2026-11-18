@@ -1,0 +1,145 @@
+# PR #508 rejection-marker type correction: author evidence
+
+Scope: the single accepted #496 finding (P2) from the final independent audit of PR #508
+(`../pr508-final-astra/report.md`). This covers only the native Windows evidence recorder and reader contract for
+`rejected.recordType`. The scheduler, native deadlines, CI architecture, upload bounds and docs were not changed.
+
+- Candidate: `4d2743c2cefaea971d3bdc3ab10e9fdd9bda3523` on `codex/gg-20261117-ci-gates` (upstream the same commit), worktree
+  `C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin`.
+- Runtime: project Node `v22.23.4` (`~/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64` first on PATH), pnpm
+  `12.8.1` via `pnpm.cmd`.
+- Author: Claude Code, Opus 5.5, single agent with no subordinate agents. Nothing was committed, staged, pushed or published. The
+  owner checkout, services, data and remote were not touched.
+
+## Finding confirmed
+
+The audit's claim holds on the original source. Three places in the type-discrimination path called `Object.hasOwn(SCHEMAS, x)`
+without first checking that `x` is a primitive string. `Object.hasOwn` converts its argument to a property key.
+
+| Place | Original line | Effect |
+| --- | --- | --- |
+| `rejected.recordType` field validator | 206 | Accepted any value whose key conversion names a record type. This includes `Object('child')`, `['child']`, `[['child']]` and `{ toString }`. |
+| `Recorder#write` schema lookup | 711 | Converted a non-string type. If the conversion threw (e.g. `Object.create(null)`), the outer `catch` returned `null`, so no rejection was written or counted. |
+| `Recorder#rejection` marker | 746 | Retained the original non-string value as `recordType`. |
+
+`validateRecord`'s own `type` check (line 307) was already strict. `factKey` (line 332) is reached only with records that have
+passed `validateRecord`. `summarize`'s `Object.hasOwn(cases, record.case)` runs only on validated records, where `case` is a
+validated string or absent. The remaining `Object.hasOwn` calls use constant keys. None of these needed a change.
+
+### Benign demonstration on the original source (`logs/01-demo-original.json`)
+
+`scripts/demo-marker-contract.mjs` runs entirely in memory. The recorder has no descriptor, so no files are written. The
+script first ran without the `Object.create(null)` input and the null-fields residual check. Both were added, and it was rerun
+on the same original source before any change. Both runs exited 0, and log 01 is the second run.
+
+- **Producer.** Boxed `'child'` became marker `recordType` of type `object`, serialized as `"child"` and accepted by the
+  validator. The one-element array `['child']` kept its structure: `"recordType":["child"]`, accepted by the validator. An object
+  with `toString` gave `"recordType":{}`. `Object.create(null)` returned `null`, so the record was dropped without a rejection.
+  Genuine `'child'` and `'rejected'` gave the same strings. `'not-a-type'`, `42` and `null` gave `'unknown'`.
+- **Validator.** It accepted boxed string, array, nested array and object-with-toString values. It refused `'not-a-type'`,
+  `'toString'`, `1` and `null`.
+- **Reader.** `parseObservations` returned `valid` for canonical lines whose `recordType` was `["child"]` or `[["child"]]`. It
+  returned `invalid-record` for `"not-a-type"`, `1` and `null`.
+
+### Red tests on the original source (`logs/02-red-new-tests-original-source.log`)
+
+The three new tests were run against the unchanged source (`sha256 5368ec79…`). All three failed for the targeted reason, exit 1:
+
+1. Producer: `[String: 'child']` was returned where `'unknown'` was expected.
+2. Validator: a boxed string was accepted (`true !== false`).
+3. Finalize: a structured `["child"]` marker left the observations `valid`, and they were uploaded (3 paths) instead of
+   `rejected`/`invalid-record` with 2 paths.
+
+## Correction
+
+In `tooling/scripts/windows-launcher-evidence.mjs`, 4 lines are replaced and 2 are added: 6 insertions and 4 deletions
+(`source/correction.diff`). One helper holds the rule:
+
+```js
+/** A primitive string naming a record type; any other value is never converted to a key. */
+const isRecordType = (value) => typeof value === 'string' && Object.hasOwn(SCHEMAS, value);
+```
+
+It is used by the `rejected.recordType` validator (`value === 'unknown' || isRecordType(value)`), the `validateRecord` type check,
+the recorder's schema lookup and the rejection marker (`isRecordType(type) ? type : 'unknown'`). Every string input behaves
+exactly as before. Every non-string type is a counted `rejected` record with `recordType: 'unknown'`. The reader refuses any
+`recordType` that is not `'unknown'` or a supported record-type string, so finalize rejects the whole observation file and does
+not upload it.
+
+`tooling/scripts/windows-launcher-evidence.test.mjs` adds three tests (+135 lines). Existing tests are unchanged.
+
+- *A rejection marker names a requested record-type string, and unknown for any other value.* This covers a real recording
+  through the public API. The genuine supported strings `child` and `rejected` are kept. `not-a-type`, a boxed string, an array,
+  an object with `toString`, `Object.create(null)`, `42` and `null` each give `unknown`. Every marker validates, the file lines
+  match, the closer counts all 9 rejections, and finalize gives `incomplete`/exit 1 with `valid` observations (`records-rejected`)
+  and 3 uploaded files.
+- *The reader refuses a rejection marker whose record type is not a supported string.* The validator accepts the supported
+  strings (`child`, `cleanup`, `rejected`, `recorder-open`, `unknown`). It refuses non-string, inherited-name, wrong-case and empty
+  values. Canonical streams with `child` or `unknown` parse as `valid`. Streams with an array, a nested array, an object, a
+  number, null or an unsupported string are rejected whole as `invalid-record`.
+- *Finalize never uploads observations whose rejection marker holds a structured record type.* A real recording has its genuine
+  `child` marker rewritten to `["child"]`, the same in-test rewrite the existing closer-count test uses. Native `success` gives
+  `incomplete`, and native `failure` stays `native-failed`. Both exit 1 with `rejected`/`invalid-record`, missing
+  `observations-rejected`, and upload only `manifest.json` and `result.json`.
+
+No numbered doc was changed. `docs/10-testing-and-quality.md` already states that a record holds closed enums only and that
+invalid records become `rejected` records. The correction makes the code conform to that contract without changing it.
+
+## Checks on the final correction
+
+| # | Command (worktree root, project Node first) | Result |
+| --- | --- | --- |
+| 03 | `pnpm.cmd --filter @graphgoblin/tooling exec vitest run scripts/windows-launcher-evidence.test.mjs` | exit 0, 36/36 passed (33 existing + 3 new) |
+| 04 | `node scripts/demo-marker-contract.mjs <corrected module>` | Every producer marker is a primitive string. Non-strings give `unknown`. The validator refuses every non-string. The reader refuses arrays as `invalid-record`. Genuine strings are unchanged. |
+| 05/06 | `node scripts/replay-captured-streams.mjs <original> <corrected> label=dir…` | All 9 retained streams give the same outcome with both helpers (`allCorrectedEqualOriginal: true`). |
+| 07 | `pnpm.cmd --filter @graphgoblin/tooling lint` | exit 0 |
+| 08 | `pnpm.cmd exec prettier --check` on both changed files | exit 0 |
+| 09 | `git diff --check` | exit 0 |
+| 10 | `pnpm.cmd exec turbo run test:coverage --filter=@graphgoblin/tooling -- --coverage.reportsDirectory=<this folder>/coverage` | exit 0. 10/10 Turbo tasks ran with 0 cached. 18 files, 214/214 tests. Totals: statements 96.62%, branches 93.46%, functions 94.21%, lines 97.54%. The evidence module had lines 99.45%, branches 97.20%, functions 100%, statements 98.93% (`logs/11-coverage-extract.json`). Reports were written here, so the worktree's ignored `tooling/coverage` summary (`5af1f36c…`) was not overwritten. |
+
+The only failures in this work were the intended red run (02). No other command failed on its first run.
+
+## Retained streams replayed (`logs/05-replay-captured-streams.json`, `logs/06-replay-summary.json`)
+
+All inputs were read as data and nothing was finalized or written beside them. The hosted members are the extracted copies in
+`../i1-ci-hosted-496-results/`. Their ZIP and member SHA-256 values match the final audit's `verification.json`: `a70d2bd1…`,
+`de7e444e…` and `9ecd59ac…` for the ZIPs, and all eight member hashes. The repository streams are raw blobs from HEAD, written to
+`inputs/repo/`. Their blob IDs were rechecked with `git hash-object --no-filters` and all 17 match
+(`inputs/repo-blob-binding.txt`).
+
+| Stream | Outcome (corrected = original) | Matches its recorded `result.json` |
+| --- | --- | --- |
+| hosted candidate (run 44258283117, positive) | `complete`, 234 records, `valid`, uploaded | Exactly |
+| hosted invalid prepare (run 44258372832) | `not-run`, observations absent | Exactly |
+| hosted negative (run 44258386159) | `native-failed`, 1,019 records, 1 rejection (`recordType` `"child"`, string), 296 omitted | Exactly |
+| local positive `tNINCr`, final `c6pNW1`, independent QA `Czp5SQ` | `native-failed`, 203 records, `valid` | Status, observation fields and upload decision match |
+| local negative `nZhAEJ`, correction-01 `2Y04gX` | `native-failed`, 1,019 records, 1 `"child"` rejection, 265 omitted | Status, observation fields and upload decision match |
+| local base same host `D3ZGyl` | `native-failed`, observations absent | Status, observation fields and upload decision match |
+
+For the six older local streams, the current `missing` list adds `binding-identity` and/or `binding-unverified`. For `tNINCr` it
+also drops `lock-contention-children`. These come from the earlier binding and contention corrections. The original HEAD helper
+gives the identical lists, so this correction did not cause them. Every retained rejection marker is a primitive string.
+
+## Residual limits and observations
+
+- The reader checks shape and consistency, not authenticity, as `docs/10` already states.
+- No hosted run has exercised the corrected head yet. Current-head hosted CI, independent behaviour QA and the D-035 correction
+  review remain with the root. The local native `pnpm test:windows-launcher` was not run. Every recorder call in
+  `windows-launcher.acceptance.mjs` passes a literal string type, so the native recording path is unchanged.
+- Out of scope and not changed: `recorder.record('<type>', null)` returns `null` and writes or counts no rejection, because
+  `Object.hasOwn(null, …)` on the `fields` argument throws into the `#write` catch. This is pre-existing and concerns `fields`,
+  not `recordType`. Before and after are shown in `residual` of logs 01 and 04. The acceptance suite always passes object
+  literals. It is left for the root to disposition.
+- Full `pnpm check` and other packages' gates were not run. Tooling is JavaScript and has no typecheck task.
+- A concurrent folder `../pr508-marker-independent-qa/` appeared in the QA root during this work. It was neither read nor
+  modified.
+
+## Layout
+
+- `scripts/`: the demonstration and replay scripts. They take module and stream paths as arguments.
+- `source/original/`: the HEAD evidence module, its test and `docs/10`. `source/corrected/`: the corrected module and test.
+  `source/correction.diff`: the worktree diff.
+- `inputs/`: raw repository stream blobs and their blob binding.
+- `logs/`: numbered command outputs. `logs/12-git-state.txt` records HEAD, branch, an empty index and the two modified files.
+- `coverage/`: tooling V8 coverage reports from run 10.
+- `SHA256SUMS.txt`: SHA-256 of every file in this folder except itself.

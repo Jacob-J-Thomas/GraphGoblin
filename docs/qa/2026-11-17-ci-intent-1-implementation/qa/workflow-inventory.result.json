@@ -1,0 +1,73 @@
+{
+  "ok": true,
+  "problems": [],
+  "facts": {
+    "jobs": {
+      "windows-launcher": "Windows launcher",
+      "repository-checks": "Repository checks",
+      "coverage": "Coverage",
+      "gates": "Gates",
+      "browser": "Browser",
+      "template-image": "Template image"
+    },
+    "repositoryChecksCommands": [
+      "actions/checkout@v4",
+      "pnpm/action-setup@v4",
+      "actions/setup-node@v4",
+      "pnpm install --frozen-lockfile",
+      "pnpm build",
+      "pnpm test:reset",
+      "pnpm test:recovery-process",
+      "pnpm test:chat-restart",
+      "pnpm test:wait-restart",
+      "pnpm test:prompt-restart",
+      "pnpm test:webhook-retry",
+      "pnpm test:upgrade",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm format:check",
+      "pnpm check:layers",
+      "pnpm check:migrations",
+      "pnpm check:tokens",
+      "pnpm check:deps",
+      "pnpm check:templates",
+      "pnpm check:licenses",
+      "pnpm check:docs",
+      "pnpm check:contrast",
+      "pnpm audit --audit-level=high"
+    ],
+    "coverageCommands": [
+      "actions/checkout@v4",
+      "pnpm/action-setup@v4",
+      "actions/setup-node@v4",
+      "pnpm install --frozen-lockfile",
+      "pnpm build",
+      "pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium",
+      "pnpm exec turbo run test:coverage --concurrency=1",
+      "actions/upload-artifact@v4",
+      "reports=$( (ls packages/*/coverage/coverage-summary.json apps/*/coverage/coverage-summary.json tooling/coverage/coverage-summary.json 2>/dev/null || true) | wc -l)\n{\n  echo '## Coverage'\n  echo\n  echo \"Coverage step: \\`${COVERAGE_OUTCOME:-not run}\\`. Package summaries retained: ${reports}.\"\n  if [ \"${COVERAGE_OUTCOME:-}\" != success ]; then\n    echo\n    echo 'The coverage step did not succeed: any retained summaries are partial and establish no passing gate.'\n  fi\n} >> \"$GITHUB_STEP_SUMMARY\"\necho \"Coverage step: ${COVERAGE_OUTCOME:-not run}; package summaries retained: ${reports}\"\n"
+    ],
+    "coverageUpload": {
+      "name": "coverage",
+      "path": "packages/*/coverage/coverage-summary.json\napps/*/coverage/coverage-summary.json\ntooling/coverage/coverage-summary.json\n",
+      "if-no-files-found": "warn"
+    },
+    "windowsSteps": [
+      "actions/checkout@v4",
+      "pnpm/action-setup@v4",
+      "actions/setup-node@v4",
+      "Prepare native evidence",
+      "Install",
+      "Build",
+      "Native Windows launcher acceptance",
+      "Finalize native evidence",
+      "Upload native evidence"
+    ],
+    "windowsUpload": {
+      "name": "windows-launcher-${{ github.run_attempt }}",
+      "path": "${{ steps.finalize.outputs.paths }}",
+      "if-no-files-found": "error",
+      "include-hidden-files": false
+    }
+  }
+}

@@ -1,0 +1,32 @@
+# Intent 1 hosted CI control overlays
+
+Seven workflow copies and one Windows launcher negative suite are ready for their
+individual disposable QA branches. Each file in [the publication manifest](publication-manifest.json)
+has an exact Git target path, target branch, byte count, SHA-256 and Git blob ID.
+Publish only the files listed for the intended branch. These workflows are for hosted
+controls and must never merge.
+
+The copies bind to the corrected CI workflow with SHA-256
+9c3539189770c0efb829550d06ed5cf67829df7db985820b15daf069c801c592.
+The four author inputs and three independent-QA inputs matched their sealed source records.
+The negative suite matches both upstream SHA-256 records and retains the exact bytes
+under tooling/scripts/windows-launcher.qa-negative.acceptance.mjs in the overlay.
+
+Repository Prettier with the explicit .prettierrc formatted the seven copied YAML files.
+Four changed. The fan-in workflow and both #496 workflows were already formatted with
+that configuration. The [format check receipt](prettier-check.json) passed for all seven.
+The manifest links the original copy and formatting diff for each workflow. Empty diffs
+mark files whose raw bytes stayed identical.
+
+[The structural verification](structure-result.txt) checked complete YAML 1.2 object
+equality, including every parsed run script, branch trigger, condition and step. It also
+verified that the #488 lane controls retain the candidate Gates job and match the source
+lanes after accounting for their documented injections. The four fan-in jobs retain the
+candidate Gates script with names and dependency contexts remapped to stub jobs. The
+three #496 Windows jobs match the candidate job after accounting for their existing
+harness changes. The independent refusal job retains its sealed PowerShell change.
+Git's clean filters preserve all eight overlay blobs at the mapped target paths.
+
+The [structure verifier](verify-structure.mjs) can be rerun with project Node from
+the bound repository worktree. Formatter and structural receipts cover local preparation.
+Hosted control outcomes remain pending.

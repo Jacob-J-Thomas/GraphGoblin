@@ -1,0 +1,168 @@
+# Hosted controls for the #488/#496 correction (prepared, not published)
+
+This lane did not push, open PRs, rerun CI or touch settings. Root alone publishes and runs these
+controls. Every control branch uses the `codex/qa/` prefix, is disposable and must never be
+merged. Before you interpret any run, record its run ID, attempt, job IDs, head SHA, runner image
+and raw job logs. Use `gh` against `Jacob-J-Thomas/GraphGoblin`.
+
+Source bindings for the frozen corrected candidate are in `../SOURCE-BINDINGS.txt`. Create every
+`#496` control branch from the exact commit that root makes of those eight files. The `#488`
+controls need only the corrected `ci.yml`.
+
+| Control | Status | Files |
+| --- | --- | --- |
+| 0. Exact-head candidate CI | to run | the candidate PR itself |
+| 1. Uploader hidden-path control | already passed; do not rerun | `../../496-hosted-uploader-control/` |
+| 2. Baseline pre-upload probe | already passed; do not rerun | `../../496-hosted-baseline-probe/` |
+| 3. Candidate negative evidence and refusal | to run (updated) | `workflows/qa-496-candidate-negative.yml`, `negative/` |
+| 4. #488 scheduling controls | to run (regenerated) | `workflows/qa-488-*.yml` |
+| 5. **New:** invalid prepare and not-run evidence | to run | `workflows/qa-496-invalid-prepare.yml` |
+| 6. External cancel | to run | any control-4 run |
+
+The original packet (`../../i1-ci-implementation-evidence/hosted/`) is preserved unchanged. Its
+generated files use `qa/` branch names and the original Windows job ordering. Do not publish them
+for the corrected candidate.
+
+Regenerate and verify:
+
+```
+python -I make-488-controls.py <checkout>/.github/workflows/ci.yml workflows
+python -I make-496-controls.py <checkout>/.github/workflows/ci.yml workflows
+python -I make-negative-acceptance.py <checkout>/tooling/scripts/windows-launcher.acceptance.mjs \
+  negative/windows-launcher.qa-negative.acceptance.mjs
+sha256sum workflows/* negative/*   # compare with ../SHA256SUMS.txt
+```
+
+## 0. Exact-head candidate CI (the real positive)
+
+Publish the frozen corrected candidate as its PR. Expected while #503 is unresolved:
+
+| Job | Expected |
+| --- | --- |
+| Windows launcher | success. The step order is Install, Build, Prepare, Native, Finalize, Upload. Artifact `windows-launcher-1`, `result.json` status `complete`, `missing: []`, observations `valid`, zero `rejected` records |
+| Repository checks | **failure** at `Dependency audit` only; every earlier step succeeds |
+| Coverage | success; 13 package summaries in `coverage`; coverage step under its 25-minute cap |
+| Gates | **failure**, summary `Repository checks = failure`, `Coverage = success` |
+| Browser, Template image | unchanged results |
+
+This run validates scheduling and the audit failure path. It is NOT a green exact-head CI.
+Download the artifact by ID, compare the ZIP SHA-256 with the API `digest`, and verify it:
+
+```
+python -I verify-evidence-bundle.py windows-launcher-1.zip --tap windows-job.log \
+  --expect-status complete --expect-observations valid
+```
+
+The manifest's `binding.event` is `pull_request`. Its `checkout.matchesSha`,
+`checkout.baseParentMatchesEventBase` and `checkout.headParentMatchesEventHead` are all `true`.
+`binding.runId` and `binding.runAttempt` match the run, `binding.sha` is the merge SHA in the job
+log, and `binding.unavailable` is `[]`. A `binding-contradiction` or `binding-unverified` entry in
+`missing` makes the job fail by design. Investigate it; do not relax it. Record the lane timings
+against the 25-minute coverage-step cap and the 30-minute lane budgets. The projected slow
+coverage run of about 22.5 minutes leaves only about 2.5 minutes under the cap. Those budgets
+are the root architecture contract, not an owner edict.
+
+Required-check readback (read only): on 2026-11-17 `main` returned `protected: false`, the
+branch-protection endpoint returned HTTP 404 `Branch not protected`, and the ruleset list was
+empty. Report `Gates` as the stable workflow status context. Do not report a platform-required
+check as configured unless a fresh readback shows one.
+
+## 1 and 2. Uploader and baseline controls
+
+These already passed on `codex/qa/gg-496-uploader-control` (run 44247019952) and
+`codex/qa/gg-496-baseline-probe` (run 44247043760). They do not depend on the candidate's
+Windows job, so do not rerun them.
+
+## 3. Candidate negative evidence and refusal (updated for the corrected job)
+
+Create branch `codex/qa/gg-496-candidate-negative` from the exact corrected candidate commit,
+adding only `.github/workflows/qa-496-candidate-negative.yml` and
+`tooling/scripts/windows-launcher.qa-negative.acceptance.mjs`. Copy the suite from
+`negative/`, or regenerate it: the acceptance suite is unchanged, so its bytes equal the original
+packet's.
+
+Job `Windows launcher negative evidence`:
+
+- The native step fails: installer child exit 7, and the junction alias forced unverified.
+- `result.json` has status `native-failed` and observations `valid`.
+- The records include:
+  - the installer `child` exit 7, with `stderrBytes` equal to the env canary length and diagnostic `unclassified`;
+  - a maxBuffer child (`ERR_CHILD_PROCESS_STDIO_MAXBUFFER`);
+  - a timeout child (`SIGTERM`, `killed: true`, `timeoutMs: 500`);
+  - exactly one `rejected` record (`recordType: child`), with `recorder-closed.rejected` = 1;
+  - exactly one `overflow` record with `omittedRecords > 0`;
+  - the junction `alias` record with `retained-release-unverified`, `direct-release` and `EQAUNVERIFIED`, and an `alias-link` fixture-state `link`.
+- The junction alias rounds `alias` and `direct` each appear once.
+- On hosted runners the directory-symlink alias passes, so `dir` has an `unlinked` alias record.
+- `missing` contains no `binding-*` entry, because this push run's checkout matches its event.
+
+Verify:
+
+```
+python -I verify-evidence-bundle.py qa496-negative-windows-launcher-1.zip --tap negative.log \
+  --expect-status native-failed --expect-observations valid \
+  --canary QA496-<run>-<attempt> --canary QA496-<run>-<attempt>-ENV \
+  --canary QA496-<run>-<attempt>-PLAINENV
+```
+
+Job `Evidence refusal control`: both finalize steps fail. One shows
+`refused: hard-link.` and the other `refused: manifest-invalid.`. Neither upload step runs,
+neither folder gains `result.json`, the outside canary is unchanged, and the job succeeds.
+
+## 4. #488 scheduling controls (regenerated)
+
+Each branch is created from the candidate commit and adds only its file. The files differ from
+the original packet only in the `codex/qa/` branch name and the corrected Gates comment.
+
+| Branch / file | Expected |
+| --- | --- |
+| `codex/qa/gg-488-fanin` / `qa-488-fanin.yml` | `gates-success-success` succeeds. `gates-success-failure`, `gates-skipped-success` and `gates-success-cancelled` fail. Stubs end failure, skipped and cancelled (1-minute job timeout). Record the `needs` values each aggregate printed. |
+| `codex/qa/gg-488-coverage-fails-early` | Coverage fails at the coverage step. Upload runs with one benign summary and the status summary says partial. Repository checks runs every step and fails at the audit while #503 is open. Gates fails. |
+| `codex/qa/gg-488-coverage-step-timeout` | The coverage step stops at its 1-minute cap. Upload and status still run. Gates fails. |
+| `codex/qa/gg-488-static-fails` | Repository checks fails at the injected step and skips the later steps. Coverage runs the full workload to success. Gates fails. |
+
+## 5. New: invalid prepare and not-run evidence
+
+Create branch `codex/qa/gg-496-invalid-prepare` from the exact corrected candidate commit,
+adding only `.github/workflows/qa-496-invalid-prepare.yml`. Both jobs are the candidate Windows
+job verbatim, plus one QA injection and a final readback step that never fails.
+
+Job `Windows launcher invalid prepare`. The injection sets `RUNNER_TEMP` to the checkout for the
+Prepare step only, so the real `init` refuses before creating anything.
+
+| Step | Expected |
+| --- | --- |
+| Install, Build | success |
+| Prepare native evidence | **failure**, log `Windows launcher evidence init refused: inside-checkout.` |
+| Native Windows launcher acceptance | **runs** the exact `pnpm test:windows-launcher` command with its own outcome (expected success, 25/25 on a hosted runner). Its log has no `windows-launcher-export` recording line, because the suite received no evidence folder |
+| Finalize native evidence, Upload native evidence | skipped |
+| QA readback | prints `prepare: failure`, the native outcome, `finalize: skipped`, empty `paths` and `artifactId`, and empty `runnerTempEvidence` and `checkoutEvidence` |
+| Job conclusion | **failure** |
+
+The job uploads no artifact. List the run's artifacts. The only expected one is from the next
+job.
+
+Job `Windows launcher install fails`. The injection makes Install exit 1.
+
+| Step | Expected |
+| --- | --- |
+| Install | **failure** |
+| Build, Native | skipped |
+| Prepare native evidence | success; it needs only checkout and Node |
+| Finalize native evidence | success; stdout status `not-run` |
+| Upload native evidence | success; artifact `qa496-not-run-windows-launcher-1` |
+| Job conclusion | **failure** |
+
+```
+python -I verify-evidence-bundle.py qa496-not-run-windows-launcher-1.zip \
+  --expect-status not-run --expect-observations absent
+```
+
+The archive holds exactly `manifest.json` and `result.json`. `result.steps` is
+`{install: failure, build: skipped, native: skipped}` and `result.missing` is
+`["observations-absent"]`.
+
+## 6. External cancel
+
+Cancel any control-4 run while both lanes are in progress. The run must end with a non-green
+Gates. Record its conclusion. None of these controls replaces the exact-head run.
