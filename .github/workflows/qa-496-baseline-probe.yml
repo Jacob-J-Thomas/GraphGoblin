@@ -1,0 +1,80 @@
+# QA-ONLY disposable control (#496). Commit alone on a throwaway branch
+# `codex/qa/gg-496-baseline-probe` created from base 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1 (ci.yml and
+# every other file unchanged; ci.yml does not trigger on this branch push). Never merge.
+# Runs the unchanged baseline native workload, then a bounded existence/type probe of a few known
+# ordinary fixture outputs (names, attributes and sizes only: no content, no hashing, no
+# recursion), then the ORIGINAL default upload step. Hidden files are never opted in here.
+name: QA 496 baseline native pre-upload probe
+
+on:
+  push:
+    branches: [codex/qa/gg-496-baseline-probe]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-launcher:
+    name: Windows launcher baseline probe
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      LIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Native Windows launcher acceptance
+        run: pnpm test:windows-launcher
+      - name: Pre-upload fixture existence and type probe
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tmp = Join-Path $env:GITHUB_WORKSPACE '.tmp'
+          $tmpItem = Get-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+          $roots = @(Get-ChildItem -LiteralPath $tmp -Force -Directory -Filter 'windows-launcher-*' -ErrorAction SilentlyContinue)
+          $known = @(
+            @{ pattern = '^windows-launcher-installer-[A-Za-z0-9]{6}$'; child = 'fixture.exe' },
+            @{ pattern = '^windows-launcher-[A-Za-z0-9]{6}$'; child = "launcher space-$([char]0x03B1)\GraphGoblin.exe" },
+            @{ pattern = '^windows-launcher-logs-[A-Za-z0-9]{6}$'; child = "install $([char]0x03B1)\launcher.log" }
+          )
+          $probes = foreach ($probe in $known) {
+            foreach ($root in @($roots | Where-Object { $_.Name -match $probe.pattern })) {
+              $path = Join-Path $root.FullName $probe.child
+              $item = Get-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue
+              [pscustomobject]@{
+                root = $root.Name
+                child = $probe.child
+                exists = [bool]$item
+                attributes = if ($item) { "$($item.Attributes)" } else { $null }
+                linkType = if ($item) { "$($item.LinkType)" } else { $null }
+                length = if ($item) { $item.Length } else { $null }
+              }
+            }
+          }
+          [pscustomobject]@{
+            evidence = 'qa-496-baseline-pre-upload-probe'
+            sha = $env:GITHUB_SHA
+            tmpExists = [bool]$tmpItem
+            tmpAttributes = if ($tmpItem) { "$($tmpItem.Attributes)" } else { $null }
+            roots = @($roots | ForEach-Object { [pscustomobject]@{ name = $_.Name; attributes = "$($_.Attributes)"; linkType = "$($_.LinkType)" } })
+            probes = @($probes)
+          } | ConvertTo-Json -Compress -Depth 4
+      # The original step, unchanged except a distinct name and short retention in case it
+      # unexpectedly uploads (the base workflow runs this exact pattern on every run today).
+      - name: Upload native evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa496-baseline-windows-launcher-${{ github.run_attempt }}
+          path: .tmp/windows-launcher-*/
+          if-no-files-found: warn
+          retention-days: 1
