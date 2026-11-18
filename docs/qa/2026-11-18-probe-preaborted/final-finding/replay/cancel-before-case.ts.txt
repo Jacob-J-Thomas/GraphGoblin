@@ -1,0 +1,41 @@
+import { beforeEach, afterAll } from 'vitest';
+import { appendFileSync, writeFileSync, readdirSync } from 'node:fs';
+
+const auditEvents = process.env.GG505_EVENTS!;
+const markerPath = process.env.GG505_MARKER!;
+const tempRoot = process.env.TEMP!;
+const savedEnv = ['TEMP','TMP','TMPDIR'].map(n=>process.env[n]);
+const spawnedAfter: number[] = [];
+const observed: ChildProcess[] = [];
+let enclosing: AbortSignal | undefined;
+const report = (event:string, data:Record<string,unknown>={}) => appendFileSync(auditEvents,JSON.stringify({event,at:performance.now(),...data})+'\n');
+beforeEach(async (context) => {
+  enclosing = context.signal;
+  const native = await vi.importActual<typeof import('node:child_process')>('node:child_process');
+  vi.mocked(spawn).mockImplementation((...args) => {
+    const child = native.spawn(...args);
+    observed.push(child);
+    if (enclosing?.aborted && child.pid) spawnedAfter.push(child.pid);
+    report('fake-cli-launch',{pid:child.pid,enclosingAborted:enclosing?.aborted,argv:child.spawnargs.slice(-3)});
+    child.once('exit',(code,signal)=>report('fake-cli-exit',{pid:child.pid,code,signal}));
+    return child;
+  });
+  report('beforeEach-enter',{aborted:enclosing.aborted});
+  const observedAbort = new Promise<void>(resolve => context.signal.addEventListener('abort',()=>{
+    report('actual-run-cancellation',{reason:String(context.signal.reason)});
+    resolve();
+  },{once:true}));
+  writeFileSync(markerPath,JSON.stringify({phase:'public beforeEach entered before maintained case',aborted:context.signal.aborted}));
+  await observedAbort;
+  report('beforeEach-return',{aborted:context.signal.aborted});
+});
+afterAll(() => {
+  const entries = readdirSync(tempRoot);
+  const envRestored=['TEMP','TMP','TMPDIR'].every((n,i)=>process.env[n]===savedEnv[i]);
+  const survivors=observed.filter(c=>c.pid && c.exitCode===null && c.signalCode===null).map(c=>c.pid);
+  report('afterAll',{spawnedAfter,enclosingAborted:enclosing?.aborted,envRestored,entries,survivors});
+  expect(envRestored).toBe(true);
+  expect(entries).toEqual([]);
+  expect(survivors).toEqual([]);
+  expect(spawnedAfter,'new owned fake CLI children launched after actual run cancellation').toEqual([]);
+});
