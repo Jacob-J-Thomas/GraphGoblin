@@ -203,7 +203,7 @@ const SCHEMAS = {
     omittedBytes: bytes,
   },
   overflow: { firstOmittedSeq: count },
-  rejected: { recordType: (value) => value === 'unknown' || Object.hasOwn(SCHEMAS, value) },
+  rejected: { recordType: (value) => value === 'unknown' || isRecordType(value) },
   'case-start': { ...scope },
   'case-end': {
     ...scope,
@@ -276,6 +276,8 @@ const SCHEMAS = {
     count: nullable(integer(0, 64)),
   },
 };
+/** A primitive string naming a record type; any other value is never converted to a key. */
+const isRecordType = (value) => typeof value === 'string' && Object.hasOwn(SCHEMAS, value);
 
 /**
  * Relations between fields that the recorder and the acceptance suite always keep: a passing test
@@ -304,7 +306,7 @@ const CONSISTENT = {
 /** True only for a record of a known type with exactly its declared, valid, consistent fields. */
 export function validateRecord(record) {
   if (record === null || typeof record !== 'object' || Array.isArray(record)) return false;
-  if (typeof record.type !== 'string' || !Object.hasOwn(SCHEMAS, record.type)) return false;
+  if (!isRecordType(record.type)) return false;
   const schema = SCHEMAS[record.type];
   const fields = ['seq', 'at', 'type', ...Object.keys(schema)];
   const keys = Object.keys(record);
@@ -708,7 +710,7 @@ export class Recorder {
   #write(type, fields, tail, internal = false) {
     if (this.#closed) return null;
     try {
-      const schema = Object.hasOwn(SCHEMAS, type) ? SCHEMAS[type] : undefined;
+      const schema = isRecordType(type) ? SCHEMAS[type] : undefined;
       const current = this.#store.getStore();
       const scoped =
         schema && 'case' in schema && current && !Object.hasOwn(fields, 'case')
@@ -743,7 +745,7 @@ export class Recorder {
       seq: ++this.#seq,
       at: this.#now().toISOString(),
       type: 'rejected',
-      recordType: Object.hasOwn(SCHEMAS, type) ? type : 'unknown',
+      recordType: isRecordType(type) ? type : 'unknown',
     };
     // Counted only once the record exists, so every counted rejection is written or omitted.
     this.#rejected++;

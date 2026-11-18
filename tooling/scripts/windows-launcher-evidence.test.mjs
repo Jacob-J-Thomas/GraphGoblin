@@ -2221,3 +2221,138 @@ test('a rejection the recorder could not stamp is neither written nor counted', 
     ['complete', 0, 'valid'],
   );
 });
+
+// Final audit of #496: a rejection marker's `recordType` is a primitive string from the closed set
+// of record types or `unknown`, when written and when read. No other value is converted to a key.
+
+test('a rejection marker names a requested record-type string, and unknown for any other value', async () => {
+  const setup = initialized();
+  const { recorder, close } = recorderFor(setup);
+  await passingSuite(recorder, temporary());
+  const requested = [
+    ['child', 'child'],
+    ['rejected', 'rejected'],
+    ['not-a-type', 'unknown'],
+    [Object('child'), 'unknown'],
+    [['child'], 'unknown'],
+    [{ toString: () => 'cleanup' }, 'unknown'],
+    [Object.create(null), 'unknown'],
+    [42, 'unknown'],
+    [null, 'unknown'],
+  ];
+  for (const [index, [type, recordType]] of requested.entries()) {
+    const marker = recorder.record(type, {});
+    assert.deepEqual([marker?.type, marker?.recordType], ['rejected', recordType], `${index}`);
+    assert.equal(validateRecord(marker), true, `${index}`);
+  }
+  close();
+  const records = lines(join(setup.directory, FILES.observations));
+  assert.deepEqual(
+    records.filter((record) => record.type === 'rejected').map((record) => record.recordType),
+    requested.map(([, recordType]) => recordType),
+  );
+  assert.equal(records.at(-1).rejected, requested.length);
+  const outcome = finalizeEvidence({ env: finalizeEnv(setup) });
+  const { state, rejected } = outcome.result.observations;
+  assert.deepEqual(
+    [outcome.status, outcome.exitCode, state, rejected, outcome.result.missing, outcome.upload],
+    [
+      'incomplete',
+      1,
+      'valid',
+      requested.length,
+      ['records-rejected'],
+      [FILES.manifest, FILES.result, FILES.observations].map((name) => join(setup.directory, name)),
+    ],
+  );
+});
+
+test('the reader refuses a rejection marker whose record type is not a supported string', () => {
+  const at = '2026-11-17T19:16:23.257Z';
+  const marker = (recordType) => ({ seq: 2, at, type: 'rejected', recordType });
+  for (const recordType of ['child', 'cleanup', 'rejected', 'recorder-open', 'unknown'])
+    assert.equal(validateRecord(marker(recordType)), true, recordType);
+  for (const [index, recordType] of [
+    Object('child'),
+    ['child'],
+    [['child']],
+    { toString: () => 'child' },
+    Object.create(null),
+    1,
+    true,
+    null,
+    'not-a-type',
+    'toString',
+    '__proto__',
+    'Child',
+    '',
+  ].entries())
+    assert.equal(validateRecord(marker(recordType)), false, `${index}`);
+
+  const evidenceId = '0d4f8c56-8f43-4b52-9b77-4fd1a9c2d001';
+  const parse = (recordType) =>
+    parseObservations(
+      Buffer.from(
+        [
+          { seq: 1, at, type: 'recorder-open', evidenceId },
+          marker(recordType),
+          {
+            seq: 3,
+            at,
+            type: 'recorder-closed',
+            written: 2,
+            rejected: 1,
+            omittedRecords: 0,
+            omittedBytes: 0,
+          },
+        ]
+          .map((record) => `${JSON.stringify(record)}\n`)
+          .join(''),
+      ),
+      evidenceId,
+    );
+  for (const recordType of ['child', 'unknown']) {
+    const parsed = parse(recordType);
+    assert.equal(parsed.state, 'valid', recordType);
+    assert.equal(parsed.records[1].recordType, recordType);
+  }
+  for (const recordType of [['child'], [['child']], { 0: 'child' }, 1, null, 'not-a-type'])
+    assert.deepEqual(
+      parse(recordType),
+      { state: 'rejected', reason: 'invalid-record', records: [] },
+      JSON.stringify(recordType),
+    );
+});
+
+test('finalize never uploads observations whose rejection marker holds a structured record type', async () => {
+  for (const [native, status] of [
+    ['success', 'incomplete'],
+    ['failure', 'native-failed'],
+  ]) {
+    const setup = initialized();
+    const { recorder, close } = recorderFor(setup);
+    await passingSuite(recorder, temporary());
+    recorder.record('child', { diagnostic: CANARY });
+    close();
+    const path = join(setup.directory, FILES.observations);
+    const records = lines(path);
+    const marker = records.find((record) => record.type === 'rejected');
+    assert.equal(marker.recordType, 'child');
+    marker.recordType = ['child'];
+    writeFileSync(path, records.map((record) => `${JSON.stringify(record)}\n`).join(''));
+    const outcome = finalizeEvidence({ env: finalizeEnv(setup, native) });
+    const { state, reason } = outcome.result.observations;
+    assert.deepEqual(
+      [outcome.status, outcome.exitCode, state, reason, outcome.result.missing, outcome.upload],
+      [
+        status,
+        1,
+        'rejected',
+        'invalid-record',
+        ['observations-rejected'],
+        [FILES.manifest, FILES.result].map((name) => join(setup.directory, name)),
+      ],
+      native,
+    );
+  }
+});
