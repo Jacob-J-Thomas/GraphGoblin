@@ -2,6 +2,10 @@
 
 ## Approval and admission
 
+This section records the November 17, 2026 approval and admission snapshot. The linked issues,
+PRs and dated [execution checkpoints](2026-11-17-intent-1-execution.md) own subsequent gate,
+finding and delivery states; this scope register does not replace their exact-head records.
+
 The owner approved the proposed next batch on November 17, 2026:
 
 > I approve this plan. Send it to the main thread to implement the five intents in order after the macOS launcher, preserving all AIDLC gates and using Claude Code for UI and other implementation work that claude is better suited for, QA, and adversarial review.
@@ -20,16 +24,25 @@ recommendation to overlap intent 2 with intent 1 is superseded by this strict se
 The question explicitly identified that PR #501 remained draft with Mac QA and the dependency
 audit blocker unresolved. This answer supersedes only the previous Mac-first admission
 dependency. [Recorded owner amendment](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6969001971).
-Intent 1 starts from main `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1` in isolated worktrees.
+Intent 1 started from main `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1` in isolated worktrees.
 The next four intents remain ordered behind it. All review, independent QA, CI, final audit,
 merge and owner-acceptance gates remain intact.
 
-PR #501 remains a separate draft at `6fe12f412cd74b034a77cde10a521bb319e8aa96` with local Mac QA
-and its reserved final audit open. CI14 passed native/browser/unit checks but failed the
+At that admission, PR #501 was a separate draft at `6fe12f412cd74b034a77cde10a521bb319e8aa96`
+with local Mac QA and its reserved final audit open. CI14 passed native/browser/unit checks but failed the
 dependency audit; [#503](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/503) tracks that
-shared prerequisite. Its unpatched picomatch finding is not waived by this admission.
+shared prerequisite. That admission did not waive its then-unpatched picomatch finding.
 The [current-batch register](2026-11-13-four-intents-register.md) retains the historical launcher
 delivery record; current issue/PR checkpoints take precedence over those earlier snapshots.
+
+On November 18 the owner approved the exact-lock, seven-day nonrenewing #503 exception and
+continued the five intents in order with every other AIDLC gate intact. The owner also
+authorized blocker decisions with their rationale and alternatives catalogued in the final
+QA sign-off. GitHub had already withdrawn the advisory before that approval, and the
+unchanged ordinary audit passed without using the exception. [#503's decision and verification](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/503)
+and the linked execution checkpoints retain the dated evidence. This changes neither the
+approved intent sequence nor the review, independent QA, current-head/current-target CI,
+fresh Astra MAX final audit, merge and owner-acceptance gates.
 
 The owner authorized the named scope and appropriate un-parking/reconciliation at admission.
 This does not approve an unresolved architecture plan, resolve a refinement gate, release
@@ -186,7 +199,8 @@ Preserve owner environments, real stores, credentials, ports and unrelated dirty
 the existing scoped permissions for commits, publication and merges without broader authority.
 No paid overages, personal plugin installation, marketplace publication or new provider access
 is included. Follow [docs/15](../15-issue-workflow.md) at each admission. Intent 1's five core
-issues and two bounded diagnostics are now unparked and admitted. Intents 2–5 remain approved
-future scope, not yet admitted. Admission is not implementation completion, QA, review, CI,
+issues and two bounded diagnostics were unparked and admitted on November 17. Each later
+intent requires its preceding intent's engineering delivery under the approved sequence.
+Admission is not implementation completion, QA, review, CI,
 merge or owner acceptance. The [intent 1 execution ledger](2026-11-17-intent-1-execution.md)
 records bounded ownership and gate states.
