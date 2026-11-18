@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Direct Node invocations of the generated-document, migration and performance-summary
+  commands execute when the checkout is reached through a directory alias (#495).
+  Importing those modules remains inert. The supported pnpm checks already rejected invalid
+  inputs through the tested Windows junction.
+
 - API test workers reserve their assigned loopback ports through subprocess startup,
   restart and cleanup, so parallel fixtures cannot select the same port (#407).
 

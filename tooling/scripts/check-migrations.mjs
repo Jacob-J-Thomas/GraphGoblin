@@ -5,7 +5,6 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { spawnSync } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
 
 const infrastructure = resolve(import.meta.dirname, '../../packages/infrastructure');
 const require = createRequire(join(infrastructure, 'package.json'));
@@ -101,7 +100,7 @@ export async function checkMigrations(schema = join(infrastructure, 'src/sqlite/
     await rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+if (import.meta.main) {
   try {
     console.log(await checkMigrations());
   } catch (error) {
