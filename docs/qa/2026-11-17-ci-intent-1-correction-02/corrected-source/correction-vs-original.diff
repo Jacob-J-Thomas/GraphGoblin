@@ -1,0 +1,407 @@
+--- original-source/docs/10-testing-and-quality.md
++++ corrected-source/docs/10-testing-and-quality.md
+@@ -158,7 +158,7 @@
+ - **Bounds.** Each record is at most 1 KiB and the file at most 1,024 records and 192 KiB, with room reserved for the closing records. Records beyond that are counted as omitted after one `overflow` record. The manifest is capped at 8 KiB and the result at 16 KiB, so the archive stays below 256 KiB.
+ - **Failures.** A failing test or subtest also prints its typed end record and its last child record to stdout. An evidence directory that is missing, linked, outside the runner temp or not created by `init` is refused with one stdout marker; the tests still run with their own result. A write failure stops recording with one marker and never throws into a test.
+ - **Finalize.** After the native step, on every outcome of a successfully prepared directory, `finalize` refuses a directory that is not the `init` directory for this job. It also refuses any entry other than the two expected files, and a link, hard link, non-file or oversized file, without following, deleting or writing anything. The manifest must be exactly the bytes `init` wrote: it is rebuilt from its validated values, the fixed limits and file names, and the fields derived from them (the `unavailable` list and the checkout comparisons), then compared byte for byte, so an unknown or repeated field at any depth, a byte-order mark or other formatting is refused before any path is published. Observation bytes must be the recorder's canonical serialization without a byte-order mark. The stream must start with its one `recorder-open`, hold at most one `overflow` record and at most one final `recorder-closed` record whose counts match the stream, and state each once-per-run fact once. Any other byte or contradiction rejects the file. These checks validate shape and consistency; they do not authenticate files that a hostile runner could write. It then writes `result.json` with the install, build and native step outcomes, the observation state and counts, per-case results and the missing required observations. The upload receives only the exact file paths, as `windows-launcher-<attempt>`, with `include-hidden-files: false` and `if-no-files-found: error`.
+-- **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; every started subtest ended and passed; both checkout-alias records with a matched target, no failure stage and an unlinked alias, each after owner-verified, drained releases through both the alias and the direct spelling; the single-owner contention trials 1, 2 and 3, each its own record; and a final state for every fixture. Alias and contention records count only from their own case. Every checkout comparison that applies to the event must also hold: a false one is a known contradiction (`binding-contradiction`) and a missing one leaves the revision unverified (`binding-unverified`). A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
++- **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; every started subtest ended and passed; both checkout-alias records with a matched target, no failure stage and an unlinked alias, each after owner-verified, drained releases through both the alias and the direct spelling; the single-owner contention trials 1, 2 and 3, each its own record; and a final state for every fixture. Alias and contention records count only from their own case. Every checkout comparison that applies to the event must also hold: a false one is a known contradiction (`binding-contradiction`) and a missing one leaves the revision unverified (`binding-unverified`). The run identity must be bound too: a missing or malformed repository, workflow reference, job key, run ID, run attempt, event or ref is reported once as `binding-identity`. The runner OS, architecture and image and the Node version are diagnostics that may stay unavailable, and a push needs no event base. A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
+ - **Retention.** Fixtures under `.tmp` and OS TEMP are left in place, including any kept because a release or unlink could not be verified. Evidence records their final state and never copies or traverses them.
+ 
+ Without `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR` the local `pnpm test:windows-launcher` writes no evidence and keeps its usual output. The CI evidence binds to the checkout but does not establish a hosted result by itself: the uploaded archive, its GitHub digest and the job's own log are the evidence.
+--- original-source/tooling/scripts/windows-launcher-evidence.mjs
++++ corrected-source/tooling/scripts/windows-launcher-evidence.mjs
+@@ -739,13 +739,15 @@
+   }
+ 
+   #rejection(type) {
+-    this.#rejected++;
+-    return {
++    const record = {
+       seq: ++this.#seq,
+       at: this.#now().toISOString(),
+       type: 'rejected',
+       recordType: Object.hasOwn(SCHEMAS, type) ? type : 'unknown',
+     };
++    // Counted only once the record exists, so every counted rejection is written or omitted.
++    this.#rejected++;
++    return record;
+   }
+ 
+   #append(record, tail, line = Buffer.from(`${JSON.stringify(record)}\n`, 'utf8')) {
+@@ -1080,10 +1082,20 @@
+ }
+ 
+ /**
+- * Binding requirements of complete evidence: every checkout comparison that applies to the event
+- * holds. A false comparison is a known contradiction; a null one leaves the revision unverified.
++ * The run identity complete evidence must bind. The runner OS, architecture and image and the Node
++ * version are diagnostics that may stay unavailable; the event head and base count only through
++ * the checkout comparisons that apply to the event.
++ */
++const RUN_IDENTITY = ['repository', 'workflowRef', 'job', 'runId', 'runAttempt', 'event', 'ref'];
++
++/**
++ * Binding requirements of complete evidence: every run identity value is present and every
++ * checkout comparison that applies to the event holds. A missing or malformed identity value is
++ * null and reported once; a false comparison is a known contradiction; a null one leaves the
++ * revision unverified.
+  */
+-export function bindingRequirements({ event, checkout }) {
++export function bindingRequirements(binding) {
++  const { event, checkout } = binding;
+   const applicable =
+     event === 'pull_request'
+       ? [
+@@ -1093,6 +1105,7 @@
+         ]
+       : [checkout.matchesSha, checkout.headMatchesEventHead];
+   return [
++    ...(RUN_IDENTITY.some((name) => binding[name] === null) ? ['binding-identity'] : []),
+     ...(applicable.includes(false) ? ['binding-contradiction'] : []),
+     ...(applicable.includes(null) ? ['binding-unverified'] : []),
+   ];
+@@ -1180,7 +1193,9 @@
+ /**
+  * The recorder writes one opening record first, at most one `overflow` record, and at most one
+  * closing record last whose counts match the stream; and it refuses a repeated once-per-run fact.
+- * A stream that breaks either rule is not the recorder's output.
++ * Each rejection the closer counts is a `rejected` record in the stream or one of its omitted
++ * records, so without omissions its count equals the stream's. A stream that breaks either rule is
++ * not the recorder's output.
+  */
+ function streamContradiction(records) {
+   const facts = new Set();
+@@ -1196,6 +1211,7 @@
+         (index !== records.length - 1 ||
+           record.written !== index ||
+           record.rejected < rejections ||
++          record.rejected > rejections + record.omittedRecords ||
+           record.omittedRecords > 0 !== (overflows === 1)))
+     )
+       return 'lifecycle';
+--- original-source/tooling/scripts/windows-launcher-evidence.test.mjs
++++ corrected-source/tooling/scripts/windows-launcher-evidence.test.mjs
+@@ -1500,7 +1500,11 @@
+     ),
+   });
+   assert.equal(notRun.status, 'not-run');
+-  assert.deepEqual(notRun.result.missing, ['observations-absent', 'binding-unverified']);
++  assert.deepEqual(notRun.result.missing, [
++    'observations-absent',
++    'binding-identity',
++    'binding-unverified',
++  ]);
+   assert.ok(notRun.upload.some((path) => path.endsWith(FILES.manifest)));
+ 
+   // Through the real CLI: an unknown manifest field is refused and no path is published.
+@@ -1615,6 +1619,9 @@
+     });
+   const init = cli('init', {
+     RUNNER_TEMP: runnerTemp,
++    // An identified push run, so the contradiction is the only missing binding requirement.
++    ...github,
++    ...push,
+     GITHUB_EVENT_NAME: 'push',
+     GITHUB_SHA: head,
+     GG_TEST_EVIDENCE_EVENT_HEAD: '1'.repeat(40),
+@@ -1918,3 +1925,299 @@
+   ])
+     assert.deepEqual(parse(...rows), { state: 'rejected', reason, records: [] }, rows.join('\n'));
+ });
++
++// Correction 02 of #496: complete evidence names an identified run, and a closer's rejected count
++// agrees with the stream.
++
++const pushRun = {
++  GITHUB_EVENT_NAME: 'push',
++  GITHUB_REF: 'refs/heads/main',
++  GITHUB_WORKFLOW_REF: 'Jacob-J-Thomas/GraphGoblin/.github/workflows/ci.yml@refs/heads/main',
++  GG_TEST_EVIDENCE_EVENT_HEAD: SHA('c'),
++  GG_TEST_EVIDENCE_EVENT_BASE: '',
++};
++
++/** A run initialized with `extra` over `github`, recorded passing unless skipped, and finalized. */
++async function recordedRun(extra, native = 'success') {
++  const runnerTemp = temporary('gg-496-runner-');
++  const env = { RUNNER_TEMP: runnerTemp, ...github, ...extra };
++  const { directory, evidenceId, manifest } = initializeEvidence({ env, git: mergeGit });
++  if (native !== 'skipped') {
++    const { recorder, close } = recorderFor({ runnerTemp, directory });
++    await passingSuite(recorder, temporary());
++    close();
++  }
++  const outcome = finalizeEvidence({
++    env: finalizeEnv({ runnerTemp, directory, evidenceId }, native),
++  });
++  return {
++    unavailable: manifest.binding.unavailable,
++    outcome: [outcome.status, outcome.exitCode, outcome.result.missing, outcome.upload.length],
++  };
++}
++
++test('complete evidence needs every run identity value, while runner diagnostics may be unavailable', async () => {
++  // Identified push and pull-request runs stay complete without the runner OS, architecture and
++  // image; a push has no event base.
++  for (const event of [pushRun, {}]) {
++    const run = await recordedRun({
++      ...event,
++      RUNNER_OS: '',
++      RUNNER_ARCH: undefined,
++      ImageVersion: 'x',
++    });
++    assert.deepEqual(run, {
++      unavailable: ['runnerOs', 'runnerArch', 'imageVersion'],
++      outcome: ['complete', 0, [], 3],
++    });
++  }
++
++  // A missing or malformed identity value keeps a verified, passing run incomplete with one
++  // marker, and its valid files are still uploaded.
++  const identity = {
++    repository: ['GITHUB_REPOSITORY', 'GraphGoblin'],
++    workflowRef: ['GITHUB_WORKFLOW_REF', 'refs/heads/main'],
++    job: ['GITHUB_JOB', 'windows launcher'],
++    runId: ['GITHUB_RUN_ID', '0'],
++    runAttempt: ['GITHUB_RUN_ATTEMPT', '2a'],
++    event: ['GITHUB_EVENT_NAME', 'Push'],
++    ref: ['GITHUB_REF', 'main'],
++  };
++  for (const [name, [variable, malformed]] of Object.entries(identity))
++    for (const value of ['', malformed])
++      assert.deepEqual(
++        await recordedRun({ ...pushRun, [variable]: value }),
++        { unavailable: [name], outcome: ['incomplete', 1, ['binding-identity'], 3] },
++        `${variable}=${JSON.stringify(value)}`,
++      );
++
++  // Several missing values are one marker, and a known contradiction keeps its own diagnosis.
++  const anonymous = await recordedRun({
++    ...pushRun,
++    GITHUB_RUN_ID: '',
++    GITHUB_RUN_ATTEMPT: '',
++    GITHUB_JOB: '',
++    GG_TEST_EVIDENCE_EVENT_HEAD: SHA('f'),
++  });
++  assert.deepEqual(anonymous.outcome, [
++    'incomplete',
++    1,
++    ['binding-identity', 'binding-contradiction'],
++    3,
++  ]);
++
++  // A failed or skipped native step keeps its own status and its valid files.
++  const unidentified = { ...pushRun, GITHUB_RUN_ID: '' };
++  assert.deepEqual((await recordedRun(unidentified, 'failure')).outcome, [
++    'native-failed',
++    0,
++    ['binding-identity'],
++    3,
++  ]);
++  assert.deepEqual((await recordedRun(unidentified, 'skipped')).outcome, [
++    'not-run',
++    0,
++    ['observations-absent', 'binding-identity'],
++    2,
++  ]);
++});
++
++test('through the real CLI, a verified run without its run ID keeps its files and is not complete', async () => {
++  const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
++  const runnerTemp = temporary('gg-496-runner-');
++  const cli = (command, output, env) =>
++    spawnSync(process.execPath, [helper, command], {
++      encoding: 'utf8',
++      timeout: 30_000,
++      windowsHide: true,
++      env: { ...process.env, GITHUB_STEP_SUMMARY: '', GITHUB_OUTPUT: output, ...env },
++    });
++  const results = [];
++  for (const runId of ['44200000001', '']) {
++    const output = join(temporary(), 'output');
++    const init = cli('init', output, {
++      RUNNER_TEMP: runnerTemp,
++      ...github,
++      ...pushRun,
++      GITHUB_SHA: head,
++      GG_TEST_EVIDENCE_EVENT_HEAD: head,
++      GITHUB_RUN_ID: runId,
++    });
++    assert.equal(init.status, 0, init.stderr);
++    const values = Object.fromEntries(
++      readFileSync(output, 'utf8')
++        .trim()
++        .split('\n')
++        .map((line) => line.split('=')),
++    );
++    const { binding } = JSON.parse(readFileSync(join(values.dir, FILES.manifest), 'utf8'));
++    const recording = recorderFor({ runnerTemp, directory: values.dir });
++    await passingSuite(recording.recorder, temporary());
++    recording.close();
++    const finalOutput = join(temporary(), 'output');
++    const final = cli(
++      'finalize',
++      finalOutput,
++      finalizeEnv({ runnerTemp, directory: values.dir, evidenceId: values.id }),
++    );
++    const { status, missing } = JSON.parse(final.stdout);
++    const [, , paths] = /^paths<<(\S+)\n([\s\S]*?)\n\1$/m.exec(readFileSync(finalOutput, 'utf8'));
++    results.push({
++      exit: final.status,
++      comparisons: [binding.checkout.matchesSha, binding.checkout.headMatchesEventHead],
++      unavailable: binding.unavailable,
++      status,
++      missing,
++      files: paths.split('\n').map((path) => basename(path)),
++    });
++  }
++  const files = [FILES.manifest, FILES.result, FILES.observations];
++  assert.deepEqual(results, [
++    {
++      exit: 0,
++      comparisons: [true, true],
++      unavailable: [],
++      status: 'complete',
++      missing: [],
++      files,
++    },
++    {
++      exit: 1,
++      comparisons: [true, true],
++      unavailable: ['runId'],
++      status: 'incomplete',
++      missing: ['binding-identity'],
++      files,
++    },
++  ]);
++});
++
++test("a closer's rejected count must equal the stream's unless it also counts omitted records", async () => {
++  const evidenceId = '0d4f8c56-8f43-4b52-9b77-4fd1a9c2d001';
++  const line = (seq, type, fields) =>
++    JSON.stringify({ seq, at: '2026-11-17T19:16:23.257Z', type, ...fields });
++  const open = line(1, 'recorder-open', { evidenceId });
++  const closed = (seq, written, extra) =>
++    line(seq, 'recorder-closed', {
++      written,
++      rejected: 0,
++      omittedRecords: 0,
++      omittedBytes: 0,
++      ...extra,
++    });
++  const rejection = (seq) => line(seq, 'rejected', { recordType: 'child' });
++  const overflow = (seq) => line(seq, 'overflow', { firstOmittedSeq: seq - 1 });
++  const omitted = { omittedRecords: 1, omittedBytes: 60 };
++  const parse = (...rows) => parseObservations(Buffer.from(`${rows.join('\n')}\n`), evidenceId);
++  // Equal counts, and a rejection that was itself the omitted record, are the recorder's output.
++  assert.equal(parse(open, rejection(3), closed(4, 2, { rejected: 1 })).state, 'valid');
++  assert.equal(parse(open, overflow(4), closed(5, 2, { rejected: 1, ...omitted })).state, 'valid');
++  for (const rows of [
++    [open, closed(2, 1, { rejected: 1 })],
++    [open, rejection(3), closed(4, 2, { rejected: 2 })],
++    [open, overflow(4), closed(5, 2, { rejected: 2, ...omitted })],
++  ])
++    assert.deepEqual(
++      parse(...rows),
++      { state: 'rejected', reason: 'lifecycle', records: [] },
++      rows.join('\n'),
++    );
++
++  // A real passing recording whose closer claims a rejection it never wrote is never complete and
++  // its observations are not uploaded; a failed native step keeps its own status.
++  for (const native of ['success', 'failure']) {
++    const setup = initialized();
++    const { recorder, close } = recorderFor(setup);
++    await passingSuite(recorder, temporary());
++    close();
++    const path = join(setup.directory, FILES.observations);
++    const records = lines(path);
++    assert.deepEqual([records.at(-1).rejected, records.at(-1).omittedRecords], [0, 0]);
++    records.at(-1).rejected = 1;
++    writeFileSync(path, records.map((record) => `${JSON.stringify(record)}\n`).join(''));
++    const outcome = finalizeEvidence({ env: finalizeEnv(setup, native) });
++    const { state, reason, rejected } = outcome.result.observations;
++    assert.deepEqual(
++      [outcome.status, outcome.exitCode, state, reason, rejected, outcome.upload.length],
++      [native === 'success' ? 'incomplete' : 'native-failed', 1, 'rejected', 'lifecycle', 0, 2],
++    );
++  }
++});
++
++test('a genuine overflow that omits rejections stays valid partial evidence', async () => {
++  const cleanup = {
++    case: 'bounded-logs',
++    subtest: 0,
++    action: 'gateway-drain',
++    result: 'drained',
++    count: null,
++  };
++  for (const [native, status, exitCode] of [
++    ['success', 'incomplete', 1],
++    ['failure', 'native-failed', 0],
++  ]) {
++    const setup = initialized();
++    const { recorder, close } = recorderFor(setup);
++    await passingSuite(recorder, temporary());
++    recorder.record('child', { case: 'launcher', subtest: 0, diagnostic: CANARY });
++    for (let index = 0; index < LIMITS.records; index++) recorder.record('cleanup', cleanup);
++    // Past capacity these rejections are counted but omitted.
++    for (let index = 0; index < 3; index++) recorder.record('child', { diagnostic: CANARY });
++    close();
++    const records = lines(join(setup.directory, FILES.observations));
++    const closer = records.at(-1);
++    assert.equal(records.filter((record) => record.type === 'rejected').length, 1);
++    assert.equal(closer.rejected, 4);
++    assert.ok(closer.omittedRecords >= 3);
++    const outcome = finalizeEvidence({ env: finalizeEnv(setup, native) });
++    const { observations } = outcome.result;
++    assert.deepEqual(
++      [
++        outcome.status,
++        outcome.exitCode,
++        observations.state,
++        observations.closed,
++        observations.rejected,
++        observations.omittedRecords,
++        outcome.result.missing,
++        outcome.upload.length,
++      ],
++      [
++        status,
++        exitCode,
++        'valid',
++        true,
++        1,
++        closer.omittedRecords,
++        ['records-omitted', 'records-rejected'],
++        3,
++      ],
++    );
++    assert.ok(Object.values(outcome.result.cases).every((entry) => entry.result === 'pass'));
++  }
++});
++
++test('a rejection the recorder could not stamp is neither written nor counted', async () => {
++  let failAfter = 0;
++  const now = () => {
++    if (failAfter > 0 && --failAfter === 0) throw new RangeError('clock unavailable');
++    return new Date();
++  };
++  const setup = initialized();
++  const { recorder, close } = recorderFor(setup, { now });
++  await passingSuite(recorder, temporary());
++  // The invalid record's own timestamp succeeds; the clock then fails while stamping its rejection.
++  failAfter = 2;
++  assert.equal(recorder.record('child', { diagnostic: CANARY }), null);
++  close();
++  const records = lines(join(setup.directory, FILES.observations));
++  assert.deepEqual(
++    [records.filter((record) => record.type === 'rejected').length, records.at(-1).rejected],
++    [0, 0],
++  );
++  const outcome = finalizeEvidence({ env: finalizeEnv(setup) });
++  assert.deepEqual(
++    [outcome.status, outcome.exitCode, outcome.result.observations.state],
++    ['complete', 0, 'valid'],
++  );
++});

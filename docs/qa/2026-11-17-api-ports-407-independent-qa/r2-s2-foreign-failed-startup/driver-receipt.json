@@ -1,0 +1,63 @@
+{
+  "run": "r2-s2-foreign-failed-startup",
+  "steps": [],
+  "foreignStarted": [
+    {
+      "port": 63806,
+      "host": "127.0.0.1",
+      "pid": 24364
+    },
+    {
+      "port": 63805,
+      "host": "0.0.0.0",
+      "pid": 3744
+    }
+  ],
+  "foreignAnswersBeforeVitest": {
+    "63805": "200:foreign:0.0.0.0",
+    "63806": "200:foreign:127.0.0.1"
+  },
+  "vitest": {
+    "command": [
+      "pnpm.cmd",
+      "exec",
+      "vitest",
+      "run",
+      "--reporter=verbose",
+      "--maxWorkers=1",
+      "src/qa407/qa407-s2"
+    ],
+    "cwd": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261117-ports-407-qa\\GraphGoblin\\apps\\api",
+    "env": {
+      "GG_TEST_PORT_START": "63804",
+      "GG_TEST_PORT_COUNT": "3",
+      "TEMP": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261117-ports-407-qa\\GraphGoblin\\.tmp\\qa407\\r2-s2-foreign-failed-startup\\tmp"
+    },
+    "startedAt": "2026-11-18T05:09:55.148Z",
+    "endedAt": "2026-11-18T05:11:35.382Z",
+    "exit": 1
+  },
+  "foreignAnswersAfterVitest": {
+    "63805": "200:foreign:0.0.0.0",
+    "63806": "200:foreign:127.0.0.1"
+  },
+  "foreignExits": [
+    {
+      "port": 63806,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "port": 63805,
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "tempEntriesAfter": [],
+  "portsAfterExit": 0,
+  "nodeProcessesAfter": {
+    "processes": [],
+    "count": 0,
+    "at": "2026-11-18T05:11:36.3191562Z"
+  }
+}

@@ -1,0 +1,182 @@
+# QA-ONLY disposable #488 control generated from the frozen candidate ci.yml. Never merge.
+name: QA 488 coverage step timeout
+
+on:
+  push:
+    branches: [qa/gg-488-coverage-step-timeout]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-checks:
+    name: Repository checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Reset acceptance
+        run: pnpm test:reset
+
+      - name: Recovery process acceptance
+        run: pnpm test:recovery-process
+
+      - name: Chat restart acceptance
+        run: pnpm test:chat-restart
+
+      - name: Wait restart acceptance
+        run: pnpm test:wait-restart
+
+      - name: Prompt restart acceptance
+        run: pnpm test:prompt-restart
+      - name: Webhook retry acceptance
+        run: pnpm test:webhook-retry
+
+      - name: Current-format migration acceptance
+        run: pnpm test:upgrade
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Layer rules
+        run: pnpm check:layers
+
+      - name: Migration generation is a no-op
+        run: pnpm check:migrations
+
+      - name: Design token rules
+        run: pnpm check:tokens
+
+      - name: Dependency graph rules
+        run: pnpm check:deps
+
+      - name: Shipped templates and deliberate-invalid refusal
+        run: pnpm check:templates
+
+      - name: Licence allowlist
+        run: pnpm check:licenses
+
+      - name: Generated docs are current
+        run: pnpm check:docs
+
+      - name: Design token contrast table is current and passing
+        run: pnpm check:contrast
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      # The same full build as Repository checks, so every suite sees the original built inputs.
+      - name: Build
+        run: pnpm build
+
+      - name: Install Chromium for tooling browser measurements
+        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium
+
+      - name: Unit tests with coverage thresholds
+        id: coverage
+        # The step cap leaves job time to retain the reports of a failed or timed-out run.
+        timeout-minutes: 1
+        run: |
+          mkdir -p packages/contracts/coverage && printf '{"total":{"lines":{"pct":0}},"qa":"benign partial report"}' > packages/contracts/coverage/coverage-summary.json
+          sleep 180
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            packages/*/coverage/coverage-summary.json
+            apps/*/coverage/coverage-summary.json
+            tooling/coverage/coverage-summary.json
+          if-no-files-found: warn
+
+      - name: Coverage report status
+        if: always()
+        shell: bash
+        env:
+          COVERAGE_OUTCOME: ${{ steps.coverage.outcome }}
+        run: |
+          reports=$( (ls packages/*/coverage/coverage-summary.json apps/*/coverage/coverage-summary.json tooling/coverage/coverage-summary.json 2>/dev/null || true) | wc -l)
+          {
+            echo '## Coverage'
+            echo
+            echo "Coverage step: \`${COVERAGE_OUTCOME:-not run}\`. Package summaries retained: ${reports}."
+            if [ "${COVERAGE_OUTCOME:-}" != success ]; then
+              echo
+              echo 'The coverage step did not succeed: any retained summaries are partial and establish no passing gate.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Coverage step: ${COVERAGE_OUTCOME:-not run}; package summaries retained: ${reports}"
+
+  # The stable required status. It always runs, even when a lane fails, is skipped or is
+  # cancelled, and passes only when both lanes succeeded: a skipped Gates would satisfy a
+  # required check, so it is never skippable.
+  gates:
+    name: Gates
+    needs: [repository-checks, coverage]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require Repository checks and Coverage to succeed
+        shell: bash
+        env:
+          REPOSITORY_CHECKS: ${{ needs.repository-checks.result }}
+          COVERAGE: ${{ needs.coverage.result }}
+        run: |
+          {
+            echo '## Gates'
+            echo
+            echo '| Required job | Result |'
+            echo '| --- | --- |'
+            echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"
+            echo "| Coverage | \`${COVERAGE:-missing}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"
+          if [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then
+            echo 'Gates passed: Repository checks and Coverage both succeeded.'
+            exit 0
+          fi
+          echo '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'
+          exit 1
+

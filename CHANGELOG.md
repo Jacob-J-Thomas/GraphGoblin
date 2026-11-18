@@ -9,6 +9,35 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   cleanup have settled, so the next case never sees its late calls. Test timeouts, coverage and
   retry settings are unchanged; no product behaviour changes. (#466)
 
+- Direct Node invocations of the generated-document, migration and performance-summary
+  commands execute when the checkout is reached through a directory alias (#495).
+  Importing those modules remains inert. The supported pnpm checks already rejected invalid
+  inputs through the tested Windows junction.
+
+- API test workers reserve their assigned loopback ports through subprocess startup,
+  restart and cleanup, so parallel fixtures cannot select the same port (#407).
+
+- CI runs the repository checks and the serial coverage gate as two independent jobs, Repository
+  checks and Coverage, each with a 30-minute budget (#488, ADR-0084). Coverage gets its own
+  install and build and a 25-minute step cap, and uploads the package coverage summaries after
+  every outcome. The licence, generated-docs, contrast and dependency-audit checks no longer wait
+  for coverage. The `Gates` status is now a short aggregate that is always evaluated and passes
+  only when both jobs succeed; a failed, cancelled or skipped job never passes it. It stays the one
+  stable status context; `main` currently has no branch protection or ruleset requiring it.
+  Commands, arguments, thresholds and the test workload are unchanged.
+
+- The Windows launcher CI job uploads bounded, typed native evidence as `windows-launcher-<attempt>`
+  (#496). The earlier `.tmp/windows-launcher-*/` upload never produced an archive; by default the
+  uploader skips hidden paths, which include everything below `.tmp`. The evidence comes from a
+  fresh folder in the runner temp directory: a manifest binding the run and checkout, the suite's
+  typed observations, and a validated result, together under 256 KiB. It records test outcomes,
+  child exit codes, signals and timings, alias and cleanup dispositions, and fixture states, but
+  never paths, output, keys, stores or fixture files. The evidence folder is prepared after the
+  build, so a preparation failure fails the job without skipping the native tests and uploads
+  nothing. Only the exact manifest bytes `init` wrote are accepted. A passing native run without
+  its required observations, with a repeated or contradictory record, or with a checkout that does
+  not match, or cannot be matched to, the event fails the job.
+
 - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
   written by the gateway itself so it never waits on logging and keeps working after the launcher

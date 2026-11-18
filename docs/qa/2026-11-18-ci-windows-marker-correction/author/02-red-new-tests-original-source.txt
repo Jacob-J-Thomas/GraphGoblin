@@ -1,0 +1,134 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling
+
+ ❯ scripts/windows-launcher-evidence.test.mjs (36 tests | 3 failed | 33 skipped) 91ms
+   × a rejection marker names a requested record-type string, and unknown for any other value 46ms
+   × the reader refuses a rejection marker whose record type is not a supported string 2ms
+   × finalize never uploads observations whose rejection marker holds a structured record type 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  scripts/windows-launcher-evidence.test.mjs > a rejection marker names a requested record-type string, and unknown for any other value
+AssertionError: 3
++ actual - expected
+
+  [
+    'rejected',
++   [String: 'child']
+-   'unknown'
+  ]
+
+
+- Expected
++ Received
+
+  [
+    "rejected",
+-   "unknown",
++   String {
++     "0": "c",
++     "1": "h",
++     "2": "i",
++     "3": "l",
++     "4": "d",
++   },
+  ]
+
+ ❯ scripts/windows-launcher-evidence.test.mjs:2245:12
+    2243|   for (const [index, [type, recordType]] of requested.entries()) {
+    2244|     const marker = recorder.record(type, {});
+    2245|     assert.deepEqual([marker?.type, marker?.recordType], ['rejected', …
+       |            ^
+    2246|     assert.equal(validateRecord(marker), true, `${index}`);
+    2247|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  scripts/windows-launcher-evidence.test.mjs > the reader refuses a rejection marker whose record type is not a supported string
+AssertionError: 0
+
+true !== false
+
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ scripts/windows-launcher-evidence.test.mjs:2290:12
+    2288|     '',
+    2289|   ].entries())
+    2290|     assert.equal(validateRecord(marker(recordType)), false, `${index}`…
+       |            ^
+    2291|
+    2292|   const evidenceId = '0d4f8c56-8f43-4b52-9b77-4fd1a9c2d001';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  scripts/windows-launcher-evidence.test.mjs > finalize never uploads observations whose rejection marker holds a structured record type
+AssertionError: success
++ actual - expected
+
+  [
+    'incomplete',
+    1,
++   'valid',
++   null,
+-   'rejected',
+-   'invalid-record',
+    [
++     'records-rejected'
+-     'observations-rejected'
+    ],
+    [
+      'C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-496-runner-qLwY7Q\\windows-launcher-evidence-Jc1MQC\\manifest.json',
+      'C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-496-runner-qLwY7Q\\windows-launcher-evidence-Jc1MQC\\result.json',
++     'C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-496-runner-qLwY7Q\\windows-launcher-evidence-Jc1MQC\\observations.ndjson'
+    ]
+  ]
+
+
+- Expected
++ Received
+
+  [
+    "incomplete",
+    1,
+-   "rejected",
+-   "invalid-record",
++   "valid",
++   null,
+    [
+-     "observations-rejected",
++     "records-rejected",
+    ],
+    [
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-496-runner-qLwY7Q\\windows-launcher-evidence-Jc1MQC\\manifest.json",
+      "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-496-runner-qLwY7Q\\windows-launcher-evidence-Jc1MQC\\result.json",
++     "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-496-runner-qLwY7Q\\windows-launcher-evidence-Jc1MQC\\observations.ndjson",
+    ],
+  ]
+
+ ❯ scripts/windows-launcher-evidence.test.mjs:2345:12
+    2343|     const outcome = finalizeEvidence({ env: finalizeEnv(setup, native)…
+    2344|     const { state, reason } = outcome.result.observations;
+    2345|     assert.deepEqual(
+       |            ^
+    2346|       [outcome.status, outcome.exitCode, state, reason, outcome.result…
+    2347|       [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 33 skipped (36)
+   Start at  14:05:16
+   Duration  457ms (tests 39%, transform 31%, import 27%, worker 3%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261117-ci-gates\GraphGoblin\tooling
+
+exit=1

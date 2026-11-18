@@ -1,0 +1,19 @@
+Harness static check (before the witness run). Transcribed verbatim from the session's command output;
+the command's output was printed to the console and not redirected to a file at the time.
+
+cwd: C:/Users/98jak/.codex/worktrees/gg-20261117-ports-407-qa/GraphGoblin/apps/api
+1) esbuild transformSync (loader ts, format esm) on each src/qa407c/* file:
+syntax ok qa407c-a.test.ts
+syntax ok qa407c-b.test.ts
+syntax ok qa407c-scenarios.ts
+syntax ok qa407c-util.ts
+
+2) node ../../node_modules/typescript/bin/tsc -p tsconfig.json --noEmit 2>&1 | grep -i qa407c
+   (filtered to QA files only; errors elsewhere, if any, were not inspected)
+src/qa407c/qa407c-scenarios.ts(494,26): error TS2379: Argument of type '{ port: number; mode: string; pid: number | undefined; alive: boolean; get: { status?: number; body?: string; error?: string; }; }' is not assignable to parameter of type '{ port: number; mode: string; pid?: number; alive: boolean; get: { body?: string; }; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+src/qa407c/qa407c-scenarios.ts(500,45): error TS2379: Argument of type '{ exitCode: number | null; forced: boolean; } | { exitCode: undefined; forced: boolean; }' is not assignable to parameter of type '{ exitCode?: number | null; forced: boolean; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+src/qa407c/qa407c-util.ts(89,5): error TS2322: Type '{ ok: false; exhausted: boolean; code: string | undefined; message: string; t0: bigint; t1: bigint; }' is not assignable to type 'Attempt'.
+src/qa407c/qa407c-util.ts(142,37): error TS2345: Argument of type '{ status: number | undefined; body: string; }' is not assignable to parameter of type '{ status?: number; body?: string; error?: string; } | PromiseLike<{ status?: number; body?: string; error?: string; }>'.
+
+Assessment: all four are exactOptionalPropertyTypes type-level complaints in disposable QA files. Vitest strips
+types, so runtime behaviour is unaffected. They were left as-is; the QA files are not lint- or type-clean.

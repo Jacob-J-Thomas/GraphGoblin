@@ -1,0 +1,284 @@
+{
+  "node": "v22.23.4",
+  "source": {
+    "base": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+    "helper": {
+      "bytes": 54885,
+      "sha256": "3d2d6521410752e947103747c867d235b946d5c18769af1721357fbbf49f8caf"
+    }
+  },
+  "fixtureRoot": "C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-i1-cli-qa-QdwKFk",
+  "passed": 13,
+  "total": 13,
+  "claims": [
+    {
+      "name": "CLI arguments and init missing runner temp",
+      "pass": true,
+      "evidence": {
+        "extra": {
+          "code": 2,
+          "stdout": "",
+          "stderr": "Usage: windows-launcher-evidence.mjs init|finalize"
+        },
+        "bad": {
+          "code": 1,
+          "stdout": "",
+          "stderr": "Windows launcher evidence init refused: runner-temp-missing."
+        }
+      }
+    },
+    {
+      "name": "init runner temp inside checkout / junction / glob",
+      "pass": true,
+      "evidence": [
+        {
+          "code": 1,
+          "stderr": "Windows launcher evidence init refused: inside-checkout."
+        },
+        {
+          "code": 1,
+          "stderr": "Windows launcher evidence init refused: runner-temp-unsafe."
+        },
+        {
+          "code": 1,
+          "stderr": "Windows launcher evidence init refused: invalid-path."
+        }
+      ]
+    },
+    {
+      "name": "exact CLI init manifest and complete supported suite",
+      "pass": true,
+      "evidence": {
+        "binding": {
+          "unavailable": [],
+          "repository": "Jacob-J-Thomas/GraphGoblin",
+          "workflowRef": "Jacob-J-Thomas/GraphGoblin/.github/workflows/ci.yml@refs/heads/main",
+          "job": "windows-launcher",
+          "runId": "90496",
+          "runAttempt": "2",
+          "event": "push",
+          "ref": "refs/heads/main",
+          "sha": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+          "eventHead": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+          "eventBase": null,
+          "runnerOs": "Windows",
+          "runnerArch": "X64",
+          "imageVersion": "20261117.196.1",
+          "checkout": {
+            "state": "observed",
+            "head": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+            "tree": "430d34fda9d7e91752a7dbc93794242b4c17a5aa",
+            "parents": [
+              "e21c24be9cef109ef438fd2df4c1583bc570b1cb",
+              "3e8b98b80d478f0788ac50dd5817006fcf96c280"
+            ],
+            "matchesSha": true,
+            "headMatchesEventHead": true,
+            "baseParentMatchesEventBase": null,
+            "headParentMatchesEventHead": null
+          },
+          "node": "v22.23.4"
+        },
+        "members": [
+          {
+            "bytes": 1484,
+            "sha256": "5baef551a7569f2880cd52f61df132320492bd84241746c59e093247d1bef4f9"
+          },
+          {
+            "bytes": 1953,
+            "sha256": "322ae5b38b5aeb47299d344bfca1fd6cb3883522057ca7b7a671c13a609f46ab"
+          },
+          {
+            "bytes": 4958,
+            "sha256": "4ad7847af60f2ae9e7183e283ec9f6709459a0eda6ceb68a665913d611634206"
+          }
+        ],
+        "records": 25
+      }
+    },
+    {
+      "name": "missing observation positive, failed and skipped native statuses remain distinct",
+      "pass": true,
+      "evidence": [
+        {
+          "code": 1,
+          "status": "incomplete",
+          "uploaded": 2
+        },
+        {
+          "code": 0,
+          "status": "native-failed",
+          "uploaded": 2
+        },
+        {
+          "code": 0,
+          "status": "not-run",
+          "uploaded": 2
+        }
+      ]
+    },
+    {
+      "name": "init refuses unrelated path and finalizer refuses bad ID",
+      "pass": true,
+      "evidence": {
+        "code": 1,
+        "stdout": "",
+        "stderr": "Windows launcher evidence finalize refused: unowned.",
+        "paths": [],
+        "body": null
+      }
+    },
+    {
+      "name": "unsafe files and unexpected entries never reach output",
+      "pass": true,
+      "evidence": [
+        {
+          "file": "manifest.json",
+          "stderr": "Windows launcher evidence finalize refused: hard-link."
+        },
+        {
+          "file": "observations.ndjson",
+          "stderr": "Windows launcher evidence finalize refused: hard-link."
+        },
+        {
+          "file": "junction",
+          "stderr": "Windows launcher evidence finalize refused: link."
+        },
+        {
+          "file": "extra-store",
+          "stderr": "Windows launcher evidence finalize refused: unexpected-entry.",
+          "outsideHash": "6c26ce0f43d6f6dbe73b1c27318ab947fb1271f50cb9f0add311d9a99d8beb1d"
+        }
+      ]
+    },
+    {
+      "name": "malformed, duplicate-key, repeated sequence, truncated and oversized observations",
+      "pass": true,
+      "evidence": [
+        {
+          "scenario": "bad-json",
+          "reason": "malformed-record",
+          "uploaded": 2
+        },
+        {
+          "scenario": "duplicate-key",
+          "reason": "invalid-record",
+          "uploaded": 2
+        },
+        {
+          "scenario": "repeated-sequence",
+          "reason": "out-of-order",
+          "uploaded": 2
+        },
+        {
+          "scenario": "truncated",
+          "reason": "incomplete-line",
+          "uploaded": 2
+        },
+        {
+          "scenario": "oversized",
+          "reason": "Windows launcher evidence finalize refused: oversized.",
+          "uploaded": 0
+        }
+      ]
+    },
+    {
+      "name": "manifest tampering rejects unknown fields and duplicate keys",
+      "pass": true,
+      "evidence": [
+        {
+          "mode": "extra",
+          "code": 1,
+          "rawCanaryAllowed": false,
+          "preflight": {
+            "bytes": 1557,
+            "sha256": "334f243ad7a31bb72be20e971fff1e207bca712795a25086f1d830623ac20112"
+          },
+          "stderr": "Windows launcher evidence finalize refused: manifest-invalid."
+        },
+        {
+          "mode": "duplicate",
+          "code": 1,
+          "rawCanaryAllowed": false,
+          "preflight": {
+            "bytes": 1552,
+            "sha256": "bbe6ed0bc91278c8dc30f6e36468f3ad0e42af4f213da6021699ae9b7c58cf6a"
+          },
+          "stderr": "Windows launcher evidence finalize refused: manifest-invalid."
+        }
+      ]
+    },
+    {
+      "name": "wrong event head cannot be admitted as complete evidence",
+      "pass": true
+    },
+    {
+      "name": "one repeated contention trial cannot satisfy three trials",
+      "pass": true
+    },
+    {
+      "name": "one repeated alias spelling cannot satisfy both teardown paths",
+      "pass": true
+    },
+    {
+      "name": "byte canonicality rejects UTF-8 BOM prefix and duplicate recorder header",
+      "pass": true,
+      "evidence": [
+        {
+          "scenario": "bom",
+          "code": 1,
+          "observations": "rejected",
+          "retained": false
+        },
+        {
+          "scenario": "duplicate-header",
+          "code": 1,
+          "observations": "rejected",
+          "retained": false
+        }
+      ]
+    },
+    {
+      "name": "real Node parent/child exit, no recorder path, typed output, symlink state and overflow",
+      "pass": true,
+      "evidence": {
+        "testExit": 1,
+        "evidenceExit": 0,
+        "state": "native-failed",
+        "observations": {
+          "state": "valid",
+          "reason": null,
+          "bytes": 180472,
+          "records": 600,
+          "closed": true,
+          "rejected": 0,
+          "omittedRecords": 808,
+          "omittedBytes": 245558,
+          "byType": {
+            "recorder-open": 1,
+            "case-start": 1,
+            "fixture": 1,
+            "child": 594,
+            "overflow": 1,
+            "fixture-state": 1,
+            "recorder-closed": 1
+          }
+        },
+        "evidenceFiles": [
+          {
+            "bytes": 1484,
+            "sha256": "cdaeb8f1a67e805f21c7099ba2ebfc4577a83daf330eaa4e281deca4caffdd77"
+          },
+          {
+            "bytes": 2404,
+            "sha256": "3b1cff4ab2bde8ce618581133c6e6fd13ea3d2f9f73be72503a4338da2bb6276"
+          },
+          {
+            "bytes": 180472,
+            "sha256": "87024821cc414f8fa795c9909f180ab629bec8ce748ef2b13553716bdac94c7f"
+          }
+        ]
+      }
+    }
+  ]
+}

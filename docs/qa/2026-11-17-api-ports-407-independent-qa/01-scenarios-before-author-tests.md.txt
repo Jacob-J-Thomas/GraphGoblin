@@ -1,0 +1,21 @@
+# Scenario design (written after reading helper/config/subprocess source, before reading author tests, caller test diffs, witness files or author README)
+
+Mechanism read: per-run mkdtemp root provided by global setup; per-worker setupFile injects root;
+reserveApiPort = validate range -> random offset -> mkdir(root/port) atomic claim + mkdir(owner uuid) marker
+-> 127.0.0.1 bind probe -> keep claim; release = rmdir(marker) then rmdir(claim), memoised.
+createApiProcessFixture holds the reservation for its lifetime; dispose kills+awaits children, then releases.
+
+All native work restricted to 63800-63819, TEMP/TMP redirected to a QA-owned folder so the run root is observable.
+
+| ID | Kind | Range | Scenario | Criteria |
+| -- | ---- | ----- | -------- | -------- |
+| S0 | precheck | 63800-63819 | Bind every port on 127.0.0.1, 0.0.0.0 and :: and list netstat owners before/after each run; abort if occupied. | C10 |
+| S1 | E2E witness 1 (real vitest.config, 2 fork workers, built API) | 63800-63801 (count 2) | Two files rendezvous through QA files: both hold fixtures before any child binds; ports distinct; a 3rd reserve fails exhausted. Each starts real API child, creates key, authenticated readiness. Worker A stops its child and, while down and undisposed, worker B's reserve still fails (restart gap retains ownership); A restarts on same port to readiness. A disposes; B then reserves and receives A's former port only after A's child closed and port not listening. | C2 C3 C4 C5 C9 |
+| S2 | E2E witness 2 (real config, built API) | 63804-63806 (count 3) | External foreign listener (separate node process outside Vitest) on one port; fixtures never receive it, foreign still answers after run. A child forced to fail startup (corrupt DB / bad config) surfaces an error; reservation stays until the child has exited, then is reusable. | C6 C8 |
+| N1 | local negative | n/a | Invalid env/option ranges: junk, empty, 0, negative, fractional, start>65535, overflow, count 0 -> clear errors before any claim. | C1 |
+| N2 | local negative | 63810 (count 1) | Hold + second reserve -> clear exhaustion error in bounded time. | C2 |
+| N3 | local negative | 63811 (count 1) | Stale release: release, replacement claim, old release again -> replacement intact. External removal of claim + replacement + old release -> replacement intact. | C7 |
+| N4 | local negative | 63812 (count 1) | Dead-owner marker (claim dir left behind) -> observe whether it is reclaimed or blocks for the run. | C7 (observation) |
+| N5 | local negative | 63813-63816 | Foreign listener variants (127.0.0.1, 0.0.0.0, ::, ::1) on a count-1 range: is the port refused when a 127.0.0.1 child bind would conflict or shadow the foreign listener; foreign still serves. | C6 |
+| N6 | local stress | 63817 (count 1) | Two workers hammer reserve/release on the same single port: count spurious non-exhaustion errors (Windows pending-delete EPERM on mkdir/rmdir) and any double grants. | C3 C7 |
+| N7 | local negative | 63818 | Caller cleanup failure (children dispose rejects) keeps reservation; module without setup -> clear error. | C8 C9 |

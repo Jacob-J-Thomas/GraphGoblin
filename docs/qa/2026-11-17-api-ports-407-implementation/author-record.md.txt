@@ -1,0 +1,24 @@
+# #407 API fixture port reservations
+
+The isolated worktree is based on main at `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`. The Windows execution host reported Windows 11 Pro build 26300 and used project Node v22.23.4 with pnpm 12.8.1. The base and candidate used the same built API entry, SHA-256 `3160AC2A1339525DC3F63400BBD9ACA29AEA6663442D625CE6728BD35619325C`.
+
+## Two real Vitest workers
+
+The retained `witness-*.test.ts` specifications ran in two Vitest forks with a two-port range, starting at 63650. Each fork selected the same initial offset. File markers proved the first fixture selected its port before the second fork selected a port and authenticated against its own built API. The first fork only started its built API after the second API was ready. Marker files contain fixture-owned PIDs and port numbers.
+
+| Run | First port | Second port | Outcome |
+| --- | --- | --- | --- |
+| Baseline | 63650 | 63650 | The first API failed with `EADDRINUSE` after the second API authenticated. One test passed and one failed. |
+| Final candidate | 63650 | 63651 | Both built APIs authenticated. Both tests passed. |
+
+The baseline and final command receipts, logs, coordination markers and source manifests are under `baseline-actual-two-workers*`, `final-actual-two-workers*`, `baseline-sources.json` and `final-witness-sources.json`. The same witness passed on the earlier implementation snapshot preserved under `candidate-actual-two-workers*`. The witness files remain in this packet. The final candidate includes one maintained `api-port.test.ts` file for invalid and exhausted ranges, ownership across an unbound startup interval and after failure, preservation of an already-listening HTTP server, and refusal to release a replaced ownership marker.
+
+## Scope and gates
+
+The allocator coordinates callers within one API Vitest run. The helper owns a claim by numeric port while key creation, startup, restarts and cleanup proceed. The operating system bind probe skips ports with established listeners and closes before the API starts. Concurrent runs use disjoint assigned ranges. The separate acceptance scripts and tests that let the OS assign an ephemeral port have their own allocation methods.
+
+The touched Windows caller matrix ran on an earlier candidate before the Vitest context injection moved to a worker setup file. It covered existing built-entry lifecycle and bind-fault tests, managed in-process startup and its fault cases, in-process history startup, the shutdown HTTP receiver alongside the gateway, and targeted Events restart. It passed 75 tests with 10 skips on 63650–63659. The final candidate passed the added worker setup path in the two-worker witness. Build, typecheck, lint, workspace dependency layers and dependency-cruiser passed on the final runtime and test sources. Dependency-cruiser reported four orphan warnings on untouched files. Source hashes are in `final-sources.json`.
+
+All recorded loopback preflight and postflight results accompany their test receipts. The checks used owned temporary stores. The package gates and logs identify any skipped platform-specific cases. Independent review, QA, hosted CI and the final audit belong to the delivery orchestrator.
+
+The first final package coverage attempt passed 2,084 tests, with 16 skipped across 135 files. V8 reported 93.95% statements, 90.92% branches, 91.67% functions and 95.36% lines. The package ran with four Vitest workers and the ten-port allocation. Its command, log and coverage report are in `final-api-coverage*`. All ten ports were bindable after completion, the run's observed lease root was removed, and neither the witness stores nor the dedicated coverage stores remained. See `final-cleanup.json`. The all-repository caller search is in `caller-census.log`.

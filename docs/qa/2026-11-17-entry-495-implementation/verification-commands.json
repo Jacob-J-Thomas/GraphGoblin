@@ -1,0 +1,38 @@
+[
+  {
+    "phase": "setup",
+    "exit": 0,
+    "log": "pnpm-install-frozen.log",
+    "command": "pnpm.cmd install --frozen-lockfile"
+  },
+  {
+    "phase": "baseline scripts with new regression test",
+    "exit": 1,
+    "log": "regression-red.log",
+    "command": "pnpm.cmd --filter @graphgoblin/tooling exec vitest run scripts/aliased-entry.test.mjs"
+  },
+  {
+    "phase": "candidate before formatting the new test",
+    "exit": 0,
+    "log": "regression-green-targeted.log",
+    "command": "pnpm.cmd --filter @graphgoblin/tooling exec vitest run scripts/aliased-entry.test.mjs scripts/cli-gates.test.mjs scripts/check-migrations.test.mjs scripts/api-reference.test.mjs perf/observers.test.mjs"
+  },
+  {
+    "phase": "candidate",
+    "exit": 0,
+    "log": "tooling-lint-final.log",
+    "command": "pnpm.cmd --filter @graphgoblin/tooling lint"
+  },
+  {
+    "phase": "candidate",
+    "exit": 0,
+    "log": "prettier-check-final.log",
+    "command": "pnpm.cmd exec prettier --check docs/10-testing-and-quality.md tooling/perf/summary.mjs tooling/scripts/check-migrations.mjs tooling/scripts/gen-docs.mjs tooling/scripts/aliased-entry.test.mjs"
+  },
+  {
+    "phase": "candidate with original contrast data materialized",
+    "exit": 0,
+    "log": "contrast-fixture-readback.log",
+    "command": "pnpm.cmd check:contrast"
+  }
+]

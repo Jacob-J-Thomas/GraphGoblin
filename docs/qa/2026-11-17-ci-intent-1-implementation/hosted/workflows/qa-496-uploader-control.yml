@@ -1,0 +1,112 @@
+# QA-ONLY disposable control (#496). Commit on a throwaway branch `qa/gg-496-uploader-control`
+# created from base 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1. Never merge.
+# Synthetic markers only: no checkout, no install, no fixture trees exist anywhere in this job.
+name: QA 496 uploader hidden-path control
+
+on:
+  push:
+    branches: [qa/gg-496-uploader-control]
+
+permissions:
+  contents: read
+
+jobs:
+  uploader-control:
+    name: Uploader hidden-path control
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Create synthetic markers and read them back before upload
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $workspace = $env:GITHUB_WORKSPACE
+          $marker = "GG496-SYNTHETIC-MARKER run=$env:GITHUB_RUN_ID attempt=$env:GITHUB_RUN_ATTEMPT"
+          $roots = [ordered]@{
+            hidden = Join-Path $workspace ".tmp\windows-launcher-artifact-control-$env:GITHUB_RUN_ID"
+            visible = Join-Path $workspace "artifact-control-visible-$env:GITHUB_RUN_ID"
+            runnerTemp = Join-Path $env:RUNNER_TEMP "artifact-control-runner-temp-$env:GITHUB_RUN_ID"
+          }
+          foreach ($root in $roots.Values) {
+            New-Item -ItemType Directory -Path $root | Out-Null
+            [IO.File]::WriteAllText((Join-Path $root 'marker.txt'), $marker, [Text.UTF8Encoding]::new($false))
+          }
+          # The hidden opt-in below must only ever see this synthetic directory.
+          $tmpChildren = @(Get-ChildItem -LiteralPath (Join-Path $workspace '.tmp') -Force)
+          if ($tmpChildren.Count -ne 1) { throw 'Unexpected .tmp content; refusing the hidden opt-in.' }
+          $tmpItem = Get-Item -LiteralPath (Join-Path $workspace '.tmp') -Force
+          $readback = foreach ($entry in $roots.GetEnumerator()) {
+            $file = Get-Item -LiteralPath (Join-Path $entry.Value 'marker.txt') -Force
+            [pscustomobject]@{
+              root = $entry.Key
+              exists = $true
+              attributes = "$($file.Attributes)"
+              linkType = "$($file.LinkType)"
+              length = $file.Length
+              sha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            }
+          }
+          [pscustomobject]@{
+            evidence = 'qa-496-uploader-control-readback'
+            sha = $env:GITHUB_SHA
+            tmpAttributes = "$($tmpItem.Attributes)"
+            markers = @($readback)
+          } | ConvertTo-Json -Compress -Depth 4
+
+      - name: A - historical pattern below .tmp, default hidden exclusion
+        id: hidden-default
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa496-hidden-default-${{ github.run_attempt }}
+          path: .tmp/windows-launcher-artifact-control-*/
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: B - historical pattern below .tmp, hidden opt-in (synthetic data only)
+        id: hidden-optin
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa496-hidden-optin-${{ github.run_attempt }}
+          path: .tmp/windows-launcher-artifact-control-*/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: C - visible workspace root, default
+        id: visible-default
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa496-visible-default-${{ github.run_attempt }}
+          path: artifact-control-visible-*/
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: D - exact file below runner temp, default (the candidate's approach)
+        id: runner-temp-default
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa496-runner-temp-default-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/artifact-control-runner-temp-${{ github.run_id }}/marker.txt
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 3
+
+      - name: Uploader outputs
+        if: always()
+        shell: pwsh
+        env:
+          A_ID: ${{ steps.hidden-default.outputs.artifact-id }}
+          B_ID: ${{ steps.hidden-optin.outputs.artifact-id }}
+          B_DIGEST: ${{ steps.hidden-optin.outputs.artifact-digest }}
+          C_ID: ${{ steps.visible-default.outputs.artifact-id }}
+          C_DIGEST: ${{ steps.visible-default.outputs.artifact-digest }}
+          D_ID: ${{ steps.runner-temp-default.outputs.artifact-id }}
+          D_DIGEST: ${{ steps.runner-temp-default.outputs.artifact-digest }}
+        run: |
+          [pscustomobject]@{
+            evidence = 'qa-496-uploader-control-outputs'
+            hiddenDefault = @{ id = $env:A_ID }
+            hiddenOptIn = @{ id = $env:B_ID; digest = $env:B_DIGEST }
+            visibleDefault = @{ id = $env:C_ID; digest = $env:C_DIGEST }
+            runnerTempDefault = @{ id = $env:D_ID; digest = $env:D_DIGEST }
+          } | ConvertTo-Json -Compress -Depth 3

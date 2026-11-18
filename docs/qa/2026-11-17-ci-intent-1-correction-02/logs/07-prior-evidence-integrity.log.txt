@@ -1,0 +1,15 @@
+checked 2026-11-18T07:10:14Z
+
+$ (cd i1-ci-correction-01 && sha256sum -c --quiet SHA256SUMS.txt)
+exit 0
+listed 129; SHA256SUMS.txt sha256 17844853b4a0297616b3ccaa4c9925de7773c2efdfac195a6e463f04a3deb123
+no unlisted or missing files
+
+$ (cd i1-ci-correction-independent-qa && tr -d '\r' < SHA256SUMS.txt | sha256sum -c --quiet)   # list has CRLF line ends
+exit 0
+listed 50; SHA256SUMS.txt sha256 76615babab333508d3304569603eaefc333700da724485cc5a411f05baecab61
+note: this packet is sealed/curated concurrently by QA; this records its state at the time above
+
+$ git -C <checkout> diff --cached --name-only   # nothing staged
+exit 0 (empty list = nothing staged)
+HEAD 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1

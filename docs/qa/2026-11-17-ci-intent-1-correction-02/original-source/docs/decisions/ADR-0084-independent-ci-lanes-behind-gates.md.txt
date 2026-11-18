@@ -1,0 +1,61 @@
+# ADR-0084 - Independent CI lanes behind a fail-closed Gates check
+
+Date: 2026-11-17. Status: Accepted for #488. Scope: `.github/workflows/ci.yml` scheduling of the
+repository gate; the gate's commands, thresholds and test workload are unchanged.
+
+## Problem
+
+One `gates` job ran installation, build, native/API acceptance, static checks, serial package
+coverage and then the licence, generated-docs, contrast and dependency-audit checks under a single
+30-minute job deadline. Three pull requests (#485, #487, #490) reached that deadline while the
+coverage command was finishing. The coverage step was cancelled and the four final checks were
+skipped. Retries of the unchanged heads passed, and the logs show the same workload taking
+materially different times on the same image (coverage 12m44s to 20m22s; API and web suites
+account for most of the spread). They hold no runner telemetry that isolates a cause, and no
+evidence of a hung suite. In the slow attempts, work before coverage took 9m49s to 10m04s and the
+slowest coverage step that emitted every group took 20m22s. Two attempts were cancelled at
+20m08s and 20m16s with tooling and both plugin groups outstanding, and are projected at about
+22.5 minutes. Measurements and sources: the #488 diagnosis receipts (run, job and log digests).
+
+## Decision
+
+- **Two independent jobs.** `repository-checks` (Repository checks) keeps every previous Gates
+  step except coverage, in the same order and with the same arguments, under a 30-minute job
+  budget. `coverage` (Coverage) does its own checkout, Node setup, frozen install and full
+  `pnpm build`, installs Chromium and runs the unchanged
+  `pnpm exec turbo run test:coverage --concurrency=1`. The coverage step is capped at 25 minutes
+  inside a 30-minute job, and the summary-only `coverage` artifact is uploaded after every
+  outcome. Neither job waits for the other; the final four checks no longer depend on coverage
+  finishing.
+- **One stable, fail-closed status.** `gates` (Gates) needs both jobs, runs with `always()`, has
+  a 2-minute budget, no checkout and no token permissions. It succeeds only when both results are
+  `success`; failed, cancelled, skipped and missing results fail it, and it records both results.
+  It uses `always()` rather than `!cancelled()` because a skipped job would satisfy a branch rule
+  that requires it. The workflow keeps `Gates` as the one stable status context for such a rule.
+  A read-back of `main` on 2026-11-17 found no branch protection and no rulesets, so no
+  platform-required check is configured.
+- **No workload relaxation.** There is no sharding, retry, raised concurrency, remote cache,
+  test-timeout or browser-argument change, and no change to coverage floors, the audit or any
+  other job.
+
+## Alternatives
+
+- Move the final four checks before coverage under one 30-minute job. This recovers their
+  results, but coverage keeps competing with them for the same deadline.
+- Keep one job with a 25-minute coverage step and a 40-minute job. This needs fewer changes, but
+  keeps the serial bottleneck and the final checks' dependence on coverage. It remains the
+  fallback if independent runners are unavailable.
+- Raise Turbo concurrency. Each Vitest package already runs its own workers, and the measured
+  variation gives no load-safe basis for it.
+
+## Consequences
+
+Each run needs one more Ubuntu runner, a second install and build (23 to 37 seconds measured)
+and a 2-minute aggregate slot. The 30-minute lane budgets and the 25-minute coverage cap are this
+decision's architecture choice, made from the measurements above; they are not an owner
+requirement. On the slowest projected coverage behaviour the 25-minute cap leaves about 2.5
+minutes. A longer run fails Coverage, and therefore Gates, rather than passing silently. Exhausting a job budget or losing a runner can still prevent an upload. A failure in
+either lane fails Gates, so the dependency audit keeps blocking the gate independently of
+coverage. Evidence consumers that read one combined Gates log now read the two jobs by name.
+Hosted timings, queue latency and the live required-check configuration are confirmed on actual
+runs.
