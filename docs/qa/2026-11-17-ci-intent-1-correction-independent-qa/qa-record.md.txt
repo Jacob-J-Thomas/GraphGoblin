@@ -1,0 +1,41 @@
+# Independent targeted QA of CI evidence correction 01
+
+**Verdict: FAIL.** The original regressions for all three accepted findings pass against the corrected candidate. Two further controls in the approved evidence-consistency scope still produce a successful `complete` result with contradictory or missing information. The remaining fixes are bounded to the third finding. Formal review count remains 0/3.
+
+## Source and checks
+
+Verified and copied exactly eight files into `codex/gg-20261117-ci-gates-qa`, based on `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`. The tracked diff SHA-256 is `3d40818a717b68629ad4b258a2ef2a8155060eedb29d700db508eef858897876`. The correction, original implementation and original QA evidence manifests verified 129, 72 and 30 entries respectively. The source locations and all file hashes are in the receipt. [Source receipts](source-receipts.json).
+
+| Check | Local result |
+| --- | --- |
+| The original CLI harness, copied byte for byte | 13/13, including init refusal, manifest unknown and duplicate fields, duplicate trial/alias facts and lifecycle records, BOM, the real child failure and overflow, and file link/privacy checks |
+| Original workflow expectations with a checked six-line insertion | 6/6 Windows scenarios, 25/25 Gates pairs, 5/5 coverage summary cases and 24/24 repository steps. Initial exact-copy attempt is retained with `KeyError` on the new GitHub expression. The adopted insertion only recognizes the two new `if:` expressions and models a successful Node prerequisite, preserving all original expectations. |
+| Focused helper tests, project Node v22.23.4 | 28/28 with 99.26% lines and 97.19% branches |
+| Supplemental CLI harness | 3/5. Real checkout parents matched a synthetic PR binding. Wrong PR base and absent checkout SHA gave `incomplete` on passing native; valid failed or skipped native evidence remained useful. An unpaired subtest yielded `installer-subtests` and `subtestsUnpaired: 1`, as intended. |
+
+[Original CLI results](cli-controls.json), [Windows and Gates matrix](workflow-controls.json), [initial model failure](workflow-original-attempt.log), [adopted insertion](workflow-harness-delta.log), [helper Vitest log](helper-tests.log), [supplemental raw result](supplemental-cli/cli-controls.json).
+
+## Open evidence-consistency failures
+
+1. **Missing run identity is marked complete.** Leave `GITHUB_RUN_ID` empty in the real CLI `init`, with the other synthetic metadata valid and the real current checkout matching both SHA comparisons. The canonical manifest has `runId: null` and `unavailable: ['runId']`. Finalization of otherwise complete observations exits 0, publishes all three paths and returns `complete` with `missing: []`. The receipt cannot identify a run. `bindingRequirements` checks only the checkout comparisons. Require the run identity fields that bind an exact archive. Continue retaining truthful failed and not-run metadata.
+2. **A contradictory closing count is marked complete.** Take an otherwise complete canonical stream with no rejected records and `omittedRecords: 0`. Change only its close record's `rejected` from 0 to 1. The real finalizer exits 0 and reports `complete`, `observations.rejected: 0`, and `closed: true`. The parser currently checks for a closer count below the visible rejections, leaving extra claimed rejections valid without omissions. Require exact agreement when no records were omitted and preserve honest partial counts when overflow occurred.
+
+Reproduce the two failures from the isolated QA checkout. Use project Node v22.23.4. The same script checks the positive merge binding, known contradiction, unavailable checkout, and unpaired subtest before the two red controls.
+
+```powershell
+node 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-independent-qa/supplemental-cli/cli-controls.mjs' (Get-Location).Path
+```
+
+The harness SHA-256 is `f0faf138b72054e3f7767d38eba9e4baecfc59bc1427e952e5d9220b5ab802b3`. The helper SHA-256 is `3d2d6521410752e947103747c867d235b946d5c18769af1721357fbbf49f8caf`. [Supplemental harness](supplemental-cli/cli-controls.mjs), [outcomes and exact witnesses](supplemental-cli/cli-controls.json).
+
+## Native evidence and hosted control preparation
+
+The corrected parser and summary independently accepted the 203 genuine records retained from the original native command and the corrected author's 1,019-record injected run. Both showed contention trials 1, 2 and 3, and both junction release spellings. The corrected author's result and missing list reconciled exactly, including 265 omissions, one injected rejection and `binding-unverified`. The corrected author's native exit 1 and 21/25 TAP are retained. The received three flat files total 173,925 bytes and are single-link regular files without the synthetic canary or drive paths. Native and full coverage were assessed from the retained reports and targeted replay. [Native replay](retained-native-validation.json).
+
+The prepared invalid-init job initially tried to override `RUNNER_TEMP` through workflow YAML `env`, which GitHub reserves. The overlay sets the variable only inside the QA step's PowerShell process before the real `init`; exact local execution exited 1 with `inside-checkout` and no step output. [GitHub default variables](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables), [original and overlay diff](qa-496-invalid-prepare.yml.diff).
+
+The initial refusal fixture collected each real init stdout marker in `$folders` along with the intended PowerShell object. Its exact local script exited 1 before creating either refusal input. The overlay sends stdout through `Out-Host` and captures `$LASTEXITCODE` immediately. Exact local scripts then prepared both controlled inputs. Both finalizers exited 1 (`hard-link`, `manifest-invalid`), published no paths, and wrote no `result.json`. The final assertion script exited 0 with the outside canary unchanged. The generated negative suite is byte-identical to the frozen author copy. [Original and overlay diff](qa-496-candidate-negative.yml.diff), [shell probe results](hosted-shell-probes.json), [overlay receipts](control-overlay-receipts.json).
+
+The dedicated external-cancellation control keeps Gates byte-identical and inserts one three-minute wait at the beginning of each of its two lanes, each under a four-minute step cap. This allows observing both active in the dedicated run before cancelling it. [Cancel control](hosted-overlay/qa-488-external-cancel.yml), [source receipt](external-cancel-control-receipt.json).
+
+The original and overlay workflows are preserved separately. Those are disposable control files. They are intended for exact-head hosted execution by the orchestrator. The hosted scheduler, uploader, and downloaded corrected positive and negative artifacts require their own evidence. The independent QA checkout and external evidence use only disposable process and filesystem fixtures. The candidate's eight source hashes and index were rechecked.

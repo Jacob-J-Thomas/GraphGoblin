@@ -1,0 +1,221 @@
+# #488/#496 correction 01: author implementation of three accepted QA findings
+
+This is the implementation lane (Claude Code, `claude-opus-5-5`). It is not a formal review and not
+independent QA; root will arrange an independent targeted follow-up. Nothing was staged,
+committed, pushed, published, commented or rerun on GitHub. Work stayed in
+`C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin`, branch
+`codex/gg-20261117-ci-gates`, base `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`. The original
+author and QA packets are unchanged (`logs/06-original-evidence-integrity.json`).
+
+## Source identity
+
+| | Original frozen candidate | Corrected candidate |
+| --- | --- | --- |
+| `.github/workflows/ci.yml` | `1899472b…79bf9` | `9c353918…1c592` |
+| `CHANGELOG.md` | `5a8116ea…63bc` | `93f639a7…ae23` |
+| `docs/10-testing-and-quality.md` | `725ccbe2…33ae0` | `ede61c10…0cac4` |
+| `docs/decisions/ADR-0084-…` | `ff27302d…65741` | `d4d2ee80…04ef` |
+| `docs/decisions/README.md` | `33b84a9a…1575` | unchanged |
+| `tooling/scripts/windows-launcher-evidence.mjs` | `3de3199f…ffb6b3` | `3d2d6521…8caf` |
+| `tooling/scripts/windows-launcher-evidence.test.mjs` | `f8cff336…dabd` | `271591c8…0fbe` |
+| `tooling/scripts/windows-launcher.acceptance.mjs` | `f156e1e7…9aa2` | unchanged |
+| Tracked diff of the five tracked files | `61444efa…a8e7` | `3d40818a…7876` |
+
+Full hashes and Git blobs are in `SOURCE-BINDINGS.txt`. Byte copies are in `original-candidate/`
+and `corrected-candidate/`, and `corrected-candidate/correction-vs-original.diff` holds the
+correction diff. No file outside the original eight changed and no adjacent change was needed.
+The concurrent `.gitattributes` and `docs/qa/` work in the same worktree was not touched. The
+tracked-diff hash therefore covers only the candidate's five tracked files.
+
+## The three findings and their corrections
+
+**1. Preparation failure suppressed the native command.**
+- *Change.* `Prepare native evidence` now runs after `Build`. Its condition is
+  `!cancelled() && steps.node.outcome == 'success'` (Node setup gets `id: node`), so it needs only
+  the checkout and Node and also runs after a failed install or build.
+- *What stays the same.* Install and Build keep their exact commands and GitHub's implicit
+  `success()`. Native still runs on `!cancelled() && steps.build.outcome == 'success'`.
+- *Gating on Prepare's outcome.* Native receives a directory only from a successful Prepare
+  (`steps.evidence.outcome == 'success' && steps.evidence.outputs.dir || ''`). Finalize runs only
+  when `steps.evidence.outcome == 'success'`. A failed Prepare that left outputs is ignored.
+- *Outputs.* `init` now writes its step outputs last, so they exist only on success.
+- *Unchanged.* No `continue-on-error`, retry or deadline change. The 20-minute job budget, the
+  exact install, build and native commands, assertions, TAP and stdout lines are unchanged.
+
+**2. The manifest's bytes were passed through after a three-field check.**
+- *Change.* `parseManifest` rebuilds the manifest from its validated values: schema, state,
+  UUID, timestamp and every typed binding value. It adds the static `LIMITS` and `FILES`
+  declarations and the derived fields (the `unavailable` list and the checkout comparisons).
+  It then compares the result with the file byte for byte.
+- *What is refused.* Unknown fields at any depth, duplicate keys, a BOM, other whitespace or
+  line endings, changed limits or file names, an inconsistent `unavailable` list or comparison,
+  and canaries in unvalidated positions. The refusal is `manifest-invalid`, before any path is
+  published. The recorder refuses such a directory too.
+- *Shared composer.* `init` writes through the same composer, so genuine manifests always match.
+- *Legitimately unavailable values* remain valid: null and listed. The event base is listed
+  only for a pull request, and the Node version is now validated too.
+- *Observations.* A file starting with a BOM is rejected as `byte-order-mark`, which claims
+  nothing about disclosure.
+- *Scope.* This is shape and consistency validation, not authentication. A runner that controls
+  the files can still write a well-formed manifest.
+
+**3. Contradictory bindings and repeated facts could qualify as complete.**
+- *Binding.* `bindingRequirements` adds `binding-contradiction` for any false checkout comparison
+  that applies to the event, and `binding-unverified` for any null one. Either keeps a passing
+  native step `incomplete`, exit 1. Valid observations are still uploaded, and a failed native
+  run stays `native-failed` with the entry listed.
+- *Recorder.* The recorder writes its lifecycle records (`recorder-open` from the constructor,
+  `overflow`, `fixture-state`, `recorder-closed`) only itself. The public `record` turns those
+  types, and any repeat of a once-per-run fact, into `rejected`. Once-per-run facts are each
+  test or subtest start and end, each link kind's alias outcome, each alias round
+  `(kind, spelling)` and each contention trial.
+- *Subtest numbering.* Subtests are numbered across their whole case, so nested subtests can
+  never collide.
+- *Finalizer stream rules.* The finalizer rejects a stream (reason `lifecycle`) with:
+  - a second `recorder-open`;
+  - a record after `recorder-closed`;
+  - more than one `overflow`;
+  - a closer whose `written` or `rejected` counts contradict the stream;
+  - omissions without an overflow, or an overflow without omissions.
+
+  A repeated fact is rejected as `duplicate-fact`.
+- *Record consistency rules.* These hold for everything the suite writes:
+  - a pass carries no failure fields;
+  - an unlinked alias matched its target;
+  - only a failed release names a failure;
+  - contention results sum to the contenders;
+  - the overflow marker follows the first omitted record.
+- *Completeness.* It now needs the actual trials 1, 2 and 3 as their own single-owner records
+  from the lock-contention case. It also needs both the `alias` and `direct` owner-verified,
+  drained releases for each link kind from the checkout-alias case, and every started subtest
+  paired with its end.
+- *Thrown non-errors.* A test that throws `undefined` or `null` is still recorded as a typed
+  failure.
+
+Two contract changes need explicit reviewer and root confirmation:
+
+- `complete` now also requires a verified binding. This is stricter than contradiction-only. An
+  unobservable checkout or a malformed event head can no longer be `complete`, and local runs
+  without GitHub variables report `binding-unverified`. Contradiction-only is a one-line change
+  if preferred.
+- `result.cases.*` gains `subtestsUnpaired`.
+
+## Controls: retained red, then green
+
+| Control | Original candidate | Corrected candidate |
+| --- | --- | --- |
+| Independent `cli-controls.mjs`, exact copy (`1c3eb92f…7290`), real child processes and files | exit 1, **8/13**, the same five failures as QA (`controls/original-candidate/`) | exit 0, **13/13**. Manifest `extra` and `duplicate` exit 1 `manifest-invalid` and are not selected. BOM and duplicate header are `rejected`, not retained. Wrong event head, repeated trials and repeated spellings are not complete (`controls/corrected-candidate/`) |
+| Independent `workflow-controls.py`, exact copy (`5c08a13f…120c`) | exit 1, `prepare-fails` native and build skipped | exit 1. It passes 24 repository steps, 25 Gates pairs and 5 coverage cases, then raises `KeyError` on `${{ !cancelled() && steps.node.outcome == 'success' }}`. Its Windows model hard-codes the three original `if:` strings, an obsolete source assumption. **Failure preserved, not rewritten** |
+| Author-proposed harness copy (`controls/proposed-harness/`, insertion-only diff) | not applicable | exit 0, 6/6 Windows cases with the unchanged expected table, including `prepare-fails`. Install and build succeed, native `success`, finalize and upload skipped. This is a proposal for independent QA to adopt or reject, not QA |
+
+Procedural attempts are retained. The mutation harness's first run stopped on its own anchor
+before mutating anything new; it found a literal U+FEFF character in the helper source, which is
+now an explicit `charCodeAt(0) === 0xfeff` check. The first proposed-harness run used an unedited
+copy, and the second used an editor-normalized end of file. Neither was presented as a result.
+
+## Maintained regressions and mutation proof
+
+`tooling/scripts/windows-launcher-evidence.test.mjs` has seven new tests and three extended ones
+(28 tests, 21 before). The extended tests cover the observation BOM, a thrown `undefined`, and the
+constructor-written header in the write-failure test.
+
+- **Root 1.** A scheduling model reads the Windows job from `ci.yml` and evaluates its `if:` and
+  `env` expressions with GitHub's status semantics. Unknown expression forms fail the test. It
+  feeds the modeled outputs into the real `finalize` and recorder, covering:
+  - prepare failure, even with outputs left behind;
+  - setup, install, build, native and finalize failures;
+  - cancellation.
+- **Root 2.** Fifteen manifest tamperings are refused by `parseManifest`, `finalize` and the
+  recorder, with nothing written. Legitimate unavailable values are accepted. A real CLI child
+  refuses an unknown field and publishes no outputs. The observation BOM is covered.
+- **Root 3.** Coverage includes:
+  - binding contradictions for push and pull request (head, sha, base parent, head parent);
+  - an unverified binding;
+  - a failed native run with a contradiction;
+  - a real CLI init and finalize on the real checkout with a wrong event head;
+  - recorder refusal of repeats and of lifecycle types;
+  - repeated trials and spellings;
+  - case scoping;
+  - nested subtest numbering and pairing;
+  - eight lifecycle, three duplicate-fact and four consistency stream rejections.
+
+`controls/regression-mutations.mjs` reverts each correction in place, one at a time. It runs the
+suite once per mutation, restores the bytes and checks their SHA-256. **All 10 mutations were
+killed**: 2 for root 1, 2 for root 2 and 6 for root 3. The unmutated baseline is 28/28 and both
+sources were restored identically (`controls/regression-mutations/regression-mutations.json`).
+
+## Bounded native negative run (local Windows host)
+
+`native/run-native-negative.sh` ran `init`, then the author's generator output from the unchanged
+acceptance suite, then `finalize`. The generated suite is byte-identical to the original packet's
+copy (`8a4a1509…`). The run used ports 63700–63719 and fresh random canaries, with no faked GitHub
+bindings and install/build passed as unknown. The generated suite was placed at its exact
+temporary path and removed by path after a byte comparison.
+
+| | Result |
+| --- | --- |
+| Exit codes | init 0, native **1** (preserved), finalize 0; 226 s |
+| TAP | 21/25. Compared with the retained same-host base run (23/25), only the two injected cases differ: installer exit 7 and the forced junction release. The directory-symlink `EPERM` and its parent fail in both runs, as on the unchanged baseline. **Not claimed fully green locally** |
+| Evidence | `native-failed`, observations **valid**, 1,019 records, 170,113 bytes, closed, 265 omitted after one overflow |
+| New rules on the genuine stream | Exactly one `rejected` record, the injected child, with `recorder-closed.rejected` = 1, so no genuine record was refused, even among omitted ones. Contention trials 1, 2 and 3 once each. Junction rounds `alias` and `direct` once each. 25 unique case starts |
+| Verifier | The author's unchanged verifier (`9ba78013…`) passes with TAP and three canaries: 173,925 bytes, no canary or path text, 8 stdout markers reconciled |
+| `missing` | the expected native failures plus `binding-unverified`, an honest result for a local run without GitHub bindings |
+| Cleanup | The QA `qa-linked-directory` junction and the retained junction alias to the checkout were each verified as links with exact targets and unlinked without recursion. No listeners on 63700–63749 and no launcher or Node processes for the checkout remained. Other fixtures are retained by design |
+
+## Verification (Node v22.23.4 first on PATH, `pnpm.cmd` 12.8.1)
+
+| Check | Command | Exit | Result |
+| --- | --- | --- | --- |
+| Focused helper tests and coverage | `pnpm.cmd --filter @graphgoblin/tooling exec vitest run scripts/windows-launcher-evidence.test.mjs --coverage.enabled --coverage.include=scripts/windows-launcher-evidence.mjs …` | 0 | 28/28; helper 98.77 statements, 97.19 branches, 100 functions, 99.26 lines |
+| Tooling lint | `pnpm.cmd --filter @graphgoblin/tooling lint` | 0 | clean |
+| Format | `pnpm.cmd format:check`, plus `prettier --check` on the eight files | 0 / 0 | clean |
+| Full tooling coverage, **first and only run** | `pnpm.cmd --filter @graphgoblin/tooling test:coverage` | 0 | 18 files, 206/206; 96.69 statements, 93.49 branches, 94.58 functions, 97.62 lines; 221 s; sources identical before and after |
+
+The full run passed the first time, including the unchanged browser performance workload. That
+does not resolve or explain the earlier 180-second timeout (#453). 34 Node processes were present
+on the shared host beforehand, and no load causality is claimed. No full build was needed: the
+apps were unchanged and the native suite used the existing build.
+
+## Hosted controls (prepared; root alone publishes and runs)
+
+The controls are in `hosted/`, with `hosted/INSTRUCTIONS.md`. They use `codex/qa/` branches,
+are never merged, and are generated from the corrected `ci.yml`.
+
+- **New invalid-prepare control** (`qa-496-invalid-prepare.yml`). It is the candidate Windows
+  job verbatim except that Prepare's `RUNNER_TEMP` is the checkout, so the real `init` refuses
+  `inside-checkout`. Expected: install and build succeed, Prepare fails, the exact native command
+  runs with its own outcome, finalize and upload are skipped, the job fails and there is no
+  artifact. A second job, where Install exits 1, must upload `not-run` metadata (manifest and
+  result only).
+- **Updated negative and refusal control** for the corrected ordering. Refusal now covers a hard
+  link and a manifest with an unknown field.
+- **Regenerated `#488` controls.** They differ from the originals only by branch prefix and the
+  corrected Gates comment.
+
+The uploader and baseline controls already passed and are not rerun. The original generated files
+are preserved. A structural check confirmed that each generated Windows job differs from the
+candidate only in its documented injections.
+
+## Qualifications and open items
+
+- `#496` is not done until root verifies hosted archives: the exact-head `complete` artifact
+  and the new controls.
+- All gates green remains blocked by #503's unpatched audit advisory, which is pending an owner
+  decision and unchanged here.
+- `Gates` is a stable workflow status context. A readback of `main` showed `protected: false`
+  and no rulesets, so no platform-required check is configured. The candidate's docs, ADR,
+  CHANGELOG and workflow comment previously claimed one, and were corrected.
+- The 30-minute lane and 25-minute coverage-step budgets are root's architecture contract, not
+  an owner edict, and are unchanged. The historical projected slow run (about 22.5 minutes)
+  leaves about 2.5 minutes. This is now recorded in docs/10 and ADR-0084.
+- Residual risks are unchanged:
+  - `lstat` cannot flag non-link Windows reparse points;
+  - files could change between finalize's checks and the upload;
+  - validation is not authentication.
+- The helper is now 1,498 formatted lines (1,258 before).
+
+## Evidence index
+
+`SOURCE-BINDINGS.txt`, `original-candidate/`, `corrected-candidate/`, `controls/` (original and
+corrected harness runs, proposed harness, mutation proof), `native/`, `logs/`, `hosted/`.
+`SHA256SUMS.txt` lists every file in this folder. No private provider stream is included.

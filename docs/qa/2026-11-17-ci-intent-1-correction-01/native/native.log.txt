@@ -1,0 +1,225 @@
+TAP version 13
+# {"evidence":"windows-launcher-export","state":"recording","evidenceId":"8f1131d6-dc43-4515-aedc-6760c2395d83"}
+# QA stdout canary QA496-C01-466aff70fd9a7f22a8729a28-STDOUT
+# {"evidence":"windows-launcher-observation","seq":5,"at":"2026-11-18T06:31:13.554Z","type":"case-end","case":"installer","subtest":0,"result":"fail","elapsedMs":69,"failedSubtests":0,"failureKind":"child-exit","failureCode":null,"failureExit":7,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":4,"at":"2026-11-18T06:31:13.553Z","type":"child","case":"installer","subtest":0,"child":1,"tool":"node","mode":"other","outcome":"exit-nonzero","exitCode":7,"errorCode":null,"signal":null,"killed":false,"timeoutMs":10000,"elapsedMs":60,"stdoutBytes":0,"stderrBytes":38,"diagnostic":"unclassified"}
+# Subtest: Windows PowerShell 5.1 installer validates before replacing native launcher files
+not ok 1 - Windows PowerShell 5.1 installer validates before replacing native launcher files
+  ---
+  duration_ms: 70.7845
+  type: 'test'
+  location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261117-ci-gates\\GraphGoblin\\tooling\\scripts\\windows-launcher.qa-negative.acceptance.mjs:225:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: C:\Users\98jak\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe -e process.stderr.write(String(process.env.GG_QA_496_ENV_CANARY)); process.exit(7)
+    QA496-C01-466aff70fd9a7f22a8729a28-ENV
+  code: 7
+  stack: |-
+    genericNodeError (node:internal/errors:983:15)
+    wrappedFn (node:internal/errors:537:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:519:28)
+    maybeClose (node:internal/child_process:1101:16)
+    ChildProcess._handle.onexit (node:internal/child_process:304:5)
+    Process.callbackTrampoline (node:internal/async_hooks:130:17)
+  ...
+# Subtest: native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+    # Subtest: concurrent cold starts create one gateway and later clicks reuse its PID
+    ok 1 - concurrent cold starts create one gateway and later clicks reuse its PID
+      ---
+      duration_ms: 14705.0105
+      type: 'test'
+      ...
+    # Subtest: wrong store and changed gateway settings are refused without stopping the live gateway
+    ok 2 - wrong store and changed gateway settings are refused without stopping the live gateway
+      ---
+      duration_ms: 5019.4104
+      type: 'test'
+      ...
+    # Subtest: same database under a different data directory cannot acquire a second gateway
+    ok 3 - same database under a different data directory cannot acquire a second gateway
+      ---
+      duration_ms: 5845.3427
+      type: 'test'
+      ...
+# {"evidence":"native-shell-shortcut-cold-route","beforePid":"58020","afterPid":"61332"}
+    # Subtest: normal drain releases ownership and a shell shortcut cold start runs the launcher
+    ok 4 - normal drain releases ownership and a shell shortcut cold start runs the launcher
+      ---
+      duration_ms: 8740.2723
+      type: 'test'
+      ...
+    # Subtest: native HWND COM relaunch command preserves the cold launcher route
+    ok 5 - native HWND COM relaunch command preserves the cold launcher route
+      ---
+      duration_ms: 7853.4222
+      type: 'test'
+      ...
+    # Subtest: cross-process HWND metadata survives stamper exit and relaunches
+    ok 6 - cross-process HWND metadata survives stamper exit and relaunches
+      ---
+      duration_ms: 7564.0615
+      type: 'test'
+      ...
+    # Subtest: plain-health HTTP listener is refused and kept alive
+    ok 7 - plain-health HTTP listener is refused and kept alive
+      ---
+      duration_ms: 1643.5215
+      type: 'test'
+      ...
+    # Subtest: a silent TCP listener never permits a gateway spawn across repeated clicks
+    ok 8 - a silent TCP listener never permits a gateway spawn across repeated clicks
+      ---
+      duration_ms: 25388.2914
+      type: 'test'
+      ...
+    # Subtest: malformed store ownership is preserved and refused before starting a gateway
+    ok 9 - malformed store ownership is preserved and refused before starting a gateway
+      ---
+      duration_ms: 4493.7514
+      type: 'test'
+      ...
+    # Subtest: reused live PID in both locks and guards permits exactly one cold gateway
+    ok 10 - reused live PID in both locks and guards permits exactly one cold gateway
+      ---
+      duration_ms: 14160.0201
+      type: 'test'
+      ...
+# {"evidence":"protected-system-pid-reuse","selected":{"pid":1088,"name":"csrss.exe","windowsCreationTime":"134388595618752230","deniedOperation":"Process.HasExited","errorCode":5},"gatewayPid":"61140"}
+    # Subtest: a protected system PID with a different verified identity is recovered without touching that process
+    ok 11 - a protected system PID with a different verified identity is recovered without touching that process
+      ---
+      duration_ms: 17036.1447
+      type: 'test'
+      ...
+# {"evidence":"windows-launcher-native","artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-O2Xgdj"}
+    # Subtest: matching and unknown identities preserve locks, guards and the live process
+    ok 12 - matching and unknown identities preserve locks, guards and the live process
+      ---
+      duration_ms: 20140.757
+      type: 'test'
+      ...
+    1..12
+ok 2 - native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+  ---
+  duration_ms: 132961.2158
+  type: 'test'
+  ...
+# {"evidence":"windows-launcher-checkout-alias","kind":"junction","requestedLinkType":"Junction","fixture":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\graphgoblin-launcher-alias-1Vyk3q\\\\junction-3QFrTP","commands":{"direct-identity":{"code":0,"signal":null,"stdout":"351dd095be4edf867d215f317f54a2f45bf748ccea2f9ae315a9d6397ce9c230\\n","stderr":""},"alias-identity":{"code":0,"signal":null,"stdout":"351dd095be4edf867d215f317f54a2f45bf748ccea2f9ae315a9d6397ce9c230\\n","stderr":""},"alias-store-state":{"code":0,"signal":null,"stdout":"{\\"state\\":\\"free\\"}\\n","stderr":""},"alias-import":{"code":0,"signal":null,"stdout":"","stderr":""},"alias-cold":{"code":0,"signal":null,"stdout":"","stderr":""},"alias-cold-alias-warm":{"code":0,"signal":null,"stdout":"","stderr":""},"alias-cold-direct-warm":{"code":0,"signal":null,"stdout":"","stderr":""},"alias-cold-wrong-store-config":{"code":1,"signal":null,"stdout":"","stderr":"unrelated or differently configured service"},"alias-cold-wrong-settings-config":{"code":1,"signal":null,"stdout":"","stderr":"unrelated or differently configured service"},"direct-cold":{"code":0,"signal":null,"stdout":"","stderr":""},"direct-cold-direct-warm":{"code":0,"signal":null,"stdout":"","stderr":""},"direct-cold-alias-warm":{"code":0,"signal":null,"stdout":"","stderr":""},"direct-cold-wrong-store-config":{"code":1,"signal":null,"stdout":"","stderr":"unrelated or differently configured service"},"direct-cold-wrong-settings-config":{"code":1,"signal":null,"stdout":"","stderr":"unrelated or differently configured service"}},"cold":[{"spelling":"alias","owner":{"pid":36880,"birth":"134394572161635940","executable":"C:\\\\Users\\\\98jak\\\\.claude\\\\codex-runs\\\\GraphGoblin\\\\runtime\\\\node-v22.23.4-win-x64\\\\node.exe","main":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\graphgoblin-launcher-alias-1Vyk3q\\\\junction-3QFrTP\\\\checkout alias-α\\\\apps\\\\api\\\\dist\\\\main.js","leases":{"graphgoblin.lock":"76cdf89951dd61c6d91d2214ec46b9cadeef195f7bfd25012eb840f389ddc72f","graphgoblin.db.graphgoblin.lock":"d904c208c9921e88711c072cf546d43374bf167bb7abfb61da243ff0530e6672"}},"release":"drained-pid-listener-leases"},{"spelling":"direct","owner":{"pid":51996,"birth":"134394572345809490","executable":"C:\\\\Users\\\\98jak\\\\.claude\\\\codex-runs\\\\GraphGoblin\\\\runtime\\\\node-v22.23.4-win-x64\\\\node.exe","main":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\apps\\\\api\\\\dist\\\\main.js","leases":{"graphgoblin.lock":"36da4ceb725a322e4b72183a0e910f75822fb92c84df51d796622c10b2af4384","graphgoblin.db.graphgoblin.lock":"019377ad6e970415da71e052a6cfe82a089e5bb4e37cec08be8555767ea288bd"}},"release":"drained-pid-listener-leases"}],"reparse":{"linkType":"Junction","directory":true,"reparsePoint":true},"port":63714,"storeEntriesBeforeCold":0,"failure":{"stage":"direct-release","code":"EQAUNVERIFIED"}}
+# {"evidence":"windows-launcher-observation","seq":119,"at":"2026-11-18T06:34:09.158Z","type":"case-end","case":"checkout-alias","subtest":1,"result":"fail","elapsedMs":42377,"failedSubtests":0,"failureKind":"system","failureCode":"EQAUNVERIFIED","failureExit":null,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":116,"at":"2026-11-18T06:34:09.156Z","type":"child","case":"checkout-alias","subtest":1,"child":30,"tool":"powershell","mode":"script","outcome":"exit-zero","exitCode":0,"errorCode":null,"signal":null,"killed":false,"timeoutMs":15000,"elapsedMs":529,"stdoutBytes":6,"stderrBytes":0,"diagnostic":"none"}
+# Subtest: native Windows launcher accepts junction and directory symlink checkout paths
+    # Subtest: cold and warm native launcher with a Junction checkout
+    not ok 1 - cold and warm native launcher with a Junction checkout
+      ---
+      duration_ms: 42377.7441
+      type: 'test'
+      location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261117-ci-gates\\GraphGoblin\\tooling\\scripts\\windows-launcher-evidence.mjs:892:27'
+      failureType: 'testCodeFailure'
+      error: 'QA-only unverified release'
+      code: 'EQAUNVERIFIED'
+      stack: |-
+        checkLauncherAlias (file:///C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling/scripts/windows-launcher.qa-negative.acceptance.mjs:1328:27)
+        async #run (file:///C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:855:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async file:///C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling/scripts/windows-launcher.qa-negative.acceptance.mjs:1413:7
+        async #run (file:///C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:855:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+# {"evidence":"windows-launcher-checkout-alias","kind":"dir","requestedLinkType":"SymbolicLink","fixture":"C:\\\\Users\\\\98jak\\\\AppData\\\\Local\\\\Temp\\\\graphgoblin-launcher-alias-1Vyk3q\\\\dir-Kk0OJy","commands":{},"cold":[],"failure":{"stage":"create-alias","code":"EPERM","errno":-4048,"syscall":"symlink"},"aliasAbsent":true}
+# {"evidence":"windows-launcher-observation","seq":125,"at":"2026-11-18T06:34:09.188Z","type":"case-end","case":"checkout-alias","subtest":2,"result":"fail","elapsedMs":30,"failedSubtests":0,"failureKind":"system","failureCode":"EPERM","failureExit":null,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":121,"at":"2026-11-18T06:34:09.187Z","type":"child","case":"checkout-alias","subtest":2,"child":1,"tool":"system-tool","mode":"acl","outcome":"exit-zero","exitCode":0,"errorCode":null,"signal":null,"killed":false,"timeoutMs":null,"elapsedMs":27,"stdoutBytes":155,"stderrBytes":0,"diagnostic":"none"}
+# {"evidence":"windows-launcher-observation","seq":126,"at":"2026-11-18T06:34:09.189Z","type":"case-end","case":"checkout-alias","subtest":0,"result":"fail","elapsedMs":42671,"failedSubtests":2,"failureKind":"subtests","failureCode":null,"failureExit":null,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":82,"at":"2026-11-18T06:33:26.781Z","type":"child","case":"checkout-alias","subtest":0,"child":1,"tool":"compiler","mode":"compile","outcome":"exit-zero","exitCode":0,"errorCode":null,"signal":null,"killed":false,"timeoutMs":null,"elapsedMs":261,"stdoutBytes":534,"stderrBytes":0,"diagnostic":"none"}
+    # Subtest: cold and warm native launcher with a SymbolicLink checkout
+    not ok 2 - cold and warm native launcher with a SymbolicLink checkout
+      ---
+      duration_ms: 29.8212
+      type: 'test'
+      location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261117-ci-gates\\GraphGoblin\\tooling\\scripts\\windows-launcher-evidence.mjs:892:27'
+      failureType: 'testCodeFailure'
+      error: "EPERM: operation not permitted, symlink 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261117-ci-gates\\GraphGoblin' -> 'C:\\Users\\98jak\\AppData\\Local\\Temp\\graphgoblin-launcher-alias-1Vyk3q\\dir-Kk0OJy\\checkout alias-α'"
+      code: 'EPERM'
+      stack: |-
+        async symlink (node:internal/fs/promises:1001:10)
+        async checkLauncherAlias (file:///C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling/scripts/windows-launcher.qa-negative.acceptance.mjs:1155:5)
+        async #run (file:///C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:855:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async file:///C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling/scripts/windows-launcher.qa-negative.acceptance.mjs:1413:7
+        async #run (file:///C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:855:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+      ...
+    1..2
+not ok 3 - native Windows launcher accepts junction and directory symlink checkout paths
+  ---
+  duration_ms: 42671.324
+  type: 'test'
+  location: 'C:\\Users\\98jak\\.codex\\worktrees\\gg-20261117-ci-gates\\GraphGoblin\\tooling\\scripts\\windows-launcher.qa-negative.acceptance.mjs:1394:1'
+  failureType: 'subtestsFailed'
+  error: '2 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# {"evidence":"independent-api-lock-contention","trial":1,"results":[{"status":"refused","pid":19124,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":52272,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":25280},{"status":"refused","pid":60636,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":58108,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-1"}
+# {"evidence":"independent-api-lock-contention","trial":2,"results":[{"status":"acquired","pid":54164},{"status":"refused","pid":59132,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":24708,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":46928,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":44616,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-2"}
+# {"evidence":"independent-api-lock-contention","trial":3,"results":[{"status":"refused","pid":50036,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":19676},{"status":"refused","pid":22680,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":44104,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":56196,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-Ozmenx\\\\trial-3"}
+# Subtest: independent API processes never share ownership while reclaiming a reused PID
+ok 4 - independent API processes never share ownership while reclaiming a reused PID
+  ---
+  duration_ms: 9084.1082
+  type: 'test'
+  ...
+# Subtest: bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names
+    # Subtest: native closed outcomes, launcher pair bounds and NUL stdio checks
+    ok 1 - native closed outcomes, launcher pair bounds and NUL stdio checks
+      ---
+      duration_ms: 1062.4953
+      type: 'test'
+      ...
+    # Subtest: a stale built entry beside the current guard module refuses before spawn
+    ok 2 - a stale built entry beside the current guard module refuses before spawn
+      ---
+      duration_ms: 430.616
+      type: 'test'
+      ...
+    # Subtest: an application startup failure reports its written closed diagnostic (74)
+    ok 3 - an application startup failure reports its written closed diagnostic (74)
+      ---
+      duration_ms: 6408.6239
+      type: 'test'
+      ...
+    # Subtest: one writer per physical root refuses a junction contender and a disjoint store and port
+    ok 4 - one writer per physical root refuses a junction contender and a disjoint store and port
+      ---
+      duration_ms: 12118.7577
+      type: 'test'
+      ...
+    # Subtest: deliberate stop, legacy append writer refusal and oversized history replacement
+    ok 5 - deliberate stop, legacy append writer refusal and oversized history replacement
+      ---
+      duration_ms: 17735.005
+      type: 'test'
+      ...
+    # Subtest: unsafe managed names are refused and their targets preserved
+    ok 6 - unsafe managed names are refused and their targets preserved
+      ---
+      duration_ms: 3264.6023
+      type: 'test'
+      ...
+# {"evidence":"windows-launcher-bounded-logs","artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\gg-20261117-ci-gates\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-logs-WXrZwJ"}
+    1..6
+ok 5 - bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names
+  ---
+  duration_ms: 41309.9736
+  type: 'test'
+  ...
+1..5
+# tests 25
+# suites 0
+# pass 21
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 226247.3009

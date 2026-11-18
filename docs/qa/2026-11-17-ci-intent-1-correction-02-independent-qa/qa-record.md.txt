@@ -1,0 +1,37 @@
+# Independent targeted QA of CI evidence correction 02
+
+**Verdict: PASS for correction 02.** Both remaining evidence-consistency failures reproduced against correction 01 now fail closed, and the original CLI regressions still pass. The workflow, launcher suite, hosted controls and prior evidence are unchanged. Formal review remains 0/3. Hosted scheduling, uploads and exact-head validation still require their own evidence.
+
+## Source and outcomes
+
+The QA checkout `codex/gg-20261117-ci-gates-qa` stayed based on `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`. Each of the eight copied files matched the live frozen author source and the sealed author copy in raw SHA-256 and Git blob ID. The scoped tracked diff is `fa332e20b8ecdadf581397b9b4e1c625bbdd3b220af962fd661d89625dc7af91`. Only the helper, focused tests and testing documentation differ from correction 01. The earlier independent FAIL packet verified all 50 entries against its existing seal. [Source receipts](source-receipts.json).
+
+| Check | Independent outcome |
+| --- | --- |
+| Byte-identical original CLI harness | 13/13, including actual child failure, overflow, manifest validation, duplicate evidence, and link/path boundary controls. |
+| Byte-identical supplemental CLI harness | 5/5. A missing required run ID now yields exit 1 and `incomplete` with `binding-identity`. A closer claiming a nonexistent rejection with zero omissions now yields exit 1 and rejects the observation file. The other three checks remain green. |
+| Real CLI identity matrix | 42/42: each of the seven required fields absent and malformed across passing, failing and skipped native states. Passing native was `incomplete` with three evidence paths and exit 1. Failed native stayed `native-failed` with three paths and exit 0. Skipped native stayed `not-run` with two paths and exit 0. Each recorded one `binding-identity` marker. |
+| Runtime diagnostics | 2/2: verified push and two-parent pull-request evidence both complete with OS, architecture, image and Node diagnostic values unavailable. The canonical `node: null` case was supplied as a fixture because Node's version is sourced from the process. |
+| Rejection timestamp | A controlled injected clock threw while stamping a rejection. That attempt made no phantom count. A second ordinary rejection appeared once and finalized with the closer count of 1, zero omissions and `valid` observations. Production timestamps use the default clock. |
+| Genuine synthetic overflow | A bounded recorder made 599 retained records, including two visible rejections, plus 709 omissions. The closer's total of five rejections is possible because three were omitted. CLI retained all three files and status `native-failed`. A controlled overclaim of 712 exceeded the maximum of 711, returned `lifecycle` and left only manifest and result selected. |
+| Focused Vitest with coverage | 33/33, helper 99.45% lines and 97.20% branches. |
+
+The first overflow harness assumed one visible rejection after the byte limit rejected a larger record. The smaller rejection record fit in the remaining space, so the genuine stream retained two. The first failure and its complete matrix are preserved. The focused follow-up measures the visible count, verifies an omitted rejection still exists and checks the upper bound. It passed 1/1. [First finite harness result](finite-controls/cli-controls.json), [bounded overflow follow-up](finite-overflow-followup/cli-controls.json), [original CLI results](original-cli/cli-controls.json), [supplemental CLI results](supplemental-cli/cli-controls.json), [focused test log](helper.log).
+
+## Retained native evidence
+
+The corrected parser independently accepted the earlier genuine 203-record stream and the corrected author's 1,019-record negative stream. The original closer counted zero rejections and zero omissions. The negative closer counted one rejection and 265 omissions, with one visible rejection. Both summaries retained trials 1–3, both junction release spellings and the stored-case outcomes. The local packets lack GitHub identity and checkout binding inputs, which are reflected in the updated missing reasons without discarding their useful failed-native observations. [Raw native reparse receipt](reparse-retained.json).
+
+The authored full tooling run passed 211/211 and is bound separately in the correction 02 packet. This targeted QA used retained native evidence and focused regression runs. The earlier performance timeout remains a separate observation and the dependency audit advisory remains pending. No candidate files, staged files or GitHub state changed in this QA lane.
+
+## Reproduction
+
+From the source-matched independent checkout, select the project Node 22.23.4 and use `pnpm.cmd` 12.8.1. The raw `finite-controls` test intentionally preserves its first synthetic assertion failure. The follow-up path contains only the rechecked overflow scenario.
+
+```powershell
+node 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-02-independent-qa/original-cli/cli-controls.mjs' (Get-Location).Path
+node 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-02-independent-qa/supplemental-cli/cli-controls.mjs' (Get-Location).Path
+node 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-02-independent-qa/finite-controls/cli-controls.mjs' (Get-Location).Path
+node 'C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-02-independent-qa/finite-overflow-followup/cli-controls.mjs' (Get-Location).Path
+pnpm.cmd --filter @graphgoblin/tooling exec vitest run scripts/windows-launcher-evidence.test.mjs --coverage.enabled --coverage.include=scripts/windows-launcher-evidence.mjs
+```

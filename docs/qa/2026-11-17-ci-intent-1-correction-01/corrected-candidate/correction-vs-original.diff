@@ -1,0 +1,1614 @@
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/original-candidate/.github/workflows/ci.yml	2026-11-17 23:00:26.531819800 -0600
++++ .github/workflows/ci.yml	2026-11-18 00:26:40.495644000 -0600
+@@ -20,34 +20,39 @@
+       - uses: actions/checkout@v4
+       - uses: pnpm/action-setup@v4
+       - uses: actions/setup-node@v4
++        id: node
+         with:
+           node-version-file: .nvmrc
+           cache: pnpm
++      - name: Install
++        id: install
++        run: pnpm install --frozen-lockfile
++      - name: Build
++        id: build
++        run: pnpm build
+       # Native evidence (#496): a fresh, non-hidden folder directly below the runner temp,
+-      # outside the checkout and every fixture. The suite writes typed records only.
++      # outside the checkout and every fixture. The suite writes typed records only. Prepared
++      # after the build, so its failure can never skip install, build or the native command; it
++      # needs only the checkout and Node, so a failed install or build is still recorded.
+       - name: Prepare native evidence
+         id: evidence
++        if: ${{ !cancelled() && steps.node.outcome == 'success' }}
+         env:
+           GG_TEST_EVIDENCE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+           GG_TEST_EVIDENCE_EVENT_BASE: ${{ github.event.pull_request.base.sha }}
+         run: node tooling/scripts/windows-launcher-evidence.mjs init
+-      - name: Install
+-        id: install
+-        run: pnpm install --frozen-lockfile
+-      - name: Build
+-        id: build
+-        run: pnpm build
+       - name: Native Windows launcher acceptance
+         id: native
+-        # Runs after a successful build even if evidence preparation failed; that failure
+-        # still fails the job.
++        # Runs after a successful build whatever evidence preparation did. A preparation failure
++        # still fails the job, and the suite then receives no evidence folder.
+         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+         env:
+-          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outputs.dir }}
++          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outcome == 'success' && steps.evidence.outputs.dir || '' }}
+         run: pnpm test:windows-launcher
+       - name: Finalize native evidence
+         id: finalize
+-        if: ${{ always() && steps.evidence.outputs.dir != '' }}
++        # Only a successfully prepared folder is finalized, and only finalized files are uploaded.
++        if: ${{ always() && steps.evidence.outcome == 'success' }}
+         env:
+           GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outputs.dir }}
+           GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_ID: ${{ steps.evidence.outputs.id }}
+@@ -199,9 +204,9 @@
+           } >> "$GITHUB_STEP_SUMMARY"
+           echo "Coverage step: ${COVERAGE_OUTCOME:-not run}; package summaries retained: ${reports}"
+ 
+-  # The stable required status. It always runs, even when a lane fails, is skipped or is
+-  # cancelled, and passes only when both lanes succeeded: a skipped Gates would satisfy a
+-  # required check, so it is never skippable.
++  # The stable `Gates` status context. It always runs, even when a lane fails, is skipped or is
++  # cancelled, and passes only when both lanes succeeded. It is never skippable, because a skipped
++  # job would satisfy a branch rule that requires it.
+   gates:
+     name: Gates
+     needs: [repository-checks, coverage]
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/original-candidate/CHANGELOG.md	2026-11-17 23:21:15.324589800 -0600
++++ CHANGELOG.md	2026-11-18 00:28:18.751966800 -0600
+@@ -8,9 +8,10 @@
+   checks and Coverage, each with a 30-minute budget (#488, ADR-0084). Coverage gets its own
+   install and build and a 25-minute step cap, and uploads the package coverage summaries after
+   every outcome. The licence, generated-docs, contrast and dependency-audit checks no longer wait
+-  for coverage. The required `Gates` status is now a short aggregate that is always evaluated and
+-  passes only when both jobs succeed; a failed, cancelled or skipped job never passes it. Commands,
+-  arguments, thresholds and the test workload are unchanged.
++  for coverage. The `Gates` status is now a short aggregate that is always evaluated and passes
++  only when both jobs succeed; a failed, cancelled or skipped job never passes it. It stays the one
++  stable status context; `main` currently has no branch protection or ruleset requiring it.
++  Commands, arguments, thresholds and the test workload are unchanged.
+ 
+ - The Windows launcher CI job uploads bounded, typed native evidence as `windows-launcher-<attempt>`
+   (#496). The earlier `.tmp/windows-launcher-*/` upload never produced an archive; by default the
+@@ -18,8 +19,11 @@
+   fresh folder in the runner temp directory: a manifest binding the run and checkout, the suite's
+   typed observations, and a validated result, together under 256 KiB. It records test outcomes,
+   child exit codes, signals and timings, alias and cleanup dispositions, and fixture states, but
+-  never paths, output, keys, stores or fixture files. A passing native run without its required
+-  observations fails the job.
++  never paths, output, keys, stores or fixture files. The evidence folder is prepared after the
++  build, so a preparation failure fails the job without skipping the native tests and uploads
++  nothing. Only the exact manifest bytes `init` wrote are accepted. A passing native run without
++  its required observations, with a repeated or contradictory record, or with a checkout that does
++  not match, or cannot be matched to, the event fails the job.
+ 
+ - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
+   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/original-candidate/docs/10-testing-and-quality.md	2026-11-17 23:21:04.222514600 -0600
++++ docs/10-testing-and-quality.md	2026-11-18 00:27:59.590769800 -0600
+@@ -115,7 +115,7 @@
+ 
+ `.github/workflows/ci.yml` runs six jobs on pushes to `main` and pull requests: Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs run independently on separate runners, except that Gates waits for Repository checks and Coverage; the steps below describe the execution order within each job.
+ 
+-The required `Gates` status is an aggregate ([ADR-0084](decisions/ADR-0084-independent-ci-lanes-behind-gates.md), #488). Coverage and the repository checks run as two independent jobs, so neither one's duration can keep the other from finishing, and the final licence, docs, contrast and audit checks no longer wait for coverage.
++The `Gates` status is a stable aggregate context ([ADR-0084](decisions/ADR-0084-independent-ci-lanes-behind-gates.md), #488). Coverage and the repository checks run as two independent jobs, so neither one's duration can keep the other from finishing, and the final licence, docs, contrast and audit checks no longer wait for coverage.
+ 
+ The `repository-checks` job (**Repository checks**, 30-minute job budget) runs:
+ 
+@@ -146,19 +146,19 @@
+ 
+ The workload is unchanged: the same packages, tests, thresholds, worker settings and serial order, with no sharding, retry or remote cache.
+ 
+-The `gates` job (**Gates**, 2 minutes) needs both jobs and runs with `always()`, so it is evaluated even when either job fails, is skipped or is cancelled. It checks out nothing, holds no token permissions, writes both results to its log and job summary, and succeeds only when both results are `success`. Any failed, cancelled, skipped or missing result fails it. It is never skippable, because a skipped job would satisfy a required status check. A run cancelled because a newer commit superseded it therefore ends with a non-green Gates. Branch protection continues to require the single `Gates` context; read individual command results from the Repository checks and Coverage jobs.
++The `gates` job (**Gates**, 2 minutes) needs both jobs and runs with `always()`, so it is evaluated even when either job fails, is skipped or is cancelled. It checks out nothing, holds no token permissions, writes both results to its log and job summary, and succeeds only when both results are `success`. Any failed, cancelled, skipped or missing result fails it. It is never skippable, because a skipped job would satisfy a branch rule that requires it. A run cancelled because a newer commit superseded it therefore ends with a non-green Gates. The workflow keeps `Gates` as the one stable status context for such a rule. A read-back of `main` on 2026-11-17 found no branch protection and no rulesets, so no platform-required check is configured. Read individual command results from the Repository checks and Coverage jobs.
+ 
+-Budgets come from the retained #485, #487, #490 and #501 logs (summarized in ADR-0084). The slowest coverage step that emitted every group took 20m22s. Two 30-minute deadline attempts were cut off at 20m08s and 20m16s, with tooling and both plugin groups still outstanding; tooling alone took 99 to 133 seconds in comparable runs. On those slow runners the 25-minute cap therefore leaves about 2.5 minutes, not the 4.6 minutes it leaves over the slowest complete run. A coverage run past the cap fails Coverage, and therefore Gates; its partial reports are still uploaded. Measured setup before coverage took 1 to 1.5 minutes. Exhausting a whole job budget, or losing the runner, can still prevent the upload.
++Budgets come from the retained #485, #487, #490 and #501 logs (summarized in ADR-0084). The 30-minute lane budgets and the 25-minute coverage cap are this change's architecture choice, made from those measurements; they are not an owner requirement. The slowest coverage step that emitted every group took 20m22s. Two 30-minute deadline attempts were cut off at 20m08s and 20m16s, with tooling and both plugin groups still outstanding; tooling alone took 99 to 133 seconds in comparable runs. On those slow runners the 25-minute cap therefore leaves about 2.5 minutes, not the 4.6 minutes it leaves over the slowest complete run. A coverage run past the cap fails Coverage, and therefore Gates; its partial reports are still uploaded. Measured setup before coverage took 1 to 1.5 minutes. Exhausting a whole job budget, or losing the runner, can still prevent the upload.
+ 
+ The `windows-launcher` job (**Windows launcher**, 20 minutes) installs, builds and runs `pnpm test:windows-launcher` with its unchanged assertions, timeouts, TAP output and stdout records. It used to upload `.tmp/windows-launcher-*/`, which never produced an archive. The uploader's documented default excludes hidden paths, including everything below a dot-directory such as `.tmp`. The fixture trees also hold stores, keys, shortcuts, binaries, hard links and junctions to the checkout, none of which may be exported. Bounded typed evidence replaces them (#496):
+ 
+-- **Prepare.** Before installing, `node tooling/scripts/windows-launcher-evidence.mjs init` creates a fresh, non-hidden `windows-launcher-evidence-XXXXXX` directory directly below the runner temp folder, outside the checkout and every fixture. It writes `manifest.json`, which binds the repository, workflow reference, job key, run ID and attempt, event, ref and SHA, and the event head and base. It also binds the checked-out commit, its tree and its parents read from the commit header, so a shallow merge checkout can be compared with the event, plus the runner image and the Node version. Missing or malformed values are recorded as null and listed under `unavailable`.
++- **Prepare.** After the build step, `node tooling/scripts/windows-launcher-evidence.mjs init` creates a fresh, non-hidden `windows-launcher-evidence-XXXXXX` directory directly below the runner temp folder, outside the checkout and every fixture. It needs only the checkout and Node, so it runs whenever Node setup succeeded and the run is not cancelled, including after a failed install or build, which are then recorded as not run. It writes `manifest.json`, which binds the repository, workflow reference, job key, run ID and attempt, event, ref and SHA, and the event head and base. It also binds the checked-out commit, its tree and its parents read from the commit header, so a shallow merge checkout can be compared with the event, plus the runner image and the Node version. Missing or malformed values are recorded as null and listed under `unavailable` (the event base only for a pull request). A preparation failure fails the job but cannot skip install, build or the native command: the native step runs after every successful build, then receives no evidence directory, and nothing is finalized or uploaded.
+ - **Record.** The native step receives only that directory, through `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR`. The suite reads it once, removes it from its environment before any child starts, and appends typed records to `observations.ndjson` synchronously as they occur. The records cover the start and end of every test and subtest; every child process's tool and mode, exit code, recognised error code, signal, kill state, configured timeout, elapsed time, stdout and stderr byte counts and a closed diagnostic class recognised from its stderr; checkout-alias link type, target match, release and unlink disposition; lock-contention owner counts; gateway drain, window-fixture and contender cleanup; and each fixture root's existence and type at exit, observed with `lstat`. Fixtures are identified only by their random six-character suffix.
+-- **Privacy.** A record holds closed enums, bounded integers, booleans and validated identifiers only: no path, argument, environment value, key, token, store byte, command output, error message or log text. Records with missing, extra or invalid fields become `rejected` records.
++- **Privacy.** A record holds closed enums, bounded integers, booleans and validated identifiers only: no path, argument, environment value, key, token, store byte, command output, error message or log text. Records with missing, extra, invalid or mutually inconsistent fields become `rejected` records. So does a second statement of a once-per-run fact (each test and subtest start and end, each link kind's alias outcome, each alias round and each contention trial), and any of the recorder's own lifecycle or fixture-state types written through the public API.
+ - **Bounds.** Each record is at most 1 KiB and the file at most 1,024 records and 192 KiB, with room reserved for the closing records. Records beyond that are counted as omitted after one `overflow` record. The manifest is capped at 8 KiB and the result at 16 KiB, so the archive stays below 256 KiB.
+ - **Failures.** A failing test or subtest also prints its typed end record and its last child record to stdout. An evidence directory that is missing, linked, outside the runner temp or not created by `init` is refused with one stdout marker; the tests still run with their own result. A write failure stops recording with one marker and never throws into a test.
+-- **Finalize.** After the native step, on every outcome, `finalize` refuses a directory that is not the `init` directory for this job. It also refuses any entry other than the two expected files, and a link, hard link, non-file or oversized file, without following, deleting or writing anything. Observation bytes must be the recorder's canonical serialization; any other byte rejects the file. It then writes `result.json` with the install, build and native step outcomes, the observation state and counts, per-case results and the missing required observations. The upload receives only the exact file paths, as `windows-launcher-<attempt>`, with `include-hidden-files: false` and `if-no-files-found: error`.
+-- **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; all subtests passed; both checkout-alias records with a matched target and an unlinked alias after drained releases; three single-owner contention trials; and a final state for every fixture. A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
++- **Finalize.** After the native step, on every outcome of a successfully prepared directory, `finalize` refuses a directory that is not the `init` directory for this job. It also refuses any entry other than the two expected files, and a link, hard link, non-file or oversized file, without following, deleting or writing anything. The manifest must be exactly the bytes `init` wrote: it is rebuilt from its validated values, the fixed limits and file names, and the fields derived from them (the `unavailable` list and the checkout comparisons), then compared byte for byte, so an unknown or repeated field at any depth, a byte-order mark or other formatting is refused before any path is published. Observation bytes must be the recorder's canonical serialization without a byte-order mark. The stream must start with its one `recorder-open`, hold at most one `overflow` record and at most one final `recorder-closed` record whose counts match the stream, and state each once-per-run fact once. Any other byte or contradiction rejects the file. These checks validate shape and consistency; they do not authenticate files that a hostile runner could write. It then writes `result.json` with the install, build and native step outcomes, the observation state and counts, per-case results and the missing required observations. The upload receives only the exact file paths, as `windows-launcher-<attempt>`, with `include-hidden-files: false` and `if-no-files-found: error`.
++- **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; every started subtest ended and passed; both checkout-alias records with a matched target, no failure stage and an unlinked alias, each after owner-verified, drained releases through both the alias and the direct spelling; the single-owner contention trials 1, 2 and 3, each its own record; and a final state for every fixture. Alias and contention records count only from their own case. Every checkout comparison that applies to the event must also hold: a false one is a known contradiction (`binding-contradiction`) and a missing one leaves the revision unverified (`binding-unverified`). A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
+ - **Retention.** Fixtures under `.tmp` and OS TEMP are left in place, including any kept because a release or unlink could not be verified. Evidence records their final state and never copies or traverses them.
+ 
+ Without `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR` the local `pnpm test:windows-launcher` writes no evidence and keeps its usual output. The CI evidence binds to the checkout but does not establish a hosted result by itself: the uploaded archive, its GitHub digest and the job's own log are the evidence.
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/original-candidate/docs/decisions/ADR-0084-independent-ci-lanes-behind-gates.md	2026-11-17 23:12:19.958623300 -0600
++++ docs/decisions/ADR-0084-independent-ci-lanes-behind-gates.md	2026-11-18 00:28:07.280426300 -0600
+@@ -30,8 +30,10 @@
+ - **One stable, fail-closed status.** `gates` (Gates) needs both jobs, runs with `always()`, has
+   a 2-minute budget, no checkout and no token permissions. It succeeds only when both results are
+   `success`; failed, cancelled, skipped and missing results fail it, and it records both results.
+-  It uses `always()` rather than `!cancelled()` because a skipped job would satisfy a required
+-  status check. Required-check configuration keeps naming the single `Gates` context.
++  It uses `always()` rather than `!cancelled()` because a skipped job would satisfy a branch rule
++  that requires it. The workflow keeps `Gates` as the one stable status context for such a rule.
++  A read-back of `main` on 2026-11-17 found no branch protection and no rulesets, so no
++  platform-required check is configured.
+ - **No workload relaxation.** There is no sharding, retry, raised concurrency, remote cache,
+   test-timeout or browser-argument change, and no change to coverage floors, the audit or any
+   other job.
+@@ -49,9 +51,10 @@
+ ## Consequences
+ 
+ Each run needs one more Ubuntu runner, a second install and build (23 to 37 seconds measured)
+-and a 2-minute aggregate slot. On the slowest projected coverage behaviour the 25-minute cap
+-leaves about 2.5 minutes. A longer run fails Coverage, and therefore Gates, rather than passing
+-silently. Exhausting a job budget or losing a runner can still prevent an upload. A failure in
++and a 2-minute aggregate slot. The 30-minute lane budgets and the 25-minute coverage cap are this
++decision's architecture choice, made from the measurements above; they are not an owner
++requirement. On the slowest projected coverage behaviour the 25-minute cap leaves about 2.5
++minutes. A longer run fails Coverage, and therefore Gates, rather than passing silently. Exhausting a job budget or losing a runner can still prevent an upload. A failure in
+ either lane fails Gates, so the dependency audit keeps blocking the gate independently of
+ coverage. Evidence consumers that read one combined Gates log now read the two jobs by name.
+ Hosted timings, queue latency and the live required-check configuration are confirmed on actual
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/original-candidate/tooling/scripts/windows-launcher-evidence.mjs	2026-11-17 23:14:39.311311600 -0600
++++ tooling/scripts/windows-launcher-evidence.mjs	2026-11-18 00:27:16.772642600 -0600
+@@ -277,7 +277,31 @@
+   },
+ };
+ 
+-/** True only for a record of a known type with exactly its declared, valid fields. */
++/**
++ * Relations between fields that the recorder and the acceptance suite always keep: a passing test
++ * has no failure fields, an unlinked alias had its target matched, only a failed release names a
++ * failure, contention results account for every contender, and the overflow marker directly
++ * follows the first omitted record. A record that breaks one did not come from them.
++ */
++const CONSISTENT = {
++  'recorder-closed': (r) => (r.omittedRecords === 0) === (r.omittedBytes === 0),
++  overflow: (r) => r.firstOmittedSeq === r.seq - 1,
++  'case-end': (r) =>
++    r.result === 'pass'
++      ? r.failedSubtests === 0 &&
++        r.failureKind === null &&
++        r.failureCode === null &&
++        r.failureExit === null &&
++        r.failureSignal === null
++      : r.failureKind !== null && (r.failureKind !== 'subtests' || r.failedSubtests > 0),
++  alias: (r) =>
++    (r.failureStage !== null || r.failureCode === null) &&
++    (r.disposition !== 'unlinked' || (r.targetMatched && r.unlinkFailure === null)),
++  'alias-round': (r) => r.release === 'failed' || r.releaseFailure === null,
++  contention: (r) => r.acquired + r.refused + r.other === r.contenders,
++};
++
++/** True only for a record of a known type with exactly its declared, valid, consistent fields. */
+ export function validateRecord(record) {
+   if (record === null || typeof record !== 'object' || Array.isArray(record)) return false;
+   if (typeof record.type !== 'string' || !Object.hasOwn(SCHEMAS, record.type)) return false;
+@@ -287,9 +311,32 @@
+   if (keys.length !== fields.length || fields.some((field) => !Object.hasOwn(record, field)))
+     return false;
+   if (!integer(1, 10_000_000)(record.seq) || !matching(TIMESTAMP)(record.at)) return false;
+-  return Object.entries(schema).every(([field, check]) => check(record[field]));
++  if (!Object.entries(schema).every(([field, check]) => check(record[field]))) return false;
++  return CONSISTENT[record.type]?.(record) ?? true;
+ }
+ 
++/**
++ * Facts the suite states once per run: a test or subtest start and end, the alias outcome of each
++ * link kind, each alias round's release and each contention trial. A repeat cannot add evidence.
++ */
++const FACT_KEYS = {
++  'case-start': (r) => `${r.case}:${r.subtest}`,
++  'case-end': (r) => `${r.case}:${r.subtest}`,
++  alias: (r) => r.kind,
++  'alias-round': (r) => `${r.kind}:${r.spelling}`,
++  contention: (r) => String(r.trial),
++};
++const factKey = (record) =>
++  Object.hasOwn(FACT_KEYS, record.type) ? `${record.type}|${FACT_KEYS[record.type](record)}` : null;
++/** Written only by the recorder itself; `record` refuses them like any other invalid record. */
++const INTERNAL = new Set([
++  'recorder-open',
++  'recorder-closed',
++  'overflow',
++  'rejected',
++  'fixture-state',
++]);
++
+ /** Read a property of an arbitrary thrown value without letting a getter escape. */
+ function property(value, key) {
+   try {
+@@ -559,24 +606,57 @@
+   }
+ }
+ 
+-function readManifest(directory) {
+-  const content = readBounded(join(directory, FILES.manifest), LIMITS.manifestBytes);
+-  if (content === null) throw new EvidenceRefusal('manifest-missing');
+-  let manifest;
++const composeManifest = ({ evidenceId, createdAt, binding }) => ({
++  schema: SCHEMA,
++  state: 'initialized',
++  evidenceId,
++  createdAt,
++  limits: LIMITS,
++  files: FILES,
++  binding,
++});
++const serializeManifest = (manifest) => `${JSON.stringify(manifest, null, 2)}\n`;
++const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
++
++/**
++ * The manifest `init` wrote, or a refusal. The manifest is rebuilt from its validated values, the
++ * static limits and file names, and the binding fields derived from them, and must equal the file
++ * byte for byte: an unknown or repeated field at any depth, a byte-order mark, other whitespace or
++ * an inconsistent derived field is refused before anything is published. This checks shape, not
++ * authenticity: a runner that controls the files can still write a well-formed manifest.
++ */
++export function parseManifest(content) {
++  let value;
+   try {
+-    manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(content));
++    value = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(content));
+   } catch {
+     throw new EvidenceRefusal('manifest-invalid');
+   }
++  const binding = isObject(value) ? bindingFrom(value.binding) : null;
+   if (
+-    manifest?.schema !== SCHEMA ||
+-    manifest.state !== 'initialized' ||
+-    !matching(UUID)(manifest.evidenceId)
++    binding === null ||
++    value.schema !== SCHEMA ||
++    value.state !== 'initialized' ||
++    !matching(UUID)(value.evidenceId) ||
++    !matching(TIMESTAMP)(value.createdAt)
+   )
+     throw new EvidenceRefusal('manifest-invalid');
++  const manifest = composeManifest({
++    evidenceId: value.evidenceId,
++    createdAt: value.createdAt,
++    binding,
++  });
++  if (!Buffer.from(serializeManifest(manifest), 'utf8').equals(content))
++    throw new EvidenceRefusal('manifest-invalid');
+   return manifest;
+ }
+ 
++function readManifest(directory) {
++  const content = readBounded(join(directory, FILES.manifest), LIMITS.manifestBytes);
++  if (content === null) throw new EvidenceRefusal('manifest-missing');
++  return parseManifest(content);
++}
++
+ /**
+  * Appends validated records to the evidence file as they occur, synchronously so a later
+  * failure or crash cannot lose earlier records. It never throws into the suite: invalid or
+@@ -598,27 +678,34 @@
+   #overflowed = false;
+   #closed = false;
+   #fixtures = [];
++  #facts = new Set();
+ 
++  /** With an `evidenceId`, the first record written is the stream's only `recorder-open`. */
+   constructor({
+     fd = null,
+     state = 'disabled',
+     log = console.log,
+     now = () => new Date(),
+     clock = () => performance.now(),
++    evidenceId = null,
+   } = {}) {
+     this.#fd = fd;
+     this.state = state;
+     this.#log = log;
+     this.#now = now;
+     this.#clock = clock;
++    if (evidenceId !== null) this.#write('recorder-open', { evidenceId }, false, true);
+   }
+ 
+-  /** Record one typed observation; scope fields come from the running test when omitted. */
++  /**
++   * Record one typed observation; scope fields come from the running test when omitted. The
++   * recorder's own lifecycle types and a repeat of a once-per-run fact become `rejected`.
++   */
+   record(type, fields = {}) {
+     return this.#write(type, fields, false);
+   }
+ 
+-  #write(type, fields, tail) {
++  #write(type, fields, tail, internal = false) {
+     if (this.#closed) return null;
+     try {
+       const schema = Object.hasOwn(SCHEMAS, type) ? SCHEMAS[type] : undefined;
+@@ -632,10 +719,10 @@
+         { seq: ++this.#seq, at: this.#now().toISOString(), type },
+         reserved ? {} : scoped,
+       );
+-      const valid = !reserved && validateRecord(record);
++      const valid = !reserved && (internal || !INTERNAL.has(type)) && validateRecord(record);
+       const line = valid ? Buffer.from(`${JSON.stringify(record)}\n`, 'utf8') : null;
+       // Bounded fields keep valid records far below the limit; the size check is a backstop.
+-      if (!valid || line.length > LIMITS.recordBytes)
++      if (!valid || line.length > LIMITS.recordBytes || !this.#firstStatement(record))
+         return this.#append(this.#rejection(type), tail);
+       return this.#append(record, tail, line);
+     } catch {
+@@ -643,6 +730,14 @@
+     }
+   }
+ 
++  #firstStatement(record) {
++    const key = factKey(record);
++    if (key === null) return true;
++    if (this.#facts.has(key)) return false;
++    this.#facts.add(key);
++    return true;
++  }
++
+   #rejection(type) {
+     this.#rejected++;
+     return {
+@@ -663,7 +758,7 @@
+       this.#omittedBytes += line.length;
+       if (!this.#overflowed) {
+         this.#overflowed = true;
+-        this.#write('overflow', { firstOmittedSeq: record.seq }, true);
++        this.#write('overflow', { firstOmittedSeq: record.seq }, true, true);
+       }
+       return record;
+     }
+@@ -738,13 +833,14 @@
+     return (t) => this.#run(this.#scope(caseId, 0, null), t, body);
+   }
+ 
++  /** Subtests are numbered across their whole case, so nested subtests never share a number. */
+   #scope(caseId, subtest, parent) {
+     return {
+       case: caseId,
+       subtest,
+       parent,
++      numbering: parent?.numbering ?? { subtests: 0 },
+       children: 0,
+-      subtests: 0,
+       failedSubtests: 0,
+       lastChild: null,
+     };
+@@ -772,7 +868,8 @@
+         result: failed ? 'fail' : 'pass',
+         elapsedMs: Math.min(86_400_000, Math.max(0, Math.round(this.#clock() - started))),
+         failedSubtests: current.failedSubtests,
+-        ...failureFields(thrown ? error : undefined, current.failedSubtests),
++        // Even a thrown `undefined` or `null` is a failure with a kind.
++        ...failureFields(thrown ? (error ?? {}) : undefined, current.failedSubtests),
+       });
+       if (failed) {
+         this.#marker(end);
+@@ -789,7 +886,7 @@
+             const index = rest.findIndex((item) => typeof item === 'function');
+             if (index >= 0) {
+               const body = rest[index];
+-              const child = this.#scope(current.case, ++current.subtests, current);
++              const child = this.#scope(current.case, ++current.numbering.subtests, current);
+               rest[index] = (subtest) => this.#run(child, subtest, body);
+             }
+             return target.test(name, ...rest);
+@@ -811,7 +908,7 @@
+   close() {
+     if (this.#closed) return;
+     for (const { kind, path, id } of this.#fixtures)
+-      this.#write('fixture-state', { fixture: id, kind, ...pathState(path) }, true);
++      this.#write('fixture-state', { fixture: id, kind, ...pathState(path) }, true, true);
+     this.#write(
+       'recorder-closed',
+       {
+@@ -821,6 +918,7 @@
+         omittedBytes: this.#omittedBytes,
+       },
+       true,
++      true,
+     );
+     this.#closed = true;
+     if (this.#fd !== null) {
+@@ -855,8 +953,7 @@
+     const directory = verifyEvidenceDirectory(requested, env.RUNNER_TEMP, repoRoot);
+     const { evidenceId } = readManifest(directory);
+     const fd = createExclusive(join(directory, FILES.observations));
+-    const recorder = new Recorder({ fd, state: 'recording', log, now, clock });
+-    recorder.record('recorder-open', { evidenceId });
++    const recorder = new Recorder({ fd, state: 'recording', log, now, clock, evidenceId });
+     log(JSON.stringify({ evidence: 'windows-launcher-export', state: 'recording', evidenceId }));
+     onExit(() => recorder.close());
+     return recorder;
+@@ -906,28 +1003,99 @@
+   }
+ }
+ 
+-/** Validated run and checkout bindings; absent or malformed values are null and listed. */
+-export function describeBinding(env, git) {
+-  const binding = { unavailable: [] };
+-  for (const [name, variable, pattern] of BINDINGS) {
+-    const value = env[variable];
+-    const optional = name === 'eventBase' && (value === undefined || value === '');
+-    binding[name] = typeof value === 'string' && pattern.test(value) ? value : null;
+-    if (binding[name] === null && !optional) binding.unavailable.push(name);
+-  }
++const NODE_VERSION = /^v[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}$/;
++const text = (pattern) => (value) => typeof value === 'string' && pattern.test(value);
++
++/**
++ * The binding in its one canonical shape. `unavailable` lists every null value (the event base
++ * only for a pull request, where it applies) and the checkout comparisons are computed from the
++ * values, so a manifest can be rebuilt from its own content.
++ */
++function composeBinding({ checkout, node, ...values }) {
++  const merge = values.event === 'pull_request';
++  const unavailable = BINDINGS.map(([name]) => name).filter(
++    (name) => values[name] === null && (name !== 'eventBase' || merge),
++  );
++  if (checkout.state !== 'observed') unavailable.push('checkout');
++  if (node === null) unavailable.push('node');
+   const same = (a, b) => (a === null || b === null || a === undefined ? null : a === b);
+-  const checkout = observeCheckout(git);
+-  if (checkout.state !== 'observed') binding.unavailable.push('checkout');
+-  const merge = binding.event === 'pull_request';
+-  binding.checkout = {
+-    ...checkout,
+-    matchesSha: same(checkout.head, binding.sha),
+-    headMatchesEventHead: merge ? null : same(checkout.head, binding.eventHead),
+-    baseParentMatchesEventBase: merge ? same(checkout.parents[0], binding.eventBase) : null,
+-    headParentMatchesEventHead: merge ? same(checkout.parents[1], binding.eventHead) : null,
++  return {
++    unavailable,
++    ...Object.fromEntries(BINDINGS.map(([name]) => [name, values[name]])),
++    checkout: {
++      state: checkout.state,
++      head: checkout.head,
++      tree: checkout.tree,
++      parents: checkout.parents,
++      matchesSha: same(checkout.head, values.sha),
++      headMatchesEventHead: merge ? null : same(checkout.head, values.eventHead),
++      baseParentMatchesEventBase: merge ? same(checkout.parents[0], values.eventBase) : null,
++      headParentMatchesEventHead: merge ? same(checkout.parents[1], values.eventHead) : null,
++    },
++    node,
+   };
+-  binding.node = process.version;
+-  return binding;
++}
++
++/** Validated run and checkout bindings; absent or malformed values are null and listed. */
++export function describeBinding(env, git) {
++  const values = Object.fromEntries(
++    BINDINGS.map(([name, variable, pattern]) => [
++      name,
++      text(pattern)(env[variable]) ? env[variable] : null,
++    ]),
++  );
++  const node = NODE_VERSION.test(process.version) ? process.version : null;
++  return composeBinding({ ...values, checkout: observeCheckout(git), node });
++}
++
++/** The canonical binding rebuilt from a parsed manifest's values, or null when one is invalid. */
++function bindingFrom(binding) {
++  if (!isObject(binding) || !isObject(binding.checkout)) return null;
++  const values = {};
++  for (const [name, , pattern] of BINDINGS) {
++    if (binding[name] !== null && !text(pattern)(binding[name])) return null;
++    values[name] = binding[name];
++  }
++  const { state, head, tree, parents } = binding.checkout;
++  const observed =
++    state === 'observed' &&
++    text(SHA)(head) &&
++    text(SHA)(tree) &&
++    Array.isArray(parents) &&
++    parents.length <= 8 &&
++    parents.every(text(SHA));
++  const absent =
++    state === 'unavailable' &&
++    head === null &&
++    tree === null &&
++    Array.isArray(parents) &&
++    parents.length === 0;
++  if ((!observed && !absent) || (binding.node !== null && !text(NODE_VERSION)(binding.node)))
++    return null;
++  return composeBinding({
++    ...values,
++    checkout: { state, head, tree, parents: [...parents] },
++    node: binding.node,
++  });
++}
++
++/**
++ * Binding requirements of complete evidence: every checkout comparison that applies to the event
++ * holds. A false comparison is a known contradiction; a null one leaves the revision unverified.
++ */
++export function bindingRequirements({ event, checkout }) {
++  const applicable =
++    event === 'pull_request'
++      ? [
++          checkout.matchesSha,
++          checkout.baseParentMatchesEventBase,
++          checkout.headParentMatchesEventHead,
++        ]
++      : [checkout.matchesSha, checkout.headMatchesEventHead];
++  return [
++    ...(applicable.includes(false) ? ['binding-contradiction'] : []),
++    ...(applicable.includes(null) ? ['binding-unverified'] : []),
++  ];
+ }
+ 
+ function runGit(repoRoot) {
+@@ -959,18 +1127,14 @@
+     repoRoot,
+   );
+   const evidenceId = randomUUID();
+-  const manifest = {
+-    schema: SCHEMA,
+-    state: 'initialized',
++  const manifest = composeManifest({
+     evidenceId,
+     createdAt: now().toISOString(),
+-    limits: LIMITS,
+-    files: FILES,
+     binding: describeBinding(env, git),
+-  };
++  });
+   writeExclusive(
+     join(directory, FILES.manifest),
+-    `${JSON.stringify(manifest, null, 2)}\n`,
++    serializeManifest(manifest),
+     LIMITS.manifestBytes,
+   );
+   return { directory, evidenceId, manifest };
+@@ -979,14 +1143,16 @@
+ /** Parse and validate the observation file; any invalid line rejects the whole file. */
+ export function parseObservations(content, evidenceId) {
+   const rejected = (reason) => ({ state: 'rejected', reason, records: [] });
+-  let text;
++  let decoded;
+   try {
+-    text = new TextDecoder('utf-8', { fatal: true }).decode(content);
++    decoded = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(content);
+   } catch {
+     return rejected('encoding');
+   }
+-  if (text !== '' && !text.endsWith('\n')) return rejected('incomplete-line');
+-  const lines = text === '' ? [] : text.slice(0, -1).split('\n');
++  // The recorder never writes a byte-order mark, so a file that starts with one is not its output.
++  if (decoded.charCodeAt(0) === 0xfeff) return rejected('byte-order-mark');
++  if (decoded !== '' && !decoded.endsWith('\n')) return rejected('incomplete-line');
++  const lines = decoded === '' ? [] : decoded.slice(0, -1).split('\n');
+   if (lines.length > LIMITS.records) return rejected('too-many-records');
+   const records = [];
+   for (const line of lines) {
+@@ -1006,9 +1172,49 @@
+   }
+   if (records[0]?.type !== 'recorder-open' || records[0].evidenceId !== evidenceId)
+     return rejected('unbound');
++  const contradiction = streamContradiction(records);
++  if (contradiction !== null) return rejected(contradiction);
+   return { state: 'valid', reason: null, records };
+ }
+ 
++/**
++ * The recorder writes one opening record first, at most one `overflow` record, and at most one
++ * closing record last whose counts match the stream; and it refuses a repeated once-per-run fact.
++ * A stream that breaks either rule is not the recorder's output.
++ */
++function streamContradiction(records) {
++  const facts = new Set();
++  let overflows = 0;
++  let rejections = 0;
++  for (const [index, record] of records.entries()) {
++    if (record.type === 'overflow') overflows++;
++    if (record.type === 'rejected') rejections++;
++    if (
++      (index > 0 && record.type === 'recorder-open') ||
++      overflows > 1 ||
++      (record.type === 'recorder-closed' &&
++        (index !== records.length - 1 ||
++          record.written !== index ||
++          record.rejected < rejections ||
++          record.omittedRecords > 0 !== (overflows === 1)))
++    )
++      return 'lifecycle';
++    const key = factKey(record);
++    if (key !== null) {
++      if (facts.has(key)) return 'duplicate-fact';
++      facts.add(key);
++    }
++  }
++  return null;
++}
++
++/**
++ * The lock-contention trials and the alias-round spellings the acceptance suite runs. Each must be
++ * its own record from its own case: repeating one trial or spelling never stands in for another.
++ */
++const CONTENTION_TRIALS = [1, 2, 3];
++const ALIAS_SPELLINGS = ['alias', 'direct'];
++
+ /** Counts and per-case outcomes from validated records. */
+ export function summarize(records) {
+   const byType = {};
+@@ -1021,37 +1227,66 @@
+         subtestsStarted: 0,
+         subtestsPassed: 0,
+         subtestsFailed: 0,
++        subtestsUnpaired: 0,
+         children: 0,
+         childFailures: 0,
+       },
+     ]),
+   );
++  const subtests = Object.fromEntries(CASES.map((name) => [name, new Map()]));
+   const closedAt = records.findIndex((record) => record.type === 'recorder-closed');
+   const closed = closedAt >= 0 ? records[closedAt] : null;
+   const fixtures = new Set();
+   const states = new Set();
+-  const aliases = { junction: { record: null, drained: 0 }, dir: { record: null, drained: 0 } };
+-  let contention = 0;
++  const aliases = { junction: { record: null, released: [] }, dir: { record: null, released: [] } };
++  const trials = new Set();
+   for (const record of records) {
+     byType[record.type] = (byType[record.type] ?? 0) + 1;
+-    const entry = cases[record.case];
+-    if (record.type === 'case-start' && entry) {
+-      if (record.subtest === 0) entry.started = true;
+-      else entry.subtestsStarted++;
+-    } else if (record.type === 'case-end' && entry) {
+-      if (record.subtest === 0) entry.result = record.result;
+-      else if (record.result === 'pass') entry.subtestsPassed++;
+-      else entry.subtestsFailed++;
++    const entry = Object.hasOwn(cases, record.case) ? cases[record.case] : undefined;
++    const starts = record.type === 'case-start';
++    if ((starts || record.type === 'case-end') && entry) {
++      if (record.subtest === 0) {
++        if (starts) entry.started = true;
++        else entry.result = record.result;
++      } else {
++        // A subtest counts once its start and its end are both recorded.
++        const pair = subtests[record.case].get(record.subtest) ?? { started: false, result: null };
++        if (starts) pair.started = true;
++        else pair.result = record.result;
++        subtests[record.case].set(record.subtest, pair);
++      }
+     } else if (record.type === 'child' && entry) {
+       entry.children++;
+       if (record.outcome !== 'exit-zero') entry.childFailures++;
+     } else if (record.type === 'fixture') fixtures.add(`${record.kind}:${record.fixture}`);
+     else if (record.type === 'fixture-state') states.add(`${record.kind}:${record.fixture}`);
+-    else if (record.type === 'alias') aliases[record.kind].record = record;
+-    else if (record.type === 'alias-round' && record.release === 'drained-pid-listener-leases')
+-      aliases[record.kind].drained++;
+-    else if (record.type === 'contention' && record.acquired === 1) contention++;
++    else if (record.case === 'checkout-alias' && record.type === 'alias')
++      aliases[record.kind].record = record;
++    else if (
++      record.case === 'checkout-alias' &&
++      record.type === 'alias-round' &&
++      record.ownerVerified === true &&
++      record.release === 'drained-pid-listener-leases' &&
++      record.releaseFailure === null
++    )
++      aliases[record.kind].released.push(record.spelling);
++    else if (
++      record.case === 'lock-contention' &&
++      record.type === 'contention' &&
++      record.contenders >= 2 &&
++      record.acquired === 1 &&
++      record.other === 0
++    )
++      trials.add(record.trial);
+   }
++  for (const name of CASES)
++    for (const { started, result } of subtests[name].values()) {
++      const entry = cases[name];
++      if (started) entry.subtestsStarted++;
++      if (started && result === 'pass') entry.subtestsPassed++;
++      if (result === 'fail') entry.subtestsFailed++;
++      if (!started || result === null) entry.subtestsUnpaired++;
++    }
+   return {
+     records: records.length,
+     byType,
+@@ -1061,7 +1296,7 @@
+     omittedBytes: closed?.omittedBytes ?? 0,
+     cases,
+     aliases,
+-    contention,
++    contention: [...trials].sort((a, b) => a - b),
+     fixturesWithoutState: [...fixtures].filter((fixture) => !states.has(fixture)).length,
+   };
+ }
+@@ -1082,14 +1317,16 @@
+     if (!entry.started) missing.push(`${name}-start`);
+     if (entry.result !== 'pass') missing.push(`${name}-pass`);
+     if (CHILD_CASES.has(name) && entry.children === 0) missing.push(`${name}-children`);
+-    if (entry.subtestsFailed > 0 || entry.subtestsPassed !== entry.subtestsStarted)
+-      missing.push(`${name}-subtests`);
++    if (entry.subtestsFailed > 0 || entry.subtestsUnpaired > 0) missing.push(`${name}-subtests`);
+   }
+-  for (const [kind, { record, drained }] of Object.entries(summary.aliases)) {
+-    if (!record?.targetMatched || record.disposition !== 'unlinked') missing.push(`alias-${kind}`);
+-    if (drained < 2) missing.push(`alias-${kind}-release`);
++  for (const [kind, { record, released }] of Object.entries(summary.aliases)) {
++    if (!record?.targetMatched || record.disposition !== 'unlinked' || record.failureStage !== null)
++      missing.push(`alias-${kind}`);
++    if (!ALIAS_SPELLINGS.every((spelling) => released.includes(spelling)))
++      missing.push(`alias-${kind}-release`);
+   }
+-  if (summary.contention < 3) missing.push('contention-trials');
++  if (!CONTENTION_TRIALS.every((trial) => summary.contention.includes(trial)))
++    missing.push('contention-trials');
+   if (summary.fixturesWithoutState > 0) missing.push('fixture-states');
+   return missing;
+ }
+@@ -1123,8 +1360,10 @@
+       ? { state: 'absent', reason: null, records: [] }
+       : parseObservations(content, manifest.evidenceId);
+   const summary = summarize(parsed.records);
+-  const missing =
+-    parsed.state === 'valid' ? missingRequirements(summary) : [`observations-${parsed.state}`];
++  const missing = [
++    ...(parsed.state === 'valid' ? missingRequirements(summary) : [`observations-${parsed.state}`]),
++    ...bindingRequirements(manifest.binding),
++  ];
+   const status =
+     steps.native === 'success'
+       ? missing.length === 0
+@@ -1227,10 +1466,11 @@
+         repoRoot,
+         ...(git ? { git } : {}),
+       });
+-      writeOutputs(env.GITHUB_OUTPUT, { dir: directory, id: evidenceId });
+       stdout(
+         JSON.stringify({ evidence: 'windows-launcher-export', state: 'initialized', evidenceId }),
+       );
++      // Written last: the step outputs exist only when `init` succeeds.
++      writeOutputs(env.GITHUB_OUTPUT, { dir: directory, id: evidenceId });
+       return 0;
+     }
+     const outcome = finalizeEvidence({ env, repoRoot });
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/original-candidate/tooling/scripts/windows-launcher-evidence.test.mjs	2026-11-17 23:14:50.941180500 -0600
++++ tooling/scripts/windows-launcher-evidence.test.mjs	2026-11-18 00:24:56.866378300 -0600
+@@ -1,6 +1,6 @@
+ import { test } from 'vitest';
+ import assert from 'node:assert/strict';
+-import { execFile, spawnSync } from 'node:child_process';
++import { execFile, execFileSync, spawnSync } from 'node:child_process';
+ import { randomUUID } from 'node:crypto';
+ import {
+   existsSync,
+@@ -27,6 +27,7 @@
+   LIMITS,
+   Recorder,
+   aliasStage,
++  bindingRequirements,
+   childFields,
+   classifyDiagnostic,
+   describeBinding,
+@@ -40,6 +41,7 @@
+   missingRequirements,
+   observeCheckout,
+   openWindowsLauncherEvidence,
++  parseManifest,
+   parseObservations,
+   pathState,
+   readBounded,
+@@ -113,7 +115,11 @@
+  * Every required observation of a passing native run, produced through the public API. Like the
+  * real suite, lock contention spawns its contenders directly and has no observed `execFile` child.
+  */
+-async function passingSuite(recorder, fixture) {
++async function passingSuite(
++  recorder,
++  fixture,
++  { trials = [1, 2, 3], spellings = ['alias', 'direct'] } = {},
++) {
+   const run = recorder.observeExecFile(() => Promise.resolve({ stdout: '', stderr: '' }));
+   for (const name of CASES)
+     await recorder.observeTest(name, async (t) => {
+@@ -124,7 +130,7 @@
+         for (const kind of ['junction', 'dir'])
+           await t.test(kind, async () => {
+             await run('C:\\a\\GraphGoblin.exe', ['--config', 'x', '--ensure-gateway']);
+-            for (const spelling of ['alias', 'direct'])
++            for (const spelling of spellings)
+               recorder.record('alias-round', {
+                 kind,
+                 spelling,
+@@ -145,7 +151,7 @@
+             });
+           });
+       if (name === 'lock-contention')
+-        for (let trial = 1; trial <= 3; trial++)
++        for (const trial of trials)
+           recorder.record('contention', {
+             trial,
+             contenders: 5,
+@@ -717,8 +723,15 @@
+ test('a write failure stops recording with one marker and never throws into the suite', () => {
+   // An invalid descriptor fails validation before any system call can reach another file.
+   const log = [];
+-  const recorder = new Recorder({ fd: -1, state: 'recording', log: (line) => log.push(line) });
+-  assert.doesNotThrow(() => recorder.record('recorder-open', { evidenceId: randomUUID() }));
++  let recorder;
++  assert.doesNotThrow(() => {
++    recorder = new Recorder({
++      fd: -1,
++      state: 'recording',
++      log: (line) => log.push(line),
++      evidenceId: randomUUID(),
++    });
++  });
+   assert.equal(recorder.state, 'write-failed');
+   assert.deepEqual(JSON.parse(log[0]), {
+     evidence: 'windows-launcher-export',
+@@ -810,8 +823,16 @@
+     })(),
+     (error) => error === thrown,
+   );
++  // A thrown non-error is still a typed failure, never a failing record without a kind.
++  await assert.rejects(
++    recorder.observeTest('launcher', async () => {
++      throw undefined;
++    })(),
++    (error) => error === undefined,
++  );
+   close();
+   const records = lines(join(setup.directory, FILES.observations));
++  assert.equal(records.filter((record) => record.type === 'rejected').length, 0);
+   const ends = records.filter((record) => record.type === 'case-end');
+   assert.deepEqual(
+     ends.map((record) => [record.case, record.subtest, record.result, record.failureKind]),
+@@ -820,11 +841,12 @@
+       ['bounded-logs', 2, 'fail', 'assertion'],
+       ['bounded-logs', 0, 'fail', 'subtests'],
+       ['installer', 0, 'fail', 'other'],
++      ['launcher', 0, 'fail', 'other'],
+     ],
+   );
+   assert.equal(ends[2].failedSubtests, 1);
+   const markers = log.filter((line) => line.includes('windows-launcher-observation'));
+-  assert.equal(markers.length, 4, 'failed ends plus the last child of the failed subtest');
++  assert.equal(markers.length, 5, 'failed ends plus the last child of the failed subtest');
+   assert.match(markers[1], /"diagnostic":"destination-in-use"/);
+   assert.doesNotMatch(
+     log.join('\n') + readFileSync(join(setup.directory, FILES.observations)),
+@@ -1011,6 +1033,8 @@
+     `{"seq":${seq},"at":"2026-11-17T19:16:23.257Z","type":"cleanup","case":"launcher","subtest":0,"action":"gateway-drain","result":"drained","count":null}`;
+   const cases = {
+     encoding: Buffer.concat([Buffer.from(`${open}\n`), Buffer.from([0xff, 0x0a])]),
++    // A byte-order mark carries no data, but it is not the recorder's canonical output.
++    'byte-order-mark': Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(`${open}\n`)]),
+     'incomplete-line': `${open}\n${cleanup(2)}`,
+     'too-many-records': `${open}\n${cleanup(2)}\n`.repeat(LIMITS.records),
+     'oversized-record': `${open}\n${'x'.repeat(LIMITS.recordBytes)}\n`,
+@@ -1184,3 +1208,713 @@
+   const manifest = JSON.parse(readFileSync(join(runnerTemp, directory, FILES.manifest), 'utf8'));
+   assert.equal(manifest.binding.checkout.state, 'observed');
+ });
++
++// Correction of #496 root 1: evidence preparation can never skip the native command.
++
++const workflowFile = fileURLToPath(new URL('../../.github/workflows/ci.yml', import.meta.url));
++
++/** One job's steps from ci.yml: each step's keys and one level of `env` and `with` entries. */
++function workflowSteps(job) {
++  const source = readFileSync(workflowFile, 'utf8').split('\n');
++  const start = source.indexOf(`  ${job}:`);
++  assert.ok(start >= 0, job);
++  const end = source.findIndex(
++    (line, index) => index > start && /^ {2}[a-z][a-z0-9-]*:$/.test(line),
++  );
++  const steps = [];
++  let key;
++  for (const line of source.slice(start, end < 0 ? undefined : end)) {
++    const entry = /^ {6}(- | {2})([a-z-]+):(?: (.*))?$/.exec(line);
++    const nested = /^ {10}([A-Za-z0-9_-]+): (.*)$/.exec(line);
++    if (entry) {
++      if (entry[1] === '- ') steps.push({});
++      key = entry[2];
++      steps.at(-1)[key] = entry[3] ?? {};
++    } else if (nested && typeof steps.at(-1)?.[key] === 'object')
++      steps.at(-1)[key][nested[1]] = nested[2];
++  }
++  return steps;
++}
++
++const truthy = (value) => value !== '' && value !== false && value !== null;
++
++/** GitHub expression semantics for the forms the job uses; any other form fails the test. */
++function evaluate(source, context) {
++  const body = /^\$\{\{ (.+) \}\}$/.exec(source)?.[1];
++  assert.ok(body, `not a single expression: ${source}`);
++  const tokens = body.match(/'[^']*'|&&|\|\||==|!=|!|[a-z]+\(\)|[A-Za-z_][\w.-]*|\S/g);
++  let at = 0;
++  const primary = () => {
++    const token = tokens[at++];
++    if (token === '!') return !truthy(primary());
++    if (token.startsWith("'")) return token.slice(1, -1);
++    if (token.endsWith('()')) {
++      const name = token.slice(0, -2);
++      assert.ok(Object.hasOwn(context.status, name), token);
++      context.statusChecked = true;
++      return context.status[name];
++    }
++    const [root, id, field, name] = token.split('.');
++    if (root === 'github') return '';
++    assert.ok(root === 'steps' && ['outcome', 'outputs'].includes(field), token);
++    return field === 'outcome' ? (context.outcomes[id] ?? '') : (context.outputs[id]?.[name] ?? '');
++  };
++  const binary = (operand, operators, combine) => () => {
++    let left = operand();
++    while (operators.includes(tokens[at])) {
++      const operator = tokens[at++];
++      left = combine(operator, left, operand());
++    }
++    return left;
++  };
++  const comparison = binary(
++    primary,
++    ['==', '!='],
++    (operator, a, b) => (operator === '==') === (a === b),
++  );
++  const and = binary(comparison, ['&&'], (_operator, a, b) => (truthy(a) ? b : a));
++  const or = binary(and, ['||'], (_operator, a, b) => (truthy(a) ? a : b));
++  const value = or();
++  assert.equal(at, tokens.length, source);
++  return value;
++}
++
++/**
++ * The steps that run, with their evaluated environment, when the given steps end with `failure`
++ * or `cancelled`. A step without `if`, or whose `if` has no status function, carries GitHub's
++ * implicit `success()`. Every step that runs keeps the outputs given for it, even one that fails.
++ */
++function schedule(steps, { end = {}, outputs = {} } = {}) {
++  const context = { outcomes: {}, outputs: {}, status: {} };
++  const ran = {};
++  steps.forEach((step, index) => {
++    const id =
++      step.id ?? (step.uses?.startsWith('actions/upload-artifact') ? 'upload' : `#${index}`);
++    const earlier = Object.values(context.outcomes);
++    const cancelled = earlier.includes('cancelled');
++    const failed = earlier.includes('failure');
++    context.status = { always: true, cancelled, failure: failed, success: !cancelled && !failed };
++    context.statusChecked = false;
++    const condition = step.if === undefined ? true : truthy(evaluate(step.if, context));
++    if (!condition || (!context.statusChecked && !context.status.success)) {
++      context.outcomes[id] = 'skipped';
++      return;
++    }
++    const env = Object.fromEntries(
++      Object.entries(step.env ?? {}).map(([name, value]) => [
++        name,
++        value.startsWith('${{') ? evaluate(value, context) : value,
++      ]),
++    );
++    context.outcomes[id] = end[id] ?? 'success';
++    context.outputs[id] = outputs[id] ?? {};
++    ran[id] = { env, run: step.run };
++  });
++  const outcomes = Object.values(context.outcomes);
++  return {
++    outcomes: context.outcomes,
++    ran,
++    conclusion: outcomes.includes('failure')
++      ? 'failure'
++      : outcomes.includes('cancelled')
++        ? 'cancelled'
++        : 'success',
++  };
++}
++
++test('the Windows job runs the exact native command after a successful build whatever evidence preparation does', () => {
++  const steps = workflowSteps('windows-launcher');
++  const commands = Object.fromEntries(
++    steps.filter((step) => step.id).map((step) => [step.id, step.run]),
++  );
++  assert.deepEqual(
++    [commands.install, commands.build, commands.native],
++    ['pnpm install --frozen-lockfile', 'pnpm build', 'pnpm test:windows-launcher'],
++  );
++  assert.ok(
++    steps.every((step) => !('continue-on-error' in step)),
++    'no step hides a failure',
++  );
++  const prepared = () => {
++    const setup = initialized();
++    return {
++      setup,
++      outputs: {
++        evidence: { dir: setup.directory, id: setup.evidenceId },
++        finalize: { paths: 'x' },
++      },
++    };
++  };
++  const ran = (result) => Object.keys(result.ran);
++  const finalizeFrom = (result, setup) =>
++    finalizeEvidence({ env: { RUNNER_TEMP: setup.runnerTemp, ...result.ran.finalize.env } });
++
++  const nominal = prepared();
++  const passing = schedule(steps, nominal);
++  assert.deepEqual(ran(passing).slice(3), [
++    'install',
++    'build',
++    'evidence',
++    'native',
++    'finalize',
++    'upload',
++  ]);
++  assert.equal(passing.ran.native.env[DIRECTORY_VARIABLE], nominal.setup.directory);
++  assert.equal(passing.conclusion, 'success');
++
++  // A failed preparation, even one that left outputs, still runs the native command after a
++  // successful build, keeps its outcome, hands the suite no folder, uploads nothing and fails.
++  for (const native of ['success', 'failure']) {
++    const failedPrepare = prepared();
++    const result = schedule(steps, { ...failedPrepare, end: { evidence: 'failure', native } });
++    assert.deepEqual(ran(result).slice(3), ['install', 'build', 'evidence', 'native']);
++    assert.equal(result.ran.native.run, 'pnpm test:windows-launcher');
++    assert.equal(result.outcomes.native, native);
++    assert.deepEqual([result.outcomes.finalize, result.outcomes.upload], ['skipped', 'skipped']);
++    assert.equal(result.conclusion, 'failure');
++    const suite = { ...result.ran.native.env, RUNNER_TEMP: failedPrepare.setup.runnerTemp };
++    assert.equal(openWindowsLauncherEvidence({ env: suite, log: assert.fail }).state, 'disabled');
++  }
++
++  // A failed checkout or Node setup runs nothing further and publishes nothing.
++  for (const setupStep of ['#0', 'node']) {
++    const result = schedule(steps, { ...prepared(), end: { [setupStep]: 'failure' } });
++    assert.ok(!['evidence', 'native', 'finalize', 'upload'].some((id) => id in result.ran));
++  }
++
++  // After a failed install or build the prepared folder still uploads truthful not-run metadata.
++  for (const failing of ['install', 'build']) {
++    const { setup, outputs } = prepared();
++    const result = schedule(steps, { outputs, end: { [failing]: 'failure' } });
++    assert.deepEqual(
++      [result.outcomes.native, 'finalize' in result.ran, 'upload' in result.ran],
++      ['skipped', true, true],
++    );
++    const outcome = finalizeFrom(result, setup);
++    assert.equal(outcome.status, 'not-run');
++    assert.equal(outcome.result.steps[failing], 'failure');
++    assert.deepEqual(
++      outcome.upload.map((path) => basename(path)),
++      [FILES.manifest, FILES.result],
++    );
++  }
++
++  // A failed or cancelled native step is finalized and uploaded; its outcome sets the status.
++  for (const [native, conclusion] of [
++    ['failure', 'failure'],
++    ['cancelled', 'cancelled'],
++  ]) {
++    const { setup, outputs } = prepared();
++    const result = schedule(steps, { outputs, end: { native } });
++    assert.ok('upload' in result.ran);
++    assert.equal(result.conclusion, conclusion);
++    assert.equal(finalizeFrom(result, setup).status, 'native-failed');
++  }
++
++  // A refusal publishes no paths and nothing is uploaded; an incomplete result still uploads.
++  const refusal = schedule(steps, {
++    end: { finalize: 'failure' },
++    outputs: { evidence: { dir: 'd' } },
++  });
++  assert.equal(refusal.outcomes.upload, 'skipped');
++  assert.ok('upload' in schedule(steps, { ...prepared(), end: { finalize: 'failure' } }).ran);
++});
++
++// Correction of #496 root 2: only the exact manifest bytes `init` wrote are accepted.
++
++test('finalize and the recorder accept only the exact manifest init wrote, at every depth', () => {
++  const tampered = {
++    'unknown top-level field': (text) => text.replace('{\n', `{\n  "path": "C:\\\\${CANARY}",\n`),
++    'duplicate key': (text) => text.replace('{\n', `{\n  "state": "${CANARY}",\n`),
++    'unknown nested field': (text) =>
++      text.replace('"matchesSha"', `"note": "${CANARY}",\n      "matchesSha"`),
++    'changed limit': (text) => text.replace('"records": 1024', '"records": 4096'),
++    'changed file name': (text) =>
++      text.replace('"result": "result.json"', '"result": "gateway.log"'),
++    'byte-order mark': (text) => `\uFEFF${text}`,
++    'other whitespace': (text) => `${JSON.stringify(JSON.parse(text))}\n`,
++    'CRLF line ends': (text) => text.replaceAll('\n', '\r\n'),
++    'listed but available value': (text) =>
++      text.replace('"unavailable": []', '"unavailable": [\n    "runId"\n  ]'),
++    'contradicting derived comparison': (text) =>
++      text.replace('"matchesSha": true', '"matchesSha": false'),
++    'canary in a bound value': (text) =>
++      text.replace('"runAttempt": "2"', `"runAttempt": "${CANARY}"`),
++    'number for a string': (text) => text.replace('"runAttempt": "2"', '"runAttempt": 2'),
++    'canary as a parent': (text) => text.replace(`        "${SHA('a')}"`, `        "${CANARY}"`),
++    'unvalidated Node version': (text) =>
++      text.replace(/"node": "v[^"]+"/, `"node": "v22.0.0-${CANARY}"`),
++    'other state': (text) => text.replace('"state": "initialized"', '"state": "finalized"'),
++  };
++  for (const [name, change] of Object.entries(tampered)) {
++    const setup = initialized();
++    const path = join(setup.directory, FILES.manifest);
++    const original = readFileSync(path, 'utf8');
++    const changed = change(original);
++    assert.notEqual(changed, original, name);
++    writeFileSync(path, changed);
++    assert.throws(() => parseManifest(readFileSync(path)), refused('manifest-invalid'), name);
++    assert.throws(
++      () => finalizeEvidence({ env: finalizeEnv(setup, 'skipped') }),
++      refused('manifest-invalid'),
++      name,
++    );
++    assert.deepEqual(readdirSync(setup.directory), [FILES.manifest], `${name}: nothing written`);
++    assert.equal(recorderFor(setup).recorder.state, 'refused', name);
++  }
++
++  // The bytes init wrote parse back to the same manifest.
++  const genuine = initialized();
++  assert.deepEqual(
++    parseManifest(readFileSync(join(genuine.directory, FILES.manifest))),
++    genuine.manifest,
++  );
++
++  // Legitimately unavailable values stay valid and are uploaded, and leave the binding unverified.
++  const runnerTemp = temporary('gg-496-runner-');
++  const sparse = initializeEvidence({
++    env: { RUNNER_TEMP: runnerTemp, GITHUB_EVENT_NAME: 'pull_request' },
++    git: () => {
++      throw new Error('git unavailable');
++    },
++  });
++  assert.deepEqual(sparse.manifest.binding.unavailable, [
++    'repository',
++    'workflowRef',
++    'job',
++    'runId',
++    'runAttempt',
++    'ref',
++    'sha',
++    'eventHead',
++    'eventBase',
++    'runnerOs',
++    'runnerArch',
++    'imageVersion',
++    'checkout',
++  ]);
++  const notRun = finalizeEvidence({
++    env: finalizeEnv(
++      { runnerTemp, directory: sparse.directory, evidenceId: sparse.evidenceId },
++      'skipped',
++    ),
++  });
++  assert.equal(notRun.status, 'not-run');
++  assert.deepEqual(notRun.result.missing, ['observations-absent', 'binding-unverified']);
++  assert.ok(notRun.upload.some((path) => path.endsWith(FILES.manifest)));
++
++  // Through the real CLI: an unknown manifest field is refused and no path is published.
++  const child = initialized();
++  const manifest = join(child.directory, FILES.manifest);
++  writeFileSync(
++    manifest,
++    readFileSync(manifest, 'utf8').replace('{\n', `{\n  "path": "${CANARY}",\n`),
++  );
++  const output = join(temporary(), 'output');
++  const finalized = spawnSync(process.execPath, [helper, 'finalize'], {
++    encoding: 'utf8',
++    timeout: 30_000,
++    windowsHide: true,
++    env: {
++      ...process.env,
++      ...finalizeEnv(child, 'skipped'),
++      GITHUB_OUTPUT: output,
++      GITHUB_STEP_SUMMARY: '',
++    },
++  });
++  assert.equal(finalized.status, 1, finalized.stderr);
++  assert.match(finalized.stderr, /finalize refused: manifest-invalid\./);
++  assert.equal(existsSync(output), false, 'no step outputs');
++  assert.doesNotMatch(finalized.stdout + finalized.stderr, /CANARY/);
++});
++
++// Correction of #496 root 3: contradictions and repeats never count as complete evidence.
++
++test('complete evidence needs a verified revision binding and a known contradiction is never complete', async () => {
++  const run = async (extra, { git = mergeGit, native = 'success' } = {}) => {
++    const runnerTemp = temporary('gg-496-runner-');
++    const env = { RUNNER_TEMP: runnerTemp, ...github, ...extra };
++    const { directory, evidenceId } = initializeEvidence({ env, git });
++    const { recorder, close } = recorderFor({ runnerTemp, directory });
++    await passingSuite(recorder, temporary());
++    close();
++    return finalizeEvidence({ env: finalizeEnv({ runnerTemp, directory, evidenceId }, native) });
++  };
++  const push = {
++    GITHUB_EVENT_NAME: 'push',
++    GITHUB_REF: 'refs/heads/main',
++    GITHUB_WORKFLOW_REF: 'Jacob-J-Thomas/GraphGoblin/.github/workflows/ci.yml@refs/heads/main',
++    GG_TEST_EVIDENCE_EVENT_HEAD: SHA('c'),
++    GG_TEST_EVIDENCE_EVENT_BASE: '',
++  };
++  assert.equal((await run(push)).status, 'complete');
++  assert.equal((await run({})).status, 'complete', 'pull-request merge checkout');
++  for (const [extra, missing, git] of [
++    [{ ...push, GG_TEST_EVIDENCE_EVENT_HEAD: SHA('f') }, ['binding-contradiction']],
++    [
++      { ...push, GITHUB_SHA: SHA('f'), GG_TEST_EVIDENCE_EVENT_HEAD: SHA('f') },
++      ['binding-contradiction'],
++    ],
++    [{ GG_TEST_EVIDENCE_EVENT_BASE: SHA('e') }, ['binding-contradiction']],
++    [{ GG_TEST_EVIDENCE_EVENT_HEAD: SHA('e') }, ['binding-contradiction']],
++    [{ GG_TEST_EVIDENCE_EVENT_HEAD: 'not-a-sha' }, ['binding-unverified']],
++    [
++      {},
++      ['binding-unverified'],
++      () => {
++        throw new Error('git unavailable');
++      },
++    ],
++  ]) {
++    const outcome = await run(extra, { git });
++    assert.deepEqual(
++      [outcome.status, outcome.exitCode, outcome.result.missing],
++      ['incomplete', 1, missing],
++    );
++    assert.equal(outcome.upload.length, 3, 'the valid observations are still uploaded');
++  }
++  // A failed native run keeps its honest status and its valid observations.
++  const failed = await run(
++    { ...push, GG_TEST_EVIDENCE_EVENT_HEAD: SHA('f') },
++    { native: 'failure' },
++  );
++  assert.deepEqual(
++    [failed.status, failed.exitCode, failed.result.missing, failed.upload.length],
++    ['native-failed', 0, ['binding-contradiction'], 3],
++  );
++  const checkout = (values) => ({
++    matchesSha: true,
++    headMatchesEventHead: null,
++    baseParentMatchesEventBase: null,
++    headParentMatchesEventHead: null,
++    ...values,
++  });
++  assert.deepEqual(
++    bindingRequirements({
++      event: 'pull_request',
++      checkout: checkout({ baseParentMatchesEventBase: false }),
++    }),
++    ['binding-contradiction', 'binding-unverified'],
++  );
++  assert.deepEqual(
++    bindingRequirements({ event: 'push', checkout: checkout({ headMatchesEventHead: true }) }),
++    [],
++  );
++
++  // Through the real CLI on the real checkout: a push whose event head differs from the checked
++  // out commit records the contradiction and cannot finalize as complete.
++  const head = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
++  const runnerTemp = temporary('gg-496-runner-');
++  const output = join(temporary(), 'output');
++  const cli = (command, env) =>
++    spawnSync(process.execPath, [helper, command], {
++      encoding: 'utf8',
++      timeout: 30_000,
++      windowsHide: true,
++      env: { ...process.env, GITHUB_STEP_SUMMARY: '', GITHUB_OUTPUT: output, ...env },
++    });
++  const init = cli('init', {
++    RUNNER_TEMP: runnerTemp,
++    GITHUB_EVENT_NAME: 'push',
++    GITHUB_SHA: head,
++    GG_TEST_EVIDENCE_EVENT_HEAD: '1'.repeat(40),
++  });
++  assert.equal(init.status, 0, init.stderr);
++  const values = Object.fromEntries(
++    readFileSync(output, 'utf8')
++      .trim()
++      .split('\n')
++      .map((line) => line.split('=')),
++  );
++  const { checkout: observed } = JSON.parse(
++    readFileSync(join(values.dir, FILES.manifest), 'utf8'),
++  ).binding;
++  assert.deepEqual([observed.matchesSha, observed.headMatchesEventHead], [true, false]);
++  const recording = recorderFor({ runnerTemp, directory: values.dir });
++  await passingSuite(recording.recorder, temporary());
++  recording.close();
++  const final = cli(
++    'finalize',
++    finalizeEnv({ runnerTemp, directory: values.dir, evidenceId: values.id }),
++  );
++  assert.equal(final.status, 1, final.stderr);
++  assert.match(final.stdout, /"status":"incomplete".*"missing":\["binding-contradiction"\]/);
++});
++
++test('the recorder states each once-per-run fact once and writes its own lifecycle records', async () => {
++  const setup = initialized();
++  const { recorder, close } = recorderFor(setup);
++  await passingSuite(recorder, temporary());
++  const alias = {
++    case: 'checkout-alias',
++    subtest: 1,
++    kind: 'junction',
++    observedLinkType: 'Junction',
++    reparsePoint: true,
++    directory: true,
++    targetMatched: true,
++    failureStage: null,
++    failureCode: null,
++    disposition: 'unlinked',
++    unlinkFailure: null,
++  };
++  const repeats = [
++    [
++      'contention',
++      {
++        case: 'lock-contention',
++        subtest: 0,
++        trial: 1,
++        contenders: 5,
++        acquired: 1,
++        refused: 4,
++        other: 0,
++      },
++    ],
++    [
++      'alias-round',
++      {
++        case: 'checkout-alias',
++        subtest: 1,
++        kind: 'junction',
++        spelling: 'alias',
++        ownerVerified: true,
++        release: 'drained-pid-listener-leases',
++        releaseFailure: null,
++      },
++    ],
++    ['alias', alias],
++    ['case-start', { case: 'installer', subtest: 0 }],
++    ['recorder-open', { evidenceId: setup.evidenceId }],
++    ['recorder-closed', { written: 1, rejected: 0, omittedRecords: 0, omittedBytes: 0 }],
++    ['overflow', { firstOmittedSeq: 1 }],
++    ['rejected', { recordType: 'child' }],
++    ['fixture-state', { fixture: 'abcdef', kind: 'logs', state: 'directory', errorCode: null }],
++  ];
++  for (const [type, fields] of repeats)
++    assert.equal(recorder.record(type, fields).type, 'rejected', type);
++  close();
++  const records = lines(join(setup.directory, FILES.observations));
++  assert.deepEqual(
++    records.filter((record) => record.type === 'rejected').map((record) => record.recordType),
++    repeats.map(([type]) => type),
++  );
++  const count = (type) => records.filter((record) => record.type === type).length;
++  assert.deepEqual(
++    [count('recorder-open'), count('recorder-closed'), count('contention'), count('alias')],
++    [1, 1, 3, 2],
++  );
++  const outcome = finalizeEvidence({ env: finalizeEnv(setup) });
++  assert.deepEqual(
++    [outcome.status, outcome.exitCode, outcome.result.observations.state, outcome.result.missing],
++    ['incomplete', 1, 'valid', ['records-rejected']],
++  );
++});
++
++test('repeated contention trials and alias spellings never stand in for distinct ones', async () => {
++  for (const [options, expected] of [
++    [{ trials: [1, 1, 1] }, ['records-rejected', 'contention-trials']],
++    [
++      { spellings: ['alias', 'alias'] },
++      ['records-rejected', 'alias-junction-release', 'alias-dir-release'],
++    ],
++    [{ trials: [1, 2, 4] }, ['contention-trials']],
++  ]) {
++    const setup = initialized();
++    const { recorder, close } = recorderFor(setup);
++    await passingSuite(recorder, temporary(), options);
++    close();
++    const outcome = finalizeEvidence({ env: finalizeEnv(setup) });
++    assert.deepEqual(
++      [outcome.status, outcome.exitCode, outcome.result.missing],
++      ['incomplete', 1, expected],
++      JSON.stringify(options),
++    );
++  }
++  // Only single-owner trials of the contention case and verified, drained rounds of the
++  // checkout-alias case count, each once.
++  const trial = (number, extra = {}) => ({
++    type: 'contention',
++    case: 'lock-contention',
++    subtest: 0,
++    trial: number,
++    contenders: 5,
++    acquired: 1,
++    refused: 4,
++    other: 0,
++    ...extra,
++  });
++  assert.deepEqual(
++    summarize([
++      trial(1),
++      trial(2, { case: 'installer' }),
++      trial(3, { acquired: 2, refused: 3 }),
++      trial(3, { refused: 3, other: 1 }),
++      trial(3, { contenders: 1, refused: 0 }),
++      trial(4),
++    ]).contention,
++    [1, 4],
++  );
++  const round = (spelling, extra = {}) => ({
++    type: 'alias-round',
++    case: 'checkout-alias',
++    subtest: 1,
++    kind: 'junction',
++    spelling,
++    ownerVerified: true,
++    release: 'drained-pid-listener-leases',
++    releaseFailure: null,
++    ...extra,
++  });
++  assert.deepEqual(summarize([round('alias'), round('direct')]).aliases.junction.released, [
++    'alias',
++    'direct',
++  ]);
++  assert.deepEqual(
++    summarize([
++      round('alias', { ownerVerified: false }),
++      round('direct', { case: 'launcher' }),
++      round('alias', { release: 'no-gateway-spawned' }),
++    ]).aliases.junction.released,
++    [],
++  );
++});
++
++test('nested subtests are numbered across their case and count once their start and end pair', async () => {
++  const setup = initialized();
++  const { recorder, close } = recorderFor(setup);
++  await recorder.observeTest('launcher', async (t) => {
++    await t.test('outer', async (inner) => inner.test('nested', async () => undefined));
++    await t.test('second', async () => undefined);
++  })(context());
++  close();
++  const records = lines(join(setup.directory, FILES.observations));
++  assert.deepEqual(
++    records.filter((record) => record.type === 'case-start').map((record) => record.subtest),
++    [0, 1, 2, 3],
++  );
++  const { launcher } = summarize(records).cases;
++  assert.deepEqual(
++    [launcher.subtestsStarted, launcher.subtestsPassed, launcher.subtestsUnpaired],
++    [3, 3, 0],
++  );
++  const unpaired = summarize([
++    { type: 'case-start', case: 'launcher', subtest: 0 },
++    { type: 'case-start', case: 'launcher', subtest: 1 },
++    { type: 'case-end', case: 'launcher', subtest: 2, result: 'pass' },
++    { type: 'case-end', case: 'launcher', subtest: 0, result: 'pass' },
++  ]);
++  assert.deepEqual(
++    [
++      unpaired.cases.launcher.subtestsStarted,
++      unpaired.cases.launcher.subtestsPassed,
++      unpaired.cases.launcher.subtestsUnpaired,
++    ],
++    [1, 0, 2],
++  );
++  assert.ok(missingRequirements(unpaired).includes('launcher-subtests'));
++});
++
++test('a stream that breaks the recorder lifecycle or repeats a fact is rejected whole', () => {
++  const evidenceId = '0d4f8c56-8f43-4b52-9b77-4fd1a9c2d001';
++  const line = (seq, type, fields) =>
++    JSON.stringify({ seq, at: '2026-11-17T19:16:23.257Z', type, ...fields });
++  const open = line(1, 'recorder-open', { evidenceId });
++  const closed = (seq, written, extra = {}) =>
++    line(seq, 'recorder-closed', {
++      written,
++      rejected: 0,
++      omittedRecords: 0,
++      omittedBytes: 0,
++      ...extra,
++    });
++  const trial = (seq, number, extra = {}) =>
++    line(seq, 'contention', {
++      case: 'lock-contention',
++      subtest: 0,
++      trial: number,
++      contenders: 5,
++      acquired: 1,
++      refused: 4,
++      other: 0,
++      ...extra,
++    });
++  const round = (seq) =>
++    line(seq, 'alias-round', {
++      case: 'checkout-alias',
++      subtest: 1,
++      kind: 'junction',
++      spelling: 'alias',
++      ownerVerified: true,
++      release: 'drained-pid-listener-leases',
++      releaseFailure: null,
++    });
++  const start = (seq) => line(seq, 'case-start', { case: 'launcher', subtest: 1 });
++  const overflow = (seq) => line(seq, 'overflow', { firstOmittedSeq: seq - 1 });
++  const rejection = (seq) => line(seq, 'rejected', { recordType: 'child' });
++  const parse = (...rows) => parseObservations(Buffer.from(`${rows.join('\n')}\n`), evidenceId);
++  // Closed with matching counts, unclosed partial evidence and a counted overflow stay valid.
++  assert.equal(parse(open, trial(2, 1), closed(3, 2)).state, 'valid');
++  assert.equal(parse(open, trial(2, 1), trial(3, 2)).state, 'valid');
++  assert.equal(
++    parse(
++      open,
++      rejection(3),
++      overflow(5),
++      closed(6, 3, { rejected: 2, omittedRecords: 1, omittedBytes: 90 }),
++    ).state,
++    'valid',
++  );
++  for (const [reason, rows] of [
++    ['lifecycle', [open, line(2, 'recorder-open', { evidenceId })]],
++    ['lifecycle', [open, closed(2, 1), trial(3, 1)]],
++    ['lifecycle', [open, closed(2, 1), closed(3, 2)]],
++    ['lifecycle', [open, trial(2, 1), closed(3, 1)]],
++    ['lifecycle', [open, rejection(2), closed(3, 2)]],
++    ['lifecycle', [open, overflow(3), overflow(5)]],
++    ['lifecycle', [open, overflow(3), closed(4, 2)]],
++    ['lifecycle', [open, closed(2, 1, { omittedRecords: 1, omittedBytes: 90 })]],
++    ['duplicate-fact', [open, trial(2, 1), trial(3, 1)]],
++    ['duplicate-fact', [open, round(2), round(3)]],
++    ['duplicate-fact', [open, start(2), start(3)]],
++    ['invalid-record', [open, trial(2, 1, { refused: 7 })]],
++    ['invalid-record', [open, overflow(3).replace('"firstOmittedSeq":2', '"firstOmittedSeq":1')]],
++    [
++      'invalid-record',
++      [
++        open,
++        line(2, 'case-end', {
++          case: 'launcher',
++          subtest: 0,
++          result: 'pass',
++          elapsedMs: 1,
++          failedSubtests: 0,
++          failureKind: 'assertion',
++          failureCode: null,
++          failureExit: null,
++          failureSignal: null,
++        }),
++      ],
++    ],
++    [
++      'invalid-record',
++      [
++        open,
++        line(2, 'alias', {
++          case: 'checkout-alias',
++          subtest: 2,
++          kind: 'dir',
++          observedLinkType: 'unobserved',
++          reparsePoint: null,
++          directory: null,
++          targetMatched: false,
++          failureStage: null,
++          failureCode: null,
++          disposition: 'unlinked',
++          unlinkFailure: null,
++        }),
++      ],
++    ],
++  ])
++    assert.deepEqual(parse(...rows), { state: 'rejected', reason, records: [] }, rows.join('\n'));
++});
