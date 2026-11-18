@@ -1,0 +1,79 @@
+{
+  "node": "v22.23.4",
+  "sources": {
+    "tooling/scripts/windows-launcher-evidence.mjs": "5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf",
+    "tooling/scripts/windows-launcher-evidence.test.mjs": "85dce79d1ba8f6a750c82e905a50179ffaf28d7e5e99415d641479c97e5c84d5"
+  },
+  "mutations": [
+    {
+      "name": "root1-run-identity-not-required",
+      "kind": "revert",
+      "mutatedSha256": "5d8becb23d88bc83ab5a60842b50fe10d47d40d7da23ee5ef8adb8fbdcb56a2c",
+      "targets": [
+        "complete evidence needs every run identity value, while runner diagnostics may be unavailable",
+        "through the real CLI, a verified run without its run ID keeps its files and is not complete"
+      ],
+      "exit": 1,
+      "passed": 30,
+      "failed": [
+        "finalize and the recorder accept only the exact manifest init wrote, at every depth",
+        "complete evidence needs every run identity value, while runner diagnostics may be unavailable",
+        "through the real CLI, a verified run without its run ID keeps its files and is not complete"
+      ],
+      "targetsFailed": true,
+      "restoredSha256": "5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf"
+    },
+    {
+      "name": "root2-closer-may-claim-unwritten-rejections",
+      "kind": "revert",
+      "mutatedSha256": "8a3ea49effc54b07817109cd4f74c96025d66acc632601651d9448f3e4875a40",
+      "targets": [
+        "a closer's rejected count must equal the stream's unless it also counts omitted records"
+      ],
+      "exit": 1,
+      "passed": 32,
+      "failed": [
+        "a closer's rejected count must equal the stream's unless it also counts omitted records"
+      ],
+      "targetsFailed": true,
+      "restoredSha256": "5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf"
+    },
+    {
+      "name": "root2-rejection-counted-before-its-record-exists",
+      "kind": "revert",
+      "mutatedSha256": "e5159214ece0d3ac176f540374056011f9d541b7ebdc8eccce1ddc1f4060638b",
+      "targets": [
+        "a rejection the recorder could not stamp is neither written nor counted"
+      ],
+      "exit": 1,
+      "passed": 32,
+      "failed": [
+        "a rejection the recorder could not stamp is neither written nor counted"
+      ],
+      "targetsFailed": true,
+      "restoredSha256": "5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf"
+    },
+    {
+      "name": "control-closer-must-equal-even-with-omissions",
+      "kind": "over-tightening control",
+      "mutatedSha256": "d60cabdedb0a30c03e32fab1530bccd2242ac7bc84a3de69e3f03f1496c3a4d7",
+      "targets": [
+        "a genuine overflow that omits rejections stays valid partial evidence"
+      ],
+      "exit": 1,
+      "passed": 30,
+      "failed": [
+        "a stream that breaks the recorder lifecycle or repeats a fact is rejected whole",
+        "a closer's rejected count must equal the stream's unless it also counts omitted records",
+        "a genuine overflow that omits rejections stays valid partial evidence"
+      ],
+      "targetsFailed": true,
+      "restoredSha256": "5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf"
+    }
+  ],
+  "restored": {
+    "tooling/scripts/windows-launcher-evidence.mjs": "5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf",
+    "tooling/scripts/windows-launcher-evidence.test.mjs": "85dce79d1ba8f6a750c82e905a50179ffaf28d7e5e99415d641479c97e5c84d5"
+  },
+  "ok": true
+}

@@ -1,0 +1,144 @@
+{
+  "exits": {
+    "run": "correction-negative",
+    "init": 0,
+    "native": 1,
+    "finalize": 0,
+    "start": "2026-11-18T06:31:13Z",
+    "end": "2026-11-18T06:34:59Z",
+    "suiteRemoved": true,
+    "dir": "windows-launcher-evidence-2Y04gX"
+  },
+  "status": "native-failed",
+  "observations": {
+    "state": "valid",
+    "reason": null,
+    "bytes": 170113,
+    "records": 1019,
+    "closed": true,
+    "rejected": 1,
+    "omittedRecords": 265,
+    "omittedBytes": 40620,
+    "byType": {
+      "recorder-open": 1,
+      "case-start": 25,
+      "fixture": 9,
+      "child": 91,
+      "case-end": 24,
+      "cleanup": 850,
+      "alias-round": 2,
+      "alias": 2,
+      "rejected": 1,
+      "contention": 3,
+      "overflow": 1,
+      "fixture-state": 9,
+      "recorder-closed": 1
+    }
+  },
+  "missing": [
+    "records-omitted",
+    "records-rejected",
+    "installer-pass",
+    "checkout-alias-pass",
+    "checkout-alias-subtests",
+    "bounded-logs-pass",
+    "alias-junction",
+    "alias-dir",
+    "alias-dir-release",
+    "binding-unverified"
+  ],
+  "steps": {
+    "install": "unknown",
+    "build": "unknown",
+    "native": "failure"
+  },
+  "verifierExit": 0,
+  "closed": {
+    "seq": 1285,
+    "at": "2026-11-18T06:34:59.588Z",
+    "type": "recorder-closed",
+    "written": 1018,
+    "rejected": 1,
+    "omittedRecords": 265,
+    "omittedBytes": 40620
+  },
+  "checks": {
+    "exactlyOneRejectedAndItIsTheInjectedChild": true,
+    "oneOverflowWithOmissions": true,
+    "contentionTrialsOnceEach": true,
+    "junctionRoundsOnceEach": true,
+    "aliasRecords": [
+      [
+        "junction",
+        "retained-release-unverified",
+        "direct-release",
+        "EQAUNVERIFIED"
+      ],
+      [
+        "dir",
+        "not-created",
+        "create-alias",
+        "EPERM"
+      ]
+    ],
+    "caseStartsUnique": true,
+    "noBindingContradiction": true,
+    "canaryAbsent": true
+  },
+  "tap": {
+    "top": [
+      [
+        "not ok",
+        1,
+        "Windows PowerShell 5.1 installer validates before replacing native launcher files"
+      ],
+      [
+        "ok",
+        2,
+        "native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route"
+      ],
+      [
+        "not ok",
+        3,
+        "native Windows launcher accepts junction and directory symlink checkout paths"
+      ],
+      [
+        "ok",
+        4,
+        "independent API processes never share ownership while reclaiming a reused PID"
+      ],
+      [
+        "ok",
+        5,
+        "bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names"
+      ]
+    ],
+    "subtests": 20,
+    "failedSubtests": [
+      [
+        "not ok",
+        1,
+        "cold and warm native launcher with a Junction checkout"
+      ],
+      [
+        "not ok",
+        2,
+        "cold and warm native launcher with a SymbolicLink checkout"
+      ]
+    ]
+  },
+  "cleanup": [
+    {
+      "path": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261117-ci-gates\\GraphGoblin\\.tmp\\windows-launcher-logs-WXrZwJ\\qa-linked-directory",
+      "before": "link",
+      "action": "unlinked",
+      "after": "absent"
+    },
+    {
+      "path": "C:\\Users\\98jak\\AppData\\Local\\Temp\\graphgoblin-launcher-alias-1Vyk3q\\junction-3QFrTP\\checkout alias-α",
+      "before": "link",
+      "action": "unlinked",
+      "after": "absent"
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+# Hosted controls for #488 and #496 (prepared, not published)
+
+Root publishes these; this lane did not push, open PRs, rerun CI or touch live settings. Every
+control branch is disposable and must never be merged. Record each run's ID, attempt, job IDs,
+head SHA, runner image and the raw job logs before interpreting anything. Use `gh` against
+`Jacob-J-Thomas/GraphGoblin`.
+
+All workflow files below are in `hosted/workflows/`; generators are in `hosted/` and `qa/`.
+
+## 0. Exact-head candidate CI (the real positive)
+
+Publish the frozen candidate as its PR. Expected with #503 unresolved:
+
+| Job | Expected |
+| --- | --- |
+| Windows launcher | success; artifact `windows-launcher-1`, `result.json` status `complete`, `missing: []` |
+| Repository checks | **failure** at `Dependency audit` only (all earlier steps success) |
+| Coverage | success; 13 package summaries in `coverage` |
+| Gates | **failure**, summary `Repository checks = failure`, `Coverage = success` |
+| Browser, Template image | unchanged results |
+
+This validates scheduling and the audit failure path; it is NOT a green exact-head CI. Read back:
+
+```
+gh run view <run> --json headSha,headBranch,event,attempt,jobs,conclusion
+gh api repos/Jacob-J-Thomas/GraphGoblin/actions/runs/<run>/artifacts
+gh api repos/Jacob-J-Thomas/GraphGoblin/actions/jobs/<job>/logs > <job>.log
+gh api repos/Jacob-J-Thomas/GraphGoblin/actions/artifacts/<artifact-id>/zip > windows-launcher-1.zip
+sha256sum windows-launcher-1.zip   # must equal the API artifact "digest" (sha256:...)
+python -I qa/verify-evidence-bundle.py windows-launcher-1.zip --tap windows-job.log \
+  --expect-status complete --expect-observations valid
+```
+
+Check in the manifest: `binding.runId/runAttempt` equal the run; `binding.sha` equals the
+PR merge SHA in the job log (`HEAD is now at ...`); `checkout.matchesSha`,
+`checkout.headParentMatchesEventHead` and `checkout.baseParentMatchesEventBase` are `true`;
+`binding.job` is `windows-launcher`. The numeric job ID comes from `gh run view --json jobs` and
+the same job's upload step log (artifact ID, digest, URL). Record lane start/end times, the
+coverage step duration against its 25-minute cap and the Coverage job against 30 minutes, and
+the 13 package reports and floors. Confirm branch protection / rulesets still require exactly
+the `Gates` context (read only; do not edit).
+
+## 1. #496 uploader hidden-path control (synthetic only)
+
+Branch `qa/gg-496-uploader-control` from base `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`, adding
+only `.github/workflows/qa-496-uploader-control.yml`. Expected:
+
+- the readback line shows three ordinary `marker.txt` files with equal SHA-256 (no LinkType);
+- A (`.tmp/...`, default): warning "No files were found", no `qa496-hidden-default-*` artifact;
+- B (same path, `include-hidden-files: true`, synthetic data only): artifact with `marker.txt`;
+- C (visible workspace root): artifact with `marker.txt`;
+- D (exact file below runner temp, the candidate's approach): artifact with `marker.txt`.
+
+Download B, C and D by ID, compare each ZIP SHA-256 to the API digest and the member hash to the
+readback hash. Record the resolved `actions/upload-artifact@v4` SHA from "Download action
+repository". If A uploads or B does not, stop and diagnose before claiming the cause.
+
+## 2. #496 baseline native pre-upload probe
+
+Branch `qa/gg-496-baseline-probe` from base, adding only
+`.github/workflows/qa-496-baseline-probe.yml`. Expected: the native result as on main; the probe
+line shows `.tmp` and its `windows-launcher-*` roots existing, with `fixture.exe`,
+`GraphGoblin.exe` and `launcher.log` existing as ordinary files (names, attributes, sizes only);
+then the unchanged default upload warns that no files were found and no artifact is listed.
+Together with control 1 this separates fixture absence from uploader filtering. Hidden files are
+never opted in for real fixture trees.
+
+## 3. #496 candidate negative evidence and refusal
+
+Branch `qa/gg-496-candidate-negative` from the EXACT frozen candidate commit, adding:
+
+```
+python -I qa/make-negative-acceptance.py tooling/scripts/windows-launcher.acceptance.mjs \
+  tooling/scripts/windows-launcher.qa-negative.acceptance.mjs
+# and .github/workflows/qa-496-candidate-negative.yml
+```
+
+Expected, job `Windows launcher negative evidence`: native step **failure** (installer child
+exit 7; junction alias forced unverified); `result.json` status `native-failed`, observations
+`valid`; records include the installer `child` exit 7 with `stderrBytes` equal to the env
+canary length and `diagnostic: unclassified`; a maxBuffer child (`errorCode
+ERR_CHILD_PROCESS_STDIO_MAXBUFFER`); a timeout child (`signal SIGTERM`, `killed true`,
+`timeoutMs 500`); exactly one `rejected` record (`recordType child`); one `overflow` record and
+`omittedRecords > 0`; the junction `alias` record `disposition retained-release-unverified`,
+`failureStage direct-release`, `failureCode EQAUNVERIFIED`, and its `alias-link` fixture-state
+`link` (on hosted runners the directory-symlink alias passes). Verify the downloaded archive:
+
+```
+python -I qa/verify-evidence-bundle.py qa496-negative-windows-launcher-1.zip --tap negative.log \
+  --expect-status native-failed --expect-observations valid \
+  --canary QA496-<run>-<attempt> --canary QA496-<run>-<attempt>-ENV \
+  --canary QA496-<run>-<attempt>-PLAINENV
+```
+
+The verifier fails on any canary, path-like text, extra or non-regular member, or a size above
+the limits; it also reconciles TAP and the stdout markers. Job `Evidence refusal control` must
+show finalize **failure** with `refused: hard-link`, no upload step run, no `result.json`, and
+the outside canary unchanged.
+
+## 4. #488 scheduling controls
+
+Generate from the frozen candidate (each on its own branch from the candidate commit, adding
+only its file):
+
+```
+python -I hosted/make-488-controls.py .github/workflows/ci.yml hosted/workflows
+```
+
+| Branch / file | Expected |
+| --- | --- |
+| `qa/gg-488-fanin` / `qa-488-fanin.yml` | `gates-success-success` success; `gates-success-failure`, `gates-skipped-success`, `gates-success-cancelled` failure. Stub results: failure, skipped, cancelled (1-minute job timeout); record the actual `needs` values each aggregate printed. |
+| `qa/gg-488-coverage-fails-early` | Coverage failure at the coverage step; upload runs with one benign summary; status summary says partial; Repository checks runs every step (fails at the audit while #503 is open); Gates failure. |
+| `qa/gg-488-coverage-step-timeout` | Coverage step stopped at its 1-minute cap; upload and status still run; Gates failure. |
+| `qa/gg-488-static-fails` | Repository checks fails at the injected step with later steps skipped; Coverage runs the full workload to success; Gates failure. |
+
+An externally cancelled run (cancel a run of any variant while both lanes are in progress) must
+end with a non-green Gates; record its conclusion. None of these replaces the exact-head run.

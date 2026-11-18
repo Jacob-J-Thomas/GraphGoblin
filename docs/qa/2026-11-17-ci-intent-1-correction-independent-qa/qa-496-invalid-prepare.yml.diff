@@ -1,0 +1,17 @@
+--- original/qa-496-invalid-prepare.yml
++++ overlay/qa-496-invalid-prepare.yml
+@@ -41,9 +41,11 @@
+         env:
+           GG_TEST_EVIDENCE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+           GG_TEST_EVIDENCE_EVENT_BASE: ${{ github.event.pull_request.base.sha }}
+-          # QA-ONLY INJECTION: the checkout as runner temp, so the real init refuses.
+-          RUNNER_TEMP: ${{ github.workspace }}
+-        run: node tooling/scripts/windows-launcher-evidence.mjs init
++        # QA-ONLY INJECTION: override the inherited default in this PowerShell process.
++        run: |
++          $env:RUNNER_TEMP = $env:GITHUB_WORKSPACE
++          node tooling/scripts/windows-launcher-evidence.mjs init
++          exit $LASTEXITCODE
+       - name: Native Windows launcher acceptance
+         id: native
+         # Runs after a successful build whatever evidence preparation did. A preparation failure

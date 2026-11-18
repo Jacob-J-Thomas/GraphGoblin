@@ -1,0 +1,149 @@
+# QA-ONLY disposable #488 fan-in control. The aggregate step is the candidate Gates step
+# verbatim, with its two needs remapped to stub jobs. Never merge.
+name: QA 488 Gates fan-in control
+
+on:
+  push:
+    branches: [qa/gg-488-fanin]
+
+permissions: {}
+
+jobs:
+  stub-success-a:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo success
+  stub-success-b:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo success
+  stub-failure:
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
+  stub-skipped:
+    runs-on: ubuntu-latest
+    if: ${{ false }}
+    steps:
+      - run: echo never
+  stub-cancelled:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - run: sleep 150
+  gates-success-success:
+    name: gates-success-success
+    needs: [stub-success-a, stub-success-b]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require Repository checks and Coverage to succeed
+        shell: bash
+        env:
+          REPOSITORY_CHECKS: ${{ needs.stub-success-a.result }}
+          COVERAGE: ${{ needs.stub-success-b.result }}
+        run: |
+          {
+            echo '## Gates'
+            echo
+            echo '| Required job | Result |'
+            echo '| --- | --- |'
+            echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"
+            echo "| Coverage | \`${COVERAGE:-missing}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"
+          if [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then
+            echo 'Gates passed: Repository checks and Coverage both succeeded.'
+            exit 0
+          fi
+          echo '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'
+          exit 1
+  gates-success-failure:
+    name: gates-success-failure
+    needs: [stub-success-a, stub-failure]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require Repository checks and Coverage to succeed
+        shell: bash
+        env:
+          REPOSITORY_CHECKS: ${{ needs.stub-success-a.result }}
+          COVERAGE: ${{ needs.stub-failure.result }}
+        run: |
+          {
+            echo '## Gates'
+            echo
+            echo '| Required job | Result |'
+            echo '| --- | --- |'
+            echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"
+            echo "| Coverage | \`${COVERAGE:-missing}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"
+          if [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then
+            echo 'Gates passed: Repository checks and Coverage both succeeded.'
+            exit 0
+          fi
+          echo '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'
+          exit 1
+  gates-skipped-success:
+    name: gates-skipped-success
+    needs: [stub-skipped, stub-success-b]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require Repository checks and Coverage to succeed
+        shell: bash
+        env:
+          REPOSITORY_CHECKS: ${{ needs.stub-skipped.result }}
+          COVERAGE: ${{ needs.stub-success-b.result }}
+        run: |
+          {
+            echo '## Gates'
+            echo
+            echo '| Required job | Result |'
+            echo '| --- | --- |'
+            echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"
+            echo "| Coverage | \`${COVERAGE:-missing}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"
+          if [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then
+            echo 'Gates passed: Repository checks and Coverage both succeeded.'
+            exit 0
+          fi
+          echo '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'
+          exit 1
+  gates-success-cancelled:
+    name: gates-success-cancelled
+    needs: [stub-success-a, stub-cancelled]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require Repository checks and Coverage to succeed
+        shell: bash
+        env:
+          REPOSITORY_CHECKS: ${{ needs.stub-success-a.result }}
+          COVERAGE: ${{ needs.stub-cancelled.result }}
+        run: |
+          {
+            echo '## Gates'
+            echo
+            echo '| Required job | Result |'
+            echo '| --- | --- |'
+            echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"
+            echo "| Coverage | \`${COVERAGE:-missing}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"
+          if [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then
+            echo 'Gates passed: Repository checks and Coverage both succeeded.'
+            exit 0
+          fi
+          echo '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'
+          exit 1

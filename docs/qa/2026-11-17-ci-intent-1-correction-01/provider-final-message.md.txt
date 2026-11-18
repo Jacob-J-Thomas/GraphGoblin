@@ -1,0 +1,41 @@
+The correction is implemented and uncommitted in the CI worktree: three of the original eight files changed, plus docs. Every check I ran passed, but #496 is still not done until you verify the hosted archives, and all gates can't be green while #503's audit failure stands. Nothing was staged, committed, pushed, published or commented.
+
+## What changed (only within the original eight files)
+1. **A failed evidence preparation no longer skips the native tests.** Preparation now runs after Build and needs only checkout and Node, so it also runs after a failed install or build and records them as not run. The native step runs after any successful build. It only gets an evidence folder, and finalize only runs, when preparation succeeded; a failed preparation turns the job red and uploads nothing. The native, install and build commands are unchanged, and there is no `continue-on-error`, retry or deadline change.
+2. **The manifest must be exactly what `init` wrote.** Finalize rebuilds it from its validated values plus the fixed limits and file names, then compares byte for byte. Unknown fields at any depth, duplicate keys, a byte-order mark, reformatting or inconsistent derived fields are refused before anything is uploaded. Legitimately unavailable values are still accepted. An observation file starting with a byte-order mark is now rejected, without claiming it leaked anything. This checks shape, not authenticity.
+3. **Contradictions and repeats can't count as complete.**
+   - Any applicable checkout comparison that is false gives `binding-contradiction`; a missing one gives `binding-unverified`.
+   - Only the recorder itself can write its open, close, overflow and fixture-state records, and it rejects a second statement of a once-per-run fact.
+   - Finalize rejects streams that break the recorder's lifecycle or repeat a fact.
+   - Complete evidence now needs the actual trials 1–3 and both alias/direct releases per link kind, each from its own test case. Honest incomplete or failed evidence still uploads.
+
+**Decision for you:** `complete` now also requires a verified binding, which is stricter than contradiction-only. Local runs without GitHub variables therefore report `binding-unverified`. If you'd rather block only contradictions, it's a one-line change.
+
+## Results
+| Check | Result |
+| --- | --- |
+| QA's CLI harness (exact copy) | original candidate 8/13, matching QA; corrected 13/13 |
+| QA's workflow harness (exact copy) | still exits 1: `KeyError` from its hard-coded original conditions. Left as is, not rewritten |
+| My proposed copy of that harness (insertion only, expected table unchanged) | 6/6 Windows cases pass, including prepare-fails. For independent QA to adopt or reject |
+| New regressions (7 new tests + 3 extended, 28 total) | reverting each fix one at a time turned the matching tests red in all 10 cases; restored sources are byte-identical |
+| Helper coverage / lint / format | 99.26% lines, 97.19% branches; all clean |
+| Full tooling coverage, single run | 206/206 passed first time; statements 96.69, branches 93.49, functions 94.58, lines 97.62 |
+| Native negative run (ports 63700–63719) | native exit 1 preserved; evidence valid. The only rejected record is the injected one, so the new rules refused no genuine record. No canaries or paths in the bundle |
+
+The native run matched the same-host baseline except for the two injected cases. The directory-symlink case still fails here with EPERM, so this host is not fully green. Afterwards nothing was listening on 63700–63749 and no launcher or Node processes remained. I unlinked only the two QA-created junctions, after checking their exact paths and targets.
+
+The full coverage run passing doesn't explain the earlier #453 timeout; 34 Node processes were running on the host, and I'm not claiming load as a cause. The original author and QA evidence packets are unchanged.
+
+## Hosted controls you still need to run
+Generated from the corrected `ci.yml` on `codex/qa/` branches; steps are in `hosted/INSTRUCTIONS.md`.
+- **New invalid-prepare control:** expect a successful build, the forced `init` refusal, the exact native command running with its own result, a red job and no archive. A second job with a failing install must upload `not-run` metadata only.
+- **Updated negative/refusal control:** now also checks a tampered manifest.
+- **Regenerated #488 controls:** they differ from the originals only in branch prefix and a comment.
+
+The uploader and baseline controls already passed and aren't rerun. The original generated files are untouched.
+
+## Other notes
+- **Docs fix:** the candidate's docs, ADR, CHANGELOG and workflow comment said branch protection requires `Gates`. Your readback showed `protected:false` and no rulesets, so they now call it the stable `Gates` workflow context.
+- **Budgets:** the 30/25-minute budgets are unchanged and recorded as your architecture choice, not an owner requirement. The roughly 2.5 minutes of headroom on slow runs is noted.
+
+Everything is in `C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01`; start with `README.md`. `SOURCE-BINDINGS.txt` holds the corrected hashes (scoped diff `3d40818a…7876`), and `SHA256SUMS.txt` lists 129 files and hashes to `17844853…eb123`. No private provider streams are included.

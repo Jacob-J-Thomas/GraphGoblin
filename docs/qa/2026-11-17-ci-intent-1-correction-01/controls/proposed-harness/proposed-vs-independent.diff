@@ -1,0 +1,15 @@
+--- C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/controls/corrected-candidate/workflow-controls.py	2026-11-17 23:57:05.843451000 -0600
++++ C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-01/controls/proposed-harness/workflow-controls.proposed.py	2026-11-18 00:29:55.457554900 -0600
+@@ -124,6 +124,12 @@
+             lambda: outcomes.get("evidence") == "success",
+         "${{ always() && steps.finalize.outputs.paths != '' }}":
+             lambda: outcomes.get("finalize") == "success",
++        # PROPOSED (author-side, #496 correction 01): the corrected job's two new conditions.
++        # Setup steps before slot 3 are modeled as successful, as in the original harness.
++        "${{ !cancelled() && steps.node.outcome == 'success' }}":
++            lambda: not cancelled,
++        "${{ always() && steps.evidence.outcome == 'success' }}":
++            lambda: outcomes.get("evidence") == "success",
+     }
+     for item in slots:
+         when = by_name[item].get("if")

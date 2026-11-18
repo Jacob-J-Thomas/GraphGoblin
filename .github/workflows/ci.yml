@@ -20,24 +20,56 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
+        id: node
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - name: Install
+        id: install
         run: pnpm install --frozen-lockfile
       - name: Build
+        id: build
         run: pnpm build
+      # Native evidence (#496): a fresh, non-hidden folder directly below the runner temp,
+      # outside the checkout and every fixture. The suite writes typed records only. Prepared
+      # after the build, so its failure can never skip install, build or the native command; it
+      # needs only the checkout and Node, so a failed install or build is still recorded.
+      - name: Prepare native evidence
+        id: evidence
+        if: ${{ !cancelled() && steps.node.outcome == 'success' }}
+        env:
+          GG_TEST_EVIDENCE_EVENT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          GG_TEST_EVIDENCE_EVENT_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node tooling/scripts/windows-launcher-evidence.mjs init
       - name: Native Windows launcher acceptance
+        id: native
+        # Runs after a successful build whatever evidence preparation did. A preparation failure
+        # still fails the job, and the suite then receives no evidence folder.
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outcome == 'success' && steps.evidence.outputs.dir || '' }}
         run: pnpm test:windows-launcher
+      - name: Finalize native evidence
+        id: finalize
+        # Only a successfully prepared folder is finalized, and only finalized files are uploaded.
+        if: ${{ always() && steps.evidence.outcome == 'success' }}
+        env:
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR: ${{ steps.evidence.outputs.dir }}
+          GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_ID: ${{ steps.evidence.outputs.id }}
+          GG_TEST_EVIDENCE_INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          GG_TEST_EVIDENCE_BUILD_OUTCOME: ${{ steps.build.outcome }}
+          GG_TEST_EVIDENCE_NATIVE_OUTCOME: ${{ steps.native.outcome }}
+        run: node tooling/scripts/windows-launcher-evidence.mjs finalize
       - name: Upload native evidence
-        if: always()
+        if: ${{ always() && steps.finalize.outputs.paths != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: windows-launcher
-          path: .tmp/windows-launcher-*/
-          if-no-files-found: warn
-  gates:
-    name: Gates
+          name: windows-launcher-${{ github.run_attempt }}
+          path: ${{ steps.finalize.outputs.paths }}
+          if-no-files-found: error
+          include-hidden-files: false
+  repository-checks:
+    name: Repository checks
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -100,13 +132,6 @@ jobs:
       - name: Shipped templates and deliberate-invalid refusal
         run: pnpm check:templates
 
-      - name: Install Chromium for tooling browser measurements
-        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium
-
-      - name: Unit tests with coverage thresholds
-        # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
-        run: pnpm exec turbo run test:coverage --concurrency=1
-
       - name: Licence allowlist
         run: pnpm check:licenses
 
@@ -119,6 +144,37 @@ jobs:
       - name: Dependency audit
         run: pnpm audit --audit-level=high
 
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      # The same full build as Repository checks, so every suite sees the original built inputs.
+      - name: Build
+        run: pnpm build
+
+      - name: Install Chromium for tooling browser measurements
+        run: pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium
+
+      - name: Unit tests with coverage thresholds
+        id: coverage
+        # The step cap leaves job time to retain the reports of a failed or timed-out run.
+        timeout-minutes: 25
+        # Each Vitest package owns its worker pool; avoid multiplying pools on the CI host.
+        run: pnpm exec turbo run test:coverage --concurrency=1
+
       - name: Upload coverage reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -128,7 +184,58 @@ jobs:
             packages/*/coverage/coverage-summary.json
             apps/*/coverage/coverage-summary.json
             tooling/coverage/coverage-summary.json
-          if-no-files-found: ignore
+          if-no-files-found: warn
+
+      - name: Coverage report status
+        if: always()
+        shell: bash
+        env:
+          COVERAGE_OUTCOME: ${{ steps.coverage.outcome }}
+        run: |
+          reports=$( (ls packages/*/coverage/coverage-summary.json apps/*/coverage/coverage-summary.json tooling/coverage/coverage-summary.json 2>/dev/null || true) | wc -l)
+          {
+            echo '## Coverage'
+            echo
+            echo "Coverage step: \`${COVERAGE_OUTCOME:-not run}\`. Package summaries retained: ${reports}."
+            if [ "${COVERAGE_OUTCOME:-}" != success ]; then
+              echo
+              echo 'The coverage step did not succeed: any retained summaries are partial and establish no passing gate.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Coverage step: ${COVERAGE_OUTCOME:-not run}; package summaries retained: ${reports}"
+
+  # The stable `Gates` status context. It always runs, even when a lane fails, is skipped or is
+  # cancelled, and passes only when both lanes succeeded. It is never skippable, because a skipped
+  # job would satisfy a branch rule that requires it.
+  gates:
+    name: Gates
+    needs: [repository-checks, coverage]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require Repository checks and Coverage to succeed
+        shell: bash
+        env:
+          REPOSITORY_CHECKS: ${{ needs.repository-checks.result }}
+          COVERAGE: ${{ needs.coverage.result }}
+        run: |
+          {
+            echo '## Gates'
+            echo
+            echo '| Required job | Result |'
+            echo '| --- | --- |'
+            echo "| Repository checks | \`${REPOSITORY_CHECKS:-missing}\` |"
+            echo "| Coverage | \`${COVERAGE:-missing}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Repository checks: ${REPOSITORY_CHECKS:-missing}; Coverage: ${COVERAGE:-missing}"
+          if [ "${REPOSITORY_CHECKS:-}" = success ] && [ "${COVERAGE:-}" = success ]; then
+            echo 'Gates passed: Repository checks and Coverage both succeeded.'
+            exit 0
+          fi
+          echo '::error title=Gates::Repository checks and Coverage must both succeed; a failed, cancelled or skipped job never passes Gates.'
+          exit 1
 
   browser:
     name: Browser
