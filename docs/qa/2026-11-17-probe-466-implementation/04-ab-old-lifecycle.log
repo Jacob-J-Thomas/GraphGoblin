@@ -1,0 +1,67 @@
+# real Vitest A/B, OLD lifecycle (pre-#466 lifecycle substituted). head 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1 + uncommitted candidate; node v22.23.4; started 2026-11-18T04:51:35Z
+# command: GG_466_VARIANT=old GG_466_OBSERVATION=<evidence>/04-ab-old-observation.json pnpm exec vitest run src/probe-466-ab-scratch.test.ts -t '466 real Vitest' --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466/GraphGoblin/packages/adapter-codex
+
+ ↓ src/probe-466-ab-scratch.test.ts > Codex readiness probe directory > runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe
+ ↓ src/probe-466-ab-scratch.test.ts > Codex readiness probe directory > preserves 1 existing collision directories and bounds retries
+ ↓ src/probe-466-ab-scratch.test.ts > Codex readiness probe directory > preserves 4 existing collision directories and bounds retries
+ ↓ src/probe-466-ab-scratch.test.ts > Codex readiness probe directory > fails a real directory creation fault before starting the fake CLI or removing anything
+ ↓ src/probe-466-ab-scratch.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned before its first fake CLI starts before the case finishes
+ ↓ src/probe-466-ab-scratch.test.ts > Codex readiness probe case lifecycle (#466) > settles a case abandoned while a fake CLI runs before the case finishes
+ ↓ src/probe-466-ab-scratch.test.ts > Codex readiness probe case lifecycle (#466) > reports an ordinary case failure once, after the same settlement
+ × src/probe-466-ab-scratch.test.ts > 466 real Vitest lifecycle evidence > A: a probe case abandoned by a real Vitest timeout 1014ms
+   → Test timed out in 1000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/probe-466-ab-scratch.test.ts > 466 real Vitest lifecycle evidence > B: the next case observes no late call from A 14978ms
+   → expected { predecessorSettled: false, …(2) } to match object { predecessorSettled: true, …(1) }
+(1 matching property omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-466-ab-scratch.test.ts > 466 real Vitest lifecycle evidence > A: a probe case abandoned by a real Vitest timeout
+Error: Test timed out in 1000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-466-ab-scratch.test.ts:329:3
+    327|
+    328| describe('466 real Vitest lifecycle evidence', () => {
+    329|   it(
+       |   ^
+    330|     'A: a probe case abandoned by a real Vitest timeout',
+    331|     (context) =>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/probe-466-ab-scratch.test.ts > 466 real Vitest lifecycle evidence > B: the next case observes no late call from A
+AssertionError: expected { predecessorSettled: false, …(2) } to match object { predecessorSettled: true, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "predecessorRunningFakeClis": 0,
+-   "predecessorSettled": true,
++   "predecessorRunningFakeClis": 1,
++   "predecessorSettled": false,
+  }
+
+ ❯ src/probe-466-ab-scratch.test.ts:406:37
+    404|         create.mockRestore();
+    405|         remove.mockRestore();
+    406|         expect(observation.atStart).toMatchObject({
+       |                                     ^
+    407|           predecessorSettled: true,
+    408|           predecessorRunningFakeClis: 0,
+ ❯ src/probe-466-ab-scratch.test.ts:56:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 7 skipped (9)
+   Start at  22:51:37
+   Duration  19.53s (tests 83%, import 9%, transform 7%)
+
+exit=1
+# finished 2026-11-18T04:51:56Z

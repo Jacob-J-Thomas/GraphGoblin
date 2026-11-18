@@ -1,0 +1,172 @@
+import { appendFileSync, existsSync } from 'node:fs';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+const scenario = process.env.GG_466_QA_SCENARIO;
+const observation = process.env.GG_466_QA_OBSERVATION;
+const originalTemp = Object.fromEntries(TEMP_NAMES.map((name) => [name, process.env[name]]));
+const initialClock = performance.now();
+const aborted = Promise.withResolvers<void>();
+const bodyDone = Promise.withResolvers<void>();
+const childDone = Promise.withResolvers<void>();
+let ownerRoot = '';
+let startedProbe = '';
+let bodySettled = false;
+let probeRmCompleted = false;
+let rootRmObserved = false;
+let successorStarted = false;
+let hangChild: ChildProcess | undefined;
+let observedChildren = 0;
+let didAbort = false;
+
+function record(event: string, details = {}) {
+  appendFileSync(observation!, JSON.stringify({
+    event, elapsedMs: Math.round(performance.now() - initialClock), ...details,
+  }) + '\n');
+}
+
+function tempMatchesOwner() {
+  return TEMP_NAMES.every((name) => process.env[name] === ownerRoot);
+}
+
+function tempMatchesOriginal() {
+  return TEMP_NAMES.every((name) => process.env[name] === originalTemp[name]);
+}
+
+function nativePresent(pid: number | undefined) {
+  if (pid === undefined) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false;
+    throw error;
+  }
+}
+
+async function afterAbortDelay() {
+  const fallback = new AbortController();
+  try {
+    await Promise.race([
+      aborted.promise.then(() => sleep(650)),
+      sleep(9000, undefined, { signal: fallback.signal }).then(() => {
+        throw new Error('QA abort was not observed at the expected boundary');
+      }),
+    ]);
+  } finally {
+    fallback.abort();
+  }
+}
+
+const timed = probeCase('gg-codex-independent-', async (probe) => {
+  ownerRoot = probe.root;
+  useTempRoot(ownerRoot);
+  record('body-start', { ownerRoot, tempMatchesOwner: tempMatchesOwner() });
+  probe.signal.addEventListener('abort', () => {
+    record('real-vitest-abort', {
+      reason: String(probe.signal.reason),
+      pid: hangChild?.pid,
+      running: hangChild ? isRunning(hangChild) : false,
+      nativePresent: nativePresent(hangChild?.pid),
+      tempMatchesOwner: tempMatchesOwner(),
+      bodySettled,
+    });
+    didAbort = true;
+    aborted.resolve();
+  }, { once: true });
+  const realFs = await vi.importActual<typeof probeFs>('node:fs/promises');
+  vi.mocked(probeFs.rm).mockImplementation(async (path, options) => {
+    const target = String(path);
+    if (target === ownerRoot) {
+      rootRmObserved = true;
+      record('case-root-rm-enter', {
+        target, bodySettled, probeRmCompleted, successorStarted,
+        tempMatchesOriginal: tempMatchesOriginal(), nativePresent: nativePresent(hangChild?.pid),
+      });
+      if (scenario === 'double-fault') {
+        record('case-root-fault-injected', { target, error: 'QA466_ROOT_REMOVE_FAILURE' });
+        throw Object.assign(new Error('QA466_ROOT_REMOVE_FAILURE'), { code: 'EBUSY' });
+      }
+      await realFs.rm(path, options);
+      record('case-root-rm-complete', { target, exists: existsSync(target) });
+      return;
+    }
+    startedProbe = target;
+    if (scenario !== 'double-fault') {
+      record('probe-rm-enter', { target, successorStarted, tempMatchesOwner: tempMatchesOwner() });
+      await afterAbortDelay();
+      // Isolate test lifecycle ordering from the existing Windows cwd/kill removal race.
+      await childDone.promise;
+    }
+    await realFs.rm(path, options);
+    probeRmCompleted = true;
+    record('probe-rm-complete', {
+      target, successorStarted, tempMatchesOwner: tempMatchesOwner(),
+      nativePresent: nativePresent(hangChild?.pid), exists: existsSync(target),
+    });
+  });
+  if (scenario === 'double-fault') {
+    vi.mocked(probeFs.readdir).mockImplementationOnce(async (path, options) => {
+      startedProbe = String(path);
+      record('runner-readdir-enter', { target: startedProbe });
+      await afterAbortDelay();
+      record('runner-readdir-release', {
+        signalAborted: probe.signal.aborted, tempMatchesOwner: tempMatchesOwner(), successorStarted,
+      });
+      return realFs.readdir(path, options);
+    });
+  }
+  try {
+    const { harness } = fixture(probe, scenario === 'double-fault' ? 'ready' : 'hang', (args) => {
+      observedChildren = probe.children.length;
+      const child = probe.children.at(-1);
+      if (args.join(' ') !== 'login status' || child === undefined) return;
+      hangChild = child;
+      child.once('spawn', () => record('fake-cli-spawn', {
+        pid: child.pid, nativePresent: nativePresent(child.pid),
+        args: child.spawnargs.slice(-3),
+      }));
+      child.once('exit', (code, signal) => {
+        record('fake-cli-exit', { pid: child.pid, code, signal, nativePresent: nativePresent(child.pid) });
+        childDone.resolve();
+      });
+    });
+    const result = await harness.preflight();
+    record('preflight-result', { state: result.state, ok: result.ok, observedChildren });
+    expect(result).toMatchObject({ state: 'unknown', ok: false });
+    throw new Error(scenario === 'double-fault' ? 'QA466_LATE_BODY_FAILURE' : 'QA466_TIMED_BODY_FAILURE');
+  } finally {
+    bodySettled = true;
+    record('body-settled', {
+      successorStarted, tempMatchesOwner: tempMatchesOwner(),
+      nativePresent: nativePresent(hangChild?.pid),
+    });
+    bodyDone.resolve();
+  }
+});
+
+it('A genuinely times out in Vitest', timed);
+
+it('B checks ownership the moment the next case runs', async () => {
+  successorStarted = true;
+  const snapshot = {
+    signalAborted: didAbort,
+    bodySettled, probeRmCompleted, rootRmObserved, observedChildren,
+    priorProbeExists: existsSync(startedProbe), priorRootExists: existsSync(ownerRoot),
+    tempMatchesOriginal: tempMatchesOriginal(),
+    nativeChildPresent: nativePresent(hangChild?.pid),
+  };
+  record('successor-start', snapshot);
+  // Preserve the first snapshot before safely draining the intentionally broken control.
+  await Promise.race([bodyDone.promise, sleep(2000, undefined, { ref: false })]);
+  if (scenario === 'double-fault') {
+    expect(snapshot).toMatchObject({
+      bodySettled: true, probeRmCompleted: true, rootRmObserved: true, observedChildren: 0,
+      priorProbeExists: false, priorRootExists: true, tempMatchesOriginal: true, nativeChildPresent: false,
+    });
+  } else {
+    expect(snapshot).toMatchObject({
+      bodySettled: true, probeRmCompleted: true, rootRmObserved: true, observedChildren: 4,
+      priorProbeExists: false, priorRootExists: false, tempMatchesOriginal: true, nativeChildPresent: false,
+    });
+  }
+});

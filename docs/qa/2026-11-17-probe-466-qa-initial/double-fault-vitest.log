@@ -1,0 +1,52 @@
+$ vitest run src/probe-directory.independent-qa.test.ts --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466-qa/GraphGoblin/packages/adapter-codex
+
+ × src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest 5684ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   → QA466_ROOT_REMOVE_FAILURE
+ ✓ src/probe-directory.independent-qa.test.ts > B checks ownership the moment the next case runs 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.independent-qa.test.ts:247:1
+    245| });
+    246|
+    247| it('A genuinely times out in Vitest', timed);
+       | ^
+    248|
+    249| it('B checks ownership the moment the next case runs', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest
+Error: QA466_ROOT_REMOVE_FAILURE
+ ❯ Module.<anonymous> src/probe-directory.independent-qa.test.ts:187:29
+    185|       if (scenario === 'double-fault') {
+    186|         record('case-root-fault-injected', { target, error: 'QA466_ROO…
+    187|         throw Object.assign(new Error('QA466_ROOT_REMOVE_FAILURE'), { …
+       |                             ^
+    188|       }
+    189|       await realFs.rm(path, options);
+ ❯ src/probe-directory.independent-qa.test.ts:66:45
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'EBUSY' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:07:06
+   Duration  8.64s (tests 68%, import 18%, transform 14%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261117-probe-466-qa\GraphGoblin\packages\adapter-codex
+

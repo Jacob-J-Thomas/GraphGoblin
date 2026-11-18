@@ -1,0 +1,50 @@
+$ vitest run src/probe-directory.independent-qa.test.ts --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466-qa/GraphGoblin/packages/adapter-codex
+
+ × src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest 5827ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   → QA466_TIMED_BODY_FAILURE
+ ✓ src/probe-directory.independent-qa.test.ts > B checks ownership the moment the next case runs 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.independent-qa.test.ts:247:1
+    245| });
+    246|
+    247| it('A genuinely times out in Vitest', timed);
+       | ^
+    248|
+    249| it('B checks ownership the moment the next case runs', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest
+Error: QA466_TIMED_BODY_FAILURE
+ ❯ src/probe-directory.independent-qa.test.ts:236:11
+    234|     record('preflight-result', { state: result.state, ok: result.ok, o…
+    235|     expect(result).toMatchObject({ state: 'unknown', ok: false });
+    236|     throw new Error(scenario === 'double-fault' ? 'QA466_LATE_BODY_FAI…
+       |           ^
+    237|   } finally {
+    238|     bodySettled = true;
+ ❯ src/probe-directory.independent-qa.test.ts:53:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:06:45
+   Duration  8.71s (tests 69%, import 17%, transform 14%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261117-probe-466-qa\GraphGoblin\packages\adapter-codex
+

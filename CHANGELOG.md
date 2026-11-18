@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Codex readiness probe-directory tests own their fake CLI processes and cleanup: a case that
+  times out or is cancelled stops its fake CLI and finishes only after its probe, processes and
+  cleanup have settled, so the next case never sees its late calls. Test timeouts, coverage and
+  retry settings are unchanged; no product behaviour changes. (#466)
+
 - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
   written by the gateway itself so it never waits on logging and keeps working after the launcher

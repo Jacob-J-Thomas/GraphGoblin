@@ -1,0 +1,58 @@
+--- src/probe-directory.test.ts	2026-11-17 22:46:59.807782700 -0600
++++ src/probe-lifecycle-old-control.test.ts	2026-11-17 22:47:48.624036700 -0600
+@@ -1,4 +1,4 @@
+-import { describe, expect, it, vi, type TestContext } from 'vitest';
++import { afterEach, describe, expect, it, vi, type TestContext } from 'vitest';
+ import { spawn, type ChildProcess } from 'node:child_process';
+ import * as probeFs from 'node:fs/promises';
+ import { tmpdir } from 'node:os';
+@@ -14,6 +14,8 @@
+ 
+ const TEMP_NAMES = ['TEMP', 'TMP', 'TMPDIR'];
+ 
++afterEach(() => vi.unstubAllEnvs());
++
+ function useTempRoot(root: string): void {
+   for (const name of TEMP_NAMES) vi.stubEnv(name, root);
+ }
+@@ -50,20 +52,13 @@
+     let root: string | undefined;
+     const work = (async () => {
+       root = await probeFs.mkdtemp(join(tmpdir(), prefix));
+-      await body({ signal: context.signal, root, children });
++      try {
++        await body({ signal: context.signal, root, children });
++      } finally {
++        vi.unstubAllEnvs();
++        await probeFs.rm(root, { recursive: true, force: true });
++      }
+     })();
+-    context.onTestFinished(async () => {
+-      const [outcome] = await Promise.allSettled([work]);
+-      await Promise.all(
+-        children
+-          .filter(isRunning)
+-          .map((child) => new Promise((resolve) => child.once('exit', resolve))),
+-      );
+-      vi.unstubAllEnvs();
+-      if (root !== undefined) await probeFs.rm(root, { recursive: true, force: true });
+-      // A body that outlived the abort reports how it ended; otherwise the case reported it already.
+-      if (context.signal.aborted && outcome.status === 'rejected') throw outcome.reason;
+-    });
+     return work;
+   };
+ }
+@@ -73,13 +68,11 @@
+   const runner = vi.fn<CliRunner>(async (command, args, timeout) => {
+     commands.push(command);
+     expect(await probeFs.readdir(command.cwd ?? '')).toEqual([]);
+-    probe.signal.throwIfAborted();
+     const spawned = vi.mocked(spawn).mock.results.length;
+     const result = runCli(
+       { ...command, prefix: [...command.prefix, scenario] },
+       args,
+       timeout,
+-      probe.signal,
+     );
+     for (const started of vi.mocked(spawn).mock.results.slice(spawned))
+       if (started.type === 'return') probe.children.push(started.value);

@@ -1,0 +1,68 @@
+$ vitest run src/probe-directory.independent-qa.test.ts --reporter=verbose
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-probe-466-qa/GraphGoblin/packages/adapter-codex
+
+ × src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest 5023ms
+   → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ × src/probe-directory.independent-qa.test.ts > B checks ownership the moment the next case runs 661ms
+   → expected { signalAborted: true, …(8) } to match object { bodySettled: true, …(7) }
+(1 matching property omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > A genuinely times out in Vitest
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/probe-directory.independent-qa.test.ts:247:1
+    245| });
+    246|
+    247| it('A genuinely times out in Vitest', timed);
+       | ^
+    248|
+    249| it('B checks ownership the moment the next case runs', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/probe-directory.independent-qa.test.ts > B checks ownership the moment the next case runs
+AssertionError: expected { signalAborted: true, …(8) } to match object { bodySettled: true, …(7) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "bodySettled": true,
++   "bodySettled": false,
+    "nativeChildPresent": false,
+    "observedChildren": 4,
+    "priorProbeExists": false,
+    "priorRootExists": false,
+-   "probeRmCompleted": true,
++   "probeRmCompleted": false,
+    "rootRmObserved": true,
+    "tempMatchesOriginal": true,
+  }
+
+ ❯ src/probe-directory.independent-qa.test.ts:267:22
+    265|     });
+    266|   } else {
+    267|     expect(snapshot).toMatchObject({
+       |                      ^
+    268|       bodySettled: true, probeRmCompleted: true, rootRmObserved: true,…
+    269|       priorProbeExists: false, priorRootExists: false, tempMatchesOrig…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  23:06:55
+   Duration  8.50s (tests 69%, import 17%, transform 14%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in C:\Users\98jak\.codex\worktrees\gg-
+  │ 20261117-probe-466-qa\GraphGoblin\packages\adapter-codex
+

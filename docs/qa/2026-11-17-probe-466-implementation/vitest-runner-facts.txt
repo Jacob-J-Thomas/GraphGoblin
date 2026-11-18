@@ -1,0 +1,9 @@
+Installed Vitest 5.0.3 runner facts used by the #466 design (read from the installed source; not copied).
+file: node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js
+sha256: 950469eb28cec3faa51f30c3203e1ab3099b54a52e3282b05f388930e7769717
+- TestContext.signal: 'aborted if the test times out or the test run was cancelled' (dist/chunks/config.d.BxjInJat.d.ts:3210-3215).
+- Test fn wrapped as withTimeout(withCancel(...), timeout, false, stack, (_, error) => abortIfTimeout([context], error)) (line 2683).
+- withTimeout: on deadline calls onTimeout(args, error) [aborts the context signal] before reject_(error); the abandoned body keeps running (lines 3253-3313).
+- abortIfTimeout/abortContextSignal abort the per-context AbortController (lines 3340-3347).
+- runTest order: test fn -> onTaskFinished -> afterEach -> beforeEach cleanups -> fixture cleanup -> onTestFinished (stack order) -> onTestFailed (lines 3871-3909).
+- Consequence: a file-level afterEach runs before onTestFinished, so environment restoration must follow settlement inside the finish hook.
