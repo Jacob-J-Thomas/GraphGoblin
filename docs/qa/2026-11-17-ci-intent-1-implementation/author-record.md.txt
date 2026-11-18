@@ -1,0 +1,198 @@
+# Intent 1 CI slice: #488 Gates lanes and #496 Windows evidence (implementation evidence)
+
+Implementer: Claude Code, model `claude-opus-5-5` (Opus 5.5), 2026-11-17/18 (America/Chicago
+evening; UTC timestamps in logs). This is an implementation plus design critique. It is **not** a
+formal code review, an independent QA sign-off or a hosted proof. Nothing was staged, committed,
+pushed, published, commented or rerun. No issue was touched, and no subagent was used.
+
+- Worktree: `C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin`
+- Branch: `codex/gg-20261117-ci-gates`; base and HEAD `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`
+- Runtime: Node v22.23.4 (project runtime), pnpm 12.8.1; frozen install exit 0, `pnpm build` exit 0
+- Exact source bindings: [`SOURCE-BINDINGS.txt`](SOURCE-BINDINGS.txt); evidence hashes: [`SHA256SUMS.txt`](SHA256SUMS.txt)
+
+**Not claimed.** #496 is not done until root downloads and verifies a hosted archive from the
+exact candidate. All gates are not green: #503's real audit still fails Repository checks and
+therefore Gates, by design.
+
+## Changed files (uncommitted)
+
+| File | Change |
+| --- | --- |
+| `.github/workflows/ci.yml` | #488 lanes and fan-in; #496 Windows evidence steps |
+| `tooling/scripts/windows-launcher.acceptance.mjs` | Typed observations at setup, child, outcome and cleanup boundaries; assertions, timeouts, commands and stdout lines unchanged |
+| `tooling/scripts/windows-launcher-evidence.mjs` (new) | Bounded recorder, record schemas, `init`/`finalize` CLI; Node built-ins only |
+| `tooling/scripts/windows-launcher-evidence.test.mjs` (new) | 21 Vitest tests over real files, links, child processes and a real `node --test` subprocess |
+| `docs/10-testing-and-quality.md` | CI gates inventory (six jobs, Chat restart restored), budgets, cancellation and artifact semantics, Windows evidence contract |
+| `docs/decisions/ADR-0084-independent-ci-lanes-behind-gates.md` (new) | Narrow scheduling decision (0083 left to PR501) |
+| `docs/decisions/README.md` | One index line for ADR-0084. **Flag:** adjacent to, not literally in, the owned-file list; every ADR has an index entry |
+| `CHANGELOG.md` | Two Unreleased entries |
+
+Untouched: C# launcher and API runtime, dependencies and lockfile, `turbo.json`, shared Vitest
+config, `routing-perf.yml`, the Browser and Template image jobs, `docs/delivery`, and the Mac job
+source. Unchanged jobs and the workflow triggers and concurrency are byte-equal; the inventory
+harness checks this.
+
+## Design critique and bounded corrections
+
+The independent-lane design and typed projection direction were implemented as accepted. Items
+1 to 6 below are corrections or hardenings within that direction; 7 to 11 are flagged risks or
+limits, with no change made.
+
+1. **Correction (found by the real native run): the required-observation rule.** My first rule
+   required child-process records for every case. Lock contention starts its contenders with
+   `spawn`, not `execFile`, so a fully passing hosted run would have been `incomplete` and failed
+   the Windows job. The first local bundle shows `lock-contention-children` in its `missing` list
+   (`local/candidate-positive/`, kept as the record of the defect). The fix makes that case's
+   requirement its three single-owner contention trials. The unit-test model now mirrors the real
+   suite, and the final bundle (`local/candidate-final/`) no longer lists it.
+2. **Correction: the evidence variable.** The contract passes the path through a test-specific
+   variable. Several suite children inherit `process.env` (compiler, `whoami`/`icacls`, the
+   installer's launcher fixture). The recorder therefore removes `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR`
+   from its own environment before any child starts. A real `node --test` subprocess test shows a
+   child cannot see it. The launcher already strips `GG_*` from gateways.
+3. **Hardening: write-once files.** Nothing is rewritten in place. `init` writes `manifest.json`,
+   the suite creates `observations.ndjson` and `finalize` writes `result.json`, each with
+   `CREATE_NEW` (`wx`) plus an `fstat`/`lstat` identity and single-link check. A planted file,
+   hard link or junction at any name is refused, never written through. Tests: `exists` refusal
+   with the outside target unchanged.
+4. **Hardening: canonical bytes.** Parsing and then validating JSON would let a duplicate key carry
+   unvalidated text past the check (`{"type":"<canary>","type":"child",...}`). `finalize` requires
+   each line to equal the recorder's own serialization of the validated record, and otherwise
+   rejects the whole file. Rejected observation files are never uploaded.
+5. **Hardening: exact upload paths.** `upload-artifact` treats every `path` line as a glob. The
+   evidence path is validated free of `* ? [ ] { }`, newlines and a leading `!`, and only the
+   finalized file list is passed (`if-no-files-found: error`, `include-hidden-files: false`,
+   attempt-specific name).
+6. **Hardening: the native step condition.** The native step runs as `!cancelled() &&
+   build == success`, so a failed `init` cannot suppress the native result. The job still fails
+   through the failed `init` step, and `finalize` and upload are skipped when `init` produced no
+   directory.
+7. **Workload risk, no change (owner-fixed numbers).** The contract's "4m38s headroom" is measured
+   against the slowest *complete* coverage step (20m22s, #487 first). The two other deadline
+   attempts (#485 and #490 first) were cut off at 20m08s and 20m16s, with tooling (99 to 133 s
+   elsewhere) and both plugin groups outstanding, which projects to about 22.5 to 22.6 minutes.
+   Against that, the 25-minute cap leaves about **2.5 minutes**. A breach fails Coverage and Gates
+   (fail-closed) and still uploads partial reports. Tooling grew from 175 to 219 tests on PR501.
+   Root should watch hosted durations; this slice adds 21 fast tooling tests (about 2.4 s locally).
+8. **Design confirmed: `always()`.** The aggregate must not use `!cancelled()`. A skipped job
+   satisfies a required status check, so a cancelled run would leave a green-equivalent Gates.
+   `always()` runs the aggregate on cancellation, and it fails there.
+9. **Limit: reparse detection.** Node's `lstat` reports symlinks and junctions. Other reparse tags
+   are not distinguishable without native attributes. Mitigations: a fresh directory, `CREATE_NEW`
+   writes, a canonical `realpath`, `fstat` identity before reading and `nlink == 1`. Hosted
+   `D:\a\_temp` is the expected root.
+10. **Limit: diagnostics without log reads.** Per root's preference, no gateway or launcher log is
+    read. Launcher outcomes come from a closed classification of the first 4 KiB of stderr: 26
+    launcher, installer and PowerShell classes, plus `none`, `unavailable` and `unclassified`. Real
+    runs mapped `foreign-listener`, `store-held`, `store-unverified`, `listener-not-ready`,
+    `configuration-refused`, `startup-failed-logged`, `destination-in-use` and
+    `destination-unavailable`. New launcher wording falls back to `unclassified`, never to text.
+11. **Limit: the numeric job ID** is not available inside a job and is not invented. Root binds it
+    from `gh run view --json jobs` and the same job's upload log.
+12. **Review point: helper size.** `windows-launcher-evidence.mjs` is 1,258 formatted lines, more
+    than "small". Prettier puts each enum value on its own line; the record schemas and enums take
+    about 280 lines, the recorder about 260, and `init`, `finalize` and the CLI about 400. Each part
+    serves a stated criterion: typed allow-listed records, bindings, refusal of links and unowned
+    destinations, completeness and bounded output. No dependency was added. A reviewer may judge
+    whether any part (for example the stderr classes) should be trimmed.
+
+docs/10 previously said "three jobs" (base has four) and omitted `pnpm test:chat-restart` from the
+Gates list; both are corrected.
+
+## What was implemented
+
+**#488 (`ci.yml`).** `repository-checks` (**Repository checks**, 30 min) has exactly the base Gates
+steps minus Chromium, coverage and coverage upload, in order, with identical commands: 24 steps,
+including Chat restart and the final licence, docs, contrast and audit checks. `coverage`
+(**Coverage**, 30 min) does its own checkout, pnpm, `.nvmrc` Node, frozen install, full
+`pnpm build`, Chromium install and `pnpm exec turbo run test:coverage --concurrency=1` with
+`timeout-minutes: 25`. It then uploads the unchanged `coverage` artifact with the three summary
+paths on every outcome (`if-no-files-found: warn`) and a summary step that reports the step outcome
+and the summary count, and marks summaries partial unless the step succeeded. `gates` (**Gates**)
+`needs` both, `if: ${{ always() }}`, 2 min, `permissions: {}`, no checkout. Results arrive through
+`env`, never interpolated into the script; it writes a summary table and passes only on
+`success`/`success`.
+
+**#496 (`ci.yml`, suite, helper).** Before Install, `init` creates
+`<runner.temp>\windows-launcher-evidence-XXXXXX` and writes `manifest.json`. The manifest binds the
+repository, workflow ref, job key, run ID and attempt, event, ref, SHA, event head and base; the
+checked-out HEAD, tree and parents from the raw commit header, so shallow merge checkouts work;
+match booleans; the runner OS, arch, image and Node; and an `unavailable` list. The suite appends
+typed records: `case-start` and `case-end` with failure kind, code, exit and signal; `child` with
+tool, mode, outcome, exit, error code, signal, killed, timeout, elapsed, byte counts and diagnostic
+class; `alias` and `alias-round`; `contention`; `cleanup`; `fixture`; `fixture-state` (`lstat`
+only, at exit); `rejected`, `overflow` and `recorder-open`/`-closed`. Failing cases also print their
+end record and last child record to stdout. `finalize` always validates the directory and files and
+writes `result.json` with statuses `complete`, `incomplete`, `native-failed` and `not-run`. It exits
+non-zero for `incomplete`, rejected or refused evidence, and passes the exact file list to the
+upload.
+
+## Verification performed (local, Windows 11 host)
+
+| Check | Command / source | Exit | Result |
+| --- | --- | --- | --- |
+| Frozen install | `pnpm install --frozen-lockfile` | 0 | `logs/01-install.log` |
+| Build | `pnpm build` | 0 | `logs/02-build-base.log` |
+| Helper unit tests | `vitest run scripts/windows-launcher-evidence.test.mjs` | 0 | 21/21; helper 99.14% lines, 97.10% branches, 100% functions, 98.73% statements |
+| Tooling coverage gate, attempt 1 | `pnpm --filter @graphgoblin/tooling test:coverage` | 1 | 198/199. Unchanged `perf/runtime.test.mjs` browser workload timed out at 180 s on the shared host (30 other `node` processes); no coverage report (`logs/03-*`) |
+| Same perf file alone | `vitest run perf/runtime.test.mjs` | 0 | 22/22 (`logs/04-*`) |
+| Tooling coverage gate, rerun | same command | 0 | 18 files, 199/199; statements 96.50, branches 93.19, functions 93.82, lines 97.41 (`logs/05-*`) |
+| Repository format | `pnpm format:check` | 0 | all files (`logs/06-*`) |
+| Tooling lint | `pnpm --filter @graphgoblin/tooling lint` | 0 | (`logs/07-*`) |
+| Workflow inventory | `qa/workflow-inventory.py` base vs candidate | 0 | every invariant holds (`qa/workflow-inventory.result.json`) |
+| Inventory red controls | `qa/workflow-inventory-red-controls.py` | 0 | 10/10 mutations detected: drop Chat restart or audit, audit continue-on-error, concurrency 2, `!cancelled()` Gates, one-lane needs, no step cap, Browser retries, hidden opt-in, success-only upload |
+| Fan-in script | `qa/gates-fanin-harness.py` (exact YAML `run` text under GitHub's bash flags) | 0 | 25 result pairs over success, failure, cancelled, skipped and missing: green **only** for success/success; status step exits 0 for all and marks partial unless success |
+| Fan-in red control | same, `--mutate` (`&&`→`\|\|`) | 1 | 8 extra green pairs, 16 problems reported |
+| Native, candidate final | `qa/run-native-evidence.sh candidate-final` (`pnpm test:windows-launcher`, ports 63700+) | native 1, finalize 0 | 25 tests: 23 pass, 2 fail (dir-symlink subtest and parent, `EPERM`: this host lacks symlink privilege; junctions pass). Bundle 53,344 B; verifier ok; TAP and stdout markers reconcile |
+| Native, base same host | base suite copy, same driver | native 1 | **TAP result lines identical to the candidate**; finalize `native-failed`, observations `absent` |
+| Native, QA negative | generated `hosted/negative/...qa-negative...mjs` with random canaries | native 1, finalize 0 | 25 tests: 21 pass, 4 fail; bundle 173,756 B; no canary or path text; injected failures typed (see below) |
+
+Negative-control specifics (`local/candidate-negative/verify.json`):
+- **Installer child:** exit 7, `stderrBytes: 24` (the env canary's length), `diagnostic:
+  unclassified`, and the case end is `child-exit` 7.
+- **Oversized and timed-out children:** maxBuffer child `ERR_CHILD_PROCESS_STDIO_MAXBUFFER` with
+  `stdoutBytes: 1048576`; timeout child `SIGTERM`, `killed: true`, 531 ms.
+- **Records:** one `rejected` record for the 5 KB field, written as nothing else; one `overflow`
+  record; `omittedRecords: 265` (40,620 B); the closing records still present.
+- **Retained junction:** disposition `retained-release-unverified` at `direct-release` with
+  `EQAUNVERIFIED`, and its `alias-link` state is `link` (`lstat`, never traversed).
+- **Store, key, linked-directory and hard-link files:** absent from the archive.
+- **Canaries:** the stdout and env canaries appear only in the job log, as before.
+
+Cleanup: no launcher, gateway or contender process remained, and the reserved ports showed only
+`TIME_WAIT`. The two QA junctions (the retained checkout alias in OS TEMP and the linked canary
+directory) were each verified by exact path and target, then unlinked without recursion; the
+checkout is intact. Fixture trees from all runs remain in `.tmp` and OS TEMP, in keeping with the
+retention policy. Temporary in-repo QA suites were deleted (`git status` shows only the eight
+changed files).
+
+## Artifact privacy limits
+
+Three flat files below 256 KiB total: manifest ≤ 8 KiB, result ≤ 16 KiB, observations ≤ 192 KiB,
+with records ≤ 1 KiB each, ≤ 1,024 records and the closing records reserved. They contain no
+paths, arguments, environment values, keys, tokens, store bytes, command output, error messages
+or log text: string values are closed enums, recognised error codes and signals, SHAs and
+validated IDs. Fixtures are identified by their random `mkdtemp` suffix. The manifest includes
+public run bindings (repository, refs, SHAs, image and Node version). Local logs in this folder
+(`local/*/native.log`) are ordinary TAP with host paths and local canaries; they are QA logs, not
+artifact content. Residual: suite children never receive the evidence path, but another process
+on the runner could still find it in the runner temp folder. `finalize` refuses any unexpected
+entry, link, hard link or non-canonical byte instead of uploading it. A race between
+`finalize`'s checks and the uploader's read remains theoretically possible.
+
+## Hosted evidence still needed (root)
+
+Exact steps and expectations: [`hosted/INSTRUCTIONS.md`](hosted/INSTRUCTIONS.md). Workflows:
+`hosted/workflows/`. Generators: `hosted/make-488-controls.py` and
+`qa/make-negative-acceptance.py`. Verifier: `qa/verify-evidence-bundle.py`.
+
+1. Exact-head candidate CI: Windows `complete` archive downloaded by ID, digest equal to GitHub's,
+   bindings checked against the job log and merge parents. Lane times against the 25 and 30-minute
+   caps. 13 coverage reports and floors. Expected Repository checks **failure at audit only**
+   (#503), Coverage success, Gates failure. Live required check still `Gates` (read only).
+2. #496 synthetic uploader control (hidden default vs synthetic opt-in vs visible vs runner-temp).
+3. #496 baseline pre-upload fixture existence/type probe on the unchanged workload.
+4. #496 candidate negative archive with canaries, plus the hosted hard-link refusal job.
+5. #488 fan-in with real `needs` results (success, failure, skipped, cancelled), coverage early
+   failure with a partial report, step timeout, static-side failure with Coverage finishing, and
+   an externally cancelled run.

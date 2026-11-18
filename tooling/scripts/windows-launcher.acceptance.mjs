@@ -25,9 +25,17 @@ import process from 'node:process';
 import { test } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
+import {
+  aliasStage,
+  errorCodeOf,
+  openWindowsLauncherEvidence,
+} from './windows-launcher-evidence.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const execute = promisify(execFile);
+// CI evidence (#496): typed records only, appended as they occur. Without the CI variable nothing
+// is written; the variable is removed from this process before any child starts.
+const ciEvidence = openWindowsLauncherEvidence({ repoRoot: root });
+const execute = ciEvidence.observeExecFile(promisify(execFile));
 const env = Object.fromEntries(
   Object.entries(process.env).filter(([key]) => !key.startsWith('GG_') && key !== 'JEV_API_KEY'),
 );
@@ -121,9 +129,12 @@ const health = async (config) => {
   };
 };
 async function stop(config) {
+  const cleanup = (result) =>
+    ciEvidence.record('cleanup', { action: 'gateway-drain', result, count: null });
   try {
     await health(config);
   } catch {
+    cleanup('not-running');
     return;
   }
   await fetch(origin(config) + '/system/shutdown', {
@@ -131,15 +142,20 @@ async function stop(config) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ action: 'drain' }),
     signal: AbortSignal.timeout(3000),
+  }).catch((error) => {
+    cleanup('failed');
+    throw error;
   });
   for (let i = 0; i < 100; i++) {
     try {
       await health(config);
     } catch {
+      cleanup('drained');
       return;
     }
     await sleep(100);
   }
+  cleanup('failed');
   throw new Error('Disposable gateway did not finish its normal drain.');
 }
 
@@ -206,9 +222,10 @@ function logRecords(contents) {
 test(
   'Windows PowerShell 5.1 installer validates before replacing native launcher files',
   { skip: process.platform !== 'win32', timeout: 120_000 },
-  async () => {
+  ciEvidence.observeTest('installer', async () => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-installer-'));
+    ciEvidence.fixture('installer', base);
     const install = join(base, 'installed space α');
     const store = join(base, 'store');
     await mkdir(store);
@@ -474,15 +491,16 @@ test(
       { NodePath: join(base, 'GG_INSTALLER_PRIVATE_PATH_CANARY', 'node.exe') },
       /Node.+22\.22\.2.+-NodePath/is,
     );
-  },
+  }),
 );
 
 test(
   'native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route',
   { skip: process.platform !== 'win32', timeout: 240_000 },
-  async (t) => {
+  ciEvidence.observeTest('launcher', async (t) => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-'));
+    ciEvidence.fixture('launcher', base);
     const install = join(base, 'launcher space-α');
     await privateDirectory(install);
     const exe = join(install, 'GraphGoblin.exe');
@@ -683,6 +701,11 @@ test(
           if (!closed) {
             fixture.kill();
           }
+          ciEvidence.record('cleanup', {
+            action: 'window-fixture',
+            result: closed ? 'closed' : 'killed',
+            count: null,
+          });
         }
         assert.equal(closed, true, 'Disposable native HWND fixture did not close.');
       });
@@ -907,7 +930,7 @@ test(
       },
     );
     console.log(JSON.stringify({ evidence: 'windows-launcher-native', artifacts: base }));
-  },
+  }),
 );
 
 const identityLine = /^[a-f0-9]{64}\n$/;
@@ -1102,6 +1125,8 @@ function sameFile(current, original) {
 async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
   const fixture = await privateDirectory(await mkdtemp(join(sandbox, `${kind}-`)));
   const alias = join(fixture, 'checkout alias-α');
+  // The link's final state is observed with lstat only; it is never traversed or exported.
+  ciEvidence.fixture('alias-link', alias, ciEvidence.fixture('alias-fixture', fixture));
   const evidence = {
     evidence: 'windows-launcher-checkout-alias',
     kind,
@@ -1112,6 +1137,7 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
   };
   const fixtureStat = await lstat(fixture, { bigint: true });
   let link;
+  let targetMatched = false;
   let releaseVerified = true;
   let stage = 'create-alias';
   let failure;
@@ -1122,6 +1148,7 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
     assert.ok(created.isSymbolicLink());
     assert.equal(await realpath(alias), repo);
     assert.equal(await realpath(await readlink(alias)), repo);
+    targetMatched = true;
     evidence.reparse = await nativeObservation(
       `
       $item = Get-Item -LiteralPath $env:GG_TEST_CHECKOUT_ALIAS -Force;
@@ -1273,6 +1300,16 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
           roundFailure = error;
         }
       }
+      ciEvidence.record('alias-round', {
+        kind,
+        spelling: start.name,
+        ownerVerified: owner !== undefined,
+        release: observation.release ?? 'failed',
+        releaseFailure:
+          'releaseFailure' in observation
+            ? errorCodeOf({ code: observation.releaseFailure })
+            : null,
+      });
       if (roundFailure) throw roundFailure;
     }
   } catch (error) {
@@ -1308,18 +1345,47 @@ async function checkLauncherAlias(exe, sandbox, repo, kind, linkType) {
     failure ??= error;
   }
   console.log(JSON.stringify(evidence));
+  // Typed projection of the same facts: no paths, protocol identity or command output.
+  const reparseType = evidence.reparse?.linkType;
+  ciEvidence.record('alias', {
+    kind,
+    observedLinkType:
+      reparseType === 'Junction' || reparseType === 'SymbolicLink'
+        ? reparseType
+        : evidence.reparse
+          ? 'other'
+          : 'unobserved',
+    reparsePoint:
+      typeof evidence.reparse?.reparsePoint === 'boolean' ? evidence.reparse.reparsePoint : null,
+    directory: typeof evidence.reparse?.directory === 'boolean' ? evidence.reparse.directory : null,
+    targetMatched,
+    failureStage: evidence.failure ? aliasStage(evidence.failure.stage) : null,
+    failureCode: evidence.failure ? errorCodeOf(failure) : null,
+    disposition: evidence.aliasUnlinked
+      ? 'unlinked'
+      : evidence.aliasAbsent === true
+        ? 'not-created'
+        : link && !releaseVerified
+          ? 'retained-release-unverified'
+          : evidence.unlinkFailure !== undefined
+            ? 'retained-unlink-refused'
+            : 'retained-unverified-link',
+    unlinkFailure:
+      evidence.unlinkFailure === undefined ? null : errorCodeOf({ code: evidence.unlinkFailure }),
+  });
   if (failure) throw failure;
 }
 
 test(
   'native Windows launcher accepts junction and directory symlink checkout paths',
   { skip: process.platform !== 'win32', timeout: 240_000 },
-  async (t) => {
+  ciEvidence.observeTest('checkout-alias', async (t) => {
     const repo = await realpath(root);
     const temp = await realpath(tmpdir());
     const fromRepo = relative(repo, temp);
     assert.ok(isAbsolute(fromRepo) || fromRepo === '..' || fromRepo.startsWith(`..${sep}`));
     const sandbox = await mkdtemp(join(temp, 'graphgoblin-launcher-alias-'));
+    ciEvidence.fixture('alias-sandbox', sandbox);
     const exe = join(sandbox, 'GraphGoblin.exe');
     await compileLauncher(
       join(process.env.WINDIR, 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'),
@@ -1333,15 +1399,16 @@ test(
         checkLauncherAlias(exe, sandbox, repo, kind, linkType),
       );
     }
-  },
+  }),
 );
 
 test(
   'independent API processes never share ownership while reclaiming a reused PID',
   { skip: process.platform !== 'win32', timeout: 180_000 },
-  async () => {
+  ciEvidence.observeTest('lock-contention', async () => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-contention-'));
+    ciEvidence.fixture('contention', base);
     const { windowsProcessIdentity } =
       await import('../../apps/api/dist/windows-process-identity.js');
     const { identity } = await windowsProcessIdentity(process.pid);
@@ -1360,6 +1427,14 @@ test(
       try {
         const results = await Promise.all(contenders.map((contender) => contender.result));
         const owners = results.filter((result) => result.status === 'acquired');
+        const refused = results.filter((result) => result.status === 'refused').length;
+        ciEvidence.record('contention', {
+          trial,
+          contenders: contenders.length,
+          acquired: owners.length,
+          refused,
+          other: results.length - owners.length - refused,
+        });
         // No successful contender is released before every result is known. The launcher
         // mutex and in-process acquiringPaths cannot serialize these separate API writers.
         for (const owner of owners) {
@@ -1392,19 +1467,27 @@ test(
         assert.equal(recorded.pid, owners[0].pid);
       } finally {
         for (const { child } of contenders) child.stdin.end();
+        let closedContenders = 0;
         await Promise.all(
           contenders.map(async ({ child, exited }) => {
             const closed = await Promise.race([
               exited.then(() => true),
               sleep(5000).then(() => false),
             ]);
+            if (closed) closedContenders++;
             if (!closed) child.kill();
             assert.equal(closed, true, 'Ownership contender did not release on stdin EOF.');
+          }),
+        ).finally(() =>
+          ciEvidence.record('cleanup', {
+            action: 'contenders',
+            result: closedContenders === contenders.length ? 'closed' : 'killed',
+            count: closedContenders,
           }),
         );
       }
     }
-  },
+  }),
 );
 
 /** Complete LF records totalling exactly `bytes`. */
@@ -1464,9 +1547,10 @@ function holdLegacyAppend(path) {
 test(
   'bounded Windows logs: stale entry, closed outcomes, one writer per root, legacy writer and unsafe names',
   { skip: process.platform !== 'win32', timeout: 300_000 },
-  async (t) => {
+  ciEvidence.observeTest('bounded-logs', async (t) => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-logs-'));
+    ciEvidence.fixture('logs', base);
     const install = await privateDirectory(join(base, 'install α'));
     const canonicalInstall = await realpath(install);
     // Gateway and launcher inherit an isolated TEMP: a no-write witness for managed log names.
@@ -1756,5 +1840,5 @@ test(
     assert.ok((await stat(gatewayLog)).size <= 4 * 1024 * 1024);
     assert.ok((await stat(join(install, 'launcher.log'))).size <= 256 * 1024);
     console.log(JSON.stringify({ evidence: 'windows-launcher-bounded-logs', artifacts: base }));
-  },
+  }),
 );

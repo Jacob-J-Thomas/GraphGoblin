@@ -1,0 +1,890 @@
+{
+  "node": "v22.23.4",
+  "yaml": {
+    "version": "2.9.1",
+    "schema": "YAML 1.2 core",
+    "uniqueKeys": true
+  },
+  "exitCode": 0,
+  "candidateWorkflow": {
+    "sourcePath": "C:/Users/98jak/.codex/worktrees/gg-20261117-ci-gates/GraphGoblin/.github/workflows/ci.yml",
+    "targetPath": ".github/workflows/ci.yml",
+    "bytes": 13926,
+    "sha256": "9c3539189770c0efb829550d06ed5cf67829df7db985820b15daf069c801c592",
+    "gitBlob": "638476dfa48fd00d9bb5730303dac672e8e9d698"
+  },
+  "gatesObjectSha256": "0aaab47e5d8c7c9ab9cc38bd40850d098f35014d27134117695ff8883924fa04",
+  "gatesRunScriptSha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286",
+  "candidateCorrespondence": {
+    "qa-488-coverage-fails-early": {
+      "exactGatesObject": true,
+      "exactCandidateJobsAfterRemovingDocumentedInjection": [
+        "repository-checks",
+        "coverage",
+        "gates"
+      ],
+      "injection": "The coverage step writes a benign partial report and exits 1."
+    },
+    "qa-488-coverage-step-timeout": {
+      "exactGatesObject": true,
+      "exactCandidateJobsAfterRemovingDocumentedInjection": [
+        "repository-checks",
+        "coverage",
+        "gates"
+      ],
+      "injection": "The coverage step writes a benign partial report, sleeps for three minutes and times out at one minute."
+    },
+    "qa-488-static-fails": {
+      "exactGatesObject": true,
+      "exactCandidateJobsAfterRemovingDocumentedInjection": [
+        "repository-checks",
+        "coverage",
+        "gates"
+      ],
+      "injection": "One failing step before Reset acceptance."
+    },
+    "qa-488-external-cancel": {
+      "exactGatesObject": true,
+      "exactCandidateJobsAfterRemovingDocumentedInjection": [
+        "repository-checks",
+        "coverage",
+        "gates"
+      ],
+      "injection": "First step in each lane waits three minutes with a four-minute step timeout."
+    },
+    "qa-488-fanin": {
+      "exactCandidateGatesJobsAfterRemappingNamesAndNeeds": {
+        "gates-success-success": [
+          "stub-success-a",
+          "stub-success-b"
+        ],
+        "gates-success-failure": [
+          "stub-success-a",
+          "stub-failure"
+        ],
+        "gates-skipped-success": [
+          "stub-skipped",
+          "stub-success-b"
+        ],
+        "gates-success-cancelled": [
+          "stub-success-a",
+          "stub-cancelled"
+        ]
+      }
+    },
+    "qa-496-invalid-prepare": {
+      "exactWindowsCandidateJobsAfterRemovingHarnessDifferences": [
+        "windows-launcher-invalid-prepare",
+        "windows-launcher-install-fails"
+      ]
+    },
+    "qa-496-candidate-negative": {
+      "exactWindowsCandidateJobsAfterRemovingHarnessDifferences": [
+        "windows-launcher-negative"
+      ],
+      "exactOriginalRefusalJobWithPreviouslySealedIndependentQAPowerShellCorrection": true
+    }
+  },
+  "results": [
+    {
+      "path": "overlay/.github/workflows/qa-488-fanin.yml",
+      "beforeSha256": "6c53dbcf3541e77e8254ea7729d39961f618d30950cdc89fe75706680b0045e6",
+      "afterSha256": "6c53dbcf3541e77e8254ea7729d39961f618d30950cdc89fe75706680b0045e6",
+      "byteChanged": false,
+      "parsedYamlSha256Before": "ff14b6e7d0c0ec602f0bf170119151319b1bcf388a09ae7610e6afdfa7b112ab",
+      "parsedYamlSha256After": "ff14b6e7d0c0ec602f0bf170119151319b1bcf388a09ae7610e6afdfa7b112ab",
+      "exactYamlObjectMatch": true,
+      "exactRunScripts": [
+        {
+          "path": "jobs.stub-success-a.steps.0.run",
+          "bytes": 12,
+          "sha256": "bf609fa2d91358d741c2a7e586accc499d696eb3db50980376764e997cdf2e58"
+        },
+        {
+          "path": "jobs.stub-success-b.steps.0.run",
+          "bytes": 12,
+          "sha256": "bf609fa2d91358d741c2a7e586accc499d696eb3db50980376764e997cdf2e58"
+        },
+        {
+          "path": "jobs.stub-failure.steps.0.run",
+          "bytes": 6,
+          "sha256": "1a21be8bb1dc4721d30cc1850ead617faa55ae9aebf416da4369668bdeaf0824"
+        },
+        {
+          "path": "jobs.stub-skipped.steps.0.run",
+          "bytes": 10,
+          "sha256": "bea047edc82a601906fece31a06cbd0c6a0188ded5fd67713a9b395c7c22ed68"
+        },
+        {
+          "path": "jobs.stub-cancelled.steps.0.run",
+          "bytes": 9,
+          "sha256": "8ab61411be434761c92b9ac504d3451f814a7ca045f76f70f818faea5feca7ea"
+        },
+        {
+          "path": "jobs.gates-success-success.steps.0.run",
+          "bytes": 620,
+          "sha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286"
+        },
+        {
+          "path": "jobs.gates-success-failure.steps.0.run",
+          "bytes": 620,
+          "sha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286"
+        },
+        {
+          "path": "jobs.gates-skipped-success.steps.0.run",
+          "bytes": 620,
+          "sha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286"
+        },
+        {
+          "path": "jobs.gates-success-cancelled.steps.0.run",
+          "bytes": 620,
+          "sha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286"
+        }
+      ],
+      "branch": "codex/qa/gg-488-fanin"
+    },
+    {
+      "path": "overlay/.github/workflows/qa-488-coverage-fails-early.yml",
+      "beforeSha256": "452a75a98c8f78f3d233abfb1be02159026af98a36d7e9c05b61a271689afceb",
+      "afterSha256": "e363f36fbb31106b2f54fbf260cc1092c44067642e681cdf91ff6a9d372718e8",
+      "byteChanged": true,
+      "parsedYamlSha256Before": "4fb2149996b5cb8236792c85f49fd3536bae53ba944cb273c619c9a671ee4c1b",
+      "parsedYamlSha256After": "4fb2149996b5cb8236792c85f49fd3536bae53ba944cb273c619c9a671ee4c1b",
+      "exactYamlObjectMatch": true,
+      "exactRunScripts": [
+        {
+          "path": "jobs.repository-checks.steps.3.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.repository-checks.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.repository-checks.steps.5.run",
+          "bytes": 15,
+          "sha256": "9a78d5eb9db477b6dea0d82c89e79c560dc1405e161bf7c3c11d77785eb94536"
+        },
+        {
+          "path": "jobs.repository-checks.steps.6.run",
+          "bytes": 26,
+          "sha256": "5547834797b56b6064bc34f92f3c3d0b1751a8786121153f81806b1f93d142b5"
+        },
+        {
+          "path": "jobs.repository-checks.steps.7.run",
+          "bytes": 22,
+          "sha256": "ef2b84724180f854850c0275cd58413e78221f93c52c25e2b5ae71cdadb4e1b6"
+        },
+        {
+          "path": "jobs.repository-checks.steps.8.run",
+          "bytes": 22,
+          "sha256": "7791f9e20b30f75eeb39c6d155f7a75e29bb741b6bd51b47d1567148dbdbb45c"
+        },
+        {
+          "path": "jobs.repository-checks.steps.9.run",
+          "bytes": 24,
+          "sha256": "5a51c67fa8564845125cfe41cd66b881390170d33805db655bbe1a367fd62f0b"
+        },
+        {
+          "path": "jobs.repository-checks.steps.10.run",
+          "bytes": 23,
+          "sha256": "0f22f2b7288d69246263cbd2e46894a09d551396e083aa3948b6d6c6c67948dd"
+        },
+        {
+          "path": "jobs.repository-checks.steps.11.run",
+          "bytes": 17,
+          "sha256": "81db84d8477aa96383a67c10b266dc6af9e1c1bfc2d3f8b3b254d0d1f6598a24"
+        },
+        {
+          "path": "jobs.repository-checks.steps.12.run",
+          "bytes": 14,
+          "sha256": "1b65adab2d69e0f148ddd11c15c7dcd73ca087b66cc02dac2672f9493093cc6d"
+        },
+        {
+          "path": "jobs.repository-checks.steps.13.run",
+          "bytes": 9,
+          "sha256": "ede823a2d5f2814db6ddd8a2969504d513bf5a4428b806aa4d1a0499fb38462f"
+        },
+        {
+          "path": "jobs.repository-checks.steps.14.run",
+          "bytes": 17,
+          "sha256": "fec0f169fd7449072dea4759d51c44fbb7e5dcbb2c5bc5a9795af1052f7e3513"
+        },
+        {
+          "path": "jobs.repository-checks.steps.15.run",
+          "bytes": 17,
+          "sha256": "99a6d09bf92b67a77c2edd1c276007c41426738d879487c887a463047a4fabe2"
+        },
+        {
+          "path": "jobs.repository-checks.steps.16.run",
+          "bytes": 21,
+          "sha256": "0008bdde53efff8282396fb36cbcb6bd2578bf038e1f9d12c2607a6623b173ad"
+        },
+        {
+          "path": "jobs.repository-checks.steps.17.run",
+          "bytes": 17,
+          "sha256": "157e7de9c452543c006a834da25c4ba0c5f91ec94e262b41f6a16f15490963b7"
+        },
+        {
+          "path": "jobs.repository-checks.steps.18.run",
+          "bytes": 15,
+          "sha256": "200cf7c6e0fb6eaf2768c882e19d0063e353d7762cb5b73ba7fe8ede73a67d99"
+        },
+        {
+          "path": "jobs.repository-checks.steps.19.run",
+          "bytes": 20,
+          "sha256": "3458d5dc64fc1d9439cd189e90e9fa021197824a96d794c4722a9e54f79a65cd"
+        },
+        {
+          "path": "jobs.repository-checks.steps.20.run",
+          "bytes": 19,
+          "sha256": "d98608d413c89def4079cb7108ac133ac02265350e2310a4a6626401530daaa6"
+        },
+        {
+          "path": "jobs.repository-checks.steps.21.run",
+          "bytes": 15,
+          "sha256": "71fbec0dba9c5a8dabe09153b314fa11f12648d302f71e2fd77ea8240f620ce8"
+        },
+        {
+          "path": "jobs.repository-checks.steps.22.run",
+          "bytes": 19,
+          "sha256": "87570a69c928dbe529dfae53717d8260b4c76e1d24abd190042ab64119ea1561"
+        },
+        {
+          "path": "jobs.repository-checks.steps.23.run",
+          "bytes": 29,
+          "sha256": "9dbc7826e3ce1948ecace1c396963f1a004a08617361f0037fcca1ac9254f741"
+        },
+        {
+          "path": "jobs.coverage.steps.3.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.coverage.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.coverage.steps.5.run",
+          "bytes": 75,
+          "sha256": "e8fff61bc9565b970b18e720e7a56ab366340d5076d93e601f9272336fb199fa"
+        },
+        {
+          "path": "jobs.coverage.steps.6.run",
+          "bytes": 203,
+          "sha256": "b103db34a0ba90d854302c1f6a1fbd17cad970ccc4ba77a94b8753239b467584"
+        },
+        {
+          "path": "jobs.coverage.steps.8.run",
+          "bytes": 587,
+          "sha256": "8fc04d682a6be7d330a5cd56d4edc24e3ced0981247a180130f661881ec0f4ed"
+        },
+        {
+          "path": "jobs.gates.steps.0.run",
+          "bytes": 620,
+          "sha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286"
+        }
+      ],
+      "branch": "codex/qa/gg-488-coverage-fails-early"
+    },
+    {
+      "path": "overlay/.github/workflows/qa-488-coverage-step-timeout.yml",
+      "beforeSha256": "bfe8a6b29c1c8ab5b79899eb72afa3832e4c60d8c78e218207b0f582ca45ccb9",
+      "afterSha256": "676b10055e83b96a81e32b104ad141e7234103bfa9946289793cafdf5f3064ed",
+      "byteChanged": true,
+      "parsedYamlSha256Before": "170ff8e51ab7d6a00192e2f71d0d2c4da92b749b17306f6ac3bba5f1e31d4942",
+      "parsedYamlSha256After": "170ff8e51ab7d6a00192e2f71d0d2c4da92b749b17306f6ac3bba5f1e31d4942",
+      "exactYamlObjectMatch": true,
+      "exactRunScripts": [
+        {
+          "path": "jobs.repository-checks.steps.3.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.repository-checks.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.repository-checks.steps.5.run",
+          "bytes": 15,
+          "sha256": "9a78d5eb9db477b6dea0d82c89e79c560dc1405e161bf7c3c11d77785eb94536"
+        },
+        {
+          "path": "jobs.repository-checks.steps.6.run",
+          "bytes": 26,
+          "sha256": "5547834797b56b6064bc34f92f3c3d0b1751a8786121153f81806b1f93d142b5"
+        },
+        {
+          "path": "jobs.repository-checks.steps.7.run",
+          "bytes": 22,
+          "sha256": "ef2b84724180f854850c0275cd58413e78221f93c52c25e2b5ae71cdadb4e1b6"
+        },
+        {
+          "path": "jobs.repository-checks.steps.8.run",
+          "bytes": 22,
+          "sha256": "7791f9e20b30f75eeb39c6d155f7a75e29bb741b6bd51b47d1567148dbdbb45c"
+        },
+        {
+          "path": "jobs.repository-checks.steps.9.run",
+          "bytes": 24,
+          "sha256": "5a51c67fa8564845125cfe41cd66b881390170d33805db655bbe1a367fd62f0b"
+        },
+        {
+          "path": "jobs.repository-checks.steps.10.run",
+          "bytes": 23,
+          "sha256": "0f22f2b7288d69246263cbd2e46894a09d551396e083aa3948b6d6c6c67948dd"
+        },
+        {
+          "path": "jobs.repository-checks.steps.11.run",
+          "bytes": 17,
+          "sha256": "81db84d8477aa96383a67c10b266dc6af9e1c1bfc2d3f8b3b254d0d1f6598a24"
+        },
+        {
+          "path": "jobs.repository-checks.steps.12.run",
+          "bytes": 14,
+          "sha256": "1b65adab2d69e0f148ddd11c15c7dcd73ca087b66cc02dac2672f9493093cc6d"
+        },
+        {
+          "path": "jobs.repository-checks.steps.13.run",
+          "bytes": 9,
+          "sha256": "ede823a2d5f2814db6ddd8a2969504d513bf5a4428b806aa4d1a0499fb38462f"
+        },
+        {
+          "path": "jobs.repository-checks.steps.14.run",
+          "bytes": 17,
+          "sha256": "fec0f169fd7449072dea4759d51c44fbb7e5dcbb2c5bc5a9795af1052f7e3513"
+        },
+        {
+          "path": "jobs.repository-checks.steps.15.run",
+          "bytes": 17,
+          "sha256": "99a6d09bf92b67a77c2edd1c276007c41426738d879487c887a463047a4fabe2"
+        },
+        {
+          "path": "jobs.repository-checks.steps.16.run",
+          "bytes": 21,
+          "sha256": "0008bdde53efff8282396fb36cbcb6bd2578bf038e1f9d12c2607a6623b173ad"
+        },
+        {
+          "path": "jobs.repository-checks.steps.17.run",
+          "bytes": 17,
+          "sha256": "157e7de9c452543c006a834da25c4ba0c5f91ec94e262b41f6a16f15490963b7"
+        },
+        {
+          "path": "jobs.repository-checks.steps.18.run",
+          "bytes": 15,
+          "sha256": "200cf7c6e0fb6eaf2768c882e19d0063e353d7762cb5b73ba7fe8ede73a67d99"
+        },
+        {
+          "path": "jobs.repository-checks.steps.19.run",
+          "bytes": 20,
+          "sha256": "3458d5dc64fc1d9439cd189e90e9fa021197824a96d794c4722a9e54f79a65cd"
+        },
+        {
+          "path": "jobs.repository-checks.steps.20.run",
+          "bytes": 19,
+          "sha256": "d98608d413c89def4079cb7108ac133ac02265350e2310a4a6626401530daaa6"
+        },
+        {
+          "path": "jobs.repository-checks.steps.21.run",
+          "bytes": 15,
+          "sha256": "71fbec0dba9c5a8dabe09153b314fa11f12648d302f71e2fd77ea8240f620ce8"
+        },
+        {
+          "path": "jobs.repository-checks.steps.22.run",
+          "bytes": 19,
+          "sha256": "87570a69c928dbe529dfae53717d8260b4c76e1d24abd190042ab64119ea1561"
+        },
+        {
+          "path": "jobs.repository-checks.steps.23.run",
+          "bytes": 29,
+          "sha256": "9dbc7826e3ce1948ecace1c396963f1a004a08617361f0037fcca1ac9254f741"
+        },
+        {
+          "path": "jobs.coverage.steps.3.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.coverage.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.coverage.steps.5.run",
+          "bytes": 75,
+          "sha256": "e8fff61bc9565b970b18e720e7a56ab366340d5076d93e601f9272336fb199fa"
+        },
+        {
+          "path": "jobs.coverage.steps.6.run",
+          "bytes": 170,
+          "sha256": "d5c6bc1e0ad4b8bd4b8e2a3473b755c937ec8cdfc4b73c53c7b73e76b403dafc"
+        },
+        {
+          "path": "jobs.coverage.steps.8.run",
+          "bytes": 587,
+          "sha256": "8fc04d682a6be7d330a5cd56d4edc24e3ced0981247a180130f661881ec0f4ed"
+        },
+        {
+          "path": "jobs.gates.steps.0.run",
+          "bytes": 620,
+          "sha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286"
+        }
+      ],
+      "branch": "codex/qa/gg-488-coverage-step-timeout"
+    },
+    {
+      "path": "overlay/.github/workflows/qa-488-static-fails.yml",
+      "beforeSha256": "5ae618205ebfd8af1d42c56a0e04a448db4f2f9bc8bc4eba33ded8abc0c39675",
+      "afterSha256": "521799ec508fb78d9cb40dbd877571e490843d5322233d48cb797e6532fd2e94",
+      "byteChanged": true,
+      "parsedYamlSha256Before": "2ec1c088bc5d83f817cc4e749fb8a6593dfcd5bb1da0a3bb68ec1b8857c8335c",
+      "parsedYamlSha256After": "2ec1c088bc5d83f817cc4e749fb8a6593dfcd5bb1da0a3bb68ec1b8857c8335c",
+      "exactYamlObjectMatch": true,
+      "exactRunScripts": [
+        {
+          "path": "jobs.repository-checks.steps.3.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.repository-checks.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.repository-checks.steps.5.run",
+          "bytes": 6,
+          "sha256": "1a21be8bb1dc4721d30cc1850ead617faa55ae9aebf416da4369668bdeaf0824"
+        },
+        {
+          "path": "jobs.repository-checks.steps.6.run",
+          "bytes": 15,
+          "sha256": "9a78d5eb9db477b6dea0d82c89e79c560dc1405e161bf7c3c11d77785eb94536"
+        },
+        {
+          "path": "jobs.repository-checks.steps.7.run",
+          "bytes": 26,
+          "sha256": "5547834797b56b6064bc34f92f3c3d0b1751a8786121153f81806b1f93d142b5"
+        },
+        {
+          "path": "jobs.repository-checks.steps.8.run",
+          "bytes": 22,
+          "sha256": "ef2b84724180f854850c0275cd58413e78221f93c52c25e2b5ae71cdadb4e1b6"
+        },
+        {
+          "path": "jobs.repository-checks.steps.9.run",
+          "bytes": 22,
+          "sha256": "7791f9e20b30f75eeb39c6d155f7a75e29bb741b6bd51b47d1567148dbdbb45c"
+        },
+        {
+          "path": "jobs.repository-checks.steps.10.run",
+          "bytes": 24,
+          "sha256": "5a51c67fa8564845125cfe41cd66b881390170d33805db655bbe1a367fd62f0b"
+        },
+        {
+          "path": "jobs.repository-checks.steps.11.run",
+          "bytes": 23,
+          "sha256": "0f22f2b7288d69246263cbd2e46894a09d551396e083aa3948b6d6c6c67948dd"
+        },
+        {
+          "path": "jobs.repository-checks.steps.12.run",
+          "bytes": 17,
+          "sha256": "81db84d8477aa96383a67c10b266dc6af9e1c1bfc2d3f8b3b254d0d1f6598a24"
+        },
+        {
+          "path": "jobs.repository-checks.steps.13.run",
+          "bytes": 14,
+          "sha256": "1b65adab2d69e0f148ddd11c15c7dcd73ca087b66cc02dac2672f9493093cc6d"
+        },
+        {
+          "path": "jobs.repository-checks.steps.14.run",
+          "bytes": 9,
+          "sha256": "ede823a2d5f2814db6ddd8a2969504d513bf5a4428b806aa4d1a0499fb38462f"
+        },
+        {
+          "path": "jobs.repository-checks.steps.15.run",
+          "bytes": 17,
+          "sha256": "fec0f169fd7449072dea4759d51c44fbb7e5dcbb2c5bc5a9795af1052f7e3513"
+        },
+        {
+          "path": "jobs.repository-checks.steps.16.run",
+          "bytes": 17,
+          "sha256": "99a6d09bf92b67a77c2edd1c276007c41426738d879487c887a463047a4fabe2"
+        },
+        {
+          "path": "jobs.repository-checks.steps.17.run",
+          "bytes": 21,
+          "sha256": "0008bdde53efff8282396fb36cbcb6bd2578bf038e1f9d12c2607a6623b173ad"
+        },
+        {
+          "path": "jobs.repository-checks.steps.18.run",
+          "bytes": 17,
+          "sha256": "157e7de9c452543c006a834da25c4ba0c5f91ec94e262b41f6a16f15490963b7"
+        },
+        {
+          "path": "jobs.repository-checks.steps.19.run",
+          "bytes": 15,
+          "sha256": "200cf7c6e0fb6eaf2768c882e19d0063e353d7762cb5b73ba7fe8ede73a67d99"
+        },
+        {
+          "path": "jobs.repository-checks.steps.20.run",
+          "bytes": 20,
+          "sha256": "3458d5dc64fc1d9439cd189e90e9fa021197824a96d794c4722a9e54f79a65cd"
+        },
+        {
+          "path": "jobs.repository-checks.steps.21.run",
+          "bytes": 19,
+          "sha256": "d98608d413c89def4079cb7108ac133ac02265350e2310a4a6626401530daaa6"
+        },
+        {
+          "path": "jobs.repository-checks.steps.22.run",
+          "bytes": 15,
+          "sha256": "71fbec0dba9c5a8dabe09153b314fa11f12648d302f71e2fd77ea8240f620ce8"
+        },
+        {
+          "path": "jobs.repository-checks.steps.23.run",
+          "bytes": 19,
+          "sha256": "87570a69c928dbe529dfae53717d8260b4c76e1d24abd190042ab64119ea1561"
+        },
+        {
+          "path": "jobs.repository-checks.steps.24.run",
+          "bytes": 29,
+          "sha256": "9dbc7826e3ce1948ecace1c396963f1a004a08617361f0037fcca1ac9254f741"
+        },
+        {
+          "path": "jobs.coverage.steps.3.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.coverage.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.coverage.steps.5.run",
+          "bytes": 75,
+          "sha256": "e8fff61bc9565b970b18e720e7a56ab366340d5076d93e601f9272336fb199fa"
+        },
+        {
+          "path": "jobs.coverage.steps.6.run",
+          "bytes": 49,
+          "sha256": "06cda2210111f22968cde1416b6faabc16ecd180bd8cebfa123ec94a692c5760"
+        },
+        {
+          "path": "jobs.coverage.steps.8.run",
+          "bytes": 587,
+          "sha256": "8fc04d682a6be7d330a5cd56d4edc24e3ced0981247a180130f661881ec0f4ed"
+        },
+        {
+          "path": "jobs.gates.steps.0.run",
+          "bytes": 620,
+          "sha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286"
+        }
+      ],
+      "branch": "codex/qa/gg-488-static-fails"
+    },
+    {
+      "path": "overlay/.github/workflows/qa-496-invalid-prepare.yml",
+      "beforeSha256": "aba59b1c4b445444ad18cfb14c5b35e3b7244fd7d3e9e01abeff0a740d1d8383",
+      "afterSha256": "aba59b1c4b445444ad18cfb14c5b35e3b7244fd7d3e9e01abeff0a740d1d8383",
+      "byteChanged": false,
+      "parsedYamlSha256Before": "98bff4aaee5c5b9cfee2d0cf9d1d1bd2492208c3843d57f38b26aa6c0bd57a7f",
+      "parsedYamlSha256After": "98bff4aaee5c5b9cfee2d0cf9d1d1bd2492208c3843d57f38b26aa6c0bd57a7f",
+      "exactYamlObjectMatch": true,
+      "exactRunScripts": [
+        {
+          "path": "jobs.windows-launcher-invalid-prepare.steps.3.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.windows-launcher-invalid-prepare.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.windows-launcher-invalid-prepare.steps.5.run",
+          "bytes": 116,
+          "sha256": "aa815dd24dda03be2bd55bd5695a0e69bc04e1e79a5f166f40d9ba7b6e5e4c8d"
+        },
+        {
+          "path": "jobs.windows-launcher-invalid-prepare.steps.6.run",
+          "bytes": 26,
+          "sha256": "345fcbc0f8a3b7645bbd127c619eefc518d11f45b75b85d258146f9577fdc6a1"
+        },
+        {
+          "path": "jobs.windows-launcher-invalid-prepare.steps.7.run",
+          "bytes": 59,
+          "sha256": "62e606039bdea1d169a5b8e778140141cd1b41df54abd36266b7bcd4bd102b50"
+        },
+        {
+          "path": "jobs.windows-launcher-invalid-prepare.steps.9.run",
+          "bytes": 616,
+          "sha256": "175506468f13a7e42d172fd37a2948e7b97c3161ca498159a46cfb94ec3a6630"
+        },
+        {
+          "path": "jobs.windows-launcher-install-fails.steps.3.run",
+          "bytes": 6,
+          "sha256": "1a21be8bb1dc4721d30cc1850ead617faa55ae9aebf416da4369668bdeaf0824"
+        },
+        {
+          "path": "jobs.windows-launcher-install-fails.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.windows-launcher-install-fails.steps.5.run",
+          "bytes": 55,
+          "sha256": "a799d825378e70ef25f76630197cc1acc92d70d3b43583064cb78f6cc854b111"
+        },
+        {
+          "path": "jobs.windows-launcher-install-fails.steps.6.run",
+          "bytes": 26,
+          "sha256": "345fcbc0f8a3b7645bbd127c619eefc518d11f45b75b85d258146f9577fdc6a1"
+        },
+        {
+          "path": "jobs.windows-launcher-install-fails.steps.7.run",
+          "bytes": 59,
+          "sha256": "62e606039bdea1d169a5b8e778140141cd1b41df54abd36266b7bcd4bd102b50"
+        },
+        {
+          "path": "jobs.windows-launcher-install-fails.steps.9.run",
+          "bytes": 614,
+          "sha256": "be928cd7c9454e0022cb3b872091b52941f79a1d599e7453b35d93278598af1a"
+        }
+      ],
+      "branch": "codex/qa/gg-496-invalid-prepare"
+    },
+    {
+      "path": "overlay/.github/workflows/qa-496-candidate-negative.yml",
+      "beforeSha256": "2252ff1a862aa690f07061d2fa322a7c7721f0051c64b13f0550b9617475c91a",
+      "afterSha256": "2252ff1a862aa690f07061d2fa322a7c7721f0051c64b13f0550b9617475c91a",
+      "byteChanged": false,
+      "parsedYamlSha256Before": "9f8f962a66d08a3e657c519ce60ca6141150c17b0781ec81d1b118f0787c5776",
+      "parsedYamlSha256After": "9f8f962a66d08a3e657c519ce60ca6141150c17b0781ec81d1b118f0787c5776",
+      "exactYamlObjectMatch": true,
+      "exactRunScripts": [
+        {
+          "path": "jobs.windows-launcher-negative.steps.3.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.windows-launcher-negative.steps.4.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.windows-launcher-negative.steps.5.run",
+          "bytes": 55,
+          "sha256": "a799d825378e70ef25f76630197cc1acc92d70d3b43583064cb78f6cc854b111"
+        },
+        {
+          "path": "jobs.windows-launcher-negative.steps.6.run",
+          "bytes": 71,
+          "sha256": "4f08da4b14c5e5eb27896fe8decda0b55e3a88398e7a9480325f74f293c129bc"
+        },
+        {
+          "path": "jobs.windows-launcher-negative.steps.7.run",
+          "bytes": 59,
+          "sha256": "62e606039bdea1d169a5b8e778140141cd1b41df54abd36266b7bcd4bd102b50"
+        },
+        {
+          "path": "jobs.windows-launcher-negative.steps.9.run",
+          "bytes": 616,
+          "sha256": "60e60e2dd6b739528d201dd2d751fdf5c71f0534b8704f7b794f468933064abd"
+        },
+        {
+          "path": "jobs.evidence-refusal.steps.2.run",
+          "bytes": 1320,
+          "sha256": "4b826b2a0ff725482bc8fc7e22b3fbd7174ff849bb37368420d2389915e6ce94"
+        },
+        {
+          "path": "jobs.evidence-refusal.steps.3.run",
+          "bytes": 59,
+          "sha256": "62e606039bdea1d169a5b8e778140141cd1b41df54abd36266b7bcd4bd102b50"
+        },
+        {
+          "path": "jobs.evidence-refusal.steps.4.run",
+          "bytes": 59,
+          "sha256": "62e606039bdea1d169a5b8e778140141cd1b41df54abd36266b7bcd4bd102b50"
+        },
+        {
+          "path": "jobs.evidence-refusal.steps.7.run",
+          "bytes": 991,
+          "sha256": "ca64530b3bc5ecaef4399a8b677a58cad371bfd67a2cca41bb4aa0a1dc14fb58"
+        }
+      ],
+      "branch": "codex/qa/gg-496-candidate-negative"
+    },
+    {
+      "path": "overlay/.github/workflows/qa-488-external-cancel.yml",
+      "beforeSha256": "291e03eb4e939cfb8aefb8457a574f21c556058214e422a455c577d259d57f52",
+      "afterSha256": "5ea51d3adeb9c60161618e55b0d13c9fb2aea5d3e0295872842c9b6a6d1844aa",
+      "byteChanged": true,
+      "parsedYamlSha256Before": "1e37773ac814c154a394c42b71457a00e2612fdbbf2177fc85bfc2c41ffa00e8",
+      "parsedYamlSha256After": "1e37773ac814c154a394c42b71457a00e2612fdbbf2177fc85bfc2c41ffa00e8",
+      "exactYamlObjectMatch": true,
+      "exactRunScripts": [
+        {
+          "path": "jobs.repository-checks.steps.0.run",
+          "bytes": 53,
+          "sha256": "6f21b63ebb49a2fc9491bfee5fc4a5d7536911980384fdcc70c6a1f29e3dfaa0"
+        },
+        {
+          "path": "jobs.repository-checks.steps.4.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.repository-checks.steps.5.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.repository-checks.steps.6.run",
+          "bytes": 15,
+          "sha256": "9a78d5eb9db477b6dea0d82c89e79c560dc1405e161bf7c3c11d77785eb94536"
+        },
+        {
+          "path": "jobs.repository-checks.steps.7.run",
+          "bytes": 26,
+          "sha256": "5547834797b56b6064bc34f92f3c3d0b1751a8786121153f81806b1f93d142b5"
+        },
+        {
+          "path": "jobs.repository-checks.steps.8.run",
+          "bytes": 22,
+          "sha256": "ef2b84724180f854850c0275cd58413e78221f93c52c25e2b5ae71cdadb4e1b6"
+        },
+        {
+          "path": "jobs.repository-checks.steps.9.run",
+          "bytes": 22,
+          "sha256": "7791f9e20b30f75eeb39c6d155f7a75e29bb741b6bd51b47d1567148dbdbb45c"
+        },
+        {
+          "path": "jobs.repository-checks.steps.10.run",
+          "bytes": 24,
+          "sha256": "5a51c67fa8564845125cfe41cd66b881390170d33805db655bbe1a367fd62f0b"
+        },
+        {
+          "path": "jobs.repository-checks.steps.11.run",
+          "bytes": 23,
+          "sha256": "0f22f2b7288d69246263cbd2e46894a09d551396e083aa3948b6d6c6c67948dd"
+        },
+        {
+          "path": "jobs.repository-checks.steps.12.run",
+          "bytes": 17,
+          "sha256": "81db84d8477aa96383a67c10b266dc6af9e1c1bfc2d3f8b3b254d0d1f6598a24"
+        },
+        {
+          "path": "jobs.repository-checks.steps.13.run",
+          "bytes": 14,
+          "sha256": "1b65adab2d69e0f148ddd11c15c7dcd73ca087b66cc02dac2672f9493093cc6d"
+        },
+        {
+          "path": "jobs.repository-checks.steps.14.run",
+          "bytes": 9,
+          "sha256": "ede823a2d5f2814db6ddd8a2969504d513bf5a4428b806aa4d1a0499fb38462f"
+        },
+        {
+          "path": "jobs.repository-checks.steps.15.run",
+          "bytes": 17,
+          "sha256": "fec0f169fd7449072dea4759d51c44fbb7e5dcbb2c5bc5a9795af1052f7e3513"
+        },
+        {
+          "path": "jobs.repository-checks.steps.16.run",
+          "bytes": 17,
+          "sha256": "99a6d09bf92b67a77c2edd1c276007c41426738d879487c887a463047a4fabe2"
+        },
+        {
+          "path": "jobs.repository-checks.steps.17.run",
+          "bytes": 21,
+          "sha256": "0008bdde53efff8282396fb36cbcb6bd2578bf038e1f9d12c2607a6623b173ad"
+        },
+        {
+          "path": "jobs.repository-checks.steps.18.run",
+          "bytes": 17,
+          "sha256": "157e7de9c452543c006a834da25c4ba0c5f91ec94e262b41f6a16f15490963b7"
+        },
+        {
+          "path": "jobs.repository-checks.steps.19.run",
+          "bytes": 15,
+          "sha256": "200cf7c6e0fb6eaf2768c882e19d0063e353d7762cb5b73ba7fe8ede73a67d99"
+        },
+        {
+          "path": "jobs.repository-checks.steps.20.run",
+          "bytes": 20,
+          "sha256": "3458d5dc64fc1d9439cd189e90e9fa021197824a96d794c4722a9e54f79a65cd"
+        },
+        {
+          "path": "jobs.repository-checks.steps.21.run",
+          "bytes": 19,
+          "sha256": "d98608d413c89def4079cb7108ac133ac02265350e2310a4a6626401530daaa6"
+        },
+        {
+          "path": "jobs.repository-checks.steps.22.run",
+          "bytes": 15,
+          "sha256": "71fbec0dba9c5a8dabe09153b314fa11f12648d302f71e2fd77ea8240f620ce8"
+        },
+        {
+          "path": "jobs.repository-checks.steps.23.run",
+          "bytes": 19,
+          "sha256": "87570a69c928dbe529dfae53717d8260b4c76e1d24abd190042ab64119ea1561"
+        },
+        {
+          "path": "jobs.repository-checks.steps.24.run",
+          "bytes": 29,
+          "sha256": "9dbc7826e3ce1948ecace1c396963f1a004a08617361f0037fcca1ac9254f741"
+        },
+        {
+          "path": "jobs.coverage.steps.0.run",
+          "bytes": 53,
+          "sha256": "6f21b63ebb49a2fc9491bfee5fc4a5d7536911980384fdcc70c6a1f29e3dfaa0"
+        },
+        {
+          "path": "jobs.coverage.steps.4.run",
+          "bytes": 30,
+          "sha256": "f733afb2da73a36bd48778fd7502436e384741ad191367d97182afc4909130a5"
+        },
+        {
+          "path": "jobs.coverage.steps.5.run",
+          "bytes": 10,
+          "sha256": "702e948d947e109310cb2bf19c157b5bb8142b88c87e02ae87a7594c9b797893"
+        },
+        {
+          "path": "jobs.coverage.steps.6.run",
+          "bytes": 75,
+          "sha256": "e8fff61bc9565b970b18e720e7a56ab366340d5076d93e601f9272336fb199fa"
+        },
+        {
+          "path": "jobs.coverage.steps.7.run",
+          "bytes": 49,
+          "sha256": "06cda2210111f22968cde1416b6faabc16ecd180bd8cebfa123ec94a692c5760"
+        },
+        {
+          "path": "jobs.coverage.steps.9.run",
+          "bytes": 587,
+          "sha256": "8fc04d682a6be7d330a5cd56d4edc24e3ced0981247a180130f661881ec0f4ed"
+        },
+        {
+          "path": "jobs.gates.steps.0.run",
+          "bytes": 620,
+          "sha256": "6dbb9a7a895698898a5fb0655ba8977c01ce31506bedbe49de260f0e404c2286"
+        }
+      ],
+      "branch": "codex/qa/gg-488-external-cancel"
+    },
+    {
+      "path": "overlay/tooling/scripts/windows-launcher.qa-negative.acceptance.mjs",
+      "beforeSha256": "8a4a1509f26230f503b6be7879d0f93451a1461660ba53061eee07968919b4d5",
+      "afterSha256": "8a4a1509f26230f503b6be7879d0f93451a1461660ba53061eee07968919b4d5",
+      "byteChanged": false
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[('insert', 126, 126, 126, 132)]
+        # PROPOSED (author-side, #496 correction 01): the corrected job's two new conditions.
+        # Setup steps before slot 3 are modeled as successful, as in the original harness.
+        "${{ !cancelled() && steps.node.outcome == 'success' }}":
+            lambda: not cancelled,
+        "${{ always() && steps.evidence.outcome == 'success' }}":
+            lambda: outcomes.get("evidence") == "success",
+

@@ -1,0 +1,33 @@
+TAP version 13
+# {"evidence":"windows-launcher-export","state":"recording","evidenceId":"6a511943-ec36-4337-8587-8d34728bb494"}
+# {"evidence":"windows-launcher-observation","seq":1406,"at":"2026-11-18T06:08:42.129Z","type":"case-end","case":"installer","subtest":0,"result":"fail","elapsedMs":233,"failedSubtests":0,"failureKind":"child-exit","failureCode":null,"failureExit":7,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":1405,"at":"2026-11-18T06:08:42.129Z","type":"child","case":"installer","subtest":0,"child":1,"tool":"node","mode":"other","outcome":"exit-nonzero","exitCode":7,"errorCode":null,"signal":null,"killed":false,"timeoutMs":null,"elapsedMs":123,"stdoutBytes":45,"stderrBytes":42,"diagnostic":"unclassified"}
+# Subtest: independent synthetic output and failed child
+not ok 1 - independent synthetic output and failed child
+  ---
+  duration_ms: 234.5101
+  type: 'test'
+  location: 'C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-i1-cli-qa-aY2ME5\\fixture.mjs:7:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: C:\Users\98jak\.claude\codex-runs\GraphGoblin\runtime\node-v22.23.4-win-x64\node.exe -e if (process.env.GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR !== undefined) process.exit(99); process.stdout.write(process.env.QA_STDOUT); process.stderr.write(process.env.QA_ENV); process.exit(7)
+    qa496-env-dd9d927c1f4b4577b83e5c11b70b5589
+  code: 7
+  stack: |-
+    genericNodeError (node:internal/errors:983:15)
+    wrappedFn (node:internal/errors:537:14)
+    ChildProcess.exithandler (node:child_process:417:12)
+    ChildProcess.emit (node:events:519:28)
+    maybeClose (node:internal/child_process:1101:16)
+    ChildProcess._handle.onexit (node:internal/child_process:304:5)
+    Process.callbackTrampoline (node:internal/async_hooks:130:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 461.8762

@@ -1,0 +1,59 @@
+Both fixes are in and the supplemental reproducer now passes 5/5. Nothing was staged, committed, pushed or published. The workflow, native suite, deadlines, thresholds, audit, ADR and hosted controls are unchanged.
+
+**Source.** Three of the eight files changed:
+
+| File | SHA-256 |
+|---|---|
+| `tooling/scripts/windows-launcher-evidence.mjs` | `3d2d6521…8caf` → `5368ec79cbadafaaf3ae004fbab4e2b5238bf8e3b9cdf82c17d16a069f9ad0cf` (+22 −6 lines) |
+| `tooling/scripts/windows-launcher-evidence.test.mjs` | `271591c8…0fbe` → `85dce79d1ba8f6a750c82e905a50179ffaf28d7e5e99415d641479c97e5c84d5` (+304 −1) |
+| `docs/10-testing-and-quality.md` | `ede61c10…0cac4` → `96c87851f4b535601e967ffc2d24387bff7f0f0cf4d5e292aedb136fcfcad15f` (one Status paragraph) |
+| Tracked diff of the five tracked files | `3d40818a…7876` → `fa332e20b8ecdadf581397b9b4e1c625bbdd3b220af962fd661d89625dc7af91` |
+
+The concurrent `.gitattributes` and `docs/qa/` work is untouched and outside the diff hash.
+
+**Root 1 (run identity).**
+- **Contract, now in docs10.** Complete evidence needs `repository`, `workflowRef`, `job`, `runId`, `runAttempt`, `event` and `ref` to be present and valid.
+- **One marker.** Any missing or malformed value adds a single `binding-identity` marker, however many are missing.
+- **Outcomes.** A passing native step becomes `incomplete`, exit 1, and its valid files are still uploaded. A failed or skipped step keeps `native-failed` or `not-run` with the marker listed.
+- **Not required.** Runner OS, architecture, image and Node version may be unavailable, and a push needs no event base. A known contradiction keeps its own `binding-contradiction` marker.
+
+**Root 2 (closer count).**
+- **Accounting.** I checked the recorder first. Every rejection it counts is either written or counted as omitted. So a closer's rejected count must lie between the visible rejected records and those plus `omittedRecords`, and must equal the visible count when nothing was omitted.
+- **Check.** The finalizer now rejects a stream (`lifecycle`) whose closer claims more than that.
+- **Recorder.** The recorder could count a rejection whose timestamp failed and was never written. Only an injected test clock can trigger that; production cannot. The count now happens after the record exists.
+- **Not added.** I did not enforce a tighter sequence-number bound, because it would invalidate an existing valid overflow fixture.
+
+**Two existing test lines changed, forced by the new contract:**
+- One expectation listed `['observations-absent', 'binding-unverified']` for a manifest with no run identity, which was the defect itself. It now includes `binding-identity`.
+- One real-CLI test inherited its run identity from the environment, so it would have failed locally but passed on hosted CI. It now passes an explicit identified push run, and its assertion is unchanged.
+
+**Results:**
+
+| Check | Result |
+|---|---|
+| Supplemental harness, exact copy (`f0faf138…`) | red on frozen source: exit 1, 3/5, same two failures as QA; green on corrected source: exit 0, 5/5 |
+| Reverts | each fix reverted once: all three killed their targeted tests; bytes restored and SHA-checked |
+| Over-tightening control | requiring equal counts even with omissions fails the genuine-overflow test |
+| Focused helper tests | 33/33; helper coverage 98.93 statements / 97.2 branches / 100 functions / 99.45 lines |
+| Tooling lint, prettier on the 8 files, `format:check` | all exit 0 |
+| Full tooling coverage (first and only run) | exit 0, 18 files, 211/211, 218 s; 96.62 / 93.46 / 94.2 / 97.54; sources identical before and after |
+| Retained native streams, reparsed once | both still valid (1,019 records: `1 ≤ 1 ≤ 266`; 203 records: `0 ≤ 0 ≤ 0`); only `binding-identity` is added to their `missing` lists; bytes unchanged |
+| Prior packets | correction-01: 129/129 files match; QA packet: 50/50 at check time; nothing staged |
+
+The performance workload passed. The aggregate function coverage fell slightly (94.58 → 94.2) because the unchanged `perf/worker.mjs` covered fewer functions this run; I'm not claiming a cause.
+
+Two of my own harness slips are kept in the packet:
+- The first reparse failed on my own over-strict assertion: the baseline result predates a field added in correction 01. That attempt is kept as `attempt1-*`.
+- The first integrity check of the QA packet reported failures only because its sums file uses CRLF line endings. With those stripped, all 50 files match.
+
+**Evidence:** `C:/Users/98jak/graphgoblin-qa/2026-11-17-five-intents/i1-ci-correction-02`. Start with `README.md`. New bindings are in `SOURCE-BINDINGS.txt` (`b23db2b6…`), the 8-file comparison in `SOURCE-COMPARISON.txt`, and the packet's checksum list in `SHA256SUMS.txt` (60 files, `c8793a85…`). No private provider stream is included.
+
+**Remaining gates:**
+- **Independent QA** of this correction.
+- **Hosted runs.** Hosted runs set all seven identity values, so no change in hosted outcomes is expected; QA should confirm on the exact-head run.
+- **#496** stays open until you verify the exact-head `complete` artifact and the QA hosted controls.
+- **Publication.** No candidate PR is published; you publish after QA.
+- **Formal scans** remain 0/3.
+- **#503 audit** remains pending an owner decision, with no waiver.
+
+**Decision for you:** `CHANGELOG.md` was outside the brief, so I left it unchanged. Its #496 sentence doesn't mention run identity; you may want to add one clause.

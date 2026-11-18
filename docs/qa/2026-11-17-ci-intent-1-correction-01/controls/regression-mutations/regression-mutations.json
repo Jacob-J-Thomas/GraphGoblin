@@ -1,0 +1,121 @@
+{
+  "node": "v22.23.4",
+  "sources": {
+    "tooling\\scripts\\windows-launcher-evidence.mjs": "3d2d6521410752e947103747c867d235b946d5c18769af1721357fbbf49f8caf",
+    ".github\\workflows\\ci.yml": "9c3539189770c0efb829550d06ed5cf67829df7db985820b15daf069c801c592"
+  },
+  "baseline": {
+    "exit": 0,
+    "passed": 28,
+    "failed": []
+  },
+  "mutations": [
+    {
+      "name": "root1-original-windows-job",
+      "root": 1,
+      "mutatedSha256": "1899472bb579353b5712fe29948515a3607fff71b6b2abe59e89faac23579bf9",
+      "exit": 1,
+      "passed": 27,
+      "failed": [
+        "the Windows job runs the exact native command after a successful build whatever evidence preparation does"
+      ]
+    },
+    {
+      "name": "root1-outputs-of-a-failed-prepare-are-used",
+      "root": 1,
+      "mutatedSha256": "62c0a86c90ad3f4b0025854880a731625e99250bce90b7b22190d5385dad354a",
+      "exit": 1,
+      "passed": 27,
+      "failed": [
+        "the Windows job runs the exact native command after a successful build whatever evidence preparation does"
+      ]
+    },
+    {
+      "name": "root2-manifest-bytes-not-compared",
+      "root": 2,
+      "mutatedSha256": "fcb9fac46188c63368bf3557f7016531b5a3b718257b720d8e3687e40e0a7db6",
+      "exit": 1,
+      "passed": 27,
+      "failed": [
+        "finalize and the recorder accept only the exact manifest init wrote, at every depth"
+      ]
+    },
+    {
+      "name": "root2-observation-bom-accepted",
+      "root": 2,
+      "mutatedSha256": "daf10a0fe1a82b1541c08928205a2575d6820404251883e0040b4b808e189376",
+      "exit": 1,
+      "passed": 27,
+      "failed": [
+        "invalid observation bytes are rejected whole and never uploaded"
+      ]
+    },
+    {
+      "name": "root3-binding-not-required",
+      "root": 3,
+      "mutatedSha256": "06b4fe9d924123a24c738874f156adf8883396e766ee01f276fe9264806fcfb4",
+      "exit": 1,
+      "passed": 26,
+      "failed": [
+        "finalize and the recorder accept only the exact manifest init wrote, at every depth",
+        "complete evidence needs a verified revision binding and a known contradiction is never complete"
+      ]
+    },
+    {
+      "name": "root3-recorder-accepts-repeated-facts",
+      "root": 3,
+      "mutatedSha256": "e161a3c674fa19700e5a03a4032693009ef341a8a1b89cda40856fae9bfbb0e7",
+      "exit": 1,
+      "passed": 26,
+      "failed": [
+        "the recorder states each once-per-run fact once and writes its own lifecycle records",
+        "repeated contention trials and alias spellings never stand in for distinct ones"
+      ]
+    },
+    {
+      "name": "root3-recorder-lifecycle-public",
+      "root": 3,
+      "mutatedSha256": "51fe592087fb4439772d48ec3e1a6ceb29aba59e891c72a2a1673b2be1e0eaae",
+      "exit": 1,
+      "passed": 27,
+      "failed": [
+        "the recorder states each once-per-run fact once and writes its own lifecycle records"
+      ]
+    },
+    {
+      "name": "root3-stream-repeated-facts-accepted",
+      "root": 3,
+      "mutatedSha256": "2ec8db1bf38545696b39b0fe676e803937df07672d00c57bc416da949f77d917",
+      "exit": 1,
+      "passed": 27,
+      "failed": [
+        "a stream that breaks the recorder lifecycle or repeats a fact is rejected whole"
+      ]
+    },
+    {
+      "name": "root3-stream-second-open-accepted",
+      "root": 3,
+      "mutatedSha256": "2a019224d4e19d7de9f0b15b76afc1384309c08228bf616b9f3d062ce75bcab5",
+      "exit": 1,
+      "passed": 27,
+      "failed": [
+        "a stream that breaks the recorder lifecycle or repeats a fact is rejected whole"
+      ]
+    },
+    {
+      "name": "root3-trials-counted-not-distinct",
+      "root": 3,
+      "mutatedSha256": "c170862e2b054c97e4ac5ab49b217ceefa42ced04094bf7e45510f0fe14604cb",
+      "exit": 1,
+      "passed": 27,
+      "failed": [
+        "repeated contention trials and alias spellings never stand in for distinct ones"
+      ]
+    }
+  ],
+  "restored": {
+    "tooling\\scripts\\windows-launcher-evidence.mjs": "3d2d6521410752e947103747c867d235b946d5c18769af1721357fbbf49f8caf",
+    ".github\\workflows\\ci.yml": "9c3539189770c0efb829550d06ed5cf67829df7db985820b15daf069c801c592"
+  },
+  "ok": true
+}

@@ -1,0 +1,14 @@
+--- original/qa-496-candidate-negative.yml
++++ overlay/qa-496-candidate-negative.yml
+@@ -114,8 +114,9 @@
+           $folders = foreach ($case in 'hardlink', 'manifest') {
+             $env:GITHUB_OUTPUT_SAVED = $env:GITHUB_OUTPUT
+             $env:GITHUB_OUTPUT = Join-Path $env:RUNNER_TEMP "qa496-$case-output.txt"
+-            node tooling/scripts/windows-launcher-evidence.mjs init
+-            if ($LASTEXITCODE -ne 0) { throw "init failed for $case" }
++            node tooling/scripts/windows-launcher-evidence.mjs init | Out-Host
++            $initCode = $LASTEXITCODE
++            if ($initCode -ne 0) { throw "init failed for $case" }
+             $values = @{}
+             Get-Content -LiteralPath $env:GITHUB_OUTPUT | ForEach-Object { if ($_ -match '^(dir|id)=(.*)$') { $values[$Matches[1]] = $Matches[2] } }
+             $env:GITHUB_OUTPUT = $env:GITHUB_OUTPUT_SAVED
