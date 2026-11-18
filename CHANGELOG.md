@@ -4,6 +4,11 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Direct Node invocations of the generated-document, migration and performance-summary
+  commands execute when the checkout is reached through a directory alias (#495).
+  Importing those modules remains inert. The supported pnpm checks already rejected invalid
+  inputs through the tested Windows junction.
+
 - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
   written by the gateway itself so it never waits on logging and keeps working after the launcher
