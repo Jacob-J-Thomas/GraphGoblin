@@ -1,0 +1,633 @@
+﻿2026-11-18T06:30:53.5794297Z Current runner version: '2.338.2'
+2026-11-18T06:30:53.5817836Z ##[group]Runner Image Provisioner
+2026-11-18T06:30:53.5818578Z Hosted Compute Agent
+2026-11-18T06:30:53.5819219Z Version: 20261103.629
+2026-11-18T06:30:53.5819744Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-18T06:30:53.5820413Z Build Date: 2026-11-03T17:26:59Z
+2026-11-18T06:30:53.5821203Z Worker ID: {43de0ea3-8528-4302-a78b-b3ed51413a03}
+2026-11-18T06:30:53.5821806Z Region: westus2
+2026-11-18T06:30:53.5822347Z Cloud: Azure
+2026-11-18T06:30:53.5822801Z ##[endgroup]
+2026-11-18T06:30:53.5824310Z ##[group]Operating System
+2026-11-18T06:30:53.5824861Z Ubuntu
+2026-11-18T06:30:53.5825290Z 26.04.1
+2026-11-18T06:30:53.5826228Z LTS
+2026-11-18T06:30:53.5826659Z ##[endgroup]
+2026-11-18T06:30:53.5827109Z ##[group]Runner Image
+2026-11-18T06:30:53.5827683Z Image: ubuntu-26.04
+2026-11-18T06:30:53.5828149Z Version: 20261111.196.1
+2026-11-18T06:30:53.5829312Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261111.196/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-18T06:30:53.5830480Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261111.196
+2026-11-18T06:30:53.5831482Z ##[endgroup]
+2026-11-18T06:30:53.5832396Z ##[group]GITHUB_TOKEN Permissions
+2026-11-18T06:30:53.5834443Z Contents: read
+2026-11-18T06:30:53.5834941Z Metadata: read
+2026-11-18T06:30:53.5835477Z ##[endgroup]
+2026-11-18T06:30:53.5837394Z Secret source: Actions
+2026-11-18T06:30:53.5838287Z Cache mode: write
+2026-11-18T06:30:53.5839071Z Prepare workflow directory
+2026-11-18T06:30:53.6236893Z Prepare all required actions
+2026-11-18T06:30:53.6288086Z Getting action download info
+2026-11-18T06:30:54.0167867Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-18T06:30:54.1491635Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-18T06:30:54.6066307Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-18T06:30:54.7009925Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-18T06:30:54.9472527Z Complete job name: #407 control (ubuntu-latest)
+2026-11-18T06:30:55.0393359Z ##[group]Run actions/checkout@v4
+2026-11-18T06:30:55.0394760Z with:
+2026-11-18T06:30:55.0395457Z   fetch-depth: 3
+2026-11-18T06:30:55.0396218Z   persist-credentials: false
+2026-11-18T06:30:55.0397117Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-18T06:30:55.0404940Z   token: ***
+2026-11-18T06:30:55.0405663Z   ssh-strict: true
+2026-11-18T06:30:55.0406404Z   ssh-user: git
+2026-11-18T06:30:55.0407121Z   clean: true
+2026-11-18T06:30:55.0407889Z   sparse-checkout-cone-mode: true
+2026-11-18T06:30:55.0408790Z   fetch-tags: false
+2026-11-18T06:30:55.0409532Z   show-progress: true
+2026-11-18T06:30:55.0410283Z   lfs: false
+2026-11-18T06:30:55.0411085Z   submodules: false
+2026-11-18T06:30:55.0411843Z   set-safe-directory: true
+2026-11-18T06:30:55.0412703Z   allow-unsafe-pr-checkout: false
+2026-11-18T06:30:55.0413861Z env:
+2026-11-18T06:30:55.0414541Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:30:55.0415366Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:30:55.0416133Z ##[endgroup]
+2026-11-18T06:30:55.4860860Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-18T06:30:55.4863634Z ##[group]Getting Git version info
+2026-11-18T06:30:55.4865230Z Working directory is '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-18T06:30:55.4867597Z [command]/usr/bin/git version
+2026-11-18T06:30:55.4868738Z git version 2.56.1
+2026-11-18T06:30:55.4872385Z ##[endgroup]
+2026-11-18T06:30:55.4882507Z Temporarily overriding HOME='/home/runner/work/_temp/81f6efb0-e7b0-4102-ae7c-a52e0838eb09' before making global git config changes
+2026-11-18T06:30:55.4884770Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T06:30:55.4887517Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-18T06:30:55.4960948Z Deleting the contents of '/home/runner/work/GraphGoblin/GraphGoblin'
+2026-11-18T06:30:55.4965603Z ##[group]Initializing the repository
+2026-11-18T06:30:55.4969663Z [command]/usr/bin/git init /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-18T06:30:55.5071039Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-18T06:30:55.5074079Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-18T06:30:55.5076362Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-18T06:30:55.5078510Z hint: call:
+2026-11-18T06:30:55.5079834Z hint:
+2026-11-18T06:30:55.5081668Z hint: 	git config --global init.defaultBranch <name>
+2026-11-18T06:30:55.5083632Z hint:
+2026-11-18T06:30:55.5085370Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-18T06:30:55.5088002Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-18T06:30:55.5091188Z hint:
+2026-11-18T06:30:55.5092603Z hint: 	git branch -m <name>
+2026-11-18T06:30:55.5094206Z hint:
+2026-11-18T06:30:55.5095930Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-18T06:30:55.5098916Z Initialized empty Git repository in /home/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-18T06:30:55.5104097Z [command]/usr/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-18T06:30:55.5158411Z ##[endgroup]
+2026-11-18T06:30:55.5161034Z ##[group]Disabling automatic garbage collection
+2026-11-18T06:30:55.5163492Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-18T06:30:55.5204398Z ##[endgroup]
+2026-11-18T06:30:55.5206157Z ##[group]Setting up auth
+2026-11-18T06:30:55.5209575Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T06:30:55.5259339Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T06:30:55.5891797Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T06:30:55.5930489Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T06:30:55.6198486Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T06:30:55.6237355Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T06:30:55.6527670Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-18T06:30:55.6624939Z ##[endgroup]
+2026-11-18T06:30:55.6626242Z ##[group]Fetching the repository
+2026-11-18T06:30:55.6638179Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=3 origin +4579dc3b0de022da9aa90e86f7d2abfb4953214e:refs/remotes/origin/codex/qa/gg-407-posix-control
+2026-11-18T06:31:09.2937986Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-18T06:31:09.2938885Z  * [new ref]           4579dc3b0de022da9aa90e86f7d2abfb4953214e -> origin/codex/qa/gg-407-posix-control
+2026-11-18T06:31:09.2941479Z ##[endgroup]
+2026-11-18T06:31:09.2942146Z ##[group]Determining the checkout info
+2026-11-18T06:31:09.2943643Z ##[endgroup]
+2026-11-18T06:31:09.2948988Z [command]/usr/bin/git sparse-checkout disable
+2026-11-18T06:31:09.3002439Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-18T06:31:09.3034887Z ##[group]Checking out the ref
+2026-11-18T06:31:09.3039267Z [command]/usr/bin/git checkout --progress --force -B codex/qa/gg-407-posix-control refs/remotes/origin/codex/qa/gg-407-posix-control
+2026-11-18T06:31:10.3750431Z Updating files:  22% (6843/31042)
+2026-11-18T06:31:10.3965192Z Updating files:  23% (7140/31042)
+2026-11-18T06:31:10.4184341Z Updating files:  24% (7451/31042)
+2026-11-18T06:31:10.4495432Z Updating files:  25% (7761/31042)
+2026-11-18T06:31:10.4697693Z Updating files:  26% (8071/31042)
+2026-11-18T06:31:10.4909977Z Updating files:  27% (8382/31042)
+2026-11-18T06:31:10.5240792Z Updating files:  28% (8692/31042)
+2026-11-18T06:31:10.5480100Z Updating files:  29% (9003/31042)
+2026-11-18T06:31:10.5672472Z Updating files:  30% (9313/31042)
+2026-11-18T06:31:10.6320748Z Updating files:  31% (9624/31042)
+2026-11-18T06:31:10.6781229Z Updating files:  32% (9934/31042)
+2026-11-18T06:31:10.7299204Z Updating files:  33% (10244/31042)
+2026-11-18T06:31:10.7581294Z Updating files:  34% (10555/31042)
+2026-11-18T06:31:10.7749221Z Updating files:  35% (10865/31042)
+2026-11-18T06:31:10.8075407Z Updating files:  36% (11176/31042)
+2026-11-18T06:31:10.8561421Z Updating files:  37% (11486/31042)
+2026-11-18T06:31:10.8830338Z Updating files:  38% (11796/31042)
+2026-11-18T06:31:10.9163054Z Updating files:  39% (12107/31042)
+2026-11-18T06:31:10.9533647Z Updating files:  40% (12417/31042)
+2026-11-18T06:31:11.0039380Z Updating files:  41% (12728/31042)
+2026-11-18T06:31:11.0449689Z Updating files:  42% (13038/31042)
+2026-11-18T06:31:11.0615592Z Updating files:  43% (13349/31042)
+2026-11-18T06:31:11.0767296Z Updating files:  44% (13659/31042)
+2026-11-18T06:31:11.1050340Z Updating files:  45% (13969/31042)
+2026-11-18T06:31:11.1331257Z Updating files:  46% (14280/31042)
+2026-11-18T06:31:11.1611987Z Updating files:  47% (14590/31042)
+2026-11-18T06:31:11.1763596Z Updating files:  48% (14901/31042)
+2026-11-18T06:31:11.1999442Z Updating files:  49% (15211/31042)
+2026-11-18T06:31:11.2485790Z Updating files:  50% (15521/31042)
+2026-11-18T06:31:11.2773338Z Updating files:  51% (15832/31042)
+2026-11-18T06:31:11.3094690Z Updating files:  52% (16142/31042)
+2026-11-18T06:31:11.3353762Z Updating files:  53% (16453/31042)
+2026-11-18T06:31:11.3426830Z Updating files:  53% (16684/31042)
+2026-11-18T06:31:11.3652284Z Updating files:  54% (16763/31042)
+2026-11-18T06:31:11.3953434Z Updating files:  55% (17074/31042)
+2026-11-18T06:31:11.4134495Z Updating files:  56% (17384/31042)
+2026-11-18T06:31:11.4595556Z Updating files:  57% (17694/31042)
+2026-11-18T06:31:11.5161713Z Updating files:  58% (18005/31042)
+2026-11-18T06:31:11.5550280Z Updating files:  59% (18315/31042)
+2026-11-18T06:31:11.5799972Z Updating files:  60% (18626/31042)
+2026-11-18T06:31:11.6418820Z Updating files:  61% (18936/31042)
+2026-11-18T06:31:11.6639133Z Updating files:  62% (19247/31042)
+2026-11-18T06:31:11.7002681Z Updating files:  63% (19557/31042)
+2026-11-18T06:31:11.7331016Z Updating files:  64% (19867/31042)
+2026-11-18T06:31:11.7607957Z Updating files:  65% (20178/31042)
+2026-11-18T06:31:11.7820674Z Updating files:  66% (20488/31042)
+2026-11-18T06:31:11.8121393Z Updating files:  67% (20799/31042)
+2026-11-18T06:31:11.8366936Z Updating files:  68% (21109/31042)
+2026-11-18T06:31:11.8777713Z Updating files:  69% (21419/31042)
+2026-11-18T06:31:11.9175109Z Updating files:  70% (21730/31042)
+2026-11-18T06:31:11.9562214Z Updating files:  71% (22040/31042)
+2026-11-18T06:31:12.0087876Z Updating files:  72% (22351/31042)
+2026-11-18T06:31:12.0374903Z Updating files:  73% (22661/31042)
+2026-11-18T06:31:12.0676459Z Updating files:  74% (22972/31042)
+2026-11-18T06:31:12.1160380Z Updating files:  75% (23282/31042)
+2026-11-18T06:31:12.1421272Z Updating files:  76% (23592/31042)
+2026-11-18T06:31:12.1728768Z Updating files:  77% (23903/31042)
+2026-11-18T06:31:12.2008724Z Updating files:  78% (24213/31042)
+2026-11-18T06:31:12.2282283Z Updating files:  79% (24524/31042)
+2026-11-18T06:31:12.2648297Z Updating files:  80% (24834/31042)
+2026-11-18T06:31:12.2920772Z Updating files:  81% (25145/31042)
+2026-11-18T06:31:12.3233626Z Updating files:  82% (25455/31042)
+2026-11-18T06:31:12.3347404Z Updating files:  83% (25765/31042)
+2026-11-18T06:31:12.3473302Z Updating files:  83% (25917/31042)
+2026-11-18T06:31:12.3628369Z Updating files:  84% (26076/31042)
+2026-11-18T06:31:12.3792217Z Updating files:  85% (26386/31042)
+2026-11-18T06:31:12.3970992Z Updating files:  86% (26697/31042)
+2026-11-18T06:31:12.4130472Z Updating files:  87% (27007/31042)
+2026-11-18T06:31:12.4392997Z Updating files:  88% (27317/31042)
+2026-11-18T06:31:12.4812113Z Updating files:  89% (27628/31042)
+2026-11-18T06:31:12.4965327Z Updating files:  90% (27938/31042)
+2026-11-18T06:31:12.5188093Z Updating files:  91% (28249/31042)
+2026-11-18T06:31:12.5499753Z Updating files:  92% (28559/31042)
+2026-11-18T06:31:12.5846145Z Updating files:  93% (28870/31042)
+2026-11-18T06:31:12.5982652Z Updating files:  94% (29180/31042)
+2026-11-18T06:31:12.6155979Z Updating files:  95% (29490/31042)
+2026-11-18T06:31:12.6286849Z Updating files:  96% (29801/31042)
+2026-11-18T06:31:12.6451472Z Updating files:  97% (30111/31042)
+2026-11-18T06:31:12.6620929Z Updating files:  98% (30422/31042)
+2026-11-18T06:31:12.6789845Z Updating files:  99% (30732/31042)
+2026-11-18T06:31:12.6791127Z Updating files: 100% (31042/31042)
+2026-11-18T06:31:12.6791526Z Updating files: 100% (31042/31042), done.
+2026-11-18T06:31:12.7387337Z Switched to a new branch 'codex/qa/gg-407-posix-control'
+2026-11-18T06:31:12.7391757Z branch 'codex/qa/gg-407-posix-control' set up to track 'origin/codex/qa/gg-407-posix-control'.
+2026-11-18T06:31:12.7531693Z ##[endgroup]
+2026-11-18T06:31:12.7653366Z [command]/usr/bin/git log -1 --format=%H
+2026-11-18T06:31:12.7683856Z 4579dc3b0de022da9aa90e86f7d2abfb4953214e
+2026-11-18T06:31:12.7693060Z ##[group]Removing auth
+2026-11-18T06:31:12.7697062Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T06:31:12.7729104Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T06:31:12.8049767Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T06:31:12.8079171Z http.https://github.com/.extraheader
+2026-11-18T06:31:12.8087502Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-18T06:31:12.8126777Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T06:31:12.8435521Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T06:31:12.8474577Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T06:31:12.8786047Z ##[endgroup]
+2026-11-18T06:31:12.9009926Z ##[group]Run pnpm/action-setup@v4
+2026-11-18T06:31:12.9010177Z with:
+2026-11-18T06:31:12.9010354Z   dest: ~/setup-pnpm
+2026-11-18T06:31:12.9010709Z   run_install: null
+2026-11-18T06:31:12.9010891Z   cache: false
+2026-11-18T06:31:12.9011084Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-18T06:31:12.9011338Z   package_json_file: package.json
+2026-11-18T06:31:12.9011547Z   standalone: false
+2026-11-18T06:31:12.9011719Z env:
+2026-11-18T06:31:12.9011904Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:31:12.9012114Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:31:12.9012302Z ##[endgroup]
+2026-11-18T06:31:13.0322255Z ##[group]Running self-installer...
+2026-11-18T06:31:13.3933534Z (node:2307) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-18T06:31:13.3934932Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T06:31:13.5339005Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-18T06:31:13.6578078Z Packages: +3
+2026-11-18T06:31:13.6578429Z +++
+2026-11-18T06:31:14.2646473Z Progress: resolved 15, reused 0, downloaded 3, added 3, done
+2026-11-18T06:31:14.2789778Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-18T06:31:14.9403482Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-18T06:31:14.9407757Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-18T06:31:14.9924354Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-18T06:31:16.2015710Z 
+2026-11-18T06:31:16.2016155Z dependencies:
+2026-11-18T06:31:16.2016428Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-18T06:31:16.2016612Z 
+2026-11-18T06:31:16.2039541Z Done in 3s
+2026-11-18T06:31:16.2872559Z ##[endgroup]
+2026-11-18T06:31:16.2873329Z Installation Completed!
+2026-11-18T06:31:16.3064024Z ##[group]Run actions/setup-node@v4
+2026-11-18T06:31:16.3064272Z with:
+2026-11-18T06:31:16.3064465Z   node-version-file: .nvmrc
+2026-11-18T06:31:16.3064781Z   always-auth: false
+2026-11-18T06:31:16.3064973Z   check-latest: false
+2026-11-18T06:31:16.3066997Z   token: ***
+2026-11-18T06:31:16.3067173Z env:
+2026-11-18T06:31:16.3067347Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:31:16.3067550Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:31:16.3067819Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-18T06:31:16.3068099Z ##[endgroup]
+2026-11-18T06:31:16.4374197Z Resolved .nvmrc as 22
+2026-11-18T06:31:16.4448413Z Found in cache @ /opt/hostedtoolcache/node/22.23.4/x64
+2026-11-18T06:31:16.4453399Z (node:2338) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T06:31:16.4454318Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T06:31:16.4455835Z ##[group]Environment details
+2026-11-18T06:31:16.8960188Z node: v22.23.4
+2026-11-18T06:31:16.8960801Z npm: 10.9.9
+2026-11-18T06:31:16.8961067Z yarn: 1.22.22
+2026-11-18T06:31:16.8961803Z ##[endgroup]
+2026-11-18T06:31:16.9111601Z ##[group]Run set -euo pipefail
+2026-11-18T06:31:16.9111964Z [36;1mset -euo pipefail[0m
+2026-11-18T06:31:16.9112235Z [36;1mtest "$RUNNER_ENVIRONMENT" = github-hosted[0m
+2026-11-18T06:31:16.9112579Z [36;1mwork="$(mktemp -d "${RUNNER_TEMP%/}/gg407-posix-XXXXXXXX")"[0m
+2026-11-18T06:31:16.9112933Z [36;1mwork="$(cd "$work" && pwd -P)"[0m
+2026-11-18T06:31:16.9113309Z [36;1mmkdir "$work/evidence" "$work/sync" "$work/maintained-tmp" "$work/witness-tmp"[0m
+2026-11-18T06:31:16.9113645Z [36;1m{[0m
+2026-11-18T06:31:16.9113837Z [36;1m  printf 'GG_407_WORK=%s\n' "$work"[0m
+2026-11-18T06:31:16.9114117Z [36;1m  printf 'GG_407_EVIDENCE=%s\n' "$work/evidence"[0m
+2026-11-18T06:31:16.9114389Z [36;1m  printf 'GG_407_SYNC=%s\n' "$work/sync"[0m
+2026-11-18T06:31:16.9114629Z [36;1m} >> "$GITHUB_ENV"[0m
+2026-11-18T06:31:16.9171378Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-18T06:31:16.9171726Z env:
+2026-11-18T06:31:16.9171918Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:31:16.9172204Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:31:16.9172443Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-18T06:31:16.9172703Z ##[endgroup]
+2026-11-18T06:31:16.9388422Z ##[group]Run node .github/qa407-posix/control.mjs source
+2026-11-18T06:31:16.9388956Z [36;1mnode .github/qa407-posix/control.mjs source[0m
+2026-11-18T06:31:16.9451479Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-18T06:31:16.9451969Z env:
+2026-11-18T06:31:16.9452238Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:31:16.9452564Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:31:16.9452939Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-18T06:31:16.9453432Z   GG_407_WORK: /home/runner/work/_temp/gg407-posix-mFoPNJRB
+2026-11-18T06:31:16.9453995Z   GG_407_EVIDENCE: /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence
+2026-11-18T06:31:16.9454565Z   GG_407_SYNC: /home/runner/work/_temp/gg407-posix-mFoPNJRB/sync
+2026-11-18T06:31:16.9454998Z ##[endgroup]
+2026-11-18T06:31:18.1143627Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-18T06:31:18.1143963Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-18T06:31:18.1190352Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-18T06:31:18.1190869Z env:
+2026-11-18T06:31:18.1191060Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:31:18.1191273Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:31:18.1191519Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-18T06:31:18.1192065Z   GG_407_WORK: /home/runner/work/_temp/gg407-posix-mFoPNJRB
+2026-11-18T06:31:18.1192429Z   GG_407_EVIDENCE: /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence
+2026-11-18T06:31:18.1192782Z   GG_407_SYNC: /home/runner/work/_temp/gg407-posix-mFoPNJRB/sync
+2026-11-18T06:31:18.1193054Z ##[endgroup]
+2026-11-18T06:31:18.1509850Z Scope: all 14 workspace projects
+2026-11-18T06:31:18.1959284Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-18T06:31:18.4741325Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-11-18T06:31:18.4742198Z   Content-addressable store is at: /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-18T06:31:18.4742695Z   Virtual store is at:             node_modules/.pnpm
+2026-11-18T06:31:18.5324552Z Downloading @rolldown/binding-linux-x64-gnu@1.2.12: 0.00 B/8.07 MB
+2026-11-18T06:31:19.4900021Z Downloading @turbo/linux-64@2.11.6: 0.00 B/17.61 MB
+2026-11-18T06:31:20.5292392Z Progress: resolved 801, reused 0, downloaded 381, added 382
+2026-11-18T06:31:21.7181963Z Progress: resolved 801, reused 0, downloaded 503, added 480
+2026-11-18T06:31:21.7963626Z Downloading @openai/codex@0.160.0-linux-x64: 0.00 B/163.27 MB
+2026-11-18T06:31:22.8038314Z Downloading @turbo/linux-64@2.11.6: 3.11 MB/17.61 MB
+2026-11-18T06:31:23.4911699Z ✓ Lockfile passes supply-chain policies (931 entries in 5.3s)
+2026-11-18T06:31:23.4912667Z Lockfile is up to date, resolution step is skipped
+2026-11-18T06:31:24.8039546Z Downloading @openai/codex@0.160.0-linux-x64: 113.77 MB/163.27 MB
+2026-11-18T06:31:25.4117209Z Packages: +801
+2026-11-18T06:31:25.4117636Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-18T06:31:25.4677533Z Progress: resolved 801, reused 0, downloaded 793, added 801, done
+2026-11-18T06:31:25.4798817Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-11-18T06:31:25.4799692Z .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-11-18T06:31:25.6005047Z .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-11-18T06:31:25.6557776Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-11-18T06:31:25.9029505Z 
+2026-11-18T06:31:25.9030157Z devDependencies:
+2026-11-18T06:31:25.9030715Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-18T06:31:25.9031083Z + @eslint/js 10.0.1
+2026-11-18T06:31:25.9031374Z + @vitest/coverage-v8 5.0.3
+2026-11-18T06:31:25.9031697Z + dependency-cruiser 18.5.0
+2026-11-18T06:31:25.9032058Z + eslint 10.11.0
+2026-11-18T06:31:25.9032396Z + eslint-config-prettier 10.1.8
+2026-11-18T06:31:25.9032757Z + eslint-plugin-react-hooks 7.1.1
+2026-11-18T06:31:25.9033070Z + prettier 3.9.9
+2026-11-18T06:31:25.9033305Z + turbo 2.11.6
+2026-11-18T06:31:25.9033617Z + typescript 6.0.3
+2026-11-18T06:31:25.9033896Z + typescript-eslint 8.71.0
+2026-11-18T06:31:25.9034174Z + vitest 5.0.3
+2026-11-18T06:31:25.9034311Z 
+2026-11-18T06:31:26.0954226Z Done in 7.9s using pnpm v12.8.1
+2026-11-18T06:31:26.1521991Z ##[group]Run pnpm build
+2026-11-18T06:31:26.1522270Z [36;1mpnpm build[0m
+2026-11-18T06:31:26.1522494Z [36;1mnode .github/qa407-posix/control.mjs build[0m
+2026-11-18T06:31:26.1569490Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-18T06:31:26.1569791Z env:
+2026-11-18T06:31:26.1569979Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:31:26.1570184Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:31:26.1570437Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-18T06:31:26.1570967Z   GG_407_WORK: /home/runner/work/_temp/gg407-posix-mFoPNJRB
+2026-11-18T06:31:26.1571314Z   GG_407_EVIDENCE: /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence
+2026-11-18T06:31:26.1571655Z   GG_407_SYNC: /home/runner/work/_temp/gg407-posix-mFoPNJRB/sync
+2026-11-18T06:31:26.1571928Z ##[endgroup]
+2026-11-18T06:31:26.1893408Z $ turbo run build
+2026-11-18T06:31:26.2235225Z 
+2026-11-18T06:31:26.2236015Z Attention:
+2026-11-18T06:31:26.2236711Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-18T06:31:26.2237611Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-18T06:31:26.2238296Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-18T06:31:26.2238798Z https://turborepo.dev/docs/telemetry
+2026-11-18T06:31:26.2238964Z 
+2026-11-18T06:31:26.3001311Z 
+2026-11-18T06:31:26.3016437Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-18T06:31:26.3018128Z    • Running build in 13 packages
+2026-11-18T06:31:26.3018691Z    • Remote caching disabled
+2026-11-18T06:31:26.3019021Z 
+2026-11-18T06:31:28.3469949Z ##[group]@graphgoblin/contracts:build
+2026-11-18T06:31:28.3470751Z cache miss, executing eb8b5255e39358ad
+2026-11-18T06:31:28.3471236Z $ tsc -b tsconfig.build.json
+2026-11-18T06:31:28.3471854Z ##[endgroup]
+2026-11-18T06:31:31.1022069Z ##[group]@graphgoblin/domain:build
+2026-11-18T06:31:31.1022533Z cache miss, executing 684a5b33b8afabc0
+2026-11-18T06:31:31.1022823Z $ tsc -b tsconfig.build.json
+2026-11-18T06:31:31.1023201Z ##[endgroup]
+2026-11-18T06:31:34.5216609Z ##[group]@graphgoblin/engine:build
+2026-11-18T06:31:34.5217112Z cache miss, executing e5dbd36bacb0c2f1
+2026-11-18T06:31:34.5217403Z $ tsc -b tsconfig.build.json
+2026-11-18T06:31:34.5217775Z ##[endgroup]
+2026-11-18T06:31:36.8311756Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-18T06:31:36.8341759Z cache miss, executing 664c3a09e8b264a6
+2026-11-18T06:31:36.8342461Z $ tsc -b tsconfig.build.json
+2026-11-18T06:31:36.8343399Z ##[endgroup]
+2026-11-18T06:31:37.1935180Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-18T06:31:37.1961926Z cache miss, executing cedbae362b115cc1
+2026-11-18T06:31:37.1983464Z $ tsc -b tsconfig.build.json
+2026-11-18T06:31:37.1984279Z ##[endgroup]
+2026-11-18T06:31:41.6245864Z ##[group]@graphgoblin/infrastructure:build
+2026-11-18T06:31:41.6246374Z cache miss, executing 801f20092d991f94
+2026-11-18T06:31:41.6246661Z $ tsc -b tsconfig.build.json
+2026-11-18T06:31:41.6247040Z ##[endgroup]
+2026-11-18T06:31:47.5396100Z ##[group]@graphgoblin/api:build
+2026-11-18T06:31:47.5396570Z cache miss, executing 5f54f998eefe1369
+2026-11-18T06:31:47.5396984Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-18T06:31:47.5397452Z ##[endgroup]
+2026-11-18T06:31:49.9586750Z ##[group]@graphgoblin/api-client:build
+2026-11-18T06:31:49.9587426Z cache miss, executing d34d0c38168275dd
+2026-11-18T06:31:49.9587833Z $ tsc -b tsconfig.build.json
+2026-11-18T06:31:49.9588335Z ##[endgroup]
+2026-11-18T06:31:52.8735788Z ##[group]@graphgoblin/mcp:build
+2026-11-18T06:31:52.8736416Z cache miss, executing 8e5f6cfbf430de24
+2026-11-18T06:31:52.8736846Z $ tsc -b tsconfig.build.json
+2026-11-18T06:31:52.8737771Z ##[endgroup]
+2026-11-18T06:31:54.3236057Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-18T06:31:54.3253082Z cache bypass, force executing ecbb17f9c1f01ea7
+2026-11-18T06:31:54.3258127Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-18T06:31:54.3272303Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-18T06:31:54.3291929Z ##[endgroup]
+2026-11-18T06:31:54.6825740Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-18T06:31:54.6826316Z cache bypass, force executing bd96b50647a7907d
+2026-11-18T06:31:54.6826744Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-18T06:31:54.6827275Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-18T06:31:54.6828023Z Install: codex plugin marketplace add "/home/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-18T06:31:54.6828606Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-18T06:31:54.6829326Z ##[endgroup]
+2026-11-18T06:31:57.1991260Z ##[group]@graphgoblin/web:build
+2026-11-18T06:31:57.1991883Z cache miss, executing 4db536c5ef020dad
+2026-11-18T06:31:57.1992380Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-18T06:31:57.1993423Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-18T06:31:57.1993790Z transforming...
+2026-11-18T06:31:57.1994060Z ✓ 779 modules transformed.
+2026-11-18T06:31:57.1994325Z rendering chunks...
+2026-11-18T06:31:57.1994533Z computing gzip size...
+2026-11-18T06:31:57.1994782Z dist/manifest.webmanifest           0.47 kB
+2026-11-18T06:31:57.1995193Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-18T06:31:57.1995629Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-18T06:31:57.1996185Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-18T06:31:57.1996557Z 
+2026-11-18T06:31:57.1997103Z [32m✓ built in 2.05s[39m
+2026-11-18T06:31:57.1997312Z 
+2026-11-18T06:31:57.1997471Z [36mPWA v1.3.0[39m
+2026-11-18T06:31:57.1997874Z mode      [35mgenerateSW[39m
+2026-11-18T06:31:57.1998402Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-18T06:31:57.1998747Z files generated
+2026-11-18T06:31:57.1999034Z   [2mdist/sw.js.map[22m
+2026-11-18T06:31:57.1999338Z   [2mdist/sw.js[22m
+2026-11-18T06:31:57.1999707Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-18T06:31:57.2000111Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-18T06:31:57.2001876Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-18T06:31:57.2002353Z transforming...
+2026-11-18T06:31:57.2002689Z ✓ 284 modules transformed.
+2026-11-18T06:31:57.2002996Z rendering chunks...
+2026-11-18T06:31:57.2003270Z computing gzip size...
+2026-11-18T06:31:57.2003650Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-18T06:31:57.2004284Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-18T06:31:57.2004996Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-18T06:31:57.2005831Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-18T06:31:57.2006243Z 
+2026-11-18T06:31:57.2006424Z [32m✓ built in 550ms[39m
+2026-11-18T06:31:57.2006610Z 
+2026-11-18T06:31:57.2006751Z [36mPWA v1.3.0[39m
+2026-11-18T06:31:57.2007094Z mode      [35mgenerateSW[39m
+2026-11-18T06:31:57.2007535Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-18T06:31:57.2007879Z files generated
+2026-11-18T06:31:57.2008196Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-18T06:31:57.2008563Z   [2m../dist-goblin/sw.js[22m
+2026-11-18T06:31:57.2008968Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-18T06:31:57.2009418Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-18T06:31:57.2010024Z ##[endgroup]
+2026-11-18T06:31:57.2010188Z 
+2026-11-18T06:31:57.2010340Z  Tasks:    12 successful, 12 total
+2026-11-18T06:31:57.2010809Z Cached:    0 cached, 12 total
+2026-11-18T06:31:57.2011474Z   Time:    30.953s 
+2026-11-18T06:31:57.2011639Z 
+2026-11-18T06:31:57.3787264Z ##[group]Run bash .github/qa407-posix/run-suite.sh maintained
+2026-11-18T06:31:57.3787810Z [36;1mbash .github/qa407-posix/run-suite.sh maintained[0m
+2026-11-18T06:31:57.3837978Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-18T06:31:57.3838280Z env:
+2026-11-18T06:31:57.3838472Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:31:57.3838681Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:31:57.3838924Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-18T06:31:57.3839249Z   GG_407_WORK: /home/runner/work/_temp/gg407-posix-mFoPNJRB
+2026-11-18T06:31:57.3839595Z   GG_407_EVIDENCE: /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence
+2026-11-18T06:31:57.3839935Z   GG_407_SYNC: /home/runner/work/_temp/gg407-posix-mFoPNJRB/sync
+2026-11-18T06:31:57.3840202Z ##[endgroup]
+2026-11-18T06:31:57.9391913Z 
+2026-11-18T06:31:57.9395258Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/runner/work/GraphGoblin/GraphGoblin/apps/api[39m
+2026-11-18T06:31:57.9396204Z 
+2026-11-18T06:31:58.2642613Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mrefuses invalid port allocation 0 with count 1[32m 2[2mms[22m[39m
+2026-11-18T06:31:58.2644005Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mrefuses invalid port allocation 65535 with count 2[32m 0[2mms[22m[39m
+2026-11-18T06:31:58.2645299Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mrefuses invalid port allocation 5600 with count 0[32m 0[2mms[22m[39m
+2026-11-18T06:31:58.2646540Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mrefuses invalid port allocation 5600 with count -1[32m 0[2mms[22m[39m
+2026-11-18T06:31:58.2647782Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mrefuses invalid port allocation 5600.5 with count 1[32m 0[2mms[22m[39m
+2026-11-18T06:31:58.2649029Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mrefuses invalid port allocation 5600 with count 1.5[32m 0[2mms[22m[39m
+2026-11-18T06:31:58.2650710Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mrefuses invalid port allocation NaN with count 1[32m 0[2mms[22m[39m
+2026-11-18T06:31:58.9240764Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mkeeps a port available to its fixture across an unbound interval and a failed startup[33m 757[2mms[22m[39m
+2026-11-18T06:31:58.9533634Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mpreserves an existing 127.0.0.1 listener and refuses its otherwise unreserved port[32m 17[2mms[22m[39m
+2026-11-18T06:31:58.9535186Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mpreserves an existing 0.0.0.0 listener and refuses its otherwise unreserved port[32m 6[2mms[22m[39m
+2026-11-18T06:31:58.9537091Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mpreserves an existing :: listener and refuses its otherwise unreserved port[32m 4[2mms[22m[39m
+2026-11-18T06:31:58.9538087Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mcannot release a replacement claim if the original ownership marker is gone[32m 2[2mms[22m[39m
+2026-11-18T06:31:58.9538979Z  [32m✓[39m src/testing/api-port.test.ts[2m > [22mhonors the configured range and refuses a count that crosses the last TCP port[32m 0[2mms[22m[39m
+2026-11-18T06:31:58.9557073Z 
+2026-11-18T06:31:58.9561142Z [2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+2026-11-18T06:31:58.9562303Z [2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+2026-11-18T06:31:58.9562877Z [2m   Start at [22m 06:31:57
+2026-11-18T06:31:58.9564903Z [2m   Duration [22m 1.01s[2m (tests 90%, import 4%, transform 4%, setup 2%)[22m
+2026-11-18T06:31:58.9573671Z 
+2026-11-18T06:31:58.9593070Z JSON report written to /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/maintained.json
+2026-11-18T06:31:59.0646049Z ##[group]Run mkdir apps/api/src/qa407-posix
+2026-11-18T06:31:59.0646354Z [36;1mmkdir apps/api/src/qa407-posix[0m
+2026-11-18T06:31:59.0646812Z [36;1mcp .github/qa407-posix/shared.ts .github/qa407-posix/owner.test.ts .github/qa407-posix/peer.test.ts apps/api/src/qa407-posix/[0m
+2026-11-18T06:31:59.0647313Z [36;1mbash .github/qa407-posix/run-suite.sh witness[0m
+2026-11-18T06:31:59.0693267Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-18T06:31:59.0693553Z env:
+2026-11-18T06:31:59.0693736Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:31:59.0693942Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:31:59.0694185Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-18T06:31:59.0694490Z   GG_407_WORK: /home/runner/work/_temp/gg407-posix-mFoPNJRB
+2026-11-18T06:31:59.0694836Z   GG_407_EVIDENCE: /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence
+2026-11-18T06:31:59.0695179Z   GG_407_SYNC: /home/runner/work/_temp/gg407-posix-mFoPNJRB/sync
+2026-11-18T06:31:59.0695502Z ##[endgroup]
+2026-11-18T06:31:59.4111014Z 
+2026-11-18T06:31:59.4113909Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/home/runner/work/GraphGoblin/GraphGoblin/apps/api[39m
+2026-11-18T06:31:59.4114301Z 
+2026-11-18T06:31:59.6187980Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:31:59.6202135Z [22m[39mGG407 {"phase":"peer-start","root":"/home/runner/work/_temp/gg407-posix-mFoPNJRB/witness-tmp/gg-api-ports-WFQBZf","workerPid":3351}
+2026-11-18T06:31:59.6202871Z 
+2026-11-18T06:31:59.6432484Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:31:59.6434434Z [22m[39mGG407 {"phase":"owner-start","root":"/home/runner/work/_temp/gg407-posix-mFoPNJRB/witness-tmp/gg-api-ports-WFQBZf","workerPid":3350}
+2026-11-18T06:31:59.6435591Z 
+2026-11-18T06:31:59.6555356Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:31:59.6556212Z [22m[39mGG407 {"phase":"generation-held","workerPid":3350}
+2026-11-18T06:31:59.6556584Z 
+2026-11-18T06:31:59.6760443Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:31:59.6761361Z [22m[39mGG407 {"phase":"generation-refused","workerPid":3351}
+2026-11-18T06:31:59.6761699Z 
+2026-11-18T06:31:59.6824155Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:31:59.6825595Z [22m[39mGG407 {"phase":"generation-released","workerPid":3350}
+2026-11-18T06:31:59.6826050Z 
+2026-11-18T06:31:59.7091721Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:31:59.7092451Z [22m[39mGG407 {"phase":"generation-next-held","workerPid":3351}
+2026-11-18T06:31:59.7092702Z 
+2026-11-18T06:31:59.7342668Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:31:59.7343973Z [22m[39mGG407 {"phase":"stale-release-checked","workerPid":3350}
+2026-11-18T06:31:59.7344511Z 
+2026-11-18T06:31:59.7350169Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:31:59.7351493Z [22m[39mGG407 {"phase":"generation-next-released","workerPid":3351}
+2026-11-18T06:31:59.7351927Z 
+2026-11-18T06:31:59.7621000Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:31:59.7621784Z [22m[39mGG407 {"phase":"wildcard-ready","port":18471,"workerPid":3350}
+2026-11-18T06:31:59.7622027Z 
+2026-11-18T06:31:59.8314741Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:31:59.8316324Z [22m[39mGG407 {"phase":"wildcard-checked","nativeBind":"EADDRINUSE","reservation":"refused","foreignAnswered":true,"workerPid":3351}
+2026-11-18T06:31:59.8316988Z 
+2026-11-18T06:31:59.8407047Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:31:59.8408382Z [22m[39mGG407 {"phase":"api-reserved","port":18472,"workerPid":3350}
+2026-11-18T06:31:59.8408919Z 
+2026-11-18T06:31:59.8586773Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:31:59.8587599Z [22m[39mGG407 {"phase":"api-unbound-refused","bound":false,"lease":"refused","workerPid":3351}
+2026-11-18T06:31:59.8587897Z 
+2026-11-18T06:32:01.5586462Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:32:01.5587257Z [22m[39mGG407 {"phase":"api-first-ready","childPid":3390,"workerPid":3350}
+2026-11-18T06:32:01.5587505Z 
+2026-11-18T06:32:01.5622265Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:32:01.5623155Z [22m[39mGG407 {"phase":"api-first-refused","bound":true,"lease":"refused","workerPid":3351}
+2026-11-18T06:32:01.5623602Z 
+2026-11-18T06:32:01.6014754Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:32:01.6015464Z [22m[39mGG407 {"phase":"api-stopped","workerPid":3350}
+2026-11-18T06:32:01.6015665Z 
+2026-11-18T06:32:01.6148276Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:32:01.6149097Z [22m[39mGG407 {"phase":"api-stopped-refused","bound":false,"lease":"refused","workerPid":3351}
+2026-11-18T06:32:01.6149391Z 
+2026-11-18T06:32:02.5748961Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:32:02.5781667Z [22m[39mGG407 {"phase":"api-restarted","childPid":3406,"workerPid":3350}
+2026-11-18T06:32:02.5810834Z 
+2026-11-18T06:32:02.5882761Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:32:02.5883717Z [22m[39mGG407 {"phase":"api-restart-refused","bound":true,"lease":"refused","workerPid":3351}
+2026-11-18T06:32:02.5884052Z 
+2026-11-18T06:32:02.6227146Z [90mstdout[2m | src/qa407-posix/owner.test.ts[2m > [22m[2mowns the first generation and holds the API lease through ready, restart and settlement
+2026-11-18T06:32:02.6228075Z [22m[39mGG407 {"phase":"api-settled","closeObserved":true,"markerAtClose":false,"workerPid":3350}
+2026-11-18T06:32:02.6228383Z 
+2026-11-18T06:32:02.6413470Z [90mstdout[2m | src/qa407-posix/peer.test.ts[2m > [22m[2mshares the root across forks and can reacquire only after the owner settles
+2026-11-18T06:32:02.6414414Z [22m[39mGG407 {"phase":"api-reacquired","workerPid":3351}
+2026-11-18T06:32:02.6414723Z 
+2026-11-18T06:32:02.6420718Z  [32m✓[39m src/qa407-posix/peer.test.ts[2m > [22mshares the root across forks and can reacquire only after the owner settles[33m 3027[2mms[22m[39m
+2026-11-18T06:32:02.6497316Z  [32m✓[39m src/qa407-posix/owner.test.ts[2m > [22mowns the first generation and holds the API lease through ready, restart and settlement[33m 3010[2mms[22m[39m
+2026-11-18T06:32:02.6517833Z 
+2026-11-18T06:32:02.6521849Z [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+2026-11-18T06:32:02.6522901Z [2m      Tests [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+2026-11-18T06:32:02.6524900Z [2m   Start at [22m 06:31:59
+2026-11-18T06:32:02.6525604Z [2m   Duration [22m 3.23s[2m (tests 97%, transform 1%, import 1%)[22m
+2026-11-18T06:32:02.6534530Z 
+2026-11-18T06:32:02.6544900Z JSON report written to /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/witness.json
+2026-11-18T06:32:02.7646000Z ##[group]Run actions/upload-artifact@v4
+2026-11-18T06:32:02.7646254Z with:
+2026-11-18T06:32:02.7646466Z   name: gg407-posix-ubuntu-latest-44251885185-1
+2026-11-18T06:32:02.7646724Z   if-no-files-found: error
+2026-11-18T06:32:02.7649573Z   path: /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/source.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/build.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/maintained.log
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/maintained.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/maintained.exit.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/witness.log
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/witness.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/witness.exit.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/ports-maintained-before.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/ports-maintained-after.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/ports-witness-before.json
+/home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence/ports-witness-after.json
+
+2026-11-18T06:32:02.7652396Z   compression-level: 6
+2026-11-18T06:32:02.7652601Z   overwrite: false
+2026-11-18T06:32:02.7652803Z   include-hidden-files: false
+2026-11-18T06:32:02.7653014Z env:
+2026-11-18T06:32:02.7653184Z   GG_TEST_PORT_START: 18470
+2026-11-18T06:32:02.7653392Z   GG_TEST_PORT_COUNT: 20
+2026-11-18T06:32:02.7653626Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-11-18T06:32:02.7653926Z   GG_407_WORK: /home/runner/work/_temp/gg407-posix-mFoPNJRB
+2026-11-18T06:32:02.7654260Z   GG_407_EVIDENCE: /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence
+2026-11-18T06:32:02.7654607Z   GG_407_SYNC: /home/runner/work/_temp/gg407-posix-mFoPNJRB/sync
+2026-11-18T06:32:02.7654872Z ##[endgroup]
+2026-11-18T06:32:02.9099667Z (node:3436) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T06:32:02.9100374Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T06:32:02.9178378Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-18T06:32:02.9202439Z The least common ancestor is /home/runner/work/_temp/gg407-posix-mFoPNJRB/evidence. This will be the root directory of the artifact
+2026-11-18T06:32:02.9203507Z With the provided path, there will be 12 files uploaded
+2026-11-18T06:32:02.9204236Z Artifact name is valid!
+2026-11-18T06:32:02.9204670Z Root directory input is valid!
+2026-11-18T06:32:03.3100058Z Beginning upload of artifact content to blob storage
+2026-11-18T06:32:03.3378142Z (node:3436) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-18T06:32:03.6218875Z Uploaded bytes 7814
+2026-11-18T06:32:03.7000224Z Finished uploading artifact content to blob storage!
+2026-11-18T06:32:03.7001435Z SHA256 digest of uploaded artifact zip is 126218ee02624d4c0af45ac0c70a1bf9156f35b6cb55c610c00e7b082ab7011a
+2026-11-18T06:32:03.7002118Z Finalizing artifact upload
+2026-11-18T06:32:04.1006243Z Artifact gg407-posix-ubuntu-latest-44251885185-1.zip successfully finalized. Artifact ID 14404516645
+2026-11-18T06:32:04.1007066Z Artifact gg407-posix-ubuntu-latest-44251885185-1 has been successfully uploaded! Final size is 7814 bytes. Artifact ID is 14404516645
+2026-11-18T06:32:04.1012921Z Artifact download URL: https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44251885185/artifacts/14404516645
+2026-11-18T06:32:04.1189402Z Post job cleanup.
+2026-11-18T06:32:04.2240287Z (node:3449) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-18T06:32:04.2241171Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-18T06:32:04.2405539Z Post job cleanup.
+2026-11-18T06:32:04.3717946Z Pruning is unnecessary.
+2026-11-18T06:32:04.3911372Z Post job cleanup.
+2026-11-18T06:32:04.4703790Z [command]/usr/bin/git version
+2026-11-18T06:32:04.4748874Z git version 2.56.1
+2026-11-18T06:32:04.4786867Z Temporarily overriding HOME='/home/runner/work/_temp/1fe2b8d1-4916-4cee-b36b-efc397eb88af' before making global git config changes
+2026-11-18T06:32:04.4787715Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-18T06:32:04.4790329Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/GraphGoblin/GraphGoblin
+2026-11-18T06:32:04.4836486Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-18T06:32:04.4878093Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-18T06:32:04.5214252Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-18T06:32:04.5269763Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-18T06:32:04.5611938Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-18T06:32:04.5646976Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-18T06:32:04.6084990Z Cleaning up orphan processes
+2026-11-18T06:32:04.6420025Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

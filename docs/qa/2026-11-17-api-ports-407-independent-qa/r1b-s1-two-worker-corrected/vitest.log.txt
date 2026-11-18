@@ -1,0 +1,34 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-ports-407-qa/GraphGoblin/apps/api
+
+ × src/qa407/qa407-s1-a.test.ts > QA407 S1 worker A 11360ms
+   → expected true to be false // Object.is equality
+ ✓ src/qa407/qa407-s1-b.test.ts > QA407 S1 worker B 11398ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/qa407/qa407-s1-a.test.ts > QA407 S1 worker A
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ runS1 src/qa407/s1-scenario.ts:109:31
+    107|       await q.signal('A-disposed', after);
+    108|       expect(ownMarkerRemains).toBe(false);
+    109|       expect(after.listening).toBe(false);
+       |                               ^
+    110|     } else {
+    111|       const down = await q.waitFor('A-down');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 1 passed (2)
+   Start at  23:07:42
+   Duration  11.91s (tests 98%, transform 1%)
+

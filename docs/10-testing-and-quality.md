@@ -308,9 +308,22 @@ Finding fixed while measuring: libsql's local client does its work in native cod
 `apps/api/dist/main.js`. API subprocess tests build the API first through Turbo's
 `test` and `test:coverage` task dependencies. Direct package test commands bypass
 Turbo, so run `pnpm build` first; a missing entry reports that command explicitly.
-Each fixture owns a temporary `gg-api-process-*` directory and a free loopback port
-from 5600 to 5699, clears inherited `GG_*` configuration, and creates its API key
-through the binary. CLI dispatch is proved by exit codes 0/1/2. Corrupt SQLite
+Each fixture owns a temporary `gg-api-process-*` directory, clears inherited `GG_*`
+configuration, and creates its API key through the binary. API Vitest workers
+reserve loopback ports atomically in a temporary directory shared by the run (#407).
+The reservation lasts through startup, restarts and child or listener cleanup.
+Set `GG_TEST_PORT_START` and `GG_TEST_PORT_COUNT` to a free range large enough for
+the fixtures active at the same time. The default is 5600 to 5699, with 5760 to 5769
+for the dedicated shutdown process and startup suites. An invalid or exhausted
+range fails with the range in the error. TCP bind probes check IPv4 loopback and,
+on Windows and macOS, also check IPv4 and available dual-stack wildcard bindings
+because overlapping addresses can bind the same port on those platforms.
+Probe listeners close before startup. Reservations coordinate fixtures drawing from that range
+in the same Vitest run. Each port records successive claims in separate
+directories that stay until the run closes. An unfinished claim stays reserved
+for that run, and the Vitest parent removes the reservation directory when
+its workers have closed. Give simultaneous test invocations disjoint ranges.
+CLI dispatch is proved by exit codes 0/1/2. Corrupt SQLite
 refusal, occupied-port cleanup and Linux native signal shutdown are distinct
 evidence. The corrupt database fails before HTTP setup; a literal `*` static asset
 supplies a separate real post-container route-registration fault on POSIX.

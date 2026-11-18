@@ -14,6 +14,7 @@ export default createVitestConfig({
     execArgv: ['--expose-gc'],
     testTimeout: 20_000,
     hookTimeout: 20_000,
-    globalSetup: ['./wait-storage.global-setup.ts'],
+    globalSetup: ['./wait-storage.global-setup.ts', './api-ports.global-setup.ts'],
+    setupFiles: ['./api-ports.setup.ts'],
   },
 });
