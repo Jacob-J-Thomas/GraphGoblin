@@ -1,0 +1,17 @@
+# Independent QA criteria for #407 (written before reading author tests, witness files or the author README)
+
+Recorded: see file mtime / receipts. Source of criteria: issue #407 body (admission record), QA brief outcome statement.
+
+| ID | Criterion (pass condition) |
+| -- | -- |
+| C1 | Range config: GG_TEST_PORT_START / GG_TEST_PORT_COUNT select the pool. Invalid values (non-integer, zero/negative count, start out of 1..65535, start+count-1 > 65535, junk strings) fail clearly with an error naming the problem, before any child is started; no silent fallback to another range. |
+| C2 | Exhaustion: when every port of the range is held by cooperating fixtures (or occupied), a further acquire fails clearly (bounded time, message mentions exhaustion/range), never returns an out-of-range or duplicate port. |
+| C3 | Distinctness: in one Vitest run with >=2 workers drawing from the same range, ports held concurrently are distinct. |
+| C4 | Hold-until-settlement: a reservation is held from acquire until the owned child has exited AND its listener is gone; it is not released at spawn, at readiness, or when stop() is merely requested. Controlled: worker A holds port P before its child binds; worker B acquiring concurrently never receives P. |
+| C5 | Restart ownership: a fixture that stops and restarts its API child on the same port keeps the reservation across the gap; another worker cannot take that port in between. |
+| C6 | Foreign listeners: a port in range already bound by an unrelated listener is not handed out (or is refused clearly); the foreign listener is not closed/killed and still serves after the run. |
+| C7 | Stale markers: a claim left by a dead owner can be reclaimed (no permanent exhaustion), and the stale owner's late cleanup cannot delete a replacement claim held by a live owner. |
+| C8 | Failed startup/cleanup: if the child exits before readiness or readiness times out, the error is surfaced and the reservation is released only after the child has actually exited (no leak, no early release); a failing stop/cleanup does not release a port whose child may still listen. |
+| C9 | Wiring: the actual API vitest config wires the coordination setup (global setup + per-worker setup) so callers get coordination without per-test opt-in; coordination state lives in a run-owned location and is removed at the end of the run. |
+| C10 | Cleanup evidence: after each QA run, no listener remains on 63800-63819, no orphan node child, no leftover run-owned coordination directory. |
+| L1 | Limit (not a promise): coordination across independent Vitest runs or against unrelated dynamic allocations. |

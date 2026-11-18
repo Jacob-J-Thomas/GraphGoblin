@@ -7,10 +7,12 @@ import { loadConfig } from './config.js';
 import { createApiProcessFixture } from './testing/api-subprocess.js';
 
 it('a stop requested during startup leaves independent queued work unstarted on the same store', async () => {
-  // A run given its own range through GG_TEST_PORT_START uses it; otherwise this case keeps its own.
+  // A run given its own range uses it; otherwise this case keeps its own.
   const f = await createApiProcessFixture({
     prefix: 'gg-wp-c7-',
-    ...(process.env.GG_TEST_PORT_START ? {} : { portStart: 5760, portCount: 10 }),
+    ...(process.env.GG_TEST_PORT_START === undefined && process.env.GG_TEST_PORT_COUNT === undefined
+      ? { portStart: 5760, portCount: 10 }
+      : {}),
   });
   const owners: Container[] = [];
   let app: Awaited<ReturnType<typeof buildApp>> | undefined;

@@ -4,6 +4,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- API test workers reserve their assigned loopback ports through subprocess startup,
+  restart and cleanup, so parallel fixtures cannot select the same port (#407).
+
 - A gateway started by the Windows launcher writes a bounded private log in the launcher folder
   (#438, ADR-0081): `gateway.log` and `gateway.log.1` of at most 4 MiB each with complete records,
   written by the gateway itself so it never waits on logging and keeps working after the launcher

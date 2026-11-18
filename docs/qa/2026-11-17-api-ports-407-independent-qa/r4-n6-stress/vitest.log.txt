@@ -1,0 +1,58 @@
+
+ RUN  v5.0.3 C:/Users/98jak/.codex/worktrees/gg-20261117-ports-407-qa/GraphGoblin/apps/api
+
+ × src/qa407/qa407-n6-b.test.ts > QA407 N6 stress worker B 8047ms
+   → non-exhaustion reservation errors: expected { EPERM: 13 } to deeply equal {}
+ × src/qa407/qa407-n6-a.test.ts > QA407 N6 stress worker A 8048ms
+   → non-exhaustion reservation errors: expected { EPERM: 12 } to deeply equal {}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/qa407/qa407-n6-a.test.ts > QA407 N6 stress worker A
+AssertionError: non-exhaustion reservation errors: expected { EPERM: 12 } to deeply equal {}
+
+- Expected
++ Received
+
+- {}
++ {
++   "EPERM": 12,
++ }
+
+ ❯ runN6 src/qa407/n6-stress.ts:60:67
+     58|   expect(counts.exhausted).toBeGreaterThan(0);
+     59|   expect.soft(counts.doubleGrant, 'double grants').toBe(0);
+     60|   expect.soft(reserveErrors, 'non-exhaustion reservation errors').toEq…
+       |                                                                   ^
+     61|   expect.soft(releaseErrors, 'release errors').toEqual({});
+     62| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/qa407/qa407-n6-b.test.ts > QA407 N6 stress worker B
+AssertionError: non-exhaustion reservation errors: expected { EPERM: 13 } to deeply equal {}
+
+- Expected
++ Received
+
+- {}
++ {
++   "EPERM": 13,
++ }
+
+ ❯ runN6 src/qa407/n6-stress.ts:60:67
+     58|   expect(counts.exhausted).toBeGreaterThan(0);
+     59|   expect.soft(counts.doubleGrant, 'double grants').toBe(0);
+     60|   expect.soft(reserveErrors, 'non-exhaustion reservation errors').toEq…
+       |                                                                   ^
+     61|   expect.soft(releaseErrors, 'release errors').toEqual({});
+     62| }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed (2)
+   Start at  23:14:07
+   Duration  8.47s (tests 98%, setup 1%)
+

@@ -9,7 +9,7 @@ import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { singleNodeLoop, FakeClock, CapturingLogger } from '@graphgoblin/engine/testing';
 import { HistoryCleanup } from './history-cleanup.js';
 import { buildApp } from './app.js';
-import { freePort } from './testing/api-subprocess.js';
+import { reserveApiPort } from './testing/api-port.js';
 import { createTestApp, type TestApp } from './testing/test-app.js';
 
 let app: TestApp | undefined;
@@ -604,13 +604,11 @@ it('serves HTTP requests while a startup cleanup pass is still reclaiming', asyn
   );
   await cleanup.start(false);
   const server = await buildApp({ ...app.container, historyCleanup: cleanup });
+  let reservation: Awaited<ReturnType<typeof reserveApiPort>> | undefined;
   try {
-    // Dedicated test port in the assigned API pool; no owner listener is probed.
+    reservation = await reserveApiPort();
     const url = await server.listen({
-      port: await freePort(
-        Number(process.env['GG_TEST_PORT_START'] ?? 5600),
-        Number(process.env['GG_TEST_PORT_COUNT'] ?? 100),
-      ),
+      port: reservation.port,
       host: '127.0.0.1',
     });
     await entered;
@@ -619,8 +617,12 @@ it('serves HTTP requests while a startup cleanup pass is still reclaiming', asyn
     expect(cleanup.status().cleaning).toBe(true);
   } finally {
     release();
-    await cleanup.stop();
-    await server.close();
+    try {
+      await cleanup.stop();
+    } finally {
+      await server.close();
+      await reservation?.release();
+    }
   }
 });
 
