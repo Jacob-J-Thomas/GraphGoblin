@@ -3,7 +3,8 @@
  * `data-field="<path>"` (forms/fields/shared.tsx `Row`, and the object, array, record, and union
  * fieldsets), where the path is relative to the form's value; the node editor marks its own fields
  * (`id`, `label`) and the config form with `data-field-scope` so an issue path such as
- * `config.routes.0.label` finds its control.
+ * `config.routes.0.label` finds its control. A record key holding the issue at its entry's path is
+ * marked `data-key-issue="<path>"`, and an issue's link focuses it (`focusIssuePath`).
  *
  * A field may sit in a collapsed disclosure (a form's Advanced group, a collapsed list item, #14),
  * which keeps its panel mounted but hidden: `focusField` opens every disclosure around the control
@@ -116,11 +117,22 @@ export function focusField(root: ParentNode, path: string): boolean {
 
 /**
  * Focus the field an issue path names inside the node editor: `config.<path>` in the config form
- * (scope `config`), anything else (`id`, `label`) among the node's own fields (scope `node`).
+ * (scope `config`), anything else (`id`, `label`) among the node's own fields (scope `node`). An
+ * issue at a record entry's path that is about the entry's key focuses that key: the form marks it
+ * with `data-key-issue="<path>"` while the key holds the issue, before the entry's value field.
  */
 export function focusIssuePath(root: ParentNode, path: string): boolean {
   const inConfig = path === 'config' || path.startsWith('config.');
   const scope = root.querySelector(`[data-field-scope="${inConfig ? 'config' : 'node'}"]`);
   if (!scope) return false;
-  return focusField(scope, inConfig ? path.slice('config'.length + 1) : path);
+  const relative = inConfig ? path.slice('config'.length + 1) : path;
+  const key = [...scope.querySelectorAll('[data-key-issue]')].find(
+    (el) => el.getAttribute('data-key-issue') === relative,
+  );
+  const control = key ? firstFocusable(key) : undefined;
+  if (control) {
+    control.focus();
+    return true;
+  }
+  return focusField(scope, relative);
 }
