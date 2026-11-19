@@ -1,0 +1,249 @@
+Sanitized verbatim gate excerpts. Machine-specific paths are replaced by <WORKTREE> and <TEMP>. Full logs are retained externally and are not part of this publication component.
+
+=== Original contract baseline: first clean old-source result ===
+src/base429-contract.test.ts (19 tests | 13 failed) 47ms
+   ❯ Codex config override keys (#429) (19)
+     × rejects top-level reserved key without discarding authored input 9ms
+     × rejects constructor without discarding authored input 3ms
+     × rejects prototype without discarding authored input 1ms
+     × rejects dotted reserved segment without discarding authored input 1ms
+     × rejects nested reserved segment without discarding authored input 2ms
+     × rejects space without discarding authored input 2ms
+     × rejects quoted segment without discarding authored input 2ms
+     × rejects empty segment without discarding authored input 1ms
+     × rejects leading dot without discarding authored input 1ms
+     × rejects trailing dot without discarding authored input 1ms
+     × rejects empty key without discarding authored input 1ms
+     × rejects non-ASCII key without discarding authored input 1ms
+     × rejects array table without discarding authored input 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects top-level reserved key without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects constructor without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects prototype without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects dotted reserved segment without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects nested reserved segment without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects space without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects quoted segment without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects empty segment without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects leading dot without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects trailing dot without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects empty key without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects non-ASCII key without discarding authored input
+ FAIL  src/base429-contract.test.ts > Codex config override keys (#429) > rejects array table without discarding authored input
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/base429-contract.test.ts:41:28
+     39|     const before = JSON.stringify(configOverrides);
+     40|     const parsed = InferenceConfigSchema.safeParse({ prompt, harnessOp…
+     41|     expect(parsed.success).toBe(false);
+       |                            ^
+     42|     if (!parsed.success)
+     43|       expect(parsed.error.issues).toContainEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 6 passed (19)
+   Start at  19:29:55
+   Duration  39.52s (import 96%, transform 3%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in <WORKTREE>/<PACKAGE>
+
+
+
+=== Candidate contract focused result ===
+Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  19:32:14
+   Duration  1.16s (import 55%, transform 38%, tests 5%, worker 1%)
+
+
+
+=== Candidate public API focused result ===
+Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  19:42:43
+   Duration  24.84s (tests 38%, transform 33%, import 29%)
+
+  Transform  transforming modules took 7.96s · 33% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+
+=== Generated-client broad suite: first failed result ===
+Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/templates.test.ts > creates an ordinary editable draft with the generated client without automation setup
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/templates.test.ts:19:1
+     17| }
+     18|
+     19| it('creates an ordinary editable draft with the generated client witho…
+       | ^
+     20|   const client = await setup();
+     21|   app!.harness.preflightResult = {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 10 passed (11)
+      Tests  1 failed | 102 passed (103)
+   Start at  19:46:01
+   Duration  55.32s (transform 37%, tests 35%, import 28%)
+
+  Transform  transforming modules took 79.09s · 37% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in <WORKTREE>/<PACKAGE>
+
+
+
+=== API broad suite: first failed result ===
+Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  FAIL  src/history-cleanup.test.ts > reclaims approved workspaces through the API with 1000 retained workspace users
+@graphgoblin/api:test:coverage: Error: Test timed out in 20000ms.
+@graphgoblin/api:test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@graphgoblin/api:test:coverage:  ❯ src/history-cleanup.test.ts:629:1
+@graphgoblin/api:test:coverage:     627| });
+@graphgoblin/api:test:coverage:     628|
+@graphgoblin/api:test:coverage:     629| it('reclaims approved workspaces through the API with 1000 retained wo…
+@graphgoblin/api:test:coverage:        | ^
+@graphgoblin/api:test:coverage:     630|   const { api, poll } = await controlled();
+@graphgoblin/api:test:coverage:     631|   const root = join(api.container.config.dataDir, 'retained-input');
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  FAIL  src/loop-deletion.test.ts > DELETE /loops/:id > returns 500 and rolls back history on a mid-delete storage failure
+@graphgoblin/api:test:coverage: Error: another GraphGoblin process holds <TEMP>/graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish
+@graphgoblin/api:test:coverage:  ❯ held src/data-dir-lock.ts:43:3
+@graphgoblin/api:test:coverage:      41|
+@graphgoblin/api:test:coverage:      42| const held = (path: string, detail?: string): Error =>
+@graphgoblin/api:test:coverage:      43|   new Error(
+@graphgoblin/api:test:coverage:        |   ^
+@graphgoblin/api:test:coverage:      44|     detail && !detail.startsWith('another GraphGoblin process')
+@graphgoblin/api:test:coverage:      45|       ? `${detail}: ${path}`
+@graphgoblin/api:test:coverage:  ❯ acquireRecovery src/data-dir-lock.ts:200:11
+@graphgoblin/api:test:coverage:  ❯ acquireDataDirLock src/data-dir-lock.ts:297:22
+@graphgoblin/api:test:coverage:  ❯ createContainer src/container.ts:188:16
+@graphgoblin/api:test:coverage:  ❯ createTestApp src/testing/test-app.ts:80:21
+@graphgoblin/api:test:coverage:  ❯ src/loop-deletion.test.ts:14:7
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  FAIL  src/reset/reset-chat-audio.test.ts > removes owned audio independently of an unreadable database
+@graphgoblin/api:test:coverage: Error: Test timed out in 20000ms.
+@graphgoblin/api:test:coverage: If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+@graphgoblin/api:test:coverage:  ❯ src/reset/reset-chat-audio.test.ts:103:43
+@graphgoblin/api:test:coverage:     101| });
+@graphgoblin/api:test:coverage:     102|
+@graphgoblin/api:test:coverage:     103| it.each(['unreadable', 'absent'] as const)(
+@graphgoblin/api:test:coverage:        |                                           ^
+@graphgoblin/api:test:coverage:     104|   'removes owned audio independently of an %s database',
+@graphgoblin/api:test:coverage:     105|   async (kind) => {
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:  Test Files  3 failed | 131 passed | 2 skipped (136)
+@graphgoblin/api:test:coverage:       Tests  3 failed | 2092 passed | 16 skipped (2111)
+@graphgoblin/api:test:coverage:    Start at  19:45:03
+@graphgoblin/api:test:coverage:    Duration  636.95s (tests 87%, import 11%, transform 1%)
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage:     Isolate  136 workers spawned · ~956ms startup each (spawn + environment, per file)
+@graphgoblin/api:test:coverage:              at least ~10.87s faster with isolate: false — reuses workers across files instead of one per file
+@graphgoblin/api:test:coverage: 
+@graphgoblin/api:test:coverage: [ELIFECYCLE] Command failed with exit code 1.
+
+ Tasks:    7 successful, 8 total
+Cached:    7 cached, 8 total
+  Time:    10m39.769s 
+Failed:    @graphgoblin/api#test:coverage
+
+@graphgoblin/api#test:coverage:  ERROR  command (<WORKTREE>\apps\api) pnpm.cmd run test:coverage exited (1)
+ ERROR  run failed: command  exited (1)
+
+
+=== Exact JSON1 punctuation-key observation ===
+{"path":"$.\"quoted\\\"key.with.dot\"","readback":null,"corrected":"{\"quoted\\\"key.with.dot\":true,\"features.prototype\":true}"}
+{"path":"$.\"features.prototype\"","readback":1,"corrected":"{\"quoted\\\"key.with.dot\":true}"}
+
+=== Sequential focused discriminators ===
+Each case ran once with its original test/hook deadlines. Coverage was not enabled; overlapping web coverage and actual CPU load are in focused-discriminators.json.
+
+
+--- 01-client-template: @graphgoblin/api-client / src/templates.test.ts ---
+Selected test: creates an ordinary editable draft with the generated client without automation setup
+
+ RUN  v5.0.3 <WORKTREE>/packages/api-client
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 1 skipped (2)
+   Start at  20:30:22
+   Duration  11.02s (import 53%, transform 30%, tests 17%)
+
+  Transform  transforming modules took 3.18s · 30% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+
+--- 02-api-cleanup-1000: @graphgoblin/api / src/history-cleanup.test.ts ---
+Selected test: reclaims approved workspaces through the API with 1000 retained workspace users
+
+ RUN  v5.0.3 <WORKTREE>/apps/api
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 24 skipped (25)
+   Start at  20:30:41
+   Duration  16.34s (tests 48%, import 33%, transform 19%)
+
+
+
+--- 03-api-delete-rollback: @graphgoblin/api / src/loop-deletion.test.ts ---
+Selected test: returns 500 and rolls back history on a mid-delete storage failure
+
+ RUN  v5.0.3 <WORKTREE>/apps/api
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 8 skipped (9)
+   Start at  20:31:06
+   Duration  10.30s (import 46%, transform 33%, tests 20%, setup 1%)
+
+  Transform  transforming modules took 3.28s · 33% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+
+
+--- 04-api-audio-unreadable: @graphgoblin/api / src/reset/reset-chat-audio.test.ts ---
+Selected test: removes owned audio independently of an unreadable database
+
+ RUN  v5.0.3 <WORKTREE>/apps/api
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 11 skipped (12)
+   Start at  20:31:26
+   Duration  18.37s (tests 74%, import 17%, transform 9%)
+

@@ -1,0 +1,280 @@
+{
+  "label": "browser",
+  "browser": {
+    "channel": "msedge",
+    "headless": true,
+    "profile": "fresh temporary directory, deleted after the run"
+  },
+  "gateway": {
+    "port": 6442,
+    "webDist": "apps/web/dist (this checkout)",
+    "apiDist": "apps/api/dist (this checkout)",
+    "store": "temporary, deleted after the run",
+    "stop": {
+      "steps": [
+        {
+          "action": "drain",
+          "status": 202
+        }
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  },
+  "expectedHeldMessage": "Key \"__proto__\" can't be used. The entry keeps its key \"<last key>\" until you choose another.",
+  "steps": [
+    {
+      "step": "sign in through the app Settings panel (key typed, never recorded)",
+      "ok": true
+    },
+    {
+      "step": "open the disposable inference node, Advanced: two saved entries",
+      "ok": true,
+      "server": [
+        [
+          "features.plugins",
+          false
+        ],
+        [
+          "gg_qa.notes",
+          "inert"
+        ]
+      ],
+      "shown": [
+        [
+          "features.plugins",
+          "false"
+        ],
+        [
+          "gg_qa.notes",
+          "\"inert\""
+        ]
+      ],
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": {
+          "role": "textbox",
+          "name": "Config overrides key 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value2": {
+          "role": "textbox",
+          "name": "Config overrides value 2",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        }
+      },
+      "advanced": "Advanced\n2 set",
+      "screenshot": "01-initial.png"
+    },
+    {
+      "step": "replace Key 2's text with __proto__ in one input (select all, insert text), then Tab away",
+      "focusAfterInput": "BODY",
+      "shown": [
+        [
+          "features.plugins",
+          "false"
+        ]
+      ],
+      "rows": {
+        "key1": {
+          "role": "textbox",
+          "name": "Config overrides key 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "value1": {
+          "role": "textbox",
+          "name": "Config overrides value 1",
+          "description": "",
+          "invalid": "false",
+          "focused": false
+        },
+        "key2": null,
+        "value2": null
+      },
+      "keyDescriptionIsHeldMessage": false,
+      "recordStatus": "",
+      "alerts": [],
+      "advanced": "Advanced\n2 set",
+      "serverBefore": [
+        [
+          "features.plugins",
+          false
+        ],
+        [
+          "gg_qa.notes",
+          "inert"
+        ]
+      ],
+      "serverAfter": [
+        [
+          "features.plugins",
+          false
+        ]
+      ],
+      "screenshot": "02-key2-replaced.png",
+      "focusAfterTab": "BUTTON",
+      "shownAfterTab": [
+        [
+          "features.plugins",
+          "false"
+        ]
+      ],
+      "recordStatusAfterTab": "",
+      "ok": false
+    },
+    {
+      "step": "type __proto__ key by key into Key 1",
+      "ok": false,
+      "keystrokes": 9,
+      "focusAfterEachKey": [
+        "Config overrides key 1",
+        "BODY"
+      ],
+      "shown": [],
+      "rows": {
+        "key1": null,
+        "value1": null,
+        "key2": null,
+        "value2": null
+      },
+      "recordStatus": "",
+      "alerts": [],
+      "advanced": "Advanced\n1 set",
+      "serverBefore": [
+        [
+          "features.plugins",
+          false
+        ]
+      ],
+      "serverAfter": [],
+      "screenshot": "03-key1-typed.png"
+    },
+    {
+      "step": "correct both Keys by typing ordinary names: feedback clears and the draft saves",
+      "ok": false,
+      "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('dialog').getByLabel('Config overrides key 1', { exact: true })\u001b[22m\n"
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "nonGetOrFailedResponses": [
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/shutdown"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/storage"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/harness/ollama/connection"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/model-catalog"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/chat/voice/config"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/harness/preflight"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/settings"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/system/model-defaults"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/classifier-models"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/secrets"
+    },
+    {
+      "status": 401,
+      "method": "GET",
+      "path": "/api-keys"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "path": "/loops/01M7S5Q0VNJYQKHTDR5TWEYJTA/validate"
+    },
+    {
+      "status": 200,
+      "method": "PUT",
+      "path": "/loops/01M7S5Q0VNJYQKHTDR5TWEYJTA/draft"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "path": "/loops/01M7S5Q0VNJYQKHTDR5TWEYJTA/validate"
+    },
+    {
+      "status": 200,
+      "method": "PUT",
+      "path": "/loops/01M7S5Q0VNJYQKHTDR5TWEYJTA/draft"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "path": "/loops/01M7S5Q0VNJYQKHTDR5TWEYJTA/validate"
+    }
+  ],
+  "passed": 2,
+  "failed": [
+    "replace Key 2's text with __proto__ in one input (select all, insert text), then Tab away",
+    "type __proto__ key by key into Key 1",
+    "correct both Keys by typing ordinary names: feedback clears and the draft saves"
+  ]
+}
