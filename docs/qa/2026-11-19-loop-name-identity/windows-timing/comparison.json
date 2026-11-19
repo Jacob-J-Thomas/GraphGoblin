@@ -1,0 +1,266 @@
+{
+  "runs": [
+    {
+      "order": "i2-names-timeout-pair-01",
+      "receiptSha256": "abd26146e30a8993202222dae6b8b54eb26cef96e73dc9100ce0dae74ab4f0ea",
+      "checks": [
+        {
+          "kind": "base",
+          "head": "d3f651c83779ded401878094d35374ac2f494d3d",
+          "case": "infra",
+          "args": [
+            "--filter",
+            "@graphgoblin/infrastructure",
+            "exec",
+            "vitest",
+            "run",
+            "src/sqlite/history-cleanup.test.ts",
+            "-t",
+            "does not let 61 budget-protected artifact jobs hide removable workspaces in a later window"
+          ],
+          "start": "2026-11-19T01:44:56.671250+00:00",
+          "end": "2026-11-19T01:45:11.901364+00:00",
+          "code": 0,
+          "passedOne": true,
+          "sha256": "76a49c83f043ad439fc31a5b8e360ed8e2f76f5b9dea87ea3a905b949758c83a",
+          "observations": [
+            "Test Files  1 passed (1)",
+            "Tests  1 passed | 37 skipped (38)",
+            "Duration  13.65s (tests 60%, import 27%, transform 13%)"
+          ]
+        },
+        {
+          "kind": "base",
+          "head": "d3f651c83779ded401878094d35374ac2f494d3d",
+          "case": "mcp",
+          "args": [
+            "--filter",
+            "@graphgoblin/mcp",
+            "exec",
+            "vitest",
+            "run",
+            "src/thread-history.test.ts",
+            "-t",
+            "MCP reads agree through persisted failure and resume with stale snapshots"
+          ],
+          "start": "2026-11-19T01:45:11.902969+00:00",
+          "end": "2026-11-19T01:45:45.662140+00:00",
+          "code": 0,
+          "passedOne": true,
+          "sha256": "d379d9580e9f490277937e7e1b876fb48b19815d666ff0bfc959297932a75d49",
+          "observations": [
+            "Test Files  1 passed (1)",
+            "Tests  1 passed | 1 skipped (2)",
+            "Duration  29.24s (transform 54%, import 31%, tests 15%)"
+          ]
+        },
+        {
+          "kind": "candidate",
+          "head": "14a84a180495b65e0788994b25974d05a2b94ca7",
+          "case": "infra",
+          "args": [
+            "--filter",
+            "@graphgoblin/infrastructure",
+            "exec",
+            "vitest",
+            "run",
+            "src/sqlite/history-cleanup.test.ts",
+            "-t",
+            "does not let 61 budget-protected artifact jobs hide removable workspaces in a later window"
+          ],
+          "start": "2026-11-19T01:45:48.539125+00:00",
+          "end": "2026-11-19T01:46:30.508189+00:00",
+          "code": 1,
+          "passedOne": false,
+          "sha256": "09b7dc80f1371027057ad9dbc841f94109e572887d19b42602f9f0d42e4aeb52",
+          "observations": [
+            "Error: Test timed out in 20000ms.",
+            "Test Files  1 failed (1)",
+            "Tests  1 failed | 37 skipped (38)",
+            "Duration  37.27s (tests 59%, transform 28%, import 13%)"
+          ]
+        },
+        {
+          "kind": "candidate",
+          "head": "14a84a180495b65e0788994b25974d05a2b94ca7",
+          "case": "mcp",
+          "args": [
+            "--filter",
+            "@graphgoblin/mcp",
+            "exec",
+            "vitest",
+            "run",
+            "src/thread-history.test.ts",
+            "-t",
+            "MCP reads agree through persisted failure and resume with stale snapshots"
+          ],
+          "start": "2026-11-19T01:46:30.509714+00:00",
+          "end": "2026-11-19T01:47:10.886676+00:00",
+          "code": 1,
+          "passedOne": false,
+          "sha256": "fb5832b37ba5a337f87b8c20703b839b9494242cc8be04afdc0caada12eeac7b",
+          "observations": [
+            "Error: Test timed out in 5000ms.",
+            "Test Files  1 failed (1)",
+            "Tests  1 failed | 1 skipped (2)",
+            "Duration  33.21s (transform 54%, import 30%, tests 16%)"
+          ]
+        }
+      ]
+    },
+    {
+      "order": "i2-names-timeout-pair-inverse-01",
+      "receiptSha256": "97ea6af0a8687df337bde9762fd41bef39c1c67f20b242154b8a31e587ea1069",
+      "checks": [
+        {
+          "kind": "candidate",
+          "head": "14a84a180495b65e0788994b25974d05a2b94ca7",
+          "case": "infra",
+          "args": [
+            "--filter",
+            "@graphgoblin/infrastructure",
+            "exec",
+            "vitest",
+            "run",
+            "src/sqlite/history-cleanup.test.ts",
+            "-t",
+            "does not let 61 budget-protected artifact jobs hide removable workspaces in a later window"
+          ],
+          "start": "2026-11-19T02:27:20.298078+00:00",
+          "end": "2026-11-19T02:27:28.037846+00:00",
+          "code": 0,
+          "passedOne": true,
+          "sha256": "7973ad0c829c88c880fad789d7f320c368fadf38d20dfab3ed3ff8adc224160b",
+          "observations": [
+            "Test Files  1 passed (1)",
+            "Tests  1 passed | 37 skipped (38)",
+            "Duration  6.79s (import 43%, tests 38%, transform 19%)"
+          ]
+        },
+        {
+          "kind": "candidate",
+          "head": "14a84a180495b65e0788994b25974d05a2b94ca7",
+          "case": "mcp",
+          "args": [
+            "--filter",
+            "@graphgoblin/mcp",
+            "exec",
+            "vitest",
+            "run",
+            "src/thread-history.test.ts",
+            "-t",
+            "MCP reads agree through persisted failure and resume with stale snapshots"
+          ],
+          "start": "2026-11-19T02:27:28.039932+00:00",
+          "end": "2026-11-19T02:27:38.318266+00:00",
+          "code": 0,
+          "passedOne": true,
+          "sha256": "4879fd2e4db79c024d86168e248e2d9cbe50deae68aae058a319940c084783e6",
+          "observations": [
+            "Test Files  1 passed (1)",
+            "Tests  1 passed | 1 skipped (2)",
+            "Duration  9.39s (import 52%, tests 25%, transform 23%)"
+          ]
+        },
+        {
+          "kind": "base",
+          "head": "d3f651c83779ded401878094d35374ac2f494d3d",
+          "case": "infra",
+          "args": [
+            "--filter",
+            "@graphgoblin/infrastructure",
+            "exec",
+            "vitest",
+            "run",
+            "src/sqlite/history-cleanup.test.ts",
+            "-t",
+            "does not let 61 budget-protected artifact jobs hide removable workspaces in a later window"
+          ],
+          "start": "2026-11-19T02:27:38.791671+00:00",
+          "end": "2026-11-19T02:27:45.981128+00:00",
+          "code": 0,
+          "passedOne": true,
+          "sha256": "aef0492b325411c336a6ed677384ed7f27d4d5d7b1566dea65dfafe96fd52740",
+          "observations": [
+            "Test Files  1 passed (1)",
+            "Tests  1 passed | 37 skipped (38)",
+            "Duration  5.91s (import 44%, tests 34%, transform 21%)"
+          ]
+        },
+        {
+          "kind": "base",
+          "head": "d3f651c83779ded401878094d35374ac2f494d3d",
+          "case": "mcp",
+          "args": [
+            "--filter",
+            "@graphgoblin/mcp",
+            "exec",
+            "vitest",
+            "run",
+            "src/thread-history.test.ts",
+            "-t",
+            "MCP reads agree through persisted failure and resume with stale snapshots"
+          ],
+          "start": "2026-11-19T02:27:45.983136+00:00",
+          "end": "2026-11-19T02:27:55.332401+00:00",
+          "code": 0,
+          "passedOne": true,
+          "sha256": "ff21e0623cdb8d5aa916ee092d1730e2fd512f3fc5794b07bd0a5b6e7dda9bfa",
+          "observations": [
+            "Test Files  1 passed (1)",
+            "Tests  1 passed | 1 skipped (2)",
+            "Duration  8.24s (import 52%, transform 26%, tests 23%)"
+          ]
+        }
+      ]
+    }
+  ],
+  "inverseProcessorSamples": [
+    {
+      "utc": "2026-11-19T02:27:20.3323054Z",
+      "cpu": 64,
+      "runQueue": 0
+    },
+    {
+      "utc": "2026-11-19T02:27:24.9642185Z",
+      "cpu": 35,
+      "runQueue": 0
+    },
+    {
+      "utc": "2026-11-19T02:27:29.5915228Z",
+      "cpu": 31,
+      "runQueue": 0
+    },
+    {
+      "utc": "2026-11-19T02:27:34.1953183Z",
+      "cpu": 28,
+      "runQueue": 0
+    },
+    {
+      "utc": "2026-11-19T02:27:38.8018057Z",
+      "cpu": 49,
+      "runQueue": 0
+    },
+    {
+      "utc": "2026-11-19T02:27:43.4155371Z",
+      "cpu": 45,
+      "runQueue": 0
+    },
+    {
+      "utc": "2026-11-19T02:27:48.0242334Z",
+      "cpu": 58,
+      "runQueue": 0
+    },
+    {
+      "utc": "2026-11-19T02:27:52.6297894Z",
+      "cpu": 26,
+      "runQueue": 0
+    },
+    {
+      "utc": "2026-11-19T02:27:57.2470421Z",
+      "cpu": 19,
+      "runQueue": 0
+    }
+  ],
+  "limits": "These samples and timings do not establish the cause of the earlier failures. The normal deadlines and assertions did not change."
+}

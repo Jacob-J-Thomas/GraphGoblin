@@ -1,0 +1,201 @@
+{
+  "issue": 473,
+  "unit": "U2.3",
+  "admittedBase": "d3f651c83779ded401878094d35374ac2f494d3d",
+  "coordinatorCombinedSourceCommit": "14a84a180495b65e0788994b25974d05a2b94ca7",
+  "runtime": {
+    "node": "v22.23.4",
+    "packageManager": "pnpm.cmd",
+    "frozenLockSha256": "3fda48ff6e5a65af5a280ede5364ea23ae21fb32c068e3e1cf8835c12a0916df"
+  },
+  "reproductionCommands": [
+    "pnpm.cmd build --filter=@graphgoblin/api --filter=@graphgoblin/mcp --filter=@graphgoblin/plugin-codex --filter=@graphgoblin/plugin-claude",
+    "pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/loop-names.test.ts",
+    "pnpm.cmd typecheck --filter=@graphgoblin/domain --filter=@graphgoblin/infrastructure --filter=@graphgoblin/mcp --filter=@graphgoblin/web --filter=@graphgoblin/plugin-codex --filter=@graphgoblin/plugin-claude --concurrency=2",
+    "pnpm.cmd lint --filter=@graphgoblin/domain --filter=@graphgoblin/infrastructure --filter=@graphgoblin/mcp --filter=@graphgoblin/web --filter=@graphgoblin/plugin-codex --filter=@graphgoblin/plugin-claude --concurrency=2",
+    "pnpm.cmd check:layers",
+    "pnpm.cmd check:deps",
+    "pnpm.cmd --filter @graphgoblin/web test:coverage --maxWorkers=2",
+    "pnpm.cmd --filter @graphgoblin/plugin-codex test:coverage",
+    "pnpm.cmd --filter @graphgoblin/plugin-claude test:coverage"
+  ],
+  "sourceHashes": [
+    {
+      "path": "apps/mcp/src/tools.ts",
+      "sha256": "8fa886e908a4a324217aff963d0e634863b7c7ab2c67b89cd09ddf56ee422a16"
+    },
+    {
+      "path": "apps/mcp/src/loop-names.test.ts",
+      "sha256": "7557091c4467ef2f13515a718c06e00536cfd6205e9deb1caf42f4571762b88f"
+    },
+    {
+      "path": "apps/web/src/lib/loop-names.ts",
+      "sha256": "730705f0940e278302616ba14349a3b25996a35e74af5d53f296c0c9f6c74520"
+    },
+    {
+      "path": "apps/web/src/lib/loop-names.test.ts",
+      "sha256": "10d7275ffb6d77a856eb0f37338ffa77840cad2bfce17c602dc5ef4ae1532606"
+    },
+    {
+      "path": "docs/07-api-and-streaming.md",
+      "sha256": "e1907644597a4cacae4bb4fa85da1f59a2b68aa4515bebfc408e8dedb27d8c30"
+    },
+    {
+      "path": "packages/domain/src/index.ts",
+      "sha256": "d7752e8c692e0aa09cf197e5799e1d8e495a49462f9b805d548c09c530a2f189"
+    },
+    {
+      "path": "packages/domain/src/loop-names.ts",
+      "sha256": "8cca17d7015ce39905dfc73f17bd0d66b7f0a74db1d9fd2cf607e791478e8c27"
+    },
+    {
+      "path": "packages/domain/src/loop-names.test.ts",
+      "sha256": "d08ba0794155a556ad2c91d4928f99a68c51d84b0feddc99472b1d23483d3021"
+    },
+    {
+      "path": "packages/infrastructure/src/sqlite/loop-names.ts",
+      "sha256": "b4e72b3a840cf50a5742fd5dfdadc3355638e68546f3d5b042329080bd01f070"
+    },
+    {
+      "path": "packages/infrastructure/src/sqlite/store-format.ts",
+      "sha256": "ea766e0fd67d488adfca97725cf2592fa1800ab2bc48c5f290da54cf2a4932b1"
+    }
+  ],
+  "manifests": [
+    {
+      "profile": "codex",
+      "artifact": "apps/plugin-codex/dist/marketplace/plugins/graphgoblin/.mcp.json",
+      "originalArtifactSha256": "6b51f64d1239b7b0cdd8c02d95c7137719e69bf307e6970355cc546164fe5936",
+      "sanitizedRegistration": {
+        "command": "node",
+        "args": [
+          "<workspace>/apps/mcp/dist/main.js"
+        ],
+        "env_vars": [
+          "GG_API_URL",
+          "GG_API_KEY"
+        ],
+        "startup_timeout_sec": 30,
+        "tool_timeout_sec": 660
+      }
+    },
+    {
+      "profile": "claude",
+      "artifact": "apps/plugin-claude/dist/plugin/graphgoblin/.mcp.json",
+      "originalArtifactSha256": "1748c87330c19937ae7f5c9af0bceb9685c40171555435d72d3fc312034ad816",
+      "sanitizedRegistration": {
+        "type": "stdio",
+        "command": "${GG_NODE_BINARY:-node}",
+        "args": [
+          "--require",
+          "${CLAUDE_PLUGIN_ROOT}/check-runtime.cjs",
+          "<workspace>/apps/mcp/dist/main.js",
+          "--draft-tools"
+        ]
+      }
+    }
+  ],
+  "originalExternalEvidenceBindings": [
+    {
+      "file": "baseline-public-first-results.jsonl",
+      "sha256": "4851106a61ec27c5aa22c2945391b31368165629ced42b1d89b7f7103ab130ee"
+    },
+    {
+      "file": "candidate-public-first-results.jsonl",
+      "sha256": "13b403a2b3039e73d44c0ed1df46653e910b3fb993af2ca5b5d87e175e625c4b"
+    },
+    {
+      "file": "baseline-build.log",
+      "sha256": "41ced713450eccebb41ff522cc135e118400ad40f5b2682a975c73ea5cb81463"
+    },
+    {
+      "file": "baseline-regression.log",
+      "sha256": "770edc1daef255643be50dad2e8d00e286f8e3e09815ece502119c2d82b24ac9"
+    },
+    {
+      "file": "baseline-public.log",
+      "sha256": "3a6c53558ad69243e1dfea7b5d75e9260fc54542c672451fb0915c8fe089b9c9"
+    },
+    {
+      "file": "candidate-build.log",
+      "sha256": "31fbf75d905801e85d21f3252ed7bc4f17c178df76882fa7e0b27140bf55763f"
+    },
+    {
+      "file": "candidate-regression.log",
+      "sha256": "6c2036abe5518eceed3a2e8722888d809e7a1439eafdd5d4aaf19dcd9d5cb408"
+    },
+    {
+      "file": "candidate-public.log",
+      "sha256": "4356b1a8f71f132b79076b87e4fda526eb7b6d4bdae88573695fda4ce7078017"
+    },
+    {
+      "file": "candidate-typecheck.log",
+      "sha256": "9a5e2e435d24c17ba34c332fd4e320b86efbfcceca85d832d9756ebde314aeca"
+    },
+    {
+      "file": "candidate-lint.log",
+      "sha256": "cd6d1d2d75ff557e71c6f54a2a8431325a968860cd9f2d4bf25cc79bd91a67ae"
+    },
+    {
+      "file": "candidate-lint-corrected.log",
+      "sha256": "9eecf8fa7ba362b362dbdc20d248cfafe0a29eff26ecdb31ee2827712d821528"
+    },
+    {
+      "file": "candidate-format.log",
+      "sha256": "15c13b10c2bcd5412ec2e4c8b8b0e5867940a5798116efea9a30bd467b21c110"
+    },
+    {
+      "file": "candidate-format-corrected.log",
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "file": "candidate-layers.log",
+      "sha256": "45aad4760f307e105b85b466c4e8bc7ca6162020b1356de2f2257d5d7b909f6c"
+    },
+    {
+      "file": "candidate-deps.log",
+      "sha256": "81c6f9527b5a982df1844d5c37e501b9ed1a8654bf4bed6b8f4a01bfd4d2aec0"
+    },
+    {
+      "file": "candidate-coverage.log",
+      "sha256": "ca1cbed38e0cc9cc2960254cb82b2b2c0c7ae19f4452e528b66bf218195b2ef2"
+    },
+    {
+      "file": "candidate-coverage-continuation.log",
+      "sha256": "3333507df3e4b47474b9396d7e17590ec689ae97d713eb2bd0054c6ef37f5f81"
+    },
+    {
+      "file": "candidate-codex-coverage.log",
+      "sha256": "3ab04aa34d386b094b1d0cdb0846f9dc691d4f6ca100dc8e4aa8903c51baa695"
+    },
+    {
+      "file": "candidate-claude-coverage.log",
+      "sha256": "1f38db2ec2025bc58f37e509e44f39c77de7965b5a3fd8dfa67c12f13733812c"
+    },
+    {
+      "file": "candidate-web-coverage.log",
+      "sha256": "505fbd9f1f4b3058501c79d333c9527fa86587958e77bcb61b5146eb2675f1c5"
+    },
+    {
+      "file": "probe-cleanup-readback.json",
+      "sha256": "477f74eeaeaebd0197b3738f93949835d85d987f0491f4dd5025b05f22d23f4c"
+    },
+    {
+      "file": "native-probe-counts.json",
+      "sha256": "9e11bb27694dc0dd2f2e1cc9bdeb0e742c35a068dc8bbfe262d429c66989d720"
+    },
+    {
+      "file": "author-source-sha256.json",
+      "sha256": "81df6a6c872c581717cbd04e9d73b003c7eec007f2e6ddc593c5ce4df35f3127"
+    },
+    {
+      "file": "baseline-summary.json",
+      "sha256": "e46093a214909f02227f16f66b3545244b147d54b01bd9444df0453964cf96c3"
+    },
+    {
+      "file": "candidate-summary.json",
+      "sha256": "58c6cf0044889941ebabc231731cd3ddb10802624707ba9da786e77f27604fe4"
+    }
+  ],
+  "derivation": "Source paths are repository-relative. Manifests retain their original artifact hashes but replace machine-specific checkout prefixes with <workspace>. Original source/evidence remain external; no production source is copied here. Raw private paths, ephemeral endpoints, PIDs and credentials are excluded. This public component is the author evidence only; root integrates independent QA, issue 472 and cross-run controls separately."
+}
