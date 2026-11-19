@@ -550,6 +550,353 @@ describe('a route ID typed through another row’s or a blank one (#481)', () =>
   });
 });
 
+describe('a device copy whose route rows claim one record (#481)', () => {
+  type Edge = LoopDefinitionInput['edges'][number];
+  /**
+   * The unsynced device copy an earlier editor (95c759b) left in IndexedDB, as captured in QA: the
+   * second route was typed from `no` to `yes`, and its map recorded both rows on `yes` naming `e1`,
+   * while the two `e1` records stayed on `yes` (to Done) and `no` (to Other), each with its own
+   * manual route. The current format admits it on the device; the API refuses its route IDs. With
+   * `second`, the second route's ID as another capture of the same draft had it.
+   */
+  function captured(second = 'yes'): {
+    definition: LoopDefinitionInput;
+    decisionRoutes: DecisionRoutes;
+  } {
+    const exit = {
+      outcome: 'success' as const,
+      returns: 'none' as const,
+      destinations: [{ kind: 'caller' as const }],
+    };
+    return {
+      definition: {
+        schemaVersion: 4,
+        name: 'Ownership shared rename-after-collision baseline',
+        description: 'Independent transient route-identity ownership QA',
+        settings: {
+          workingDirectory: { kind: 'temp' },
+          defaults: { byHarness: {} },
+          maxNodeVisits: 10,
+          runDeadlineSeconds: null,
+          structuredTimeoutMs: null,
+          subloopDepthLimit: 8,
+        },
+        variables: {},
+        nodes: [
+          {
+            id: 'start',
+            label: 'Start',
+            ui: { x: 0, y: 100 },
+            kind: 'trigger',
+            config: { type: 'manual', exposeTo: ['ui', 'api', 'mcp'] },
+          },
+          {
+            id: 'pick',
+            label: 'Pick',
+            ui: { x: 310, y: 100 },
+            kind: 'decision',
+            config: {
+              kind: 'expression',
+              jsonata: '"yes"',
+              routes: [
+                { id: 'yes', label: 'Yes' },
+                { id: second, label: 'No' },
+                { id: 'maybe', label: 'Maybe' },
+              ],
+            },
+          },
+          { id: 'done', label: 'Done', ui: { x: 810, y: 0 }, kind: 'exit', config: exit },
+          { id: 'other', label: 'Other', ui: { x: 810, y: 360 }, kind: 'exit', config: exit },
+        ],
+        edges: [
+          {
+            id: 's1',
+            from: { node: 'start', port: 'out' },
+            to: { node: 'pick', port: 'in' },
+            ui: { route: [220] },
+          },
+          {
+            id: 'e1',
+            from: { node: 'pick', port: 'yes' },
+            to: { node: 'done', port: 'in' },
+            ui: { route: [500, 200, 650] },
+          },
+          {
+            id: 'e1',
+            from: { node: 'pick', port: 'no' },
+            to: { node: 'other', port: 'in' },
+            ui: { route: [670] },
+          },
+          {
+            id: 'm1',
+            from: { node: 'pick', port: 'maybe' },
+            to: { node: 'done', port: 'in' },
+            ui: { route: [550, 440, 700] },
+          },
+        ],
+      },
+      decisionRoutes: {
+        pick: {
+          nextKey: 3,
+          rows: [
+            { key: 0, edgeIds: ['e1'], id: 'yes' },
+            { key: 1, edgeIds: ['e1'], id: 'yes' },
+            { key: 2, edgeIds: ['m1'], id: 'maybe' },
+          ],
+        },
+      },
+    };
+  }
+  /** As the editor restores an unsynced device copy (`useLoadEditor`), with or without its map. */
+  function restore(copy: ReturnType<typeof captured>, withMap = true) {
+    store().load('L1', copy.definition, {
+      dirty: true,
+      deviceSaved: true,
+      ...(withMap ? { decisionRoutes: copy.decisionRoutes } : {}),
+    });
+  }
+  const pickRoutes = (...ids: string[]) => ({
+    kind: 'expression' as const,
+    jsonata: '"yes"',
+    routes: ids.map((id, index) => ({ id, label: ['Yes', 'No', 'Maybe'][index]! })),
+  });
+  const rows = () => store().decisionRoutes['pick']!.rows.map((row) => [row.id, row.edgeIds]);
+  const listed = (index: number) =>
+    rowConnections(store().definition!, store().decisionRoutes, 'pick', index);
+  /** The fixture's records in stored order: `s1`, `e1` to Done, `e1` to Other, `m1`. */
+  const records = (definition: LoopDefinitionInput) => definition.edges as [Edge, Edge, Edge, Edge];
+  const on = (edge: Edge, port: string) => ({ ...edge, from: { ...edge.from, port } });
+
+  it('restores both rows’ claims as naming no owner, exactly as a load without the map', () => {
+    const copy = captured();
+    restore(copy);
+    expect(store().definition).toBe(copy.definition);
+    expect(rows()).toEqual([
+      ['yes', []],
+      ['yes', []],
+      ['maybe', ['m1']],
+    ]);
+    expect(listed(0)).toEqual([]);
+    expect(listed(1)).toEqual([]);
+    const restored = store().decisionRoutes;
+    restore(captured(), false);
+    expect(store().decisionRoutes).toEqual(restored);
+  });
+
+  it.each([
+    ['the second row', 1, ['yes', 'affirm', 'maybe']],
+    ['the first row', 0, ['yes2', 'yes', 'maybe']],
+  ])('renaming %s moves neither record, and Undo and Redo are exact', (_, row, ids) => {
+    const copy = captured();
+    restore(copy);
+    const loaded = store().decisionRoutes;
+    store().updateNode('pick', { config: pickRoutes(...ids) }, typing(`routes.${row}.id`));
+    const after = store().definition!;
+    expect(after.edges).toEqual(copy.definition.edges);
+    untouched(copy.definition);
+    expect(store().past).toHaveLength(1);
+    store().undo();
+    expect(store().definition).toBe(copy.definition);
+    expect(store().decisionRoutes).toBe(loaded);
+    store().redo();
+    expect(store().definition).toBe(after);
+  });
+
+  it.each([
+    ['the second row', 1],
+    ['the first row', 0],
+  ])('removing %s lists no connection and removes none', (_, row) => {
+    const copy = captured();
+    restore(copy);
+    expect(listed(row)).toEqual([]);
+    store().updateNode('pick', { config: pickRoutes('yes', 'maybe') }, removal(row));
+    const after = store().definition!;
+    expect(after.edges).toEqual(copy.definition.edges);
+    untouched(copy.definition);
+    store().undo();
+    expect(store().definition).toBe(copy.definition);
+    store().redo();
+    expect(store().definition).toBe(after);
+  });
+
+  it('lets the author repair it: retyped to the port its record is on, the row owns and removes only that record', () => {
+    const copy = captured();
+    restore(copy);
+    const [start, done, other, maybe] = records(copy.definition);
+    // Typed a key at a time: at `n` the first row is the one `yes` route and takes up its record;
+    // at `no` the second takes up the other `e1`, alone on its port.
+    for (const id of ['n', 'no'])
+      store().updateNode('pick', { config: pickRoutes('yes', id, 'maybe') }, typing('routes.1.id'));
+    untouched(copy.definition);
+    expect(listed(0)).toEqual([done]);
+    expect(listed(1)).toEqual([other]);
+    pause();
+    store().updateNode('pick', { config: pickRoutes('yes', 'maybe') }, removal(1));
+    expect(edges()).toEqual([start, done, maybe]);
+    untouched(copy.definition, [2]);
+    expect(validateDraft(store().definition!).issues.map((issue) => issue.code)).not.toContain(
+      'DUPLICATE_EDGE_ID',
+    );
+    store().undo();
+    store().undo();
+    expect(store().definition).toBe(copy.definition);
+  });
+
+  it('keeps no refused claim to act on later: after reload, and after a blank ID', () => {
+    const copy = captured();
+    const [, done] = records(copy.definition);
+    // The refused rename, then the device copy as the mirror keeps it, reloaded.
+    restore(copy);
+    store().updateNode(
+      'pick',
+      { config: pickRoutes('yes', 'affirm', 'maybe') },
+      typing('routes.1.id'),
+    );
+    expect(rows()).toEqual([
+      ['yes', ['e1']],
+      ['affirm', []],
+      ['maybe', ['m1']],
+    ]);
+    store().load('L1', store().definition!, {
+      dirty: true,
+      deviceSaved: true,
+      decisionRoutes: store().decisionRoutes,
+    });
+    // The first row is now the one `yes` route: its record follows it, the other stays.
+    store().updateNode(
+      'pick',
+      { config: pickRoutes('yes2', 'affirm', 'maybe') },
+      typing('routes.0.id'),
+    );
+    expect(edges()[1]).toEqual(on(done, 'yes2'));
+    untouched(copy.definition, [1]);
+    // Blank, then named: the second row never takes the first row's record.
+    restore(captured());
+    for (const [row, ids] of [
+      [1, ['yes', '', 'maybe']],
+      [0, ['yes2', '', 'maybe']],
+      [1, ['yes2', 'affirm', 'maybe']],
+    ] as const) {
+      store().updateNode('pick', { config: pickRoutes(...ids) }, typing(`routes.${row}.id`));
+      pause();
+    }
+    expect(edges()[1]).toEqual(on(done, 'yes2'));
+    expect(edges()[2]).toEqual(copy.definition.edges[2]);
+    expect(listed(1)).toEqual([]);
+  });
+
+  it('takes up a record through a row’s ID without moving another record of that id', () => {
+    // The captured draft loaded without its map (as from the server), the second row retyped to
+    // `no`: read on its old port `yes`, `e1` would name the Done record, which must stay.
+    const copy = captured();
+    restore(copy, false);
+    store().updateNode('pick', { config: pickRoutes('yes', 'no', 'maybe') }, typing('routes.1.id'));
+    untouched(copy.definition);
+    const [, done, other] = records(copy.definition);
+    expect(listed(0)).toEqual([done]);
+    expect(listed(1)).toEqual([other]);
+  });
+
+  it('keeps every record through unrelated edits', () => {
+    const copy = captured();
+    restore(copy);
+    store().updateMeta({ name: 'Renamed' });
+    store().moveNode('done', { x: 999, y: 9 });
+    store().updateNode(
+      'pick',
+      {
+        config: {
+          ...pickRoutes('yes', 'yes', 'maybe'),
+          routes: [
+            { id: 'yes', label: 'Yes please' },
+            { id: 'yes', label: 'No' },
+            { id: 'maybe', label: 'Maybe' },
+          ],
+        },
+      },
+      typing('routes.0.label'),
+    );
+    untouched(copy.definition);
+  });
+
+  it('still trusts each row’s claim a readable device map names on its own port', () => {
+    // As the same QA captured the device copy after Undo: the second route back on `no`.
+    const readable = captured('no');
+    readable.decisionRoutes = {
+      pick: {
+        nextKey: 3,
+        rows: [
+          { key: 0, edgeIds: ['e1'], id: 'yes' },
+          { key: 1, edgeIds: ['e1'], id: 'no' },
+          { key: 2, edgeIds: ['m1'], id: 'maybe' },
+        ],
+      },
+    };
+    const [start, done, other, maybe] = records(readable.definition);
+    restore(readable);
+    expect(listed(1)).toEqual([other]);
+    store().updateNode(
+      'pick',
+      { config: pickRoutes('yes', 'yes', 'maybe') },
+      typing('routes.1.id'),
+    );
+    store().updateNode(
+      'pick',
+      { config: pickRoutes('yes', 'affirm', 'maybe') },
+      typing('routes.1.id'),
+    );
+    expect(edges()).toEqual([start, done, on(other, 'affirm'), maybe]);
+    restore(readable);
+    store().updateNode('pick', { config: pickRoutes('yes', 'maybe') }, removal(1));
+    expect(edges()).toEqual([start, done, maybe]);
+  });
+
+  it('still trusts unique ids in a device map whose rows read one ID', () => {
+    // As the same QA captured it with the `no → Other` record called `e2`.
+    const unique = captured();
+    unique.definition.edges[2] = { ...unique.definition.edges[2]!, id: 'e2' };
+    unique.decisionRoutes = {
+      pick: {
+        nextKey: 3,
+        rows: [
+          { key: 0, edgeIds: ['e1'], id: 'yes' },
+          { key: 1, edgeIds: ['e2'], id: 'yes' },
+          { key: 2, edgeIds: ['m1'], id: 'maybe' },
+        ],
+      },
+    };
+    const [start, done, other, maybe] = records(unique.definition);
+    restore(unique);
+    expect(listed(1)).toEqual([other]);
+    store().updateNode(
+      'pick',
+      { config: pickRoutes('yes', 'affirm', 'maybe') },
+      typing('routes.1.id'),
+    );
+    expect(edges()).toEqual([start, done, on(other, 'affirm'), maybe]);
+    restore(unique);
+    store().updateNode('pick', { config: pickRoutes('yes', 'maybe') }, removal(1));
+    expect(edges()).toEqual([start, done, maybe]);
+  });
+});
+
+describe('a record two rows came to claim while editing (#481)', () => {
+  it.each([
+    ['the second row', 1, ['yes', 'affirm', 'maybe']],
+    ['the first row', 0, ['affirm', 'yes', 'maybe']],
+  ])('renaming %s after section JSON gave both one ID moves no record', (_, row, ids) => {
+    const definition = withinDecision();
+    definition.edges[2] = { ...definition.edges[2]!, id: 'e2' };
+    store().load('L1', definition);
+    // JSON names routes by ID: `no` is gone with its record, and both rows read `yes`.
+    store().updateNode('pick', { config: routes('yes', 'yes', 'maybe') }, replacement);
+    pause();
+    store().updateNode('pick', { config: routes(...ids) }, typing(`routes.${row}.id`));
+    expect(edges()).toEqual([definition.edges[0], definition.edges[1], definition.edges[3]]);
+    untouched(definition, [2]);
+  });
+});
+
 describe('repairing a shared id in the editor (#481)', () => {
   it('removes the Decision route, adds it back and draws it again, then edits by id as usual', () => {
     const definition = acrossSources();

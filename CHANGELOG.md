@@ -10,8 +10,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   rewrites another edge's output port, and removing a route or replacing its JSON no longer removes
   another node's edge with the same id. A row keeps naming its own record while its ID is typed
   blank, invalid or the same as another row's, so renaming or removing it then never changes the
-  other row's record. Reset route, segment drags and nudges, and a moved card's route reset refuse
-  a shared id as Remove connection does, changing nothing. Selecting such a
+  other row's record. A record two rows name, as in a device copy an earlier editor left after
+  such a collision, belongs to neither: renaming or removing either row keeps it and its manual
+  route, as a load without the device copy's table does, and retyping a row to the port its own
+  record is on lets that row's removal repair the shared id. Reset route, segment drags and
+  nudges, and a moved card's route reset refuse a shared id as Remove connection does, changing
+  nothing. Selecting such a
   connection shows a note with the reason and the repair at once; Reset route and Remove connection
   stay focusable but unavailable, described by the note, and clicking them changes nothing. The
   repair leads with removing a Decision route (its review lists just that connection), adding it

@@ -299,7 +299,13 @@ export function decisionRouteEdges(
             }
       }
     }
-    const claimed = new Set(before.rows.flatMap((row) => row.edgeIds));
+    // The records a row's claim names. A row with a unique ID takes up the others on its port: by
+    // record, since another record sharing an id that a row owns is not that row's.
+    const claimed = new Set(
+      before.rows.flatMap((row) =>
+        row.edgeIds.map((edgeId) => ownedRecord(outgoing, edgeId, row.id)),
+      ),
+    );
     // A kept row's records are on its port before this edit (`RouteRow.id`).
     const previousIds = new Map(before.rows.map((row) => [row.key, row.id]));
     rows = rows.map((row) => {
@@ -310,7 +316,7 @@ export function decisionRouteEdges(
         outgoing.filter(
           (edge) =>
             row.edgeIds.includes(edge.id) ||
-            (unique && !claimed.has(edge.id) && edge.from.port === row.id),
+            (unique && !claimed.has(edge) && edge.from.port === row.id),
         ),
       );
       const existing = previousIds.has(row.key);
