@@ -204,3 +204,21 @@ intent requires its preceding intent's engineering delivery under the approved s
 Admission is not implementation completion, QA, review, CI,
 merge or owner acceptance. The [intent 1 execution ledger](2026-11-17-intent-1-execution.md)
 records bounded ownership and gate states.
+
+## November 19 checkpoint
+
+Intent 1 completed engineering at main `d3f651c83779ded401878094d35374ac2f494d3d`.
+Five of the 26 core issues in the ordered batch had merged. The two bounded diagnostic
+issues remained open. Their original causes are unresolved. The Mac GUI handoff and
+PR #460's separate hold continued. [Intent 1 delivery record](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6996568162)
+
+| Core issues   | Final integration record                                                                                                            |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| #488 and #496 | [CI scheduling and native Windows evidence](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/508#issuecomment-6991155749)         |
+| #407          | [API subprocess port ownership](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/507#issuecomment-6992685770)                     |
+| #495          | [Gate entry through aliased checkout paths](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/504#issuecomment-6993532974)         |
+| #466          | [Probe cancellation, timeout reporting and cleanup](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/505#issuecomment-6996556265) |
+
+Intent 2 entered the pipeline at that commit. The four issues received their approved
+delivery gate and named independent QA agents after checking their states, native
+relationships and open PRs. [Intent 2 admission and model assignments](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/279#issuecomment-6996675245)

@@ -1,0 +1,5249 @@
+{
+  "upstreamPublicInputs": {
+    "identity.json": "0263cae77768e9cc054ea4e1bc7a31f40e84760c83860b7d5153ef51a7ac9872",
+    "analysis/assertions-baseline-04-vs-candidate-01.json": "e718c0bf42e27a9338bea482c6536b12cbac101eb91769cc77a0d04273ebce6d",
+    "records/baseline-04/provenance.json": "263459f5c63434b5475b95e4ba33a7d392d776c9abcc42d3419af4905b548c36",
+    "records/candidate-01/provenance.json": "1abd860655f87abbd7825c5f0ed8bcaa8268fe567df991b0964866e0b7705ed4",
+    "records/baseline-04/results.json": "4adc74590ff70e69f91b30d7ee02d552e39dff3d4c95e50f72639495ab9bdb58",
+    "records/candidate-01/results.json": "aff84b6911c6311d037ec035306187285f36618f8d2d21f314218f92283c24bb"
+  },
+  "selection": [
+    "Source and build identity fields plus artifact and driver hashes",
+    "Predicate names, sections and verdicts with details omitted",
+    "All lookup rows from the independent assertion results",
+    "Only #472 coverage scenarios from both driver results"
+  ],
+  "terminalWorker": {
+    "exitCode": 0,
+    "result": "success",
+    "reason": "end_turn"
+  },
+  "identity": {
+    "base": "d3f651c83779ded401878094d35374ac2f494d3d",
+    "candidate": "14a84a180495b65e0788994b25974d05a2b94ca7",
+    "tree": "4602f86fa5f1153cca60f33ba6411fcc4780f775",
+    "sourceFileSha256": {
+      "apps/api/src/loop-names.test.ts": "ea4e90b56eeda18ed552f41f57d404ae1f430f5c2df8a688e69b8f423fe21425",
+      "apps/mcp/src/loop-names.test.ts": "7557091c4467ef2f13515a718c06e00536cfd6205e9deb1caf42f4571762b88f",
+      "apps/mcp/src/tools.ts": "8fa886e908a4a324217aff963d0e634863b7c7ab2c67b89cd09ddf56ee422a16",
+      "apps/web/src/lib/loop-names.test.ts": "10d7275ffb6d77a856eb0f37338ffa77840cad2bfce17c602dc5ef4ae1532606",
+      "apps/web/src/lib/loop-names.ts": "730705f0940e278302616ba14349a3b25996a35e74af5d53f296c0c9f6c74520",
+      "docs/07-api-and-streaming.md": "e1907644597a4cacae4bb4fa85da1f59a2b68aa4515bebfc408e8dedb27d8c30",
+      "docs/delivery/2026-11-17-five-intents-register.md": "e4f64b491fd940d1c358f31c47dfcc436e57a1017b7f019cf211b30e5b6fbf6c",
+      "packages/domain/src/index.ts": "d7752e8c692e0aa09cf197e5799e1d8e495a49462f9b805d548c09c530a2f189",
+      "packages/domain/src/loop-names.test.ts": "d08ba0794155a556ad2c91d4928f99a68c51d84b0feddc99472b1d23483d3021",
+      "packages/domain/src/loop-names.ts": "8cca17d7015ce39905dfc73f17bd0d66b7f0a74db1d9fd2cf607e791478e8c27",
+      "packages/infrastructure/src/sqlite/loop-names.ts": "b4e72b3a840cf50a5742fd5dfdadc3355638e68546f3d5b042329080bd01f070",
+      "packages/infrastructure/src/sqlite/store-format.ts": "ea766e0fd67d488adfca97725cf2592fa1800ab2bc48c5f290da54cf2a4932b1"
+    },
+    "trackedTreeCleanBeforeRuns": true,
+    "trackedTreeCleanAfterRuns": true,
+    "driver": [
+      "names-qa.mjs copy=1007d09753d6839d327db8a6efc3728029795a599fbe5ad5a5ad3beff56bbfff baselineManifest=1007d09753d6839d327db8a6efc3728029795a599fbe5ad5a5ad3beff56bbfff IDENTICAL",
+      "fixture-second-owner-key.mjs copy=558ea2568b4c1a1f871821e1a97d89c82e3efb994534ab7ad77a4bddb1762ab2 baselineManifest=558ea2568b4c1a1f871821e1a97d89c82e3efb994534ab7ad77a4bddb1762ab2 IDENTICAL",
+      "compare.mjs copy=9f91cd9d9075762340149b3acd670905effa43b72eb78b7e42d8a2ef1eb56fbc baselineManifest=9f91cd9d9075762340149b3acd670905effa43b72eb78b7e42d8a2ef1eb56fbc IDENTICAL"
+    ],
+    "baselineManifestBefore": [
+      "verified_at=2026-11-19T02:01:43Z",
+      "manifest_sha256=115971b6f200c67c12bf63d71d7b45d3d3383b1b3bd93e7b4c6851efa5a052c5",
+      "manifest_entries=57",
+      "ok=57",
+      "not_ok_lines:"
+    ],
+    "baselineManifestAfter": [
+      "verified_at=2026-11-19T02:13:55Z",
+      "manifest_sha256=115971b6f200c67c12bf63d71d7b45d3d3383b1b3bd93e7b4c6851efa5a052c5",
+      "ok=57",
+      "files_on_disk=58",
+      "not_ok_lines:"
+    ]
+  },
+  "wiringAndBuild": {
+    "baseline": {
+      "head": "d3f651c83779ded401878094d35374ac2f494d3d",
+      "driverSha256": "1007d09753d6839d327db8a6efc3728029795a599fbe5ad5a5ad3beff56bbfff",
+      "fixtureSha256": "558ea2568b4c1a1f871821e1a97d89c82e3efb994534ab7ad77a4bddb1762ab2",
+      "mcpSdkVersion": "1.32.1 (<checkout>\\node_modules\\.pnpm\\@modelcontextprotocol+sdk@1_826f42287f009fec6949df81351e07b0\\node_modules\\@modelcontextprotocol\\sdk)",
+      "mcpResolverSha256": "d7458dd89e31658c8678beffc147c8db0ea0578c617fb930434a4a0877b451a1",
+      "pluginWirings": {
+        "codex": {
+          "manifest": "apps/plugin-codex/dist/marketplace/plugins/graphgoblin/.mcp.json",
+          "manifestSha256": "4c369c08a47604674221a1a7457b1544146c7b3d647f81ff6f8908b3b3958d87"
+        },
+        "claude": {
+          "manifest": "apps/plugin-claude/dist/plugin/graphgoblin/.mcp.json",
+          "manifestSha256": "97e90ad0fc8fb00229aee2b9fd108033d0cfa87dd05ca90ce2f47693c37fc31d"
+        }
+      }
+    },
+    "candidate": {
+      "head": "14a84a180495b65e0788994b25974d05a2b94ca7",
+      "driverSha256": "1007d09753d6839d327db8a6efc3728029795a599fbe5ad5a5ad3beff56bbfff",
+      "fixtureSha256": "558ea2568b4c1a1f871821e1a97d89c82e3efb994534ab7ad77a4bddb1762ab2",
+      "mcpSdkVersion": "1.32.1 (<checkout>\\node_modules\\.pnpm\\@modelcontextprotocol+sdk@1_826f42287f009fec6949df81351e07b0\\node_modules\\@modelcontextprotocol\\sdk)",
+      "mcpResolverSha256": "6af0a6ab5d7e5f0459570933fb30975b518f5708a529d5466a37e64e4b46bc72",
+      "pluginWirings": {
+        "codex": {
+          "manifest": "apps/plugin-codex/dist/marketplace/plugins/graphgoblin/.mcp.json",
+          "manifestSha256": "4c369c08a47604674221a1a7457b1544146c7b3d647f81ff6f8908b3b3958d87"
+        },
+        "claude": {
+          "manifest": "apps/plugin-claude/dist/plugin/graphgoblin/.mcp.json",
+          "manifestSha256": "97e90ad0fc8fb00229aee2b9fd108033d0cfa87dd05ca90ce2f47693c37fc31d"
+        }
+      }
+    }
+  },
+  "summary": {
+    "baseline": {
+      "label": "baseline",
+      "head": "d3f651c83779ded401878094d35374ac2f494d3d",
+      "startedAt": "2026-11-19T01:53:05.962Z",
+      "byKind": {
+        "setup": {
+          "pass": 13,
+          "fail": 0
+        },
+        "control": {
+          "pass": 71,
+          "fail": 0
+        },
+        "coverage": {
+          "pass": 13,
+          "fail": 0
+        },
+        "target": {
+          "pass": 0,
+          "fail": 40
+        },
+        "informational": {
+          "pass": 4,
+          "fail": 0
+        }
+      },
+      "firstFailure": {
+        "id": "473.mcp.codex.A.L04",
+        "kind": "target",
+        "at": "2026-11-19T01:53:27.889Z"
+      }
+    },
+    "candidate": {
+      "label": "candidate",
+      "head": "14a84a180495b65e0788994b25974d05a2b94ca7",
+      "startedAt": "2026-11-19T02:03:17.495Z",
+      "byKind": {
+        "setup": {
+          "pass": 13,
+          "fail": 0
+        },
+        "control": {
+          "pass": 71,
+          "fail": 0
+        },
+        "coverage": {
+          "pass": 13,
+          "fail": 0
+        },
+        "target": {
+          "pass": 40,
+          "fail": 0
+        },
+        "informational": {
+          "pass": 4,
+          "fail": 0
+        }
+      },
+      "firstFailure": null
+    },
+    "transitions": {
+      "setup: pass -> pass": 13,
+      "control: pass -> pass": 71,
+      "coverage: pass -> pass": 13,
+      "target: fail -> pass": 40,
+      "informational: pass -> pass": 4
+    },
+    "targets": [
+      "473.mcp.codex.A.L04",
+      "473.mcp.codex.A.L05",
+      "473.mcp.codex.A.L06",
+      "473.mcp.codex.A.L07",
+      "473.mcp.codex.A.L09",
+      "473.mcp.codex.A.L10",
+      "473.mcp.codex.A.L11",
+      "473.mcp.codex.A.L13",
+      "473.mcp.codex.A.L15",
+      "473.mcp.codex.A.L28",
+      "473.mcp.codex.A.L29",
+      "473.mcp.codex.A.L33",
+      "473.mcp.codex.A.roundtrip-listed-names",
+      "473.mcp.codex.A.R03",
+      "473.mcp.codex.A.R04",
+      "473.mcp.codex.B.B04",
+      "473.mcp.codex.B.B05",
+      "473.mcp.claude.A.L04",
+      "473.mcp.claude.A.L05",
+      "473.mcp.claude.A.L06",
+      "473.mcp.claude.A.L07",
+      "473.mcp.claude.A.L09",
+      "473.mcp.claude.A.L10",
+      "473.mcp.claude.A.L11",
+      "473.mcp.claude.A.L13",
+      "473.mcp.claude.A.L15",
+      "473.mcp.claude.A.L28",
+      "473.mcp.claude.A.L29",
+      "473.mcp.claude.A.L33",
+      "473.mcp.claude.A.roundtrip-listed-names",
+      "473.mcp.claude.A.R03",
+      "473.mcp.claude.A.R04",
+      "473.mcp.claude.B.B04",
+      "473.mcp.claude.B.B05",
+      "473.stub.codex.S03",
+      "473.stub.codex.S04",
+      "473.stub.codex.S05",
+      "473.stub.claude.S03",
+      "473.stub.claude.S04",
+      "473.stub.claude.S05"
+    ],
+    "informational": [
+      {
+        "id": "473.mcp.codex.A.L34",
+        "request": "\"<lower:ids.exact>\"",
+        "baseline": "resolved ids.namedAsExactId",
+        "candidate": "resolved ids.namedAsExactId"
+      },
+      {
+        "id": "473.mcp.codex.A.L35",
+        "request": "\" <ids.exact> \"",
+        "baseline": "resolved ids.namedAsExactId",
+        "candidate": "resolved ids.namedAsExactId"
+      },
+      {
+        "id": "473.mcp.claude.A.L34",
+        "request": "\"<lower:ids.exact>\"",
+        "baseline": "resolved ids.namedAsExactId",
+        "candidate": "resolved ids.namedAsExactId"
+      },
+      {
+        "id": "473.mcp.claude.A.L35",
+        "request": "\" <ids.exact> \"",
+        "baseline": "resolved ids.namedAsExactId",
+        "candidate": "resolved ids.namedAsExactId"
+      }
+    ],
+    "candidateHttpStatusCounts": {
+      "200": 35,
+      "201": 25,
+      "202": 2,
+      "204": 3,
+      "401": 2,
+      "404": 7,
+      "409": 18
+    },
+    "httpTallyDiff": [],
+    "mcpOutcomeTallyDiff": [
+      {
+        "k": "claude:A describe_loop error LOOP_NOT_FOUND",
+        "baseline": 19,
+        "candidate": 4
+      },
+      {
+        "k": "claude:A describe_loop ok",
+        "baseline": 37,
+        "candidate": 52
+      },
+      {
+        "k": "claude:A start_run error LOOP_NOT_FOUND",
+        "baseline": 2,
+        "candidate": 0
+      },
+      {
+        "k": "claude:A start_run ok",
+        "baseline": 2,
+        "candidate": 4
+      },
+      {
+        "k": "claude:A wait_for_run ok",
+        "baseline": 2,
+        "candidate": 4
+      },
+      {
+        "k": "claude:B describe_loop error LOOP_NOT_FOUND",
+        "baseline": 5,
+        "candidate": 3
+      },
+      {
+        "k": "claude:B describe_loop ok",
+        "baseline": 1,
+        "candidate": 3
+      },
+      {
+        "k": "claude:stub describe_loop error AMBIGUOUS_LOOP_NAME",
+        "baseline": 2,
+        "candidate": 5
+      },
+      {
+        "k": "claude:stub describe_loop error LOOP_NOT_FOUND",
+        "baseline": 3,
+        "candidate": 1
+      },
+      {
+        "k": "claude:stub describe_loop ok",
+        "baseline": 3,
+        "candidate": 2
+      },
+      {
+        "k": "codex:A describe_loop error LOOP_NOT_FOUND",
+        "baseline": 19,
+        "candidate": 4
+      },
+      {
+        "k": "codex:A describe_loop ok",
+        "baseline": 37,
+        "candidate": 52
+      },
+      {
+        "k": "codex:A start_run error LOOP_NOT_FOUND",
+        "baseline": 2,
+        "candidate": 0
+      },
+      {
+        "k": "codex:A start_run ok",
+        "baseline": 2,
+        "candidate": 4
+      },
+      {
+        "k": "codex:A wait_for_run ok",
+        "baseline": 2,
+        "candidate": 4
+      },
+      {
+        "k": "codex:B describe_loop error LOOP_NOT_FOUND",
+        "baseline": 5,
+        "candidate": 3
+      },
+      {
+        "k": "codex:B describe_loop ok",
+        "baseline": 1,
+        "candidate": 3
+      },
+      {
+        "k": "codex:stub describe_loop error AMBIGUOUS_LOOP_NAME",
+        "baseline": 2,
+        "candidate": 5
+      },
+      {
+        "k": "codex:stub describe_loop error LOOP_NOT_FOUND",
+        "baseline": 3,
+        "candidate": 1
+      },
+      {
+        "k": "codex:stub describe_loop ok",
+        "baseline": 3,
+        "candidate": 2
+      }
+    ],
+    "assertions": {
+      "total": 329,
+      "failed": 0
+    }
+  },
+  "assertions": [
+    {
+      "section": "identity",
+      "name": "candidate HEAD is the PR #512 candidate",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "baseline HEAD is the base",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "candidate tracked tree clean at run start",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "same driver bytes (sha256) in both runs",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "same fixture bytes (sha256) in both runs",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "driver version i2-names-qa/3 in both runs",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "candidate Node v22.23.4",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "shipped entry point unchanged: apps/plugin-codex/dist/marketplace/plugins/graphgoblin/.mcp.json",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "shipped entry point unchanged: apps/plugin-claude/dist/plugin/graphgoblin/.mcp.json",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "shipped entry point unchanged: apps/plugin-claude/dist/plugin/graphgoblin/check-runtime.cjs",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "MCP resolver was rebuilt (apps/mcp/dist/tools.js differs from baseline)",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "Codex wiring declared command/args/env_vars identical to baseline",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "Claude wiring declared command/args identical to baseline",
+      "pass": true
+    },
+    {
+      "section": "identity",
+      "name": "same MCP SDK version",
+      "pass": true
+    },
+    {
+      "section": "scenario-set",
+      "name": "same scenario IDs, same order",
+      "pass": true
+    },
+    {
+      "section": "scenario-set",
+      "name": "same kind per scenario ID",
+      "pass": true
+    },
+    {
+      "section": "scenario-set",
+      "name": "baseline: every scenario has at least one check (no vacuous pass)",
+      "pass": true
+    },
+    {
+      "section": "scenario-set",
+      "name": "baseline: verdict equals all-checks-pass",
+      "pass": true
+    },
+    {
+      "section": "scenario-set",
+      "name": "baseline: no scenario threw a script error",
+      "pass": true
+    },
+    {
+      "section": "scenario-set",
+      "name": "candidate: every scenario has at least one check (no vacuous pass)",
+      "pass": true
+    },
+    {
+      "section": "scenario-set",
+      "name": "candidate: verdict equals all-checks-pass",
+      "pass": true
+    },
+    {
+      "section": "scenario-set",
+      "name": "candidate: no scenario threw a script error",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L01 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L01 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L02 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L02 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L03 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L03 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L04 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L04 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L05 achieves the policy (resolved ids.padded via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L05 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L06 achieves the policy (resolved ids.padded via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L06 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L07 achieves the policy (resolved ids.padded via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L07 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L08 achieves the policy (resolved ids.double via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L08 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L09 achieves the policy (resolved ids.double via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L09 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L10 achieves the policy (resolved ids.double via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L10 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L11 achieves the policy (resolved ids.single via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L11 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L12 achieves the policy (resolved ids.tab via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L12 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L13 achieves the policy (resolved ids.tab via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L13 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L14 achieves the policy (resolved ids.nbsp via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L14 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L15 achieves the policy (resolved ids.nbsp via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L15 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L16 achieves the policy (resolved ids.mixed via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L16 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L17 achieves the policy (resolved ids.nfc via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L17 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L18 achieves the policy (resolved ids.nfd via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L18 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L19 achieves the policy (resolved ids.sharpS via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L19 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L20 achieves the policy (resolved ids.upperSS via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L20 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L21 achieves the policy (resolved ids.kelvin via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L21 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L22 achieves the policy (resolved ids.plainI via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L22 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L23 achieves the policy (resolved ids.dottedI via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L23 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L24 achieves the policy (resolved ids.exact via id)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L24 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L25 achieves the policy (resolved ids.namedAsFakeUlid via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L25 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L26 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L26 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L27 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L27 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L28 achieves the policy (resolved ids.x_new via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L28 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L29 achieves the policy (resolved ids.x_new via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L29 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L30 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L30 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L31 achieves the policy (resolved ids.x_new via id)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L31 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.L32 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L32 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.L33 achieves the policy (resolved ids.multi_new via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L33 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:informational",
+      "name": "473.mcp.codex.A.L34 achieves the policy (resolved ids.namedAsExactId via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L34 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:informational",
+      "name": "473.mcp.codex.A.L35 achieves the policy (resolved ids.namedAsExactId via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.L35 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.R01 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.R01 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.A.R02 achieves the policy (resolved ids.exact via id)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.R02 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.R03 achieves the policy (resolved ids.padded via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.R03 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.R04 achieves the policy (resolved ids.x_new via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.A.R04 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.B.B01 achieves the policy (resolved ids.ownerB_exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.B.B01 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.B.B02 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.B.B02 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.B.B03 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.B.B03 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.B.B04 achieves the policy (resolved ids.x_ownerB via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.B.B04 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.B.B05 achieves the policy (resolved ids.x_ownerB via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.B.B05 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.codex.B.B06 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.codex.B.B06 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L01 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L01 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L02 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L02 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L03 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L03 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L04 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L04 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L05 achieves the policy (resolved ids.padded via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L05 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L06 achieves the policy (resolved ids.padded via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L06 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L07 achieves the policy (resolved ids.padded via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L07 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L08 achieves the policy (resolved ids.double via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L08 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L09 achieves the policy (resolved ids.double via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L09 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L10 achieves the policy (resolved ids.double via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L10 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L11 achieves the policy (resolved ids.single via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L11 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L12 achieves the policy (resolved ids.tab via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L12 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L13 achieves the policy (resolved ids.tab via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L13 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L14 achieves the policy (resolved ids.nbsp via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L14 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L15 achieves the policy (resolved ids.nbsp via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L15 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L16 achieves the policy (resolved ids.mixed via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L16 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L17 achieves the policy (resolved ids.nfc via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L17 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L18 achieves the policy (resolved ids.nfd via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L18 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L19 achieves the policy (resolved ids.sharpS via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L19 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L20 achieves the policy (resolved ids.upperSS via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L20 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L21 achieves the policy (resolved ids.kelvin via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L21 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L22 achieves the policy (resolved ids.plainI via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L22 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L23 achieves the policy (resolved ids.dottedI via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L23 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L24 achieves the policy (resolved ids.exact via id)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L24 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L25 achieves the policy (resolved ids.namedAsFakeUlid via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L25 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L26 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L26 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L27 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L27 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L28 achieves the policy (resolved ids.x_new via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L28 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L29 achieves the policy (resolved ids.x_new via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L29 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L30 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L30 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L31 achieves the policy (resolved ids.x_new via id)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L31 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.L32 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L32 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.L33 achieves the policy (resolved ids.multi_new via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L33 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:informational",
+      "name": "473.mcp.claude.A.L34 achieves the policy (resolved ids.namedAsExactId via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L34 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:informational",
+      "name": "473.mcp.claude.A.L35 achieves the policy (resolved ids.namedAsExactId via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.L35 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.R01 achieves the policy (resolved ids.exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.R01 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.A.R02 achieves the policy (resolved ids.exact via id)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.R02 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.R03 achieves the policy (resolved ids.padded via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.R03 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.R04 achieves the policy (resolved ids.x_new via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.A.R04 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.B.B01 achieves the policy (resolved ids.ownerB_exact via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.B.B01 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.B.B02 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.B.B02 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.B.B03 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.B.B03 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.B.B04 achieves the policy (resolved ids.x_ownerB via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.B.B04 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.B.B05 achieves the policy (resolved ids.x_ownerB via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.B.B05 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.mcp.claude.B.B06 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.mcp.claude.B.B06 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.codex.S01 achieves the policy (ambiguous [stub.1, stub.2])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.codex.S01 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.codex.S02 achieves the policy (ambiguous [stub.1, stub.2])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.codex.S02 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.stub.codex.S03 achieves the policy (ambiguous [stub.3, stub.4])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.codex.S03 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.stub.codex.S04 achieves the policy (ambiguous [stub.3, stub.4])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.codex.S04 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.stub.codex.S05 achieves the policy (ambiguous [stub.3, stub.4])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.codex.S05 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.codex.S06 achieves the policy (resolved stub.5 via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.codex.S06 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.codex.S07 achieves the policy (resolved stub.5 via id)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.codex.S07 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.codex.S08 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.codex.S08 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.claude.S01 achieves the policy (ambiguous [stub.1, stub.2])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.claude.S01 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.claude.S02 achieves the policy (ambiguous [stub.1, stub.2])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.claude.S02 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.stub.claude.S03 achieves the policy (ambiguous [stub.3, stub.4])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.claude.S03 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.stub.claude.S04 achieves the policy (ambiguous [stub.3, stub.4])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.claude.S04 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.stub.claude.S05 achieves the policy (ambiguous [stub.3, stub.4])",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.claude.S05 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.claude.S06 achieves the policy (resolved stub.5 via name)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.claude.S06 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.claude.S07 achieves the policy (resolved stub.5 via id)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.claude.S07 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:control",
+      "name": "473.stub.claude.S08 achieves the policy (not-found)",
+      "pass": true
+    },
+    {
+      "section": "lookup:same-case",
+      "name": "473.stub.claude.S08 is the same semantic case in both runs",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.codex.A.roundtrip-listed-names: all 21 listed names resolve per policy",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "codex: every real stored owner-A name is policy-unique (real API admits no equivalents)",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "473.mcp.claude.A.roundtrip-listed-names: all 21 listed names resolve per policy",
+      "pass": true
+    },
+    {
+      "section": "lookup:target",
+      "name": "claude: every real stored owner-A name is policy-unique (real API admits no equivalents)",
+      "pass": true
+    },
+    {
+      "section": "plugin-stdio",
+      "name": "codex: shipped command launched over stdio and exposes list_loops/describe_loop/start_run",
+      "pass": true
+    },
+    {
+      "section": "id-precedence",
+      "name": "codex: L24 exact ID resolves ids.exact (not the loop named that ID)",
+      "pass": true
+    },
+    {
+      "section": "id-precedence",
+      "name": "codex: R02 start_run by exact ID ran ids.exact",
+      "pass": true
+    },
+    {
+      "section": "id-precedence",
+      "name": "codex: L25 ULID-shaped non-ID falls back to the loop named it",
+      "pass": true
+    },
+    {
+      "section": "id-precedence",
+      "name": "codex: stub S07 exact ID wins and is fetched directly (no list)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "codex: list_loops = owner A HTTP listing byte-for-byte, no owner B loop",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "codex: B01 owner B resolves its own \"QA Exact Name\" (not owner A's)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "codex: B02 owner A data invisible to owner B (truthful not-found)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "codex: B03 owner A data invisible to owner B (truthful not-found)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "codex: B06 owner A data invisible to owner B (truthful not-found)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "codex: B04/B05 owner B \" x \" found by \"X\" and \" x \" (owner B's own row)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "codex: L32 owner B ID invisible to owner A",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "codex: no key -> API 401 UNAUTHORIZED, never a name verdict",
+      "pass": true
+    },
+    {
+      "section": "list-guidance",
+      "name": "codex: L26 truthful LOOP_NOT_FOUND with list_loops guidance",
+      "pass": true
+    },
+    {
+      "section": "list-guidance",
+      "name": "codex: L27 truthful LOOP_NOT_FOUND with list_loops guidance",
+      "pass": true
+    },
+    {
+      "section": "list-guidance",
+      "name": "codex: L30 truthful LOOP_NOT_FOUND with list_loops guidance",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: L17 resolves only ids.nfc",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: L18 resolves only ids.nfd",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: L19 resolves only ids.sharpS",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: L20 resolves only ids.upperSS",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: L21 resolves only ids.kelvin",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: L22 resolves only ids.plainI",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: L23 resolves only ids.dottedI",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: NFC and NFD stay distinct loops",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: ß and SS stay distinct (no full folding)",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "codex: İ and i stay distinct (locale-independent lowercase)",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "codex: S01 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "codex: S02 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "codex: S03 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "codex: S04 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "codex: S05 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "plugin-stdio",
+      "name": "claude: shipped command launched over stdio and exposes list_loops/describe_loop/start_run",
+      "pass": true
+    },
+    {
+      "section": "id-precedence",
+      "name": "claude: L24 exact ID resolves ids.exact (not the loop named that ID)",
+      "pass": true
+    },
+    {
+      "section": "id-precedence",
+      "name": "claude: R02 start_run by exact ID ran ids.exact",
+      "pass": true
+    },
+    {
+      "section": "id-precedence",
+      "name": "claude: L25 ULID-shaped non-ID falls back to the loop named it",
+      "pass": true
+    },
+    {
+      "section": "id-precedence",
+      "name": "claude: stub S07 exact ID wins and is fetched directly (no list)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "claude: list_loops = owner A HTTP listing byte-for-byte, no owner B loop",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "claude: B01 owner B resolves its own \"QA Exact Name\" (not owner A's)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "claude: B02 owner A data invisible to owner B (truthful not-found)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "claude: B03 owner A data invisible to owner B (truthful not-found)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "claude: B06 owner A data invisible to owner B (truthful not-found)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "claude: B04/B05 owner B \" x \" found by \"X\" and \" x \" (owner B's own row)",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "claude: L32 owner B ID invisible to owner A",
+      "pass": true
+    },
+    {
+      "section": "owner-scope",
+      "name": "claude: no key -> API 401 UNAUTHORIZED, never a name verdict",
+      "pass": true
+    },
+    {
+      "section": "list-guidance",
+      "name": "claude: L26 truthful LOOP_NOT_FOUND with list_loops guidance",
+      "pass": true
+    },
+    {
+      "section": "list-guidance",
+      "name": "claude: L27 truthful LOOP_NOT_FOUND with list_loops guidance",
+      "pass": true
+    },
+    {
+      "section": "list-guidance",
+      "name": "claude: L30 truthful LOOP_NOT_FOUND with list_loops guidance",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: L17 resolves only ids.nfc",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: L18 resolves only ids.nfd",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: L19 resolves only ids.sharpS",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: L20 resolves only ids.upperSS",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: L21 resolves only ids.kelvin",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: L22 resolves only ids.plainI",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: L23 resolves only ids.dottedI",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: NFC and NFD stay distinct loops",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: ß and SS stay distinct (no full folding)",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "claude: İ and i stay distinct (locale-independent lowercase)",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "claude: S01 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "claude: S02 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "claude: S03 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "claude: S04 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "claude: S05 AMBIGUOUS_LOOP_NAME listing both twins, list-only upstream",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "D04: API admission refuses every MCP-equivalent spelling (409) and admits NFC/NFD, ß/SS, İ/i",
+      "pass": true
+    },
+    {
+      "section": "non-normalization",
+      "name": "D01: every authored name stored verbatim (201)",
+      "pass": true
+    },
+    {
+      "section": "synthetic-ambiguity",
+      "name": "stub: every upstream request carried the forwarded GG_API_KEY",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "all 13 #472 coverage scenarios pass with real public API calls",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "create X 201; equivalent \" x \" while active 409 with no row added",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "foreign owner: B creates \" x \" 201; B GET/DELETE of A loop 404; A intact",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "delete 204; old ID GET/DELETE/PUT draft 404 and unlisted",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "reuse: \" x \" re-created 201 with a new distinct ULID, verbatim spelling",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "active-row conflict: X, x, \"  X  \", \"X \", \" x \", import X, draft rename x all 409; probe name kept",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "per-owner rule: B creating X conflicts with its own \" x \" (409)",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "internal-whitespace reuse: delete 204, re-create 201 new ID, old 404, equivalent 409",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "in-use: waiting run blocks delete 409 LOOP_IN_USE and keeps the name; after cancel delete 204 and re-create 201",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "every #472 observed status/code/name identical to baseline (IDs masked)",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "codex: MCP finds the re-created \" x \" by \" x \" and \"X\" (L28/L29) and starts it (R04)",
+      "pass": true
+    },
+    {
+      "section": "472",
+      "name": "claude: MCP finds the re-created \" x \" by \" x \" and \"X\" (L28/L29) and starts it (R04)",
+      "pass": true
+    },
+    {
+      "section": "dynamic-ids",
+      "name": "every recorded candidate ID is a ULID",
+      "pass": true
+    },
+    {
+      "section": "dynamic-ids",
+      "name": "every recorded candidate ID was minted during the candidate run window",
+      "pass": true
+    },
+    {
+      "section": "dynamic-ids",
+      "name": "recorded candidate IDs are pairwise distinct",
+      "pass": true
+    },
+    {
+      "section": "dynamic-ids",
+      "name": "no candidate ID reuses a baseline ID (fresh disposable store)",
+      "pass": true
+    },
+    {
+      "section": "dynamic-ids",
+      "name": "owner A catalog = 21 loops: 1 seeded system loop + 20 QA loops, all labelled",
+      "pass": true
+    },
+    {
+      "section": "dynamic-ids",
+      "name": "owner B catalog = its \" x \" and \"QA Exact Name\" only",
+      "pass": true
+    },
+    {
+      "section": "http-status",
+      "name": "no 5xx among the candidate run HTTP calls",
+      "pass": true
+    },
+    {
+      "section": "http-status",
+      "name": "HTTP (method, path, owner, status, code) tally identical to baseline",
+      "pass": true
+    },
+    {
+      "section": "processes",
+      "name": "every QA-owned process (git, CLI, fixture, API, 8 MCP servers) not alive at finish",
+      "pass": true
+    },
+    {
+      "section": "processes",
+      "name": "API, CLI and fixture exited 0",
+      "pass": true
+    },
+    {
+      "section": "processes",
+      "name": "gateway drained by POST /system/shutdown 202 and exited 0 without force",
+      "pass": true
+    },
+    {
+      "section": "processes",
+      "name": "disposable workspace removed, not kept",
+      "pass": true
+    },
+    {
+      "section": "processes",
+      "name": "driver exit 0 with no first failure",
+      "pass": true
+    },
+    {
+      "section": "privacy",
+      "name": "no gg_ token, Bearer value or authorization header value in either run directory",
+      "pass": true
+    }
+  ],
+  "lookupRows": [
+    {
+      "id": "473.mcp.codex.A.L01",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Exact Name\"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Exact Name\"",
+        "policy": "resolved ids.exact via name",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L02",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa exact name\"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa exact name\"",
+        "policy": "resolved ids.exact via name",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L03",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"  QA Exact Name  \"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"  QA Exact Name  \"",
+        "policy": "resolved ids.exact via name",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L04",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA  Exact   Name\"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA  Exact   Name\"",
+        "policy": "resolved ids.exact via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L05",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"  QA Padded  \"",
+      "policy": "resolved ids.padded via name",
+      "driverExpected": "resolved ids.padded via name",
+      "observed": "resolved ids.padded",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"  QA Padded  \"",
+        "policy": "resolved ids.padded via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L06",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA Padded\"",
+      "policy": "resolved ids.padded via name",
+      "driverExpected": "resolved ids.padded via name",
+      "observed": "resolved ids.padded",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA Padded\"",
+        "policy": "resolved ids.padded via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L07",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"qa padded\"",
+      "policy": "resolved ids.padded via name",
+      "driverExpected": "resolved ids.padded via name",
+      "observed": "resolved ids.padded",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"qa padded\"",
+        "policy": "resolved ids.padded via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L08",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA  Double   Space\"",
+      "policy": "resolved ids.double via name",
+      "driverExpected": "resolved ids.double via name",
+      "observed": "resolved ids.double",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA  Double   Space\"",
+        "policy": "resolved ids.double via name",
+        "observed": "resolved ids.double",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L09",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA Double Space\"",
+      "policy": "resolved ids.double via name",
+      "driverExpected": "resolved ids.double via name",
+      "observed": "resolved ids.double",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA Double Space\"",
+        "policy": "resolved ids.double via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L10",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"qa double space\"",
+      "policy": "resolved ids.double via name",
+      "driverExpected": "resolved ids.double via name",
+      "observed": "resolved ids.double",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"qa double space\"",
+        "policy": "resolved ids.double via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L11",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA  Single   Space  Stored\"",
+      "policy": "resolved ids.single via name",
+      "driverExpected": "resolved ids.single via name",
+      "observed": "resolved ids.single",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA  Single   Space  Stored\"",
+        "policy": "resolved ids.single via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L12",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA\\tTab Name\"",
+      "policy": "resolved ids.tab via name",
+      "driverExpected": "resolved ids.tab via name",
+      "observed": "resolved ids.tab",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA\\tTab Name\"",
+        "policy": "resolved ids.tab via name",
+        "observed": "resolved ids.tab",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L13",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA Tab Name\"",
+      "policy": "resolved ids.tab via name",
+      "driverExpected": "resolved ids.tab via name",
+      "observed": "resolved ids.tab",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA Tab Name\"",
+        "policy": "resolved ids.tab via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L14",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA\\u00A0NBSP Name\"",
+      "policy": "resolved ids.nbsp via name",
+      "driverExpected": "resolved ids.nbsp via name",
+      "observed": "resolved ids.nbsp",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA\\u00A0NBSP Name\"",
+        "policy": "resolved ids.nbsp via name",
+        "observed": "resolved ids.nbsp",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L15",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA NBSP Name\"",
+      "policy": "resolved ids.nbsp via name",
+      "driverExpected": "resolved ids.nbsp via name",
+      "observed": "resolved ids.nbsp",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA NBSP Name\"",
+        "policy": "resolved ids.nbsp via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L16",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa mixed case\"",
+      "policy": "resolved ids.mixed via name",
+      "driverExpected": "resolved ids.mixed via name",
+      "observed": "resolved ids.mixed",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa mixed case\"",
+        "policy": "resolved ids.mixed via name",
+        "observed": "resolved ids.mixed",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L17",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Caf\\u00E9\"",
+      "policy": "resolved ids.nfc via name",
+      "driverExpected": "resolved ids.nfc via name",
+      "observed": "resolved ids.nfc",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Caf\\u00E9\"",
+        "policy": "resolved ids.nfc via name",
+        "observed": "resolved ids.nfc",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L18",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Cafe\\u0301\"",
+      "policy": "resolved ids.nfd via name",
+      "driverExpected": "resolved ids.nfd via name",
+      "observed": "resolved ids.nfd",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Cafe\\u0301\"",
+        "policy": "resolved ids.nfd via name",
+        "observed": "resolved ids.nfd",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L19",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa stra\\u00DFe\"",
+      "policy": "resolved ids.sharpS via name",
+      "driverExpected": "resolved ids.sharpS via name",
+      "observed": "resolved ids.sharpS",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa stra\\u00DFe\"",
+        "policy": "resolved ids.sharpS via name",
+        "observed": "resolved ids.sharpS",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L20",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa strasse\"",
+      "policy": "resolved ids.upperSS via name",
+      "driverExpected": "resolved ids.upperSS via name",
+      "observed": "resolved ids.upperSS",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa strasse\"",
+        "policy": "resolved ids.upperSS via name",
+        "observed": "resolved ids.upperSS",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L21",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa k kelvin\"",
+      "policy": "resolved ids.kelvin via name",
+      "driverExpected": "resolved ids.kelvin via name",
+      "observed": "resolved ids.kelvin",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa k kelvin\"",
+        "policy": "resolved ids.kelvin via name",
+        "observed": "resolved ids.kelvin",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L22",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa i dotted\"",
+      "policy": "resolved ids.plainI via name",
+      "driverExpected": "resolved ids.plainI via name",
+      "observed": "resolved ids.plainI",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa i dotted\"",
+        "policy": "resolved ids.plainI via name",
+        "observed": "resolved ids.plainI",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L23",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA \\u0130 DOTTED\"",
+      "policy": "resolved ids.dottedI via name",
+      "driverExpected": "resolved ids.dottedI via name",
+      "observed": "resolved ids.dottedI",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA \\u0130 DOTTED\"",
+        "policy": "resolved ids.dottedI via name",
+        "observed": "resolved ids.dottedI",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L24",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.exact>\"",
+      "policy": "resolved ids.exact via id",
+      "driverExpected": "resolved ids.exact via id",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.exact>\"",
+        "policy": "resolved ids.exact via id",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L25",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"01KQ4NAMEDQA00000000000000\"",
+      "policy": "resolved ids.namedAsFakeUlid via name",
+      "driverExpected": "resolved ids.namedAsFakeUlid via name",
+      "observed": "resolved ids.namedAsFakeUlid",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"01KQ4NAMEDQA00000000000000\"",
+        "policy": "resolved ids.namedAsFakeUlid via name",
+        "observed": "resolved ids.namedAsFakeUlid",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L26",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"01KQ4ABSENTQA0000000000000\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"01KQ4ABSENTQA0000000000000\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L27",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Never Created\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Never Created\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L28",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\" x \"",
+      "policy": "resolved ids.x_new via name",
+      "driverExpected": "resolved ids.x_new via name",
+      "observed": "resolved ids.x_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\" x \"",
+        "policy": "resolved ids.x_new via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L29",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"X\"",
+      "policy": "resolved ids.x_new via name",
+      "driverExpected": "resolved ids.x_new via name",
+      "observed": "resolved ids.x_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"X\"",
+        "policy": "resolved ids.x_new via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L30",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.x_old>\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.x_old>\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L31",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.x_new>\"",
+      "policy": "resolved ids.x_new via id",
+      "driverExpected": "resolved ids.x_new via id",
+      "observed": "resolved ids.x_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.x_new>\"",
+        "policy": "resolved ids.x_new via id",
+        "observed": "resolved ids.x_new",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L32",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.x_ownerB>\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.x_ownerB>\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L33",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"Reuse  Multi   Space\"",
+      "policy": "resolved ids.multi_new via name",
+      "driverExpected": "resolved ids.multi_new via name",
+      "observed": "resolved ids.multi_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"Reuse  Multi   Space\"",
+        "policy": "resolved ids.multi_new via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L34",
+      "kind": "informational",
+      "catalog": "A",
+      "request": "\"<lower:ids.exact>\"",
+      "policy": "resolved ids.namedAsExactId via name",
+      "driverExpected": "resolved ids.namedAsExactId via name",
+      "observed": "resolved ids.namedAsExactId",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<lower:ids.exact>\"",
+        "policy": "resolved ids.namedAsExactId via name",
+        "observed": "resolved ids.namedAsExactId",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.L35",
+      "kind": "informational",
+      "catalog": "A",
+      "request": "\" <ids.exact> \"",
+      "policy": "resolved ids.namedAsExactId via name",
+      "driverExpected": "resolved ids.namedAsExactId via name",
+      "observed": "resolved ids.namedAsExactId",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\" <ids.exact> \"",
+        "policy": "resolved ids.namedAsExactId via name",
+        "observed": "resolved ids.namedAsExactId",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.R01",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Exact Name\"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Exact Name\"",
+        "policy": "resolved ids.exact via name",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.R02",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.exact>\"",
+      "policy": "resolved ids.exact via id",
+      "driverExpected": "resolved ids.exact via id",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.exact>\"",
+        "policy": "resolved ids.exact via id",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.R03",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA Padded\"",
+      "policy": "resolved ids.padded via name",
+      "driverExpected": "resolved ids.padded via name",
+      "observed": "resolved ids.padded",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA Padded\"",
+        "policy": "resolved ids.padded via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.A.R04",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"X\"",
+      "policy": "resolved ids.x_new via name",
+      "driverExpected": "resolved ids.x_new via name",
+      "observed": "resolved ids.x_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"X\"",
+        "policy": "resolved ids.x_new via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.B.B01",
+      "kind": "control",
+      "catalog": "B",
+      "request": "\"QA Exact Name\"",
+      "policy": "resolved ids.ownerB_exact via name",
+      "driverExpected": "resolved ids.ownerB_exact via name",
+      "observed": "resolved ids.ownerB_exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Exact Name\"",
+        "policy": "resolved ids.ownerB_exact via name",
+        "observed": "resolved ids.ownerB_exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.B.B02",
+      "kind": "control",
+      "catalog": "B",
+      "request": "\"<ids.exact>\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.exact>\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.B.B03",
+      "kind": "control",
+      "catalog": "B",
+      "request": "\"  QA Padded  \"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"  QA Padded  \"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.B.B04",
+      "kind": "target",
+      "catalog": "B",
+      "request": "\"X\"",
+      "policy": "resolved ids.x_ownerB via name",
+      "driverExpected": "resolved ids.x_ownerB via name",
+      "observed": "resolved ids.x_ownerB",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"X\"",
+        "policy": "resolved ids.x_ownerB via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.B.B05",
+      "kind": "target",
+      "catalog": "B",
+      "request": "\" x \"",
+      "policy": "resolved ids.x_ownerB via name",
+      "driverExpected": "resolved ids.x_ownerB via name",
+      "observed": "resolved ids.x_ownerB",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\" x \"",
+        "policy": "resolved ids.x_ownerB via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.codex.B.B06",
+      "kind": "control",
+      "catalog": "B",
+      "request": "\"<ids.x_new>\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.x_new>\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L01",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Exact Name\"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Exact Name\"",
+        "policy": "resolved ids.exact via name",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L02",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa exact name\"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa exact name\"",
+        "policy": "resolved ids.exact via name",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L03",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"  QA Exact Name  \"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"  QA Exact Name  \"",
+        "policy": "resolved ids.exact via name",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L04",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA  Exact   Name\"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA  Exact   Name\"",
+        "policy": "resolved ids.exact via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L05",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"  QA Padded  \"",
+      "policy": "resolved ids.padded via name",
+      "driverExpected": "resolved ids.padded via name",
+      "observed": "resolved ids.padded",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"  QA Padded  \"",
+        "policy": "resolved ids.padded via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L06",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA Padded\"",
+      "policy": "resolved ids.padded via name",
+      "driverExpected": "resolved ids.padded via name",
+      "observed": "resolved ids.padded",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA Padded\"",
+        "policy": "resolved ids.padded via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L07",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"qa padded\"",
+      "policy": "resolved ids.padded via name",
+      "driverExpected": "resolved ids.padded via name",
+      "observed": "resolved ids.padded",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"qa padded\"",
+        "policy": "resolved ids.padded via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L08",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA  Double   Space\"",
+      "policy": "resolved ids.double via name",
+      "driverExpected": "resolved ids.double via name",
+      "observed": "resolved ids.double",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA  Double   Space\"",
+        "policy": "resolved ids.double via name",
+        "observed": "resolved ids.double",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L09",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA Double Space\"",
+      "policy": "resolved ids.double via name",
+      "driverExpected": "resolved ids.double via name",
+      "observed": "resolved ids.double",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA Double Space\"",
+        "policy": "resolved ids.double via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L10",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"qa double space\"",
+      "policy": "resolved ids.double via name",
+      "driverExpected": "resolved ids.double via name",
+      "observed": "resolved ids.double",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"qa double space\"",
+        "policy": "resolved ids.double via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L11",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA  Single   Space  Stored\"",
+      "policy": "resolved ids.single via name",
+      "driverExpected": "resolved ids.single via name",
+      "observed": "resolved ids.single",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA  Single   Space  Stored\"",
+        "policy": "resolved ids.single via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L12",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA\\tTab Name\"",
+      "policy": "resolved ids.tab via name",
+      "driverExpected": "resolved ids.tab via name",
+      "observed": "resolved ids.tab",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA\\tTab Name\"",
+        "policy": "resolved ids.tab via name",
+        "observed": "resolved ids.tab",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L13",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA Tab Name\"",
+      "policy": "resolved ids.tab via name",
+      "driverExpected": "resolved ids.tab via name",
+      "observed": "resolved ids.tab",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA Tab Name\"",
+        "policy": "resolved ids.tab via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L14",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA\\u00A0NBSP Name\"",
+      "policy": "resolved ids.nbsp via name",
+      "driverExpected": "resolved ids.nbsp via name",
+      "observed": "resolved ids.nbsp",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA\\u00A0NBSP Name\"",
+        "policy": "resolved ids.nbsp via name",
+        "observed": "resolved ids.nbsp",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L15",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA NBSP Name\"",
+      "policy": "resolved ids.nbsp via name",
+      "driverExpected": "resolved ids.nbsp via name",
+      "observed": "resolved ids.nbsp",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA NBSP Name\"",
+        "policy": "resolved ids.nbsp via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L16",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa mixed case\"",
+      "policy": "resolved ids.mixed via name",
+      "driverExpected": "resolved ids.mixed via name",
+      "observed": "resolved ids.mixed",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa mixed case\"",
+        "policy": "resolved ids.mixed via name",
+        "observed": "resolved ids.mixed",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L17",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Caf\\u00E9\"",
+      "policy": "resolved ids.nfc via name",
+      "driverExpected": "resolved ids.nfc via name",
+      "observed": "resolved ids.nfc",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Caf\\u00E9\"",
+        "policy": "resolved ids.nfc via name",
+        "observed": "resolved ids.nfc",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L18",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Cafe\\u0301\"",
+      "policy": "resolved ids.nfd via name",
+      "driverExpected": "resolved ids.nfd via name",
+      "observed": "resolved ids.nfd",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Cafe\\u0301\"",
+        "policy": "resolved ids.nfd via name",
+        "observed": "resolved ids.nfd",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L19",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa stra\\u00DFe\"",
+      "policy": "resolved ids.sharpS via name",
+      "driverExpected": "resolved ids.sharpS via name",
+      "observed": "resolved ids.sharpS",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa stra\\u00DFe\"",
+        "policy": "resolved ids.sharpS via name",
+        "observed": "resolved ids.sharpS",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L20",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa strasse\"",
+      "policy": "resolved ids.upperSS via name",
+      "driverExpected": "resolved ids.upperSS via name",
+      "observed": "resolved ids.upperSS",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa strasse\"",
+        "policy": "resolved ids.upperSS via name",
+        "observed": "resolved ids.upperSS",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L21",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa k kelvin\"",
+      "policy": "resolved ids.kelvin via name",
+      "driverExpected": "resolved ids.kelvin via name",
+      "observed": "resolved ids.kelvin",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa k kelvin\"",
+        "policy": "resolved ids.kelvin via name",
+        "observed": "resolved ids.kelvin",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L22",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"qa i dotted\"",
+      "policy": "resolved ids.plainI via name",
+      "driverExpected": "resolved ids.plainI via name",
+      "observed": "resolved ids.plainI",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"qa i dotted\"",
+        "policy": "resolved ids.plainI via name",
+        "observed": "resolved ids.plainI",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L23",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA \\u0130 DOTTED\"",
+      "policy": "resolved ids.dottedI via name",
+      "driverExpected": "resolved ids.dottedI via name",
+      "observed": "resolved ids.dottedI",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA \\u0130 DOTTED\"",
+        "policy": "resolved ids.dottedI via name",
+        "observed": "resolved ids.dottedI",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L24",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.exact>\"",
+      "policy": "resolved ids.exact via id",
+      "driverExpected": "resolved ids.exact via id",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.exact>\"",
+        "policy": "resolved ids.exact via id",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L25",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"01KQ4NAMEDQA00000000000000\"",
+      "policy": "resolved ids.namedAsFakeUlid via name",
+      "driverExpected": "resolved ids.namedAsFakeUlid via name",
+      "observed": "resolved ids.namedAsFakeUlid",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"01KQ4NAMEDQA00000000000000\"",
+        "policy": "resolved ids.namedAsFakeUlid via name",
+        "observed": "resolved ids.namedAsFakeUlid",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L26",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"01KQ4ABSENTQA0000000000000\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"01KQ4ABSENTQA0000000000000\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L27",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Never Created\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Never Created\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L28",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\" x \"",
+      "policy": "resolved ids.x_new via name",
+      "driverExpected": "resolved ids.x_new via name",
+      "observed": "resolved ids.x_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\" x \"",
+        "policy": "resolved ids.x_new via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L29",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"X\"",
+      "policy": "resolved ids.x_new via name",
+      "driverExpected": "resolved ids.x_new via name",
+      "observed": "resolved ids.x_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"X\"",
+        "policy": "resolved ids.x_new via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L30",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.x_old>\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.x_old>\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L31",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.x_new>\"",
+      "policy": "resolved ids.x_new via id",
+      "driverExpected": "resolved ids.x_new via id",
+      "observed": "resolved ids.x_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.x_new>\"",
+        "policy": "resolved ids.x_new via id",
+        "observed": "resolved ids.x_new",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L32",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.x_ownerB>\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.x_ownerB>\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L33",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"Reuse  Multi   Space\"",
+      "policy": "resolved ids.multi_new via name",
+      "driverExpected": "resolved ids.multi_new via name",
+      "observed": "resolved ids.multi_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"Reuse  Multi   Space\"",
+        "policy": "resolved ids.multi_new via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L34",
+      "kind": "informational",
+      "catalog": "A",
+      "request": "\"<lower:ids.exact>\"",
+      "policy": "resolved ids.namedAsExactId via name",
+      "driverExpected": "resolved ids.namedAsExactId via name",
+      "observed": "resolved ids.namedAsExactId",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<lower:ids.exact>\"",
+        "policy": "resolved ids.namedAsExactId via name",
+        "observed": "resolved ids.namedAsExactId",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.L35",
+      "kind": "informational",
+      "catalog": "A",
+      "request": "\" <ids.exact> \"",
+      "policy": "resolved ids.namedAsExactId via name",
+      "driverExpected": "resolved ids.namedAsExactId via name",
+      "observed": "resolved ids.namedAsExactId",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\" <ids.exact> \"",
+        "policy": "resolved ids.namedAsExactId via name",
+        "observed": "resolved ids.namedAsExactId",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.R01",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"QA Exact Name\"",
+      "policy": "resolved ids.exact via name",
+      "driverExpected": "resolved ids.exact via name",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Exact Name\"",
+        "policy": "resolved ids.exact via name",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.R02",
+      "kind": "control",
+      "catalog": "A",
+      "request": "\"<ids.exact>\"",
+      "policy": "resolved ids.exact via id",
+      "driverExpected": "resolved ids.exact via id",
+      "observed": "resolved ids.exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.exact>\"",
+        "policy": "resolved ids.exact via id",
+        "observed": "resolved ids.exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.R03",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"QA Padded\"",
+      "policy": "resolved ids.padded via name",
+      "driverExpected": "resolved ids.padded via name",
+      "observed": "resolved ids.padded",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"QA Padded\"",
+        "policy": "resolved ids.padded via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.A.R04",
+      "kind": "target",
+      "catalog": "A",
+      "request": "\"X\"",
+      "policy": "resolved ids.x_new via name",
+      "driverExpected": "resolved ids.x_new via name",
+      "observed": "resolved ids.x_new",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"X\"",
+        "policy": "resolved ids.x_new via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.B.B01",
+      "kind": "control",
+      "catalog": "B",
+      "request": "\"QA Exact Name\"",
+      "policy": "resolved ids.ownerB_exact via name",
+      "driverExpected": "resolved ids.ownerB_exact via name",
+      "observed": "resolved ids.ownerB_exact",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"QA Exact Name\"",
+        "policy": "resolved ids.ownerB_exact via name",
+        "observed": "resolved ids.ownerB_exact",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.B.B02",
+      "kind": "control",
+      "catalog": "B",
+      "request": "\"<ids.exact>\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.exact>\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.B.B03",
+      "kind": "control",
+      "catalog": "B",
+      "request": "\"  QA Padded  \"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"  QA Padded  \"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.B.B04",
+      "kind": "target",
+      "catalog": "B",
+      "request": "\"X\"",
+      "policy": "resolved ids.x_ownerB via name",
+      "driverExpected": "resolved ids.x_ownerB via name",
+      "observed": "resolved ids.x_ownerB",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"X\"",
+        "policy": "resolved ids.x_ownerB via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.B.B05",
+      "kind": "target",
+      "catalog": "B",
+      "request": "\" x \"",
+      "policy": "resolved ids.x_ownerB via name",
+      "driverExpected": "resolved ids.x_ownerB via name",
+      "observed": "resolved ids.x_ownerB",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\" x \"",
+        "policy": "resolved ids.x_ownerB via name",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.mcp.claude.B.B06",
+      "kind": "control",
+      "catalog": "B",
+      "request": "\"<ids.x_new>\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<ids.x_new>\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.codex.S01",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"twin\"",
+      "policy": "ambiguous [stub.1, stub.2]",
+      "driverExpected": "ambiguous [stub.1, stub.2]",
+      "observed": "ambiguous [stub.1, stub.2]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"twin\"",
+        "policy": "ambiguous [stub.1, stub.2]",
+        "observed": "ambiguous [stub.1, stub.2]",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.codex.S02",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"TWIN\"",
+      "policy": "ambiguous [stub.1, stub.2]",
+      "driverExpected": "ambiguous [stub.1, stub.2]",
+      "observed": "ambiguous [stub.1, stub.2]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"TWIN\"",
+        "policy": "ambiguous [stub.1, stub.2]",
+        "observed": "ambiguous [stub.1, stub.2]",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.codex.S03",
+      "kind": "target",
+      "catalog": "stub",
+      "request": "\"Spaced Twin\"",
+      "policy": "ambiguous [stub.3, stub.4]",
+      "driverExpected": "ambiguous [stub.3, stub.4]",
+      "observed": "ambiguous [stub.3, stub.4]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"Spaced Twin\"",
+        "policy": "ambiguous [stub.3, stub.4]",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.codex.S04",
+      "kind": "target",
+      "catalog": "stub",
+      "request": "\"spaced  twin\"",
+      "policy": "ambiguous [stub.3, stub.4]",
+      "driverExpected": "ambiguous [stub.3, stub.4]",
+      "observed": "ambiguous [stub.3, stub.4]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"spaced  twin\"",
+        "policy": "ambiguous [stub.3, stub.4]",
+        "observed": "resolved stub.4",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.codex.S05",
+      "kind": "target",
+      "catalog": "stub",
+      "request": "\" Spaced Twin \"",
+      "policy": "ambiguous [stub.3, stub.4]",
+      "driverExpected": "ambiguous [stub.3, stub.4]",
+      "observed": "ambiguous [stub.3, stub.4]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\" Spaced Twin \"",
+        "policy": "ambiguous [stub.3, stub.4]",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.codex.S06",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"solo\"",
+      "policy": "resolved stub.5 via name",
+      "driverExpected": "resolved stub.5 via name",
+      "observed": "resolved stub.5",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"solo\"",
+        "policy": "resolved stub.5 via name",
+        "observed": "resolved stub.5",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.codex.S07",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"<stub.5>\"",
+      "policy": "resolved stub.5 via id",
+      "driverExpected": "resolved stub.5 via id",
+      "observed": "resolved stub.5",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<stub.5>\"",
+        "policy": "resolved stub.5 via id",
+        "observed": "resolved stub.5",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.codex.S08",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"nothing here\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"nothing here\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.claude.S01",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"twin\"",
+      "policy": "ambiguous [stub.1, stub.2]",
+      "driverExpected": "ambiguous [stub.1, stub.2]",
+      "observed": "ambiguous [stub.1, stub.2]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"twin\"",
+        "policy": "ambiguous [stub.1, stub.2]",
+        "observed": "ambiguous [stub.1, stub.2]",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.claude.S02",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"TWIN\"",
+      "policy": "ambiguous [stub.1, stub.2]",
+      "driverExpected": "ambiguous [stub.1, stub.2]",
+      "observed": "ambiguous [stub.1, stub.2]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"TWIN\"",
+        "policy": "ambiguous [stub.1, stub.2]",
+        "observed": "ambiguous [stub.1, stub.2]",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.claude.S03",
+      "kind": "target",
+      "catalog": "stub",
+      "request": "\"Spaced Twin\"",
+      "policy": "ambiguous [stub.3, stub.4]",
+      "driverExpected": "ambiguous [stub.3, stub.4]",
+      "observed": "ambiguous [stub.3, stub.4]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"Spaced Twin\"",
+        "policy": "ambiguous [stub.3, stub.4]",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.claude.S04",
+      "kind": "target",
+      "catalog": "stub",
+      "request": "\"spaced  twin\"",
+      "policy": "ambiguous [stub.3, stub.4]",
+      "driverExpected": "ambiguous [stub.3, stub.4]",
+      "observed": "ambiguous [stub.3, stub.4]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\"spaced  twin\"",
+        "policy": "ambiguous [stub.3, stub.4]",
+        "observed": "resolved stub.4",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.claude.S05",
+      "kind": "target",
+      "catalog": "stub",
+      "request": "\" Spaced Twin \"",
+      "policy": "ambiguous [stub.3, stub.4]",
+      "driverExpected": "ambiguous [stub.3, stub.4]",
+      "observed": "ambiguous [stub.3, stub.4]",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "fail",
+        "request": "\" Spaced Twin \"",
+        "policy": "ambiguous [stub.3, stub.4]",
+        "observed": "not-found",
+        "achieved": false
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.claude.S06",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"solo\"",
+      "policy": "resolved stub.5 via name",
+      "driverExpected": "resolved stub.5 via name",
+      "observed": "resolved stub.5",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"solo\"",
+        "policy": "resolved stub.5 via name",
+        "observed": "resolved stub.5",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.claude.S07",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"<stub.5>\"",
+      "policy": "resolved stub.5 via id",
+      "driverExpected": "resolved stub.5 via id",
+      "observed": "resolved stub.5",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"<stub.5>\"",
+        "policy": "resolved stub.5 via id",
+        "observed": "resolved stub.5",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    },
+    {
+      "id": "473.stub.claude.S08",
+      "kind": "control",
+      "catalog": "stub",
+      "request": "\"nothing here\"",
+      "policy": "not-found",
+      "driverExpected": "not-found",
+      "observed": "not-found",
+      "problems": [],
+      "achieved": true,
+      "baseline": {
+        "verdict": "pass",
+        "request": "\"nothing here\"",
+        "policy": "not-found",
+        "observed": "not-found",
+        "achieved": true
+      },
+      "sameSemanticCase": true,
+      "verdict": "pass"
+    }
+  ],
+  "deletionLifecycle": {
+    "baseline": [
+      {
+        "id": "472.H01.create-X",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A creates \"X\" -> 201 with a ULID and verbatim name",
+        "observed": {
+          "status": 201,
+          "id": "01M7RR4E2MQ4SZXTJXSSZD2D9K",
+          "name": "X"
+        },
+        "checks": [
+          {
+            "name": "201",
+            "pass": true,
+            "detail": 201
+          },
+          {
+            "name": "ULID id",
+            "pass": true
+          },
+          {
+            "name": "name \"X\" verbatim",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 30.9
+      },
+      {
+        "id": "472.H02.conflict-while-active",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A creates \" x \" while \"X\" exists -> 409 LOOP_NAME_CONFLICT; no row added",
+        "observed": {
+          "status": 409,
+          "code": "LOOP_NAME_CONFLICT",
+          "suggestedName": "x copy",
+          "before": 2,
+          "after": 2
+        },
+        "checks": [
+          {
+            "name": "409",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "code LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": "LOOP_NAME_CONFLICT"
+          },
+          {
+            "name": "no row added",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 27.5
+      },
+      {
+        "id": "472.H03.second-owner-equivalent-name",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner B creates \" x \" while owner A holds \"X\" -> 201 (owner isolation), distinct ID",
+        "observed": {
+          "status": 201,
+          "id": "01M7RR4E453NWZM7YKSM0TGHMK",
+          "name": " x "
+        },
+        "checks": [
+          {
+            "name": "201",
+            "pass": true,
+            "detail": 201
+          },
+          {
+            "name": "distinct from A id",
+            "pass": true
+          },
+          {
+            "name": "name \" x \" verbatim",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 18.5
+      },
+      {
+        "id": "472.H04.cross-owner-cannot-see-or-delete",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner B GET/DELETE of owner A loop -> 404; owner A row intact",
+        "observed": {
+          "bGet": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "bDelete": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "aGet": [
+            200,
+            "X"
+          ]
+        },
+        "checks": [
+          {
+            "name": "B GET 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "B DELETE 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "A still 200 \"X\"",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 20.4
+      },
+      {
+        "id": "472.H05.delete-X",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A deletes \"X\" -> 204",
+        "observed": {
+          "status": 204
+        },
+        "checks": [
+          {
+            "name": "204",
+            "pass": true,
+            "detail": 204
+          }
+        ],
+        "pass": true,
+        "ms": 17.4
+      },
+      {
+        "id": "472.H06.old-id-absent",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Old ID absent: GET/DELETE/PUT draft -> 404 LOOP_NOT_FOUND; not listed",
+        "observed": {
+          "get": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "delete": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "putDraft": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "listed": false
+        },
+        "checks": [
+          {
+            "name": "GET 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "DELETE 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "PUT draft 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "not listed",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 22.3
+      },
+      {
+        "id": "472.H07.other-owner-unaffected",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner B row \" x \" unaffected by owner A deletion",
+        "observed": {
+          "status": 200,
+          "name": " x "
+        },
+        "checks": [
+          {
+            "name": "200 \" x \"",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 7.1
+      },
+      {
+        "id": "472.H08.recreate-equivalent",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A creates \" x \" after deleting \"X\" -> 201, new distinct ID, verbatim spelling",
+        "observed": {
+          "status": 201,
+          "oldId": "01M7RR4E2MQ4SZXTJXSSZD2D9K",
+          "newId": "01M7RR4E6W0GRH8K3Y4YNVFBTE",
+          "name": " x ",
+          "get": [
+            200,
+            " x "
+          ]
+        },
+        "checks": [
+          {
+            "name": "201",
+            "pass": true,
+            "detail": 201
+          },
+          {
+            "name": "new ULID",
+            "pass": true
+          },
+          {
+            "name": "new ID != old ID",
+            "pass": true
+          },
+          {
+            "name": "new ID != owner B ID",
+            "pass": true
+          },
+          {
+            "name": "stored \" x \" verbatim",
+            "pass": true
+          },
+          {
+            "name": "GET new ID 200",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 21.9
+      },
+      {
+        "id": "472.H09.listing-after-reuse",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A listing has the new ID once and not the old ID; owner B listing unchanged",
+        "observed": {
+          "aIds": [
+            "01M7RR4E6W0GRH8K3Y4YNVFBTE",
+            "01M7RR4DF3XRSNZWG46152W5GT"
+          ],
+          "bIds": [
+            "01M7RR4E453NWZM7YKSM0TGHMK"
+          ]
+        },
+        "checks": [
+          {
+            "name": "new ID listed once",
+            "pass": true
+          },
+          {
+            "name": "old ID not listed",
+            "pass": true
+          },
+          {
+            "name": "B has only its \" x \"",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 13.1
+      },
+      {
+        "id": "472.H10.active-row-conflicts",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Equivalent spellings against the active re-created row are refused for create, import and draft rename",
+        "observed": {
+          "creates": [
+            {
+              "name": "\"X\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            },
+            {
+              "name": "\"x\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "x copy"
+            },
+            {
+              "name": "\"  X  \"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            },
+            {
+              "name": "\"X\\u00A0\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            },
+            {
+              "name": "\" x \"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "x copy"
+            }
+          ],
+          "import": [
+            409,
+            "LOOP_NAME_CONFLICT"
+          ],
+          "probeCreate": 201,
+          "rename": [
+            409,
+            "LOOP_NAME_CONFLICT"
+          ],
+          "probeName": "QA Rename Probe",
+          "before": 2,
+          "after": 3
+        },
+        "checks": [
+          {
+            "name": "create \"X\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\"X\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            }
+          },
+          {
+            "name": "create \"x\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\"x\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "x copy"
+            }
+          },
+          {
+            "name": "create \"  X  \" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\"  X  \"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            }
+          },
+          {
+            "name": "create \"X\\u00A0\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\"X\\u00A0\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            }
+          },
+          {
+            "name": "create \" x \" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\" x \"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "x copy"
+            }
+          },
+          {
+            "name": "import \"X\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "rename probe created 201",
+            "pass": true
+          },
+          {
+            "name": "draft rename to \"x\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "probe name unchanged",
+            "pass": true
+          },
+          {
+            "name": "only the probe row was added",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 98.6
+      },
+      {
+        "id": "472.H11.second-owner-own-conflict",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner B creating \"X\" conflicts with its own active \" x \" (per-owner rule)",
+        "observed": {
+          "status": 409,
+          "code": "LOOP_NAME_CONFLICT"
+        },
+        "checks": [
+          {
+            "name": "409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": 409
+          }
+        ],
+        "pass": true,
+        "ms": 7.9
+      },
+      {
+        "id": "472.H12.internal-whitespace-reuse",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Delete \"Reuse  Multi   Space\" then create \"reuse multi space\" -> 201 new ID; active-row conflict for \"REUSE MULTI SPACE\"",
+        "observed": {
+          "create1": 201,
+          "delete": 204,
+          "create2": [
+            201,
+            "\"reuse multi space\""
+          ],
+          "oldId": "01M7RR4EB9P4VMWPT3YWK8K2NP",
+          "newId": "01M7RR4EC26XB0XNBEAMMF11QA",
+          "oldGet": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "conflict": [
+            409,
+            "LOOP_NAME_CONFLICT"
+          ]
+        },
+        "checks": [
+          {
+            "name": "first create 201",
+            "pass": true
+          },
+          {
+            "name": "delete 204",
+            "pass": true
+          },
+          {
+            "name": "re-create 201",
+            "pass": true
+          },
+          {
+            "name": "new ID distinct",
+            "pass": true
+          },
+          {
+            "name": "old ID 404",
+            "pass": true
+          },
+          {
+            "name": "equivalent create 409",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 53.1
+      },
+      {
+        "id": "472.H13.in-use-keeps-name",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "A loop with an active (waiting) run refuses delete 409 LOOP_IN_USE and keeps its name; after cancel, delete 204 and equivalent re-create 201",
+        "observed": {
+          "create": 201,
+          "run": 202,
+          "runStatus": "waiting",
+          "delete1": [
+            409,
+            "LOOP_IN_USE"
+          ],
+          "dupCreate": [
+            409,
+            "LOOP_NAME_CONFLICT"
+          ],
+          "cancel": 200,
+          "statusAfterCancel": "cancelled",
+          "delete2": 204,
+          "recreate": [
+            201,
+            "\" held  name \""
+          ],
+          "oldId": "01M7RR4ED19VYWTQF2WVAWDCRD",
+          "newId": "01M7RR4EST30Z4PV7HKG4XGVW3",
+          "runAfterDelete": [
+            404,
+            "RUN_NOT_FOUND"
+          ]
+        },
+        "checks": [
+          {
+            "name": "create 201",
+            "pass": true
+          },
+          {
+            "name": "run accepted 202",
+            "pass": true,
+            "detail": 202
+          },
+          {
+            "name": "run waiting",
+            "pass": true,
+            "detail": "waiting"
+          },
+          {
+            "name": "delete while active -> 409 LOOP_IN_USE",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "equivalent name still held -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "run cancelled",
+            "pass": true,
+            "detail": "cancelled"
+          },
+          {
+            "name": "delete after cancel 204",
+            "pass": true,
+            "detail": 204
+          },
+          {
+            "name": "equivalent re-create 201 with new ID",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 433.4
+      }
+    ],
+    "candidate": [
+      {
+        "id": "472.H01.create-X",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A creates \"X\" -> 201 with a ULID and verbatim name",
+        "observed": {
+          "status": 201,
+          "id": "01M7RRQ2N5EH3GVZ9K0FS1H5BC",
+          "name": "X"
+        },
+        "checks": [
+          {
+            "name": "201",
+            "pass": true,
+            "detail": 201
+          },
+          {
+            "name": "ULID id",
+            "pass": true
+          },
+          {
+            "name": "name \"X\" verbatim",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 32.8
+      },
+      {
+        "id": "472.H02.conflict-while-active",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A creates \" x \" while \"X\" exists -> 409 LOOP_NAME_CONFLICT; no row added",
+        "observed": {
+          "status": 409,
+          "code": "LOOP_NAME_CONFLICT",
+          "suggestedName": "x copy",
+          "before": 2,
+          "after": 2
+        },
+        "checks": [
+          {
+            "name": "409",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "code LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": "LOOP_NAME_CONFLICT"
+          },
+          {
+            "name": "no row added",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 30.1
+      },
+      {
+        "id": "472.H03.second-owner-equivalent-name",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner B creates \" x \" while owner A holds \"X\" -> 201 (owner isolation), distinct ID",
+        "observed": {
+          "status": 201,
+          "id": "01M7RRQ2PW5QZKYADRE1NFA7BJ",
+          "name": " x "
+        },
+        "checks": [
+          {
+            "name": "201",
+            "pass": true,
+            "detail": 201
+          },
+          {
+            "name": "distinct from A id",
+            "pass": true
+          },
+          {
+            "name": "name \" x \" verbatim",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 19.5
+      },
+      {
+        "id": "472.H04.cross-owner-cannot-see-or-delete",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner B GET/DELETE of owner A loop -> 404; owner A row intact",
+        "observed": {
+          "bGet": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "bDelete": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "aGet": [
+            200,
+            "X"
+          ]
+        },
+        "checks": [
+          {
+            "name": "B GET 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "B DELETE 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "A still 200 \"X\"",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 20.3
+      },
+      {
+        "id": "472.H05.delete-X",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A deletes \"X\" -> 204",
+        "observed": {
+          "status": 204
+        },
+        "checks": [
+          {
+            "name": "204",
+            "pass": true,
+            "detail": 204
+          }
+        ],
+        "pass": true,
+        "ms": 17.5
+      },
+      {
+        "id": "472.H06.old-id-absent",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Old ID absent: GET/DELETE/PUT draft -> 404 LOOP_NOT_FOUND; not listed",
+        "observed": {
+          "get": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "delete": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "putDraft": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "listed": false
+        },
+        "checks": [
+          {
+            "name": "GET 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "DELETE 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "PUT draft 404 LOOP_NOT_FOUND",
+            "pass": true
+          },
+          {
+            "name": "not listed",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 23.2
+      },
+      {
+        "id": "472.H07.other-owner-unaffected",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner B row \" x \" unaffected by owner A deletion",
+        "observed": {
+          "status": 200,
+          "name": " x "
+        },
+        "checks": [
+          {
+            "name": "200 \" x \"",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 7.6
+      },
+      {
+        "id": "472.H08.recreate-equivalent",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A creates \" x \" after deleting \"X\" -> 201, new distinct ID, verbatim spelling",
+        "observed": {
+          "status": 201,
+          "oldId": "01M7RRQ2N5EH3GVZ9K0FS1H5BC",
+          "newId": "01M7RRQ2SNXPPQ36QV7SCTJJYA",
+          "name": " x ",
+          "get": [
+            200,
+            " x "
+          ]
+        },
+        "checks": [
+          {
+            "name": "201",
+            "pass": true,
+            "detail": 201
+          },
+          {
+            "name": "new ULID",
+            "pass": true
+          },
+          {
+            "name": "new ID != old ID",
+            "pass": true
+          },
+          {
+            "name": "new ID != owner B ID",
+            "pass": true
+          },
+          {
+            "name": "stored \" x \" verbatim",
+            "pass": true
+          },
+          {
+            "name": "GET new ID 200",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 23.5
+      },
+      {
+        "id": "472.H09.listing-after-reuse",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner A listing has the new ID once and not the old ID; owner B listing unchanged",
+        "observed": {
+          "aIds": [
+            "01M7RRQ2SNXPPQ36QV7SCTJJYA",
+            "01M7RRQ1WW8YBFCVQFFB06H6P3"
+          ],
+          "bIds": [
+            "01M7RRQ2PW5QZKYADRE1NFA7BJ"
+          ]
+        },
+        "checks": [
+          {
+            "name": "new ID listed once",
+            "pass": true
+          },
+          {
+            "name": "old ID not listed",
+            "pass": true
+          },
+          {
+            "name": "B has only its \" x \"",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 13.7
+      },
+      {
+        "id": "472.H10.active-row-conflicts",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Equivalent spellings against the active re-created row are refused for create, import and draft rename",
+        "observed": {
+          "creates": [
+            {
+              "name": "\"X\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            },
+            {
+              "name": "\"x\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "x copy"
+            },
+            {
+              "name": "\"  X  \"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            },
+            {
+              "name": "\"X\\u00A0\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            },
+            {
+              "name": "\" x \"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "x copy"
+            }
+          ],
+          "import": [
+            409,
+            "LOOP_NAME_CONFLICT"
+          ],
+          "probeCreate": 201,
+          "rename": [
+            409,
+            "LOOP_NAME_CONFLICT"
+          ],
+          "probeName": "QA Rename Probe",
+          "before": 2,
+          "after": 3
+        },
+        "checks": [
+          {
+            "name": "create \"X\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\"X\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            }
+          },
+          {
+            "name": "create \"x\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\"x\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "x copy"
+            }
+          },
+          {
+            "name": "create \"  X  \" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\"  X  \"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            }
+          },
+          {
+            "name": "create \"X\\u00A0\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\"X\\u00A0\"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "X copy"
+            }
+          },
+          {
+            "name": "create \" x \" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": {
+              "name": "\" x \"",
+              "status": 409,
+              "code": "LOOP_NAME_CONFLICT",
+              "suggestedName": "x copy"
+            }
+          },
+          {
+            "name": "import \"X\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "rename probe created 201",
+            "pass": true
+          },
+          {
+            "name": "draft rename to \"x\" -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "probe name unchanged",
+            "pass": true
+          },
+          {
+            "name": "only the probe row was added",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 109
+      },
+      {
+        "id": "472.H11.second-owner-own-conflict",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Owner B creating \"X\" conflicts with its own active \" x \" (per-owner rule)",
+        "observed": {
+          "status": 409,
+          "code": "LOOP_NAME_CONFLICT"
+        },
+        "checks": [
+          {
+            "name": "409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": 409
+          }
+        ],
+        "pass": true,
+        "ms": 8.4
+      },
+      {
+        "id": "472.H12.internal-whitespace-reuse",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "Delete \"Reuse  Multi   Space\" then create \"reuse multi space\" -> 201 new ID; active-row conflict for \"REUSE MULTI SPACE\"",
+        "observed": {
+          "create1": 201,
+          "delete": 204,
+          "create2": [
+            201,
+            "\"reuse multi space\""
+          ],
+          "oldId": "01M7RRQ2YE00XXNCZ0H1R0PWGZ",
+          "newId": "01M7RRQ2ZDCFJ9RBZ5GJ42WV5B",
+          "oldGet": [
+            404,
+            "LOOP_NOT_FOUND"
+          ],
+          "conflict": [
+            409,
+            "LOOP_NAME_CONFLICT"
+          ]
+        },
+        "checks": [
+          {
+            "name": "first create 201",
+            "pass": true
+          },
+          {
+            "name": "delete 204",
+            "pass": true
+          },
+          {
+            "name": "re-create 201",
+            "pass": true
+          },
+          {
+            "name": "new ID distinct",
+            "pass": true
+          },
+          {
+            "name": "old ID 404",
+            "pass": true
+          },
+          {
+            "name": "equivalent create 409",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 61.1
+      },
+      {
+        "id": "472.H13.in-use-keeps-name",
+        "issue": "#472",
+        "kind": "coverage",
+        "surface": "http",
+        "description": "A loop with an active (waiting) run refuses delete 409 LOOP_IN_USE and keeps its name; after cancel, delete 204 and equivalent re-create 201",
+        "observed": {
+          "create": 201,
+          "run": 202,
+          "runStatus": "waiting",
+          "delete1": [
+            409,
+            "LOOP_IN_USE"
+          ],
+          "dupCreate": [
+            409,
+            "LOOP_NAME_CONFLICT"
+          ],
+          "cancel": 200,
+          "statusAfterCancel": "cancelled",
+          "delete2": 204,
+          "recreate": [
+            201,
+            "\" held  name \""
+          ],
+          "oldId": "01M7RRQ30F1CV6H1V7WPX93Y84",
+          "newId": "01M7RRQ3DBYKX4R0DT8CY7ZZHQ",
+          "runAfterDelete": [
+            404,
+            "RUN_NOT_FOUND"
+          ]
+        },
+        "checks": [
+          {
+            "name": "create 201",
+            "pass": true
+          },
+          {
+            "name": "run accepted 202",
+            "pass": true,
+            "detail": 202
+          },
+          {
+            "name": "run waiting",
+            "pass": true,
+            "detail": "waiting"
+          },
+          {
+            "name": "delete while active -> 409 LOOP_IN_USE",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "equivalent name still held -> 409 LOOP_NAME_CONFLICT",
+            "pass": true,
+            "detail": 409
+          },
+          {
+            "name": "run cancelled",
+            "pass": true,
+            "detail": "cancelled"
+          },
+          {
+            "name": "delete after cancel 204",
+            "pass": true,
+            "detail": 204
+          },
+          {
+            "name": "equivalent re-create 201 with new ID",
+            "pass": true
+          }
+        ],
+        "pass": true,
+        "ms": 437
+      }
+    ]
+  }
+}

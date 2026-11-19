@@ -1,13 +1,5 @@
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
-
-/**
- * The key the API compares loop names by (ADR-0073): trimmed, each whitespace run collapsed to one
- * space, then lowercased. The API decides admission; the UI uses the key only to tell whether the
- * name now in a field is the one the API refused, so the guidance can stay with that name or clear.
- */
-export function loopNameKey(name: string): string {
-  return name.trim().replace(/\s+/gu, ' ').toLowerCase();
-}
+import { loopNameKey } from '@graphgoblin/domain';
 
 /** Whether the API counts `a` and `b` as the same loop name. */
 export function sameLoopName(a: string, b: string): boolean {
