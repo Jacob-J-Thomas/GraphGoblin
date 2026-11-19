@@ -1,0 +1,32 @@
+{
+  "source": "10cdc55a8573e484ceb07a32fba9fe9f513a005f",
+  "clean": true,
+  "exactPriorPrEdgeIdArrays": false,
+  "equivalentAmbiguousClaims": true,
+  "actualRows": [
+    {
+      "key": 0,
+      "edgeIds": [
+        "e1",
+        "e1"
+      ],
+      "id": "yes"
+    },
+    {
+      "key": 1,
+      "edgeIds": [
+        "e1",
+        "e1"
+      ],
+      "id": "yes"
+    },
+    {
+      "key": 2,
+      "edgeIds": [
+        "m1"
+      ],
+      "id": "maybe"
+    }
+  ],
+  "qualification": "Current main emits duplicate e1 entries in each row ([e1,e1]), whereas the prior PR deduplicates them to [e1]. Both rows still claim the same ID on the same yes anchor. The original exact-array equality flag is false; the ambiguous ownership relationship is empirically present. Store-only result; no main browser/device run."
+}
