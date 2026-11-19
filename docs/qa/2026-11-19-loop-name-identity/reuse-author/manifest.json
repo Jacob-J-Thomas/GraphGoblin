@@ -1,0 +1,96 @@
+{
+  "issue": 472,
+  "unit": "U2.4",
+  "baseCommit": "d3f651c83779ded401878094d35374ac2f494d3d",
+  "combinedSourceCommit": "14a84a180495b65e0788994b25974d05a2b94ca7",
+  "combinedSourceTree": "4602f86fa5f1153cca60f33ba6411fcc4780f775",
+  "sourceFile": {
+    "path": "apps/api/src/loop-names.test.ts",
+    "baseSha256": "58000a20302c0c3ed225eae281e75421127d03432969736f1fc2c63287c14a17",
+    "combinedSha256": "ea4e90b56eeda18ed552f41f57d404ae1f430f5c2df8a688e69b8f423fe21425",
+    "appliedTestSha256": "18bd2f57c08007bab3121976c23317b7bfecb96044fcf4c66c82d32f448ef2c1"
+  },
+  "author": {
+    "model": "gpt-6-luna",
+    "reasoningEffort": "xhigh",
+    "initialCliExitCode": 0,
+    "initialLocalToolError": "registered Core launch requires an installed app",
+    "initialFinalReportSha256": "b99d21d605b026057418997d08817c2efcdfba8d9a01e2ee76faaa635b3d6846",
+    "retryCliExitCode": 0,
+    "retryMode": "source-only",
+    "retryPromptSha256": "5b489431d3327cc7e00c0f49fc1d88b16450c85bdd8199777734df4d7d8dc1d6",
+    "retryReturnedTestSha256": "8aad48a8e9b4dea02358097fef527327e35e45988367fcb58076a345e3edb94a"
+  },
+  "localExecution": {
+    "platform": "Windows",
+    "nodeVersion": "22.23.4",
+    "pnpmVersion": "12.8.1",
+    "sourceUnderTest": "base plus applied API test",
+    "commands": [
+      {
+        "name": "build",
+        "program": "pnpm.cmd",
+        "arguments": [
+          "exec",
+          "turbo",
+          "run",
+          "build",
+          "--filter=@graphgoblin/api"
+        ],
+        "exitCode": 0,
+        "originalLogSha256": "270a7d1401e5e0dd0192ae960f3ebdc6b83bf43d814d7e1dd5a1c19dc108031a"
+      },
+      {
+        "name": "suite",
+        "program": "pnpm.cmd",
+        "arguments": [
+          "--filter",
+          "@graphgoblin/api",
+          "exec",
+          "vitest",
+          "run",
+          "src/loop-names.test.ts"
+        ],
+        "exitCode": 0,
+        "originalLogSha256": "4948755565fb5add5e3290b8f19ddf8511c04dfc67aeaa55187c248150e4bfb9",
+        "testsPassed": 8
+      },
+      {
+        "name": "gates",
+        "program": "pnpm.cmd",
+        "arguments": [
+          "exec",
+          "turbo",
+          "run",
+          "typecheck",
+          "lint",
+          "--filter=@graphgoblin/api"
+        ],
+        "exitCode": 0,
+        "originalLogSha256": "b7e2d2c05b4eacfc0406f6f9afd534fecfcce0ec7db5ce412afb3cdb7f3e3445"
+      },
+      {
+        "name": "format",
+        "program": "pnpm.cmd",
+        "arguments": [
+          "exec",
+          "prettier",
+          "--check",
+          "apps/api/src/loop-names.test.ts"
+        ],
+        "exitCode": 0,
+        "originalLogSha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+      }
+    ]
+  },
+  "publicFiles": {
+    "README.md": {
+      "bytes": 3530,
+      "sha256": "627eee0970bc7caf28bb86e01645441dd481f11fc526b0df7969227705015ea5"
+    },
+    "results.txt": {
+      "bytes": 546,
+      "sha256": "52a11e966ff0fdb5a90904212eb8e509a601e86d8e48b0a175e70f2f054d7246"
+    }
+  }
+}

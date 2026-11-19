@@ -1,15 +1,11 @@
 import { isStorableLoopName, MAX_LOOP_NAME_LENGTH } from '@graphgoblin/contracts';
+import { loopNameKey } from '@graphgoblin/domain';
 import { eq } from 'drizzle-orm';
 import type { SqliteTransaction } from './database-types.js';
 import { loops } from './schema.js';
 
 function collapseWhitespace(name: string): string {
   return name.trim().replace(/\s+/gu, ' ');
-}
-
-/** The display spelling is stored verbatim. This key only decides equivalence. */
-export function loopNameKey(name: string): string {
-  return collapseWhitespace(name).toLowerCase();
 }
 
 export class LoopNameConflictError extends Error {

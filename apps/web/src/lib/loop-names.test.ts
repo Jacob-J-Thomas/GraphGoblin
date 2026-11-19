@@ -1,12 +1,7 @@
 import { GraphGoblinApiError } from '@graphgoblin/api-client';
+import { loopNameKey } from '@graphgoblin/domain';
 import { describe, expect, it } from 'vitest';
-import {
-  importedLoopName,
-  LOOP_NAME_RULE,
-  loopNameConflict,
-  loopNameKey,
-  sameLoopName,
-} from './loop-names.js';
+import { importedLoopName, LOOP_NAME_RULE, loopNameConflict, sameLoopName } from './loop-names.js';
 
 const refusal = (extensions: Record<string, unknown>, code = 'LOOP_NAME_CONFLICT') =>
   new GraphGoblinApiError({ status: 409, code, detail: 'taken', ...extensions });

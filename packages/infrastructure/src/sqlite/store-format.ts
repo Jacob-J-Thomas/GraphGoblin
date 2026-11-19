@@ -6,8 +6,11 @@ import {
   HeaderNameSchema,
   LoopDefinitionSchema,
 } from '@graphgoblin/contracts';
-import { retiredEventDestinations, withoutRetiredEventDestinations } from '@graphgoblin/domain';
-import { loopNameKey } from './loop-names.js';
+import {
+  loopNameKey,
+  retiredEventDestinations,
+  withoutRetiredEventDestinations,
+} from '@graphgoblin/domain';
 import {
   currentStoreReadiness,
   normalizeStoreSql,

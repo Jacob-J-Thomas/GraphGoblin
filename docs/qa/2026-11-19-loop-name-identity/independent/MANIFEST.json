@@ -1,0 +1,518 @@
+{
+  "packet": "i2_names_qa candidate behaviour QA public packet",
+  "candidate": "14a84a180495b65e0788994b25974d05a2b94ca7",
+  "base": "d3f651c83779ded401878094d35374ac2f494d3d",
+  "redactionRules": [
+    {
+      "rule": "checkout",
+      "replacement": "<checkout>"
+    },
+    {
+      "rule": "worktrees-root",
+      "replacement": "<worktrees-root>"
+    },
+    {
+      "rule": "node22-runtime",
+      "replacement": "<node22-runtime>"
+    },
+    {
+      "rule": "temp",
+      "replacement": "<temp>"
+    },
+    {
+      "rule": "qa-root",
+      "replacement": "<qa-root>"
+    },
+    {
+      "rule": "user-profile",
+      "replacement": "<user-profile>"
+    },
+    {
+      "rule": "user-name",
+      "replacement": "<user>"
+    },
+    {
+      "rule": "token",
+      "replacement": "<redacted-token>"
+    }
+  ],
+  "files": [
+    {
+      "path": "analysis/assert-candidate.mjs",
+      "sha256": "ebed83d6bb1af36e0cb2bfe96784864efab42a515d896f55e607a09fa70dd219",
+      "bytes": 31037,
+      "origin": "candidate-evidence/analysis/assert-candidate.mjs",
+      "originSha256": "ebed83d6bb1af36e0cb2bfe96784864efab42a515d896f55e607a09fa70dd219",
+      "treatment": "verbatim (byte-identical to origin)",
+      "note": "independent candidate assertions v2 (used for the verdict)"
+    },
+    {
+      "path": "analysis/assertions-baseline-04-vs-candidate-01.json",
+      "sha256": "e718c0bf42e27a9338bea482c6536b12cbac101eb91769cc77a0d04273ebce6d",
+      "bytes": 152264,
+      "origin": "candidate-evidence/analysis/assertions.json",
+      "originSha256": "9c6c0a7697ef02eff076af32df1f00017e6914e903eff2c49a1b5b7946220c71",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 2
+      }
+    },
+    {
+      "path": "analysis/assertions-baseline-04-vs-candidate-02-summary.json",
+      "sha256": "ae24be7df2107d779720f430f4068feb4c259224d4f1637eaa0dbee8489de9ae",
+      "bytes": 6154,
+      "origin": "derived",
+      "derivedFrom": [
+        {
+          "origin": "candidate-evidence/analysis/candidate-02/assertions.json",
+          "originSha256": "0189d5568cbc16bfdd98842c0ea2abebc14f1e8e476943acaab20eaec1555e45"
+        }
+      ],
+      "treatment": "derived extract",
+      "note": "repeat-run assertion summary"
+    },
+    {
+      "path": "analysis/history/assert-candidate.v1.console.txt",
+      "sha256": "62dda0a087c185a1ce0c47c8440c48ff6f886a07222f2341373c2777b50e9811",
+      "bytes": 3979,
+      "origin": "candidate-evidence/analysis/first-run/assert-candidate.console.txt",
+      "originSha256": "62dda0a087c185a1ce0c47c8440c48ff6f886a07222f2341373c2777b50e9811",
+      "treatment": "verbatim (no redaction needed)",
+      "note": "superseded v1 output: one privacy false positive, preserved"
+    },
+    {
+      "path": "analysis/history/assert-candidate.v1.mjs",
+      "sha256": "eca02cd6845ab45bb91a02a1d5d90fcf8f786d46cba2781a93eac61ed22e67ff",
+      "bytes": 30426,
+      "origin": "candidate-evidence/analysis/first-run/assert-candidate.v1.mjs",
+      "originSha256": "eca02cd6845ab45bb91a02a1d5d90fcf8f786d46cba2781a93eac61ed22e67ff",
+      "treatment": "verbatim (byte-identical to origin)",
+      "note": "superseded v1: privacy regex false positive on a help-text placeholder"
+    },
+    {
+      "path": "analysis/row-comparison-baseline-04-vs-candidate-01.md",
+      "sha256": "80252a3ae24deeff9536b4fc7b176dd412569a1b8e2cc4fc41f5f2b2998bbcd1",
+      "bytes": 19011,
+      "origin": "candidate-evidence/analysis/row-comparison.md",
+      "originSha256": "80252a3ae24deeff9536b4fc7b176dd412569a1b8e2cc4fc41f5f2b2998bbcd1",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "baseline/SUMMARY.md",
+      "sha256": "0906f86b39da9badf7bec493f90c2e92be1aff0b3ce14ee664e84c7c66cd089e",
+      "bytes": 4068,
+      "origin": "baseline-evidence/SUMMARY.md",
+      "originSha256": "0906f86b39da9badf7bec493f90c2e92be1aff0b3ce14ee664e84c7c66cd089e",
+      "treatment": "verbatim (byte-identical to origin)",
+      "note": "baseline public summary as published by the baseline context"
+    },
+    {
+      "path": "build/candidate-build.json",
+      "sha256": "c6b6780ccd79c10a62fa95f37448ca8e8d7ba7a203375b09df00a660bf98270f",
+      "bytes": 1966,
+      "origin": "derived",
+      "derivedFrom": [
+        {
+          "origin": "candidate-evidence/build/build.meta.txt",
+          "originSha256": "727773b6085773c087ac227de057f1fa23dac306b842af4a0d6e973e0e5aa8c2"
+        },
+        {
+          "origin": "candidate-evidence/build/build-force.meta.txt",
+          "originSha256": "892efacd03d42cb6bcb1e3f6d66b8bbbe8e7867ad1ebd18cd7c7abf7ac2bddd9"
+        },
+        {
+          "origin": "candidate-evidence/build/build-force.log",
+          "originSha256": "4747bdeaae639a5fb8eb679ddf622e3c9459a0322f90150cf37f95b08c2694cc"
+        },
+        {
+          "origin": "candidate-evidence/build/artifacts-after-build-force.sha256",
+          "originSha256": "f01af895476445b4ac855cf541c880deea632889bc4ce6122fff04982e29718b"
+        }
+      ],
+      "treatment": "derived extract",
+      "note": "candidate build receipt"
+    },
+    {
+      "path": "driver/compare.mjs",
+      "sha256": "9f91cd9d9075762340149b3acd670905effa43b72eb78b7e42d8a2ef1eb56fbc",
+      "bytes": 3085,
+      "origin": "baseline-evidence/driver/compare.mjs",
+      "originSha256": "9f91cd9d9075762340149b3acd670905effa43b72eb78b7e42d8a2ef1eb56fbc",
+      "treatment": "verbatim (byte-identical to origin)",
+      "note": "baseline compare script (verdict-flag comparison only)"
+    },
+    {
+      "path": "driver/fixture-second-owner-key.mjs",
+      "sha256": "558ea2568b4c1a1f871821e1a97d89c82e3efb994534ab7ad77a4bddb1762ab2",
+      "bytes": 2346,
+      "origin": "baseline-evidence/driver/fixture-second-owner-key.mjs",
+      "originSha256": "558ea2568b4c1a1f871821e1a97d89c82e3efb994534ab7ad77a4bddb1762ab2",
+      "treatment": "verbatim (byte-identical to origin)",
+      "note": "QA fixture minting the second owner key"
+    },
+    {
+      "path": "driver/history/names-qa.v1.mjs",
+      "sha256": "fe37dd23d41b79351568f3f262bdc1bd00879b3bddd82d01da3fea583a052844",
+      "bytes": 62378,
+      "origin": "baseline-evidence/driver/history/names-qa.v1.mjs",
+      "originSha256": "fe37dd23d41b79351568f3f262bdc1bd00879b3bddd82d01da3fea583a052844",
+      "treatment": "verbatim (byte-identical to origin)",
+      "note": "superseded driver v1 (baseline-01; empty-owner-A predicate mistake)"
+    },
+    {
+      "path": "driver/history/names-qa.v2.mjs",
+      "sha256": "7d0881defedc461139e205712da9e8be266079359d7625a76a06ccd457625eda",
+      "bytes": 62819,
+      "origin": "baseline-evidence/driver/history/names-qa.v2.mjs",
+      "originSha256": "7d0881defedc461139e205712da9e8be266079359d7625a76a06ccd457625eda",
+      "treatment": "verbatim (byte-identical to origin)",
+      "note": "superseded driver v2 (baseline-02/03; SDK version metadata bug only)"
+    },
+    {
+      "path": "driver/names-qa.mjs",
+      "sha256": "1007d09753d6839d327db8a6efc3728029795a599fbe5ad5a5ad3beff56bbfff",
+      "bytes": 63211,
+      "origin": "baseline-evidence/driver/names-qa.mjs",
+      "originSha256": "1007d09753d6839d327db8a6efc3728029795a599fbe5ad5a5ad3beff56bbfff",
+      "treatment": "verbatim (byte-identical to origin)",
+      "note": "final baseline driver v3 (i2-names-qa/3), unchanged for the candidate run"
+    },
+    {
+      "path": "identity.json",
+      "sha256": "0263cae77768e9cc054ea4e1bc7a31f40e84760c83860b7d5153ef51a7ac9872",
+      "bytes": 3962,
+      "origin": "derived",
+      "derivedFrom": [
+        {
+          "origin": "candidate-evidence/identity/source-identity.txt",
+          "originSha256": "3f419458bbb1acd2acb0ea6111cd467f845c390154d6400a70e7a6e6d7bf23aa"
+        },
+        {
+          "origin": "candidate-evidence/identity/pr-512-readback.json",
+          "originSha256": "26f4e9160b8e894da4a3c532be61ea232a1023c56c5b712347b68942a8165694"
+        },
+        {
+          "origin": "candidate-evidence/identity/changed-file-sha256.txt",
+          "originSha256": "dc177a7dc09d5ccf7f42f50c7229a5c39ec295bf2e6c88ee026e9d97e0f2af77"
+        },
+        {
+          "origin": "candidate-evidence/identity/combined-source-check.txt",
+          "originSha256": "1da38a08f833a3090ca11de779be4cf035038c066135a808edbc22962430bfc4"
+        },
+        {
+          "origin": "candidate-evidence/identity/driver-identity.txt",
+          "originSha256": "6b30454b5250d57702cf12c9286fc6670b1f5e2512ffadca1d9de6be94cade14"
+        },
+        {
+          "origin": "candidate-evidence/identity/baseline-manifest-verify-before.txt",
+          "originSha256": "a2d2a0116e727fd5bef316fdc7bdf0dd64faa1d2a7bcabdff5b4969d88b42d14"
+        },
+        {
+          "origin": "candidate-evidence/identity/baseline-manifest-verify-after.txt",
+          "originSha256": "221b7e8e6082291c0c23a06df0f76e5fffc02fa069f5f13b20d84f3ee0e6bd5e"
+        },
+        {
+          "origin": "candidate-evidence/identity/process-audit-final.txt",
+          "originSha256": "3d57b9936e6d4490f70c20cb38cf78e4e41b8bfac2853e4d5054f5a506b5ff2b"
+        },
+        {
+          "origin": "candidate-evidence/identity/source-clean-after.txt",
+          "originSha256": "b30f14e15da4fac718b679e4b132fd4e45816d5dca6457de4faa7f95e736392e"
+        },
+        {
+          "origin": "candidate-evidence/identity/pr-512-checks.txt",
+          "originSha256": "fb41cc9a7c18bfdec33ce9b5953bb03ed53ae836777c6a31f35dd286339f1e8d"
+        }
+      ],
+      "treatment": "derived extract",
+      "note": "source, driver, PR and audit identity"
+    },
+    {
+      "path": "privacy-verification.json",
+      "sha256": "b783e6c1b78e5db21ce5d1ff90029691519755d68abd9492f225aafc326d70bc",
+      "bytes": 7892,
+      "origin": "generated",
+      "treatment": "generated privacy scan of this packet (excluding itself and MANIFEST.json)"
+    },
+    {
+      "path": "README.md",
+      "sha256": "1f7c50b90b98d016c8c01b129c1b945aef66892fd45dfe28b01529e7eb234b2d",
+      "bytes": 16018,
+      "origin": "authored for publication",
+      "treatment": "authored"
+    },
+    {
+      "path": "records/baseline-01-excerpt.json",
+      "sha256": "929fff9e9668bdd17e6be345d28eb74b368ddff87e4cdbc7f11aea6e44f1bd67",
+      "bytes": 4813,
+      "origin": "derived",
+      "derivedFrom": [
+        {
+          "origin": "baseline-evidence/runs/baseline-01/results.json",
+          "originSha256": "8b5df98d4f14dffccf3ce15b42ddfab77228da61915046a6fcd66bd9088fc526"
+        }
+      ],
+      "treatment": "derived extract",
+      "note": "baseline-01 summary and its failing harness record"
+    },
+    {
+      "path": "records/baseline-04/calls.json",
+      "sha256": "00b35a32a9803b7f7086dfed09819bf7abcdb09bbab041f3d5963afd70e7c8f3",
+      "bytes": 39892,
+      "origin": "baseline-evidence/runs/baseline-04/calls.json",
+      "originSha256": "00b35a32a9803b7f7086dfed09819bf7abcdb09bbab041f3d5963afd70e7c8f3",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/baseline-04/catalog.json",
+      "sha256": "dcfd93336cf8c4019550f04744c537028825f1846eeb396736907a1d4e600d94",
+      "bytes": 3471,
+      "origin": "baseline-evidence/runs/baseline-04/catalog.json",
+      "originSha256": "dcfd93336cf8c4019550f04744c537028825f1846eeb396736907a1d4e600d94",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/baseline-04/provenance.json",
+      "sha256": "263459f5c63434b5475b95e4ba33a7d392d776c9abcc42d3419af4905b548c36",
+      "bytes": 4356,
+      "origin": "baseline-evidence/runs/baseline-04/provenance.json",
+      "originSha256": "a99f2ff1a9839c9a5c015b864b1c9d1312d6fac9b69619fa4bd6762e0353c823",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 12,
+        "node22-runtime": 2
+      }
+    },
+    {
+      "path": "records/baseline-04/results.json",
+      "sha256": "4adc74590ff70e69f91b30d7ee02d552e39dff3d4c95e50f72639495ab9bdb58",
+      "bytes": 153849,
+      "origin": "baseline-evidence/runs/baseline-04/results.json",
+      "originSha256": "0aed1bfb16ca6d4f260803a6d243db31a3197656e638cf3e13714baae0c6ee80",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 3,
+        "temp": 2
+      }
+    },
+    {
+      "path": "records/baseline-04/stub-catalog.json",
+      "sha256": "86cc65db2ea09da1bbc13a53e4d75f4317e1f270034ba5a2a30a14694fbcc960",
+      "bytes": 474,
+      "origin": "baseline-evidence/runs/baseline-04/stub-catalog.json",
+      "originSha256": "86cc65db2ea09da1bbc13a53e4d75f4317e1f270034ba5a2a30a14694fbcc960",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/baseline-04/stub-requests.json",
+      "sha256": "a70bab6cefcc14c89ed864335bca4c53fd3b2796cc23f5933145c8aa717aff05",
+      "bytes": 1785,
+      "origin": "baseline-evidence/runs/baseline-04/stub-requests.json",
+      "originSha256": "a70bab6cefcc14c89ed864335bca4c53fd3b2796cc23f5933145c8aa717aff05",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/candidate-01/calls.json",
+      "sha256": "4ddca96bc2c2d491f16ec16669c3287943da0d6c9658875c7753cd50a187f779",
+      "bytes": 40360,
+      "origin": "candidate-evidence/runs/candidate-01/calls.json",
+      "originSha256": "4ddca96bc2c2d491f16ec16669c3287943da0d6c9658875c7753cd50a187f779",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/candidate-01/catalog.json",
+      "sha256": "009615ff943b4b8247fdbab99de6f88bcc0831ea61d517b7d45327afac160fd1",
+      "bytes": 3471,
+      "origin": "candidate-evidence/runs/candidate-01/catalog.json",
+      "originSha256": "009615ff943b4b8247fdbab99de6f88bcc0831ea61d517b7d45327afac160fd1",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/candidate-01/provenance.json",
+      "sha256": "1abd860655f87abbd7825c5f0ed8bcaa8268fe567df991b0964866e0b7705ed4",
+      "bytes": 4360,
+      "origin": "candidate-evidence/runs/candidate-01/provenance.json",
+      "originSha256": "d3550d3aeabe3e57214740fdc7dfced912f26d2b3602e327ee26333883ee591a",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 12,
+        "node22-runtime": 2
+      }
+    },
+    {
+      "path": "records/candidate-01/results.json",
+      "sha256": "aff84b6911c6311d037ec035306187285f36618f8d2d21f314218f92283c24bb",
+      "bytes": 155476,
+      "origin": "candidate-evidence/runs/candidate-01/results.json",
+      "originSha256": "9e47923c593bc82f6df582f497988e682545294f5dd28f73ccc65b60872d174e",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 3,
+        "temp": 2
+      }
+    },
+    {
+      "path": "records/candidate-01/stub-catalog.json",
+      "sha256": "86cc65db2ea09da1bbc13a53e4d75f4317e1f270034ba5a2a30a14694fbcc960",
+      "bytes": 474,
+      "origin": "candidate-evidence/runs/candidate-01/stub-catalog.json",
+      "originSha256": "86cc65db2ea09da1bbc13a53e4d75f4317e1f270034ba5a2a30a14694fbcc960",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/candidate-01/stub-requests.json",
+      "sha256": "a53a58638353c6aa59f15e846b6e2b747a2c9762094efc2d191799038bd1ca67",
+      "bytes": 1569,
+      "origin": "candidate-evidence/runs/candidate-01/stub-requests.json",
+      "originSha256": "a53a58638353c6aa59f15e846b6e2b747a2c9762094efc2d191799038bd1ca67",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/candidate-02-excerpt.json",
+      "sha256": "c899c7ea470e8fd2592df48e4a6ea7b332ab383e3b9bbac763ef3e1728cbe6cb",
+      "bytes": 4389,
+      "origin": "derived",
+      "derivedFrom": [
+        {
+          "origin": "candidate-evidence/runs/candidate-02/results.json",
+          "originSha256": "54199bbc146db3028830809ba4c52d404f0f04fa93eae3be62b083036312db31"
+        }
+      ],
+      "treatment": "derived extract",
+      "note": "candidate repeat summary"
+    },
+    {
+      "path": "records/compare/baseline-02-vs-03.json",
+      "sha256": "3a61f243fae2f7a2bf3077cad8793ba607cc0c06f0bad0b906e01b74908240ed",
+      "bytes": 28523,
+      "origin": "baseline-evidence/runs/compare-baseline-02-vs-03.json",
+      "originSha256": "3a61f243fae2f7a2bf3077cad8793ba607cc0c06f0bad0b906e01b74908240ed",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/compare/baseline-02-vs-04.json",
+      "sha256": "756909352d95230838206879907f0cdf786132f644eea395a524ea1f6d1e968b",
+      "bytes": 28516,
+      "origin": "baseline-evidence/runs/compare-baseline-02-vs-04.json",
+      "originSha256": "756909352d95230838206879907f0cdf786132f644eea395a524ea1f6d1e968b",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/compare/baseline-04-vs-candidate-01.json",
+      "sha256": "9ff4542a68733760488cdb48cc567ac718cf8206f76711ee3b8a029b347980d7",
+      "bytes": 28487,
+      "origin": "candidate-evidence/runs/compare-baseline-04-vs-candidate-01.json",
+      "originSha256": "9ff4542a68733760488cdb48cc567ac718cf8206f76711ee3b8a029b347980d7",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/compare/baseline-04-vs-candidate-02.json",
+      "sha256": "72c590de2501105f043c1985d4b1598aafc7ef09d31b9928f1f0c2ac03b9328e",
+      "bytes": 28494,
+      "origin": "candidate-evidence/runs/compare-baseline-04-vs-candidate-02.json",
+      "originSha256": "72c590de2501105f043c1985d4b1598aafc7ef09d31b9928f1f0c2ac03b9328e",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/compare/candidate-01-vs-candidate-02.json",
+      "sha256": "634279170c29954eae3abc65b38f0aa3b284919cf8f8695daddd1ef5b7cfc13a",
+      "bytes": 27331,
+      "origin": "candidate-evidence/runs/compare-candidate-01-vs-candidate-02.json",
+      "originSha256": "634279170c29954eae3abc65b38f0aa3b284919cf8f8695daddd1ef5b7cfc13a",
+      "treatment": "verbatim (no redaction needed)"
+    },
+    {
+      "path": "records/runs-index.json",
+      "sha256": "62254bdc731a9b53d5ee3c5dc4f95c63a131e40836f9f614fd41b1cdf5771e74",
+      "bytes": 12122,
+      "origin": "derived",
+      "derivedFrom": [
+        {
+          "origin": "baseline-evidence/runs/baseline-01/results.json",
+          "originSha256": "8b5df98d4f14dffccf3ce15b42ddfab77228da61915046a6fcd66bd9088fc526"
+        },
+        {
+          "origin": "baseline-evidence/runs/baseline-02/results.json",
+          "originSha256": "5a174f03945292870818d8f6194a79a0f880773159bd74379660687c5592c269"
+        },
+        {
+          "origin": "baseline-evidence/runs/baseline-03/results.json",
+          "originSha256": "fa19aaf6d6deea48ed5c74d7f35403f67d4b82ef3efbb772e46215a30a75c0f3"
+        },
+        {
+          "origin": "baseline-evidence/runs/baseline-04/results.json",
+          "originSha256": "0aed1bfb16ca6d4f260803a6d243db31a3197656e638cf3e13714baae0c6ee80"
+        },
+        {
+          "origin": "candidate-evidence/runs/candidate-01/results.json",
+          "originSha256": "9e47923c593bc82f6df582f497988e682545294f5dd28f73ccc65b60872d174e"
+        },
+        {
+          "origin": "candidate-evidence/runs/candidate-02/results.json",
+          "originSha256": "54199bbc146db3028830809ba4c52d404f0f04fa93eae3be62b083036312db31"
+        }
+      ],
+      "treatment": "derived extract",
+      "note": "run index with original raw hashes"
+    },
+    {
+      "path": "unit/mcp-ab-without-new-loop-names-file.log",
+      "sha256": "b076ea317176a0896779853a4fb3d996799d3f994d47ad7820495ec5aa417b35",
+      "bytes": 1489,
+      "origin": "candidate-evidence/unit-candidate/mcp-ab-without-new-loop-names-file.log",
+      "originSha256": "c1e2610410e10c5052d7396ad52cbc84797787c1eb16c00991d76b6ad9fd8aa6",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 1,
+        "worktrees-root": 1
+      }
+    },
+    {
+      "path": "unit/mcp-rerun-full-verbose.log",
+      "sha256": "ffbfdf5af25b35453a55414c661751b25bbf9fe968c3fab489e2d60b37d345e2",
+      "bytes": 10694,
+      "origin": "candidate-evidence/unit-candidate/mcp-rerun-full-verbose.log",
+      "originSha256": "47bfc1b914c1e2132286b3fc6cb6c6d2d7562c4079429e2be37d79b7f346bad0",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 1,
+        "worktrees-root": 1
+      }
+    },
+    {
+      "path": "unit/mcp-rerun-thread-history.log",
+      "sha256": "03486599d71592e0057685eb17081abfba15f9a6d9e79df5aa7462446c032e65",
+      "bytes": 425,
+      "origin": "candidate-evidence/unit-candidate/mcp-rerun-thread-history.log",
+      "originSha256": "72192236a27a3862fe76178709ee7e8621247940bd36b42e38eec68272d2cf70",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 1
+      }
+    },
+    {
+      "path": "unit/mcp.first-run.log",
+      "sha256": "6b1cdeef38bb481724e338b11b55757cf98ad822aaa2fd121b9d0555428a1151",
+      "bytes": 1233,
+      "origin": "candidate-evidence/unit-candidate/mcp.first-run.log",
+      "originSha256": "e31b3e2b08453d4afb384fc17a12258758c78e72e59aa5926091df9299f55442",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "checkout": 1,
+        "worktrees-root": 1
+      }
+    },
+    {
+      "path": "unit/summary.txt",
+      "sha256": "a16aa747f5bfebdbc99b23d297411f62c7285546ff1c02ec9a97c79b14fd6f45",
+      "bytes": 2583,
+      "origin": "candidate-evidence/unit-candidate/summary.txt",
+      "originSha256": "6928f72ef7117d3ffd9e7532a88e4913a0a7eae0c5bbcb90b6aa6715c3b32d74",
+      "treatment": "REDACTED: path placeholders only (see redactions); otherwise byte-identical",
+      "redactions": {
+        "worktrees-root": 3
+      },
+      "note": "reference-only unit suites at the candidate, including reruns"
+    }
+  ]
+}
