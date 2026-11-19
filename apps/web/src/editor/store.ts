@@ -258,7 +258,10 @@ export interface EditorState {
   /**
    * Store an edge's manual route (`edge.ui.route`, #44), or with `undefined` remove it so the edge
    * routes automatically again. A drag ends in one call; a run of arrow-key nudges of one edge's
-   * segments merges into one step, like a node's; a reset is a step of its own.
+   * segments merges into one step, like a node's; a reset is a step of its own. It changes the one
+   * stored edge with that id; an id more than one stored edge holds is refused (`edgeRouteRefusal`)
+   * without changing the draft, its history, revision or save state, and the refusal is shown in
+   * the connection notice (#481).
    */
   setEdgeRoute: (
     edgeId: string,
@@ -451,9 +454,24 @@ function heightsByIndex(
 }
 
 /**
+ * What an action by connection id says when more than one stored edge holds `edgeId` (#207, #481),
+ * as an imported or API-written draft can (`DUPLICATE_EDGE_ID`): it names no single connection, so
+ * the action changes nothing. The selected connection's toolbar shows the same text before any
+ * action. It leads with the repair that keeps every other record: removing a Decision route takes
+ * only the one connection its row names (`rowConnections`, which its review lists), and a connection
+ * drawn again always gets an id of its own. Where no route can tell one apart, or there is no
+ * pointer to draw with (the keyboard cannot create connections), the draft is corrected through the
+ * API's draft save; an import would create another loop, and deleting a card at either end would
+ * also take its settings and every connection at it.
+ */
+export function sharedEdgeIdRefusal(edgeId: string): string {
+  return `More than one connection uses the ID "${edgeId}", so the editor cannot tell which one you mean. To repair it, remove a Decision route one of them starts from (its review should list just that connection), add the route back and draw its connection again, until one keeps the ID. Otherwise, or without a pointer, correct the ID with PUT /loops/{id}/draft.`;
+}
+
+/**
  * Why the connection `edgeId` may not be removed from `definition` (#207), or undefined when it may,
  * or when no edge holds the id. The store's `removeEdge` refuses with it, and the selected
- * connection's **Remove connection** is disabled with it. An id more than one stored edge holds is
+ * connection's **Remove connection** is unavailable with it. An id more than one stored edge holds is
  * checked first: it names no single connection, so it is refused the same way whichever of its
  * holders is a protected Chat voice step, and in whichever order they are stored.
  */
@@ -463,10 +481,24 @@ export function edgeRemovalRefusal(
   edgeId: string,
 ): string | undefined {
   const holders = definition.edges.filter((edge) => edge.id === edgeId);
-  if (holders.length > 1)
-    return `More than one connection uses the ID "${edgeId}"; this action cannot choose just one.`;
+  if (holders.length > 1) return sharedEdgeIdRefusal(edgeId);
   const [edge] = holders;
   return edge && isProtectedVoiceEdge(definition, system, edge) ? VOICE_STEP_MESSAGE : undefined;
+}
+
+/**
+ * Why the manual route of connection `edgeId` may not be changed in `definition` (#481): an id more
+ * than one stored edge holds names no single route. The store's `setEdgeRoute` refuses with it, and
+ * the selected connection's toolbar shows it above **Reset route** and **Remove connection**, which
+ * are then unavailable and described by it.
+ */
+export function edgeRouteRefusal(
+  definition: LoopDefinitionInput,
+  edgeId: string,
+): string | undefined {
+  return definition.edges.filter((edge) => edge.id === edgeId).length > 1
+    ? sharedEdgeIdRefusal(edgeId)
+    : undefined;
 }
 
 /** An edge in an undo label: "start to done", or "decide yes to infer" from a named port. */
@@ -966,13 +998,22 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
     setEdgeRoute: (edgeId, route, coalesceKey) => {
       if (route !== undefined && !EdgeRouteSchema.safeParse(route).success) return;
-      const edge = get().definition?.edges.find((e) => e.id === edgeId);
+      const def = get().definition;
+      if (!def) return;
+      // An id more than one stored edge holds names no single route: refuse, changing nothing but
+      // the notice (#481), as `removeEdge` does.
+      const refusal = edgeRouteRefusal(def, edgeId);
+      if (refusal) {
+        set({ connectionError: refusal });
+        return;
+      }
+      const edge = onlyEdge(def, edgeId);
       if (!edge) return;
       edit(
         (d) => ({
           ...d,
           edges: d.edges.map((e) => {
-            if (e.id !== edgeId) return e;
+            if (e !== edge) return e;
             const { ui: _previous, ...rest } = e;
             return route ? { ...rest, ui: { route: [...route] } } : rest;
           }),

@@ -4,6 +4,20 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The editor keeps every stored edge record when a draft gives two edges one id
+  (`DUPLICATE_EDGE_ID`, #481). Decision route bookkeeping changes or removes only the record a
+  route row names alone among that Decision's own connections, so an unrelated edit no longer
+  rewrites another edge's output port, and removing a route or replacing its JSON no longer removes
+  another node's edge with the same id. Reset route, segment drags and nudges, and a moved card's
+  route reset refuse a shared id as Remove connection does, changing nothing. Selecting such a
+  connection shows a note with the reason and the repair at once; Reset route and Remove connection
+  stay focusable but unavailable, described by the note, and clicking them changes nothing. The
+  repair leads with removing a Decision route (its review lists just that connection), adding it
+  back and drawing it again, repeated while the id is shared, and otherwise, or without a pointer,
+  the API's draft save; it no longer suggests deleting a card, which also removes the card's other
+  connections and their routes. Validation, draft saves and Publish's refusal are unchanged. No
+  stored, export or device-draft format changes; nothing to upgrade.
+
 - The Codex readiness probe-directory tests own their fake CLI processes and cleanup: a case that
   times out or is cancelled stops its fake CLI and finishes only after its probe, processes and
   cleanup have settled, so the next case never sees its late calls. Test timeouts, coverage and

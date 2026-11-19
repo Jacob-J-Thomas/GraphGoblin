@@ -1,9 +1,15 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { getSmoothStepPath, Position, ReactFlowProvider, type EdgeProps } from '@xyflow/react';
+import {
+  getSmoothStepPath,
+  Position,
+  ReactFlowProvider,
+  useStoreApi,
+  type EdgeProps,
+} from '@xyflow/react';
 import type { ReactNode } from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { OrthogonalEdge, type OrthogonalFlowEdge } from './OrthogonalEdge.js';
+import { notePlacement, OrthogonalEdge, type OrthogonalFlowEdge } from './OrthogonalEdge.js';
 import { RouteEditingContext, type RouteEditing } from './route-editing.js';
 import type { RoutedEdge } from './routing.js';
 import { createRouteChannels } from './route-channels.js';
@@ -577,8 +583,8 @@ describe('OrthogonalEdge', () => {
     ['a Chat draft, the voice step stored first', true, true],
     ['a Chat draft, the voice step stored second', true, false],
   ])(
-    'disables Remove connection for an id two stored connections hold, saying so, in %s (#207)',
-    (_, system, voiceFirst) => {
+    'keeps Remove connection focusable but unavailable for an id two stored connections hold, under a note saying why, in %s (#207, #481)',
+    async (_, system, voiceFirst) => {
       const voice = {
         id: 'return',
         from: { node: 'chat-input', port: 'out' },
@@ -598,33 +604,209 @@ describe('OrthogonalEdge', () => {
       } as unknown as LoopDefinitionInput;
       useEditorStore.setState({ systemChat: system, definition });
       const message =
-        'More than one connection uses the ID "return"; this action cannot choose just one.';
+        'More than one connection uses the ID "return", so the editor cannot tell which one you mean. To repair it, remove a Decision route one of them starts from (its review should list just that connection), add the route back and draw its connection again, until one keeps the ID. Otherwise, or without a pointer, correct the ID with PUT /loops/{id}/draft.';
       const gate = createViewportGestureGate();
       const editing = editor(gate);
+      // xyflow's edge wrapper selects its edge in a React click handler on an ancestor.
+      const onClick = vi.fn();
+      const user = userEvent.setup();
       try {
-        render(inFlow(<OrthogonalEdge {...props} selected />, editing));
+        render(
+          <div onClick={onClick}>{inFlow(<OrthogonalEdge {...props} selected />, editing)}</div>,
+        );
         const remove = screen.getByRole('button', { name: 'Remove connection' });
-        expect(remove).toBeDisabled();
-        expect(remove).toHaveAttribute('title', message);
-        fireEvent.click(remove);
+        // The reason shows as soon as the connection is selected, before any refused action:
+        // a note above the row of controls, outside it.
+        const note = screen.getByText(message);
+        expect(note).toHaveClass('gg-route-note', 'nodrag', 'nopan');
+        expect(note.closest('.gg-route-toolbar')).toBeNull();
+        // Not a disabled button a press falls through: a hit target that keeps focus, unavailable
+        // and described by the note, with no tooltip repeating it.
+        expect(remove).toBeEnabled();
+        expect(remove).toHaveAttribute('aria-disabled', 'true');
+        expect(remove).toHaveAttribute('aria-describedby', note.id);
+        expect(remove).toHaveAccessibleDescription(message);
+        expect(remove).not.toHaveAttribute('title');
+        // A click, element.click(), Enter and Space change nothing and end on the button, where
+        // focus stays.
+        remove.focus();
+        for (const detail of [0, 1]) fireEvent.click(remove, { detail });
+        remove.click();
+        await user.keyboard('{Enter}');
+        await user.keyboard(' ');
+        expect(editing.remove).not.toHaveBeenCalled();
+        expect(onClick).not.toHaveBeenCalled();
+        expect(remove).toHaveFocus();
+        // A later click of a double click returns focus to the connection, as on any connection.
+        fireEvent.click(remove, { detail: 2 });
+        expect(screen.getByTestId('edge')).toHaveFocus();
         expect(editing.remove).not.toHaveBeenCalled();
         // The store's reason outranks a pan in progress, as the voice step's does.
         act(() => gate.move(new MouseEvent('mousemove')));
-        expect(remove).toBeDisabled();
-        expect(remove).toHaveAttribute('title', message);
-        expect(remove).not.toHaveAttribute('aria-disabled');
+        expect(remove).toHaveAttribute('aria-disabled', 'true');
         expect(remove).not.toHaveAttribute('data-gesture');
-        // One holder again: an ordinary connection may go; the voice step keeps its own reason.
+        expect(remove).toHaveAccessibleDescription(message);
+        // One holder again: an ordinary connection may go (here once the pan settles), with no
+        // note; the voice step keeps its own reason, natively disabled as before.
         act(() => useEditorStore.setState({ definition: { ...definition, edges: [plain] } }));
         expect(remove).toBeEnabled();
         expect(remove).not.toHaveAttribute('title');
+        expect(remove).not.toHaveAttribute('aria-describedby');
+        expect(remove).toHaveAttribute('data-gesture', 'panning');
+        expect(screen.queryByText(message)).toBeNull();
         act(() => useEditorStore.setState({ definition: { ...definition, edges: [voice] } }));
         expect(remove.getAttribute('title')).toBe(system ? VOICE_STEP_MESSAGE : null);
+        if (system) expect(remove).toBeDisabled();
+        expect(screen.queryByText(message)).toBeNull();
       } finally {
         useEditorStore.setState({ definition: undefined, systemChat: false });
       }
     },
   );
+
+  it('describes Reset route and the handles of a shared id by the same note, which leaves the row where it was (#481)', () => {
+    const own = { id: 'return', from: { node: 'done', port: 'out' }, to: { node: 'work' } };
+    const other = { id: 'return', from: { node: 'start', port: 'out' }, to: { node: 'work' } };
+    const definition = {
+      schemaVersion: 4,
+      name: 'Shared id',
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+        { id: 'work', kind: 'mutate', label: 'Work', config: { operations: [] } },
+        { id: 'done', kind: 'mutate', label: 'Done', config: { operations: [] } },
+      ],
+      edges: [other, own],
+    } as unknown as LoopDefinitionInput;
+    useEditorStore.setState({ systemChat: false, definition });
+    const message =
+      'More than one connection uses the ID "return", so the editor cannot tell which one you mean. To repair it, remove a Decision route one of them starts from (its review should list just that connection), add the route back and draw its connection again, until one keeps the ID. Otherwise, or without a pointer, correct the ID with PUT /loops/{id}/draft.';
+    const editing = editor();
+    const onClick = vi.fn();
+    try {
+      const view = render(
+        <div onClick={onClick}>
+          {inFlow(
+            <OrthogonalEdge {...props} data={data({ ...route, manual: true })} selected />,
+            editing,
+          )}
+        </div>,
+      );
+      const frame = view.container.querySelector('foreignObject')!;
+      const toolbar = view.container.querySelector('.gg-route-toolbar')!;
+      const note = screen.getByText(message);
+      // The row of controls is unchanged and still ends at the frame's bottom, centred on the
+      // label; the frame grows upward to hold the note above it, and sideways so it can move. (The
+      // pane is unmeasured here, so the note is centred at the toolbar's width.)
+      expect([...toolbar.children].map((child) => child.textContent)).toEqual([
+        'Reset route',
+        'Remove connection',
+      ]);
+      expect(note.nextElementSibling).toBe(toolbar);
+      expect(frame).toHaveAttribute('x', String(-420));
+      expect(frame).toHaveAttribute('width', String(2 * 420));
+      expect(frame).toHaveAttribute('y', String(-(48 + 240)));
+      expect(frame).toHaveAttribute('height', String(48 + 240));
+      expect(note).toHaveStyle({ width: '420px' });
+      const reset = screen.getByRole('button', { name: 'Reset route' });
+      expect(reset).toBeEnabled();
+      expect(reset).toHaveAttribute('aria-disabled', 'true');
+      expect(reset).toHaveAccessibleDescription(message);
+      expect(reset).not.toHaveAttribute('title');
+      expect(reset).not.toHaveAttribute('data-gesture');
+      // A click resets nothing and holds nothing: focus stays on the button.
+      reset.focus();
+      for (const detail of [0, 1, 2]) fireEvent.click(reset, { detail });
+      expect(editing.reset).not.toHaveBeenCalled();
+      expect(onClick).not.toHaveBeenCalled();
+      expect(reset).toHaveFocus();
+      fireEvent.keyDown(reset, { key: 'Escape' });
+      expect(screen.getByTestId('edge')).toHaveFocus();
+      // The handles stay focusable and unavailable, described by the same note.
+      for (const handle of screen.getAllByRole('button', { name: /^Route segment/ })) {
+        expect(handle).toHaveAttribute('aria-disabled', 'true');
+        expect(handle).not.toHaveAttribute('aria-description');
+        expect(handle).toHaveAccessibleDescription(message);
+      }
+
+      // One holder again: no note, the frame as it was, and the controls available.
+      act(() => useEditorStore.setState({ definition: { ...definition, edges: [own] } }));
+      expect(screen.queryByText(message)).toBeNull();
+      expect(frame).toHaveAttribute('x', String(-210));
+      expect(frame).toHaveAttribute('width', '420');
+      expect(frame).toHaveAttribute('y', '-48');
+      expect(frame).toHaveAttribute('height', '48');
+      for (const button of [reset, screen.getByRole('button', { name: 'Remove connection' })]) {
+        expect(button).toBeEnabled();
+        expect(button).not.toHaveAttribute('aria-disabled');
+        expect(button).not.toHaveAttribute('aria-describedby');
+      }
+      const handle = screen.getAllByRole('button', { name: /^Route segment/ })[0]!;
+      expect(handle).not.toHaveAttribute('aria-disabled');
+      expect(handle).not.toHaveAttribute('aria-describedby');
+      expect(handle.getAttribute('aria-description')).toMatch(/arrows move it one grid step/);
+      fireEvent.click(reset, { detail: 1 });
+      expect(editing.reset).toHaveBeenCalledWith('return');
+    } finally {
+      useEditorStore.setState({ definition: undefined, systemChat: false });
+    }
+  });
+
+  it('moves a shared id’s note inside a narrow pane, and below the label when there is no room above it (#481)', () => {
+    const own = { id: 'return', from: { node: 'done', port: 'out' }, to: { node: 'work' } };
+    const other = { id: 'return', from: { node: 'start', port: 'out' }, to: { node: 'work' } };
+    useEditorStore.setState({
+      systemChat: false,
+      definition: {
+        schemaVersion: 4,
+        name: 'Shared id',
+        nodes: [
+          { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+          { id: 'work', kind: 'mutate', label: 'Work', config: { operations: [] } },
+          { id: 'done', kind: 'mutate', label: 'Done', config: { operations: [] } },
+        ],
+        edges: [other, own],
+      } as unknown as LoopDefinitionInput,
+    });
+    let flowStore: ReturnType<typeof useStoreApi> | undefined;
+    function FlowStore() {
+      flowStore = useStoreApi();
+      return null;
+    }
+    try {
+      const view = render(
+        inFlow(
+          <>
+            <FlowStore />
+            <OrthogonalEdge {...props} selected />
+          </>,
+          editor(),
+        ),
+      );
+      // A 390 px pane panned so the label (55, 180) sits 30 px from its top.
+      act(() => flowStore!.setState({ width: 390, height: 600, transform: [0, -150, 1] }));
+      const note = view.container.querySelector<HTMLElement>('.gg-route-note')!;
+      const [toolbarFrame, noteFrame] = view.container.querySelectorAll('foreignObject');
+      // The note is below the label, in its own frame; the controls' frame is as without a note.
+      expect(noteFrame!.contains(note)).toBe(true);
+      expect(noteFrame).toHaveAttribute('y', '0');
+      expect(toolbarFrame).toHaveAttribute('width', '420');
+      expect(toolbarFrame).toHaveAttribute('height', '48');
+      // As wide as the pane less its margins, and moved right to start inside it.
+      expect(note).toHaveStyle({ width: '374px', transform: 'translateX(140px)' });
+      // The controls are still described by it.
+      expect(screen.getByRole('button', { name: 'Remove connection' })).toHaveAttribute(
+        'aria-describedby',
+        note.id,
+      );
+      // Panned back down, there is room above again: the note returns over the controls.
+      act(() => flowStore!.setState({ transform: [0, 300, 1] }));
+      const above = view.container.querySelector<HTMLElement>('.gg-route-note')!;
+      expect(view.container.querySelectorAll('foreignObject')).toHaveLength(1);
+      expect(above.nextElementSibling).toBe(view.container.querySelector('.gg-route-toolbar'));
+    } finally {
+      useEditorStore.setState({ definition: undefined, systemChat: false });
+    }
+  });
 
   it('keeps a protected voice step’s own reason while a pan settles (#207)', () => {
     useEditorStore.setState({
@@ -1162,7 +1344,7 @@ describe('Remove connection ignores the later clicks of a double click (#207)', 
     }
   });
 
-  it('leaves the store’s own refusal alone: a protected or shared-id connection stays disabled with its reason', () => {
+  it('leaves the store’s own refusal alone: a protected connection stays disabled with its reason', () => {
     useEditorStore.setState({
       systemChat: true,
       definition: {
@@ -1191,5 +1373,60 @@ describe('Remove connection ignores the later clicks of a double click (#207)', 
     } finally {
       useEditorStore.setState({ definition: undefined, systemChat: false });
     }
+  });
+});
+
+describe('notePlacement (#481)', () => {
+  const pane = { width: 1000, height: 800 };
+  it('centres the note above the controls at the toolbar width while it has room, or before the pane is measured', () => {
+    expect(notePlacement({ x: 500, y: 600 }, [0, 0, 1], pane)).toEqual({
+      width: 420,
+      shift: 0,
+      below: false,
+    });
+    expect(notePlacement({ x: 0, y: 0 }, [0, 0, 1], { width: 0, height: 0 })).toEqual({
+      width: 420,
+      shift: 0,
+      below: false,
+    });
+  });
+
+  it('reads the anchor through the viewport transform', () => {
+    // (100, 400) at zoom 2, panned by (20, -300), is (220, 500) in the pane: 220 - 210 leaves
+    // 10 px, over the 8 px margin, and 500 - 74 = 426 px above holds the note.
+    expect(notePlacement({ x: 100, y: 400 }, [20, -300, 2], pane)).toEqual({
+      width: 420,
+      shift: 0,
+      below: false,
+    });
+    // (90, 400) is 200 px across: 18 px right reaches the margin.
+    expect(notePlacement({ x: 90, y: 400 }, [20, -300, 2], pane).shift).toBe(18);
+    // Panned 300 px further up, the label is 200 px down: 126 px above, 582 px below.
+    expect(notePlacement({ x: 100, y: 400 }, [20, -600, 2], pane).below).toBe(true);
+  });
+
+  it('narrows to the pane less its margins and moves inside it, by at most half its width', () => {
+    const narrow = { width: 390, height: 800 };
+    expect(notePlacement({ x: 195, y: 600 }, [0, 0, 1], narrow)).toEqual({
+      width: 374,
+      shift: 0,
+      below: false,
+    });
+    expect(notePlacement({ x: 350, y: 600 }, [0, 0, 1], narrow).shift).toBe(-155);
+    expect(notePlacement({ x: 40, y: 600 }, [0, 0, 1], narrow).shift).toBe(155);
+    // A label beyond the pane's side: the note still covers it, at its edge.
+    expect(notePlacement({ x: -100, y: 600 }, [0, 0, 1], narrow).shift).toBe(187);
+    expect(notePlacement({ x: 600, y: 600 }, [0, 0, 1], narrow).shift).toBe(-187);
+  });
+
+  it('goes below the label when the room above the controls is less than the note’s and there is more below', () => {
+    // 314 - 18 - 48 - 8 = 240 px above: the note's whole room.
+    expect(notePlacement({ x: 500, y: 314 }, [0, 0, 1], pane).below).toBe(false);
+    // 239 px above, and 800 - 313 - 18 = 469 px below.
+    expect(notePlacement({ x: 500, y: 313 }, [0, 0, 1], pane).below).toBe(true);
+    // Room for neither: the larger side, here above (126 px over 82 px).
+    expect(notePlacement({ x: 500, y: 200 }, [0, 0, 1], { width: 1000, height: 300 }).below).toBe(
+      false,
+    );
   });
 });

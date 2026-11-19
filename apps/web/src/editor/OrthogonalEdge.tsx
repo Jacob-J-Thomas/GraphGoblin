@@ -11,6 +11,7 @@ import {
   memo,
   use,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -33,7 +34,7 @@ import { LABEL_CHARACTER_WIDTH, LABEL_HEIGHT, LABEL_PADDING } from './routing-la
 import { roundedPath } from './routing.js';
 import { followEdgeLabel } from './edge-label-placement.js';
 import { edgeLabelText } from './edge-label-text.js';
-import { edgeRemovalRefusal, useEditorStore } from './store.js';
+import { edgeRemovalRefusal, edgeRouteRefusal, useEditorStore } from './store.js';
 
 export interface OrthogonalEdgeData extends Record<string, unknown> {
   /** The edge's routed geometry, published by the canvas without rebuilding xyflow's edges. */
@@ -60,6 +61,52 @@ const HANDLE_REACH = 14;
  * events, so the empty frame never covers the canvas.
  */
 const TOOLBAR_WIDTH = 420;
+/** The height (screen px) of the toolbar's row of controls, whose bottom sits above the label. */
+const TOOLBAR_HEIGHT = 48;
+/** How far (screen px) the toolbar's row ends above the label's centre, and the note starts below. */
+const LABEL_GAP = 18;
+/**
+ * Room (screen px) for the note of a connection whose id is shared (#481), enough for its text
+ * wrapped on a narrow screen. Its frame is twice the toolbar's width, so the note can move sideways
+ * by up to half its own width. Frames are transparent to the pointer, so the room covers nothing;
+ * only the note and the controls take pointer events.
+ */
+const NOTE_ROOM = 240;
+/** The margin (screen px) the note keeps from the pane's sides, and its gap to the controls. */
+const NOTE_MARGIN = 8;
+type Transform = readonly [number, number, number];
+const NO_TRANSFORM: Transform = [0, 0, 1];
+/** The viewport, which a shared id's note follows while it shows (#481); otherwise a constant. */
+const transformOf = (state: Pick<ReactFlowState, 'transform'>): Transform => state.transform;
+const noTransformOf = (): Transform => NO_TRANSFORM;
+const paneWidthOf = (state: Pick<ReactFlowState, 'width'>): number => state.width;
+const paneHeightOf = (state: Pick<ReactFlowState, 'height'>): number => state.height;
+
+/**
+ * Where the note of a shared id (#481) goes, in screen px, for a toolbar anchored at `anchor` (flow
+ * coordinates) in a pane of size `pane` seen through `transform`: as wide as the toolbar, or the
+ * pane less its margins; moved sideways, by at most half its width so it stays over its connection,
+ * to keep inside the pane; and below the label when the room above the controls is less than the
+ * note's room and the room below is larger. The controls never move. A pane not yet measured leaves
+ * the note centred above, at the toolbar's width.
+ */
+export function notePlacement(
+  anchor: Point,
+  transform: Transform,
+  pane: { width: number; height: number },
+): { width: number; shift: number; below: boolean } {
+  if (pane.width <= 0 || pane.height <= 0) return { width: TOOLBAR_WIDTH, shift: 0, below: false };
+  const [tx, ty, zoom] = transform;
+  const width = Math.max(0, Math.min(TOOLBAR_WIDTH, pane.width - 2 * NOTE_MARGIN));
+  const half = width / 2;
+  const x = anchor.x * zoom + tx;
+  const y = anchor.y * zoom + ty;
+  const inside = Math.min(Math.max(x, NOTE_MARGIN + half), pane.width - NOTE_MARGIN - half);
+  const shift = Math.min(Math.max(inside - x, -half), half);
+  const roomAbove = y - LABEL_GAP - TOOLBAR_HEIGHT - NOTE_MARGIN;
+  const roomBelow = pane.height - y - LABEL_GAP;
+  return { width, shift, below: roomAbove < NOTE_ROOM && roomBelow > roomAbove };
+}
 /** Keys a toolbar button keeps from the edge and the canvas: they act on the button alone. */
 const TOOLBAR_KEYS = ['Enter', ' ', 'Delete', 'Backspace'];
 /** What a held Reset route says: it is unavailable because the route is automatic. */
@@ -98,8 +145,9 @@ const ARROWS: Record<string, ['x' | 'y', -1 | 1]> = {
  * handle on each segment and a toolbar: Remove connection (#207), which ignores a later click of a
  * double or triple click (a browser click count above one) and keeps focus on the connection, and,
  * for a manual route, Reset route, which stays where it was clicked, unavailable, until the route is
- * drawn by hand again or the connection is deselected. xyflow's wrapper keeps the hit target,
- * keyboard selection, and edge change and delete events.
+ * drawn by hand again or the connection is deselected. When more than one stored connection holds
+ * its id (#481), a note above them says why both are unavailable and how to repair the draft.
+ * xyflow's wrapper keeps the hit target, keyboard selection, and edge change and delete events.
  */
 export const OrthogonalEdge = memo(function OrthogonalEdge({
   id,
@@ -275,6 +323,25 @@ function RouteHandles({
   const refusal = useEditorStore((s) =>
     s.definition ? edgeRemovalRefusal(s.definition, s.systemChat, edgeId) : undefined,
   );
+  // The store's reason for refusing a route edit (#481): an id more than one stored connection
+  // holds names no single route. It is the removal's reason too (the shared id is checked first),
+  // and it says how to repair the draft. The toolbar shows it as a note as soon as the connection
+  // is selected, before any refused action. Reset route, Remove connection and the handles stay
+  // focusable, unavailable (aria-disabled) and described by the note, as Open in Runs is before a
+  // publish: a pointer, the keyboard and assistive technology all reach the reason. A click on the
+  // buttons changes nothing and raises no notice above the canvas, which would move the canvas
+  // under a second click; a drag or nudge on a handle still shows the notice, as Delete does.
+  const routeRefusal = useEditorStore((s) =>
+    s.definition ? edgeRouteRefusal(s.definition, edgeId) : undefined,
+  );
+  const noteId = useId();
+  const described = routeRefusal ? noteId : undefined;
+  // The note stays readable on a narrow pane, or with the label near its top: it is placed from the
+  // pane's size and the viewport, which it follows only while it shows.
+  const transform = useStore(routeRefusal ? transformOf : noTransformOf);
+  const paneWidth = useStore(paneWidthOf);
+  const paneHeight = useStore(paneHeightOf);
+  const placement = notePlacement(anchor, transform, { width: paneWidth, height: paneHeight });
   // From a mouse pan's first move, or a mouse node drag's start, until its release settles, d3 may
   // cancel the next click (#207). Reset route and Remove connection then say they are unavailable,
   // keeping their hit target and focus (aria-disabled, not disabled), and their handlers refuse on
@@ -323,6 +390,18 @@ function RouteHandles({
   };
 
   const scale = `scale(${1 / zoom})`;
+  // The shared id's note (#481): one element, above the controls or, without room there, below the
+  // label. Pointer presses on it neither pan nor drag.
+  const note = routeRefusal ? (
+    <p
+      id={noteId}
+      className="gg-route-note nodrag nopan rounded-md border border-l-4 border-status-warn-border bg-status-warn-bg px-2.5 py-1.5 text-xs leading-snug text-default wrap-anywhere"
+      style={{ width: placement.width, transform: `translateX(${placement.shift}px)` }}
+    >
+      {routeRefusal}
+    </p>
+  ) : null;
+  const noteAbove = !!note && !placement.below;
   // Escape returns to the connection; the keys that act on a button stay with it.
   const toolbarKeys = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key === 'Escape') {
@@ -344,7 +423,13 @@ function RouteHandles({
             role="button"
             tabIndex={0}
             aria-label={`Route segment ${i + 1} of ${segments.length}, ${vertical ? 'vertical' : 'horizontal'}`}
-            aria-description={`${vertical ? 'Left and Right' : 'Up and Down'} arrows move it one grid step, with Shift five. Escape returns to the connection.`}
+            aria-description={
+              routeRefusal
+                ? undefined
+                : `${vertical ? 'Left and Right' : 'Up and Down'} arrows move it one grid step, with Shift five. Escape returns to the connection.`
+            }
+            aria-describedby={described}
+            aria-disabled={routeRefusal ? true : undefined}
             aria-keyshortcuts={vertical ? 'ArrowLeft ArrowRight' : 'ArrowUp ArrowDown'}
             transform={`translate(${at.x} ${at.y}) ${scale}`}
             onPointerDown={(event) => {
@@ -362,84 +447,107 @@ function RouteHandles({
           </g>
         );
       })}
-      <g transform={`translate(${anchor.x} ${anchor.y - 18 / zoom}) ${scale}`}>
+      <g transform={`translate(${anchor.x} ${anchor.y - LABEL_GAP / zoom}) ${scale}`}>
         <foreignObject
-          x={-TOOLBAR_WIDTH / 2}
-          y={-48}
-          width={TOOLBAR_WIDTH}
-          height={48}
+          x={-(noteAbove ? 2 * TOOLBAR_WIDTH : TOOLBAR_WIDTH) / 2}
+          y={-(TOOLBAR_HEIGHT + (noteAbove ? NOTE_ROOM : 0))}
+          width={noteAbove ? 2 * TOOLBAR_WIDTH : TOOLBAR_WIDTH}
+          height={TOOLBAR_HEIGHT + (noteAbove ? NOTE_ROOM : 0)}
           className="gg-route-toolbar-frame"
         >
-          <div className="gg-route-toolbar flex h-full items-end justify-center gap-2">
-            {manual && crossing ? (
-              <span className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted">
-                Crosses a card
-              </span>
-            ) : hold?.crossing ? (
-              // The same span, blank and hidden from assistive technology: its width keeps the
-              // controls beside it where they were.
-              <span
-                className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted invisible"
-                aria-hidden="true"
-              >
-                Crosses a card
-              </span>
-            ) : null}
-            {manual || hold ? (
+          {/* The row of controls stays at the bottom, where it is without the note. */}
+          <div className="flex h-full flex-col items-center justify-end gap-2">
+            {noteAbove ? note : null}
+            <div className="gg-route-toolbar flex w-full items-end justify-center gap-2">
+              {manual && crossing ? (
+                <span className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted">
+                  Crosses a card
+                </span>
+              ) : hold?.crossing ? (
+                // The same span, blank and hidden from assistive technology: its width keeps the
+                // controls beside it where they were.
+                <span
+                  className="rounded-md border border-default bg-surface-raised px-2 py-1 text-xs text-muted invisible"
+                  aria-hidden="true"
+                >
+                  Crosses a card
+                </span>
+              ) : null}
+              {manual || hold ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="nodrag nopan nokey pointer-coarse:h-11"
+                  // Unavailable for a shared id, described by the note above (#481); held on an
+                  // automatic route, because there is nothing to reset. Either way still a hit
+                  // target that keeps focus and `nopan`, so a second press lands here.
+                  aria-disabled={routeRefusal || settling || !manual ? true : undefined}
+                  aria-describedby={described}
+                  data-gesture={routeRefusal ? undefined : settling}
+                  title={routeRefusal || manual ? undefined : ROUTES_AUTOMATICALLY}
+                  onClick={(event) => {
+                    // As Remove connection's: the edge wrapper would select this edge again, which
+                    // with Control or Meta held toggles it off and takes the hold with it.
+                    event.stopPropagation();
+                    if (routeRefusal || settling || !manual) return;
+                    setHold({ at: labelAt, crossing, reset: points });
+                    // Focus first: a reset refused for a stale selection moves focus on to Undo.
+                    edgeElement()?.focus();
+                    editing.reset(edgeId);
+                  }}
+                  onKeyDown={toolbarKeys}
+                >
+                  Reset route
+                </Button>
+              ) : null}
               <Button
                 size="sm"
                 variant="outline"
                 className="nodrag nopan nokey pointer-coarse:h-11"
-                // Held on an automatic route: unavailable because there is nothing to reset, and
-                // still a hit target that keeps focus and `nopan`, so a second press lands here.
-                aria-disabled={settling || !manual ? true : undefined}
-                data-gesture={settling}
-                title={manual ? undefined : ROUTES_AUTOMATICALLY}
+                // A protected voice step stays disabled with its own reason (#207). A shared id is
+                // unavailable, focusable and described by the note above (#481).
+                disabled={!!refusal && !routeRefusal}
+                aria-disabled={routeRefusal || removeSettling ? true : undefined}
+                aria-describedby={described}
+                data-gesture={removeSettling}
+                title={routeRefusal ? undefined : refusal}
                 onClick={(event) => {
-                  // As Remove connection's: the edge wrapper would select this edge again, which
-                  // with Control or Meta held toggles it off and takes the hold with it.
+                  // The edge wrapper would select this (now removed) edge again on the same click.
                   event.stopPropagation();
-                  if (settling || !manual) return;
-                  setHold({ at: labelAt, crossing, reset: points });
-                  // Focus first: a reset refused for a stale selection moves focus on to Undo.
-                  edgeElement()?.focus();
-                  editing.reset(edgeId);
+                  // A later click of a double or triple click (the browser's count above one) goes
+                  // on from the press before it, which may have selected this connection and so
+                  // drawn this button under the pointer (#207). It removes nothing and leaves focus
+                  // on the connection, as that press did. Enter, Space and element.click() report
+                  // 0, and a separate click 1: both go on to remove.
+                  if (event.detail > 1) {
+                    edgeElement()?.focus();
+                    return;
+                  }
+                  if (routeRefusal || settling) return;
+                  editing.remove(edgeId);
                 }}
                 onKeyDown={toolbarKeys}
               >
-                Reset route
+                Remove connection
               </Button>
-            ) : null}
-            <Button
-              size="sm"
-              variant="outline"
-              className="nodrag nopan nokey pointer-coarse:h-11"
-              disabled={!!refusal}
-              aria-disabled={removeSettling ? true : undefined}
-              data-gesture={removeSettling}
-              title={refusal}
-              onClick={(event) => {
-                // The edge wrapper would select this (now removed) edge again on the same click.
-                event.stopPropagation();
-                // A later click of a double or triple click (the browser's count above one) goes on
-                // from the press before it, which may have selected this connection and so drawn
-                // this button under the pointer (#207). It removes nothing and leaves focus on the
-                // connection, as that press did. Enter, Space and element.click() report 0, and a
-                // separate click 1: both go on to remove.
-                if (event.detail > 1) {
-                  edgeElement()?.focus();
-                  return;
-                }
-                if (settling) return;
-                editing.remove(edgeId);
-              }}
-              onKeyDown={toolbarKeys}
-            >
-              Remove connection
-            </Button>
+            </div>
           </div>
         </foreignObject>
       </g>
+      {note && placement.below ? (
+        // No room above the controls, and more below the label: the note goes there instead.
+        <g transform={`translate(${anchor.x} ${anchor.y + LABEL_GAP / zoom}) ${scale}`}>
+          <foreignObject
+            x={-TOOLBAR_WIDTH}
+            y={0}
+            width={2 * TOOLBAR_WIDTH}
+            height={NOTE_ROOM}
+            className="gg-route-toolbar-frame"
+          >
+            <div className="flex h-full flex-col items-center justify-start">{note}</div>
+          </foreignObject>
+        </g>
+      ) : null}
     </g>
   );
 }
