@@ -1,0 +1,77 @@
+### Page
+- Page URL: http://127.0.0.1:58471/app/loops
+- Page Title: GraphGoblin
+### Snapshot
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]: GraphGoblin
+    - navigation "Main" [ref=e22]:
+      - link "Chat" [ref=e23] [cursor=pointer]:
+        - /url: /app/chat
+      - link "Loops" [active] [ref=e25] [cursor=pointer]:
+        - /url: /app/loops
+      - link "Runs" [ref=e27] [cursor=pointer]:
+        - /url: /app/runs
+      - link "Events" [ref=e29] [cursor=pointer]:
+        - /url: /app/events
+      - link "Settings" [ref=e31] [cursor=pointer]:
+        - /url: /app/settings
+  - generic [ref=e80]:
+    - heading "Loops" [level=1] [ref=e82]
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - form "Create loop" [ref=e86]:
+          - paragraph [aria-hidden] [ref=e87]: Required fields are marked *
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e90]: New loop name
+              - generic [aria-hidden] [ref=e91]: "*"
+            - textbox "New loop name" [ref=e92]:
+              - /placeholder: nightly-triage
+          - button "Create" [disabled]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Import an exported loop (JSON)
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - button "Import an exported loop (JSON)" [ref=e97] [cursor=pointer]
+              - generic [aria-hidden]: Choose file
+            - generic [ref=e98]: No file chosen
+      - button "New from template" [ref=e101] [cursor=pointer]
+    - generic [ref=e103]:
+      - paragraph [ref=e104]: No loops of your own yet. Create one above or import an export.
+      - region "System loops" [ref=e105]:
+        - heading "System loops" [level=2] [ref=e107]
+        - generic [ref=e108]:
+          - paragraph [ref=e109]: GraphGoblin keeps one chat loop for this gateway and one for each paired device, including revoked ones. Change the steps between the chat trigger and its exits.
+          - table [ref=e110]:
+            - rowgroup [ref=e111]:
+              - row [ref=e112]:
+                - columnheader "Name" [ref=e113]
+                - columnheader "State" [ref=e114]
+                - columnheader "Last run" [ref=e115]
+                - columnheader "Actions" [ref=e116]
+            - rowgroup [ref=e117]:
+              - row [ref=e118]:
+                - cell [ref=e119]:
+                  - link "Gateway chat" [ref=e120] [cursor=pointer]:
+                    - /url: /app/loops/01M7RZ0HYHTNQ5JHNM2M6A1VV9/edit
+                  - paragraph [ref=e121]: System chat workflow. Its protocol boundary is protected; its workflow is editable.
+                  - paragraph [ref=e122]:
+                    - text: Answers
+                    - link "Chat on this gateway" [ref=e123] [cursor=pointer]:
+                      - /url: /app/chat
+                  - paragraph [ref=e124]:
+                    - text: Updated
+                    - time [ref=e125]: 11/18/2026, 9:53:38 PM
+                - cell "published" [ref=e126]
+                - cell "never run" [ref=e129]
+                - cell [ref=e131]:
+                  - generic [ref=e133]:
+                    - link "Edit Gateway chat" [ref=e134] [cursor=pointer]:
+                      - /url: /app/loops/01M7RZ0HYHTNQ5JHNM2M6A1VV9/edit
+                      - text: Edit
+                    - button "Export Gateway chat" [ref=e137] [cursor=pointer]:
+                      - generic [ref=e140]: Export
+                    - status [ref=e141]
+```

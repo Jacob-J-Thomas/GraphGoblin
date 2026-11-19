@@ -1,0 +1,14 @@
+GraphGoblin preflight
+
+  STATUS  CHECK           DETAIL
+  ok      Node.js         Node 22.23.4
+  FAIL    Data directory  $QA_ROOT\not-a-directory exists but is not a directory
+  WARN    Master key      $QA_ROOT\not-a-directory\master.key does not exist yet; a key is generated on first start (back it up, or set GG_MASTER_KEY)
+  FAIL    Database        not reachable: $QA_ROOT\not-a-directory\graphgoblin.db cannot be created: $QA_ROOT\not-a-directory is not a directory
+  WARN    Harness ollama  Ollama is not checked until the database can be read
+  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.
+  ok      Harness codex   codex 0.160.0 is installed and logged in
+  WARN    Jev             not checked until the database is migrated; Jev is optional
+  ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start
+
+2 failed, 4 warning(s): fix the failed checks before starting
