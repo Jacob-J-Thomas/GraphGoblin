@@ -262,7 +262,8 @@ describe('Codex readiness probe case lifecycle (#466)', () => {
    * body, including its own cleanup, then abandons and finishes the controlled case if the body
    * ended without finishing it, as after an early failure; only then may the next case start. A
    * body failure after the abort and the errors of a controlled finish the body never saw are both
-   * reported. A lifecycle test entered already aborted starts nothing, as a probe case does.
+   * reported, except the abort reason itself, which the case reports once. A lifecycle test entered
+   * already aborted starts nothing, as a probe case does.
    */
   function lifecycleTest(
     test: (lifecycle: ReturnType<typeof controlledLifecycle>) => Promise<void>,
@@ -275,8 +276,14 @@ describe('Codex readiness probe case lifecycle (#466)', () => {
         const [outcome] = await Promise.allSettled([body]);
         const unseen = await lifecycle.settle();
         // A body that outlived the abort reports how it ended; otherwise the case reported it already.
+        // The abort reason itself, which a probe case entered after the abort rejects with, is that
+        // same object the case reports as its timeout or cancellation, so it is not reported again.
         const late =
-          context.signal.aborted && outcome.status === 'rejected' ? [outcome.reason] : [];
+          context.signal.aborted &&
+          outcome.status === 'rejected' &&
+          outcome.reason !== context.signal.reason
+            ? [outcome.reason]
+            : [];
         const failures = [...late, ...unseen];
         if (failures.length > 1)
           throw new AggregateError(failures, 'The lifecycle test and its probe case failed late');
@@ -492,6 +499,49 @@ describe('Codex readiness probe case lifecycle (#466)', () => {
         expect(finished).toEqual({ status: 'fulfilled', value: undefined });
         // Vitest receives the original reason, by which it reports a cancelled run's case as skipped.
         await expect(entered).rejects.toBe(reason);
+      })(context),
+  );
+
+  // Vitest can abort a lifecycle test's case while its body still awaits, before it enters its
+  // probe case, which then rejects on entry with the abort reason that the case reports as its
+  // timeout or cancellation. `vitestCase` stands in for that Vitest case. A copy of the reason has
+  // its name, message and stack but is a different error, which the hook still reports.
+  it.for(['the abort reason', 'a copy of the abort reason'] as const)(
+    'reports only an error other than the abort reason when a lifecycle test aborted mid-body ends with %s',
+    (ending, context) =>
+      lifecycleTest(async (vitestCase) => {
+        const entered = enter(
+          lifecycleTest(async (lifecycle) => {
+            const { signal } = lifecycle.context;
+            // The body still awaits when its case is aborted, and goes on after the abort.
+            await new Promise((resolve) => signal.addEventListener('abort', resolve));
+            if (ending === 'a copy of the abort reason') throw structuredClone(signal.reason);
+            // Unaborted, this ordinary probe case starts four fake CLIs.
+            await probeCase('gg-codex-resumed-', async (probe) => {
+              const { harness } = fixture(probe);
+              useTempRoot(probe.root);
+              expect(await harness.preflight()).toMatchObject({ state: 'ready', ok: true });
+            })(lifecycle.context);
+            await lifecycle.finish();
+          }),
+          vitestCase.context,
+        );
+        vitestCase.abandon();
+        const reason: unknown = vitestCase.context.signal.reason;
+        // As Vitest does, run the finish hooks once the case is abandoned, its body unsettled.
+        const [finished] = await Promise.allSettled([vitestCase.finish()]);
+        const [outcome] = await Promise.allSettled([entered]);
+
+        expect(vi.mocked(spawn), 'fake CLI processes started').not.toHaveBeenCalled();
+        expect(vi.mocked(probeFs.mkdtemp), 'case directories created').not.toHaveBeenCalled();
+        // The body ended with the abort reason itself, or with a copy of it alike in every word.
+        expect(outcome).toEqual({ status: 'rejected', reason });
+        const ended: unknown = outcome.status === 'rejected' ? outcome.reason : undefined;
+        expect(ended === reason).toBe(ending === 'the abort reason');
+        // The case reports the abort reason once; its hook adds only another error, however alike.
+        const [reported, ...more] = reportedBy(finished);
+        expect(more).toEqual([]);
+        expect(reported).toBe(ending === 'the abort reason' ? undefined : ended);
       })(context),
   );
 

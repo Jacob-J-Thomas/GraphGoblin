@@ -1,0 +1,64 @@
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > reports only an error other than the abort reason when a lifecycle test aborted mid-body ends with a copy of the abort reason
+AssertionError: expected undefined to be Error: Simulated test timeout // Object.is equality
+
+- Expected:
+Error {
+  "message": "Simulated test timeout",
+}
+
++ Received:
+undefined
+
+ ❯ src/probe-directory.test.ts:540:26
+    538|         const [reported, ...more] = reportedBy(finished);
+    539|         expect(more).toEqual([]);
+    540|         expect(reported).toBe(ending === 'the abort reason' ? undefine…
+       |                          ^
+    541|       })(context),
+    542|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe case lifecycle (#466) > abandons the probe case of a lifecycle test whose Vitest case is aborted while a fake CLI runs
+AssertionError: expected { status: 'fulfilled', …(1) } to deeply equal { status: 'rejected', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "reason": AssertionError {
+-     "message": "expected { state: 'unknown', ok: false, …(2) } to match object { state: 'ready', ok: true }
+- (2 matching properties omitted from actual)",
+-     "showDiff": true,
+-     "expected": {
+-       "ok": true,
+-       "state": "ready",
+-     },
+-     "actual": {
+-       "ok": false,
+-       "state": "unknown",
+-     },
+-   },
+-   "status": "rejected",
++   "status": "fulfilled",
++   "value": undefined,
+  }
+
+ ❯ src/probe-directory.test.ts:593:24
+    591|       const [outcome] = await Promise.allSettled([run]);
+    592|       expect(outcome).toMatchObject({ status: 'rejected', reason: { na…
+    593|       expect(finished).toEqual(outcome);
+       |                        ^
+    594|     }),
+    595|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in D:\GraphGoblin-AIDLC\2026-11-18-five\lane-
+  │ b\GraphGoblin\packages\adapter-codex
+

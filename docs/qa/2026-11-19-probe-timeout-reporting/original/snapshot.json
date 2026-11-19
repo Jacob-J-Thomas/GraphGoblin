@@ -1,0 +1,167 @@
+{
+  "kind": "derived compact snapshot of two original native A/B runs; no new test execution",
+  "sourceManifestSha256": "d4bdb3a0d1d8af68d1dac8c1e9193ae79c7dccd863ee71231b262559584d762f",
+  "sourceManifestPayloadCount": 34,
+  "branch": "without an abort",
+  "sharedExtractedMaintainedCaseSha256": "f7729b7e27cc6660a5b51b607bf235158537fe08a82d9a0cdaf0fe7883c30438",
+  "runtime": {
+    "node": "v22.23.4",
+    "vitest": "5.0.3",
+    "platform": "native Windows, retained evidence"
+  },
+  "control": "Wait for the actual builtin import result, then deliberately withhold that available result until 650ms after the real default outer timeout. This is not an observed slow builtin import.",
+  "runs": [
+    {
+      "label": "parent",
+      "meaning": "held parent",
+      "commit": "0ff00d6717bfb397e42bf85db8fe62ed1fc0d9b7",
+      "maintainedTestSha256": "e211bfdc49b1a465e4b1b0d997f028005112d003282417c7286172f928e15e75",
+      "generatedInputSha256": "5a9cd085b4e1cba38bfadfbcdd4f61900eafe48bed5a5ec239c44ff9d04fd134",
+      "selectedTask": {
+        "title": "reports a body failure without an abort once, and a failed case-root removal, after the same settlement",
+        "status": "failed",
+        "fullFailureStringCount": 4,
+        "failureFirstLines": [
+          "Error: Test timed out in 5000ms.",
+          "AssertionError: expected true to be false // Object.is equality",
+          "Error: Body failure without an abort",
+          "Error: Case root removal failure"
+        ],
+        "fullFailureStringSha256": [
+          "21677049de7956ba7b8ea4d550b7c6322362120a4068c117f259341f4d62b86f",
+          "23781375889eac6184d2373f77326bb88acdf9a3b868d5f42a3557188a6336bf",
+          "44ebc072e387110d73a5a7df0b5f009783a4683d6c9632dbc6be31919b9f1780",
+          "48d6f48b71121296c546d76e0c60f73d57ffe1ac455dbda56afe8e2a36aa655b"
+        ],
+        "allFullFailureStringsIdentical": false
+      },
+      "successorTask": {
+        "title": "successor observes settled state without repairing it",
+        "status": "passed"
+      },
+      "reporterCounts": {
+        "numPassedTests": 1,
+        "numFailedTests": 1,
+        "numPendingTests": 0,
+        "success": false
+      },
+      "workerTimingMs": {
+        "realImportResolved": 9,
+        "realImportAwaitDuration": 0.8043000000002394,
+        "actualDefaultOuterAbort": 5025,
+        "heldResultReleased": 5678,
+        "observedHoldAfterAbort": 653,
+        "successorFirstObservation": 5692
+      },
+      "releaseHandshake": {
+        "outerAborted": true,
+        "innerAborted": true,
+        "sameReasonObject": true
+      },
+      "successorFirstObservation": {
+        "elapsedMs": 5692,
+        "outerFinished": true,
+        "localMockRestored": true,
+        "rootsCreated": 1,
+        "rootsStillPresent": [],
+        "childrenCreated": 0,
+        "livingOwnedChildren": 0,
+        "envRestored": true,
+        "rmImplementationRestored": true,
+        "runnerEntriesUnchanged": true
+      },
+      "controller": {
+        "cancelRequests": 0,
+        "endReason": "failed",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "actualExit": 1,
+        "externalDeadlineReached": false,
+        "ownedFakeProcessesAfterRun": [],
+        "runnerTempEntriesBeforeExternalCleanup": [],
+        "runnerTempExistsAfterExternalCleanup": false
+      },
+      "rawResult": "raw/parent-midbody-01/vitest.json",
+      "rawEvents": "raw/parent-midbody-01/events.jsonl",
+      "rawReceipt": "raw/parent-midbody-01/command-receipt.json"
+    },
+    {
+      "label": "corrected",
+      "meaning": "entry-guard revision before the later mid-body repair",
+      "commit": "c99a93d228646431083c9ca63625674115f5c40a",
+      "maintainedTestSha256": "bf35aebd27666194aec20fd08c4168a16c452c7706f18353e6f1afee70f590d4",
+      "generatedInputSha256": "de982122e0723d00fbf0ad90683dddec6ee1c10e456c216a77f572a84805fa24",
+      "selectedTask": {
+        "title": "reports a body failure without an abort once, and a failed case-root removal, after the same settlement",
+        "status": "failed",
+        "fullFailureStringCount": 2,
+        "failureFirstLines": [
+          "Error: Test timed out in 5000ms.",
+          "Error: Test timed out in 5000ms."
+        ],
+        "fullFailureStringSha256": [
+          "ac3153a3f632a1bc2145ca92bc382fdb0442016c52a4c41a894cc6e262b9b9ce",
+          "ac3153a3f632a1bc2145ca92bc382fdb0442016c52a4c41a894cc6e262b9b9ce"
+        ],
+        "allFullFailureStringsIdentical": true
+      },
+      "successorTask": {
+        "title": "successor observes settled state without repairing it",
+        "status": "passed"
+      },
+      "reporterCounts": {
+        "numPassedTests": 1,
+        "numFailedTests": 1,
+        "numPendingTests": 0,
+        "success": false
+      },
+      "workerTimingMs": {
+        "realImportResolved": 10,
+        "realImportAwaitDuration": 1.3274999999998727,
+        "actualDefaultOuterAbort": 5015,
+        "heldResultReleased": 5680,
+        "observedHoldAfterAbort": 665,
+        "successorFirstObservation": 5683
+      },
+      "releaseHandshake": {
+        "outerAborted": true,
+        "innerAborted": true,
+        "sameReasonObject": true
+      },
+      "successorFirstObservation": {
+        "elapsedMs": 5683,
+        "outerFinished": true,
+        "localMockRestored": true,
+        "rootsCreated": 0,
+        "rootsStillPresent": [],
+        "childrenCreated": 0,
+        "livingOwnedChildren": 0,
+        "envRestored": true,
+        "rmImplementationRestored": true,
+        "runnerEntriesUnchanged": true
+      },
+      "controller": {
+        "cancelRequests": 0,
+        "endReason": "failed",
+        "unhandled": [],
+        "watchdogFired": false,
+        "apiObservedExitCode": 1,
+        "runnerTempEntriesAfterClose": []
+      },
+      "command": {
+        "actualExit": 1,
+        "externalDeadlineReached": false,
+        "ownedFakeProcessesAfterRun": [],
+        "runnerTempEntriesBeforeExternalCleanup": [],
+        "runnerTempExistsAfterExternalCleanup": false
+      },
+      "rawResult": "raw/corrected-midbody-01/vitest.json",
+      "rawEvents": "raw/corrected-midbody-01/events.jsonl",
+      "rawReceipt": "raw/corrected-midbody-01/command-receipt.json"
+    }
+  ]
+}

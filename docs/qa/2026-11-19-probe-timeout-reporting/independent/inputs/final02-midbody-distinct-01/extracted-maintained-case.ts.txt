@@ -1,0 +1,64 @@
+
+
+  it.for(['after its abort', 'without an abort'] as const)(
+    'reports a body failure %s once, and a failed case-root removal, after the same settlement',
+    (when, context) =>
+      lifecycleTest(async (lifecycle) => {
+        const abandoned = when === 'after its abort';
+        const failure = new Error(`Body failure ${when}`);
+        const removalFailure = Object.assign(new Error('Case root removal failure'), {
+          code: 'EBUSY',
+        });
+        const seen: Seen = { root: '', commands: [], children: [] };
+        let bodySettled = false;
+        const { rm } = await vi.importActual<typeof probeFs>('node:fs/promises');
+        const remove = vi.spyOn(probeFs, 'rm');
+        // The probe still removes its own directory; only the removal of the case root fails.
+        remove.mockImplementation(async (path, options) => {
+          if (String(path) === seen.root) throw removalFailure;
+          return rm(path, options);
+        });
+        try {
+          const run = probeCase('gg-codex-double-fault-', async (probe) => {
+            // `login status` never answers in the hang scenario: only the abort ends it.
+            const { harness, commands } = fixture(probe, abandoned ? 'hang' : 'ready', (args) => {
+              if (abandoned && args.join(' ') === 'login status') lifecycle.abandon();
+            });
+            Object.assign(seen, { root: probe.root, commands, children: probe.children });
+            useTempRoot(probe.root);
+            await harness.preflight();
+            throw failure;
+          })(lifecycle.context).finally(() => {
+            bodySettled = true;
+          });
+          const { signal } = lifecycle.context;
+          // As Vitest does, run the finish hooks once the case is abandoned or its body has failed.
+          await Promise.race([
+            new Promise((resolve) => signal.addEventListener('abort', resolve)),
+            Promise.allSettled([run]),
+          ]);
+          expect(signal.aborted).toBe(abandoned);
+          const [finished] = await Promise.allSettled([lifecycle.finish()]);
+
+          // Only the injected fault left the case root behind.
+          expect(await leftAtFinish(seen, bodySettled)).toEqual({
+            ...settledCase(seen),
+            root: 'present',
+          });
+          expect(seen.children).toHaveLength(4);
+          const [outcome] = await Promise.allSettled([run]);
+          expect(outcome).toEqual({ status: 'rejected', reason: failure });
+          // The case itself reports its timeout after an abort, otherwise its body failure; the hook
+          // adds a body failure only if it came after the abort, then the failed removal.
+          expect(reportedBy(finished)).toEqual(
+            abandoned ? [failure, removalFailure] : [removalFailure],
+          );
+        } finally {
+          // Settle the controlled case before restoring its fault, even after an early failure.
+          await lifecycle.settle();
+          remove.mockRestore();
+          // The case's processes have exited; remove the root its failed removal preserved.
+          if (seen.root !== '') await rm(seen.root, { recursive: true, force: true });
+        }
+      })(context),
+  );

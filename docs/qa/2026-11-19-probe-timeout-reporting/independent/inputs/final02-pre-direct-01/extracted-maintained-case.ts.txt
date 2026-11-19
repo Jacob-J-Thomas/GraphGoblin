@@ -1,0 +1,23 @@
+
+  it(
+    'runs the fake CLI under a 226-character TEMP/TMP/TMPDIR root and removes its probe',
+    probeCase('gg-codex-long-', async (probe) => {
+      let longTemp = probe.root;
+      while (longTemp.length < 226 - 21) longTemp = join(longTemp, 'segment-abcdefghij');
+      longTemp = join(longTemp, 'x'.repeat(226 - longTemp.length - 1));
+      expect(longTemp).toHaveLength(226);
+      await probeFs.mkdir(longTemp, { recursive: true });
+      useTempRoot(longTemp);
+      const { harness, commands } = fixture(probe);
+      expect(await harness.preflight()).toMatchObject({ state: 'ready', ok: true, problems: [] });
+      expect(commands).toHaveLength(4);
+      const directories = new Set(commands.map((command) => command.cwd));
+      expect(directories.size).toBe(1);
+      const directory = commands[0]?.cwd ?? '';
+      expect(dirname(directory)).toBe(longTemp);
+      expect(basename(directory)).toMatch(/^gg-codex-probe-[a-f0-9]{8}$/);
+      expect(directory).toHaveLength(250);
+      await expect(probeFs.access(directory)).rejects.toMatchObject({ code: 'ENOENT' });
+      expect(await probeFs.readdir(longTemp)).toEqual([]);
+    }),
+  );
